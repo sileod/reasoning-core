@@ -133,7 +133,7 @@ ckpt = load_ckpt(ckpt_file)
 
 # --- 🔒 NFS-safe cross-machine lock ---
 import socket, threading, time, atexit
-
+EXIT_CODE=99
 def acquire_lock(lock_file: Path, stale_after: int = 300, heartbeat_every: int = 60):
     """Cross-machine lock via O_EXCL create + heartbeat. Exits if another runner is active."""
     lock_file.parent.mkdir(parents=True, exist_ok=True)
@@ -154,10 +154,10 @@ def acquire_lock(lock_file: Path, stale_after: int = 300, heartbeat_every: int =
 
     if not try_create():
         if lock_age() < stale_after:
-            print(f"🔒 Active elsewhere: {lock_file.read_text()}. Exiting."); exit(0)
+            print(f"🔒 Active elsewhere: {lock_file.read_text()}. Exiting."); exit(EXIT_CODE)
         lock_file.unlink(missing_ok=True)                 # stale → clear and retry
         if not try_create():
-            print(f"🔒 Lost race: {lock_file.read_text()}. Exiting."); exit(0)
+            print(f"🔒 Lost race: {lock_file.read_text()}. Exiting."); exit(EXIT_CODE)
 
     atexit.register(lambda: lock_file.unlink(missing_ok=True))
 
@@ -168,7 +168,7 @@ def acquire_lock(lock_file: Path, stale_after: int = 300, heartbeat_every: int =
             except OSError: return
     threading.Thread(target=heartbeat, daemon=True).start()
 
-acquire_lock(ckpt_dir / "run.lock")
+#acquire_lock(ckpt_dir / "run.lock")
 
 
 if ckpt and ckpt.get("hash") == run_hash:
@@ -215,11 +215,15 @@ if getattr(tokenizer, "chat_template", None) is None:
 def get_formatter(data_key):
     if data_key == "fw":
         return lambda x: {"prompt": "", "completion": x["text"] + tokenizer.eos_token}
-    else:
-        prefix = SPECIAL + "\n" if SPECIAL and data_key == "rc" else ""
-        return lambda x: {"prompt": prefix + x["prompt"] + "\n",
-                          "completion": x.get("answer") + tokenizer.eos_token}
 
+    def fmt(x):
+        prefix = SPECIAL + "\n" if SPECIAL and data_key == "rc" else ""
+        answer = x.get("answer")
+        return {
+            "prompt": prefix + f"Q: {x['prompt']}\nA:",
+            "completion": " "+answer + tokenizer.eos_token,
+        }
+    return fmt
 
 # --- Materialized loader (original behavior; also used for evals) ---
 def load_exact_tokens_materialized(key, budget, stream_skip=0, max_len=None, batch_size=1000):

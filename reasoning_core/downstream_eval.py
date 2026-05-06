@@ -37,6 +37,20 @@ harness_tasks = ['leaderboard_bbh',
     "tinyMMLU", "tinyHellaswag", "tinyWinogrande", "tinyArc", "tinyGSM8k", "winogrande",
     ]     #social_iqa wsc prost: not working
 
+custom_tasks = {
+    name: ConfigurableTask(config={
+        "task": name, "dataset_path": path,
+        "output_type": "multiple_choice",
+        "test_split": "train", "doc_to_text": "",
+        "doc_to_choice": '["{{sentence_good}}", "{{sentence_bad}}"]',
+        "doc_to_target": 0,
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    })
+    for name, path in [
+        ("blimp", "tasksource/blimp"),
+        ("zorro", "tasksource/zorro"),
+    ]
+}
 
 tasksource = ['ConTRoL-nli', 'folio','anli/a1','WANLI','sick/label','glue/rte','glue/cola','cladder']
 
@@ -100,32 +114,32 @@ def run_platinum(model, tokenizer, tasks=platinum, limit=200, batch_size=16, use
 
 
 
-def run_harness(model, tokenizer, limit=200):
-    custom_tasks = {
-        name: ConfigurableTask(config={
-            "task": name, "dataset_path": path,
-            "output_type": "multiple_choice",
-            "test_split": "train", "doc_to_text": "",
-            "doc_to_choice": '["{{sentence_good}}", "{{sentence_bad}}"]',
-            "doc_to_target": 0,
-            "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
-        })
-        for name, path in [
-            ("blimp", "tasksource/blimp"),
-            ("zorro", "tasksource/zorro"),
-        ]
-    }
 
-    hflm = HFLM(pretrained=model, tokenizer=tokenizer, batch_size="auto")
-    
-    task_manager = TaskManager()
-    standard_tasks = get_task_dict(harness_tasks, task_manager)
-    
-    task_dict = {**standard_tasks, **custom_tasks}
-    
-    res = evaluate(lm=hflm, task_dict=task_dict, limit=limit)['results']
-    
-    s = {t: next((m[k] for k in ['mcc,none', 'acc_norm,none', 'acc,none'] if k in m), 0.) for t, m in res.items()}
+
+def pick_metric(m):
+    return next((m[k] for k in ['mcc,none', 'acc_norm,none', 'acc,none'] if k in m), 0.)
+
+
+def add_bbh0(s, hflm, task_manager, limit=200):
+    def set_fewshot(task_dict, n):
+        for x in task_dict.values():
+            set_fewshot(x, n) if isinstance(x, dict) else x.set_config(key="num_fewshot", value=n)
+
+    bbh = get_task_dict(["leaderboard_bbh"], task_manager)
+    set_fewshot(bbh, 0)
+    r = evaluate(lm=hflm, task_dict=bbh, limit=limit)['results']
+    s["leaderboard_bbh_0shot"] = pick_metric(r["leaderboard_bbh"])
     return s
-    
 
+
+def run_harness(model, tokenizer, limit=200):
+    hflm = HFLM(pretrained=model, tokenizer=tokenizer, batch_size="auto")
+    task_manager = TaskManager()
+
+    task_dict = {**get_task_dict(harness_tasks, task_manager), **custom_tasks}
+    r = evaluate(lm=hflm, task_dict=task_dict, limit=limit)['results']
+
+    s = {t: pick_metric(m) for t, m in r.items() if t != "leaderboard_bbh"}
+    s["leaderboard_bbh_3shot"] = pick_metric(r["leaderboard_bbh"])
+
+    return add_bbh0(s, hflm, task_manager, limit)
