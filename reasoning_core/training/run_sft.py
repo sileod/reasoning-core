@@ -68,6 +68,7 @@ parser.add_argument('--seed', type=int, default=True)
 DATA_MAP = {
     "fw": "HuggingFaceFW/fineweb-edu",
     "rc": "reasoning-core/procedural-pretraining-pile",
+    "rg": "reasoning-core/reasoning-gym",
     "synth": "tasksource/SYNTH",
     "dolci": "tasksource/dolci-instruct",
 }
@@ -338,15 +339,16 @@ available_memory_factor = max(1, min(16, round(
     2 * (_model_params / 68) * (24 / _total_gb)
 )))
 
-observed_memory_peak = 0.60
+observed_memory_peak = 0.40
 target_memory_peak = 0.85
 
 available_memory_factor = max(1, min(16, round(
     available_memory_factor * observed_memory_peak / target_memory_peak
 )))
 
-per_device_bs = 16 // available_memory_factor
-grad_accum = 4 * available_memory_factor
+TARGET_EFFECTIVE_BS = 64
+per_device_bs = 1 << ((16 // available_memory_factor).bit_length() - 1)  # largest pow2 ≤ 16//factor
+grad_accum    = TARGET_EFFECTIVE_BS // per_device_bs
 
 common_args = dict(
     learning_rate=1.0, per_device_train_batch_size=per_device_bs,
