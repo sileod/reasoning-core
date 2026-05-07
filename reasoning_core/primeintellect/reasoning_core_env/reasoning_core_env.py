@@ -1,12 +1,13 @@
-import json
 import pandas as pd
-from datasets import Dataset, load_dataset, DatasetDict
+from datasets import Dataset, load_dataset, DatasetDict, get_dataset_split_names
 import verifiers as vf
 import reasoning_gym as rg
 from reasoning_core import score_answer
 from easydict import EasyDict as edict
 
 DEFAULT_SYSTEM_PROMPT = rg.utils.SYSTEM_PROMPTS["DeepSeekZero"]
+DEFAULT_DATASET_NAME = "reasoning-core/formal-reasoning-env"
+DEFAULT_ALLOWED_MODES = ("instruct", "few_shot")
 
 
 def extract_answer(s, tag="answer"):
@@ -18,7 +19,8 @@ def extract_answer(s, tag="answer"):
 def rc_ds_to_env(
     ds, 
     system_prompt=DEFAULT_SYSTEM_PROMPT, 
-    do_extract_answer=True
+    do_extract_answer=True,
+    allowed_modes=DEFAULT_ALLOWED_MODES,
 ):
     """
     Convert Dataset or DatasetDict into a verifiers SingleTurnEnv.
@@ -41,6 +43,15 @@ def rc_ds_to_env(
         # If a single Dataset is passed
         main_ds = ds
         eval_ds = None
+
+    def filter_modes(dataset):
+        if allowed_modes and "mode" in dataset.column_names:
+            return dataset.filter(lambda example: example.get("mode") in allowed_modes)
+        return dataset
+
+    main_ds = filter_modes(main_ds)
+    if eval_ds is not None:
+        eval_ds = filter_modes(eval_ds)
 
     # Process main dataset
     dataset = main_ds.rename_columns({"prompt": "question"})
@@ -81,26 +92,35 @@ def load_environment(
     num_train_examples: int = 500,
     num_eval_examples: int = 50,
     do_extract_answer=True,
-    dataset_name: str = "reasoning-core/rc1",
+    dataset_name: str = DEFAULT_DATASET_NAME,
+    allowed_modes=DEFAULT_ALLOWED_MODES,
     seed: int = 0,
 ) -> vf.SingleTurnEnv:
     """
     Load the dataset and return a ready-to-use SingleTurnEnv.
     """
-    splits = {"train": num_train_examples, "test": num_eval_examples}
+    split_names = get_dataset_split_names(dataset_name)
 
-    ds = DatasetDict({
-        split: Dataset.from_list(
-            list(
-                load_dataset(dataset_name, split=split, streaming=True)
-                .shuffle(seed=seed)
-                .take(n)
-            )
-        )
-        for split, n in splits.items()
-    })
+    def load_stream(split: str, n: int, skip: int = 0) -> Dataset:
+        stream = load_dataset(dataset_name, split=split, streaming=True).shuffle(seed=seed)
+        if skip:
+            stream = stream.skip(skip)
+        return Dataset.from_list(list(stream.take(n)))
 
-    return rc_ds_to_env(ds, do_extract_answer=do_extract_answer)
+    if "test" in split_names:
+        eval_split = "test"
+    elif "validation" in split_names:
+        eval_split = "validation"
+    else:
+        eval_split = None
+
+    ds = DatasetDict({"train": load_stream("train", num_train_examples)})
+    if eval_split is not None:
+        ds["test"] = load_stream(eval_split, num_eval_examples)
+    else:
+        ds["test"] = load_stream("train", num_eval_examples, skip=num_train_examples)
+
+    return rc_ds_to_env(ds, do_extract_answer=do_extract_answer, allowed_modes=allowed_modes)
 
 
 # ============================
