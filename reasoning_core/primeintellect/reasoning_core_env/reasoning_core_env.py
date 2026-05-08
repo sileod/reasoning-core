@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from datasets import Dataset, load_dataset, DatasetDict
+from datasets import Dataset, load_dataset, DatasetDict, get_dataset_split_names
 import verifiers as vf
 import reasoning_gym as rg
 from reasoning_core import score_answer
@@ -81,23 +81,32 @@ def load_environment(
     num_train_examples: int = 500,
     num_eval_examples: int = 50,
     do_extract_answer=True,
-    dataset_name: str = "reasoning-core/rc1",
+    dataset_name: str = "reasoning-core/formal-reasoning-env",
     seed: int = 0,
 ) -> vf.SingleTurnEnv:
     """
     Load the dataset and return a ready-to-use SingleTurnEnv.
     """
-    splits = {"train": num_train_examples, "test": num_eval_examples}
+    available_splits = get_dataset_split_names(dataset_name)
+    eval_source_split = next(
+        (split for split in ("test", "validation", "eval", "dev") if split in available_splits),
+        "train",
+    )
+
+    splits = {
+        "train": ("train", num_train_examples, seed),
+        "test": (eval_source_split, num_eval_examples, seed + int(eval_source_split == "train")),
+    }
 
     ds = DatasetDict({
         split: Dataset.from_list(
             list(
-                load_dataset(dataset_name, split=split, streaming=True)
-                .shuffle(seed=seed)
+                load_dataset(dataset_name, split=source_split, streaming=True)
+                .shuffle(seed=split_seed)
                 .take(n)
             )
         )
-        for split, n in splits.items()
+        for split, (source_split, n, split_seed) in splits.items()
     })
 
     return rc_ds_to_env(ds, do_extract_answer=do_extract_answer)
