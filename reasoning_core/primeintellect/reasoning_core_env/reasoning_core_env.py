@@ -42,6 +42,12 @@ def rc_ds_to_env(
         main_ds = ds
         eval_ds = None
 
+    def remove_reserved_columns(dataset):
+        reserved_columns = [col for col in ("task",) if col in dataset.column_names]
+        if reserved_columns:
+            dataset = dataset.remove_columns(reserved_columns)
+        return dataset
+
     # Process main dataset
     dataset = main_ds.rename_columns({"prompt": "question"})
 
@@ -53,12 +59,14 @@ def rc_ds_to_env(
         return {'info': entry}
 
     dataset = dataset.map(parse_entry)
+    dataset = remove_reserved_columns(dataset)
 
     # Process eval dataset if it exists
     eval_dataset = None
     if eval_ds is not None:
         eval_dataset = eval_ds.rename_columns({"prompt": "question"})
         eval_dataset = eval_dataset.map(parse_entry)
+        eval_dataset = remove_reserved_columns(eval_dataset)
 
     def score_answer_vf(prompt, completion, info) -> float:
         answer = completion[0]['content']
