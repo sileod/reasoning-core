@@ -64,6 +64,7 @@ parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default=True)
 parser.add_argument('--seed', type=int, default=True)
+parser.add_argument('--n_eval', type=int, default=10)
 
 DATA_MAP = {
     "fw": "HuggingFaceFW/fineweb-edu",
@@ -87,6 +88,7 @@ def in_notebook():
     return getattr(get_ipython(), '__class__', None).__name__ == 'ZMQInteractiveShell'
 
 args, _ = parser.parse_known_args()
+args.n_eval = max(1, args.n_eval)
 if args.main_data == "dolci":
     args.from_scratch = False
 args.model_name = MODEL_MAP.get(args.model_name, args.model_name)
@@ -107,7 +109,7 @@ print(f"📡 ITERABLE_MODE = {args.iterable_mode}")
 
 # --- 💾 Checkpointing ---
 def _args_hash(a):
-    d = {k: str(v) for k, v in sorted(vars(a).items())}
+    d = {k: str(v) for k, v in sorted(vars(a).items()) if k != "n_eval"}
     return hashlib.sha256(json.dumps(d).encode()).hexdigest()[:16]
 
 def _run_name(seed_str):
@@ -331,6 +333,102 @@ class ScheduleFreeModeCallback(TrainerCallback):
     def on_train_end(self, args, state, control, **kwargs): self.optimizer.eval()
 
 
+def downstream_eval(model, tokenizer):
+    return {
+        **run_harness(model, tokenizer),
+        **run_platinum(model, tokenizer),
+    }
+
+
+def configure_downstream_eval_metrics():
+    wandb.define_metric("downstream_eval/index")
+    wandb.define_metric("downstream_eval/score/*", step_metric="downstream_eval/index")
+
+
+def log_downstream_eval(model, tokenizer, bucket, n_eval, global_step=None, max_steps=None, ordinal=None):
+    scores = downstream_eval(model, tokenizer)
+    metrics = {
+        **scores,
+        **{f"downstream_eval/score/{k}": v for k, v in scores.items()},
+        "downstream_eval/bucket": bucket,          # 1-based intended eval bucket
+        "downstream_eval/index": bucket - 1,       # 0-based axis for W&B plots
+        "downstream_eval/n_eval": n_eval,
+    }
+    if global_step is not None:
+        metrics["downstream_eval/global_step"] = global_step
+    if max_steps is not None:
+        metrics["downstream_eval/max_steps"] = max_steps
+    if global_step is not None and max_steps:
+        metrics["downstream_eval/progress"] = global_step / max_steps
+    if ordinal is not None:
+        metrics["downstream_eval/ordinal"] = ordinal
+
+    if global_step is None:
+        wandb.log(metrics)
+    else:
+        wandb.log(metrics, step=global_step)
+
+
+class DownstreamEvalCallback(TrainerCallback):
+    """Run downstream eval at n-1 evenly-spaced buckets; final eval stays in existing block."""
+    def __init__(self, model, tokenizer, optimizer, n=10):
+        self.model = model
+        self.tokenizer = tokenizer
+        self.optimizer = optimizer
+        self.n = max(1, int(n))
+        self.fired = set()
+        self.ordinal = 0
+
+    def buckets(self, max_steps):
+        return {
+            b: max(1, round(b * max_steps / self.n))
+            for b in range(1, self.n)
+        }
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        if state.max_steps > 0:
+            self.fired = {
+                b for b, step in self.buckets(state.max_steps).items()
+                if state.global_step >= step
+            }
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if state.max_steps <= 0:
+            return
+
+        due = [
+            b for b, step in self.buckets(state.max_steps).items()
+            if state.global_step >= step and b not in self.fired
+        ]
+        if not due:
+            return
+
+        b = max(due)
+        self.fired.update(due)
+
+        was_training = self.model.training
+        self.optimizer.eval()
+        self.model.eval()
+
+        with torch.inference_mode():
+            log_downstream_eval(
+                self.model, self.tokenizer,
+                bucket=b, n_eval=self.n,
+                global_step=state.global_step,
+                max_steps=state.max_steps,
+                ordinal=self.ordinal,
+            )
+        self.ordinal += 1
+
+        if was_training:
+            self.model.train()
+
+        if control.should_evaluate or control.should_save:
+            self.optimizer.eval()
+        else:
+            self.optimizer.train()
+
+
 # --- 🔄 Training ---
 _total_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3
 _model_params = sum(p.numel() for p in model.parameters()) / 1e6
@@ -379,6 +477,7 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
     run_id = f"{run_hash}-{stage_name}"
     wandb.init(project="rc-sft", group=group_id, id=run_id,
                name=f"{run_name}/{stage_name}", config=args, resume="allow", reinit=True)
+    configure_downstream_eval_metrics()
 
     if restart or opt_state["optimizer"] is None:
         optimizer = ProdigyPlusScheduleFree(
@@ -404,7 +503,10 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
         args=SFTConfig(**sft_kwargs),
         train_dataset=ds, eval_dataset=evals,
         optimizers=(optimizer, scheduler),
-        callbacks=[ScheduleFreeModeCallback(optimizer)],
+        callbacks=[
+            ScheduleFreeModeCallback(optimizer),
+            DownstreamEvalCallback(model, tokenizer, optimizer, n=args.n_eval),
+        ],
     )
 
     optimizer.train()
@@ -434,9 +536,18 @@ if "eval" not in completed:
     if wandb.run is None:  # all stages skipped on resume
         wandb.init(project="rc-sft", group=group_id, id=f"{run_hash}-eval",
                    name=f"{run_name}/eval", config=args, resume="allow")
-                   
-    wandb.log(run_harness(model, tokenizer))
-    wandb.log(run_platinum(model, tokenizer))
+        configure_downstream_eval_metrics()
+
+    final_step = trainer.state.global_step if trainer is not None else None
+    final_max_steps = trainer.state.max_steps if trainer is not None else None
+    model.eval()
+    with torch.inference_mode():
+        log_downstream_eval(
+            model, tokenizer,
+            bucket=args.n_eval, n_eval=args.n_eval,
+            global_step=final_step,
+            max_steps=final_max_steps,
+        )
 
     if trainer is not None:
         trainer.evaluate(metric_key_prefix="final")
