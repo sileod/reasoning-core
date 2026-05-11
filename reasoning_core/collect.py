@@ -1,3 +1,4 @@
+from __future__ import annotations
 
 import argparse, hashlib, json, os, tempfile, time
 from pathlib import Path

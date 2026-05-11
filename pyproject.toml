@@ -12,6 +12,7 @@ name = "reasoning_core"
 dynamic = ["version"]
 readme = "README.md"
 description = "Procedural data generators for symbolic pre-training, also including RL environments"
+requires-python = ">=3.9"
 
 dependencies = [
     "gramforge",
