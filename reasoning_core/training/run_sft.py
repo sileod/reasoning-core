@@ -59,7 +59,7 @@ parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
 parser.add_argument('--aux_version', type=str, default="rc12")
-parser.add_argument('--script_version', type=str, default="13")
+parser.add_argument('--script_version', type=str, default="15")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default=True)
@@ -438,7 +438,7 @@ available_memory_factor = max(1, min(16, round(
 )))
 
 observed_memory_peak = 0.40
-target_memory_peak = 0.85
+target_memory_peak = 0.60
 
 available_memory_factor = max(1, min(16, round(
     available_memory_factor * observed_memory_peak / target_memory_peak
@@ -450,8 +450,8 @@ grad_accum    = TARGET_EFFECTIVE_BS // per_device_bs
 
 common_args = dict(
     learning_rate=1.0, per_device_train_batch_size=per_device_bs,
-    gradient_accumulation_steps=grad_accum, max_grad_norm=1.0,
-    logging_steps=10, gradient_checkpointing=False, bf16=True, report_to="wandb",
+    gradient_accumulation_steps=grad_accum, max_grad_norm=0.0, #grad clip is  handled by prodigy  
+    logging_steps=15, gradient_checkpointing=False, bf16=True, report_to="wandb",
     eval_strategy="steps", eval_steps=50, packing=True,
     dataset_num_proc=1, max_length=args.max_length,
     save_strategy="steps", save_steps=200, save_total_limit=2,
@@ -482,7 +482,7 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
     if restart or opt_state["optimizer"] is None:
         optimizer = ProdigyPlusScheduleFree(
             model.parameters(), lr=1.0, weight_decay=args.decay,
-            use_bias_correction=True, betas=(0.95, 0.99))
+            use_bias_correction=False, betas=(0.95, 0.99))
         opt_state["optimizer"] = optimizer
         opt_state["scheduler"] = get_constant_schedule(optimizer)
     optimizer, scheduler = opt_state["optimizer"], opt_state["scheduler"]

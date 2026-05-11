@@ -67,3 +67,28 @@ include = ["reasoning_core*"]
 
 [tool.hatch.version]
 path = "reasoning_core/__init__.py"
+
+[tool.hatch.build]
+skip-excluded-dirs = true
+exclude = [
+    "/reasoning_core/**/__pycache__",
+    "/reasoning_core/**/.ipynb_checkpoints",
+    "/reasoning_core/.mountpoints/**",
+    "/reasoning_core/generated_data/**",
+    "/reasoning_core/index/**",
+    "/reasoning_core/score_cache/**",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["reasoning_core"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/GALLERY.md",
+    "/LICENSE",
+    "/README.md",
+    "/TASK_AUTHORING_GUIDE.md",
+    "/pyproject.toml",
+    "/reasoning_core",
+    "/tests",
+]

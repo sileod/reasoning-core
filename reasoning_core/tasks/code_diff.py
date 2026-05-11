@@ -180,4 +180,5 @@ class DiffPatching(VersionedTask, Task):
                 f"The answer is the resulting text.")
 
     def score_answer(self, answer, entry):
-        return Levenshtein.normalized_similarity(answer.strip(), entry['answer'].strip())
+        norm = lambda x: str(x).strip()
+        return Levenshtein.normalized_similarity(norm(answer), norm(entry['answer']))
