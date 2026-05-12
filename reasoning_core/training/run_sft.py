@@ -76,6 +76,7 @@ DATA_MAP = {
 
 MODEL_MAP = {
     "monad": "PleIAs/Monad",
+    "smol135": "HuggingFaceTB/SmolLM2-135M",
     "baguette": "PleIAs/Baguettotron",
     "h1": "tiiuae/Falcon-H1-Tiny-90M-Instruct",
     "ettin68": "jhu-clsp/ettin-decoder-68m",
