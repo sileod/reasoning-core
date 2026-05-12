@@ -64,6 +64,8 @@ unsloth_compiled_cache/
 ehthumbs.db
 Thumbs.db
 reasoning_core/generated_data/
+reasoning_core/checkpoints/
+reasoning_core/wandb/
 
 *.xls
 *.pkl

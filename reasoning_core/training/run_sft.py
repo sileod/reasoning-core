@@ -59,7 +59,7 @@ parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
 parser.add_argument('--aux_version', type=str, default="rc12")
-parser.add_argument('--script_version', type=str, default="15")
+parser.add_argument('--script_version', type=str, default="16")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
@@ -463,8 +463,8 @@ available_memory_factor = max(1, min(16, round(
     2 * (_model_params / 68) * (24 / _total_gb)
 )))
 
-observed_memory_peak = 0.40
-target_memory_peak = 0.60
+observed_memory_peak = 0.90
+target_memory_peak = 0.90
 
 available_memory_factor = max(1, min(16, round(
     available_memory_factor * observed_memory_peak / target_memory_peak
