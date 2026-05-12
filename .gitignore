@@ -57,6 +57,13 @@ unsloth_compiled_cache/
 
 # Temporary files
 =[0-9]*
+generated_data/
+reasoning_core/Openrouter_credit_check.py
+reasoning_core/eval/
+reasoning_core/type_inhab_evaluate.py
+reasoning_core/type_inhabilitation_datasetsplit.py
+reasoning_core/type_inhabilitation_v2.py
+type_inhabilitation_test.py
 
 # OS generated files
 .DS_Store
