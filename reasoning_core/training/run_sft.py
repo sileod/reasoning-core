@@ -20,7 +20,7 @@ os.makedirs(SAFE_TMP, exist_ok=True)
 tempfile.tempdir = SAFE_TMP
 
 from itertools import islice
-
+from collections import defaultdict
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -62,16 +62,17 @@ parser.add_argument('--aux_version', type=str, default="rc12")
 parser.add_argument('--script_version', type=str, default="15")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
-parser.add_argument('--title', type=str, default=True)
-parser.add_argument('--seed', type=int, default=True)
+parser.add_argument('--title', type=str, default='')
+parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--n_eval', type=int, default=10)
 
 DATA_MAP = {
     "fw": "HuggingFaceFW/fineweb-edu",
-    "rc": "reasoning-core/procedural-pretraining-pile",
-    "rg": "reasoning-core/reasoning-gym",
     "synth": "tasksource/SYNTH",
     "dolci": "tasksource/dolci-instruct",
+    "rc": "reasoning-core/procedural-pretraining-pile",
+    "rg": "reasoning-core/reasoning-gym",
+    'bp': "reasoning-core/basic-procedural"
 }
 
 MODEL_MAP = {
@@ -289,11 +290,35 @@ def load_exact_tokens_iterable(key, budget, max_len=None, chars_per_token=4.0):
 
 # --- 🧪 Experiment Setup ---
 
+def clean_metric_key(x):
+    return str(x).lower().replace("/", "_").replace(" ", "_").replace(".", "_")[:60]
+
+def load_eval_split(key, budget=250_000, skip=100_000, group_by=("task", "level"), max_groups=24, max_examples_per_group=32, min_examples_per_group=8, max_scanned=50_000):
+    fmt = get_formatter(key)
+    stream = load_dataset(DATA_MAP.get(key, key), split="train", streaming=True).skip(skip)
+    buckets, tokens = defaultdict(list), 0
+    for i, row in enumerate(stream):
+        if tokens >= budget or i >= max_scanned: break
+        if len(buckets) >= max_groups and all(len(v) >= max_examples_per_group for v in buckets.values()): break
+        vals = [row.get(k) for k in group_by]
+        if any(v in (None, "") for v in vals): continue
+        g = ".".join(clean_metric_key(v) for v in vals)
+        if g not in buckets and len(buckets) >= max_groups: continue
+        if len(buckets[g]) >= max_examples_per_group: continue
+        ex = fmt(row)
+        L = len(tokenizer(ex["prompt"] + ex["completion"]).input_ids)
+        if L > args.max_length: continue
+        buckets[g].append(ex); tokens += L
+    
+    result = {k: Dataset.from_list(v) for k, v in buckets.items() if len(v) >= min_examples_per_group}
+    print(f"📊 eval buckets ({len(result)}/{len(buckets)} kept, {tokens} tokens): {sorted((k, len(v)) for k, v in result.items())}")
+    return result
+
 # Evals: always materialized (tiny, trainer needs __len__)
 eval_main, _ = load_exact_tokens_materialized(args.main_data, 50_000, stream_skip=1_000_000, max_len=args.max_length)
-eval_aux, _ = load_exact_tokens_materialized(args.aux_data, 50_000, stream_skip=100_000, max_len=args.max_length)
-evals = {"main": eval_main}
-if eval_aux: evals["aux"] = eval_aux
+eval_splits = load_eval_split(args.aux_data, budget=250_000, skip=100_000, max_groups=24, max_examples_per_group=32, min_examples_per_group=24)
+evals = {"main": eval_main, **{f"aux_tl/{k}": v for k, v in eval_splits.items()}}
+
 
 aux_budget = int(args.token_budget * args.aux_ratio)
 
@@ -449,13 +474,14 @@ TARGET_EFFECTIVE_BS = 64
 per_device_bs = 1 << ((16 // available_memory_factor).bit_length() - 1)  # largest pow2 ≤ 16//factor
 grad_accum    = TARGET_EFFECTIVE_BS // per_device_bs
 
+
 common_args = dict(
     learning_rate=1.0, per_device_train_batch_size=per_device_bs,
     gradient_accumulation_steps=grad_accum, max_grad_norm=0.0, #grad clip is  handled by prodigy  
     logging_steps=15, gradient_checkpointing=False, bf16=True, report_to="wandb",
-    eval_strategy="steps", eval_steps=50, packing=True,
+    eval_strategy="steps", packing=True,
     dataset_num_proc=1, max_length=args.max_length,
-    save_strategy="steps", save_steps=200, save_total_limit=2,
+    save_strategy="steps", save_total_limit=2,
 )
 
 # Iterable mode: compute max_steps from token budget (trainer can't infer from a stream)
@@ -464,6 +490,12 @@ if args.iterable_mode:
     total_tokens = args.token_budget * (1 + args.aux_ratio)
     max_steps_s1 = max(1, int(total_tokens // (args.max_length * eff_batch)))
     print(f"📐 max_steps (stage1) = {max_steps_s1}  (eff_batch={eff_batch}, seq_len={args.max_length})")
+
+EVAL_ROUNDS = 100
+if args.iterable_mode:
+    common_args["eval_steps"] = max(8, max_steps_s1 // EVAL_ROUNDS)
+common_args["save_steps"] = 400
+
 
 opt_state = {"optimizer": None, "scheduler": None}
 
