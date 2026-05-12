@@ -542,6 +542,16 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
         ],
     )
 
+    def scope_eval_metrics(trainer):
+        old_log = trainer.log
+        def log(logs, *a, **kw):
+            prefixes = [k[:-5] for k in logs if k.startswith("eval_") and k.endswith("_loss")]
+            if prefixes and "eval_mean_token_accuracy" in logs:
+                logs = dict(logs); logs[f"{prefixes[0]}_mean_token_accuracy"] = logs.pop("eval_mean_token_accuracy")
+            return old_log(logs, *a, **kw)
+        trainer.log = log
+    scope_eval_metrics(trainer)
+
     optimizer.train()
     trainer.train(resume_from_checkpoint=resume)
     completed.add(stage_name)
