@@ -45,7 +45,7 @@ class Reasoning_Gym(Task):
 
         meta = entry['metadata'] | dict(task_name=f"RG.{d}") | dict(_question=entry['question'])
         meta = json.loads(json.dumps(meta, default=str))
-        return Problem(meta, entry['answer'])
+        return Problem(meta, str(entry['answer']))
 
     def score_answer(self, answer, entry):
         sd=entry['metadata']['source_dataset']
