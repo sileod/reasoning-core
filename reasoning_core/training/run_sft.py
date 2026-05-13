@@ -49,7 +49,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 parse_num = lambda s: int(float(s[:-1]) * {'K': 1e3, 'M': 1e6, 'B': 1e9}[s[-1].upper()]) if s[-1].isalpha() else int(s)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_name', type=str, default="ettin68")
+parser.add_argument('--model_name', type=str, default="smol135")
 parser.add_argument('--token_budget', type=parse_num, default=100_000_000)
 parser.add_argument('--aux_ratio', type=float, default=0.2)
 parser.add_argument('--phase_2_ratio', type=float, default=0.0)
@@ -59,7 +59,7 @@ parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
 parser.add_argument('--aux_version', type=str, default="rc12")
-parser.add_argument('--script_version', type=str, default="16")
+parser.add_argument('--script_version', type=str, default="17")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
@@ -266,23 +266,26 @@ def load_exact_tokens_materialized(key, budget, stream_skip=0, max_len=None, bat
 
 
 # --- Iterable loader: lazy, approximate tokens-via-chars ---
-def load_exact_tokens_iterable(key, budget, max_len=None, chars_per_token=4.0):
+def load_exact_tokens_iterable(key, budget, max_len=None, chars_per_token=4.0, cycle=False):
     if budget <= 0:
         return None
 
     hf_path = DATA_MAP.get(key, key)
     fmt_fn = get_formatter(key)
-    print(f"⏳ [iterable] {key} ({hf_path}) infinite stream (budget handled by max_steps)")
+    print(f"⏳ [iterable] {key} ({hf_path}) infinite stream (budget handled by max_steps, cycle={cycle})")
 
     max_chars = max_len * chars_per_token if max_len else None
 
     def gen():
-        stream = load_dataset(hf_path, split="train", streaming=True)
-        for row in stream:
-            ex = fmt_fn(row)
-            if max_chars and (len(ex["prompt"]) + len(ex["completion"])) > max_chars:
-                continue
-            yield ex
+        while True:
+            stream = load_dataset(hf_path, split="train", streaming=True)
+            for row in stream:
+                ex = fmt_fn(row)
+                if max_chars and (len(ex["prompt"]) + len(ex["completion"])) > max_chars:
+                    continue
+                yield ex
+            if not cycle:
+                break
 
     ds = IterableDataset.from_generator(gen)
     return ds
@@ -293,7 +296,7 @@ def load_exact_tokens_iterable(key, budget, max_len=None, chars_per_token=4.0):
 def clean_metric_key(x):
     return str(x).lower().replace("/", "_").replace(" ", "_").replace(".", "_")[:60]
 
-def load_eval_split(key, budget=250_000, skip=100_000, group_by=("task", "level"), max_groups=24, max_examples_per_group=32, min_examples_per_group=8, max_scanned=50_000):
+def load_eval_split(key, budget=250_000, skip=100_000, group_by=("task", "level"), max_groups=200, max_examples_per_group=32, min_examples_per_group=8, max_scanned=50_000):
     fmt = get_formatter(key)
     stream = load_dataset(DATA_MAP.get(key, key), split="train", streaming=True).skip(skip)
     buckets, tokens = defaultdict(list), 0
@@ -316,7 +319,7 @@ def load_eval_split(key, budget=250_000, skip=100_000, group_by=("task", "level"
 
 # Evals: always materialized (tiny, trainer needs __len__)
 eval_main, _ = load_exact_tokens_materialized(args.main_data, 50_000, stream_skip=1_000_000, max_len=args.max_length)
-eval_splits = load_eval_split(args.aux_data, budget=250_000, skip=100_000, max_groups=24, max_examples_per_group=32, min_examples_per_group=24)
+eval_splits = load_eval_split(args.aux_data, budget=1_500_000, skip=100_000, max_groups=200, max_examples_per_group=32, min_examples_per_group=24)
 evals = {"main": eval_main, **{f"aux_tl/{k}": v for k, v in eval_splits.items()}}
 
 
@@ -324,14 +327,14 @@ aux_budget = int(args.token_budget * args.aux_ratio)
 
 if args.iterable_mode:
     s1_main_ds = load_exact_tokens_iterable(args.main_data, args.token_budget, max_len=args.max_length)
-    s1_aux_ds = load_exact_tokens_iterable(args.aux_data, aux_budget, max_len=args.max_length)
+    s1_aux_ds = load_exact_tokens_iterable(args.aux_data, aux_budget, max_len=args.max_length, cycle=True)
 
     parts = [d for d in [s1_main_ds, s1_aux_ds] if d is not None]
     if len(parts) == 2:
         p_main = 1 / (1 + args.aux_ratio)
         s1_final = interleave_datasets(
             parts, probabilities=[p_main, 1 - p_main],
-            seed=42, stopping_strategy="all_exhausted",
+            seed=42, stopping_strategy="first_exhausted",
         ).shuffle(seed=42, buffer_size=100)
     else:
         s1_final = parts[0].shuffle(seed=42, buffer_size=100)
@@ -394,6 +397,37 @@ def log_downstream_eval(model, tokenizer, bucket, n_eval, global_step=None, max_
     else:
         wandb.log(metrics, step=global_step)
 
+
+class ScopeEvalLogCallback(TrainerCallback):
+    def __init__(self, n_aux_tl=0):
+        self.n_aux_tl = n_aux_tl
+        self.step = None
+        self.seen = set()
+        self.rt = self.samples = self.steps = 0.0
+
+    def on_log(self, args, state, control, logs=None, **kw):
+        if not logs: return
+        loss_keys = [k for k in logs if k.endswith("_loss") and (k.startswith("eval_") or k.startswith("eval/"))]
+        acc_key = next((k for k in ("eval_mean_token_accuracy", "eval/mean_token_accuracy") if k in logs), None)
+        if not loss_keys: return
+        prefix = loss_keys[0][:-5]
+        if acc_key: logs[f"{prefix}_mean_token_accuracy"] = logs.pop(acc_key)
+        if prefix.startswith(("eval_aux_tl/", "eval/aux_tl/")):
+            if self.step != state.global_step:
+                self.step, self.seen = state.global_step, set()
+                self.rt = self.samples = self.steps = 0.0
+            rt = logs.pop(f"{prefix}_runtime", None)
+            sps = logs.pop(f"{prefix}_samples_per_second", None)
+            tps = logs.pop(f"{prefix}_steps_per_second", None)
+            if rt is not None:
+                self.rt += rt
+                if sps is not None: self.samples += rt * sps
+                if tps is not None: self.steps += rt * tps
+            self.seen.add(prefix)
+            if self.n_aux_tl and len(self.seen) >= self.n_aux_tl and self.rt:
+                logs["eval_aux_tl_runtime"] = self.rt
+                logs["eval_aux_tl_samples_per_second"] = self.samples / self.rt
+                logs["eval_aux_tl_steps_per_second"] = self.steps / self.rt
 
 class DownstreamEvalCallback(TrainerCallback):
     """Run downstream eval at n-1 evenly-spaced buckets; final eval stays in existing block."""
@@ -531,6 +565,9 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
     else:
         sft_kwargs["num_train_epochs"] = epochs
 
+
+
+
     trainer = SFTTrainer(
         model=model, processing_class=tokenizer,
         args=SFTConfig(**sft_kwargs),
@@ -542,15 +579,8 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
         ],
     )
 
-    def scope_eval_metrics(trainer):
-        old_log = trainer.log
-        def log(logs, *a, **kw):
-            prefixes = [k[:-5] for k in logs if k.startswith("eval_") and k.endswith("_loss")]
-            if prefixes and "eval_mean_token_accuracy" in logs:
-                logs = dict(logs); logs[f"{prefixes[0]}_mean_token_accuracy"] = logs.pop("eval_mean_token_accuracy")
-            return old_log(logs, *a, **kw)
-        trainer.log = log
-    scope_eval_metrics(trainer)
+    trainer.callback_handler.callbacks.insert(
+    0, ScopeEvalLogCallback(n_aux_tl=sum(k.startswith("aux_tl/") for k in evals)) )
 
     optimizer.train()
     trainer.train(resume_from_checkpoint=resume)
