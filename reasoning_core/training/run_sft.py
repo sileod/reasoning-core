@@ -319,7 +319,7 @@ def load_eval_split(key, budget=250_000, skip=100_000, group_by=("task", "level"
 
 # Evals: always materialized (tiny, trainer needs __len__)
 eval_main, _ = load_exact_tokens_materialized(args.main_data, 50_000, stream_skip=1_000_000, max_len=args.max_length)
-eval_splits = load_eval_split(args.aux_data, budget=250_000, skip=100_000, max_groups=24, max_examples_per_group=32, min_examples_per_group=24)
+eval_splits = load_eval_split(args.aux_data, budget=1_500_000, skip=100_000, max_groups=200, max_examples_per_group=32, min_examples_per_group=24)
 evals = {"main": eval_main, **{f"aux_tl/{k}": v for k, v in eval_splits.items()}}
 
 
