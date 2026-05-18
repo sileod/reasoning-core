@@ -2,7 +2,6 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 from lm_eval.api.task import ConfigurableTask
 import numpy as np
-import datasets.config
 from transformers import DataCollatorForSeq2Seq
 from datasets import disable_progress_bar, get_dataset_config_names, load_dataset
 from tqdm.auto import tqdm
@@ -36,7 +35,7 @@ harness_tasks = ['leaderboard_bbh',
     "cola", "sst2", "mnli", "qnli", "rte", "boolq", "copa", "cb",'commonsense_qa',
     "swag", "piqa", "openbookqa", "sciq", "triviaqa","arc_easy",'arc_challenge', "lambada_openai","lambada_standard",
     "tinyMMLU", "tinyHellaswag", "tinyWinogrande", "tinyArc", "tinyGSM8k", "winogrande",
-    "logiqa", "anli_r1", "anli_r2", "anli_r3",
+    "anli_r1", "anli_r2", "anli_r3",
     ]     #social_iqa wsc prost: not working
 
 logic_custom_task_configs = {
@@ -82,14 +81,64 @@ logic_custom_task_configs = {
         "doc_to_target": '{{["True", "False", "Uncertain"].index(label)}}',
         "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
     },
+    "logiqa2_nli": {
+        "task": "logiqa2_nli",
+        "dataset_path": "tasksource/logiqa-2.0-nli",
+        "validation_split": "validation",
+        "output_type": "multiple_choice",
+        "doc_to_text": "Premise: {{premise}}\nHypothesis: {{hypothesis}}\nLabel:",
+        "doc_to_choice": '["entailment", "not-entailment"]',
+        "doc_to_target": '{{["entailment", "not-entailment"].index(label)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "semantic_fragments_nli": {
+        "task": "semantic_fragments_nli",
+        "dataset_path": "tasksource/semantic_fragments_nli",
+        "validation_split": "dev",
+        "output_type": "multiple_choice",
+        "doc_to_text": "Premise: {{sentence1}}\nHypothesis: {{sentence2}}\nLabel:",
+        "doc_to_choice": '["entailment", "neutral", "contradiction"]',
+        "doc_to_target": '{{["entailment", "neutral", "contradiction"].index(gold_label)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "control_nli": {
+        "task": "control_nli",
+        "dataset_path": "tasksource/ConTRoL-nli",
+        "validation_split": "validation",
+        "output_type": "multiple_choice",
+        "doc_to_text": "Premise: {{premise}}\nHypothesis: {{hypothesis}}\nLabel:",
+        "doc_to_choice": '["entailment", "neutral", "contradiction"]',
+        "doc_to_target": '{{["entailment", "neutral", "contradiction"].index(label)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
     "boardgameqa": {
         "task": "boardgameqa",
-        "dataset_path": "1-800-LLMs/Boardgame-QA",
-        "validation_split": "validation",
+        "dataset_path": "tasksource/Boardgame-QA",
+        "validation_split": "valid",
         "output_type": "multiple_choice",
         "doc_to_text": "{{example}}\nAnswer:",
         "doc_to_choice": '["proved", "disproved", "unknown"]',
         "doc_to_target": '{{["proved", "disproved", "unknown"].index(label)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "commonsense_qa_2": {
+        "task": "commonsense_qa_2",
+        "dataset_path": "tasksource/commonsense_qa_2.0",
+        "validation_split": "validation",
+        "output_type": "multiple_choice",
+        "doc_to_text": "{{question}}\nAnswer:",
+        "doc_to_choice": '["yes", "no"]',
+        "doc_to_target": '{{["yes", "no"].index(answer)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "math_qa": {
+        "task": "math_qa",
+        "dataset_path": "regisss/math_qa",
+        "validation_split": "validation",
+        "output_type": "multiple_choice",
+        "doc_to_text": "{{Problem}}\n{{options}}\nAnswer:",
+        "doc_to_choice": '["a", "b", "c", "d", "e"]',
+        "doc_to_target": '{{["a", "b", "c", "d", "e"].index(correct)}}',
         "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
     },
 }
@@ -108,7 +157,11 @@ custom_tasks = {
         ("zorro", "tasksource/zorro"),
     ]
 }
-custom_tasks.update({name: ConfigurableTask(config=config) for name, config in logic_custom_task_configs.items()})
+default_logic_custom_task_configs = {
+    name: config for name, config in logic_custom_task_configs.items()
+    if name != "hans"
+}
+custom_tasks.update({name: ConfigurableTask(config=config) for name, config in default_logic_custom_task_configs.items()})
 
 tasksource = ['ConTRoL-nli', 'folio','anli/a1','WANLI','sick/label','glue/rte','glue/cola','cladder']
 
@@ -190,15 +243,27 @@ def add_bbh0(s, hflm, task_manager, limit=200):
     return s
 
 
-def run_harness(model, tokenizer, limit=200, trust_remote_code=True):
-    datasets.config.HF_DATASETS_TRUST_REMOTE_CODE = trust_remote_code
+def run_harness(model, tokenizer, limit=200):
     hflm = HFLM(pretrained=model, tokenizer=tokenizer, batch_size="auto")
     task_manager = TaskManager()
+    s = {}
 
-    task_dict = {**get_task_dict(harness_tasks, task_manager), **custom_tasks}
-    r = evaluate(lm=hflm, task_dict=task_dict, limit=limit)['results']
+    for t in harness_tasks:
+        try:
+            r = evaluate(lm=hflm, task_dict=get_task_dict([t], task_manager), limit=limit)['results']
+            s[f"{t}_3shot" if t == "leaderboard_bbh" else t] = pick_metric(r[t])
+        except Exception as e:
+            print(f"Skipping {t}: {e}")
 
-    s = {t: pick_metric(m) for t, m in r.items() if t != "leaderboard_bbh"}
-    s["leaderboard_bbh_3shot"] = pick_metric(r["leaderboard_bbh"])
+    for t, task in custom_tasks.items():
+        try:
+            r = evaluate(lm=hflm, task_dict={t: task}, limit=limit)['results']
+            s[t] = pick_metric(r[t])
+        except Exception as e:
+            print(f"Skipping {t}: {e}")
 
-    return add_bbh0(s, hflm, task_manager, limit)
+    try:
+        return add_bbh0(s, hflm, task_manager, limit)
+    except Exception as e:
+        print(f"Skipping leaderboard_bbh_0shot: {e}")
+        return s
