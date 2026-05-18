@@ -2,6 +2,7 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 from lm_eval.api.task import ConfigurableTask
 import numpy as np
+import datasets.config
 from transformers import DataCollatorForSeq2Seq
 from datasets import disable_progress_bar, get_dataset_config_names, load_dataset
 from tqdm.auto import tqdm
@@ -35,7 +36,63 @@ harness_tasks = ['leaderboard_bbh',
     "cola", "sst2", "mnli", "qnli", "rte", "boolq", "copa", "cb",'commonsense_qa',
     "swag", "piqa", "openbookqa", "sciq", "triviaqa","arc_easy",'arc_challenge', "lambada_openai","lambada_standard",
     "tinyMMLU", "tinyHellaswag", "tinyWinogrande", "tinyArc", "tinyGSM8k", "winogrande",
+    "logiqa", "anli_r1", "anli_r2", "anli_r3",
     ]     #social_iqa wsc prost: not working
+
+logic_custom_task_configs = {
+    "wanli": {
+        "task": "wanli",
+        "dataset_path": "alisawuffles/WANLI",
+        "validation_split": "test",
+        "output_type": "multiple_choice",
+        "doc_to_text": "Premise: {{premise}}\nHypothesis: {{hypothesis}}\nLabel:",
+        "doc_to_choice": '["entailment", "neutral", "contradiction"]',
+        "doc_to_target": '{{["entailment", "neutral", "contradiction"].index(gold)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "hans": {
+        "task": "hans",
+        "dataset_path": "hans",
+        "dataset_name": "plain_text",
+        "validation_split": "validation",
+        "output_type": "multiple_choice",
+        "doc_to_text": "Premise: {{premise}}\nHypothesis: {{hypothesis}}\nLabel:",
+        "doc_to_choice": '["entailment", "non-entailment"]',
+        "doc_to_target": "{{label}}",
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "nan_nli": {
+        "task": "nan_nli",
+        "dataset_path": "joey234/nan-nli",
+        "training_split": "train",
+        "test_split": "train",
+        "output_type": "multiple_choice",
+        "doc_to_text": "Premise: {{premise}}\nHypothesis: {{hypothesis}}\nLabel:",
+        "doc_to_choice": '["entailment", "neutral", "contradiction"]',
+        "doc_to_target": '{{["entailment", "neutral", "contradiction"].index(label)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "folio": {
+        "task": "folio",
+        "dataset_path": "tasksource/folio",
+        "validation_split": "validation",
+        "output_type": "multiple_choice",
+        "doc_to_text": "Premises:\n{{premises}}\nConclusion: {{conclusion}}\nLabel:",
+        "doc_to_choice": '["True", "False", "Uncertain"]',
+        "doc_to_target": '{{["True", "False", "Uncertain"].index(label)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "boardgameqa": {
+        "task": "boardgameqa",
+        "dataset_path": "1-800-LLMs/Boardgame-QA",
+        "validation_split": "validation",
+        "output_type": "multiple_choice",
+        "doc_to_text": "{{example}}\nAnswer:",
+        "doc_to_choice": '["proved", "disproved", "unknown"]',
+        "doc_to_target": '{{["proved", "disproved", "unknown"].index(label)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+}
 
 custom_tasks = {
     name: ConfigurableTask(config={
@@ -51,6 +108,7 @@ custom_tasks = {
         ("zorro", "tasksource/zorro"),
     ]
 }
+custom_tasks.update({name: ConfigurableTask(config=config) for name, config in logic_custom_task_configs.items()})
 
 tasksource = ['ConTRoL-nli', 'folio','anli/a1','WANLI','sick/label','glue/rte','glue/cola','cladder']
 
@@ -132,7 +190,8 @@ def add_bbh0(s, hflm, task_manager, limit=200):
     return s
 
 
-def run_harness(model, tokenizer, limit=200):
+def run_harness(model, tokenizer, limit=200, trust_remote_code=True):
+    datasets.config.HF_DATASETS_TRUST_REMOTE_CODE = trust_remote_code
     hflm = HFLM(pretrained=model, tokenizer=tokenizer, batch_size="auto")
     task_manager = TaskManager()
 
