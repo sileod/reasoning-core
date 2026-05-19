@@ -4,7 +4,6 @@ import argparse
 import time
 from dataclasses import dataclass
 
-import datasets.config
 from lm_eval.api.task import ConfigurableTask
 from lm_eval.evaluator import evaluate
 from lm_eval.models.huggingface import HFLM
@@ -15,7 +14,6 @@ from reasoning_core.downstream_eval import logic_custom_task_configs, pick_metri
 
 
 BUILTIN_LOGIC_TASKS = (
-    "logiqa",
     "anli_r1",
     "anli_r2",
     "anli_r3",
@@ -25,7 +23,11 @@ BUILTIN_LOGIC_TASKS = (
     "cb",
 )
 
-CUSTOM_LOGIC_TASKS = ("wanli", "hans", "nan_nli", "folio", "reclor", "boardgameqa")
+CUSTOM_LOGIC_TASKS = (
+    "wanli", "hans", "nan_nli", "folio", "logiqa2_nli",
+    "semantic_fragments_nli", "control_nli", "commonsense_qa_2",
+    "reclor", "boardgameqa",
+)
 LOGIC_TASKS = BUILTIN_LOGIC_TASKS + CUSTOM_LOGIC_TASKS
 
 
@@ -89,9 +91,7 @@ def evaluate_logic(
     batch_size: int | str = 1,
     device: str = "cpu",
     timeout_s: float | None = None,
-    trust_remote_code: bool = False,
 ) -> dict[str, float]:
-    datasets.config.HF_DATASETS_TRUST_REMOTE_CODE = trust_remote_code
     hflm = HFLM(pretrained=model, batch_size=batch_size, device=device)
     manager = TaskManager()
     rows: list[LogicResult] = []
@@ -127,7 +127,6 @@ def main() -> None:
     parser.add_argument("--batch-size", default="1")
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--timeout-s", type=float, default=None)
-    parser.add_argument("--trust-remote-code", action="store_true")
     args = parser.parse_args()
 
     batch_size: int | str = int(args.batch_size) if args.batch_size.isdigit() else args.batch_size
@@ -138,7 +137,6 @@ def main() -> None:
         batch_size=batch_size,
         device=args.device,
         timeout_s=args.timeout_s,
-        trust_remote_code=args.trust_remote_code,
     )
 
 
