@@ -26,7 +26,7 @@ BUILTIN_LOGIC_TASKS = (
 CUSTOM_LOGIC_TASKS = (
     "wanli", "hans", "nan_nli", "folio", "logiqa2_nli",
     "semantic_fragments_nli", "control_nli", "commonsense_qa_2",
-    "math_qa", "gsm8k_mc", "reclor", "boardgameqa",
+    "math_qa", "gsm8k_mc", "infotabs", "reclor", "boardgameqa",
 )
 LOGIC_TASKS = BUILTIN_LOGIC_TASKS + CUSTOM_LOGIC_TASKS
 
