@@ -151,6 +151,16 @@ logic_custom_task_configs = {
         "doc_to_target": '{{["A", "B", "C", "D"].index(Answer)}}',
         "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
     },
+    "infotabs": {
+        "task": "infotabs",
+        "dataset_path": "table-benchmark/infotabs",
+        "validation_split": "dev",
+        "output_type": "multiple_choice",
+        "doc_to_text": "Table title: {{table_title}}\nTable: {{table}}\nQuestion: {{question}}\nLabel:",
+        "doc_to_choice": '["Entailment", "Neutral", "Contradiction"]',
+        "doc_to_target": '{{["Entailment", "Neutral", "Contradiction"].index(answer)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
 }
 
 custom_tasks = {
