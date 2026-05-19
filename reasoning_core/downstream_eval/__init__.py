@@ -131,6 +131,26 @@ logic_custom_task_configs = {
         "doc_to_target": '{{["yes", "no"].index(answer)}}',
         "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
     },
+    "math_qa": {
+        "task": "math_qa",
+        "dataset_path": "regisss/math_qa",
+        "validation_split": "validation",
+        "output_type": "multiple_choice",
+        "doc_to_text": "{{Problem}}\n{{options}}\nAnswer:",
+        "doc_to_choice": '["a", "b", "c", "d", "e"]',
+        "doc_to_target": '{{["a", "b", "c", "d", "e"].index(correct)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
+    "gsm8k_mc": {
+        "task": "gsm8k_mc",
+        "dataset_path": "guipenedo/gsm8k-mc",
+        "test_split": "test",
+        "output_type": "multiple_choice",
+        "doc_to_text": "{{Question}}\nA) {{A}}\nB) {{B}}\nC) {{C}}\nD) {{D}}\nAnswer:",
+        "doc_to_choice": '["A", "B", "C", "D"]',
+        "doc_to_target": '{{["A", "B", "C", "D"].index(Answer)}}',
+        "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
+    },
 }
 
 custom_tasks = {
