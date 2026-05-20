@@ -1,0 +1,67 @@
+{
+  "groups": {
+    "language": [
+      "binding",
+      "constrained_continuation",
+      "continuation",
+      "coreference",
+      "grammar",
+      "knowledge",
+      "lexical_knowledge",
+      "parsability",
+      "parsing",
+      "qstr",
+      "reference_tracking",
+      "table_conversion",
+      "table_qa"
+    ],
+    "logic": [
+      "bayesian_association",
+      "bayesian_intervention",
+      "causal_reasoning",
+      "conjecture_entailment",
+      "constraint_satisfaction",
+      "evidence_retrieval",
+      "lambda_reduction",
+      "logic",
+      "logic_formalization",
+      "logic_nli",
+      "proof_reconstruction",
+      "qualitative_reasoning",
+      "term_unification",
+      "planning"
+    ],
+    "math": [
+      "arithmetics",
+      "count_elements",
+      "equation_system",
+      "formal_maths",
+      "set_equality",
+      "set_intersection",
+      "set_missing_element",
+      "set_operations"
+    ],
+    "code": [
+      "code_diff",
+      "code_execution",
+      "code_program_synthesis",
+      "diff_patching",
+      "diff_prediction",
+      "locate_error"
+    ],
+    "structure": [
+      "graph_dependencies",
+      "graph_isomorphism",
+      "graph_operations",
+      "graph_pathfinding",
+      "graph_successors",
+      "navigation",
+      "regex",
+      "regex_following",
+      "regex_induction",
+      "regex_reasoning",
+      "sequential_induction",
+      "tracking"
+    ]
+  }
+}

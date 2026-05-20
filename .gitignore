@@ -57,6 +57,7 @@ unsloth_compiled_cache/
 
 # Temporary files
 =[0-9]*
+*.swp
 
 # OS generated files
 .DS_Store
@@ -66,11 +67,15 @@ Thumbs.db
 reasoning_core/generated_data/
 reasoning_core/checkpoints/
 reasoning_core/wandb/
+checkpoints/
+run_logs/
+wandb/
 
 *.xls
 *.pkl
 *.xlsx
 *.log
+*.jsonl
 
 
 ROADMAP.md
