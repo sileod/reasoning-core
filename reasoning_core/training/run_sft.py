@@ -37,6 +37,7 @@ from prodigyplus.prodigy_plus_schedulefree import ProdigyPlusScheduleFree
 from trl import SFTConfig, SFTTrainer
 from tabulate import tabulate
 from reasoning_core.downstream_eval import run_harness, run_platinum
+from reasoning_core.training.mix_ablation import MixAblationCallback, add_mix_ablation_args, wrap_aux_dataset_with_ablation
 import socket, threading, time, atexit
 
 disable_caching()
@@ -59,12 +60,13 @@ parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
 parser.add_argument('--aux_version', type=str, default="rc12")
-parser.add_argument('--script_version', type=str, default="17")
+parser.add_argument('--script_version', type=str, default="18")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--n_eval', type=int, default=10)
+add_mix_ablation_args(parser)
 
 DATA_MAP = {
     "fw": "HuggingFaceFW/fineweb-edu",
@@ -224,10 +226,12 @@ def get_formatter(data_key):
     def fmt(x):
         prefix = SPECIAL + "\n" if SPECIAL and data_key == "rc" else ""
         answer = x.get("answer")
-        return {
+        ex = {
             "prompt": prefix + f"Q: {x['prompt']}\nA:",
             "completion": " "+answer + tokenizer.eos_token,
         }
+        ex.update({k: x[k] for k in ("task", "level") if x.get(k) not in (None, "")})
+        return ex
     return fmt
 
 # --- Materialized loader (original behavior; also used for evals) ---
@@ -291,6 +295,27 @@ def load_exact_tokens_iterable(key, budget, max_len=None, chars_per_token=4.0, c
     return ds
 
 
+# --- 🔄 Training ---
+_total_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3
+_model_params = sum(p.numel() for p in model.parameters()) / 1e6
+
+available_memory_factor = max(1, min(16, round(
+    2 * (_model_params / 68) * (24 / _total_gb)
+)))
+
+observed_memory_peak = 0.90
+target_memory_peak = 0.90
+
+available_memory_factor = max(1, min(16, round(
+    available_memory_factor * observed_memory_peak / target_memory_peak
+)))
+
+TARGET_EFFECTIVE_BS = 64
+per_device_bs = 1 << ((16 // available_memory_factor).bit_length() - 1)  # largest pow2 ≤ 16//factor
+grad_accum    = TARGET_EFFECTIVE_BS // per_device_bs
+eff_batch = per_device_bs * grad_accum
+
+
 # --- 🧪 Experiment Setup ---
 
 def clean_metric_key(x):
@@ -318,16 +343,25 @@ def load_eval_split(key, budget=250_000, skip=100_000, group_by=("task", "level"
     return result
 
 # Evals: always materialized (tiny, trainer needs __len__)
-eval_main, _ = load_exact_tokens_materialized(args.main_data, 50_000, stream_skip=1_000_000, max_len=args.max_length)
-eval_splits = load_eval_split(args.aux_data, budget=1_500_000, skip=100_000, max_groups=200, max_examples_per_group=32, min_examples_per_group=24)
+eval_key = args.eval_main_override or args.main_data
+eval_main, _ = load_exact_tokens_materialized(
+    eval_key, args.eval_main_budget, stream_skip=args.eval_main_skip, max_len=args.max_length)
+eval_splits = load_eval_split(
+    args.aux_data, budget=args.eval_aux_budget, skip=args.eval_aux_skip,
+    max_groups=200, max_examples_per_group=32, min_examples_per_group=24,
+    max_scanned=args.eval_aux_max_scanned)
 evals = {"main": eval_main, **{f"aux_tl/{k}": v for k, v in eval_splits.items()}}
 
 
 aux_budget = int(args.token_budget * args.aux_ratio)
+ablation_tracker = None
 
 if args.iterable_mode:
     s1_main_ds = load_exact_tokens_iterable(args.main_data, args.token_budget, max_len=args.max_length)
     s1_aux_ds = load_exact_tokens_iterable(args.aux_data, aux_budget, max_len=args.max_length, cycle=True)
+
+    if args.mix_ablation and s1_aux_ds is not None:
+        s1_aux_ds, ablation_tracker = wrap_aux_dataset_with_ablation(s1_aux_ds, args=args, eff_batch=eff_batch)
 
     parts = [d for d in [s1_main_ds, s1_aux_ds] if d is not None]
     if len(parts) == 2:
@@ -341,6 +375,7 @@ if args.iterable_mode:
 
     s2_main_ds = None  # disabled in iterable mode
 else:
+    if args.mix_ablation: print("⚠️  mix_ablation requires iterable_mode=True; ablation disabled.")
     s1_main_ds, main_rows_consumed = load_exact_tokens_materialized(
         args.main_data, args.token_budget, stream_skip=0, max_len=args.max_length)
     s1_aux_ds, _ = load_exact_tokens_materialized(
@@ -489,26 +524,6 @@ class DownstreamEvalCallback(TrainerCallback):
             self.optimizer.train()
 
 
-# --- 🔄 Training ---
-_total_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3
-_model_params = sum(p.numel() for p in model.parameters()) / 1e6
-
-available_memory_factor = max(1, min(16, round(
-    2 * (_model_params / 68) * (24 / _total_gb)
-)))
-
-observed_memory_peak = 0.90
-target_memory_peak = 0.90
-
-available_memory_factor = max(1, min(16, round(
-    available_memory_factor * observed_memory_peak / target_memory_peak
-)))
-
-TARGET_EFFECTIVE_BS = 64
-per_device_bs = 1 << ((16 // available_memory_factor).bit_length() - 1)  # largest pow2 ≤ 16//factor
-grad_accum    = TARGET_EFFECTIVE_BS // per_device_bs
-
-
 common_args = dict(
     learning_rate=1.0, per_device_train_batch_size=per_device_bs,
     gradient_accumulation_steps=grad_accum, max_grad_norm=0.0, #grad clip is  handled by prodigy  
@@ -520,7 +535,6 @@ common_args = dict(
 
 # Iterable mode: compute max_steps from token budget (trainer can't infer from a stream)
 if args.iterable_mode:
-    eff_batch = per_device_bs * grad_accum
     total_tokens = args.token_budget * (1 + args.aux_ratio)
     max_steps_s1 = max(1, int(total_tokens // (args.max_length * eff_batch)))
     print(f"📐 max_steps (stage1) = {max_steps_s1}  (eff_batch={eff_batch}, seq_len={args.max_length})")
@@ -568,15 +582,16 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
 
 
 
+    callbacks = [ScheduleFreeModeCallback(optimizer), DownstreamEvalCallback(model, tokenizer, optimizer, n=args.n_eval)]
+    if ablation_tracker is not None:
+        callbacks.append(MixAblationCallback(ablation_tracker))
+
     trainer = SFTTrainer(
         model=model, processing_class=tokenizer,
         args=SFTConfig(**sft_kwargs),
         train_dataset=ds, eval_dataset=evals,
         optimizers=(optimizer, scheduler),
-        callbacks=[
-            ScheduleFreeModeCallback(optimizer),
-            DownstreamEvalCallback(model, tokenizer, optimizer, n=args.n_eval),
-        ],
+        callbacks=callbacks,
     )
 
     trainer.callback_handler.callbacks.insert(
