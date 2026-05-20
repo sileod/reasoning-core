@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import random
 from collections import Counter, deque
@@ -6,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Lock
 
+from appdirs import user_log_dir
 from datasets import IterableDataset
 from transformers import TrainerCallback
 
@@ -75,7 +77,7 @@ def wrap_aux_dataset_with_ablation(aux_ds, args, eff_batch):
         control_frac=float(args.ablation_control_frac),
         seed=int(getattr(args, "seed", 0)),
         aux_ratio=float(getattr(args, "aux_ratio", 0.0)),
-        log_path=args.ablation_log_path or "mix_ablation.jsonl",
+        log_path=_resolve_log_path(args),
         wandb_analysis=(
             bool(getattr(args, "ablation_wandb_analysis", True))
             and bool(getattr(args, "ablation_compute_ratios", True))
@@ -243,6 +245,19 @@ def _parse_drop_rates(raw):
         if rate < 0 or rate > 1:
             raise ValueError(f"Invalid ablation drop rate {rate}; expected 0 <= rate <= 1")
     return rates
+
+
+def _resolve_log_path(args):
+    if args.ablation_log_path:
+        return args.ablation_log_path
+    keys = (
+        "model_name", "main_data", "aux_data", "aux_ratio", "token_budget",
+        "max_length", "seed", "script_version", "ablation_drop_rates",
+        "ablation_control_frac",
+    )
+    payload = {key: str(getattr(args, key, "")) for key in keys}
+    run_id = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
+    return str(Path(user_log_dir("reasoning-core")) / "taskmix" / f"{run_id}.jsonl")
 
 
 def _window_steps_for_budget(args, tasks, drop_rates, eff_batch):
