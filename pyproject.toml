@@ -52,7 +52,8 @@ dependencies = [
     "lazy_object_proxy",
     "udocker",
     "wrapt",
-    "psutil"
+    "psutil",
+    "schedulefree @ git+https://github.com/facebookresearch/schedule_free.git@43e5c2d978920e1a3707a7609662c72b56401e62"
 ]
 
 [project.optional-dependencies]
