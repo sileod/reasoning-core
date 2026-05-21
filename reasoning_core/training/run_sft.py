@@ -5,18 +5,19 @@ for budget in 300_000_000 1_000_000_000; do   for r in 0.1 0.0 0.25 0.4 0.05; do
 import os, tempfile
 from pathlib import Path
 
-MEMORY = Path("/dev/shm/hf_cache")  # Use memory = Path.home() for disk
-
-SAFE_TMP = os.environ.get('SAFE_TMP', str(MEMORY / '.cache'))
-HF_CACHE = os.environ.get('HF_CACHE', str(MEMORY / '.cache' / 'huggingface'))
+TMP_ROOT = Path(os.environ.get("RC_TMP", str(Path.home() / "tmp"))).expanduser()
+SAFE_TMP = os.environ.get("SAFE_TMP", str(TMP_ROOT / "cache"))
+HF_CACHE = os.environ.get("HF_CACHE", str(TMP_ROOT / "hf_cache"))
 os.environ['HF_HOME'] = HF_CACHE
 os.environ['HF_DATASETS_CACHE'] = HF_CACHE
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["WANDB_LOG_MODEL"] = "false"
 os.environ['WANDB__SERVICE_WAIT']="120"
 os.environ['WANDB_INIT_TIMEOUT']="200"
-for k in ('TMPDIR', 'TEMP', 'TMP'): os.environ[k] = SAFE_TMP
+for k in ("TMPDIR", "TEMP", "TMP"):
+    os.environ[k] = SAFE_TMP
 os.makedirs(SAFE_TMP, exist_ok=True)
+os.makedirs(HF_CACHE, exist_ok=True)
 tempfile.tempdir = SAFE_TMP
 
 from itertools import islice
@@ -32,12 +33,12 @@ from datasets import (
 )
 from huggingface_hub import dataset_info
 import hashlib
-from transformers import AutoTokenizer, AutoModelForCausalLM, get_constant_schedule, TrainerCallback, AutoConfig
-from prodigyplus.prodigy_plus_schedulefree import ProdigyPlusScheduleFree
-from trl import SFTConfig, SFTTrainer
+from transformers import AutoTokenizer, AutoModelForCausalLM, TrainerCallback, AutoConfig
+from trl import SFTConfig
 from tabulate import tabulate
 from reasoning_core.downstream_eval import run_harness, run_platinum
 from reasoning_core.training.mix_ablation import MixAblationCallback, add_mix_ablation_args, wrap_aux_dataset_with_ablation
+from reasoning_core.training.optimizers import add_optimizer_args, create_optimizer_and_scheduler, trainer_cls_for_optimizer
 import socket, threading, time, atexit
 
 disable_caching()
@@ -66,7 +67,11 @@ parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--n_eval', type=int, default=10)
+parser.add_argument('--target_effective_bs', type=int, default=64)
+parser.add_argument('--per_device_train_batch_size', type=int, default=0)
+parser.add_argument('--gradient_checkpointing', type=ast.literal_eval, default=False)
 add_mix_ablation_args(parser)
+add_optimizer_args(parser)
 
 DATA_MAP = {
     "fw": "HuggingFaceFW/fineweb-edu",
@@ -82,6 +87,7 @@ MODEL_MAP = {
     "smol135": "HuggingFaceTB/SmolLM2-135M",
     "baguette": "PleIAs/Baguettotron",
     "h1": "tiiuae/Falcon-H1-Tiny-90M-Instruct",
+    "ettin32": "jhu-clsp/ettin-decoder-32m",
     "ettin68": "jhu-clsp/ettin-decoder-68m",
     "ettin150": "jhu-clsp/ettin-decoder-150m",
 }
@@ -310,9 +316,11 @@ available_memory_factor = max(1, min(16, round(
     available_memory_factor * observed_memory_peak / target_memory_peak
 )))
 
-TARGET_EFFECTIVE_BS = 64
-per_device_bs = 1 << ((16 // available_memory_factor).bit_length() - 1)  # largest pow2 ≤ 16//factor
-grad_accum    = TARGET_EFFECTIVE_BS // per_device_bs
+target_effective_bs = max(1, args.target_effective_bs)
+auto_per_device_bs = 1 << ((16 // available_memory_factor).bit_length() - 1)  # largest pow2 ≤ 16//factor
+per_device_bs = args.per_device_train_batch_size or auto_per_device_bs
+per_device_bs = max(1, min(per_device_bs, target_effective_bs))
+grad_accum = max(1, target_effective_bs // per_device_bs)
 eff_batch = per_device_bs * grad_accum
 
 
@@ -527,7 +535,7 @@ class DownstreamEvalCallback(TrainerCallback):
 common_args = dict(
     learning_rate=1.0, per_device_train_batch_size=per_device_bs,
     gradient_accumulation_steps=grad_accum, max_grad_norm=0.0, #grad clip is  handled by prodigy  
-    logging_steps=15, gradient_checkpointing=False, bf16=True, report_to="wandb",
+    logging_steps=15, gradient_checkpointing=args.gradient_checkpointing, bf16=True, report_to="wandb",
     eval_strategy="steps", packing=True,
     dataset_num_proc=1, max_length=args.max_length,
     save_strategy="steps", save_total_limit=2,
@@ -561,11 +569,9 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
     configure_downstream_eval_metrics()
 
     if restart or opt_state["optimizer"] is None:
-        optimizer = ProdigyPlusScheduleFree(
-            model.parameters(), lr=1.0, weight_decay=args.decay,
-            use_bias_correction=False, betas=(0.95, 0.99))
+        optimizer, scheduler = create_optimizer_and_scheduler(model, args)
         opt_state["optimizer"] = optimizer
-        opt_state["scheduler"] = get_constant_schedule(optimizer)
+        opt_state["scheduler"] = scheduler
     optimizer, scheduler = opt_state["optimizer"], opt_state["scheduler"]
 
     stage_dir = ckpt_dir / stage_name
@@ -586,7 +592,8 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
     if ablation_tracker is not None:
         callbacks.append(MixAblationCallback(ablation_tracker))
 
-    trainer = SFTTrainer(
+    trainer_cls = trainer_cls_for_optimizer(args)
+    trainer = trainer_cls(
         model=model, processing_class=tokenizer,
         args=SFTConfig(**sft_kwargs),
         train_dataset=ds, eval_dataset=evals,
