@@ -19,28 +19,21 @@ __all__ = [
 ]
 
 
-DEFAULT_RC_TASKS = (
-    "arithmetics", "bayesian_association", "bayesian_intervention", "binding",
-    "causal_reasoning", "code_diff", "code_execution", "code_program_synthesis",
-    "conjecture_entailment", "constrained_continuation", "constraint_satisfaction",
-    "continuation", "coreference", "count_elements", "diff_patching",
-    "diff_prediction", "equation_system", "evidence_retrieval", "formal_maths",
-    "grammar", "graph_dependencies", "graph_isomorphism", "graph_operations",
-    "graph_pathfinding", "graph_successors", "knowledge", "lambda_reduction",
-    "lexical_knowledge", "locate_error", "logic", "logic_formalization",
-    "logic_nli", "navigation", "parsability", "parsing", "planning",
-    "proof_reconstruction", "qstr", "qualitative_reasoning", "reference_tracking",
-    "regex", "regex_following", "regex_induction", "regex_reasoning",
-    "sequential_induction", "set_equality", "set_intersection",
-    "set_missing_element", "set_operations", "table_conversion", "table_qa",
-    "term_unification", "tracking",
-)
+def _default_rc_tasks():
+    from reasoning_core import list_tasks
+
+    return tuple(sorted(list_tasks()))
+
+
+DEFAULT_RC_TASKS = _default_rc_tasks()
 
 
 def add_mix_ablation_args(parser):
     parser.add_argument("--mix_ablation", type=_str_to_bool, nargs="?", const=True, default=True)
     parser.add_argument("--ablation_tasks", type=str, default=",".join(DEFAULT_RC_TASKS))
-    parser.add_argument("--ablation_drop_rates", type=str, default="0,0.25,0.5,1")
+    parser.add_argument("--ablation_task_ratios", type=str, default="0,1,5")
+    parser.add_argument("--ablation_drop_rates", type=str, default="")
+    parser.add_argument("--ablation_tasks_per_window", type=int, default=4)
     parser.add_argument("--ablation_window_steps", type=int, default=50)
     parser.add_argument("--ablation_target_passes", type=float, default=1.5)
     parser.add_argument("--ablation_min_window_steps", type=int, default=8)
@@ -57,13 +50,14 @@ def add_mix_ablation_args(parser):
     parser.add_argument("--ablation_wandb_analysis", type=_str_to_bool, nargs="?", const=True, default=True)
     parser.add_argument("--ablation_analysis_min_rows", type=int, default=30)
     parser.add_argument("--ablation_analysis_every_rows", type=int, default=5)
-    parser.add_argument("--ablation_analysis_step_df", type=int, default=2)
+    parser.add_argument("--ablation_analysis_top_k", type=int, default=8)
 
 
 def wrap_aux_dataset_with_ablation(aux_ds, args, eff_batch):
     tasks = _parse_tasks(args.ablation_tasks)
-    drop_rates = _parse_drop_rates(args.ablation_drop_rates)
-    window_steps = _window_steps_for_budget(args, tasks, drop_rates, eff_batch)
+    task_ratio_arg = args.ablation_drop_rates or args.ablation_task_ratios
+    task_ratios = _parse_task_ratios(task_ratio_arg)
+    window_steps = _window_steps_for_budget(args, tasks, task_ratios, eff_batch)
     window_aux_examples = max(
         1,
         round(window_steps * int(eff_batch) * _aux_probability(getattr(args, "aux_ratio", 0.0))),
@@ -71,9 +65,10 @@ def wrap_aux_dataset_with_ablation(aux_ds, args, eff_batch):
 
     tracker = MixAblationTracker(
         tasks=tasks,
-        drop_rates=drop_rates,
+        task_ratios=task_ratios,
         window_aux_examples=window_aux_examples,
         window_steps=window_steps,
+        tasks_per_window=max(1, int(getattr(args, "ablation_tasks_per_window", 4))),
         control_frac=float(args.ablation_control_frac),
         seed=int(getattr(args, "seed", 0)),
         aux_ratio=float(getattr(args, "aux_ratio", 0.0)),
@@ -84,7 +79,7 @@ def wrap_aux_dataset_with_ablation(aux_ds, args, eff_batch):
         ),
         analysis_min_rows=int(getattr(args, "ablation_analysis_min_rows", 30)),
         analysis_every_rows=int(getattr(args, "ablation_analysis_every_rows", 5)),
-        analysis_step_df=int(getattr(args, "ablation_analysis_step_df", 2)),
+        analysis_top_k=int(getattr(args, "ablation_analysis_top_k", 8)),
     )
 
     def gen():
@@ -117,9 +112,9 @@ class MixAblationCallback(TrainerCallback):
         self.last_logged_step = state.global_step
         self.tracker.write_eval_row(int(state.global_step), loss, delta)
         self.eval_rows += 1
-        self._maybe_log_wandb_analysis(step=int(state.global_step))
+        self._maybe_log_wandb_analysis()
 
-    def _maybe_log_wandb_analysis(self, step):
+    def _maybe_log_wandb_analysis(self):
         if not self.tracker.wandb_analysis:
             return
         if self.eval_rows < self.tracker.analysis_min_rows:
@@ -134,15 +129,16 @@ class MixAblationCallback(TrainerCallback):
                 return
             from reasoning_core.training.analyze_mix_ablation import analyze_log_path
 
-            result = analyze_log_path(self.tracker.log_path, step_df=self.tracker.analysis_step_df)
-            metrics = {"mix_ablation/analysis_rows": int(self.eval_rows)}
-            for row in result.to_dict(orient="records"):
+            result = analyze_log_path(self.tracker.log_path)
+            metrics = {"tmix/n": int(self.eval_rows)}
+            top_tasks = result.drop_duplicates("task").head(self.tracker.analysis_top_k)
+            for row in top_tasks.to_dict(orient="records"):
                 task = _clean_metric_fragment(row["task"])
-                metrics[f"mix_ablation/best_drop_rate/{task}"] = float(row["best_drop_rate"])
-                metrics[f"mix_ablation/recommended_keep_ratio/{task}"] = float(row["recommended_keep_ratio"])
-                metrics[f"mix_ablation/stderr/{task}"] = float(row["stderr"])
-                metrics[f"mix_ablation/effect/{task}"] = float(row["effect"])
-            wandb.log(metrics, step=step)
+                metrics[f"tmix/recommended_ratio/{task}"] = float(row["ratio"])
+                metrics[f"tmix/z/{task}"] = float(row["z"])
+                metrics[f"tmix/effect/{task}"] = float(row["effect"])
+                metrics[f"tmix/stderr/{task}"] = float(row["stderr"])
+            wandb.log(metrics)
         except Exception as exc:
             if not self.analysis_warning_printed:
                 print(f"mix_ablation W&B analysis disabled after error: {exc}")
@@ -152,9 +148,10 @@ class MixAblationCallback(TrainerCallback):
 @dataclass
 class MixAblationTracker:
     tasks: list
-    drop_rates: list
+    task_ratios: list
     window_aux_examples: int
     window_steps: int
+    tasks_per_window: int
     control_frac: float
     seed: int
     aux_ratio: float
@@ -162,11 +159,11 @@ class MixAblationTracker:
     wandb_analysis: bool = True
     analysis_min_rows: int = 30
     analysis_every_rows: int = 5
-    analysis_step_df: int = 2
+    analysis_top_k: int = 8
     lock: Lock = field(default_factory=Lock)
     consumed_in_window: int = 0
-    target_task: str | None = None
-    drop_rate: float = 0.0
+    active_task_ratios: dict = field(default_factory=dict)
+    max_active_ratio: float = 1.0
     kept: Counter = field(default_factory=Counter)
     dropped: Counter = field(default_factory=Counter)
     history: deque = field(default_factory=lambda: deque(maxlen=3))
@@ -185,16 +182,23 @@ class MixAblationTracker:
             if self.consumed_in_window >= self.window_aux_examples:
                 self._advance_window()
             self.consumed_in_window += 1
-            should_drop = self.target_task is not None and task == self.target_task and rng.random() < self.drop_rate
+            should_drop = self._should_reject(task, rng)
             (self.dropped if should_drop else self.kept)[task] += 1
             return should_drop
+
+    def _should_reject(self, task, rng):
+        if not self.active_task_ratios:
+            return False
+        task_ratio = float(self.active_task_ratios.get(task, 1.0))
+        accept_probability = task_ratio / self.max_active_ratio
+        return rng.random() >= accept_probability
 
     def write_eval_row(self, step, eval_main_loss, eval_main_loss_delta):
         with self.lock:
             row = {
                 "step": step,
-                "target_task": self.target_task,
-                "drop_rate": self.drop_rate,
+                "active_task_ratios": dict(sorted(self.active_task_ratios.items())),
+                "n_interventions": len(self.active_task_ratios),
                 "eval_main_loss": eval_main_loss,
                 "eval_main_loss_delta": eval_main_loss_delta,
                 "aux_ratio": self.aux_ratio,
@@ -206,26 +210,45 @@ class MixAblationTracker:
             for task, count in sorted(self.dropped.items()):
                 row[f"dropped_task/{task}"] = count
             for lag, state in enumerate(reversed(list(self.history)[-3:]), start=1):
-                row[f"lag{lag}_target_task"] = state["target_task"]
-                row[f"lag{lag}_drop_rate"] = state["drop_rate"]
+                row[f"lag{lag}_active_task_ratios"] = state["active_task_ratios"]
 
             with Path(self.log_path).open("a", encoding="utf-8") as f:
                 f.write(json.dumps(row, sort_keys=True) + "\n")
 
     def _advance_window(self):
         if self.consumed_in_window:
-            self.history.append({"target_task": self.target_task, "drop_rate": self.drop_rate})
+            self.history.append({"active_task_ratios": dict(self.active_task_ratios)})
         if not self.schedule:
             self._refill_schedule()
-        self.target_task, self.drop_rate = self.schedule.pop()
+        self.active_task_ratios = self.schedule.pop()
+        self.max_active_ratio = max([1.0, *[float(x) for x in self.active_task_ratios.values()]])
         self.consumed_in_window = 0
         self.kept = Counter()
         self.dropped = Counter()
 
     def _refill_schedule(self):
-        treatments = [(task, rate) for task in self.tasks for rate in self.drop_rates]
+        cells = [(task, ratio) for task in self.tasks for ratio in self.task_ratios if float(ratio) != 1.0]
+        if not cells:
+            cells = [(task, 1.0) for task in self.tasks]
+        self.rng.shuffle(cells)
+
+        treatments = []
+        pending = list(cells)
+        while pending:
+            window = {}
+            deferred = []
+            while pending and len(window) < self.tasks_per_window:
+                task, ratio = pending.pop()
+                if task in window:
+                    deferred.append((task, ratio))
+                else:
+                    window[task] = float(ratio)
+            pending.extend(deferred)
+            if window:
+                treatments.append(window)
+
         controls = max(1, round(len(treatments) * self.control_frac / max(1e-9, 1 - self.control_frac)))
-        treatments.extend((None, 0.0) for _ in range(controls))
+        treatments.extend({} for _ in range(controls))
         self.rng.shuffle(treatments)
         self.schedule.extend(treatments)
 
@@ -237,14 +260,14 @@ def _parse_tasks(raw):
     return tasks
 
 
-def _parse_drop_rates(raw):
-    rates = [float(x.strip()) for x in str(raw).split(",") if x.strip()]
-    if not rates:
-        raise ValueError("--ablation_drop_rates must contain at least one numeric rate")
-    for rate in rates:
-        if rate < 0 or rate > 1:
-            raise ValueError(f"Invalid ablation drop rate {rate}; expected 0 <= rate <= 1")
-    return rates
+def _parse_task_ratios(raw):
+    ratios = [float(x.strip()) for x in str(raw).split(",") if x.strip()]
+    if not ratios:
+        raise ValueError("--ablation_task_ratios must contain at least one numeric ratio")
+    for ratio in ratios:
+        if ratio < 0:
+            raise ValueError(f"Invalid ablation task ratio {ratio}; expected ratio >= 0")
+    return ratios
 
 
 def _resolve_log_path(args):
@@ -252,15 +275,15 @@ def _resolve_log_path(args):
         return args.ablation_log_path
     keys = (
         "model_name", "main_data", "aux_data", "aux_ratio", "token_budget",
-        "max_length", "seed", "script_version", "ablation_drop_rates",
-        "ablation_control_frac",
+        "max_length", "seed", "script_version", "ablation_task_ratios",
+        "ablation_drop_rates", "ablation_tasks_per_window", "ablation_control_frac",
     )
     payload = {key: str(getattr(args, key, "")) for key in keys}
     run_id = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
     return str(Path(user_log_dir("reasoning-core")) / "taskmix" / f"{run_id}.jsonl")
 
 
-def _window_steps_for_budget(args, tasks, drop_rates, eff_batch):
+def _window_steps_for_budget(args, tasks, task_ratios, eff_batch):
     explicit = int(getattr(args, "ablation_window_steps", 0) or 0)
     min_steps = max(1, int(getattr(args, "ablation_min_window_steps", 8)))
     max_steps = max(min_steps, int(getattr(args, "ablation_max_window_steps", explicit or 50)))
@@ -271,10 +294,13 @@ def _window_steps_for_budget(args, tasks, drop_rates, eff_batch):
     token_budget = int(getattr(args, "token_budget", 0))
     aux_ratio = float(getattr(args, "aux_ratio", 0.0))
     total_steps = max(1, int(token_budget * (1 + aux_ratio) // max(1, max_length * eff_batch)))
-    cells = max(1, len(tasks) * len(drop_rates))
+    tasks_per_window = max(1, int(getattr(args, "ablation_tasks_per_window", 4)))
+    non_neutral_ratios = [r for r in task_ratios if float(r) != 1.0]
+    cells = max(1, len(tasks) * max(1, len(non_neutral_ratios)))
+    treatment_windows = max(1, (cells + tasks_per_window - 1) // tasks_per_window)
     control_frac = float(getattr(args, "ablation_control_frac", 0.2))
-    controls = max(1, round(cells * control_frac / max(1e-9, 1 - control_frac)))
-    target_windows = max(1.0, (cells + controls) * float(getattr(args, "ablation_target_passes", 1.5)))
+    controls = max(1, round(treatment_windows * control_frac / max(1e-9, 1 - control_frac)))
+    target_windows = max(1.0, (treatment_windows + controls) * float(getattr(args, "ablation_target_passes", 1.5)))
     return max(min_steps, min(max_steps, round(total_steps / target_windows)))
 
 
