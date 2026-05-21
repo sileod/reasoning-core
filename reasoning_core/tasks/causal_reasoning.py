@@ -401,13 +401,13 @@ class Rung(ABC):
         
         answer, specific_metadata = self._calculate_answer_and_metadata(n_round)
 
-        cot = self.reason_graph.ie.generate_natural_language_proof(scientific_notation=self.config.cot_scientific_notation, precision=n_round, concise=self.config.concise_cot)
-
         while nan in set(eval(answer).values()): #Create another scenario if this one is probabilistically impossible.
             if self.config.graph_seed != None:
                 self.config.graph_seed += 1
             self._generate_specific_problem(n_round)
             answer, specific_metadata = self._calculate_answer_and_metadata(n_round)
+
+        cot = self.reason_graph.ie.generate_natural_language_proof(scientific_notation=self.config.cot_scientific_notation, precision=n_round, concise=self.config.concise_cot)
         
         scenario = self._construct_scenario()
         target_vals = self.reason_graph.bn.states[self.reason_graph.target]
