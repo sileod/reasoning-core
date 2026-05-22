@@ -33,7 +33,7 @@ def add_mix_ablation_args(parser):
     parser.add_argument("--ablation_tasks", type=str, default=",".join(DEFAULT_RC_TASKS))
     parser.add_argument("--ablation_task_ratios", type=str, default="0,1,5")
     parser.add_argument("--ablation_drop_rates", type=str, default="")
-    parser.add_argument("--ablation_tasks_per_window", type=int, default=4)
+    parser.add_argument("--ablation_tasks_per_window", type=str, default="1..4")
     parser.add_argument("--ablation_window_steps", type=int, default=50)
     parser.add_argument("--ablation_target_passes", type=float, default=1.5)
     parser.add_argument("--ablation_min_window_steps", type=int, default=8)
@@ -68,7 +68,7 @@ def wrap_aux_dataset_with_ablation(aux_ds, args, eff_batch):
         task_ratios=task_ratios,
         window_aux_examples=window_aux_examples,
         window_steps=window_steps,
-        tasks_per_window=max(1, int(getattr(args, "ablation_tasks_per_window", 4))),
+        tasks_per_window=_parse_tasks_per_window(getattr(args, "ablation_tasks_per_window", "1..4")),
         control_frac=float(args.ablation_control_frac),
         seed=int(getattr(args, "seed", 0)),
         aux_ratio=float(getattr(args, "aux_ratio", 0.0)),
@@ -151,7 +151,7 @@ class MixAblationTracker:
     task_ratios: list
     window_aux_examples: int
     window_steps: int
-    tasks_per_window: int
+    tasks_per_window: tuple
     control_frac: float
     seed: int
     aux_ratio: float
@@ -195,9 +195,14 @@ class MixAblationTracker:
 
     def write_eval_row(self, step, eval_main_loss, eval_main_loss_delta):
         with self.lock:
+            n_kept = sum(self.kept.values())
             row = {
                 "step": step,
                 "active_task_ratios": dict(sorted(self.active_task_ratios.items())),
+                "empirical_task_mix": {
+                    task: count / n_kept
+                    for task, count in sorted(self.kept.items())
+                } if n_kept else {},
                 "n_interventions": len(self.active_task_ratios),
                 "eval_main_loss": eval_main_loss,
                 "eval_main_loss_delta": eval_main_loss_delta,
@@ -237,7 +242,8 @@ class MixAblationTracker:
         while pending:
             window = {}
             deferred = []
-            while pending and len(window) < self.tasks_per_window:
+            max_tasks = self.rng.choice(self.tasks_per_window)
+            while pending and len(window) < max_tasks:
                 task, ratio = pending.pop()
                 if task in window:
                     deferred.append((task, ratio))
@@ -270,6 +276,19 @@ def _parse_task_ratios(raw):
     return ratios
 
 
+def _parse_tasks_per_window(raw):
+    raw = str(raw).strip()
+    if ".." in raw:
+        lo, hi = (int(x.strip()) for x in raw.split("..", 1))
+        values = list(range(lo, hi + 1))
+    else:
+        values = [int(x.strip()) for x in raw.split(",") if x.strip()]
+    values = sorted({x for x in values if x > 0})
+    if not values:
+        raise ValueError("--ablation_tasks_per_window must contain positive integers")
+    return tuple(values)
+
+
 def _resolve_log_path(args):
     if args.ablation_log_path:
         return args.ablation_log_path
@@ -294,10 +313,11 @@ def _window_steps_for_budget(args, tasks, task_ratios, eff_batch):
     token_budget = int(getattr(args, "token_budget", 0))
     aux_ratio = float(getattr(args, "aux_ratio", 0.0))
     total_steps = max(1, int(token_budget * (1 + aux_ratio) // max(1, max_length * eff_batch)))
-    tasks_per_window = max(1, int(getattr(args, "ablation_tasks_per_window", 4)))
+    tasks_per_window = _parse_tasks_per_window(getattr(args, "ablation_tasks_per_window", "1..4"))
     non_neutral_ratios = [r for r in task_ratios if float(r) != 1.0]
     cells = max(1, len(tasks) * max(1, len(non_neutral_ratios)))
-    treatment_windows = max(1, (cells + tasks_per_window - 1) // tasks_per_window)
+    mean_tasks_per_window = sum(tasks_per_window) / len(tasks_per_window)
+    treatment_windows = max(1, round(cells / mean_tasks_per_window))
     control_frac = float(getattr(args, "ablation_control_frac", 0.2))
     controls = max(1, round(treatment_windows * control_frac / max(1e-9, 1 - control_frac)))
     target_windows = max(1.0, (treatment_windows + controls) * float(getattr(args, "ablation_target_passes", 1.5)))
