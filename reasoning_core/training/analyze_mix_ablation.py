@@ -1,6 +1,7 @@
 import argparse
 import json
 import math
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -139,6 +140,7 @@ def _build_design(df, min_count):
     assignments = [_assignments(row) for _, row in df.iterrows()]
     lag1 = [_assignments(row, lag=1) for _, row in df.iterrows()]
     lag2 = [_assignments(row, lag=2) for _, row in df.iterrows()]
+    empirical_ratios = _empirical_ratios(df)
 
     current_terms = _collect_terms(assignments)
     counts = {term: sum(term in row for row in assignments) for term in current_terms}
@@ -148,7 +150,10 @@ def _build_design(df, min_count):
     terms = {}
     for term in current_terms:
         col = _col_name("cur", term)
-        parts.append(pd.Series([float(term in row) for row in assignments], index=df.index, name=col))
+        parts.append(pd.Series([
+            _term_value(row_terms, empirical, term)
+            for row_terms, empirical in zip(assignments, empirical_ratios)
+        ], index=df.index, name=col))
         terms[col] = {"task": term[0], "ratio": term[1]}
         counts[col] = counts[term]
 
@@ -159,6 +164,50 @@ def _build_design(df, min_count):
             parts.append(pd.Series([float(term in row) for row in rows], index=df.index, name=col))
 
     return pd.concat(parts, axis=1), counts, terms
+
+
+def _empirical_ratios(df):
+    mixes = [_empirical_mix(row) for _, row in df.iterrows()]
+    control = [mix for mix, (_, row) in zip(mixes, df.iterrows()) if mix and not _assignments(row)]
+    baseline = Counter()
+    for mix in control or [mix for mix in mixes if mix]:
+        baseline.update(mix)
+    total = sum(baseline.values())
+    baseline = {task: value / total for task, value in baseline.items()} if total else {}
+    return [
+        {
+            task: share / baseline[task]
+            for task, share in mix.items()
+            if baseline.get(task, 0.0) > 0.0
+        }
+        for mix in mixes
+    ]
+
+
+def _empirical_mix(row):
+    value = row.get("empirical_task_mix", None)
+    if isinstance(value, dict):
+        return {str(task): float(share) for task, share in value.items()}
+
+    counts = {}
+    for key, value in row.items():
+        if str(key).startswith("kept_task/"):
+            counts[str(key).split("/", 1)[1]] = float(value)
+    total = sum(counts.values())
+    return {task: count / total for task, count in counts.items()} if total else {}
+
+
+def _term_value(row_terms, empirical, term):
+    if term not in row_terms:
+        return 0.0
+    task, ratio = term
+    if not empirical or float(ratio) == 1.0:
+        return 1.0
+    intended_delta = float(ratio) - 1.0
+    if abs(intended_delta) < 1e-12:
+        return 1.0
+    realized_delta = float(empirical.get(task, 0.0)) - 1.0
+    return realized_delta / intended_delta
 
 
 def _assignments(row, lag=0):
