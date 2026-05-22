@@ -547,7 +547,7 @@ if args.iterable_mode:
     max_steps_s1 = max(1, int(total_tokens // (args.max_length * eff_batch)))
     print(f"📐 max_steps (stage1) = {max_steps_s1}  (eff_batch={eff_batch}, seq_len={args.max_length})")
 
-EVAL_ROUNDS = 100
+EVAL_ROUNDS = 15
 if args.iterable_mode:
     common_args["eval_steps"] = max(8, max_steps_s1 // EVAL_ROUNDS)
 common_args["save_steps"] = 400
