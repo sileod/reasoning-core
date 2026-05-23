@@ -15,7 +15,7 @@ PYTHONPATH=$PWD python reasoning_core/training/run_sft.py \
   --n_eval 20
 ```
 
-Task-level ablation and W&B ratio logging are enabled by default. Defaults use task odds multipliers `0,1,5`: remove the task, keep the natural RC mix, or make the task about 5x more likely relative to the rest of RC. Each treatment window samples one task ratio by default via `--ablation_tasks_per_window 1`; larger grouped windows can be enabled explicitly for denser but more confounded exploration. Window length is chosen from the expected step budget, bounded by `--ablation_min_window_steps` and `--ablation_max_window_steps`.
+Task-level ablation and W&B ratio logging are enabled by default. Defaults use task odds multipliers `0,1,5`: remove the task, keep the natural RC mix, or make the task about 5x more likely relative to the rest of RC. Each treatment window samples one task ratio by default via `--ablation_tasks_per_window 1`; larger grouped windows can be enabled explicitly for denser but more confounded exploration. In `run_sft.py`, taskmix windows are synchronized to main-loss eval intervals.
 
 ## Analyze
 

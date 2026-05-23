@@ -61,7 +61,7 @@ parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
 parser.add_argument('--aux_version', type=str, default="rc12")
-parser.add_argument('--script_version', type=str, default="21")
+parser.add_argument('--script_version', type=str, default="22")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
@@ -578,10 +578,15 @@ if args.iterable_mode:
     max_steps_s1 = max(1, int(total_tokens // (args.max_length * eff_batch)))
     print(f"📐 max_steps (stage1) = {max_steps_s1}  (eff_batch={eff_batch}, seq_len={args.max_length})")
 
-MAIN_EVAL_ROUNDS = 100
+MAIN_EVAL_ROUNDS = 30
+TASKMIX_EVAL_STEPS = 100
 AUX_EVAL_ROUNDS = 10
 if args.iterable_mode:
-    common_args["eval_steps"] = max(8, max_steps_s1 // MAIN_EVAL_ROUNDS)
+    main_eval_steps = max(8, max_steps_s1 // MAIN_EVAL_ROUNDS)
+    if ablation_tracker is not None:
+        main_eval_steps = min(TASKMIX_EVAL_STEPS, main_eval_steps)
+        ablation_tracker.sync_windows_to_eval(main_eval_steps, eff_batch)
+    common_args["eval_steps"] = main_eval_steps
     aux_eval_steps = max(8, max_steps_s1 // AUX_EVAL_ROUNDS)
 else:
     aux_eval_steps = None

@@ -160,6 +160,7 @@ class MixAblationTracker:
     analysis_min_rows: int = 30
     analysis_every_rows: int = 5
     analysis_top_k: int = 8
+    sync_to_eval: bool = False
     lock: Lock = field(default_factory=Lock)
     consumed_in_window: int = 0
     active_task_ratios: dict = field(default_factory=dict)
@@ -179,12 +180,20 @@ class MixAblationTracker:
     def should_drop(self, task, rng):
         task = task if task in self.task_set else "unknown"
         with self.lock:
-            if self.consumed_in_window >= self.window_aux_examples:
+            if not self.sync_to_eval and self.consumed_in_window >= self.window_aux_examples:
                 self._advance_window()
             self.consumed_in_window += 1
             should_drop = self._should_reject(task, rng)
             (self.dropped if should_drop else self.kept)[task] += 1
             return should_drop
+
+    def sync_windows_to_eval(self, eval_steps, eff_batch):
+        with self.lock:
+            self.sync_to_eval = True
+            self.window_steps = int(eval_steps)
+            self.window_aux_examples = max(1, round(
+                int(eval_steps) * int(eff_batch) * _aux_probability(self.aux_ratio)
+            ))
 
     def _should_reject(self, task, rng):
         if not self.active_task_ratios:
@@ -219,6 +228,8 @@ class MixAblationTracker:
 
             with Path(self.log_path).open("a", encoding="utf-8") as f:
                 f.write(json.dumps(row, sort_keys=True) + "\n")
+            if self.sync_to_eval:
+                self._advance_window()
 
     def _advance_window(self):
         if self.consumed_in_window:
