@@ -88,6 +88,7 @@ MODEL_MAP = {
     "baguette": "PleIAs/Baguettotron",
     "h1": "tiiuae/Falcon-H1-Tiny-90M-Instruct",
     "ettin32": "jhu-clsp/ettin-decoder-32m",
+    "microlm-5m": "sileod/microlm-ettin-swa-5m",
     "ettin68": "jhu-clsp/ettin-decoder-68m",
     "ettin150": "jhu-clsp/ettin-decoder-150m",
 }
