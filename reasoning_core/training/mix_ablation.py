@@ -33,7 +33,7 @@ def add_mix_ablation_args(parser):
     parser.add_argument("--ablation_tasks", type=str, default=",".join(DEFAULT_RC_TASKS))
     parser.add_argument("--ablation_task_ratios", type=str, default="0,1,5")
     parser.add_argument("--ablation_drop_rates", type=str, default="")
-    parser.add_argument("--ablation_tasks_per_window", type=str, default="1..4")
+    parser.add_argument("--ablation_tasks_per_window", type=str, default="1")
     parser.add_argument("--ablation_window_steps", type=int, default=50)
     parser.add_argument("--ablation_target_passes", type=float, default=1.5)
     parser.add_argument("--ablation_min_window_steps", type=int, default=8)

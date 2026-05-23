@@ -61,7 +61,7 @@ parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
 parser.add_argument('--aux_version', type=str, default="rc12")
-parser.add_argument('--script_version', type=str, default="20")
+parser.add_argument('--script_version', type=str, default="21")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
@@ -358,7 +358,9 @@ eval_splits = load_eval_split(
     args.aux_data, budget=args.eval_aux_budget, skip=args.eval_aux_skip,
     max_groups=200, max_examples_per_group=32, min_examples_per_group=24,
     max_scanned=args.eval_aux_max_scanned)
-evals = {"main": eval_main, **{f"aux_tl/{k}": v for k, v in eval_splits.items()}}
+main_evals = {"main": eval_main}
+aux_tl_evals = {f"aux_tl/{k}": v for k, v in eval_splits.items()}
+trainer_evals = main_evals if args.iterable_mode else {**main_evals, **aux_tl_evals}
 
 
 aux_budget = int(args.token_budget * args.aux_ratio)
@@ -532,6 +534,35 @@ class DownstreamEvalCallback(TrainerCallback):
             self.optimizer.train()
 
 
+class PeriodicAuxEvalCallback(TrainerCallback):
+    """Run costly task/level evals at a lower cadence than main eval."""
+    def __init__(self, eval_dataset, eval_steps, optimizer):
+        self.eval_dataset = eval_dataset
+        self.eval_steps = max(1, int(eval_steps))
+        self.optimizer = optimizer
+        self.trainer = None
+        self.last_eval_step = None
+
+    def attach_trainer(self, trainer):
+        self.trainer = trainer
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if not self.eval_dataset or self.trainer is None or state.global_step <= 0:
+            return
+        if state.global_step % self.eval_steps:
+            return
+        if self.last_eval_step == state.global_step:
+            return
+
+        self.last_eval_step = state.global_step
+        self.optimizer.eval()
+        self.trainer.evaluate(eval_dataset=self.eval_dataset, metric_key_prefix="eval")
+        if control.should_evaluate or control.should_save:
+            self.optimizer.eval()
+        else:
+            self.optimizer.train()
+
+
 common_args = dict(
     learning_rate=1.0, per_device_train_batch_size=per_device_bs,
     gradient_accumulation_steps=grad_accum, max_grad_norm=0.0, #grad clip is  handled by prodigy  
@@ -547,9 +578,13 @@ if args.iterable_mode:
     max_steps_s1 = max(1, int(total_tokens // (args.max_length * eff_batch)))
     print(f"📐 max_steps (stage1) = {max_steps_s1}  (eff_batch={eff_batch}, seq_len={args.max_length})")
 
-EVAL_ROUNDS = 15
+MAIN_EVAL_ROUNDS = 100
+AUX_EVAL_ROUNDS = 10
 if args.iterable_mode:
-    common_args["eval_steps"] = max(8, max_steps_s1 // EVAL_ROUNDS)
+    common_args["eval_steps"] = max(8, max_steps_s1 // MAIN_EVAL_ROUNDS)
+    aux_eval_steps = max(8, max_steps_s1 // AUX_EVAL_ROUNDS)
+else:
+    aux_eval_steps = None
 common_args["save_steps"] = 400
 
 
@@ -588,7 +623,14 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
 
 
 
-    callbacks = [ScheduleFreeModeCallback(optimizer), DownstreamEvalCallback(model, tokenizer, optimizer, n=args.n_eval)]
+    callbacks = [
+        ScheduleFreeModeCallback(optimizer),
+        DownstreamEvalCallback(model, tokenizer, optimizer, n=args.n_eval),
+    ]
+    aux_eval_callback = None
+    if args.iterable_mode:
+        aux_eval_callback = PeriodicAuxEvalCallback(aux_tl_evals, aux_eval_steps, optimizer)
+        callbacks.append(aux_eval_callback)
     if ablation_tracker is not None:
         callbacks.append(MixAblationCallback(ablation_tracker))
 
@@ -596,13 +638,15 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
     trainer = trainer_cls(
         model=model, processing_class=tokenizer,
         args=SFTConfig(**sft_kwargs),
-        train_dataset=ds, eval_dataset=evals,
+        train_dataset=ds, eval_dataset=trainer_evals,
         optimizers=(optimizer, scheduler),
         callbacks=callbacks,
     )
+    if aux_eval_callback is not None:
+        aux_eval_callback.attach_trainer(trainer)
 
     trainer.callback_handler.callbacks.insert(
-    0, ScopeEvalLogCallback(n_aux_tl=sum(k.startswith("aux_tl/") for k in evals)) )
+    0, ScopeEvalLogCallback(n_aux_tl=len(aux_tl_evals)) )
 
     optimizer.train()
     trainer.train(resume_from_checkpoint=resume)
@@ -646,6 +690,8 @@ if "eval" not in completed:
 
     if trainer is not None:
         trainer.evaluate(metric_key_prefix="final")
+        if args.iterable_mode and aux_tl_evals:
+            trainer.evaluate(eval_dataset=aux_tl_evals, metric_key_prefix="final")
     wandb.finish()
     save_ckpt({"hash": run_hash, "group_id": group_id,
                "args": {k: str(v) for k, v in vars(args).items()},
