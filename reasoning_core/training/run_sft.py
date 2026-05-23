@@ -579,7 +579,7 @@ if args.iterable_mode:
     print(f"📐 max_steps (stage1) = {max_steps_s1}  (eff_batch={eff_batch}, seq_len={args.max_length})")
 
 MAIN_EVAL_ROUNDS = 30
-TASKMIX_EVAL_STEPS = 100
+TASKMIX_EVAL_STEPS = 50
 AUX_EVAL_ROUNDS = 10
 if args.iterable_mode:
     main_eval_steps = max(8, max_steps_s1 // MAIN_EVAL_ROUNDS)
