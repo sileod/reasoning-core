@@ -25,7 +25,7 @@ from collections import defaultdict
 import warnings
 warnings.filterwarnings("ignore")
 
-import logging, argparse, torch, wandb, ast, json, hashlib, shutil
+import logging, argparse, torch, wandb, ast, json, hashlib, shutil, copy
 from faker import Faker
 from datasets import (
     load_dataset, concatenate_datasets, interleave_datasets,
@@ -546,6 +546,16 @@ class PeriodicAuxEvalCallback(TrainerCallback):
 
     def attach_trainer(self, trainer):
         self.trainer = trainer
+        prep_args = copy.copy(trainer.args)
+        prep_args.dataset_num_proc = None
+        packing = prep_args.packing
+        if getattr(prep_args, "eval_packing", None) is not None:
+            packing = prep_args.eval_packing
+        self.eval_dataset = {
+            key: trainer._prepare_dataset(dataset, trainer.processing_class, prep_args, packing, None, key)
+            for key, dataset in self.eval_dataset.items()
+        }
+        trainer.aux_tl_eval_dataset = self.eval_dataset
 
     def on_step_end(self, args, state, control, **kwargs):
         if not self.eval_dataset or self.trainer is None or state.global_step <= 0:
@@ -697,7 +707,7 @@ if "eval" not in completed:
     if trainer is not None:
         trainer.evaluate(metric_key_prefix="final")
         if args.iterable_mode and aux_tl_evals:
-            trainer.evaluate(eval_dataset=aux_tl_evals, metric_key_prefix="final")
+            trainer.evaluate(eval_dataset=getattr(trainer, "aux_tl_eval_dataset", aux_tl_evals), metric_key_prefix="final")
     wandb.finish()
     save_ckpt({"hash": run_hash, "group_id": group_id,
                "args": {k: str(v) for k, v in vars(args).items()},
