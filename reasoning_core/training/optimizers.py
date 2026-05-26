@@ -2,6 +2,7 @@ import torch
 from prodigyplus.prodigy_plus_schedulefree import ProdigyPlusScheduleFree
 from transformers import get_constant_schedule
 from trl import SFTTrainer
+from reasoning_core.training.source_signals import SourceLossMixin
 
 
 def add_optimizer_args(parser):
@@ -24,6 +25,7 @@ def add_optimizer_args(parser):
         default=0.0,
         help="Schedule-Free averaging power for AdamC ScheduleFree+.",
     )
+    parser.add_argument("--train_source_loss", type=_str_to_bool, nargs="?", const=True, default=False)
 
 def create_optimizer_and_scheduler(model, args):
     if args.optimizer == "prodigy":
@@ -55,8 +57,20 @@ def create_optimizer_and_scheduler(model, args):
 
 def trainer_cls_for_optimizer(args):
     if args.optimizer == "adamc":
-        return LossAwareSFTTrainer
+        return SourceLossAwareSFTTrainer if args.train_source_loss else LossAwareSFTTrainer
+    if args.train_source_loss:
+        return SourceSFTTrainer
     return SFTTrainer
+
+
+def _str_to_bool(x):
+    if isinstance(x, bool):
+        return x
+    return str(x).lower() in {"1", "true", "yes", "y", "on"}
+
+
+class SourceSFTTrainer(SourceLossMixin, SFTTrainer):
+    pass
 
 
 class LossAwareSFTTrainer(SFTTrainer):
@@ -82,6 +96,10 @@ class LossAwareSFTTrainer(SFTTrainer):
             self._losses_for_optimizer_step = []
 
         return loss
+
+
+class SourceLossAwareSFTTrainer(SourceLossMixin, LossAwareSFTTrainer):
+    pass
 
 
 def _loss_aware_adamc_schedulefree_plus_paper_cls():

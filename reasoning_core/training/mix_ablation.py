@@ -16,6 +16,7 @@ __all__ = [
     "add_mix_ablation_args",
     "wrap_aux_dataset_with_ablation",
     "MixAblationCallback",
+    "log_mix_ablation_artifact",
 ]
 
 
@@ -114,6 +115,9 @@ class MixAblationCallback(TrainerCallback):
         self.eval_rows += 1
         self._maybe_log_wandb_analysis()
 
+    def on_train_end(self, args, state, control, **kwargs):
+        log_mix_ablation_artifact(self.tracker.log_path)
+
     def _maybe_log_wandb_analysis(self):
         if not self.tracker.wandb_analysis:
             return
@@ -139,10 +143,31 @@ class MixAblationCallback(TrainerCallback):
                 metrics[f"tmix/effect/{task}"] = float(row["effect"])
                 metrics[f"tmix/stderr/{task}"] = float(row["stderr"])
             wandb.log(metrics)
+            log_mix_ablation_artifact(self.tracker.log_path)
         except Exception as exc:
             if not self.analysis_warning_printed:
                 print(f"mix_ablation W&B analysis disabled after error: {exc}")
                 self.analysis_warning_printed = True
+
+
+def log_mix_ablation_artifact(log_path):
+    path = Path(log_path)
+    if not path.exists() or path.stat().st_size == 0:
+        return
+    try:
+        import wandb
+
+        if wandb.run is None:
+            return
+        artifact = wandb.Artifact(
+            "taskmix-windows",
+            type="taskmix",
+            metadata={"rows": sum(1 for _ in path.open("r", encoding="utf-8"))},
+        )
+        artifact.add_file(str(path), name="taskmix_windows.jsonl")
+        wandb.run.log_artifact(artifact, aliases=["latest"])
+    except Exception as exc:
+        print(f"mix_ablation artifact upload skipped: {exc}")
 
 
 @dataclass

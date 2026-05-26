@@ -37,8 +37,9 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, TrainerCallback, A
 from trl import SFTConfig
 from tabulate import tabulate
 from reasoning_core.downstream_eval import run_harness, run_platinum
-from reasoning_core.training.mix_ablation import MixAblationCallback, add_mix_ablation_args, wrap_aux_dataset_with_ablation
+from reasoning_core.training.mix_ablation import MixAblationCallback, add_mix_ablation_args, log_mix_ablation_artifact, wrap_aux_dataset_with_ablation
 from reasoning_core.training.optimizers import add_optimizer_args, create_optimizer_and_scheduler, trainer_cls_for_optimizer
+from reasoning_core.training.source_signals import SourceDataCollator, add_source, pack_by_source
 import socket, threading, time, atexit
 
 disable_caching()
@@ -61,7 +62,7 @@ parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
 parser.add_argument('--aux_version', type=str, default="rc12")
-parser.add_argument('--script_version', type=str, default="22")
+parser.add_argument('--script_version', type=str, default="23")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
@@ -370,6 +371,8 @@ ablation_tracker = None
 if args.iterable_mode:
     s1_main_ds = load_exact_tokens_iterable(args.main_data, args.token_budget, max_len=args.max_length)
     s1_aux_ds = load_exact_tokens_iterable(args.aux_data, aux_budget, max_len=args.max_length, cycle=True)
+    if args.train_source_loss:
+        s1_main_ds, s1_aux_ds = add_source(s1_main_ds, 0), add_source(s1_aux_ds, 1)
 
     if args.mix_ablation and s1_aux_ds is not None:
         s1_aux_ds, ablation_tracker = wrap_aux_dataset_with_ablation(s1_aux_ds, args=args, eff_batch=eff_batch)
@@ -383,6 +386,8 @@ if args.iterable_mode:
         ).shuffle(seed=42, buffer_size=100)
     else:
         s1_final = parts[0].shuffle(seed=42, buffer_size=100)
+    if args.train_source_loss:
+        s1_final = pack_by_source(s1_final, tokenizer, args.max_length)
 
     s2_main_ds = None  # disabled in iterable mode
 else:
@@ -582,6 +587,9 @@ common_args = dict(
     dataset_num_proc=1, max_length=args.max_length,
     save_strategy="steps", save_total_limit=2,
 )
+if args.train_source_loss:
+    common_args["packing"] = False
+    common_args["remove_unused_columns"] = False
 
 # Iterable mode: compute max_steps from token budget (trainer can't infer from a stream)
 if args.iterable_mode:
@@ -655,6 +663,7 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
         model=model, processing_class=tokenizer,
         args=SFTConfig(**sft_kwargs),
         train_dataset=ds, eval_dataset=trainer_evals,
+        data_collator=SourceDataCollator(tokenizer.pad_token_id, max_length=args.max_length) if args.train_source_loss else None,
         optimizers=(optimizer, scheduler),
         callbacks=callbacks,
     )
@@ -708,6 +717,8 @@ if "eval" not in completed:
         trainer.evaluate(metric_key_prefix="final")
         if args.iterable_mode and aux_tl_evals:
             trainer.evaluate(eval_dataset=getattr(trainer, "aux_tl_eval_dataset", aux_tl_evals), metric_key_prefix="final")
+    if ablation_tracker is not None:
+        log_mix_ablation_artifact(ablation_tracker.log_path)
     wandb.finish()
     save_ckpt({"hash": run_hash, "group_id": group_id,
                "args": {k: str(v) for k, v in vars(args).items()},
