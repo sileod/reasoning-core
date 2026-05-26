@@ -36,7 +36,6 @@ import hashlib
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainerCallback, AutoConfig
 from trl import SFTConfig
 from tabulate import tabulate
-from reasoning_core.downstream_eval import run_harness, run_platinum
 from reasoning_core.training.mix_ablation import MixAblationCallback, add_mix_ablation_args, log_mix_ablation_artifact, wrap_aux_dataset_with_ablation
 from reasoning_core.training.optimizers import add_optimizer_args, create_optimizer_and_scheduler, trainer_cls_for_optimizer
 from reasoning_core.training.source_signals import SourceDataCollator, add_source, pack_by_source
@@ -414,6 +413,8 @@ class ScheduleFreeModeCallback(TrainerCallback):
 
 
 def downstream_eval(model, tokenizer):
+    from reasoning_core.downstream_eval import run_harness, run_platinum
+
     return {
         **run_harness(model, tokenizer),
         **run_platinum(model, tokenizer),
