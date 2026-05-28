@@ -834,38 +834,38 @@ def _exact_next_tokens_and_stop(grammar, prefix, parser=None, nullable=None, fir
     return valid_tokens, can_stop
 
 
-def exact_completions(grammar, prefix, k, max_states=1024):
-    """
-    All distinct k-length suffixes making prefix+suffix a complete sentence.
-    Returns [] (safe skip) if state space overflows — never produces wrong results.
-    """
-    prefix = list(prefix)
+def exact_window_fills(grammar, prefix, k, suffix=(), max_states=1024):
+    """All distinct k-token windows W such that prefix + W + suffix is grammatical.
+    Empty suffix => W must yield STOP (original `exact_completions` behavior).
+    Returns [] (safe skip) on state-space overflow."""
+    prefix, suffix = list(prefix), list(suffix)
     parser = EarleyChartParser(grammar)
     nullable, first = _compute_nullable_and_first(grammar)
 
     frontier = {()}
     for _ in range(k):
         nxt = set()
-        for suf in frontier:
+        for win in frontier:
             toks, _ = _exact_next_tokens_and_stop(
-                grammar, prefix + list(suf), parser, nullable, first
+                grammar, prefix + list(win), parser, nullable, first
             )
             for tok in toks:
-                nxt.add(suf + (tok,))
+                nxt.add(win + (tok,))
         if not nxt or len(nxt) > max_states:
             return []
         frontier = nxt
 
-    return [
-        list(suf)
-        for suf in sorted(frontier)
-        if _exact_next_tokens_and_stop(
-            grammar, prefix + list(suf), parser, nullable, first
-        )[1]
-    ]
+    if not suffix:
+        return [list(w) for w in sorted(frontier)
+                if _exact_next_tokens_and_stop(grammar, prefix + list(w),
+                                               parser, nullable, first)[1]]
+    return [list(w) for w in sorted(frontier)
+            if next(parser.parse(prefix + list(w) + suffix), None) is not None]
+
 
 def sample_blanking(target, cands, min_blanks, max_blanks, tries=20):
-    """Sample a random valid hint set; falls back to greedy minimal."""
+    """Sample a random hint set whose hints uniquely identify target among cands.
+    Falls back to greedy minimal hinting."""
     k = len(target)
     max_blanks = min(max_blanks, k - 1)
     if min_blanks > max_blanks:
@@ -893,22 +893,20 @@ def sample_blanking(target, cands, min_blanks, max_blanks, tries=20):
         return list(target), {i: target[i] for i in sorted(hinted)}
     return None
 
+
 def _format_template(k, hints):
     return " ".join(hints.get(i, "___") for i in range(k))
 
+
 class ConstrainedContinuation(Task):
-    """Fill-in-the-blanks grammar continuation.
+    """Fill-in-the-blanks over a k-token window placed anywhere in a grammatical
+    sentence. The window is wrapped by a PREFIX (possibly empty) and a SUFFIX
+    (possibly empty); the model fills blanks so PREFIX + filled-TEMPLATE + SUFFIX
+    is grammatical. When the suffix is empty the task is a continuation
+    (Dyck-friendly); when non-empty it is a cloze (works on linear grammars too)."""
 
-    Given a grammar, a prefix, and a mostly-revealed continuation
-    template, find the unique completion that forms a grammatical
-    sentence.  Revealed tokens are fixed; ___ marks blanks to fill.
-    """
-
-    def __init__(
-        self,
-        config: GrammarConfig = GrammarConfig()
-    ):
-        config.prob_resampling_grammar=0.0 # needed for speed
+    def __init__(self, config: GrammarConfig = GrammarConfig()):
+        config.prob_resampling_grammar = 0.0  # needed for speed
         config.min_k = max(3, config.min_k)
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
@@ -925,22 +923,30 @@ class ConstrainedContinuation(Task):
                     ) @ "lang").split()
                 except (ValueError, RecursionError):
                     continue
-                if len(sent) < self.config.min_k + 1:
+                if len(sent) < self.config.min_k:
                     continue
 
-                slots = [(plen, k)
-                        for plen in range(1, min(5, len(sent) - self.config.min_k) + 1)
-                        for k in range(self.config.min_k, min(self.config.max_k, len(sent) - plen) + 1)]
+                slots = [(start, k)
+                         for k in range(self.config.min_k, self.config.max_k + 1)
+                         for start in range(0, len(sent) - k + 1)]
                 random.shuffle(slots)
 
-                for plen, k in slots:
-                    prefix = sent[:plen]
-                    cands = exact_completions(g, prefix, k)
-                    if not (self.config.min_options <= len(cands) <= self.config.max_options):
+                for start, k in slots:
+                    prefix = sent[:start]
+                    suffix = sent[start + k:]
+                    cands = exact_window_fills(g, prefix, k, suffix)
+                    # A single candidate is a valid deterministic cloze: PREFIX
+                    # and SUFFIX may already determine the window. When there
+                    # are multiple candidates, TEMPLATE hints disambiguate.
+                    if not cands or len(cands) > self.config.max_options:
                         continue
 
-                    target = list(random.choice(cands))
-                    result = sample_blanking(target, cands, self.config.min_blanks, self.config.max_blanks)
+                    target = sent[start:start + k]
+                    if list(target) not in cands:
+                        continue  # defensive: truth should always be a candidate
+                    result = sample_blanking(target, cands,
+                                             self.config.min_blanks,
+                                             self.config.max_blanks)
                     if result is None:
                         continue
                     target, hints = result
@@ -951,6 +957,7 @@ class ConstrainedContinuation(Task):
                             g="\n".join(str(p) for p in g.productions()),
                             k=k,
                             prefix=prefix,
+                            suffix=suffix,
                             hints={str(i): tok for i, tok in hints.items()},
                             template=_format_template(k, hints),
                             blanks=blanks,
@@ -965,16 +972,17 @@ class ConstrainedContinuation(Task):
 
     def prompt(self, meta):
         pfx = " ".join(meta.prefix) if meta.prefix else "<empty>"
+        sfx = " ".join(meta.suffix) if meta.get("suffix") else "<empty>"
         nb = meta.n_blanks
         bw = "blank" if nb == 1 else "blanks"
         return (
             f"(GRAMMAR)\n{meta.g}\n\n"
             f"(PREFIX)\n{pfx}\n\n"
             f"(TEMPLATE)\n{meta.template}\n\n"
-            f"Fill in the {nb} {bw} (___) to form a grammatical continuation "
-            f"of PREFIX using exactly {meta.k} tokens.\n"
-            f"Fixed tokens must remain in place. "
-            f"The answer is all {meta.k} tokens space-separated."
+            f"(SUFFIX)\n{sfx}\n\n"
+            f"Fill in the {nb} {bw} (___) so that PREFIX + filled-TEMPLATE + SUFFIX "
+            f"is a grammatical sentence. Fixed tokens of TEMPLATE must remain in place.\n"
+            f"The answer is the {meta.k} tokens of the filled TEMPLATE, space-separated."
         )
 
     def score_answer(self, answer, entry):
@@ -996,21 +1004,18 @@ class ConstrainedContinuation(Task):
             if idx >= len(ans) or ans[idx] != tok:
                 return 0.0
 
-        # Partial credit based on blank accuracy
         blanks = [int(b) for b in entry.metadata["blanks"]]
         if not blanks:
             return 0.0
         blank_correct = sum(1 for b in blanks if ans[b] == ref[b]) / len(blanks)
 
-        # Grammaticality bonus
         try:
             g = CFG.fromstring(entry.metadata["g"])
-            _, can_stop = _exact_next_tokens_and_stop(
-                g, list(entry.metadata["prefix"]) + ans
-            )
+            full = list(entry.metadata["prefix"]) + ans + list(entry.metadata.get("suffix", []))
+            grammatical = next(EarleyChartParser(g).parse(full), None) is not None
         except Exception:
-            can_stop = False
+            grammatical = False
 
-        if can_stop:
+        if grammatical:
             return 0.3 + 0.6 * blank_correct   # 0.3 – 0.9
         return 0.15 * blank_correct             # 0.0 – 0.15
