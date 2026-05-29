@@ -1,4 +1,4 @@
-"""Symbolic rewriting: λ-calculus β-reduction and first-order unification.
+"""Symbolic rewriting: λ-calculus β-reduction.
 
 - `lambda_reduction` — reduce an untyped λ-term to β-normal form.
   Instances are built by *anti-reduction*: sample an NF, then insert redexes
@@ -8,14 +8,9 @@
       3. substitution (λx.M[T↦x]) T     (optionally duplicating T)
   Move 3 can fail capture-avoidance silently; we catch it by normalising the
   result and checking α-equivalence with the target NF.
-
-- `term_unification` — unchanged; MGU via the `unification` library.
 """
 from dataclasses import dataclass
 import ast, random, re
-
-from unification import unify, reify, var as mkvar
-from unification.variable import Var
 
 from reasoning_core.template import Task, Problem, Config, edict
 
@@ -240,105 +235,9 @@ class LambdaReduction(Task):
         return float(_debruijn(got) == _debruijn(ref))
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# First-order term unification (unchanged)
-# ─────────────────────────────────────────────────────────────────────────────
-_TERM_TOK = re.compile(r'[A-Za-z_]\w*|[(),]')
-
-def _show_term(t) -> str:
-    if isinstance(t, Var): return t.token
-    if isinstance(t, tuple):
-        return f"{t[0]}({','.join(_show_term(x) for x in t[1:])})"
-    return str(t)
-
-def _has_var(t) -> bool:
-    if isinstance(t, Var): return True
-    if isinstance(t, tuple): return any(_has_var(x) for x in t[1:])
-    return False
-
-def _vars_in(t):
-    if isinstance(t, Var): return {t}
-    if isinstance(t, tuple):
-        s = set()
-        for x in t[1:]: s |= _vars_in(x)
-        return s
-    return set()
-
-_FUNCS = ['f', 'g', 'h', 'p', 'q']
-_ATOMS = ['a', 'b', 'c', 'd', 'e']
-
-def _gen_term(depth, rng, var_pool):
-    if depth <= 0 or rng.random() < 0.3:
-        if var_pool and rng.random() < 0.5:
-            return rng.choice(var_pool)
-        return rng.choice(_ATOMS)
-    head = rng.choice(_FUNCS)
-    arity = rng.randint(1, 3)
-    return (head, *[_gen_term(depth - 1, rng, var_pool) for _ in range(arity)])
 
 
-@dataclass
-class TermUnificationConfig(Config):
-    depth: int = 2
-    n_vars: int = 2
-
-    def update(self, c=1):
-        self.depth  += c
-        self.n_vars += c
 
 
-class TermUnification(Task):
-    def __init__(self, config=None):
-        super().__init__(config=config or TermUnificationConfig())
 
-    def generate(self):
-        rng = random.Random()
-        NAMES = ['X', 'Y', 'Z', 'W', 'U', 'V', 'X1', 'Y1', 'Z1', 'W1']
-        for _ in range(300):
-            n = max(2, min(int(self.config.n_vars), len(NAMES)))
-            pool = [mkvar(nm) for nm in NAMES[:n]]
-            skel = _gen_term(self.config.depth + 1, rng, pool)
-            if len(_vars_in(skel)) < 2: continue
 
-            def partial():
-                keep = [v for v in _vars_in(skel) if rng.random() < 0.5]
-                sub = {v: _gen_term(self.config.depth, rng, []) for v in keep}
-                return reify(skel, sub)
-
-            t1, t2 = partial(), partial()
-            s1, s2 = _show_term(t1), _show_term(t2)
-            if s1 == s2: continue
-            mgu = unify(t1, t2)
-            if not mgu: continue
-            fully = {k.token: reify(k, mgu) for k in mgu}
-            if any(_has_var(v) for v in fully.values()): continue
-            nice = {k: _show_term(v) for k, v in fully.items()}
-            return Problem(
-                metadata=edict(term1=s1, term2=s2, mgu=nice),
-                answer=repr(dict(sorted(nice.items()))),
-            )
-        raise RuntimeError("could not sample a unifiable pair")
-
-    def prompt(self, metadata):
-        return (
-            "Find the most general unifier (MGU) of the following first-order "
-            "terms.\nUppercase identifiers are variables; lowercase are "
-            "constants / function symbols.\n\n"
-            f"T1 = {metadata['term1']}\n"
-            f"T2 = {metadata['term2']}\n\n"
-            "The answer is a Python dict mapping each bound variable (as a "
-            "string key) to its fully-resolved ground term (as a string "
-            "value), with keys sorted alphabetically.\n"
-            "Example: {'X': 'f(a)', 'Y': 'b'}"
-        )
-
-    def score_answer(self, answer, entry):
-        if answer is None: return 0.0
-        try:
-            got = ast.literal_eval(str(answer).strip())
-            if not isinstance(got, dict): return 0.0
-            got = {str(k): str(v).replace(' ', '') for k, v in got.items()}
-        except Exception:
-            return 0.0
-        ref = {k: v.replace(' ', '') for k, v in entry.metadata['mgu'].items()}
-        return float(got == ref)
