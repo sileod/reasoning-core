@@ -208,7 +208,7 @@ class SequentialInduction(Task):
             formula = self.one_shot_sympy_generate()
             S = Sequence(formula)
         data = {"first elements" : S.n_first_elem(self.config.n_visible_terms), "degree of recursion" : S.degree, "initial terms" : S.first_elem}
-        answer = str(formula)
+        answer = format_additive_normal_form(formula)
         return Problem(metadata = data, answer = answer)
 
     def verify(self, y_pred, y_truth, initial_element = None) -> bool:
@@ -398,6 +398,37 @@ def Mod(x, y):
     x = sp.sympify(x)
     y = sp.sympify(y)
     return x % y
+
+def format_additive_normal_form(expr):
+    """Render an expanded expression with lower-degree terms first."""
+    expanded = sp.expand(expr)
+    n = next((sym for sym in expanded.free_symbols if sym.name == 'n'), sp.Symbol('n'))
+    terms = list(sp.Add.make_args(expanded))
+
+    def term_degree(term):
+        degree = 0
+        for base, power in term.as_powers_dict().items():
+            if base == n or isinstance(base, sp.Indexed):
+                try:
+                    degree += int(power)
+                except TypeError:
+                    return float('inf')
+        return degree
+
+    def sort_key(term):
+        return (term_degree(term), not term.is_number, str(term).lstrip('-'))
+
+    terms.sort(key=sort_key)
+    if not terms:
+        return "0"
+
+    rendered = str(terms[0])
+    for term in terms[1:]:
+        if term.could_extract_minus_sign():
+            rendered += " - " + str(-term)
+        else:
+            rendered += " + " + str(term)
+    return rendered
 
 def convert_to_sympy(tokens, recurrence_depth = 3):
     """Convert a list of tokens to a SymPy expression with special handling"""

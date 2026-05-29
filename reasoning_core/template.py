@@ -222,7 +222,7 @@ class Task(ProceduralDataset):
         return self.generate_example(*args, **kwargs)
     
     def validate(self, n_samples=10):
-        """Sanity checks to ensure that generation and scoring are working as expected."""
+        """Smoke tests to ensure that generation and scoring are working as expected."""
         x=self.generate_example()
         assert isinstance(x, Problem), f"Generated example must be of type Problem, got {type(x)}"
         assert self.score_answer(x.answer, x)==1, "The generated answer must be correct"
@@ -243,7 +243,7 @@ class Task(ProceduralDataset):
         self.score_answer('import fakemodule',x) # should not eval strings 
 
         c0=copy.deepcopy(self.config)
-        self.config.set_level(1)
+        self.config.set_level(self.config.level+1)
         assert self.config!=c0
         self.config.set_level(0)
         #assert self.config==c0
