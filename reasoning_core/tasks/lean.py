@@ -33,14 +33,18 @@ from reasoning_core.template import Config, Problem, Task
 _DIRS = AppDirs("reasoning_core")
 _BASE = Path(_DIRS.user_data_dir) / "lean"
 _ELAN_HOME = _BASE / "elan"
-_PROJECT = _BASE / "project"
-_INSTALL_STAMP = _PROJECT / ".reasoning_core_lean_env.json"
+_PROJECT_MATHLIB = _BASE / "project"
+_PROJECT_CORE = _BASE / "project_core"
+_PROJECT = _PROJECT_MATHLIB
 _LEAN_TOOLCHAIN = "leanprover/lean4:v4.29.0"
 _MATHLIB_REV = "v4.29.0"
 _REPL_REV = "v4.29.0"
 _ELAN_RELEASE = "v4.1.2"
-_PRELUDE_IMPORTS = "import Mathlib"
+_PRELUDE_IMPORTS_MATHLIB = "import Mathlib"
+_PRELUDE_IMPORTS_CORE = "import Std"
+_PRELUDE_IMPORTS = _PRELUDE_IMPORTS_MATHLIB
 _LEAN_IMPORT_CMD = "import ReasoningCorePrelude"
+_ALLOW_SOURCE_BUILD_ENV = "REASONING_CORE_LEAN_ALLOW_SOURCE_BUILD"
 
 BANNED_LEAN_TOKENS = (
     "sorry", "admit", "unsafe", "#eval", "native_decide",
@@ -61,6 +65,60 @@ require repl from git
 
 lean_lib ReasoningCorePrelude
 """
+
+_LAKEFILE_CORE = f"""\
+import Lake
+open Lake DSL
+
+package leanrepl_core
+
+require repl from git
+  "https://github.com/leanprover-community/repl" @ "{_REPL_REV}"
+
+lean_lib ReasoningCorePrelude
+"""
+
+
+def _project(use_mathlib=True):
+    return _PROJECT_MATHLIB if use_mathlib else _PROJECT_CORE
+
+
+def _lakefile(use_mathlib=True):
+    return _LAKEFILE if use_mathlib else _LAKEFILE_CORE
+
+
+def _prelude_imports(use_mathlib=True):
+    return _PRELUDE_IMPORTS_MATHLIB if use_mathlib else _PRELUDE_IMPORTS_CORE
+
+
+def _install_stamp(use_mathlib=True):
+    return _project(use_mathlib) / ".reasoning_core_lean_env.json"
+
+
+def _profile_stamp(use_mathlib=True):
+    stamp = {
+        "lean": _LEAN_TOOLCHAIN,
+        "repl": _REPL_REV,
+        "prelude": _prelude_imports(use_mathlib),
+        "profile": "mathlib" if use_mathlib else "core",
+    }
+    if use_mathlib:
+        stamp["mathlib"] = _MATHLIB_REV
+    return stamp
+
+
+def _profile_ready(use_mathlib=True):
+    project = _project(use_mathlib)
+    repl_bin = project / ".lake" / "packages" / "repl" / ".lake" / "build" / "bin" / "repl"
+    prelude_olean = project / ".lake" / "build" / "lib" / "lean" / "ReasoningCorePrelude.olean"
+    ready = repl_bin.exists() and prelude_olean.exists()
+    if use_mathlib:
+        mathlib_olean = project / ".lake" / "packages" / "mathlib" / ".lake" / "build" / "lib" / "lean" / "Mathlib.olean"
+        ready = ready and mathlib_olean.exists()
+    try:
+        return ready and json.loads(_install_stamp(use_mathlib).read_text()) == _profile_stamp(use_mathlib)
+    except Exception:
+        return False
 
 
 def _elan_env():
@@ -106,52 +164,72 @@ def _install_elan():
                    env=_elan_env(), check=True)
 
 
-def _ensure_project():
-    """Build a lake project with Mathlib + REPL deps under appdirs. Returns repl binary."""
-    repl_bin = _PROJECT / ".lake" / "packages" / "repl" / ".lake" / "build" / "bin" / "repl"
-    prelude = _PROJECT / "ReasoningCorePrelude.lean"
-    prelude_olean = _PROJECT / ".lake" / "build" / "lib" / "lean" / "ReasoningCorePrelude.olean"
-    mathlib_olean = _PROJECT / ".lake" / "packages" / "mathlib" / ".lake" / "build" / "lib" / "lean" / "Mathlib.olean"
-    stamp = {
-        "lean": _LEAN_TOOLCHAIN,
-        "mathlib": _MATHLIB_REV,
-        "repl": _REPL_REV,
-        "prelude": _PRELUDE_IMPORTS,
-    }
-    build_ready = repl_bin.exists() and prelude_olean.exists() and mathlib_olean.exists()
-    if build_ready and _INSTALL_STAMP.exists():
+def _ensure_project(use_mathlib=True):
+    """Build a Lake project with the requested Lean profile. Returns repl binary."""
+    project = _project(use_mathlib)
+    prelude_imports = _prelude_imports(use_mathlib)
+    repl_bin = project / ".lake" / "packages" / "repl" / ".lake" / "build" / "bin" / "repl"
+    prelude = project / "ReasoningCorePrelude.lean"
+    prelude_olean = project / ".lake" / "build" / "lib" / "lean" / "ReasoningCorePrelude.olean"
+    mathlib_olean = project / ".lake" / "packages" / "mathlib" / ".lake" / "build" / "lib" / "lean" / "Mathlib.olean"
+    stamp = _profile_stamp(use_mathlib)
+    build_ready = repl_bin.exists() and prelude_olean.exists()
+    if use_mathlib:
+        build_ready = build_ready and mathlib_olean.exists()
+    install_stamp = _install_stamp(use_mathlib)
+    if build_ready and install_stamp.exists():
         try:
-            if json.loads(_INSTALL_STAMP.read_text()) == stamp:
+            if json.loads(install_stamp.read_text()) == stamp:
                 return repl_bin
         except Exception:
             pass
     if build_ready and prelude.exists():
-        if prelude.read_text() == _PRELUDE_IMPORTS + "\n":
-            _INSTALL_STAMP.write_text(json.dumps(stamp, sort_keys=True))
+        if prelude.read_text() == prelude_imports + "\n":
+            install_stamp.write_text(json.dumps(stamp, sort_keys=True))
             return repl_bin
     _install_elan()
-    _PROJECT.mkdir(parents=True, exist_ok=True)
-    (_PROJECT / "lakefile.lean").write_text(_LAKEFILE)
-    (_PROJECT / "lean-toolchain").write_text(_LEAN_TOOLCHAIN + "\n")
-    (_PROJECT / "ReasoningCorePrelude.lean").write_text(_PRELUDE_IMPORTS + "\n")
+    project.mkdir(parents=True, exist_ok=True)
+    (project / "lakefile.lean").write_text(_lakefile(use_mathlib))
+    (project / "lean-toolchain").write_text(_LEAN_TOOLCHAIN + "\n")
+    (project / "ReasoningCorePrelude.lean").write_text(prelude_imports + "\n")
     env = _elan_env()
-    subprocess.run(["lake", "update"], cwd=_PROJECT, env=env, check=True)
-    # mathlib cache: skip the multi-hour olean compile, fall back silently if unavailable
-    subprocess.run(["lake", "exe", "cache", "get"], cwd=_PROJECT, env=env, check=False)
-    subprocess.run(["lake", "build", "ReasoningCorePrelude"], cwd=_PROJECT, env=env, check=True)
-    subprocess.run(["lake", "build", "repl"], cwd=_PROJECT, env=env, check=True)
+    subprocess.run(["lake", "update"], cwd=project, env=env, check=True)
+    if use_mathlib:
+        # mathlib cache: skip the multi-hour olean compile. If cache download fails,
+        # fail fast unless the caller explicitly opted into a source build.
+        cache = subprocess.run(["lake", "exe", "cache", "get"], cwd=project, env=env)
+        if cache.returncode != 0 or not mathlib_olean.exists():
+            if env.get(_ALLOW_SOURCE_BUILD_ENV) != "1":
+                raise RuntimeError(
+                    "Lean Mathlib binary cache was not available, so building would "
+                    "compile Mathlib from source and can take hours. Fix the cache "
+                    "download, or set "
+                    f"{_ALLOW_SOURCE_BUILD_ENV}=1 to allow the slow source build."
+                )
+    subprocess.run(["lake", "build", "ReasoningCorePrelude"], cwd=project, env=env, check=True)
+    subprocess.run(["lake", "build", "repl"], cwd=project, env=env, check=True)
     if not repl_bin.exists():
         raise RuntimeError(f"REPL binary missing after build: {repl_bin}")
-    _INSTALL_STAMP.write_text(json.dumps(stamp, sort_keys=True))
+    install_stamp.write_text(json.dumps(stamp, sort_keys=True))
     return repl_bin
 
 
 def ensure_lean_mathlib(verbose=True):
     """Install or reuse Lean, Mathlib, and leanprover-community/repl in appdirs."""
-    repl_bin = _ensure_project()
+    repl_bin = _ensure_project(use_mathlib=True)
     if verbose:
         print(f"Lean toolchain: {_LEAN_TOOLCHAIN}")
-        print(f"Mathlib project: {_PROJECT}")
+        print(f"Mathlib project: {_PROJECT_MATHLIB}")
+        print(f"REPL binary: {repl_bin}")
+    return repl_bin
+
+
+def ensure_lean_core(verbose=True):
+    """Install or reuse Lean, Std, and leanprover-community/repl in appdirs."""
+    repl_bin = _ensure_project(use_mathlib=False)
+    if verbose:
+        print(f"Lean toolchain: {_LEAN_TOOLCHAIN}")
+        print(f"Lean core project: {_PROJECT_CORE}")
         print(f"REPL binary: {repl_bin}")
     return repl_bin
 
@@ -161,8 +239,9 @@ def ensure_lean_mathlib(verbose=True):
 # ============================================================================
 
 class LeanRunner:
-    def __init__(self, timeout=360):
+    def __init__(self, timeout=360, use_mathlib=True):
         self.timeout = timeout
+        self.use_mathlib = use_mathlib
         self.cache = {}
         self.proc = None
         self.stdout = queue.Queue()
@@ -171,10 +250,11 @@ class LeanRunner:
 
     def _start(self):
         self.close()
-        repl_bin = _ensure_project()
+        project = _project(self.use_mathlib)
+        repl_bin = _ensure_project(use_mathlib=self.use_mathlib)
         self.proc = subprocess.Popen(
             ["lake", "env", str(repl_bin)],
-            cwd=_PROJECT, env=_elan_env(),
+            cwd=project, env=_elan_env(),
             text=True, encoding="utf-8",
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             start_new_session=True,
@@ -187,7 +267,7 @@ class LeanRunner:
         if errors or self._mathlib_env is None:
             diag = "\n".join(str(m.get("data", m)) for m in errors or msgs)
             self.close()
-            raise RuntimeError(f"Lean REPL failed to import Mathlib prelude: {diag}")
+            raise RuntimeError(f"Lean REPL failed to import prelude: {diag}")
 
     def _read(self):
         for line in self.proc.stdout:
@@ -245,12 +325,11 @@ class LeanRunner:
         return out
 
 
-_GLOBAL_RUNNER = None
-def get_runner():
-    global _GLOBAL_RUNNER
-    if _GLOBAL_RUNNER is None:
-        _GLOBAL_RUNNER = LeanRunner()
-    return _GLOBAL_RUNNER
+_GLOBAL_RUNNERS = {}
+def get_runner(use_mathlib=True):
+    if use_mathlib not in _GLOBAL_RUNNERS:
+        _GLOBAL_RUNNERS[use_mathlib] = LeanRunner(use_mathlib=use_mathlib)
+    return _GLOBAL_RUNNERS[use_mathlib]
 
 
 def _mget(metadata, key):
@@ -272,6 +351,7 @@ class LeanConfig(Config):
     expr_depth: int = 3
     n_hyps: int = 2
     n_candidates: int = 6
+    use_mathlib: bool = True
 
     def update(self, c):
         self.n_vars += c
@@ -535,6 +615,77 @@ def gen_list_length(config):
     )
 
 
+def gen_core_prop_chain(config):
+    n_hyps = max(2, min(6, int(config.n_hyps)))
+    props = [f"p{i}" for i in range(n_hyps + 1)]
+    hyps = [(f"h{i}", f"{props[i]} → {props[i + 1]}") for i in range(n_hyps)]
+    expr = "hp"
+    for i in range(n_hyps):
+        expr = f"h{i} ({expr})"
+    proof = f"fun hp => {expr}"
+    return edict(
+        decl=f"({' '.join(props)} : Prop)",
+        hyps=hyps,
+        goal=f"{props[0]} → {props[-1]}",
+        primary=f"exact {proof}",
+        kind="core_prop_chain",
+    )
+
+
+def gen_core_and(config):
+    cases = (
+        ("p ∧ q → p", "intro h; exact h.1"),
+        ("p ∧ q → q", "intro h; exact h.2"),
+        ("p → q → p ∧ q", "intro hp hq; exact And.intro hp hq"),
+        ("p ∧ q → q ∧ p", "intro h; exact And.intro h.2 h.1"),
+        ("(p ∧ q) ∧ r → p ∧ (q ∧ r)",
+         "intro h; exact And.intro h.1.1 (And.intro h.1.2 h.2)"),
+    )
+    goal, proof = random.choice(cases)
+    return edict(decl="(p q r : Prop)", hyps=[], goal=goal,
+                 primary=proof, kind="core_and")
+
+
+def gen_core_or(config):
+    cases = (
+        ("p → p ∨ q", "intro hp; exact Or.inl hp"),
+        ("q → p ∨ q", "intro hq; exact Or.inr hq"),
+        ("p ∨ q → q ∨ p",
+         "intro h; cases h with | inl hp => exact Or.inr hp | inr hq => exact Or.inl hq"),
+        ("(p → r) → (q → r) → p ∨ q → r",
+         "intro hp hq h; cases h with | inl h0 => exact hp h0 | inr h1 => exact hq h1"),
+    )
+    goal, proof = random.choice(cases)
+    return edict(decl="(p q r : Prop)", hyps=[], goal=goal,
+                 primary=proof, kind="core_or")
+
+
+def gen_core_nat_decide(config):
+    a = random.randint(0, 30)
+    b = random.randint(0, 30)
+    op = random.choice(["+", "*"])
+    res = {"+": a + b, "*": a * b}[op]
+    return edict(
+        decl="", hyps=[],
+        goal=f"({a} {op} {b} : Nat) = {res}",
+        primary="decide", kind="core_nat_decide",
+    )
+
+
+def gen_core_list(config):
+    names = list("xyzuvw")[: max(2, min(4, int(config.n_vars)))]
+    xs, ys = random.sample(names, 2)
+    cases = (
+        (f"([] ++ {xs} : List Nat) = {xs}", "rfl"),
+        (f"({xs} ++ [] : List Nat) = {xs}", "simp"),
+        (f"List.length ({xs} ++ {ys}) = List.length {xs} + List.length {ys}",
+         "simp [List.length_append]"),
+    )
+    goal, proof = random.choice(cases)
+    return edict(decl=f"({' '.join(names)} : List Nat)", hyps=[],
+                 goal=goal, primary=proof, kind="core_list")
+
+
 # ============================================================================
 # Strategy 2: Mathlib lemma schemas + gramforge slot instantiation
 # ============================================================================
@@ -585,6 +736,11 @@ STRATEGIES = (
     gen_lemma,
 )
 
+CORE_STRATEGIES = (
+    gen_core_prop_chain, gen_core_and, gen_core_or,
+    gen_core_nat_decide, gen_core_list,
+)
+
 
 # ============================================================================
 # Instance assembly
@@ -602,6 +758,11 @@ _KIND_DISTRACTORS = {
     "list_length":("rfl", "decide", "omega"),
     "finset_identity": ("rfl", "decide", "omega"),
     "set_monotone":    ("rfl", "decide", "omega", "simp"),
+    "core_prop_chain": ("rfl", "decide", "simp", "intro h; assumption"),
+    "core_and":        ("rfl", "decide", "simp", "exact True.intro"),
+    "core_or":         ("rfl", "decide", "simp", "exact True.intro"),
+    "core_nat_decide": ("rfl", "simp", "exact True.intro"),
+    "core_list":       ("rfl", "decide", "exact True.intro"),
 }
 _LEMMA_DISTRACTORS = ("rfl", "decide", "omega", "simp")
 
@@ -614,6 +775,7 @@ def _render(inst, name="ex"):
 
 def _candidate_pool(inst, n_candidates, header):
     """Build candidate proofs and label them by compiling with Lean."""
+    use_mathlib = not str(inst.kind).startswith("core_")
     base = _KIND_DISTRACTORS.get(inst.kind)
     if base is None and inst.kind.startswith("lemma:"):
         base = _LEMMA_DISTRACTORS
@@ -625,7 +787,7 @@ def _candidate_pool(inst, n_candidates, header):
             candidates.append(cand)
         if len(candidates) >= int(n_candidates):
             break
-    runner = get_runner()
+    runner = get_runner(use_mathlib=use_mathlib)
     labels = [
         bool(_safe(cand) and runner.check(header + "  " + cand + "\n")[0])
         for cand in candidates
@@ -638,8 +800,9 @@ def _candidate_pool(inst, n_candidates, header):
 def make_instance(config):
     """Sample a strategy and build a Lean-verified labeled instance."""
     n_cand = max(2, int(getattr(config, "n_candidates", 4)))
+    strategies = STRATEGIES if getattr(config, "use_mathlib", True) else CORE_STRATEGIES
     for _ in range(50):
-        inst = random.choice(STRATEGIES)(config)
+        inst = random.choice(strategies)(config)
         if not inst or not _safe(inst.goal):
             continue
         header = _render(inst)
@@ -653,6 +816,7 @@ def make_instance(config):
             kind=inst.kind, header=header,
             primary=inst.primary, elegant=inst.primary,
             candidates=candidates, labels=labels,
+            use_mathlib=getattr(config, "use_mathlib", True),
         )
     raise RuntimeError("failed to produce a Lean instance")
 
@@ -791,6 +955,22 @@ def _proof_script_finset(config):
     )
 
 
+def _proof_script_core(config):
+    if random.random() < 0.5:
+        return edict(
+            kind="core_script:prop_chain",
+            header=_render(edict(decl="(p q r : Prop)",
+                                 hyps=[("h0", "p → q"), ("h1", "q → r")],
+                                 goal="p → r")),
+            lines=["intro hp", "exact h1 (h0 hp)"],
+        )
+    return edict(
+        kind="core_script:and_comm",
+        header=_render(edict(decl="(p q : Prop)", hyps=[], goal="p ∧ q → q ∧ p")),
+        lines=["intro h", "exact And.intro h.2 h.1"],
+    )
+
+
 _PROOF_SCRIPT_BUILDERS = (
     _proof_script_set_union,
     _proof_script_set_inter,
@@ -802,6 +982,12 @@ _PROOF_SCRIPT_BUILDERS = (
 
 def make_proof_script(config):
     level = int(getattr(config, "level", 0))
+    if not getattr(config, "use_mathlib", True):
+        for _ in range(50):
+            script = _proof_script_core(config)
+            if get_runner(use_mathlib=False).check(_script_code(script.header, script.lines))[0]:
+                return script
+        raise RuntimeError("failed to produce a Lean proof script")
     builders = _PROOF_SCRIPT_BUILDERS
     if level >= 2:
         builders = (
@@ -831,7 +1017,7 @@ def _score_proof_template(answer, entry):
     if not answer or not _safe(answer):
         return 0.0
     code = _mget(entry.metadata, "template").replace("__ANSWER__", str(answer).strip())
-    return float(get_runner().check(code)[0])
+    return float(get_runner(use_mathlib=_mget(entry.metadata, "use_mathlib")).check(code)[0])
 
 
 # ============================================================================
@@ -841,7 +1027,9 @@ def _score_proof_template(answer, entry):
 class LeanMissingProofLine(Task):
     """Recover one missing line from a short proof using a constrained inventory."""
 
-    def __init__(self, config=LeanConfig()):
+    def __init__(self, config=None):
+        if config is None:
+            config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
         super().__init__(config=config, timeout=120)
 
     def generate(self):
@@ -854,14 +1042,16 @@ class LeanMissingProofLine(Task):
         return Problem(
             edict(kind=script.kind, template=script.header + "".join(body),
                   available_lines=_line_options(script.lines, answer, self.config.n_candidates),
-                  missing_line=idx + 1),
+                  missing_line=idx + 1,
+                  use_mathlib=getattr(self.config, "use_mathlib", True)),
             answer,
         )
 
     def prompt(self, metadata):
         opts = "\n".join(f"- {line}" for line in _mget(metadata, "available_lines"))
+        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
         return (
-            "Fill `__ANSWER__` with the missing Lean proof line. Mathlib is imported.\n"
+            f"Fill `__ANSWER__` with the missing Lean proof line. {imports}\n"
             "Copy exactly one line from AVAILABLE LINES; do not invent a different "
             "proof and do not include bullets or backticks.\n\n"
             f"THEOREM:\n{_mget(metadata, 'template')}\n"
@@ -889,7 +1079,8 @@ class LeanCandidateCompilation(Task):
         return Problem(
             edict(kind=inst.kind,
                   theorem=inst.header + "  ?\n",
-                  candidate=inst.candidates[idx]),
+                  candidate=inst.candidates[idx],
+                  use_mathlib=inst.use_mathlib),
             "True" if inst.labels[idx] else "False",
         )
 
@@ -920,14 +1111,16 @@ class LeanProofRepair(Task):
         return Problem(
             edict(kind=inst.kind,
                   broken=inst.header + "  " + bad + "\n",
-                  template=inst.header + "  __ANSWER__\n"),
+                  template=inst.header + "  __ANSWER__\n",
+                  use_mathlib=inst.use_mathlib),
             inst.elegant,
         )
 
     def prompt(self, metadata):
+        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
         return (
             "The Lean 4 theorem below has a broken proof. Replace the proof body with "
-            "one that compiles. Mathlib is imported. The answer is only the replacement "
+            f"one that compiles. {imports} The answer is only the replacement "
             "tactic block.\n\n"
             f"{_mget(metadata, 'broken')}"
         )
@@ -954,16 +1147,18 @@ class LeanCompileSelection(Task):
                 edict(kind=inst.kind,
                       theorem=inst.header + "  ?\n",
                       candidates=[c for c, _ in pairs],
-                      labels=labels),
+                      labels=labels,
+                      use_mathlib=inst.use_mathlib),
                 str(answer),
             )
         raise RuntimeError("failed to assemble a balanced compile-selection instance")
 
     def prompt(self, metadata):
         opts = "\n".join(f"- {c}" for c in _mget(metadata, "candidates"))
+        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
         return (
             "Which candidate Lean 4 tactic blocks make the theorem compile? "
-            "Mathlib is imported. Copy each compiling candidate exactly, one per "
+            f"{imports} Copy each compiling candidate exactly, one per "
             "line, in the same order as CANDIDATES. Do not include bullets, numbers, "
             "or backticks.\n\n"
             f"THEOREM WITH HOLE:\n{_mget(metadata, 'theorem')}\n"
