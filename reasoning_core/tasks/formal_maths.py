@@ -653,6 +653,50 @@ class ReconstructionConfig(Config):
     def update(self, c):
         self.proof_depth += c
 
+
+def make_parent_table(proof_graph, node_to_idx, node_order=None):
+    lines = []
+    if node_order is None:
+        node_order = sorted(proof_graph.nodes(), key=node_to_idx.get)
+
+    for node in node_order:
+        i = node_to_idx[node]
+        parents = list(proof_graph.predecessors(node))
+
+        if not parents:
+            lines.append(f"{i}: axiom")
+        else:
+            p1, p2 = sorted(node_to_idx[p] for p in parents)
+            lines.append(f"{i}: parents {p1} {p2}")
+
+    return lines
+
+
+def parse_parent_table(answer, n):
+    rows = {}
+    ax_pat = re.compile(r'^\s*(\d+)\s*:\s*axiom\s*$')
+    par_pat = re.compile(r'^\s*(\d+)\s*:\s*parents\s+(\d+)\s*,?\s+(\d+)\s*$')
+
+    for line in str(answer).strip().splitlines():
+        line = line.strip()
+
+        m = ax_pat.fullmatch(line)
+        if m:
+            i = int(m.group(1))
+            if 1 <= i <= n:
+                rows[i] = ()
+            continue
+
+        m = par_pat.fullmatch(line)
+        if m:
+            i, p1, p2 = map(int, m.groups())
+            if 1 <= i <= n and 1 <= p1 <= n and 1 <= p2 <= n:
+                if p1 != p2 and i not in (p1, p2):
+                    rows[i] = tuple(sorted((p1, p2)))
+
+    return rows
+
+
 class ProofReconstruction(Task):
     """
     A task that generates problems where one must reconstruct the derivation
@@ -720,7 +764,7 @@ class ProofReconstruction(Task):
         proof_nodes.add(theorem_node_id)
         proof_graph = self.graph.subgraph(proof_nodes)
 
-        # 1. Shuffle node IDs and create a strict Node-to-Index dictionary
+        # 1. Shuffle clause numbers to keep reconstruction non-trivial.
         node_order = list(proof_graph.nodes())
         random.shuffle(node_order)
         node_to_idx = {n: i + 1 for i, n in enumerate(node_order)}
@@ -748,19 +792,22 @@ class ProofReconstruction(Task):
 
         f_map = {normalize_formula(c): i+1 for i, c in enumerate(all_clauses_in_proof)}
         cot = make_cot(proof_graph, theorem_node_id, f_map)
+        answer_node_order = list(nx.lexicographical_topological_sort(proof_graph, key=str))
+        parent_table = make_parent_table(proof_graph, node_to_idx, answer_node_order)
 
         metadata = edict({
             'numbered_clauses': all_clauses_in_proof, 
             'conjecture': theorem_formula,
             'cot': cot,
             'correct_proof_structure_indices' : proof_structure_indices,
+            'correct_parent_table': parent_table,
             'correct_proof_structure_ids': sorted(proof_structure_ids),
             'correct_proof_graph' : str(proof_graph),
             'proof_depth' : self.config.proof_depth,
             'axiom_set': self.axiom_set
         })
 
-        answer = '\n'.join(str(element) for element in sorted(proof_structure_indices))
+        answer = "\n".join(parent_table)
         return Problem(metadata, answer)
 
     def prompt(self, metadata):
@@ -768,46 +815,31 @@ class ProofReconstruction(Task):
         domain_name = DOMAIN_MAP.get(metadata['axiom_set'][:3], metadata['axiom_set'])
 
         return (
-            f"Reconstruct the proof dependency graph.\n"
+            f"You are given the clauses from one generated proof trace, in shuffled order.\n"
             f"Domain: {domain_name}\n"
             f"Theorem: {metadata['conjecture']}\n\n"
-            f"Rules:\n"
-            f"- Some clauses are axioms (no parents); do NOT list them\n"
-            f"- All other clauses derive from exactly 2 parents\n"
-            f"- Clauses can be reused as parents\n\n"
-            f"Shuffled clauses:\n{clauses_text}\n\n"
-            f"The answer is the list of derivations for derived clauses, one per line: CHILD <- PARENT_1, PARENT_2\n"
-            f"Example: 5 <- 2, 4\n"
+            f"Each clause is either an axiom of this trace, or a derived clause with exactly two recorded parent clauses.\n\n"
+            f"Numbered clauses:\n{clauses_text}\n\n"
+            f"Response format:\n"
+            f"- Write exactly one line per clause, ordered so parent clauses appear before derived clauses\n"
+            f"- Use `N: axiom` if clause N has no parents\n"
+            f"- Use `N: parents A B` if clause N is derived from A and B\n"
+            f"- Parent numbers A and B must be sorted increasingly\n\n"
+            f"Example:\n"
+            f"2: axiom\n"
+            f"5: axiom\n"
+            f"1: parents 2 5\n"
+            f"4: axiom\n"
+            f"3: parents 1 4\n"
         )
     
     def score_answer(self, answer, entry):
-        """F1 of valid derivation edges against ground truth (lenient parsing)."""
-        gold = entry.metadata.get('correct_proof_structure_indices') or []
+        gold = entry.metadata.get('correct_parent_table') or []
         n = len(entry.metadata.get('numbered_clauses', []))
         if not n or not gold:
             return 0.0
 
-        pat = re.compile(r'^\s*(\d+)\s*<-\s*(\d+)\s*,\s*(\d+)\s*$')
-        derivations, seen = [], set()
+        gold_rows = parse_parent_table("\n".join(gold), n)
+        pred_rows = parse_parent_table(answer, n)
 
-        for line in str(answer).strip().splitlines():
-            m = pat.fullmatch(line.strip())
-            if not m:
-                continue  # skip malformed / axiom lines
-            child, p1, p2 = map(int, m.groups())
-            if not (1 <= child <= n and 1 <= p1 <= n and 1 <= p2 <= n):
-                continue
-            if p1 == p2 or child in (p1, p2) or child in seen:
-                continue
-            seen.add(child)
-            derivations.append((child, *sorted((p1, p2))))
-
-        if not derivations:
-            return 0.0
-
-        pred_set = {f"{c} <- {p1}, {p2}" for c, p1, p2 in derivations}
-        gold_set = set(gold)
-        tp = len(pred_set & gold_set)
-        prec = tp / len(pred_set) if pred_set else 0.0
-        rec  = tp / len(gold_set)
-        return 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
+        return sum(pred_rows.get(i) == gold_rows.get(i) for i in range(1, n + 1)) / n
