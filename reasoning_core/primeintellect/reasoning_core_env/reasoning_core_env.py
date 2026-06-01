@@ -40,6 +40,25 @@ def _filter_available_tasks(dataset, available_tasks=None):
     return dataset
 
 
+def _prepare_env_dataset(dataset, available_tasks=None):
+    dataset = _filter_available_tasks(
+        dataset,
+        available_tasks=available_tasks,
+    ).rename_columns({"prompt": "question"})
+
+    def parse_entry(example):
+        entry = edict(
+            metadata=example.get('metadata', {}),
+            answer=example['answer']
+        )
+        return {'info': entry}
+
+    dataset = dataset.map(parse_entry)
+    return dataset.select_columns(
+        [column for column in ("question", "answer", "info") if column in dataset.column_names]
+    )
+
+
 def extract_answer(s, tag="answer"):
     if s.strip().startswith('<prompt>'):
         s = s.split('</prompt>')[-1]
@@ -74,22 +93,12 @@ def rc_ds_to_env(
         eval_ds = None
 
     # Process main dataset
-    dataset = _filter_available_tasks(main_ds).rename_columns({"prompt": "question"})
-
-    def parse_entry(example):
-        entry = edict(
-            metadata=example.get('metadata', {}),
-            answer=example['answer']
-        )
-        return {'info': entry}
-
-    dataset = dataset.map(parse_entry)
+    dataset = _prepare_env_dataset(main_ds)
 
     # Process eval dataset if it exists
     eval_dataset = None
     if eval_ds is not None:
-        eval_dataset = _filter_available_tasks(eval_ds).rename_columns({"prompt": "question"})
-        eval_dataset = eval_dataset.map(parse_entry)
+        eval_dataset = _prepare_env_dataset(eval_ds)
 
     def score_answer_vf(prompt, completion, info) -> float:
         answer = completion[0]['content']

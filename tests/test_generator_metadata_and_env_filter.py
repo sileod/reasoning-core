@@ -2,6 +2,7 @@ from datasets import Dataset
 
 from reasoning_core.primeintellect.reasoning_core_env.reasoning_core_env import (
     _filter_available_tasks,
+    _prepare_env_dataset,
 )
 from reasoning_core.template import Config, DevTask, Problem
 
@@ -41,7 +42,27 @@ def test_env_filter_ignores_unavailable_tasks():
     assert filtered["prompt"] == ["keep", "also keep"]
 
 
+def test_env_dataset_drops_top_level_task_column():
+    dataset = Dataset.from_list(
+        [
+            {
+                "prompt": "keep",
+                "answer": "1",
+                "task": "available",
+                "metadata": '{"_task": "available"}',
+            },
+        ]
+    )
+
+    prepared = _prepare_env_dataset(dataset, available_tasks={"available"})
+
+    assert prepared.column_names == ["question", "answer", "info"]
+    assert prepared[0]["question"] == "keep"
+    assert prepared[0]["info"]["answer"] == "1"
+
+
 if __name__ == "__main__":
     test_generated_examples_include_agnostic_generator_metadata()
     test_env_filter_ignores_unavailable_tasks()
+    test_env_dataset_drops_top_level_task_column()
     print("generator metadata and env filter tests passed")
