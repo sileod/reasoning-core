@@ -3,10 +3,41 @@ import pandas as pd
 from datasets import Dataset, load_dataset, DatasetDict, get_dataset_split_names
 import verifiers as vf
 import reasoning_gym as rg
-from reasoning_core import score_answer
+from reasoning_core import list_tasks, score_answer
 from easydict import EasyDict as edict
 
 DEFAULT_SYSTEM_PROMPT = rg.utils.SYSTEM_PROMPTS["DeepSeekZero"]
+
+
+def _metadata_dict(example):
+    metadata = example.get("metadata", {})
+    if isinstance(metadata, str):
+        try:
+            metadata = json.loads(metadata)
+        except json.JSONDecodeError:
+            metadata = {}
+    return metadata or {}
+
+
+def _example_task_name(example):
+    metadata = _metadata_dict(example)
+    return (
+        metadata.get("_task")
+        or example.get("task")
+        or metadata.get("task")
+    )
+
+
+def _filter_available_tasks(dataset, available_tasks=None):
+    if available_tasks is None:
+        available_tasks = list_tasks()
+    available_tasks = set(available_tasks)
+    before = len(dataset)
+    dataset = dataset.filter(lambda example: _example_task_name(example) in available_tasks)
+    dropped = before - len(dataset)
+    if dropped:
+        print(f"Ignored {dropped} examples with unavailable tasks.")
+    return dataset
 
 
 def extract_answer(s, tag="answer"):
@@ -43,7 +74,7 @@ def rc_ds_to_env(
         eval_ds = None
 
     # Process main dataset
-    dataset = main_ds.rename_columns({"prompt": "question"})
+    dataset = _filter_available_tasks(main_ds).rename_columns({"prompt": "question"})
 
     def parse_entry(example):
         entry = edict(
@@ -57,7 +88,7 @@ def rc_ds_to_env(
     # Process eval dataset if it exists
     eval_dataset = None
     if eval_ds is not None:
-        eval_dataset = eval_ds.rename_columns({"prompt": "question"})
+        eval_dataset = _filter_available_tasks(eval_ds).rename_columns({"prompt": "question"})
         eval_dataset = eval_dataset.map(parse_entry)
 
     def score_answer_vf(prompt, completion, info) -> float:

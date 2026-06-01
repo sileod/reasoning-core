@@ -5,6 +5,7 @@ import pickle, base64
 import threading
 import subprocess
 import warnings
+import sys
 from easydict import EasyDict as edict
 from collections import Counter
 from collections.abc import Mapping
@@ -31,6 +32,40 @@ from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 #template.py
 
 _REGISTRY = dict()
+
+
+@functools.lru_cache(maxsize=None)
+def _generator_version(package_name):
+    module = sys.modules.get(package_name)
+    version = getattr(module, "__version__", None)
+    if version:
+        return version
+
+    try:
+        from importlib.metadata import version as package_version
+
+        return package_version(package_name)
+    except Exception:
+        return None
+
+
+@functools.lru_cache(maxsize=1)
+def _generator_commit():
+    for name in ("SOURCE_COMMIT", "GIT_COMMIT", "COMMIT_SHA", "GITHUB_SHA"):
+        value = os.environ.get(name)
+        if value:
+            return value
+
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=os.path.dirname(os.path.dirname(__file__)),
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=1,
+        ).strip()
+    except Exception:
+        return None
 
 
 def _parquet_safe(x):
@@ -322,6 +357,11 @@ class Task(ProceduralDataset):
                 problem.metadata['_config'] = self.config.to_dict()
                 problem.metadata['_prompt_tokens'] = prompt_tokens
                 problem.metadata['_answer_tokens'] = answer_tokens
+                generator_name = self.__class__.__module__.split(".", 1)[0]
+                problem.metadata['_generator_name'] = generator_name
+                problem.metadata['_generator_version'] = _generator_version(generator_name)
+                problem.metadata['_generator_commit'] = _generator_commit()
+                problem.metadata['_task_version'] = getattr(self, "task_version", "0")
 
                 problem.balancing_key = self.balancing_key(problem)
                 problem.deduplication_key = self.deduplication_key(problem)
@@ -507,4 +547,3 @@ class Reward(wrapt.ObjectProxy):
             self._self_annotations[name] = value
         else:
             setattr(self.__wrapped__, name, value)
-
