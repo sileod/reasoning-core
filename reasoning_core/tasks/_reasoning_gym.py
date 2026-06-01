@@ -18,34 +18,26 @@ class RGConfig(Config):
 
 class Reasoning_Gym(Task):
     def __init__(self, config=RGConfig()):
-
-        datasets=list(reasoning_gym.factory.DATASETS.keys())
-        datasets.remove('composite')
-        self.datasets = datasets
+        if reasoning_gym is None:
+            raise ImportError("reasoning_gym is not installed.")
+        self.datasets = [d for d in reasoning_gym.factory.DATASETS.keys() if d != 'composite']
         super().__init__(config)
-        
-    def generate(self):
-        meta = dict()
-        if self.config.rg_task:
-            d = self.config.rg_task
-        else:
-            d = random.choice(self.datasets)
 
-        t,c = reasoning_gym.factory.DATASETS[d]
-        c=c()
+    def generate(self):
+        d = self.config.rg_task or random.choice(self.datasets)
+        t, c_cls = reasoning_gym.factory.DATASETS[d]
+
         if d in reasoning_gym.factory.CURRICULA:
             cl = reasoning_gym.factory.CURRICULA[d]()
-            a=random.choice(list(cl.attributes.keys()))
-            for k in range(int(self.config.rg_level)):
-                cl.increment_attr_level(a)
-            c2=cl.generate_configuration()
+            cl.set_global_level(int(self.config.rg_level))
+            c = cl.generate_configuration()
         else:
-            self.config.level=0
-        entry =t(c)[0]
+            c = c_cls()
+            self.config.level = 0
 
-        meta = entry['metadata'] | dict(task_name=f"RG.{d}") | dict(_question=entry['question'])
-        meta = json.loads(json.dumps(meta, default=str))
-        return Problem(meta, str(entry['answer']))
+        entry = t(c)[0]
+        meta = entry['metadata'] | dict(task_name=f"RG.{d}", _question=entry['question'])
+        return Problem(json.loads(json.dumps(meta, default=str)), str(entry['answer']))
 
     def score_answer(self, answer, entry):
         sd=entry['metadata']['source_dataset']
@@ -59,5 +51,3 @@ class Reasoning_Gym(Task):
 
     def prompt(self, metadata):
         return metadata._question
-        
-       
