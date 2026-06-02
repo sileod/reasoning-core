@@ -1499,7 +1499,7 @@ class SemanticTraceVE(VariableElimination):
                 u_factor, _ = entry['unnormalized_data']
                 u_sum = u_factor.values.sum()
                 result_str = self._render_inline_dist(n_factor, precision)
-                if abs(u_sum - 1.0) < 1e-6:
+                if abs(u_sum - 1.0) > 1e-6:
                     lines.append(f"Result: {entry['final_formula']} = {result_str}")
                 else:
                     lines.append(f"Normalize (sum={round(u_sum, precision)}) -> {entry['final_formula']} = {result_str}")

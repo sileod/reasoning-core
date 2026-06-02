@@ -8,8 +8,10 @@ ATTR_GROUPS = [['tall', 'short'], ['young', 'old'],
                ['quiet', 'loud'], ['kind', 'stern']]
 VERBS = ['met', 'called', 'praised', 'avoided', 'questioned', 'greeted',
          'thanked', 'watched', 'helped']
-NAMES_M = ['John', 'Paul', 'Mark', 'Leo', 'Tom', 'Sam', 'Max', 'Ben']
-NAMES_F = ['Mary', 'Anna', 'Jane', 'Eve', 'Sara', 'Lucy', 'Zoe', 'Rita']
+NAMES_M = ['John', 'Paul', 'Mark', 'Leo', 'Tom', 'Sam', 'Max', 'Ben',
+           'Adam', 'Noah', 'Luke', 'Eric', 'Jack', 'Hugo', 'Alan', 'Owen']
+NAMES_F = ['Mary', 'Anna', 'Jane', 'Eve', 'Sara', 'Lucy', 'Zoe', 'Rita',
+           'Emma', 'Nora', 'Lily', 'Mia', 'Rose', 'Iris', 'Lena', 'Kate']
 PRON = {'m': ('He', 'him'), 'f': ('She', 'her')}
 INTRO, NAME, DESC, PRONOUN = 'intro', 'name', 'desc', 'pron'
 
@@ -60,17 +62,54 @@ def _pron_ok(e, prev_ents, cur_subj, pos):
     return not any(x.gender == e.gender and x != e for x in ctx)
 
 
-def _plan(pool, target, chain_len, n_distractors):
-    others = [e for e in pool if e != target]
-    out = []
-    for _ in range(chain_len):
-        o = random.choice(others)
-        out.append((target, o) if random.random() < 0.5 else (o, target))
-    for _ in range(n_distractors):
-        s, o = random.sample(others, 2)
-        out.append((s, o))
-    random.shuffle(out)
+def _plan(pool, chain_len, n_distractors):
+    """Locally coherent discourse without a globally privileged target."""
+    n = chain_len + n_distractors
+    cur = tuple(random.sample(pool, 2))
+    out = [cur]
+
+    for i in range(1, n):
+        if i < chain_len or random.random() < 0.45:
+            keep = random.choice(cur)
+            other = random.choice([e for e in pool if e != keep])
+            cur = (keep, other) if random.random() < 0.5 else (other, keep)
+        else:
+            cur = tuple(random.sample(pool, 2))
+        out.append(cur)
+
     return out
+
+
+def _query_candidates(mentions, pool):
+    counts = {}
+    for m in mentions:
+        counts[m['entity']] = counts.get(m['entity'], 0) + 1
+
+    top = max(counts.values())
+    unique_top = list(counts.values()).count(top) == 1
+    cands, better = [], []
+
+    for m in mentions:
+        if m['mode'] not in (PRONOUN, DESC):
+            continue
+        if unique_top and counts[m['entity']] == top:
+            continue
+
+        if m['mode'] == DESC:
+            surf = m['surface'][4:] if m['surface'].startswith('the ') else m['surface']
+            role = surf.split()[-1]
+            if sum(x.role == role for x in pool) == 1:
+                continue
+
+        cands.append(m)
+
+        if m['mode'] == PRONOUN:
+            prev = [p for p in mentions
+                    if p['sent'] == m['sent'] - 1 and p['entity'] == m['entity']]
+            if prev and any(p['mode'] != NAME for p in prev):
+                better.append(m)
+
+    return better or cands
 
 
 def _pick(e, pool, introduced, prev_ents, cur_subj, pos, p_pron, p_desc):
@@ -113,12 +152,12 @@ def _emit(plan, pool, p_pron, p_desc):
 
 @dataclass
 class CoreferenceConfig(Config):
-    n_entities: int = 4
-    chain_len: int = 2
-    n_distractors: int = 2
+    n_entities: int = 6
+    chain_len: int = 3
+    n_distractors: int = 4
     p_pronoun: float = 0.7
     p_desc: float = 0.5
-    p_shortcut: float = 0.1    # prob. of using a shorter chain for diversity
+    p_shortcut: float = 0.05   # prob. of using a shorter chain for diversity
 
     def update(self, c=1):
         self.n_entities += c
@@ -138,20 +177,26 @@ class Coreference(Task):
             if clen > 2 and random.random() < cfg.p_shortcut:
                 clen = random.randint(2, clen - 1)
             pool = _pool(cfg.n_entities)
-            target = random.choice(pool)
-            plan = _plan(pool, target, clen, cfg.n_distractors)
+            plan = _plan(pool, clen, cfg.n_distractors)
             lines, mentions = _emit(plan, pool, cfg.p_pronoun, cfg.p_desc)
-            cands = [m for m in mentions
-                     if m['entity'] == target and m['mode'] in (PRONOUN, DESC)]
-            if not cands: continue
+
+            all_cands = [m for m in mentions if m['mode'] in (PRONOUN, DESC)]
+            if all_cands and fallback is None:
+                fallback = (random.choice(all_cands), lines, mentions, pool)
+
+            cands = _query_candidates(mentions, pool)
+            if not cands:
+                continue
             prons = [m for m in cands if m['mode'] == PRONOUN]
-            if prons:
-                return self._build(random.choice(prons), lines, target, mentions, pool)
+            if prons and random.random() < 0.7:
+                return self._build(random.choice(prons), lines, mentions, pool)
             if fallback is None:
-                fallback = (random.choice(cands), lines, target, mentions, pool)
+                fallback = (random.choice(cands), lines, mentions, pool)
+            return self._build(random.choice(cands), lines, mentions, pool)
         return self._build(*fallback)
 
-    def _build(self, q, lines, target, mentions, pool):
+    def _build(self, q, lines, mentions, pool):
+        target = q['entity']
         sid = q['sent'] + 1
         if q['mode'] == PRONOUN:
             prev_names = sorted(m['entity'].name for m in mentions

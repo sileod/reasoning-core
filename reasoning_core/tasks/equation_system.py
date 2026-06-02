@@ -9,7 +9,7 @@ from reasoning_core.utils import score_scalar
 @dataclass
 class EquationSystemCfg(Config):
     num_vars: int = 2
-    obfuscation_steps: int = 0
+    obfuscation_steps: float = 0.7
     sol_magnitude: int = 30
     coeff_magnitude: int = 4
     max_generation_attempts: int = 200
@@ -27,6 +27,13 @@ def randint_nonzero(lo: int, hi: int) -> int:
     val = random.randint(lo, hi)
     while val == 0: val = random.randint(lo, hi)
     return val
+
+def stochastic_round(x):
+    return int(x // 1) + (random.random() < x % 1)
+
+def fmt_num(x):
+    x = sp.simplify(x)
+    return str(int(x)) if x.is_Integer else str(x)
 
 def _verify_system(equations: List[sp.Eq], variables: List[sp.Symbol]) -> Dict[str, Any]:
     """
@@ -62,7 +69,7 @@ class EquationSystem(Task):
         base_exprs = [v - sol_map[v] for v in variables]
         
         C = [[int(i == j) for j in range(n)] for i in range(n)]
-        for _ in range(n * cfg.obfuscation_steps):
+        for _ in range(n * stochastic_round(cfg.obfuscation_steps)):
             i, j = random.sample(range(n), 2)
             k = randint_nonzero(-cfg.coeff_magnitude // 2, cfg.coeff_magnitude // 2)
             for col in range(n):
@@ -165,7 +172,7 @@ class EquationSystem(Task):
                 for r in range(piv+1, M.rows):
                     if k := M[r, c] / M[piv, c]:
                         M.row_op(r, lambda x, i: x - k * M[piv, i])
-                        log.append(f"R{r+1} -= {float(k):g}*R{piv+1}")
+                        log.append(f"R{r+1} -= {fmt_num(k)}*R{piv+1}")
                 piv += 1
     
             # Phase 2: Backward & Check
@@ -175,7 +182,7 @@ class EquationSystem(Task):
                 row = M.row(i)
                 # Check 0=k contradiction
                 if all(x==0 for x in row[:-1]):
-                    if abs(row[-1]) > 1e-9: return f"Contradiction: 0 != {float(row[-1]):g}"
+                    if row[-1] != 0: return f"Contradiction: 0 != {fmt_num(row[-1])}"
                     continue
                 
                 # Identify pivot variable for this row
@@ -188,6 +195,6 @@ class EquationSystem(Task):
     
                 val = (row[-1] - sum(row[j]*sol.get(variables[j],0) for j in range(p_idx+1, len(variables)))) / row[p_idx]
                 sol[var] = val
-                log.append(f"{var} = {float(val):g}")
+                log.append(f"{var} = {fmt_num(val)}")
                 
             return "\n".join(log)

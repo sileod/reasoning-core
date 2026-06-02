@@ -161,12 +161,12 @@ class GraphPathfinding(BaseGraphTask, Task):
 
     def make_cot(self, G, start, end):
         queue, visited = [(start, [start])], {start}
-        lines = [f"Goal: Shortest directed path from {start} to {end} using BFS.", f"Initialize Queue: [{start}]"]
+        lines = [f"BFS path from {start} to {end}.", f"Queue: [{start}]"]
         while queue:
             curr, path = queue.pop(0)
             lines.append(f"\nPop {curr}. Current Path: {path}")
             if curr == end:
-                lines.append(f"Target {end} found! Search Complete.")
+                lines.append(f"Target found.")
                 return "\n".join(lines)
             
             new_successors = [n for n in sorted(G.successors(curr)) if n not in visited]
@@ -175,7 +175,7 @@ class GraphPathfinding(BaseGraphTask, Task):
                 queue.append((n, path + [n]))
             
             if new_successors:
-                lines.extend([f"  -> Found new outgoing neighbors: {new_successors}", "  -> Add to queue. Visited set updated."])
+                lines.extend([f"  -> Found new outgoing neighbors: {new_successors}"])
             else:
                 lines.append("  -> All outgoing neighbors visited or empty. Backtrack.")
             lines.append(f"  -> Queue is now: {[n for n, _ in queue]}")

@@ -60,6 +60,28 @@ def trivial(problem):
     init = [k for k,v in problem.initial_values.items() if v.is_true()]
     return all(g in init for g in goals.args)
 
+def ground_fluent_expressions(problem):
+    for fluent in problem.fluents:
+        obj_lists = [
+            list(problem.objects(param.type))
+            for param in fluent.signature
+        ]
+        for args in itertools.product(*obj_lists) if obj_lists else [()]:
+            yield fluent(*args)
+
+def true_facts(problem, state):
+    fmt = lambda s: str(s).replace('(', ' ').replace(')', '').replace(',', '')
+    return {
+        fmt(atom)
+        for atom in ground_fluent_expressions(problem)
+        if state.get_value(atom).is_true()
+    }
+
+def goal_satisfied(goal, state):
+    if goal.is_not():
+        return state.get_value(goal.arg(0)).is_false()
+    return state.get_value(goal).is_true()
+
 def make_cot(problem, plan):
     simulator = SequentialSimulator(problem)
     state = simulator.get_initial_state()
@@ -71,14 +93,9 @@ def make_cot(problem, plan):
     goals = [fmt(g) for g in problem.goals]
     trace.append(f"Target Goals: {', '.join(goals)}")
     
-    # Use _values to access state efficiently
-    get_state_dict = lambda s: s._values if hasattr(s, '_values') else s.values
-    
-    current_facts = {fmt(k) for k, v in get_state_dict(state).items() if v.is_true()}
-    
-    for i, action_instance in enumerate(plan.actions):
-        trace.append(f"\nStep {i+1}:")
-        
+    current_facts = true_facts(problem, state)
+
+    for i, action_instance in enumerate(plan.actions):        
         # --- RE-BINDING LOGIC ---
         # 1. Get action schema from original problem
         act_name = action_instance.action.name
@@ -111,7 +128,6 @@ def make_cot(problem, plan):
             break
             
         trace.append(f"Selected Action: {action_str}")
-        trace.append("  - Preconditions met. Applying action.")
         
         # State Transition
         next_state = simulator.apply(state, valid_instance)
@@ -120,7 +136,7 @@ def make_cot(problem, plan):
             break
 
         # Calculate Effects
-        next_facts = {fmt(k) for k, v in get_state_dict(next_state).items() if v.is_true()}
+        next_facts = true_facts(problem, next_state)
         added = next_facts - current_facts
         removed = current_facts - next_facts
         
@@ -134,13 +150,12 @@ def make_cot(problem, plan):
         state = next_state
         
         # Goal check
-        remaining_goals = [g for g in goals if g not in current_facts]
+        remaining_goals = [g for g in problem.goals if not goal_satisfied(g, state)]
         if not remaining_goals and i == len(plan.actions) - 1:
             trace.append("  - Goal condition satisfied.")
         elif remaining_goals:
             trace.append(f"  - Remaining goals: {len(remaining_goals)}")
 
-    trace.append("\nPlan found.")
     return "\n".join(trace)
 
 def fetch_domain(domain):
