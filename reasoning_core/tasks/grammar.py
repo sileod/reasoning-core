@@ -55,7 +55,7 @@ class GrammarConfig(Config):
     target_num_rules=10
 
     n_resampled_grammars: int=200
-    prob_resampling_grammar: float=0.6
+    prob_resampling_grammar: float=0.2
     max_tokens:int =16
 
     min_k: int = 3
@@ -82,7 +82,7 @@ def meta_grammar(config):
     R('rules(rule,rules)', '0\n1')
     R('rules(rule,rule,rules)', '0\n1\n2')
 
-    R('rule(nonterminal,rhs)', '0 -> 1')
+    R('rule(nonterminal,rhs)', '0 -> 1', constraint=[lambda x: x[0] @ 0 != x[1] @ 0])
 
     R('rhs(expr)', '0')
 

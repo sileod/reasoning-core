@@ -8,10 +8,10 @@ import re
 # --- Configuration for All Graph Tasks ---
 @dataclass
 class GraphReasoningConfig(Config):
-    num_nodes: int = 5  # Needs >= 5 to avoid issues with some generators/tasks
+    num_nodes: int = 6  # Needs >= 5 to avoid issues with some generators/tasks
     no_solution_prob: float = 0.1
     return_to_start_prob: float = 0.1
-
+    pairs_render_together_prob: float = 0.7
     def update(self, c): 
         self.num_nodes *= (1 + c)
 
@@ -94,7 +94,7 @@ class BaseGraphTask:
         G = nx.fast_gnp_random_graph(num_nodes, 0.4, directed=True)
         return nx.convert_node_labels_to_integers(G)
 
-    def _render_graph(self, G):
+    def _render_graph(self, G, seed=None):
         """Randomly selects a method to describe the directed graph in text."""
         def r_adjacency_list(g):
             return "\n".join(
@@ -134,9 +134,10 @@ class BaseGraphTask:
                 f"{n}: {' '.join(f'{n}->{nb}' for nb in sorted(g.successors(n)))}"
                 if g.out_degree(n) > 0 else f"{n}:"
                 for n in sorted(g.nodes()))
-                
+
+        rng = random.Random(seed)        
         renderers = [r_adjacency_list, r_edge_list, r_adj_dict, r_edge_pairs, r_adjacency_matrix, r_dot_notation, r_prose, r_incidence]
-        return random.choice(renderers)(G)
+        return rng.choice(renderers)(G)
 
 
 class GraphPathfinding(BaseGraphTask, Task):
@@ -298,7 +299,7 @@ class GraphIsomorphism(BaseGraphTask, Task):
     def generate(self):
         G1 = self._generate_graph()
         
-        if random.random() < 0.3:
+        if random.random() < 0.5:
             # TRUE Case
             nodes = list(G1.nodes())
             mapping = dict(zip(nodes, random.sample(nodes, len(nodes))))
@@ -330,9 +331,13 @@ class GraphIsomorphism(BaseGraphTask, Task):
                         break            
             answer = False
 
+        if random.random() < self.config.pairs_render_together_prob:
+            s1=s2=random.randint(1, 1000)
+        else:
+            s1=s2=None
         metadata = {
-            "graph1_description": self._render_graph(G1),
-            "graph2_description": self._render_graph(G2),
+            "graph1_description": self._render_graph(G1, s1),
+            "graph2_description": self._render_graph(G2, s2),
         }
         return Problem(metadata=metadata, answer=str(answer))
 

@@ -23,7 +23,7 @@ from urllib.request import urlretrieve
 from appdirs import AppDirs
 from easydict import EasyDict as edict
 from gramforge import generate, init_grammar
-from reasoning_core.template import Config, Problem, Task
+from reasoning_core.template import Config, Problem, Task, DevTask
 
 
 # ============================================================================
@@ -1024,7 +1024,7 @@ def _score_proof_template(answer, entry):
 # Tasks
 # ============================================================================
 
-class LeanMissingProofLine(Task):
+class LeanMissingProofLine(DevTask):
     """Recover one missing line from a short proof using a constrained inventory."""
 
     def __init__(self, config=None):
@@ -1062,7 +1062,7 @@ class LeanMissingProofLine(Task):
         return float(_normalize_line(answer) == entry.answer)
 
 
-class LeanCandidateCompilation(Task):
+class LeanCandidateCompilation(DevTask):
     """True/False on whether a single candidate proof body closes the theorem."""
 
     def __init__(self, config=LeanConfig()):
@@ -1129,7 +1129,7 @@ class LeanProofRepair(Task):
         return _score_proof_template(answer, entry)
 
 
-class LeanCompileSelection(Task):
+class LeanCompileSelection(DevTask):
     """From candidate proofs, copy the proof bodies that compile."""
 
     def __init__(self, config=LeanConfig()):

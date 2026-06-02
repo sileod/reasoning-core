@@ -18,9 +18,9 @@ import sys
 from reasoning_core.template import Task, Problem, Config, register_dataset
 from gramforge.grammars.FOL import FOL_grammar
 from easydict import EasyDict as edict
-from tqdm.auto import tqdm
 from functools import cache
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from faker import Faker
 
 import re
 
@@ -33,8 +33,35 @@ ADJECTIVES = ['rich', 'quiet', 'old', 'tall', 'kind', 'brave', 'wise',
               'happy', 'strong', 'curious', 'patient', 'funny', 'generous', 'humble']
 
 NAMES = ['mary', 'paul', 'fred', 'alice', 'john', 'susan', 'lucy']
+FEMALE_NAMES = ['mary', 'alice', 'susan', 'lucy', 'jane', 'anna', 'emma']
+MALE_NAMES = ['paul', 'fred', 'john', 'michael', 'david', 'james', 'robert']
+fake = Faker("en_US")
 
 G = FOL_grammar
+
+def safe_name(name):
+    name = re.sub(r'[^a-z0-9_]+', '_', name.lower()).strip('_')
+    return name if re.match(r'^[a-z]\w*$', name) else ''
+
+def gendered_names(n, pronoun):
+    if pronoun == "she":
+        first_name = fake.first_name_female
+    elif pronoun == "he":
+        first_name = fake.first_name_male
+    else:
+        first_name = fake.first_name
+
+    names = []
+    seen = set()
+    for _ in range(n * 20):
+        name = safe_name(first_name())
+        if name and name not in seen:
+            seen.add(name)
+            names.append(name)
+        if len(names) >= n:
+            return names
+    fallback = {"she": FEMALE_NAMES, "he": MALE_NAMES}.get(pronoun, NAMES)
+    return (names + fallback)[:n]
 
 def make_hyps(G, N=1000):
     hyps = [generate(G().get_rules('hypothesis')[0], mode="sequential") for _ in range(N)]
@@ -110,6 +137,7 @@ class LogicConfig(Config):
     generation_algorithm: str = "sequential"
     n_names: int = 3
     n_adjectives: int = 3
+    pronouns: list = field(default_factory=lambda: ["she",'he'])
     bloat_skip_rate:float = 0.90
     def update(self, c):
         self.n_formulas *= (1 + c)
@@ -159,16 +187,22 @@ class LogicNLI(Task):
 
     def __init__(self, config=LogicConfig()):
         super().__init__(config=config)
-        self.names = NAMES[:self.config.n_names]
+        self.pronoun = random.choice(self.config.pronouns)
+        self.names = gendered_names(self.config.n_names, self.pronoun)
         self.adjectives = ADJECTIVES[:self.config.n_adjectives]
-        G_hyp = fc.partial(FOL_grammar, names=self.names, adjs=self.adjectives, include_propositional=True, empty_room=False)
+        G_hyp = fc.partial(FOL_grammar, names=self.names, adjs=self.adjectives,
+                           include_propositional=True, empty_room=False,
+                           pronoun=self.pronoun)
         self.hyps, self.hyps_weights=make_hyps(G_hyp)
         self.balancing_key_ratio=1/3
 
     def generate(self):
         include_propositional = random.choice([True, False])
         empty_room = random.choice([True, False])
-        self.G = fc.partial(FOL_grammar, names=self.names, adjs=self.adjectives, empty_room=empty_room, include_propositional=include_propositional)
+        self.G = fc.partial(FOL_grammar, names=self.names, adjs=self.adjectives,
+                            empty_room=empty_room,
+                            include_propositional=include_propositional,
+                            pronoun=self.pronoun)
         meta = edict()
         for _ in range(100):    
             # generate premise
@@ -291,17 +325,25 @@ class EvidenceRetrieval(Task):
 
 
 
+@dataclass
+class LogicFormalizationConfig(LogicConfig):
+    n_formulas: int = 3
+
 class LogicFormalization(Task):
-    def __init__(self, config=LogicConfig()):
+    def __init__(self, config=LogicFormalizationConfig()):
         super().__init__(config=config)
-        self.names = NAMES[:self.config.n_names]
+        self.pronoun = random.choice(self.config.pronouns)
+        self.names = gendered_names(self.config.n_names, self.pronoun)
         self.adjectives = ADJECTIVES[:self.config.n_adjectives]
 
     def generate(self):
         include_propositional = random.choice([True, False])
         empty_room = False
         G = fc.partial(FOL_grammar, names=self.names, adjs=self.adjectives,
-                       empty_room=empty_room, include_propositional=include_propositional)
+                       empty_room=empty_room,
+                       include_propositional=include_propositional,
+                       include_setup=False,
+                       pronoun=self.pronoun)
         x = generate_N_premises(self.config.n_formulas, G,
                                 mode=self.config.generation_algorithm)
         meta = edict(prem=x.dict(), verbalize_seed=random.randint(0, int(1e6)))
@@ -314,7 +356,7 @@ class LogicFormalization(Task):
         mapping = predicate_mapping(meta.verbalize_seed)
         # only show symbols that actually appear; positive forms only (negations follow)
         used = [k for k in preds_pattern + prop_pattern if k in meta.prem.tptp]
-        glossary = "\n".join(f"  {mapping[k]!r} -> {k}" for k in used)
+        glossary = "\n".join(f"  {mapping[k]!r} -> {k}" for k in used) or "  none"
         return (
             f"Premise:\n{eng}\n\n"
             f"Glossary (English phrase -> TPTP symbol):\n{glossary}\n\n"
@@ -323,7 +365,7 @@ class LogicFormalization(Task):
             "Connectives: '&', '|', '~', '=>', '<=>'. "
             "Quantifiers: '![X]:...' (forall) and '?[X]:...' (exists). Equality: '='.\n"
             "Use the symbols from the glossary for verbalized predicates. "
-            "Names (mary, paul, ...), 'in_the_room', 'person', and adjectives (old, tall, ...) "
+            f"Names ({', '.join(self.names)}), 'in_the_room', 'person', and adjectives (old, tall, ...) "
             "appear as-is.\n"
             "The answer is the TPTP formula only (no fof(...) wrapper, no commentary)."
         )

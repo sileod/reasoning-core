@@ -113,12 +113,12 @@ def _emit(plan, pool, p_pron, p_desc):
 
 @dataclass
 class CoreferenceConfig(Config):
-    n_entities: int = 3
+    n_entities: int = 4
     chain_len: int = 2
     n_distractors: int = 2
     p_pronoun: float = 0.7
     p_desc: float = 0.5
-    p_shortcut: float = 0.15    # prob. of using a shorter chain for diversity
+    p_shortcut: float = 0.1    # prob. of using a shorter chain for diversity
 
     def update(self, c=1):
         self.n_entities += c

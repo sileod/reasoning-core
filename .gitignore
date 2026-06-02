@@ -70,6 +70,10 @@ reasoning_core/wandb/
 checkpoints/
 run_logs/
 wandb/
+analyze_artifact/
+analyze_artifact.py
+torchinductor/
+dmnsl/
 
 *.xls
 *.pkl
