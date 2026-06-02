@@ -512,6 +512,9 @@ class ConfigEdition(Task):
         recent_paths = []
         changed_paths = set()
 
+        def path_key(path):
+            return tuple(path)
+
         makers = [
             (self.make_set, 3.0),
             (self.make_toggle, 1.5),
@@ -542,12 +545,12 @@ class ConfigEdition(Task):
             ops.append(op)
 
             if op.kind == "rename":
-                recent_paths.append(op.new_path)
-                changed_paths.add(op.path)
-                changed_paths.add(op.new_path)
+                recent_paths.append(path_key(op.new_path))
+                changed_paths.add(path_key(op.path))
+                changed_paths.add(path_key(op.new_path))
             else:
-                recent_paths.append(op.path)
-                changed_paths.add(op.path)
+                recent_paths.append(path_key(op.path))
+                changed_paths.add(path_key(op.path))
 
         for _ in range(max(0, int(round(self.config.nb_ops * self.config.distractor_rate)))):
             noop = self.render_noop(obj, changed_paths)

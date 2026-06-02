@@ -311,7 +311,7 @@ class Rung12Config(Config):
     is_verbose : bool
         Whether to use a more humanlike description of the system, or a less verbose one that describe the Bayesian Network by listing all the conditional probabilities.
     """ 
-    n_nodes: int = 3
+    n_nodes: int = 4
     max_domain_size: int = 2
     edge_prob: float = 0.5
     graph_generation_mode: str = "erdos"

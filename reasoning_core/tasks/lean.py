@@ -1096,7 +1096,7 @@ class LeanCandidateCompilation(DevTask):
         return float(str(answer).strip().strip("`").lower() == entry.answer.lower())
 
 
-class LeanProofRepair(Task):
+class LeanProofRepair(DevTask):
     """Replace a broken proof body with one that compiles."""
 
     def __init__(self, config=LeanConfig()):

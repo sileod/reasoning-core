@@ -11,6 +11,15 @@ from abc import ABC, abstractmethod
 from reasoning_core.template import Task, Problem, Config
 from dataclasses import dataclass
 
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message="invalid value encountered in divide",
+    category=RuntimeWarning,
+    module=r"pgmpy\.factors\.discrete\.DiscreteFactor",
+)
+
 from typing import (
     Any,
     Dict,
