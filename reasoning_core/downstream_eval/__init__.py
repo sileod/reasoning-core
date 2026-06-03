@@ -37,6 +37,7 @@ harness_tasks = ['leaderboard_bbh',
     "tinyMMLU", "tinyHellaswag", "tinyWinogrande", "tinyArc", "tinyGSM8k", "winogrande",
     "anli_r1", "anli_r2", "anli_r3",
     ]     #social_iqa wsc prost: not working
+nll_metrics = ("folio", "leaderboard_bbh")
 
 logic_custom_task_configs = {
     "wanli": {
@@ -164,14 +165,14 @@ logic_custom_task_configs = {
 }
 
 custom_tasks = {
-    name: ConfigurableTask(config={
+    name: {
         "task": name, "dataset_path": path,
         "output_type": "multiple_choice",
         "test_split": "train", "doc_to_text": "",
         "doc_to_choice": '["{{sentence_good}}", "{{sentence_bad}}"]',
         "doc_to_target": 0,
         "metric_list": [{"metric": "acc", "aggregation": "mean", "higher_is_better": True}],
-    })
+    }
     for name, path in [
         ("blimp", "tasksource/blimp"),
         ("zorro", "tasksource/zorro"),
@@ -181,7 +182,11 @@ default_logic_custom_task_configs = {
     name: config for name, config in logic_custom_task_configs.items()
     if name != "hans"
 }
-custom_tasks.update({name: ConfigurableTask(config=config) for name, config in default_logic_custom_task_configs.items()})
+custom_tasks.update(default_logic_custom_task_configs)
+
+
+def _custom_task(name):
+    return ConfigurableTask(config=custom_tasks[name])
 
 tasksource = ['ConTRoL-nli', 'folio','anli/a1','WANLI','sick/label','glue/rte','glue/cola','cladder']
 
@@ -243,6 +248,74 @@ def run_platinum(model, tokenizer, tasks=platinum, limit=200, batch_size=16, use
     return metrics
 
 
+def _flat_tasks(task_dict):
+    for name, task in task_dict.items():
+        if isinstance(task, dict):
+            yield from _flat_tasks(task)
+        else:
+            yield name, task
+
+
+def _eval_docs(task):
+    if task.has_validation_docs():
+        return task.validation_docs()
+    if task.has_test_docs():
+        return task.test_docs()
+    return task.training_docs()
+
+
+def _target_text(task, doc):
+    target = task.doc_to_target(doc)
+    if isinstance(target, list):
+        target = target[0]
+    if isinstance(target, int) and getattr(task.config, "doc_to_choice", None) is not None:
+        return task.doc_to_choice(doc)[target]
+    return str(target)
+
+
+def _nll_batch(ds, task, tokenizer, model, batch_size):
+    collator = DataCollatorForSeq2Seq(tokenizer, pad_to_multiple_of=8)
+    delimiter = getattr(task.config, "target_delimiter", " ")
+
+    def process(doc):
+        prompt = task.doc_to_text(doc)
+        target = delimiter + _target_text(task, doc) + (tokenizer.eos_token or "")
+        q_ids = tokenizer(prompt, add_special_tokens=True).input_ids
+        a_ids = tokenizer(target, add_special_tokens=False).input_ids
+        return {"input_ids": q_ids + a_ids, "labels": [-100] * len(q_ids) + a_ids}
+
+    dl = DataLoader([process(d) for d in ds], batch_size=batch_size, collate_fn=collator)
+    with torch.no_grad():
+        return [model(**{k: v.to(model.device) for k, v in b.items()}).loss.item() for b in dl]
+
+
+def run_nll_metrics(model, tokenizer, tasks=nll_metrics, limit=200, batch_size=16, task_manager=None):
+    disable_progress_bar(), model.eval()
+    manager = task_manager
+    metrics = {}
+    for task_name in tqdm(tasks):
+        try:
+            if task_name in custom_tasks:
+                task_dict = {task_name: _custom_task(task_name)}
+            else:
+                manager = manager or TaskManager()
+                task_dict = get_task_dict([task_name], manager)
+            task_losses = []
+            for name, task in _flat_tasks(task_dict):
+                docs = list(_eval_docs(task))[:limit]
+                if not docs:
+                    continue
+                losses = _nll_batch(docs, task, tokenizer, model, batch_size)
+                task_losses.extend(losses)
+                if name == task_name:
+                    metrics[f"nll/{name}/nll"] = float(np.mean(losses))
+            if task_losses and f"nll/{task_name}/nll" not in metrics:
+                metrics[f"nll/{task_name}/nll"] = float(np.mean(task_losses))
+        except Exception as e:
+            print(f"Skipping nll/{task_name}: {e}")
+    return metrics
+
+
 
 
 
@@ -275,15 +348,15 @@ def run_harness(model, tokenizer, limit=200):
         except Exception as e:
             print(f"Skipping {t}: {e}")
 
-    for t, task in custom_tasks.items():
+    for t in custom_tasks:
         try:
-            r = evaluate(lm=hflm, task_dict={t: task}, limit=limit)['results']
+            r = evaluate(lm=hflm, task_dict={t: _custom_task(t)}, limit=limit)['results']
             s[t] = pick_metric(r[t])
         except Exception as e:
             print(f"Skipping {t}: {e}")
 
     try:
-        return add_bbh0(s, hflm, task_manager, limit)
+        s = add_bbh0(s, hflm, task_manager, limit)
     except Exception as e:
         print(f"Skipping leaderboard_bbh_0shot: {e}")
-        return s
+    return {**s, **run_nll_metrics(model, tokenizer, limit=limit, task_manager=task_manager)}
