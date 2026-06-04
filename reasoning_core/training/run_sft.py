@@ -36,7 +36,8 @@ import hashlib
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainerCallback, AutoConfig
 from trl import SFTConfig
 from tabulate import tabulate
-from reasoning_core.training.mix_ablation import MixAblationCallback, add_mix_ablation_args, log_mix_ablation_artifact, wrap_aux_dataset_with_ablation
+from reasoning_core.training.controlled_experiment import add_control_args, row_filter, wrap_aux_dataset_for_control
+from reasoning_core.training.local_metrics import LocalMetricsCallback, LocalMetricsSink
 from reasoning_core.training.optimizers import add_optimizer_args, create_optimizer_and_scheduler, trainer_cls_for_optimizer
 from reasoning_core.training.source_signals import SourceDataCollator, add_source, pack_by_source
 import socket, threading, time, atexit
@@ -60,17 +61,26 @@ parser.add_argument('--aux_data', type=str, default="rc")
 parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
-parser.add_argument('--aux_version', type=str, default="rc12")
-parser.add_argument('--script_version', type=str, default="23")
+parser.add_argument('--aux_version', type=str, default="rc13")
+parser.add_argument('--script_version', type=str, default="24")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
+parser.add_argument("--experiment_name", type=str, default="")
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--n_eval', type=int, default=10)
 parser.add_argument('--target_effective_bs', type=int, default=64)
 parser.add_argument('--per_device_train_batch_size', type=int, default=0)
 parser.add_argument('--gradient_checkpointing', type=ast.literal_eval, default=False)
-add_mix_ablation_args(parser)
+parser.add_argument("--save_steps", type=int, default=400)
+parser.add_argument("--save_total_limit", type=int, default=1)
+add_control_args(parser)
+parser.add_argument("--eval_main_override", type=str, default="")
+parser.add_argument("--eval_main_budget", type=int, default=50_000)
+parser.add_argument("--eval_main_skip", type=int, default=1_000_000)
+parser.add_argument("--eval_aux_budget", type=int, default=1_500_000)
+parser.add_argument("--eval_aux_skip", type=int, default=100_000)
+parser.add_argument("--eval_aux_max_scanned", type=int, default=50_000)
 add_optimizer_args(parser)
 
 DATA_MAP = {
@@ -194,7 +204,7 @@ if ckpt and ckpt.get("hash") == run_hash:
     print(f"♻️  Resuming {run_name} — completed stages: {completed}")
 else:
     completed = set()
-    group_id = f"{args.main_data}+{args.aux_data}-{run_name}"
+    group_id = f"{args.main_data}+{args.aux_data}-{args.experiment_name}" if args.experiment_name else f"{args.main_data}+{args.aux_data}-{run_name}"
     save_ckpt({"hash": run_hash, "group_id": group_id,
                "args": {k: str(v) for k, v in vars(args).items()},
                "completed_stages": [], "done": False}, ckpt_file)
@@ -237,9 +247,24 @@ def get_formatter(data_key):
             "prompt": prefix + f"Q: {x['prompt']}\nA:",
             "completion": " "+answer + tokenizer.eos_token,
         }
-        ex.update({k: x[k] for k in ("task", "level") if x.get(k) not in (None, "")})
+        ex.update({k: x[k] for k in ("task", "level", "mode") if x.get(k) not in (None, "")})
+        source_task = _source_task(x)
+        if source_task:
+            ex["task"] = source_task
         return ex
     return fmt
+
+
+def _source_task(row):
+    raw = row.get("metadata", {}) if isinstance(row, dict) else {}
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError:
+            raw = {}
+    if not isinstance(raw, dict):
+        return None
+    return raw.get("source_dataset") or raw.get("task_name") or raw.get("rg_task")
 
 # --- Materialized loader (original behavior; also used for evals) ---
 def load_exact_tokens_materialized(key, budget, stream_skip=0, max_len=None, batch_size=1000):
@@ -323,6 +348,13 @@ per_device_bs = args.per_device_train_batch_size or auto_per_device_bs
 per_device_bs = max(1, min(per_device_bs, target_effective_bs))
 grad_accum = max(1, target_effective_bs // per_device_bs)
 eff_batch = per_device_bs * grad_accum
+local_metrics_sink = LocalMetricsSink(
+    ckpt_dir / "metrics.jsonl",
+    run_hash=run_hash,
+    group_id=group_id,
+    script_args=args,
+    eff_batch=eff_batch,
+)
 
 
 # --- 🧪 Experiment Setup ---
@@ -330,7 +362,7 @@ eff_batch = per_device_bs * grad_accum
 def clean_metric_key(x):
     return str(x).lower().replace("/", "_").replace(" ", "_").replace(".", "_")[:60]
 
-def load_eval_split(key, budget=250_000, skip=100_000, group_by=("task", "level"), max_groups=200, max_examples_per_group=32, min_examples_per_group=8, max_scanned=50_000):
+def load_eval_split(key, budget=500_000, skip=100_000, group_by=("task", "level"), max_groups=200, max_examples_per_group=32, min_examples_per_group=8, max_scanned=50_000):
     fmt = get_formatter(key)
     stream = load_dataset(DATA_MAP.get(key, key), split="train", streaming=True).skip(skip)
     buckets, tokens = defaultdict(list), 0
@@ -365,16 +397,15 @@ trainer_evals = main_evals if args.iterable_mode else {**main_evals, **aux_tl_ev
 
 
 aux_budget = int(args.token_budget * args.aux_ratio)
-ablation_tracker = None
 
 if args.iterable_mode:
     s1_main_ds = load_exact_tokens_iterable(args.main_data, args.token_budget, max_len=args.max_length)
     s1_aux_ds = load_exact_tokens_iterable(args.aux_data, aux_budget, max_len=args.max_length, cycle=True)
+    s1_aux_ds, control_spec = wrap_aux_dataset_for_control(s1_aux_ds, args)
+    if args.aux_task or args.aux_mode or args.aux_level:
+        print(f"🧪 CONTROL = {control_spec}")
     if args.train_source_loss:
         s1_main_ds, s1_aux_ds = add_source(s1_main_ds, 0), add_source(s1_aux_ds, 1)
-
-    if args.mix_ablation and s1_aux_ds is not None:
-        s1_aux_ds, ablation_tracker = wrap_aux_dataset_with_ablation(s1_aux_ds, args=args, eff_batch=eff_batch)
 
     parts = [d for d in [s1_main_ds, s1_aux_ds] if d is not None]
     if len(parts) == 2:
@@ -390,11 +421,14 @@ if args.iterable_mode:
 
     s2_main_ds = None  # disabled in iterable mode
 else:
-    if args.mix_ablation: print("⚠️  mix_ablation requires iterable_mode=True; ablation disabled.")
     s1_main_ds, main_rows_consumed = load_exact_tokens_materialized(
         args.main_data, args.token_budget, stream_skip=0, max_len=args.max_length)
     s1_aux_ds, _ = load_exact_tokens_materialized(
         args.aux_data, aux_budget, stream_skip=0, max_len=args.max_length)
+    if (args.aux_task or args.aux_mode or args.aux_level) and s1_aux_ds is not None:
+        s1_aux_ds = s1_aux_ds.filter(
+            lambda row: row_filter(row, task=args.aux_task, mode=args.aux_mode, level=args.aux_level)
+        )
     s1_final = concatenate_datasets([d for d in [s1_main_ds, s1_aux_ds] if d]).shuffle(seed=42)
 
     s2_budget = int(args.token_budget * args.phase_2_ratio)
@@ -424,6 +458,7 @@ def downstream_eval(model, tokenizer):
 def configure_downstream_eval_metrics():
     wandb.define_metric("downstream_eval/index")
     wandb.define_metric("downstream_eval/score/*", step_metric="downstream_eval/index")
+    wandb.define_metric("compare/*")
 
 
 def log_downstream_eval(model, tokenizer, bucket, n_eval, global_step=None, max_steps=None, ordinal=None):
@@ -448,6 +483,22 @@ def log_downstream_eval(model, tokenizer, bucket, n_eval, global_step=None, max_
         wandb.log(metrics)
     else:
         wandb.log(metrics, step=global_step)
+    for key, value in scores.items():
+        if key in {"nll/folio/nll", "nll/leaderboard_bbh/nll"} or key.startswith("platinum/"):
+            wandb.run.summary[f"final/{key}"] = value
+            wandb.run.summary[f"compare/{key.replace('/', '_')}"] = value
+    local_metrics_sink.record(
+        {
+            **scores,
+            "bucket": bucket,
+            "index": bucket - 1,
+            "n_eval": n_eval,
+            **({"ordinal": ordinal} if ordinal is not None else {}),
+        },
+        kind="downstream",
+        global_step=global_step,
+        max_steps=max_steps,
+    )
 
 
 class ScopeEvalLogCallback(TrainerCallback):
@@ -480,6 +531,12 @@ class ScopeEvalLogCallback(TrainerCallback):
                 logs["eval_aux_tl_runtime"] = self.rt
                 logs["eval_aux_tl_samples_per_second"] = self.samples / self.rt
                 logs["eval_aux_tl_steps_per_second"] = self.steps / self.rt
+        if wandb.run is not None:
+            for key, value in logs.items():
+                if key in ("eval_main_loss", "final_main_loss"):
+                    wandb.run.summary[f"compare/{key}"] = value
+                if key.endswith("_mean_token_accuracy") and key.startswith(("eval_aux_tl/", "eval_aux_tl_")):
+                    wandb.run.summary[f"compare/{key.replace('/', '_')}"] = value
 
 class DownstreamEvalCallback(TrainerCallback):
     """Run downstream eval at n-1 evenly-spaced buckets; final eval stays in existing block."""
@@ -586,7 +643,7 @@ common_args = dict(
     logging_steps=15, gradient_checkpointing=args.gradient_checkpointing, bf16=True, report_to="wandb",
     eval_strategy="steps", packing=True,
     dataset_num_proc=1, max_length=args.max_length,
-    save_strategy="steps", save_total_limit=2,
+    save_strategy="steps", save_steps=args.save_steps, save_total_limit=args.save_total_limit,
 )
 if args.train_source_loss:
     common_args["packing"] = False
@@ -599,20 +656,13 @@ if args.iterable_mode:
     print(f"📐 max_steps (stage1) = {max_steps_s1}  (eff_batch={eff_batch}, seq_len={args.max_length})")
 
 MAIN_EVAL_ROUNDS = 30
-TASKMIX_EVAL_STEPS = 50
 AUX_EVAL_ROUNDS = 10
 if args.iterable_mode:
     main_eval_steps = max(8, max_steps_s1 // MAIN_EVAL_ROUNDS)
-    if ablation_tracker is not None:
-        main_eval_steps = min(TASKMIX_EVAL_STEPS, main_eval_steps)
-        ablation_tracker.sync_windows_to_eval(main_eval_steps, eff_batch)
     common_args["eval_steps"] = main_eval_steps
     aux_eval_steps = max(8, max_steps_s1 // AUX_EVAL_ROUNDS)
 else:
     aux_eval_steps = None
-common_args["save_steps"] = 400
-
-
 opt_state = {"optimizer": None, "scheduler": None}
 
 
@@ -626,6 +676,15 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
     run_id = f"{run_hash}-{stage_name}"
     wandb.init(project="rc-sft", group=group_id, id=run_id,
                name=f"{run_name}/{stage_name}", config=args, resume="allow", reinit=True)
+    wandb.config.update({
+        "compare/main_data": args.main_data,
+        "compare/aux_task": args.aux_task or "all",
+        "compare/aux_mode": args.aux_mode or "all",
+        "compare/aux_level": args.aux_level or "all",
+        "compare/aux_ratio": args.aux_ratio,
+        "compare/seed": args.seed,
+        "compare/from_scratch": args.from_scratch,
+    }, allow_val_change=True)
     configure_downstream_eval_metrics()
 
     if restart or opt_state["optimizer"] is None:
@@ -649,6 +708,7 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
 
 
     callbacks = [
+        LocalMetricsCallback(local_metrics_sink),
         ScheduleFreeModeCallback(optimizer),
         DownstreamEvalCallback(model, tokenizer, optimizer, n=args.n_eval),
     ]
@@ -656,8 +716,6 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
     if args.iterable_mode:
         aux_eval_callback = PeriodicAuxEvalCallback(aux_tl_evals, aux_eval_steps, optimizer)
         callbacks.append(aux_eval_callback)
-    if ablation_tracker is not None:
-        callbacks.append(MixAblationCallback(ablation_tracker))
 
     trainer_cls = trainer_cls_for_optimizer(args)
     trainer = trainer_cls(
@@ -705,6 +763,9 @@ if "eval" not in completed:
 
     final_step = trainer.state.global_step if trainer is not None else None
     final_max_steps = trainer.state.max_steps if trainer is not None else None
+    args.stage_name = "eval"
+    if trainer is None:
+        local_metrics_sink.write_meta(max_steps=final_max_steps)
     model.eval()
     with torch.inference_mode():
         log_downstream_eval(
@@ -718,8 +779,6 @@ if "eval" not in completed:
         trainer.evaluate(metric_key_prefix="final")
         if args.iterable_mode and aux_tl_evals:
             trainer.evaluate(eval_dataset=getattr(trainer, "aux_tl_eval_dataset", aux_tl_evals), metric_key_prefix="final")
-    if ablation_tracker is not None:
-        log_mix_ablation_artifact(ablation_tracker.log_path)
     wandb.finish()
     save_ckpt({"hash": run_hash, "group_id": group_id,
                "args": {k: str(v) for k, v in vars(args).items()},
