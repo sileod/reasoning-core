@@ -1,5 +1,6 @@
 
-import random, re
+import json
+import random, re, itertools
 from pathlib import Path
 import string
 import exrex
@@ -12,6 +13,7 @@ from faker import Faker
 import sys, os
 from functools import wraps
 import codecs
+from collections import defaultdict
 
 #import re2 as re
 r"""
@@ -128,6 +130,10 @@ class RegexConfig(Config):
     n_ex: int = 8
     max_depth: int = 5
     min_depth: int = 3
+    n_alpha: int = 4
+    max_answer_len: int = 24
+    max_synth_nodes: int = 200_000
+    require_unique: bool = True
     gramforge_algorithm = "sequential"
     def update(self, c):
         self.n_ex += c
@@ -197,65 +203,392 @@ def strip_anchors_safe(text: str) -> str:
     return m.group(1) if m else text
 
 
+def _fullmatch_sig(pattern, strings):
+    try:
+        r = regex.compile(pattern)
+        return tuple(bool(r.fullmatch(s, timeout=0.1)) for s in strings)
+    except (regex.error, TimeoutError):
+        return None
+
+
+def _consistent(pattern, positives, negatives):
+    strings = positives + negatives
+    if "" not in positives and "" not in negatives:
+        strings = strings + [""]
+        negatives = negatives + [""]
+    sig = _fullmatch_sig(pattern, strings)
+    if sig is None:
+        return False
+    return sig == (True,) * len(positives) + (False,) * len(negatives)
+
+
+def _uses_only_induction_syntax(pattern, alphabet):
+    return all(c in set(alphabet) | set("|()*+?") for c in pattern)
+
+
+def _wrap_postfix(x):
+    return x if len(x) == 1 else f"({x})"
+
+
+def _wrap_concat_arg(x):
+    return f"({x})" if "|" in x and not (x.startswith("(") and x.endswith(")")) else x
+
+
+def _concat(x, y):
+    return f"{_wrap_concat_arg(x)}{_wrap_concat_arg(y)}"
+
+
+def _alt(x, y):
+    if x == y:
+        return x
+    a, b = sorted([x, y])
+    return f"{a}|{b}"
+
+
+def synthesize_shortest_regex(
+    positives,
+    negatives,
+    alphabet,
+    max_len=24,
+    max_nodes=200_000,
+    require_unique=True,
+):
+    examples = positives + negatives
+    if "" not in positives and "" not in negatives:
+        examples = examples + [""]
+        negatives = negatives + [""]
+
+    universe = {"", *alphabet, *examples}
+    for s in examples:
+        universe.update(s[i:j] for i in range(len(s)) for j in range(i + 1, len(s) + 1))
+    universe.update("".join(p) for p in itertools.product(alphabet, repeat=2))
+    universe = sorted(universe, key=lambda s: (len(s), s))
+    index = {s: i for i, s in enumerate(universe)}
+    pos_mask = sum(1 << index[s] for s in positives)
+    neg_mask = sum(1 << index[s] for s in negatives)
+    empty_mask = 1 << index[""]
+
+    by_len = defaultdict(list)
+    best_src_by_sig = {}
+    target_by_len = defaultdict(set)
+    sig_words = {}
+    concat_cache = {}
+    star_cache = {}
+    nodes = 0
+
+    def words(sig):
+        if sig not in sig_words:
+            sig_words[sig] = [s for s, i in index.items() if sig & (1 << i)]
+        return sig_words[sig]
+
+    def concat_sig(a, b):
+        key = (a, b)
+        if key not in concat_cache:
+            out = 0
+            for x in words(a):
+                for y in words(b):
+                    i = index.get(x + y)
+                    if i is not None:
+                        out |= 1 << i
+            concat_cache[key] = out
+        return concat_cache[key]
+
+    def star_sig(sig):
+        if sig not in star_cache:
+            out = empty_mask
+            prev = -1
+            while out != prev:
+                prev = out
+                out |= concat_sig(out, sig)
+            star_cache[sig] = out
+        return star_cache[sig]
+
+    def add(src, sig):
+        nonlocal nodes
+        if len(src) > max_len:
+            return True
+        nodes += 1
+        if (sig & pos_mask) == pos_mask and not (sig & neg_mask):
+            target_by_len[len(src)].add(src)
+        old = best_src_by_sig.get(sig)
+        if old is not None and (len(old), old) <= (len(src), src):
+            return nodes <= max_nodes
+        best_src_by_sig[sig] = src
+        by_len[len(src)].append((src, sig))
+        return nodes <= max_nodes
+
+    for c in alphabet:
+        if not add(c, 1 << index[c]):
+            return None
+
+    for L in range(1, max_len + 1):
+        winners = sorted(src for src, sig in by_len[L] if (sig & pos_mask) == pos_mask and not (sig & neg_mask))
+        if winners:
+            if require_unique and len(target_by_len[L]) > 1:
+                return None
+            return winners[0]
+
+        pool = [r for k in range(1, L + 1) for r in by_len[k]]
+
+        for x, sx in pool:
+            wx = _wrap_postfix(x)
+            if len(wx) + 1 == L + 1:
+                for src, sig in (
+                    (f"{wx}*", star_sig(sx)),
+                    (f"{wx}+", concat_sig(sx, star_sig(sx))),
+                    (f"{wx}?", sx | empty_mask),
+                ):
+                    if not add(src, sig):
+                        return None
+
+        for x, sx in pool:
+            for y, sy in pool:
+                if len(x) + len(y) > L + 1:
+                    continue
+                xy = _concat(x, y)
+                if len(xy) == L + 1 and not add(xy, concat_sig(sx, sy)):
+                    return None
+                if len(x) + len(y) + 1 != L + 1:
+                    continue
+                xy = _alt(x, y)
+                if len(xy) == L + 1 and not add(xy, sx | sy):
+                    return None
+
+    return None
+
+
 class RegexInduction(Task):
     def __init__(self, config=RegexConfig()):
         super().__init__(config=config)
 
     def generate(self):
-        while True:
-            meta = edict()
-            meta.regex = sample_regex(self.config)
-            positives = set()
-            for _ in range(self.config.n_ex * 5):
-                try: positives.add(sample_instance(meta.regex))
-                except ValueError: pass
-                if len(positives) == self.config.n_ex: break
-            if len(positives) >= 2: break
+        cfg = self.config
+        alphabet = ALPHA[:max(2, cfg.n_alpha)]
+        words = [a + b for a in alphabet for b in alphabet][:6]
+        G = regex_grammar(
+            fsm_subset=True,
+            alpha=alphabet,
+            words=random.sample(words, min(len(words), 4)),
+        )
 
-        meta.positives = list(positives)
-        negatives = []
-        for _ in range(self.config.n_ex * 20):  # bounded, not while True
-            try: s = sample_instance(sample_regex(self.config))
-            except ValueError: continue
-            if not regex.fullmatch(meta.regex, s, timeout=1):
-                negatives.append(s)
-            if len(negatives) == self.config.n_ex: break
-        if len(negatives) < self.config.n_ex:
-            return None  # let the outer retry loop in generate_example handle it
-        meta.negatives = negatives
-        return Problem(meta, meta.regex)
+        for _ in range(100):
+            hidden_regex, _fsm = _sample_regex(
+                G,
+                cfg.max_depth,
+                cfg.min_depth,
+                cfg.gramforge_algorithm,
+            )
+
+            if hidden_regex is None:
+                continue
+
+            positives = set()
+            for _ in range(cfg.n_ex * 20):
+                try:
+                    s = sample_instance(hidden_regex)
+                except ValueError:
+                    continue
+
+                if s and set(s) <= set(alphabet):
+                    positives.add(s)
+
+                if len(positives) == cfg.n_ex:
+                    break
+
+            if len(positives) < 2:
+                continue
+
+            negatives = set()
+            for _ in range(cfg.n_ex * 50):
+                s = "".join(random.choice(alphabet) for _ in range(random.randint(1, 5)))
+
+                try:
+                    if not regex.fullmatch(hidden_regex, s, timeout=0.2):
+                        negatives.add(s)
+                except TimeoutError:
+                    continue
+
+                if len(negatives) == cfg.n_ex:
+                    break
+
+            if len(negatives) < cfg.n_ex:
+                continue
+
+            positives = sorted(positives)
+            negatives = sorted(negatives)
+
+            answer = synthesize_shortest_regex(
+                positives,
+                negatives,
+                alphabet,
+                max_len=cfg.max_answer_len,
+                max_nodes=cfg.max_synth_nodes,
+                require_unique=cfg.require_unique,
+            )
+
+            if answer is None:
+                continue
+
+            meta = edict(
+                hidden_regex=hidden_regex,
+                positives=positives,
+                negatives=negatives,
+                alphabet=alphabet,
+                shortest_regex=answer,
+            )
+
+            return Problem(meta, answer)
+
+        return None
 
     def score_answer(self, answer, entry):
-        predicted_regex, meta = str(answer), entry.metadata
-        try:
-            predicted_regex = strip_anchors_safe(predicted_regex)
-            r = regex.compile(predicted_regex)
-        except (regex.error, TimeoutError): # <--- CATCHING SPECIFICALLY
+        pred = strip_anchors_safe(str(answer))
+        meta = entry.metadata
+
+        if not _uses_only_induction_syntax(pred, meta["alphabet"]):
+            return 0.0
+        if not _consistent(pred, meta["positives"], meta["negatives"]):
             return 0.0
 
-        pos_rate = sum(bool(r.fullmatch(s)) for s in meta['positives']) / len(meta['positives'])
-        neg_rate = sum(not r.fullmatch(s) for s in meta['negatives']) / len(meta['negatives'])
-        
-        accuracy = pos_rate * neg_rate
-        
-        if accuracy == 1.0:
-            # Base score of 0.5 for perfect accuracy, plus up to 0.5 for being short
-            length_ratio = len(meta['regex']) / max(1, len(predicted_regex))
-            length_bonus = min(1.0, length_ratio) * 0.5
-            return 0.5 + length_bonus
-        else:
-            return accuracy * 0.49
+        opt = meta["shortest_regex"]
+        if pred == opt:
+            return 1.0
+        if len(pred) < len(opt):
+            return 0.0
+        return 1.0 / (1.0 + len(pred) - len(opt))
 
     def prompt(self, meta):
-        pos_examples = ', '.join(f"'{s}'" for s in meta['positives'])
-        neg_examples = ', '.join(f"'{s}'" for s in meta['negatives'])
+        pos_examples = ", ".join(f"'{s}'" for s in meta["positives"])
+        neg_examples = ", ".join(f"'{s}'" for s in meta["negatives"])
+        sigma = "".join(meta["alphabet"])
+
         return (
-            f"The answer is the shortest regex that fully matches all POSITIVE strings and none of the NEGATIVE strings.\n"
-            f"POSITIVE: {pos_examples}\n"
-            f"NEGATIVE: {neg_examples}"
+            f"Positive: {pos_examples}\n"
+            f"Negative: {neg_examples}\n"
+            f"The answer is the shortest regex matching all positives and no negatives. "
+            f"Use only literals from Σ={{{sigma}}}, concatenation, |, parentheses, "
+            f"and postfix *, +, ?. Break ties lexicographically."
         )
 
 
+
+
+@dataclass
+class RegexRetrievalConfig(Config):
+    max_depth: int = 4
+    min_depth: int = 2
+    n_sentences: int = 3
+    n_chunks: int = 6
+    max_matches: int = 8
+    empty_rate: float = 0.12
+    literal_rate: float = 0.15
+    natural_rate: float = 0.7
+    structured_rate: float = 0.2
+    gramforge_algorithm = "sequential"
+
+    def update(self, c):
+        self.max_depth += c
+        self.min_depth += c
+        self.n_sentences += c
+        self.n_chunks += c
+        self.max_matches += c
+
+
+def _find_matches(pattern, text, timeout=0.2):
+    try:
+        matches = [m.group(0) for m in regex.finditer(pattern, text, timeout=timeout)]
+    except (regex.error, TimeoutError):
+        return None
+    return matches if all(matches) else None
+
+
+def clean_text(s):
+    return s.isascii() and s.isprintable()
+
+
+def _has_regex_abstraction(pattern):
+    return bool(regex.search(r"(?<!\\)[|*+?{\[.]|\\[dDwW]", pattern))
+
+
+class RegexRetrieval(Task):
+    def __init__(self, config=RegexRetrievalConfig()):
+        super().__init__(config=config)
+
+    def _natural(self, cfg):
+        text = fake.paragraph(nb_sentences=cfg.n_sentences)
+        patterns = [
+            r"\b[A-Z][a-z]+\b",
+            r"\b[a-z]{4,7}\b",
+            r"\b\w*[aeiou]{2}\w*\b",
+            r"\b[a-z]+(?:ed|ing|ly)\b",
+        ]
+        return random.choice(patterns), text, "natural"
+
+    def _structured(self, cfg):
+        items = [
+            fake.email(),
+            fake.date(pattern="%Y-%m-%d"),
+            fake.bothify(text="ID-###-??").upper(),
+            fake.phone_number(),
+            fake.postcode(),
+        ]
+        patterns = [r"\b[\w.-]+@[\w.-]+\.\w+\b", r"\b\d{4}-\d{2}-\d{2}\b", r"\bID-\d{3}-[A-Z]{2}\b"]
+        return random.choice(patterns), " ".join(random.sample(items, len(items))), "structured"
+
+    def _generated(self, cfg):
+        pattern = sample_regex(cfg)
+        chunks = []
+        for _ in range(cfg.n_chunks):
+            r = pattern if random.random() < 0.45 else sample_regex(cfg)
+            chunks.append(sample_instance(r))
+        sep = random.choice([" ", " ", ", ", ". "])
+        return pattern, sep.join(chunks), "generated"
+
+    def generate(self):
+        cfg = self.config
+        p = random.random()
+        make = self._natural if p < cfg.natural_rate else self._structured if p < cfg.natural_rate + cfg.structured_rate else self._generated
+        for _ in range(100):
+            try:
+                pattern, text, source = make(cfg)
+            except (RuntimeError, ValueError):
+                continue
+            if not clean_text(text):
+                continue
+            if not _has_regex_abstraction(pattern) and random.random() > cfg.literal_rate:
+                continue
+
+            matches = _find_matches(pattern, text)
+            if matches is None or any(len(x) > 80 for x in matches):
+                continue
+            if not matches:
+                if random.random() > cfg.empty_rate:
+                    continue
+            elif (
+                len(matches) > cfg.max_matches
+                or sum(map(len, matches)) > 0.4 * len(text)
+                or sum(len(x) == 1 for x in matches) > 0.5 * len(matches)
+            ):
+                continue
+
+            meta = edict(regex=pattern, text=text, matches=matches, source=source)
+            return Problem(meta, json.dumps(matches, ensure_ascii=True, separators=(",", ":")))
+        return None
+
+    def prompt(self, meta):
+        return (
+            f"Text: {meta['text']}\n"
+            f"Regex: {meta['regex']}\n"
+            f"Return only a JSON array of exact non-overlapping matches, left-to-right. "
+            f"Include duplicates. Return [] if none."
+        )
+
+    def score_answer(self, answer, entry):
+        try:
+            pred = json.loads(str(answer))
+        except json.JSONDecodeError:
+            return 0.0
+        return float(pred == entry.metadata["matches"])
 
 
 from greenery import parse as gparse

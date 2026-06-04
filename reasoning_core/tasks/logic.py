@@ -144,34 +144,48 @@ class LogicConfig(Config):
         self.n_names += c
         self.n_adjectives += c
         
-def get_cot(text: str) -> str:
+def get_cot(text: str, input_ids=None) -> str:
+    input_ids = None if input_ids is None else {str(i) for i in input_ids}
     lines, memo = [], {}
+
     for line in text.splitlines():
-        # Fix: Greedy match (.*) anchored ($) ensures we parse until the final metadata block
-        if not (m := re.match(r'^(\d+)\.\s+(.*)\s+\[(.*?)\]$', line)): continue
+        if not (m := re.match(r'^(\d+)\.\s+(.*)\s+\[(.*?)\]$', line)):
+            continue
         oid, form, meta = m.groups()
+        meta_l = meta.lower().replace("_", " ")
+        rule = meta.split(maxsplit=1)[0] if meta.strip() else ""
+        ids = re.findall(r'\b\d+\b', meta)
+        is_explicit_hypothesis = "hyp" in meta_l or "conjecture" in meta_l
+        is_h = is_explicit_hypothesis or (rule == "cnf" and not ids)
 
-        p_oids = re.findall(r'\b(\d+)\b', meta)
-        # Map original parent IDs to new line numbers
-        parents = [str(memo[p][0]) for p in p_oids if p in memo and 'input' not in meta]
-
-        # Dedupe: Skip if formula is identical to single parent
-        if len(parents) == 1 and memo[p_oids[0]][1] == form:
-            memo[oid] = memo[p_oids[0]]; continue
-
-        if 'input' in meta:
-            input_num = re.search(r'\d+', meta)
-            if input_num is None:
-                continue
-            ctx = "assumption" if "hyp" in meta else f"input {input_num.group()}"
+        if rule == "input":
+            if is_h:
+                ctx = "H"
+            else:
+                if not ids:
+                    raise ValueError(f"input without id: {line}")
+                src = ids[0]
+                if input_ids is not None and src not in input_ids:
+                    raise ValueError(f"input id {src} not in proof.indices: {line}")
+                ctx = f"P{src}"
+        elif is_explicit_hypothesis and not ids:
+            ctx = "H"
         else:
-            ctx = f"{meta.split()[0]} {', '.join(parents)}"
+            missing = [i for i in ids if i not in memo]
+            if missing:
+                raise ValueError(f"missing parents {missing}: {line}")
+            parents = [memo[i] for i in ids]
+            if len(parents) == 1 and parents[0][1] == form:
+                memo[oid] = parents[0]
+                continue
+            parent_ids = ",".join(str(p[0]) for p in parents)
+            ctx = "H" if is_h and not parent_ids else f"{rule} {parent_ids}".rstrip()
 
-        memo[oid] = (len(lines) + 1, form)
-        lines.append(f"{len(lines)}. [{ctx}] {form}")
+        new_id = len(lines) + 1
+        memo[oid] = (new_id, form)
+        lines.append(f"{new_id}. [{ctx}] {form}")
 
     return "\n".join(lines)
-
 
 
 def is_bloat(meta, label):
@@ -222,7 +236,14 @@ class LogicNLI(Task):
                     for prefix in ("", "~")]
             meta.verbalize_seed = random.randint(0, int(1e6))
             meta.proof = proof = ([x for x in proofs if x.status=="Unsatisfiable"]+[None])[0]
-            meta.cot = verbalize_predicates(get_cot(proof.proof), seed=meta.verbalize_seed, strip_underscores=False) if proof else ""
+            if proof:
+                try:
+                    cot = get_cot(proof.proof, input_ids=proof.indices)
+                except ValueError:
+                    continue
+                meta.cot = verbalize_predicates(cot, seed=meta.verbalize_seed, strip_underscores=False)
+            else:
+                meta.cot = ""
             labels = tuple([x.status for x in proofs])
 
             label = {
