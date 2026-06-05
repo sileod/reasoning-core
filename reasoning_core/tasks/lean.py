@@ -20,10 +20,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.request import urlretrieve
 
+import networkx as nx
 from appdirs import AppDirs
 from easydict import EasyDict as edict
 from gramforge import generate, init_grammar
 from reasoning_core.template import Config, Problem, Task, DevTask
+from .formal_maths import extract_useful_axioms
 
 
 # ============================================================================
@@ -358,6 +360,19 @@ class LeanConfig(Config):
         self.expr_depth += c
         self.n_hyps += c
         self.n_candidates += c
+
+
+@dataclass
+class LeanDerivationNode:
+    clause_id: str
+    clause_formula: str
+    parents: tuple[str, ...] = ()
+    inference: str = ""
+    role: str = "plain"
+    interesting_score: float = 0.0
+    full_cnf_clause: str = ""
+    proof: str = ""
+    depth: int = 0
 
 
 VAR_NAMES = tuple("abcdefghijkmn")
@@ -835,7 +850,7 @@ def _line_options(lines, answer, max_options=6):
         if line not in options:
             options.append(line)
     for line in (
-        "rfl", "simp", "omega", "tauto", "intro h", "intro x hx",
+        "intro h", "intro hp", "intro x hx", "ext x",
         "exact h0", "exact h1", "assumption",
     ):
         if line not in options:
@@ -847,6 +862,11 @@ def _line_options(lines, answer, max_options=6):
     random.shuffle(options)
     max_options = max(2, int(max_options))
     return options[:max_options] if answer in options[:max_options] else options[:max_options - 1] + [answer]
+
+
+def _compiling_line_options(template, options, use_mathlib):
+    runner = get_runner(use_mathlib=use_mathlib)
+    return [line for line in options if _safe(line) and runner.check(template.replace("__ANSWER__", line))[0]]
 
 
 def _proof_script_set_union(config):
@@ -1021,31 +1041,394 @@ def _score_proof_template(answer, entry):
 
 
 # ============================================================================
+# Lean-verified forward derivation graphs
+# ============================================================================
+
+_ORDER_RULES = {
+    ("≤", "≤"): ("Int.le_trans", "≤"),
+    ("<", "<"): ("Int.lt_trans", "<"),
+    ("<", "≤"): ("Int.lt_of_lt_of_le", "<"),
+    ("≤", "<"): ("Int.lt_of_le_of_lt", "<"),
+}
+
+
+def _split_order_formula(formula):
+    m = re.fullmatch(r"\s*(.+?)\s*(≤|<)\s*(.+?)\s*", formula)
+    if not m:
+        return None
+    return m.group(1).strip(), m.group(2), m.group(3).strip()
+
+
+def _lean_example(decl, hyps, goal, proof):
+    hyp_str = " ".join(f"({h} : {b})" for h, b in hyps)
+    decl = decl + " " if decl else ""
+    return f"example {decl}{hyp_str} : {goal} := by\n  exact {proof}\n"
+
+
+def _node_data(G, node):
+    return G.nodes[node]["data"]
+
+
+def _add_lean_node(G, node):
+    G.add_node(node.clause_id, data=node)
+    for parent in node.parents:
+        G.add_edge(parent, node.clause_id)
+
+
+def _fresh_clause_id(G):
+    return f"c{len(G.nodes)}"
+
+
+def _rule_application(G, left, right, decl, runner):
+    lf = _split_order_formula(_node_data(G, left).clause_formula)
+    rf = _split_order_formula(_node_data(G, right).clause_formula)
+    if not lf or not rf or lf[2] != rf[0]:
+        return None
+    rule = _ORDER_RULES.get((lf[1], rf[1]))
+    if rule is None:
+        return None
+    theorem, out_op = rule
+    conclusion = f"{lf[0]} {out_op} {rf[2]}"
+    if any(_node_data(G, n).clause_formula == conclusion for n in G.nodes):
+        return None
+    proof = f"{theorem} p0 p1"
+    code = _lean_example(
+        decl,
+        [("p0", _node_data(G, left).clause_formula),
+         ("p1", _node_data(G, right).clause_formula)],
+        conclusion,
+        proof,
+    )
+    ok, _ = runner.check(code)
+    if not ok:
+        return None
+    depth = max(_node_data(G, left).depth, _node_data(G, right).depth) + 1
+    clause_id = _fresh_clause_id(G)
+    return LeanDerivationNode(
+        clause_id=clause_id,
+        clause_formula=conclusion,
+        parents=(left, right),
+        inference=theorem,
+        role="plain",
+        interesting_score=float(depth),
+        full_cnf_clause=f"cnf({clause_id},plain,{conclusion})",
+        proof=f"{theorem} {{0}} {{1}}",
+        depth=depth,
+    )
+
+
+def _hypothesis_names(G):
+    leaves = [n for n in nx.topological_sort(G) if G.in_degree(n) == 0]
+    return {n: f"h{i}" for i, n in enumerate(leaves)}
+
+
+def make_lean_have_chain(G, target_node, decl="", leaf_hyp_names=None):
+    sub = G.subgraph(nx.ancestors(G, target_node) | {target_node}).copy()
+    leaf_hyp_names = dict(leaf_hyp_names or _hypothesis_names(sub))
+    node_to_name = dict(leaf_hyp_names)
+    lines = []
+    next_idx = len(leaf_hyp_names)
+
+    for node in nx.topological_sort(sub):
+        if node in node_to_name:
+            continue
+        data = _node_data(sub, node)
+        parents = list(data.parents) if data.parents else list(sub.predecessors(node))
+        parent_names = [node_to_name[p] for p in parents]
+        name = f"h{next_idx}"
+        next_idx += 1
+        proof = data.proof.format(*parent_names) if data.proof else f"{data.inference} {' '.join(parent_names)}"
+        lines.append(f"have {name} : {data.clause_formula} := {proof}")
+        node_to_name[node] = name
+
+    lines.append(f"exact {node_to_name[target_node]}")
+    proof = "\n".join(lines)
+    refs = set(re.findall(r"\bh\d+\b", proof))
+    defined = set(leaf_hyp_names.values())
+    for line in lines:
+        m = re.match(r"have\s+(h\d+)\s*:", line)
+        if m:
+            defined.add(m.group(1))
+    if not refs <= defined:
+        raise RuntimeError(f"undefined Lean proof references: {sorted(refs - defined)}")
+    return proof
+
+
+def _render_forward_theorem(decl, leaf_hyps, goal, proof_body, name="ex"):
+    hyp_str = " ".join(f"({h} : {b})" for h, b in leaf_hyps)
+    decl = decl + " " if decl else ""
+    body = "\n".join(f"  {line}" for line in proof_body.splitlines())
+    return f"theorem {name} {decl}{hyp_str} : {goal} := by\n{body}\n"
+
+
+def _cheap_solvers(header, use_mathlib):
+    candidates = ("omega", "simp", "aesop", "tauto", "ring") if use_mathlib else ("simp", "tauto", "rfl")
+    runner = get_runner(use_mathlib=use_mathlib)
+    solved = []
+    for tactic in candidates:
+        if not _safe(tactic):
+            continue
+        ok, _ = runner.check(header + f"  {tactic}\n")
+        if ok:
+            solved.append(tactic)
+    return solved
+
+
+def gen_forward_order_graph(config):
+    n_edges = max(6, min(9, int(getattr(config, "n_hyps", 4)) + 2))
+    n_vars = n_edges + 1
+    names = _vars(n_vars)
+    decl = f"({' '.join(names)} : Int)"
+    G = nx.DiGraph()
+    strict_count = 0
+
+    for i in range(n_edges):
+        op = "<" if random.random() < 0.35 else "≤"
+        strict_count += int(op == "<")
+        formula = f"{names[i]} {op} {names[i + 1]}"
+        clause_id = f"p{i}"
+        _add_lean_node(G, LeanDerivationNode(
+            clause_id=clause_id,
+            clause_formula=formula,
+            inference="hypothesis",
+            role="axiom",
+            interesting_score=0.0,
+            full_cnf_clause=f"cnf({clause_id},axiom,{formula})",
+            proof=f"h{i}",
+            depth=0,
+        ))
+
+    if strict_count == n_edges:
+        data = _node_data(G, f"p{random.randrange(n_edges)}")
+        data.clause_formula = data.clause_formula.replace("<", "≤", 1)
+
+    runner = get_runner(use_mathlib=getattr(config, "use_mathlib", True))
+    max_depth = max(3, min(6, int(getattr(config, "expr_depth", 4)) + 1))
+    accepted = 0
+    proposals = 0
+    frontier = "p0"
+    for i in range(1, n_edges):
+        proposals += 1
+        node = _rule_application(G, frontier, f"p{i}", decl, runner)
+        if node is None or node.depth > max_depth:
+            break
+        frontier = node.clause_id
+        _add_lean_node(G, node)
+        accepted += 1
+
+    for left, right in (("p0", "p1"), ("p2", "p3"), ("p4", "p5")):
+        if left in G and right in G:
+            proposals += 1
+            node = _rule_application(G, left, right, decl, runner)
+            if node is not None and node.depth <= max_depth:
+                _add_lean_node(G, node)
+                accepted += 1
+
+    candidates = [
+        n for n in G.nodes
+        if G.in_degree(n) > 0
+        and _node_data(G, n).depth >= 3
+        and len(extract_useful_axioms(G, n)) >= 2
+    ]
+    random.shuffle(candidates)
+    for target in sorted(candidates, key=lambda n: _node_data(G, n).depth, reverse=True):
+        leaf_names = _hypothesis_names(G.subgraph(nx.ancestors(G, target) | {target}).copy())
+        leaf_hyps = [(leaf_names[n], _node_data(G, n).clause_formula) for n in leaf_names]
+        goal = _node_data(G, target).clause_formula
+        if goal in [h for _, h in leaf_hyps]:
+            continue
+        used = _used_int_vars(goal, *[h for _, h in leaf_hyps])
+        theorem_decl = f"({' '.join(used)} : Int)" if used else decl
+        proof = make_lean_have_chain(G, target, decl=decl, leaf_hyp_names=leaf_names)
+        theorem = _render_forward_theorem(theorem_decl, leaf_hyps, goal, proof)
+        if not _safe(theorem):
+            continue
+        ok, diag = runner.check(theorem)
+        if not ok:
+            continue
+        header = _render_forward_theorem(theorem_decl, leaf_hyps, goal, "", name="ex").rsplit(":= by\n", 1)[0] + ":= by\n"
+        cheap = _cheap_solvers(header, getattr(config, "use_mathlib", True))
+        return edict(
+            G=G,
+            target_node=target,
+            decl=theorem_decl,
+            leaf_hyp_names=leaf_names,
+            leaf_hyps=leaf_hyps,
+            goal=goal,
+            proof=proof,
+            theorem=theorem,
+            cheap_solvers=cheap,
+            stats=edict(
+                proposals=proposals,
+                accepted=accepted,
+                acceptance_rate=(accepted / proposals if proposals else 0.0),
+                proof_depth=_node_data(G, target).depth,
+                useful_premises=len(extract_useful_axioms(G, target)),
+                final_verifies=True,
+                diag=diag,
+            ),
+        )
+    return None
+
+
+# ============================================================================
 # Tasks
 # ============================================================================
+
+class LeanForwardProofTask(DevTask):
+    """Recover a Lean have-chain proof from a verified forward derivation graph."""
+
+    def __init__(self, config=None, **kwargs):
+        if config is None:
+            config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
+        for k, v in kwargs.items():
+            setattr(config, k, v)
+        super().__init__(config=config, timeout=120)
+
+    def generate(self):
+        for _ in range(20):
+            inst = gen_forward_order_graph(self.config)
+            if inst is None:
+                continue
+            template = _render_forward_theorem(inst.decl, inst.leaf_hyps, inst.goal, "__ANSWER__")
+            graph_rows = []
+            for n in nx.topological_sort(inst.G.subgraph(nx.ancestors(inst.G, inst.target_node) | {inst.target_node})):
+                data = _node_data(inst.G, n)
+                parents = ", ".join(data.parents) if data.parents else "axiom"
+                graph_rows.append(f"{n}: {data.clause_formula} [{data.inference}; parents: {parents}]")
+            return Problem(
+                edict(
+                    kind="lean_forward_order_graph",
+                    template=template,
+                    theorem=inst.theorem,
+                    goal=inst.goal,
+                    proof=inst.proof,
+                    graph=graph_rows,
+                    proof_depth=inst.stats.proof_depth,
+                    useful_premises=inst.stats.useful_premises,
+                    cheap_solvers=inst.cheap_solvers,
+                    stats=inst.stats,
+                    use_mathlib=getattr(self.config, "use_mathlib", True),
+                ),
+                inst.proof,
+            )
+        raise RuntimeError("failed to generate a Lean forward proof task")
+
+    def prompt(self, metadata):
+        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
+        return (
+            "Fill `__ANSWER__` with a Lean 4 proof body that reconstructs the derivation. "
+            f"{imports} The answer is only the replacement proof body, without code fences.\n\n"
+            f"THEOREM:\n{_mget(metadata, 'template')}"
+        )
+
+    def score_answer(self, answer, entry):
+        if not answer or not _safe(answer):
+            return 0.0
+        body = "\n".join(f"  {line.strip()}" for line in str(answer).splitlines() if line.strip())
+        code = _mget(entry.metadata, "template").replace("  __ANSWER__", body)
+        return float(get_runner(use_mathlib=_mget(entry.metadata, "use_mathlib")).check(code)[0])
+
+
+class LeanForwardPremiseSelection(DevTask):
+    """Select the Lean hypotheses needed by a forward derivation graph."""
+
+    def __init__(self, config=None, **kwargs):
+        if config is None:
+            config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
+        for k, v in kwargs.items():
+            setattr(config, k, v)
+        super().__init__(config=config, timeout=120)
+
+    def generate(self):
+        for _ in range(20):
+            inst = gen_forward_order_graph(self.config)
+            if inst is None:
+                continue
+            useful = extract_useful_axioms(inst.G, inst.target_node)
+            leaf_by_node = dict(inst.leaf_hyp_names)
+            useful_indices = sorted(int(leaf_by_node[n][1:]) + 1 for n in useful if n in leaf_by_node)
+            useful_formulas = [inst.leaf_hyps[i - 1][1] for i in useful_indices]
+            leaf_formulas = [
+                _node_data(inst.G, n).clause_formula
+                for n in inst.G.nodes
+                if inst.G.in_degree(n) == 0
+            ]
+            distractor_pool = [
+                f for f in leaf_formulas
+                if f not in useful_formulas and f != inst.goal
+            ]
+            n_distractors = min(len(distractor_pool), max(1, int(self.config.n_candidates) // 2))
+            pool = list(useful_formulas) + random.sample(distractor_pool, n_distractors)
+            random.shuffle(pool)
+            correct = sorted(pool.index(f) + 1 for f in useful_formulas if f in pool)
+            if len(correct) < 2:
+                continue
+            return Problem(
+                edict(
+                    kind="lean_forward_premise_selection",
+                    hypotheses_pool=pool,
+                    theorem=inst.goal,
+                    correct_indices=correct,
+                    correct_minimal_hypotheses=useful_formulas,
+                    proof=inst.proof,
+                    stats=inst.stats,
+                    use_mathlib=getattr(self.config, "use_mathlib", True),
+                ),
+                str(correct),
+            )
+        raise RuntimeError("failed to generate a Lean forward premise-selection task")
+
+    def prompt(self, metadata):
+        hypotheses_text = "\n".join(f"{i + 1}. {h}" for i, h in enumerate(_mget(metadata, "hypotheses_pool")))
+        return (
+            "Identify the numbered Lean hypotheses needed by the forward proof of the theorem.\n\n"
+            f"Hypotheses:\n{hypotheses_text}\n\n"
+            f"Theorem: `{_mget(metadata, 'theorem')}`\n\n"
+            "The answer is a sorted Python list of numbers, for example `[1, 3, 4]`."
+        )
+
+    def score_answer(self, answer, entry):
+        truth = set(ast.literal_eval(entry.answer))
+        pred = set(map(int, re.findall(r"\d+", str(answer))))
+        if not truth and not pred:
+            return 1.0
+        return len(truth & pred) / len(truth | pred) if (truth | pred) else 0.0
+
 
 class LeanMissingProofLine(DevTask):
     """Recover one missing line from a short proof using a constrained inventory."""
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, **kwargs):
         if config is None:
             config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
+        for k, v in kwargs.items():
+            setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
     def generate(self):
-        script = make_proof_script(self.config)
-        idx = random.randrange(len(script.lines))
-        answer = script.lines[idx]
-        body = []
-        for i, line in enumerate(script.lines):
-            body.append("  __ANSWER__\n" if i == idx else f"  {line}\n")
-        return Problem(
-            edict(kind=script.kind, template=script.header + "".join(body),
-                  available_lines=_line_options(script.lines, answer, self.config.n_candidates),
-                  missing_line=idx + 1,
-                  use_mathlib=getattr(self.config, "use_mathlib", True)),
-            answer,
-        )
+        use_mathlib = getattr(self.config, "use_mathlib", True)
+        for _ in range(50):
+            script = make_proof_script(self.config)
+            idx = random.randrange(len(script.lines))
+            answer = script.lines[idx]
+            body = []
+            for i, line in enumerate(script.lines):
+                body.append("  __ANSWER__\n" if i == idx else f"  {line}\n")
+            template = script.header + "".join(body)
+            options = _line_options(script.lines, answer, self.config.n_candidates)
+            compiling = _compiling_line_options(template, options, use_mathlib)
+            if compiling != [answer]:
+                continue
+            return Problem(
+                edict(kind=script.kind, template=template,
+                      available_lines=options,
+                      compiling_lines=compiling,
+                      missing_line=idx + 1,
+                      use_mathlib=use_mathlib),
+                answer,
+            )
+        raise RuntimeError("failed to generate a unique Lean missing-line instance")
 
     def prompt(self, metadata):
         opts = "\n".join(f"- {line}" for line in _mget(metadata, "available_lines"))

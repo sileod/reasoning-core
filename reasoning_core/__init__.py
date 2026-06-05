@@ -46,6 +46,7 @@ def _discover_tasks():
     Returns a mapping of {task_name: module_name}.
     """
     task_map = {}
+    dev_task_map = {}
     tasks_path = tasks.__path__[0]
     for filename in os.listdir(tasks_path):
         if filename.endswith('.py') and not filename.startswith('_'):
@@ -55,33 +56,47 @@ def _discover_tasks():
 
 
             for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef) and any(b.id == 'Task' for b in node.bases if isinstance(b, ast.Name)):
-                    # Default task_name is the class name in lowercase
-                    task_name = prepr_task_name(node.name)
-                    # Look for an explicit `task_name = "..."` assignment
-                    for body_item in node.body:
-                        if (isinstance(body_item, ast.Assign) and
-                            len(body_item.targets) == 1 and
-                            isinstance(body_item.targets[0], ast.Name) and
-                            body_item.targets[0].id == 'task_name'):
-                            # For Python 3.8+ value is Constant, for older it's Str
-                            if isinstance(body_item.value, (ast.Constant, ast.Str)):
-                                task_name = body_item.value.s
-                            break
-                    task_map[task_name] = module_name
-    return task_map
+                if not isinstance(node, ast.ClassDef):
+                    continue
+                bases = {
+                    b.id if isinstance(b, ast.Name) else b.attr
+                    for b in node.bases
+                    if isinstance(b, (ast.Name, ast.Attribute))
+                }
+                if not {'Task', 'DevTask'} & bases:
+                    continue
+                task_name = prepr_task_name(node.name)
+                for body_item in node.body:
+                    if (isinstance(body_item, ast.Assign) and
+                        len(body_item.targets) == 1 and
+                        isinstance(body_item.targets[0], ast.Name) and
+                        body_item.targets[0].id == 'task_name' and
+                        isinstance(body_item.value, ast.Constant) and
+                        isinstance(body_item.value.value, str)):
+                        task_name = body_item.value.value
+                        break
+                target_map = dev_task_map if 'DevTask' in bases else task_map
+                target_map[task_name] = (module_name, node.name)
+    return task_map, dev_task_map
 
 
-def _lazy_loader(task_name, module_name):
+def _lazy_loader(task_name, module_name, class_name=None):
     """Triggers the module import and returns the specific task class from the registry."""
-    importlib.import_module(f".tasks.{module_name}", _PACKAGE_NAME)
+    module = importlib.import_module(f".tasks.{module_name}", _PACKAGE_NAME)
+    if class_name is not None and task_name not in _REGISTRY:
+        return getattr(module, class_name)
     return _REGISTRY[task_name]
 
-_task_to_module_map = _discover_tasks()
+_task_to_module_map, _dev_task_to_module_map = _discover_tasks()
 
 DATASETS = {
     task_name: _PrettyLazy(task_name, module_name)
-    for task_name, module_name in _task_to_module_map.items()
+    for task_name, (module_name, class_name) in _task_to_module_map.items()
+}
+
+DEV_DATASETS = {
+    task_name: _PrettyLazy(task_name, module_name)
+    for task_name, (module_name, class_name) in _dev_task_to_module_map.items()
 }
 
 class SelfMock:
@@ -104,8 +119,11 @@ try:
 except ImportError:
     pass
 
-def match_task_name(name):
-    datasets = list(DATASETS.keys())+['reasoning_gym']
+def match_task_name(name, include_dev=False):
+    datasets = list(DATASETS.keys())
+    if include_dev:
+        datasets += list(DEV_DATASETS.keys())
+    datasets += ['reasoning_gym']
     norm = lambda x: x.replace('_','').lower()
     matches = [t for t in datasets if norm(name)==norm(t)]
     assert len(matches)==1, f"Could not uniquely identify task {name} in {datasets}"
@@ -115,8 +133,12 @@ def get_task(k, *args, **kwargs):
     if k.lower()=='reasoning_gym':
         from .tasks import _reasoning_gym
         return _reasoning_gym.Reasoning_Gym(*args, **kwargs) 
-    k=match_task_name(k)
-    return DATASETS[k](*args, **kwargs)
+    k=match_task_name(k, include_dev=True)
+    if k in DATASETS:
+        return DATASETS[k](*args, **kwargs)
+    module_name, class_name = _dev_task_to_module_map[k]
+    cls = _lazy_loader(k, module_name, class_name)
+    return cls(*args, **kwargs)
 
 DEPRECATED = ['symbolic_arithmetics', 'graph_node_centrality']
 ignored = DEPRECATED + ['reasonining_gym']
