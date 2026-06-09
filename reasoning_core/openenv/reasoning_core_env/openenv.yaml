@@ -1,0 +1,11 @@
+spec_version: 1
+name: reasoning_core
+type: space
+runtime: fastapi
+app: server.app:app
+port: 8000
+variables:
+  MAX_CONCURRENT_ENVS: "16"
+  RC_DATASET_SIZE: "1000"
+  RC_HF_DATASET: reasoning-core/formal-reasoning-env
+  RC_SEED: "42"

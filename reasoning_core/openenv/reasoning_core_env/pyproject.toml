@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openenv-reasoning-core"
+version = "0.1.0"
+description = "Formally verifiable symbolic reasoning tasks for OpenEnv"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets>=3.0",
+    "easydict>=1.13",
+    "openenv[core]>=0.3.1",
+    "reasoning-core>=0.4.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+server = "reasoning_core_env.server.app:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["reasoning_core_env", "reasoning_core_env.server"]
+package-dir = { "reasoning_core_env" = ".", "reasoning_core_env.server" = "server" }
