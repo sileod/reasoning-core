@@ -20,7 +20,7 @@ from ._tptp_finite_interpretation import (
     universally_quantify,
     validate_formula,
 )
-from ._sat_graph import generate_derivation_graph
+from ._tptp_sat_graph import generate_derivation_graph
 from reasoning_core.template import Task, DevTask, Problem, Config
 import ast
 from reasoning_core.template import TimeoutException
@@ -522,17 +522,27 @@ class FiniteInterpretationCheck(Task):
             for i, req in enumerate(metadata["requirements"])
         )
         return (
-            f"Check whether the finite interpretation satisfies every signed requirement.\n"
-            f"All variables are universally quantified. A formula marked false therefore needs "
-            f"at least one variable assignment that makes it false.\n\n"
-            f"Domain: {domain_name}\n\n"
-            f"Relevant background axioms (context only, not requirements):\n"
+            f"You are a mathematical logic assistant. Your task is to check whether "
+            f"a finite interpretation satisfies a set of formal requirements.\n\n"
+            f"## General Context\n"
+            f"The problem is set in the domain of: **{domain_name}**.\n"
+            f"The following TPTP clauses are relevant background axioms from the same theory. "
+            f"They are provided to make the mathematical setting clear. They are not themselves "
+            f"requirements unless they are explicitly listed below.\n\n"
+            f"Background axioms:\n"
             f"{context_text}\n\n"
-            f"Signed requirements:\n"
+            f"## Requirements\n"
+            f"Each requirement says whether a formula must evaluate to true or false "
+            f"under the finite interpretation. Variables are universally quantified. "
+            f"Thus, a formula that must be false needs at least one variable assignment "
+            f"under which it is false.\n\n"
             f"{req_text}\n\n"
-            f"Finite interpretation:\n"
+            f"## Finite interpretation\n"
             f"{metadata['model']}\n\n"
-            f"The answer is `True` if every requirement is satisfied, and `False` otherwise."
+            f"## Question\n"
+            f"Does the finite interpretation satisfy every listed requirement?\n\n"
+            f"## Response format\n"
+            f"Answer exactly `True` or `False`."
         )
 
     def score_answer(self, answer, entry):
@@ -735,7 +745,7 @@ class TheoremPremiseSelection(Task):
 
         
         return (
-            f"You are a mathematical logic assistant. Your task is to identify a minimal set of premises sufficient for a proof.\n\n"
+            f"Your task is to identify a minimal set of premises sufficient for a proof.\n\n"
             f"By using the **Superposition Calculus** (which includes rules like Resolution and Paramodulation).\n"
             f"## General Context\n"
             f"The problem is set in the domain of: **{domain_name}**.\n"
@@ -832,7 +842,7 @@ def parse_parent_table(answer, n):
     return rows
 
 
-class ProofReconstruction(Task):
+class ProofReconstruction(DevTask):
     """
     A task that generates problems where one must reconstruct the derivation
     graph from a numbered list of shuffled clauses.

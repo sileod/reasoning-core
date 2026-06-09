@@ -8,7 +8,7 @@ from easydict import EasyDict as edict
 from faker import Faker
 from rapidfuzz.distance import Levenshtein
 import whatthepatch
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, DevTask, Problem, Config, edict
 from typing import List
 
 fake = Faker()
@@ -182,7 +182,7 @@ class ConfigEditionConfig(Config):
         self.list_rate = min(0.55, self.list_rate + 0.035 * c)
 
 
-class ConfigEdition(Task):
+class ConfigEdition(DevTask):
     value_pools = {
         "id": ["small", "base", "large", "fast", "accurate"],
         "backend": ["local", "cuda", "mps", "remote"],

@@ -7,7 +7,7 @@ from nltk.parse.generate import generate as nltk_generate
 from nltk import CFG, ChartParser
 from nltk.parse.earleychart import EarleyChartParser
 import sys
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, DevTask, Problem, Config
 import random
 from pathlib import Path
 from nltk.data import path as nltk_path
@@ -389,7 +389,7 @@ def generate_parse(config=GrammarConfig):
             return meta
 
 
-class Parsability(Task):
+class Parsability(DevTask):
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio=1/3
@@ -409,7 +409,7 @@ class Parsability(Task):
         )
 
 
-class Parsing(Task):
+class Parsing(DevTask):
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.perturbation_rate = 0.0
         super().__init__(config=config)

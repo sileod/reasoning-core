@@ -25,7 +25,7 @@ from appdirs import AppDirs
 from easydict import EasyDict as edict
 from gramforge import generate, init_grammar
 from reasoning_core.template import Config, Problem, Task, DevTask
-from .formal_maths import extract_useful_axioms
+from .math_tptp import extract_useful_axioms
 
 
 # ============================================================================
@@ -850,7 +850,7 @@ def _line_options(lines, answer, max_options=6):
         if line not in options:
             options.append(line)
     for line in (
-        "intro h", "intro hp", "intro x hx", "ext x",
+        "rfl", "simp", "omega", "tauto", "intro h", "intro x hx",
         "exact h0", "exact h1", "assumption",
     ):
         if line not in options:
@@ -862,11 +862,6 @@ def _line_options(lines, answer, max_options=6):
     random.shuffle(options)
     max_options = max(2, int(max_options))
     return options[:max_options] if answer in options[:max_options] else options[:max_options - 1] + [answer]
-
-
-def _compiling_line_options(template, options, use_mathlib):
-    runner = get_runner(use_mathlib=use_mathlib)
-    return [line for line in options if _safe(line) and runner.check(template.replace("__ANSWER__", line))[0]]
 
 
 def _proof_script_set_union(config):
@@ -1275,7 +1270,7 @@ def gen_forward_order_graph(config):
 # Tasks
 # ============================================================================
 
-class LeanForwardProofTask(DevTask):
+class LeanForwardProof(DevTask):
     """Recover a Lean have-chain proof from a verified forward derivation graph."""
 
     def __init__(self, config=None, **kwargs):
@@ -1399,36 +1394,25 @@ class LeanForwardPremiseSelection(DevTask):
 class LeanMissingProofLine(DevTask):
     """Recover one missing line from a short proof using a constrained inventory."""
 
-    def __init__(self, config=None, **kwargs):
+    def __init__(self, config=None):
         if config is None:
             config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
-        for k, v in kwargs.items():
-            setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
     def generate(self):
-        use_mathlib = getattr(self.config, "use_mathlib", True)
-        for _ in range(50):
-            script = make_proof_script(self.config)
-            idx = random.randrange(len(script.lines))
-            answer = script.lines[idx]
-            body = []
-            for i, line in enumerate(script.lines):
-                body.append("  __ANSWER__\n" if i == idx else f"  {line}\n")
-            template = script.header + "".join(body)
-            options = _line_options(script.lines, answer, self.config.n_candidates)
-            compiling = _compiling_line_options(template, options, use_mathlib)
-            if compiling != [answer]:
-                continue
-            return Problem(
-                edict(kind=script.kind, template=template,
-                      available_lines=options,
-                      compiling_lines=compiling,
-                      missing_line=idx + 1,
-                      use_mathlib=use_mathlib),
-                answer,
-            )
-        raise RuntimeError("failed to generate a unique Lean missing-line instance")
+        script = make_proof_script(self.config)
+        idx = random.randrange(len(script.lines))
+        answer = script.lines[idx]
+        body = []
+        for i, line in enumerate(script.lines):
+            body.append("  __ANSWER__\n" if i == idx else f"  {line}\n")
+        return Problem(
+            edict(kind=script.kind, template=script.header + "".join(body),
+                  available_lines=_line_options(script.lines, answer, self.config.n_candidates),
+                  missing_line=idx + 1,
+                  use_mathlib=getattr(self.config, "use_mathlib", True)),
+            answer,
+        )
 
     def prompt(self, metadata):
         opts = "\n".join(f"- {line}" for line in _mget(metadata, "available_lines"))
@@ -1445,7 +1429,7 @@ class LeanMissingProofLine(DevTask):
         return float(_normalize_line(answer) == entry.answer)
 
 
-class LeanCandidateCompilation(DevTask):
+class LeanCandidateCompilation(Task):
     """True/False on whether a single candidate proof body closes the theorem."""
 
     def __init__(self, config=LeanConfig()):
@@ -1479,7 +1463,7 @@ class LeanCandidateCompilation(DevTask):
         return float(str(answer).strip().strip("`").lower() == entry.answer.lower())
 
 
-class LeanProofRepair(DevTask):
+class LeanProofRepair(Task):
     """Replace a broken proof body with one that compiles."""
 
     def __init__(self, config=LeanConfig()):

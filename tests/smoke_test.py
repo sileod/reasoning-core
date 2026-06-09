@@ -6,9 +6,11 @@ for t in list_tasks():
     t0 = time.time()
     try:
         get_task(t).validate()
-        print(f"{t.ljust(30, '.')} {time.time() - t0:.5f}")
+        print(f"{t.ljust(30, '.')}", end=' ')
+        print(f"{time.time() - t0:.5f}")
     except Exception as e:
-        print(f"{t.ljust(30, '.')} EXCEPTION: {e}")
+        print(f"{t.ljust(30, '.')}", end=' ')
+        print(f"EXCEPTION: {e}")
         failed.append(t)
 
 if failed:

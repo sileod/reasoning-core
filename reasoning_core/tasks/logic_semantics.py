@@ -15,7 +15,7 @@ def run(expr, **kw):
 from gramforge.assets import fol_nli_verbalization
 
 import sys
-from reasoning_core.template import Task, Problem, Config, register_dataset
+from reasoning_core.template import Task, DevTask, Problem, Config
 from gramforge.grammars.FOL import FOL_grammar
 from easydict import EasyDict as edict
 from functools import cache
@@ -144,49 +144,33 @@ class LogicConfig(Config):
         self.n_names += c
         self.n_adjectives += c
         
-def get_cot(text: str, input_ids=None) -> str:
-    input_ids = None if input_ids is None else {str(i) for i in input_ids}
+def get_cot(text):
     lines, memo = [], {}
-
     for line in text.splitlines():
-        if not (m := re.match(r'^(\d+)\.\s+(.*)\s+\[(.*?)\]$', line)):
+        m = re.match(r'^(\d+)\.\s+(.*)\s+\[(.*?)\]$', line)
+        if not m:
             continue
         oid, form, meta = m.groups()
-        meta_l = meta.lower().replace("_", " ")
-        rule = meta.split(maxsplit=1)[0] if meta.strip() else ""
-        ids = re.findall(r'\b\d+\b', meta)
-        is_explicit_hypothesis = "hyp" in meta_l or "conjecture" in meta_l
-        is_h = is_explicit_hypothesis or (rule == "cnf" and not ids)
 
-        if rule == "input":
-            if is_h:
-                ctx = "H"
-            else:
-                if not ids:
-                    raise ValueError(f"input without id: {line}")
-                src = ids[0]
-                if input_ids is not None and src not in input_ids:
-                    raise ValueError(f"input id {src} not in proof.indices: {line}")
-                ctx = f"P{src}"
-        elif is_explicit_hypothesis and not ids:
-            ctx = "H"
+        rule, *rest = meta.split(maxsplit=1)
+        ids = re.findall(r'\b(\d+)\b', meta)
+        parents = [str(memo[i][0]) for i in ids if i in memo and rule != 'input']
+
+        if len(parents) == 1 and ids[0] in memo and memo[ids[0]][1] == form:
+            memo[oid] = memo[ids[0]]
+            continue
+
+        if rule == 'input':
+            ctx = 'H' if 'hyp' in meta else f'P{ids[0]}'
+        elif rule == 'cnf' and not ids:
+            ctx = 'H'
         else:
-            missing = [i for i in ids if i not in memo]
-            if missing:
-                raise ValueError(f"missing parents {missing}: {line}")
-            parents = [memo[i] for i in ids]
-            if len(parents) == 1 and parents[0][1] == form:
-                memo[oid] = parents[0]
-                continue
-            parent_ids = ",".join(str(p[0]) for p in parents)
-            ctx = "H" if is_h and not parent_ids else f"{rule} {parent_ids}".rstrip()
+            ctx = f"{rule} {','.join(parents)}".rstrip()
 
-        new_id = len(lines) + 1
-        memo[oid] = (new_id, form)
-        lines.append(f"{new_id}. [{ctx}] {form}")
+        memo[oid] = (len(lines) + 1, form)
+        lines.append(f"{len(lines) + 1}. [{ctx}] {form}")
 
     return "\n".join(lines)
-
 
 def is_bloat(meta, label):
     rules = tuple(meta.proof['rules']) if meta.proof else ()
@@ -236,14 +220,7 @@ class LogicNLI(Task):
                     for prefix in ("", "~")]
             meta.verbalize_seed = random.randint(0, int(1e6))
             meta.proof = proof = ([x for x in proofs if x.status=="Unsatisfiable"]+[None])[0]
-            if proof:
-                try:
-                    cot = get_cot(proof.proof, input_ids=proof.indices)
-                except ValueError:
-                    continue
-                meta.cot = verbalize_predicates(cot, seed=meta.verbalize_seed, strip_underscores=False)
-            else:
-                meta.cot = ""
+            meta.cot = verbalize_predicates(get_cot(proof.proof), seed=meta.verbalize_seed, strip_underscores=False) if proof else ""
             labels = tuple([x.status for x in proofs])
 
             label = {
@@ -350,7 +327,7 @@ class EvidenceRetrieval(Task):
 class LogicFormalizationConfig(LogicConfig):
     n_formulas: int = 3
 
-class LogicFormalization(Task):
+class LogicFormalization(DevTask):
     def __init__(self, config=LogicFormalizationConfig()):
         super().__init__(config=config)
         self.pronoun = random.choice(self.config.pronouns)
