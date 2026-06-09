@@ -12,6 +12,14 @@ from dataclasses import dataclass
 from appdirs import AppDirs
 from pathlib import Path
 from reasoning_core.utils.udocker_process import get_prover_session
+from ._tptp_finite_interpretation import (
+    make_near_miss_model,
+    requirements_hold,
+    run_vampire_fmb_signed,
+    serialize_model,
+    universally_quantify,
+    validate_formula,
+)
 from ._sat_graph import generate_derivation_graph
 from reasoning_core.template import Task, DevTask, Problem, Config
 import ast
@@ -35,7 +43,7 @@ def extract_problem_from_graph(G: nx.DiGraph, node_id_str: str, max_length_proof
             else:
                 # FIX: Capture leaves (axioms) encountered on short branches
                 collected_hypotheses.add(v)
-        
+
         if not nxt:
             break
         frontier = nxt
@@ -166,6 +174,7 @@ def perturb_list(input_l: list, base_domain: list, n_perturbations: int = 1) -> 
             
     return lst
 
+
 def prove_conjecture(axioms: list[str], conjecture: str,
                         time_limit_seconds: str ="30", verb: bool = False,
                         disprove_first: bool = False,
@@ -175,22 +184,10 @@ def prove_conjecture(axioms: list[str], conjecture: str,
     Uses Vampire to prove or disprove a conjecture given a set of axioms.
     Returns True (provable), False (disprovable/countersatisfiable), or an error string.
     """
-    def _universally_quantify(formula: str) -> str:
-        """Add explicit universal quantifiers for all variables in a formula.
-        
-        In TPTP, variables are tokens starting with an uppercase letter.
-        Wraps them in ![...]: (...) so the formula is valid fof() syntax.
-        """
-        variables = sorted(set(re.findall(r'\b([A-Z][A-Za-z0-9_]*)\b', formula)))
-        if not variables:
-            return formula
-        return f"![{','.join(variables)}] : ({formula})"
-        
-    
     with tempfile.NamedTemporaryFile(mode='w+', delete=True, suffix='.p') as temp_f:
         for i, axiom in enumerate(axioms, 1):
             temp_f.write(f"cnf(axiom_{i}, axiom, {axiom}).\n")
-        temp_f.write(f"fof(conjecture_1, conjecture, {_universally_quantify(conjecture)}).\n")
+        temp_f.write(f"fof(conjecture_1, conjecture, {universally_quantify(conjecture)}).\n")
         temp_f.flush()
         
         if verb == True:
@@ -243,7 +240,7 @@ def prove_conjecture(axioms: list[str], conjecture: str,
                   f"\n  disprove: rc={result_disproove.returncode} stdout={result_disproove.stdout[:200]!r} stderr={result_disproove.stderr[:200]!r}",
                   file=sys.stderr)
         return f"ERROR : {result_proove.stderr}{result_disproove.stderr}"
-        
+
 
 dirs = AppDirs("Axioms_TPTP")
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -404,6 +401,144 @@ class ConjectureEntailment(Task):
         ref = entry.answer.lower()
         pred = str(answer).lower().strip().strip('"').strip("'")
         return float(ref==pred)
+
+
+@dataclass
+class FiniteInterpretationCheckConfig(Config):
+    proof_depth: int = 1
+    perturbation: int = 1
+    min_interesting_score: float = 0.6
+    false_requirement_ratio: float = 0.7
+    positive_problem_ratio: float = 0.5
+    fmb_time_limit: str = "5"
+    max_attempts: int = 50
+    max_context_axioms: int = 12
+    domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
+
+    def update(self, c):
+        self.proof_depth += c
+        self.perturbation += c
+
+
+class FiniteInterpretationCheck(Task):
+    """Check signed first-order requirements against a finite interpretation."""
+    def __init__(self, config=FiniteInterpretationCheckConfig()):
+        super().__init__(config, timeout=120)
+        from reasoning_core.utils.udocker_process import initialize_prover_session
+        initialize_prover_session()
+
+    _initialize_graph = ConjectureEntailment._initialize_graph
+
+    def _make_requirements(self, hypotheses, theorem):
+        use_false_goal = random.random() < self.config.false_requirement_ratio
+        selected_hypotheses = list(hypotheses)
+        if use_false_goal:
+            distractions = list(set(self.all_formulas) - set(hypotheses) - {theorem})
+            for _ in range(self.config.perturbation):
+                if len(selected_hypotheses) > 1 and (not distractions or random.random() < 0.5):
+                    selected_hypotheses.pop(random.randrange(len(selected_hypotheses)))
+                elif selected_hypotheses and distractions:
+                    index = random.randrange(len(selected_hypotheses))
+                    selected_hypotheses[index] = random.choice(distractions)
+            selected_hypotheses = list(dict.fromkeys(selected_hypotheses))
+
+        requirements = [
+            {"formula": hypothesis, "should_be": True}
+            for hypothesis in selected_hypotheses
+        ]
+        requirements.append({
+            "formula": theorem,
+            "should_be": not use_false_goal,
+        })
+        return requirements
+
+    def _context_axioms(self, theorem_node_id, requirements):
+        req_norm = {
+            normalize_formula(requirement["formula"])
+            for requirement in requirements
+        }
+        axioms = []
+        for node_id in extract_useful_axioms(self.graph, theorem_node_id):
+            data = self.graph.nodes[node_id]["data"]
+            if normalize_formula(data.clause_formula) not in req_norm:
+                axioms.append(data.full_cnf_clause)
+        random.shuffle(axioms)
+        return axioms[:self.config.max_context_axioms]
+
+    def generate(self):
+        self._initialize_graph()
+        if not self.interesting_thm:
+            return None
+
+        for _ in range(self.config.max_attempts):
+            theorem_node_id = random.choice(self.interesting_thm)
+            hypotheses, theorem = extract_problem_from_graph(
+                self.graph,
+                theorem_node_id,
+                self.config.proof_depth,
+            )
+            if not hypotheses:
+                continue
+
+            requirements = self._make_requirements(hypotheses, theorem)
+            try:
+                for requirement in requirements:
+                    validate_formula(requirement["formula"])
+            except ValueError:
+                continue
+
+            model = run_vampire_fmb_signed(
+                requirements,
+                time_limit_seconds=self.config.fmb_time_limit,
+            )
+            if model is None or not requirements_hold(requirements, model):
+                continue
+
+            answer = random.random() < self.config.positive_problem_ratio
+            shown_model = model
+            if not answer:
+                shown_model = make_near_miss_model(requirements, model)
+                if shown_model is None or requirements_hold(requirements, shown_model):
+                    continue
+
+            metadata = edict({
+                "requirements": requirements,
+                "model": serialize_model(shown_model),
+                "context_axioms": self._context_axioms(theorem_node_id, requirements),
+                "axiom_set": self.axiom_set,
+                "proof_depth": self.config.proof_depth,
+            })
+            return Problem(metadata, str(answer))
+        return None
+
+    def prompt(self, metadata):
+        domain_name = DOMAIN_MAP.get(metadata["axiom_set"][:3], metadata["axiom_set"])
+        context_text = "\n".join(
+            f"- {axiom}" for axiom in metadata.get("context_axioms", [])
+        ) or "- No additional context axioms provided."
+        req_text = "\n".join(
+            f"{i + 1}. Must be {'true' if req['should_be'] else 'false'}: "
+            f"`{req['formula']}`"
+            for i, req in enumerate(metadata["requirements"])
+        )
+        return (
+            f"Check whether the finite interpretation satisfies every signed requirement.\n"
+            f"All variables are universally quantified. A formula marked false therefore needs "
+            f"at least one variable assignment that makes it false.\n\n"
+            f"Domain: {domain_name}\n\n"
+            f"Relevant background axioms (context only, not requirements):\n"
+            f"{context_text}\n\n"
+            f"Signed requirements:\n"
+            f"{req_text}\n\n"
+            f"Finite interpretation:\n"
+            f"{metadata['model']}\n\n"
+            f"The answer is `True` if every requirement is satisfied, and `False` otherwise."
+        )
+
+    def score_answer(self, answer, entry):
+        ref = entry.answer.lower()
+        pred = str(answer).lower().strip().strip('"').strip("'")
+        return float(ref == pred)
 
 
 @dataclass
