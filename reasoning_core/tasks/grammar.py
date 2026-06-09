@@ -605,12 +605,11 @@ class DecisionPathParsing(Task):
     def prompt(self, meta):
         return (
             f"(GRAMMAR)\n{meta.g}\n\n"
-            f"(STRING)\n{meta.marked_string}\n\n"
+            f"(STRING)\n{meta.marked_string}\n"
             "(QUESTION)\n"
-            "Output the rule IDs on the path from the root to the marked token.\n"
+            "Answer should be the rule IDs (space separated) on the path from the root to the marked token.\n"
             "Include only rules whose left-hand side has more than one possible production.\n"
             "Answer NONE if there are no such rules.\n"
-            "One line only."
         )
 
     def score_answer(self, answer, entry):
