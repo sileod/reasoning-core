@@ -513,36 +513,28 @@ class FiniteInterpretationCheck(Task):
 
     def prompt(self, metadata):
         domain_name = DOMAIN_MAP.get(metadata["axiom_set"][:3], metadata["axiom_set"])
+
         context_text = "\n".join(
             f"- {axiom}" for axiom in metadata.get("context_axioms", [])
-        ) or "- No additional context axioms provided."
+        ) or "- None."
+
         req_text = "\n".join(
-            f"{i + 1}. Must be {'true' if req['should_be'] else 'false'}: "
-            f"`{req['formula']}`"
+            f"{i + 1}. {'True' if req['should_be'] else 'False'}: `{req['formula']}`"
             for i, req in enumerate(metadata["requirements"])
         )
+
         return (
-            f"You are a mathematical logic assistant. Your task is to check whether "
-            f"a finite interpretation satisfies a set of formal requirements.\n\n"
-            f"## General Context\n"
-            f"The problem is set in the domain of: **{domain_name}**.\n"
-            f"The following TPTP clauses are relevant background axioms from the same theory. "
-            f"They are provided to make the mathematical setting clear. They are not themselves "
-            f"requirements unless they are explicitly listed below.\n\n"
-            f"Background axioms:\n"
-            f"{context_text}\n\n"
-            f"## Requirements\n"
-            f"Each requirement says whether a formula must evaluate to true or false "
-            f"under the finite interpretation. Variables are universally quantified. "
-            f"Thus, a formula that must be false needs at least one variable assignment "
-            f"under which it is false.\n\n"
+            "Check whether the finite interpretation satisfies all listed requirements.\n"
+            f"Domain: **{domain_name}**\n"
+            "Background axioms, for context only:\n"
+            f"{context_text}\n"
+            "Requirements:\n"
+            "Variables are universally quantified. A requirement marked `False` is satisfied "
+            "iff the formula is false for at least one assignment.\n"
             f"{req_text}\n\n"
-            f"## Finite interpretation\n"
-            f"{metadata['model']}\n\n"
-            f"## Question\n"
-            f"Does the finite interpretation satisfy every listed requirement?\n\n"
-            f"## Response format\n"
-            f"Answer exactly `True` or `False`."
+            "Finite interpretation:\n"
+            f"{metadata['model']}\n"
+            "The answer is `True` or `False`."
         )
 
     def score_answer(self, answer, entry):
@@ -563,7 +555,7 @@ class SelectionConfig(Config):
         self.num_distractors += c
 
 
-class TheoremPremiseSelection(Task):
+class TheoremPremiseSelection(DevTask):
     """
     A task that generates problems where one must select the essential hypotheses
     required to prove a given conjecture from a larger pool of axioms.

@@ -1,6 +1,6 @@
 # 📖 Task Gallery
 
-[`arithmetics`](#arithmetics) · [`equation_system`](#equation_system) · [`conjecture_entailment`](#conjecture_entailment) · [`proof_reconstruction`](#proof_reconstruction) · [`bayesian_association`](#bayesian_association) · [`bayesian_intervention`](#bayesian_intervention) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`logic_formalization`](#logic_formalization) · [`planning`](#planning) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_isomorphism`](#graph_isomorphism) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`lexical_knowledge`](#lexical_knowledge) · [`parsability`](#parsability) · [`parsing`](#parsing) · [`continuation`](#continuation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_conversion`](#table_conversion) · [`lambda_reduction`](#lambda_reduction) · [`term_unification`](#term_unification) · [`code_execution`](#code_execution) · [`diff_prediction`](#diff_prediction) · [`diff_patching`](#diff_patching)
+[`arithmetics`](#arithmetics) · [`equation_system`](#equation_system) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`lean_proof_repair`](#lean_proof_repair) · [`conjecture_entailment`](#conjecture_entailment) · [`finite_interpretation_check`](#finite_interpretation_check) · [`bayesian_association`](#bayesian_association) · [`bayesian_intervention`](#bayesian_intervention) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`planning`](#planning) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_isomorphism`](#graph_isomorphism) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`lexical_knowledge`](#lexical_knowledge) · [`decision_path_parsing`](#decision_path_parsing) · [`continuation`](#continuation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_conversion`](#table_conversion) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`code_execution`](#code_execution) · [`diff_prediction`](#diff_prediction)
 
 ---
 
@@ -8,13 +8,13 @@
 
 **Prompt:**
 ```
-Evaluate 5 * -3.90.
+Evaluate round(1 % 5 + -3).
 The answer is a number.
 ```
 
 **Answer:**
 ```
--19.5
+-2
 ```
 
 ---
@@ -26,71 +26,143 @@ The answer is a number.
 Solve the following system of equations for the variable 'X2'.
 
 System:
-  X1 - 2 = 0
-  X2 + 9 = 0
+  X1 + 2 = 0
+  X2 + 25 = 0
 
 The answer is the numerical value for X2, or 'No solution' / 'Multiple solutions' if a unique numerical solution does not exist.
 ```
 
 **Answer:**
 ```
--9
+-25
 ```
 
 ---
 
-## [conjecture_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/formal_maths.py)
+## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+
+**Prompt:**
+```
+Decide whether the candidate Lean 4 tactic body closes the theorem.
+The answer is exactly True or False.
+
+THEOREM WITH HOLE:
+theorem ex (p0 p4 : Prop)  : (p4 ∧ p0) → p0 := by
+  ?
+
+CANDIDATE:
+tauto
+```
+
+**Answer:**
+```
+True
+```
+
+---
+
+## [lean_proof_repair](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+
+**Prompt:**
+```
+The Lean 4 theorem below has a broken proof. Replace the proof body with one that compiles. Mathlib is imported. The answer is only the replacement tactic block.
+
+theorem ex (x y : List Nat)  : (x ++ y).length = x.length + y.length := by
+  rfl
+
+```
+
+**Answer:**
+```
+simp [List.length_append, Nat.add_assoc]
+```
+
+---
+
+## [conjecture_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
 
 **Prompt:**
 ```
 Decide if the given premises entail the conjecture (i.e., the conjecture is provable) using Superposition/Resolution/Paramodulation.
 
-Domain: Logic Calculi
+Domain: Algebra
 
 Premises:
-- (theorem(or(or(X1,or(X2,X3)),X4))|~theorem(or(X3,X4)))
+- (member(f39(X1,X2),X1)|~group(X1,X2))
+- (member(X3,X2)|~subset(X1,X2)|~member(X3,X1))
 
-Conjecture: `(theorem(or(X1,or(X2,or(X3,X4))))|~theorem(or(X4,X1)))`
+Conjecture: `(member(f39(X1,X2),X3)|~subset(X1,X3)|~group(X1,X2))`
 
 The answer is `True` (provable) or `False` (not provable).
 ```
 
 **Answer:**
 ```
-False
+True
 ```
 
 ---
 
-## [proof_reconstruction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/formal_maths.py)
+## [finite_interpretation_check](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
 
 **Prompt:**
 ```
-Reconstruct the proof dependency graph.
-Domain: Geometry
-Theorem: (~between_c(X1,X2,X2,X3))
+Check whether the finite interpretation satisfies all listed requirements.
+Domain: **Topology**
+Background axioms, for context only:
+- cnf(boundary_70,axiom,(element_of_set(X1,closure(X2,X3,X4))|~element_of_set(X1,boundary(X2,X3,X4))))
+Requirements:
+Variables are universally quantified. A requirement marked `False` is satisfied iff the formula is false for at least one assignment.
+1. True: `(element_of_set(X1,X3)|~element_of_set(X1,intersection_of_members(X2))|~element_of_collection(X3,X2))`
+2. False: `(element_of_set(X1,closure(X2,X3,X4))|~element_of_collection(boundary(X2,X3,X4),X5)|~element_of_set(X1,intersection_of_members(X5)))`
 
-Rules:
-- Some clauses are axioms (no parents); do NOT list them
-- All other clauses derive from exactly 2 parents
-- Clauses can be reused as parents
+Finite interpretation:
+Domain:
+{0, 1}
 
-Shuffled clauses:
-1. (end_point(X2,ax1_sk1(X4,X3,X2,X1))|~between_c(X1,X2,X3,X4))
-2. (~inner_point(X1,ax1_sk1(X2,X3,X1,X4))|~between_c(X4,X1,X3,X2))
-3. (~between_c(X1,X2,X2,X3))
-4. (inner_point(X3,ax1_sk1(X4,X3,X2,X1))|~between_c(X1,X2,X3,X4))
-5. (~inner_point(X1,X2)|~end_point(X1,X2))
+Constants:
+(none)
 
-The answer is the list of derivations for derived clauses, one per line: CHILD <- PARENT_1, PARENT_2
-Example: 5 <- 2, 4
+Functions:
+boundary:
+  (0, 0, 0) -> 0
+  (0, 0, 1) -> 0
+  (0, 1, 0) -> 0
+  (0, 1, 1) -> 0
+  (1, 0, 0) -> 0
+  (1, 0, 1) -> 0
+  (1, 1, 0) -> 0
+  (1, 1, 1) -> 0
+closure:
+  (0, 0, 0) -> 1
+  (0, 0, 1) -> 0
+  (0, 1, 0) -> 0
+  (0, 1, 1) -> 0
+  (1, 0, 0) -> 0
+  (1, 0, 1) -> 0
+  (1, 1, 0) -> 0
+  (1, 1, 1) -> 0
+intersection_of_members:
+  (0,) -> 0
+  (1,) -> 1
 
+Predicates:
+element_of_collection:
+  (0, 0) -> true
+  (0, 1) -> false
+  (1, 0) -> false
+  (1, 1) -> false
+element_of_set:
+  (0, 0) -> true
+  (0, 1) -> false
+  (1, 0) -> false
+  (1, 1) -> false
+The answer is `True` or `False`.
 ```
 
 **Answer:**
 ```
-2 <- 1, 5
-3 <- 2, 4
+True
 ```
 
 ---
@@ -100,13 +172,13 @@ Example: 5 <- 2, 4
 **Prompt:**
 ```
 System:
-P(X_0) = {'0': 0.5, '1': 0.5} 
-P(X_1|X_0=0) = {'0': 0.5, '1': 0.5} 
-P(X_1|X_0=1) = {'0': 0.3, '1': 0.7} 
-P(X_2) = {'0': 0.3, '1': 0.7}
+P(X_0) = {'0': 0.1, '1': 0.9} 
+X_3 ~ Noisy-AND(leak=0.0, weights={'X_0': 0.1, 'X_2': 0.8}) 
+P(X_2) = {'0': 0.3, '1': 0.7} 
+P(X_1) = {'0': 0.6, '1': 0.4}
 Observed conditions:
-Observing/Knowing that the state X_0 is equal to 0
-Task: Compute probability distribution for X_1 (possible values: [0, 1]).
+Without further Observation/Knowledge of other variable.
+Task: Compute probability distribution for X_0 (possible values: [0, 1]).
 
 The answer is a Python dict mapping each value to its probability, rounded to 1 decimals.
 Example: {0: 0.1, 1: 0.9}
@@ -114,7 +186,7 @@ Example: {0: 0.1, 1: 0.9}
 
 **Answer:**
 ```
-{0: 0.5, 1: 0.5}
+{0: 0.1, 1: 0.9}
 ```
 
 ---
@@ -124,12 +196,13 @@ Example: {0: 0.1, 1: 0.9}
 **Prompt:**
 ```
 System:
-P(X_0) = {'0': 0.7, '1': 0.3} 
-X_2 ~ Noisy-AND(leak=0.0, weights={'X_0': 0.8, 'X_1': 0.8}) 
-P(X_1) = {'0': 0.3, '1': 0.7}
+P(X_0) = {'0': 0.5, '1': 0.5} 
+X_2 ~ Noisy-OR(leak=0.0, weights={'X_0': 0.6, 'X_1': 0.6}) 
+P(X_1) = {'0': 0.1, '1': 0.9} 
+X_3 ~ Noisy-OR(leak=0.0, weights={'X_1': 0.3, 'X_2': 0.8})
 Observed conditions:
-Doing/Imposing that the state X_1 is equal to 0
-Task: Compute probability distribution for X_2 (possible values: [0, 1]).
+Doing/Imposing that the state X_1 is equal to 1. Observing/Knowing that the state X_3 is equal to 0
+Task: Compute probability distribution for X_0 (possible values: [0, 1]).
 
 The answer is a Python dict mapping each value to its probability, rounded to 1 decimals.
 Example: {0: 0.1, 1: 0.9}
@@ -137,24 +210,95 @@ Example: {0: 0.1, 1: 0.9}
 
 **Answer:**
 ```
-{0: 1.0, 1: 0.0}
+{0: 0.6, 1: 0.4}
 ```
 
 ---
 
-## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic.py)
+## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
 
 **Prompt:**
 ```
 Premise:
-there is a room.
-Fred collects vintage maps
-Fred collects rare sneakers
-more than one person in the room practices pilates
-Paul trains for and competes in international triathlons
-someone outside the room is a scotch connoisseur
+Lee is the only person in the room.
+everyone in the room who is sierra tagged is not old
+all old people in the room are old
+Daniel is not kilo tagged
+all old people in the room are old
+at least one person in the room is not sierra tagged
 Hypothesis:
-Paul is not collects rare sneakers
+Lee is not sierra tagged
+
+If the Premise entails the Hypothesis, the label is 'entailment'.
+If the Premise contradicts the Hypothesis, the label is 'contradiction'.
+If neither, the label is 'neutral'.
+The answer is exactly one word: neutral, contradiction, or entailment.
+```
+
+**Answer:**
+```
+entailment
+```
+
+---
+
+## [evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
+
+**Prompt:**
+```
+Premise:
+[0] Rodney is the only person in the room.
+[1] Not all Bellbridge's houses are purple.
+[2] Rodney and Gilbert are respectively quiet and quiet
+[3] Gilbert is a quiet person and is a quiet person
+[4] all old people in the room are old
+[5] everyone in the room who is old is not an old person
+Hypothesis:
+Rodney is an old quiet person
+
+Which statements in the premise contradict the hypothesis?
+The answer is the list of supporting statements, e.g. [0, 6, 7].
+```
+
+**Answer:**
+```
+[0, 5]
+```
+
+---
+
+## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+**Prompt:**
+```
+Premise:
+Elena is charlie tagged.
+Elena is delta tagged.
+David is echo tagged.
+Elena is echo tagged.
+David is not delta tagged.
+Alice is delta tagged.
+Alice is echo tagged.
+Clara is foxtrot tagged.
+Bruno is gamma tagged.
+Alice is gamma tagged.
+From x is charlie tagged and x is delta tagged, it follows that x is echo tagged.
+From x is echo tagged, it follows that x is foxtrot tagged.
+Anyone who is echo tagged and bravo tagged is alpha tagged.
+For all x, if x is charlie tagged and x is bravo tagged, then x is echo tagged.
+Whenever x is delta tagged and x is alpha tagged, x is echo tagged.
+If a person is echo tagged and gamma tagged, then that person is kappa tagged.
+Anyone who is charlie tagged and foxtrot tagged is kappa tagged.
+Every gamma-tagged person who is echo tagged is not charlie tagged.
+Every foxtrot-tagged person is kappa tagged.
+For all x, if x is gamma tagged and x is alpha tagged, then x is kappa tagged.
+Anyone beta-linked to someone who is alpha-linked to a third person is gamma-linked to that third person.
+For all x, y, if x is delta-related to y, then y is not omega-connected to x.
+People reached by a omega-connected relation from a alpha-tagged person are echo tagged.
+Anyone delta-related to a delta-tagged person is charlie tagged.
+
+Hypothesis:
+Elena is alpha tagged.
 
 If the Premise entails the Hypothesis, the label is 'entailment'.
 If the Premise contradicts the Hypothesis, the label is 'contradiction'.
@@ -169,62 +313,76 @@ neutral
 
 ---
 
-## [evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic.py)
+## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
 **Prompt:**
 ```
 Premise:
-[0] Mary is the only person in the room.
-[1] Mary is not old
-[2] it is not the case that “Fred is not not quiet”
-[3] Mary is not an old quiet person
-[4] everyone in the room who is not old designs and sews custom cosplay costumes for conventions
-[5] everyone in the room who enjoys white-water rafting is a drone photographer
-Hypothesis:
-Mary designs and sews custom cosplay costumes for conventions
+[0] Elena is gamma-linked to Clara.
+[1] Clara is gamma tagged.
+[2] Bruno is delta-related to Elena.
+[3] Alice is bravo tagged.
+[4] Bruno is gamma tagged.
+[5] David is gamma-linked to Bruno.
+[6] Alice is foxtrot tagged.
+[7] Elena is kappa tagged.
+[8] David is bravo tagged.
+[9] Elena is bravo tagged.
+[10] Whenever x is gamma-linked to y and y is gamma tagged, x is alpha tagged.
+[11] Every alpha-tagged person is delta tagged.
+[12] If a person is gamma tagged and foxtrot tagged, then that person is bravo tagged.
+[13] If a person is delta tagged and echo tagged, then that person is kappa tagged.
+[14] Every gamma-tagged person who is foxtrot tagged is alpha tagged.
+[15] Anyone who is alpha tagged and bravo tagged is charlie tagged.
+[16] From x is delta tagged and x is alpha tagged, it follows that x is not echo tagged.
+[17] For all x, if x is foxtrot tagged, then x is gamma tagged.
+[18] From x is beta-linked to y and y is omega-connected to z, it follows that x is gamma-linked to z.
+[19] Every charlie-tagged person who is echo tagged is foxtrot tagged.
+[20] Every bravo-tagged person who is foxtrot tagged is charlie tagged.
+[21] Whenever x is echo tagged, x is not delta tagged.
+[22] If a person is echo tagged and charlie tagged, then that person is kappa tagged.
+[23] For all x, if x is gamma tagged and x is bravo tagged, then x is delta tagged.
 
-Which statements in the premise entail the hypothesis?
-The answer is the list of supporting statements, e.g. [0, 6, 7].
+Hypothesis:
+Elena is echo tagged.
+
+Which premise statements are necessary to contradict the hypothesis, meaning removing any one of them breaks that result?
+The answer is a list of indices, e.g. [0, 1].
 ```
 
 **Answer:**
 ```
-[0, 1, 4]
+[0, 1, 10, 11, 16]
 ```
 
 ---
 
-## [logic_formalization](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic.py)
+## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
 **Prompt:**
 ```
 Premise:
-Mary is the only person in the room.
-Mary reads mystery novels
-Mary has a vast collection of first-edition science fiction novels
-it is not the case that “more than one person in the room is right-handed”
-all old people in the room are quiet
-everyone outside the room is a quiet person if they are old
+[0] Elena is delta-related to Alice.
+[1] Clara is bravo tagged.
+[2] From x is delta-related to y and y is bravo tagged, it follows that x is charlie tagged.
+[3] Whenever x is charlie tagged, x is echo tagged.
 
-Glossary (English phrase -> TPTP symbol):
-  'has a vast collection of first-edition science fiction novels' -> predb
-  'reads mystery novels' -> predf
-  'is right-handed' -> predh
+Hypothesis:
+Elena is echo tagged.
 
-Translate the premise into a single TPTP first-order-logic formula, joining the lines with '&'.
-Connectives: '&', '|', '~', '=>', '<=>'. Quantifiers: '![X]:...' (forall) and '?[X]:...' (exists). Equality: '='.
-Use the symbols from the glossary for verbalized predicates. Names (mary, paul, ...), 'in_the_room', 'person', and adjectives (old, tall, ...) appear as-is.
-The answer is the TPTP formula only (no fof(...) wrapper, no commentary).
+Candidate additional facts:
+[0] Bruno is bravo tagged.
+[1] Alice is not bravo tagged.
+[2] Alice is alpha tagged.
+[3] Alice is bravo tagged.
+
+Which candidate facts, if added to the premise, make the premise entail the hypothesis?
+Return the smallest list of candidate indices, e.g. [0, 2].
 ```
 
 **Answer:**
 ```
-in_the_room(mary)&(![X]:(in_the_room(X)=>(X='mary')))&
-(predf(mary))&
-(predb(mary))&
-(~((?[X,Y]:(in_the_room(X)&in_the_room(Y)&(predh(X)&predh(Y))&(X!=Y)))))&
-(![X]:(in_the_room(X)=>(old(X)=>quiet(X))))&
-(![X]:(~in_the_room(X)=>(((old(X))=>(quiet(X))))))
+[3]
 ```
 
 ---
@@ -234,27 +392,29 @@ in_the_room(mary)&(![X]:(in_the_room(X)=>(X='mary')))&
 **Prompt:**
 ```
 [OBJECTS]
-object_1, object_2, object_3, object_4
+object_1, object_2, object_3
 
 [ACTIONS]
-action_0(x0, x1)
-  Requires: (not fluent_0)
-  Effect: fluent_1, fluent_0
+action_0(x0)
+  Requires: fluent_1(x0)
+  Effect: not fluent_1(x0)
+action_1(x0)
+  Requires: (not fluent_0), (not fluent_1(x0))
+  Effect: fluent_0, fluent_1(x0)
 
 [STATE]
-Default: False
-Initial true values: fluent_1
+Initial true values: None
 
 [GOAL]
 
-fluent_0
+fluent_0, fluent_1(object_2)
 The answer is the plan.
 Answer format: Multiple lines, one action per line: action(obj1, obj2)
 ```
 
 **Answer:**
 ```
-    action_0(object_1, object_1)
+    action_1(object_2)
 ```
 
 ---
@@ -263,14 +423,14 @@ Answer format: Multiple lines, one action per line: action(obj1, obj2)
 
 **Prompt:**
 ```
-Set1: {594, 140, 945, 1, 593, 239, 63, 512}
-Set2: {877, 188, 63, 945, 593, 273}
+Set1: {915, 362, 299, 427, 160, 76, 57, 776}
+Set2: {911, 776, 54, 362, 160, 346}
 The answer is the intersection of Set1 and Set2 as a Python set: {elem_1, elem_2, ..., elem_n}.
 ```
 
 **Answer:**
 ```
-{63, 593, 945}
+{160, 362, 776}
 ```
 
 ---
@@ -279,13 +439,13 @@ The answer is the intersection of Set1 and Set2 as a Python set: {elem_1, elem_2
 
 **Prompt:**
 ```
-Set_A: {386, 378, 381, 382, 384, 377, 379}
+Set_A: {536, 540, 539, 537, 535, 533, 542, 538}
 The answer is the missing elements from Set_A as a Python set.
 ```
 
 **Answer:**
 ```
-{380, 383, 385}
+{534, 541}
 ```
 
 ---
@@ -294,13 +454,13 @@ The answer is the missing elements from Set_A as a Python set.
 
 **Prompt:**
 ```
-List: [9, 2, 7, 15, 10, 18, 2, 19, 12, 3]
-How many times does 2 appear? The answer is a number.
+List: [2, 13, 2, 8, 18, 7, 8, 1, 8, 11]
+How many times does 8 appear? The answer is a number.
 ```
 
 **Answer:**
 ```
-2
+3
 ```
 
 ---
@@ -309,14 +469,14 @@ How many times does 2 appear? The answer is a number.
 
 **Prompt:**
 ```
-Set1: {'alf', 'akx', 'pj', 'mi', 'hs', 'ow', 'jy', 'ahl'}
-Set2: {'akx', 'jy', 'ahl', 'pj', 'mi', 'ow', 'alf', 'hs'}
+Set1: {'nx', 'gm', 'akp', 'ft', 'adk', 'au', 'wy', 'ajp'}
+Set2: {'wy', 'ft', 'cr', 'akp', 'au', 'ajp', 'gm', 'adk', 'nx'}
 The answer is True if Set1 and Set2 contain exactly the same elements, False otherwise.
 ```
 
 **Answer:**
 ```
-True
+False
 ```
 
 ---
@@ -326,24 +486,24 @@ True
 **Prompt:**
 ```
 Infer a recurrence for a sequence indexed from 0: [U0, U1, ..., U7].
-Max recurrence degree: 1.
+Max recurrence degree: 0.
 
 Allowed binary ops: +, -, *, **
-- Previous terms must be referenced exactly as: U[n - 1] ... U[n - 1]
+- Previous terms must be referenced exactly as: U[n - 1] ... U[n - 0]
 - You may use "n" (current index).
 - The answer is the right-hand side only (do not write "U[n] =").
-- Your recurrence degree must be <= 1.
+- Your recurrence degree must be <= 0.
 
-Sequence: [1, -6, 1, -6, 1, -6, 1, -6]
-Degree of recurrence: 1
-Initial terms: [1]
+Sequence: [0, 1, 2, 3, 4, 5, 6, 7]
+Degree of recurrence: 0
+Initial terms: []
 
 The answer must hold for all n >= d and be as simple as possible.
 ```
 
 **Answer:**
 ```
--U[n - 1] - 5
+n
 ```
 
 ---
@@ -354,19 +514,20 @@ The answer must hold for all n >= d and be as simple as possible.
 ```
 There are 5 entities labeled 0 through 4.
 You are given the following facts (read 'i rel j' as 'entity i is rel to entity j'):
-  2 started-by 1
-  4 starts 2
-  0 contains 1
-  3 equals 0
-  0 contains 2
+  0 overlaps 3
+  2 overlapped-by 0
+  4 meets 3
+  1 overlapped-by 0
+  1 overlapped-by 4
+  1 started-by 2
 
-What is the relation of the horizontal extent of box 4 to that of box 3?
+What is the relation of the vertical extent of box 4 to that of box 2?
 The answer is exactly one of: after, before, contains, during, equals, finished-by, finishes, meets, met-by, overlapped-by, overlaps, started-by, starts.
 ```
 
 **Answer:**
 ```
-during
+overlaps
 ```
 
 ---
@@ -379,24 +540,23 @@ Objects occupy distinct points on the integer grid [0, 4] x [0, 4].
 North is +y and East is +x. Any object not mentioned in a step stays fixed.
 
 Initial facts:
-- B is in the same column as C.
-- C is below B.
-- B is above A.
-- C starts at (0, 0).
-- C is below A.
-- C is left of A.
-- A is right of B.
+- C is in the same column as A.
+- C is left of B.
+- B is below A.
+- C is above B.
+- A is above C.
+- A is left of B.
 
 Steps:
-1. C and A swap positions.
+1. B jumps to A's position offset by (2, 0).
 
-What is the final coordinate of A? Answer as (x, y).
+What is the final Manhattan distance between A and B? Answer as an integer.
 
 ```
 
 **Answer:**
 ```
-(0, 0)
+2
 ```
 
 ---
@@ -406,26 +566,26 @@ What is the final coordinate of A? Answer as (x, y).
 **Prompt:**
 ```
 Inventory:
-- b1: red
-- b2: red
-- b3: yellow
+- b1: green
+- b2: blue
+- b3: black
 - b4: yellow
 Initial state:
 - b1 is in x1
-- b2 is in x3
+- b2 is in x1
 - b3 is in x1
-- b4 is in x3
+- b4 is in x2
 Moves:
-- Move all contents of x1 to x3.
-- Transfer b1 from x3 into x1.
-- Transfer b4 from x3 into x2.
-- Move b4 from x2 to x3.
-Where is b2 now? The answer is a box tag, like x1.
+- Transfer everything in x1 into x2.
+- Move all contents of x2 to x1.
+- Transfer b3 from x1 into x2.
+- Move it from x2 to x3.
+Where is b4 now? The answer is a box tag, like x1.
 ```
 
 **Answer:**
 ```
-x3
+x1
 ```
 
 ---
@@ -434,18 +594,21 @@ x3
 
 **Prompt:**
 ```
-(1) A kind short baker named Sam watched an old tall farmer named Ben.
-(2) A stern tall doctor named Lucy thanked Ben.
-(3) He thanked her.
-(4) He thanked Sam.
+(1) A stern tall writer named Lena avoided a loud stern nurse named Sam.
+(2) A quiet tall banker named Nora thanked him.
+(3) She questioned a short stern farmer named Mary.
+(4) Sam met Mary.
+(5) The farmer thanked him.
+(6) An old stern teacher named Alan questioned her.
+(7) The nurse met the banker.
 
-In sentence 3, what does the object expression 'her' refer to?
+In sentence 6, what does the object expression 'her' refer to?
 The answer is the name of the person it refers to.
 ```
 
 **Answer:**
 ```
-Lucy
+Mary
 ```
 
 ---
@@ -456,12 +619,12 @@ Lucy
 ```
 Variables/domains:
 - 0 <= x0 <= 2
-- 0 <= x1 <= 2
+- 0 <= x1 <= 1
 
 Constraints:
-1. -2*x1 >= -2
-2. 2*x0 <= 5
-3. 3*x0 >= 0
+1. -x0 - 2*x1 == 0
+2. -2*x0 <= 1
+3. x0 != -3
 
 Enumerate ALL satisfying assignments in variable order [x0, x1].
 The answer is a Python list of lists of ints, sorted lexicographically, or UNSAT if no assignment exists.
@@ -470,7 +633,7 @@ The answer is a Python list of lists of ints, sorted lexicographically, or UNSAT
 
 **Answer:**
 ```
-[[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]]
+[[0, 0]]
 ```
 
 ---
@@ -481,16 +644,16 @@ The answer is a Python list of lists of ints, sorted lexicographically, or UNSAT
 ```
 Consider the directed graph:
 
-digraph { 0->3; 1->2; 2->3; 3->0; 3->1; 3->2 }
+Nodes [0, 1, 2, 3, 4, 5] and directed edges: (0, 4), (1, 5), (3, 2), (4, 2), (5, 4).
 
-Find the lexicographically smallest shortest directed path from Node 3 to Node 4.
+Find the lexicographically smallest shortest directed path from Node 1 to Node 4.
 If no path exists, answer `None`.
 The answer is a Python list of nodes or `None`.
 ```
 
 **Answer:**
 ```
-None
+[1, 5, 4]
 ```
 
 ---
@@ -502,10 +665,10 @@ None
 Consider two directed graphs described below.
 
 Graph A:
-digraph { 0->4; 1->0; 1->3; 2->3; 2->4; 3->1; 3->2 }
+Directed Edges: 0->1, 1->5, 3->4, 4->2, 4->3, 5->1, 5->3
 
 Graph B:
-Directed Edges: 0->3, 1->0, 1->4, 2->3, 2->4, 3->1, 3->2
+digraph { 0->4; 1->5; 3->1; 4->2; 4->3; 5->1; 5->3 }
 
 Do Graph A and Graph B have the exact same structure, just with different node labels? (In other words, are they isomorphic?)
 The answer is `True` or `False`.
@@ -524,16 +687,16 @@ False
 ```
 Consider the directed graph:
 
-Adjacency Dictionary (source to targets): {0: [2], 1: [4], 2: [3], 3: [5], 4: [0], 5: [1]}
+Adjacency Dictionary (source to targets): {0: [2], 1: [0], 2: [3], 3: [5], 4: [1], 5: [4]}
 
-Queries: [(4, 1)]
+Queries: [(5, 2)]
 Each pair (x, k) asks for the k-th successor of x (following exact directed edges k times).
 The answer is a Python list of integers in query order.
 ```
 
 **Answer:**
 ```
-[0]
+[1]
 ```
 
 ---
@@ -544,10 +707,10 @@ The answer is a Python list of integers in query order.
 ```
 Consider the directed graph:
 
-Directed Edges: 0->1, 1->2, 4->3
+0: 0->1; 1:; 2:; 3: 3->1; 4: 4->2 4->3; 5: 5->1
 
 In this scenario, a directed edge from U to V means V depends on U (so U is a prerequisite of V).
-List all prerequisites of node 2 (recursively), making sure to order base prerequisites first.
+List all prerequisites of node 1 (recursively), making sure to order base prerequisites first.
 Do not include the query node itself.
 If A is a prerequisite of B and both appear in your answer, A must appear before B.
 Tie-break nodes with no mutual dependency lexicographically (smaller node ID first).
@@ -556,7 +719,7 @@ The answer is a Python list of integers.
 
 **Answer:**
 ```
-[0, 1]
+[0, 4, 3, 5]
 ```
 
 ---
@@ -565,12 +728,12 @@ The answer is a Python list of integers.
 
 **Prompt:**
 ```
-The answer is a 2-character string that fully matches the regular expression: .W
+The answer is a 1-character string that fully matches the regular expression: ([VEX])
 ```
 
 **Answer:**
 ```
-CW
+V
 ```
 
 ---
@@ -579,14 +742,30 @@ CW
 
 **Prompt:**
 ```
-The answer is the shortest regex that fully matches all POSITIVE strings and none of the NEGATIVE strings.
-POSITIVE: 'e', 'P', 'n'
-NEGATIVE: '\5', 'J', 'lll', ']]]', 'MF', 'V7X', '[A', 'ZR'
+Positive: 'a', 'aa'
+Negative: 'abcc', 'ac', 'adaac', 'adacb', 'ca', 'ccbba', 'dac', 'dbd'
+The answer is the shortest regex matching all positives and no negatives. Use only literals from Σ={abcd}, concatenation, |, parentheses, and postfix *, +, ?. Break ties lexicographically.
 ```
 
 **Answer:**
 ```
-([nPe])
+a+
+```
+
+---
+
+## [regex_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
+
+**Prompt:**
+```
+Text: Individual surface country item majority federal. Reveal at girl meet.
+Regex: \b[A-Z][a-z]+\b
+Return only a JSON array of exact non-overlapping matches, left-to-right. Include duplicates. Return [] if none.
+```
+
+**Answer:**
+```
+["Individual","Reveal"]
 ```
 
 ---
@@ -595,14 +774,14 @@ NEGATIVE: '\5', 'J', 'lll', ']]]', 'MF', 'V7X', '[A', 'ZR'
 
 **Prompt:**
 ```
-Consider the regular expressions A = aab? and B = (a)|ab
+Consider the regular expressions A = a|b* and B = a|b*
 Do A and B accept exactly the same set of strings?
 The answer is Yes or No.
 ```
 
 **Answer:**
 ```
-No
+Yes
 ```
 
 ---
@@ -612,69 +791,43 @@ No
 **Prompt:**
 ```
 Context: WordNet (relation holds for any valid noun sense).
-Select all cohyponyms(acid)
-From: [sludge, atom, metal, chloride, incense, asphalt, manure, nitrate]
+Select all cohyponyms(kitchen)
+From: [flooring, drug, ballroom, bedroom, bower, bathroom, shipyard, handbag, classroom, foyer, privy]
 The answer is a JSON list.
 ```
 
 **Answer:**
 ```
-["chloride", "incense", "nitrate"]
+["ballroom", "bathroom", "bedroom", "classroom", "foyer", "privy"]
 ```
 
 ---
 
-## [parsability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+## [decision_path_parsing](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
 
 **Prompt:**
 ```
 (GRAMMAR)
-S -> B
-B -> 'hold'
-B -> B
+R0: start -> seq
+R1: seq -> 
+R2: seq -> expr seq
+R3: expr -> '(' seq ')'
+R4: expr -> '[' seq ']'
+R5: expr -> '<' seq '>'
 
 (STRING)
-hold
+< [ ] > ( ) <M> ( </M> )
 
 (QUESTION)
-What is the parsability of this string?
-The answer is exactly one word: unambiguous, ambiguous, or unparsable.
+Output the rule IDs on the path from the root to the marked token.
+Include only rules whose left-hand side has more than one possible production.
+Answer NONE if there are no such rules.
+One line only.
 ```
 
 **Answer:**
 ```
-ambiguous
-```
-
----
-
-## [parsing](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
-
-**Prompt:**
-```
-(GRAMMAR)
-start -> seq
-seq -> 
-seq -> expr seq
-expr -> '(' seq ')'
-expr -> '[' seq ']'
-expr -> '<' seq '>'
-expr -> '⟨' seq '⟩'
-expr -> '⟦' seq '⟧'
-expr -> '⟪' seq '⟫'
-
-(STRING)
-[ < > ] < > ⟨ ⟩ ⟪ ⟫
-
-(QUESTION)
-Identify the Part-of-Speech (immediate parent) and tree depth for each token.
-format per token: token<POS:depth>
-Example: the<Det:3> cat<Noun:3>
-```
-
-**Answer:**
-```
-[<expr:3> <<expr:5> ><expr:5> ]<expr:3> <<expr:4> ><expr:4> ⟨<expr:5> ⟩<expr:5> ⟪<expr:6> ⟫<expr:6>
+R2 R2 R2 R3
 ```
 
 ---
@@ -685,19 +838,16 @@ Example: the<Det:3> cat<Noun:3>
 ```
 List all valid next tokens for this prefix. The answer is the list of valid tokens sorted alphabetically and separated by |, with STOP at the end if the prefix forms a complete string.
 (GRAMMAR)
-start -> seq
-seq -> 
-seq -> expr seq
-expr -> '(' seq ')'
-expr -> '[' seq ']'
-expr -> '<' seq '>'
+S -> B
+B -> 'develop'
+B -> 'pattern' B
 (PREFIX)
-( ) (
+pattern pattern
 ```
 
 **Answer:**
 ```
-(|)|<|[
+develop|pattern
 ```
 
 ---
@@ -707,15 +857,12 @@ expr -> '<' seq '>'
 **Prompt:**
 ```
 (GRAMMAR)
-start -> seq
-seq -> 
-seq -> expr seq
-expr -> '(' seq ')'
-expr -> '[' seq ']'
-expr -> '<' seq '>'
+S -> D
+D -> D 'parent'
+D -> 'get'
 
 (STRING)
-< [ ) > < [ ] > < >
+get parent get parent
 
 The answer is the shortest contiguous span from STRING that ends at the first invalid token and occurs only once in STRING.
 Mark the invalid token as >>token<<.
@@ -727,7 +874,7 @@ One line only.
 
 **Answer:**
 ```
->>)<<
+parent >>get<<
 ```
 
 ---
@@ -737,26 +884,27 @@ One line only.
 **Prompt:**
 ```
 (GRAMMAR)
-start -> seq
-seq -> 
-seq -> expr seq
-expr -> '(' seq ')'
-expr -> '[' seq ']'
-expr -> '<' seq '>'
+S -> C
+B -> 'special'
+B -> B B
+C -> B
 
 (PREFIX)
-<
+special special
 
 (TEMPLATE)
-___ < ___
+special ___ ___ special ___
 
-Fill in the 2 blanks (___) to form a grammatical continuation of PREFIX using exactly 3 tokens.
-Fixed tokens must remain in place. The answer is all 3 tokens space-separated.
+(SUFFIX)
+special
+
+Fill in the 3 blanks (___) so that PREFIX + filled-TEMPLATE + SUFFIX is a grammatical sentence. Fixed tokens of TEMPLATE must remain in place.
+The answer is the 5 tokens of the filled TEMPLATE, space-separated.
 ```
 
 **Answer:**
 ```
-> < >
+special special special special special
 ```
 
 ---
@@ -768,22 +916,22 @@ Fixed tokens must remain in place. The answer is all 3 tokens space-separated.
 Execute this SQL query on the table named dataframe:
 
 Table 1:
-| price   | qty   |
-|:--------|:------|
-| 90.41   | 291.0 |
-| 131.81  | 355.0 |
-| 467.1   | 882.0 |
-| 188.7   | 147.0 |
-| 88.51   | 654.0 |
+qty,date
+510,2025-12-19
+78,2026-01-21
+407,2025-07-03
+433,2026-05-05
+342,2026-04-22
 
-SQL: SELECT COUNT(*) FROM dataframe WHERE price > 131.81
+
+SQL: SELECT COUNT(*) FROM dataframe WHERE date = '2025-12-19'
 
 The answer is the result as single value.
 ```
 
 **Answer:**
 ```
-2
+1
 ```
 
 ---
@@ -792,20 +940,15 @@ The answer is the result as single value.
 
 **Prompt:**
 ```
-Convert the following table from latex to html.
+Convert the following table from markdown to html.
 
-\begin{tabular}{ll}
-\toprule
-job & date \\
-\midrule
-Quality manager & 2025-06-23 \\
-Planning and development surveyor & 2026-04-01 \\
-Child psychotherapist & 2026-04-17 \\
-Designer, television/film set & 2025-12-26 \\
-Careers adviser & 2025-06-18 \\
-\bottomrule
-\end{tabular}
-
+| city            | rating   |
+|:----------------|:---------|
+| South Saramouth | 3.2      |
+| Stewartview     | 1.0      |
+| West Debra      | 4.6      |
+| Christopherview | 3.5      |
+| Taylorfurt      | 2.6      |
 
 The answer is the converted table.
 ```
@@ -815,30 +958,30 @@ The answer is the converted table.
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
-      <th>job</th>
-      <th>date</th>
+      <th>city</th>
+      <th>rating</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>Quality manager</td>
-      <td>2025-06-23</td>
+      <td>South Saramouth</td>
+      <td>3.2</td>
     </tr>
     <tr>
-      <td>Planning and development surveyor</td>
-      <td>2026-04-01</td>
+      <td>Stewartview</td>
+      <td>1.0</td>
     </tr>
     <tr>
-      <td>Child psychotherapist</td>
-      <td>2026-04-17</td>
+      <td>West Debra</td>
+      <td>4.6</td>
     </tr>
     <tr>
-      <td>Designer, television/film set</td>
-      <td>2025-12-26</td>
+      <td>Christopherview</td>
+      <td>3.5</td>
     </tr>
     <tr>
-      <td>Careers adviser</td>
-      <td>2025-06-18</td>
+      <td>Taylorfurt</td>
+      <td>2.6</td>
     </tr>
   </tbody>
 </table>
@@ -853,35 +996,40 @@ The answer is the converted table.
 Reduce the following untyped λ-term to β-normal form.
 Syntax: `\x.body` denotes λx.body; application is left-associative juxtaposition; free identifiers are treated as constants.
 
-Term: ((((\_0.b) d) a) ((b d) d))
+Term: (a ((\_0.(\v0._0)) c))
 
 The answer is the β-normal form (compared up to α-equivalence).
 ```
 
 **Answer:**
 ```
-((b a) ((b d) d))
+(a (\v0.c))
 ```
 
 ---
 
-## [term_unification](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
+## [rewrite_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
 
 **Prompt:**
 ```
-Find the most general unifier (MGU) of the following first-order terms.
-Uppercase identifiers are variables; lowercase are constants / function symbols.
+Normalize by the ordered rewrite rules. At each step, use the first applicable rule in the listed order, searching outermost-first and left-to-right.
 
-T1 = h(f(f(h(p(d,d,c)),f(a,d,p(d,b,b)))))
-T2 = h(f(f(X,Y)))
+Rules:
+- if(false,X,Y) -> Y
+- or(true,X) -> true
+- or(X,false) -> X
+- and(X,false) -> false
+- not(not(X)) -> X
+- or(X,X) -> X
 
-The answer is a Python dict mapping each bound variable (as a string key) to its fully-resolved ground term (as a string value), with keys sorted alphabetically.
-Example: {'X': 'f(a)', 'Y': 'b'}
+Term: or(or(not(or(c,c)),false),not(c))
+
+The answer is the normal form.
 ```
 
 **Answer:**
 ```
-{'X': 'h(p(d,d,c))', 'Y': 'f(a,d,p(d,b,b))'}
+not(c)
 ```
 
 ---
@@ -893,8 +1041,11 @@ Example: {'X': 'f(a)', 'Y': 'b'}
 Predict the printed output of the following Python code:
 
 ```python
-s = 11
-print(s)
+j = 0
+r = 8
+z = 13
+y = j
+print("go"[0])
 ```
 
 The answer is the exact printed output string.
@@ -902,7 +1053,7 @@ The answer is the exact printed output string.
 
 **Answer:**
 ```
-11
+g
 ```
 
 ---
@@ -913,63 +1064,34 @@ The answer is the exact printed output string.
 ```
 Below is the version history of a file.
 
-Version 0c7cad7:
-1    | Away court manage think why sometimes happen
-2    | Pass soon movement affect
-3    | Sit occur everything
-4    | Cost outside minute blue treatment heavy run
-5    | Dog civil more really nation lay I
+Version f3c5571:
+1    | Door fall certain same
+2    | Message fight western several none model
+3    | Believe suggest water record outside particularly boy design
+4    | Fish level join feeling
+5    | Authority serious what travel so nearly
 
-Version ae34d4f:
-1    | Away court manage think why sometimes happen
-2    | Pass soon movement affect
-3    | Sit occur everything
-4    | Cost herself minute blue treatment heavy run
-5    | Dog civil more really nation lay I
+Version cf31210:
+1    | Door fall certain same
+2    | Message fight western several none model
+3    | her decide better wonder operation
+4    | Believe suggest water record outside particularly boy design
+5    | Fish level join feeling
+6    | Authority serious what travel so nearly
 
-Generate the Unified Diff to transform version ae34d4f into version 0c7cad7.
+Generate the Unified Diff to transform version f3c5571 into version cf31210.
 The answer is the diff chunks only (no file headers), or empty if no changes.
 ```
 
 **Answer:**
 ```
-@@ -1,5 +1,5 @@
- Away court manage think why sometimes happen
- Pass soon movement affect
- Sit occur everything
--Cost herself minute blue treatment heavy run
-+Cost outside minute blue treatment heavy run
- Dog civil more really nation lay I
-```
-
----
-
-## [diff_patching](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_diff.py)
-
-**Prompt:**
-```
-Apply the following Unified Diff to the text.
-
-Original Text (Version b9c62f5):
-1    | Later physical way name few little
-2    | Cost consider daughter positive between
-3    | Political bar direction shoulder plant room
-4    | Particular nearly still performance itself half state
-5    | Better clear easy effect find per today give
-
-Diff (b9c62f5 -> 5d73cf8):
-
-
-The answer is the resulting text.
-```
-
-**Answer:**
-```
-Later physical way name few little
-Cost consider daughter positive between
-Political bar direction shoulder plant room
-Particular nearly still performance itself half state
-Better clear easy effect find per today give
+@@ -1,5 +1,6 @@
+ Door fall certain same
+ Message fight western several none model
++her decide better wonder operation
+ Believe suggest water record outside particularly boy design
+ Fish level join feeling
+ Authority serious what travel so nearly
 ```
 
 ---

@@ -348,10 +348,10 @@ class Navigation(Task):
 
         return (
             f"Objects occupy distinct points on the integer grid [0, {G}] x [0, {G}].\n"
-            f"North is +y and East is +x. Any object not mentioned in a step stays fixed.\n\n"
-            f"Initial facts:\n{facts_txt}\n\n"
-            f"Steps:\n{steps_txt}\n\n"
-            f"{question}\n"
+            f"North is +y and East is +x. Any object not mentioned in a step stays fixed.\n"
+            f"Initial facts:\n{facts_txt}\n"
+            f"Steps:\n{steps_txt}\n"
+            f"{question}"
         )
 
     def score_answer(self, answer, entry):
