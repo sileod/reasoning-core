@@ -6,8 +6,10 @@ rather than good in only one setting.
 
 ## What it measures
 
-For each task it runs two influence measurements (mirroring `run_sft.py`'s mix:
-`aux_ratio=0.2`, completion-only loss, SmolLM2-135M):
+For each task it runs two influence measurements, **faithfully mirroring `run_sft.py`**:
+same prompt/completion template (`Q: {prompt}\nA:` + ` {answer}`), completion-only loss,
+SmolLM2-135M, and aux sampled at `p_aux = aux_ratio/(1+aux_ratio)` (run_sft sets
+`p_main = 1/(1+aux_ratio)`, so `aux_ratio=0.2` ⇒ aux prob 1/6, not 1/5):
 
 | regime | init | main data | steps |
 |---|---|---|---|
@@ -25,15 +27,18 @@ over 2 seeds.
 ## Run
 
 ```bash
-python joint_importance.py --tasks arithmetics,regex_following,proof_reconstruction
-# options: --hf reasoning-core/procedural-pretraining-pile  --seeds 0,1  --n 1500
+python joint_importance.py                              # ALL tasks in the source (default), 2 seeds
+python joint_importance.py --tasks arithmetics,parsing  # a subset for a quick look
+# options: --hf reasoning-core/procedural-pretraining-pile  --aux_ratio 0.2  --seeds 0,1  --n 1500
 ```
 
-Aux data is streamed from a HuggingFace source (`--hf`, default the procedural-pretraining
-pile) and **deduplicated by prompt** (the pile/staging are not deduped). Writes
-`joint_importance.json` and refreshes the table below. Budget ≈ **10 min/task/seed**
-(3.5 min fine-tune T300 + 7 min pretrain T600 on one A10-class GPU); the main-only baselines
-are computed once per regime/seed and reused.
+By default it scores **every task found in the HF source, sequentially** (single GPU), and is
+**resumable** — results are written to `joint_importance.json` after every task, so a rerun
+skips finished work and continues (important: a full ~40-task × 2-seed sweep is ~10 min/task/seed
+≈ 13 h, long enough that a transient HF streaming hiccup would otherwise lose progress). Aux is
+streamed from `--hf` and **deduplicated by prompt** (the pile/staging are not deduped). The
+main-only baselines are computed once per regime/seed and cached. For a quick check, pass a
+small `--tasks` subset.
 
 ## Why both regimes
 
@@ -47,7 +52,10 @@ fine-tuning rewards tasks that surface latent reasoning.
 <!-- RESULTS -->
 ## Example (SmolLM2-135M, T300/T600, single seed; illustrative)
 
-Lower `joint_z` = helps both regimes. (Re-running the script overwrites this section.)
+Lower `joint_z` = helps both regimes. Illustrative ranking from the project's influence runs
+(single seed; pre-dates the exact run_sft template/ratio match above — the *ordering* is robust,
+the absolute z's shift slightly). Re-running the script overwrites this section with 2-seed,
+run_sft-faithful numbers.
 
 | task                  |  joint_z |  ft_BBH |  pt_BBH |  pt_FWtax |
 |-----------------------|---------:|--------:|--------:|----------:|
