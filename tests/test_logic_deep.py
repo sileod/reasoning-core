@@ -1,5 +1,5 @@
 from reasoning_core import get_task, list_tasks, score_answer
-from reasoning_core.tasks.logic_deep import Atom, PredSig, Rule, Theory, chase, close_with, render, support_sources
+from reasoning_core.tasks.logic_depth import Atom, Denial, PredSig, Rule, Theory, chase, close_with, render, support_sources
 
 
 def test_multistep_nli_registers_and_generates():
@@ -79,20 +79,42 @@ def test_support_sources_include_facts_and_rules():
     assert support_sources(Atom("b", ("alice",)), res.derivations, source) == {0, 1}
 
 
-def test_chase_self_loop_filter_is_pack_aware():
-    sigs = {p: PredSig(p, ("entity", "entity")) for p in ("r",)}
+def test_spatial_left_of_cycle_is_inconsistent_via_derived_self_loop():
+    sigs = {"left_of": PredSig("left_of", ("item", "item"))}
     theory = Theory(
-        facts=[Atom("r", ("a", "b")), Atom("r", ("b", "a"))],
-        rules=[Rule((Atom("r", ("?x", "?y")), Atom("r", ("?y", "?z"))), Atom("r", ("?x", "?z")), shape="composition")],
-        denials=[],
+        facts=[Atom("left_of", ("a", "b")), Atom("left_of", ("b", "a"))],
+        rules=[
+            Rule(
+                (Atom("left_of", ("?x", "?y")), Atom("left_of", ("?y", "?z"))),
+                Atom("left_of", ("?x", "?z")),
+                shape="composition",
+            )
+        ],
+        denials=[Denial((Atom("left_of", ("?x", "?x")),))],
         pred_sigs=sigs,
-        entities={"entity": ("a", "b")},
-        domain_pack="surface",
+        entities={"item": ("a", "b")},
+        domain_pack="spatial",
     )
     res = chase(theory, max_depth=None)
-    assert Atom("r", ("a", "a")) in res.closure
+    assert res.inconsistent
+    assert Atom("left_of", ("a", "a")) in res.closure
 
-    theory.domain_pack = "spatial"
+def test_spatial_acyclic_left_of_chain_remains_consistent():
+    sigs = {"left_of": PredSig("left_of", ("item", "item"))}
+    theory = Theory(
+        facts=[Atom("left_of", ("a", "b")), Atom("left_of", ("b", "c"))],
+        rules=[
+            Rule(
+                (Atom("left_of", ("?x", "?y")), Atom("left_of", ("?y", "?z"))),
+                Atom("left_of", ("?x", "?z")),
+                shape="composition",
+            )
+        ],
+        denials=[Denial((Atom("left_of", ("?x", "?x")),))],
+        pred_sigs=sigs,
+        entities={"item": ("a", "b", "c")},
+        domain_pack="spatial",
+    )
     res = chase(theory, max_depth=None)
-    assert Atom("r", ("a", "a")) not in res.closure
-    assert Atom("r", ("b", "b")) not in res.closure
+    assert not res.inconsistent
+    assert Atom("left_of", ("a", "c")) in res.closure

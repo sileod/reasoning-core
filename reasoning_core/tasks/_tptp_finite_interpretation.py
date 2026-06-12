@@ -1,8 +1,6 @@
 """Finite interpretations for the CNF fragment emitted by the TPTP tasks."""
 
-import copy
 import os
-import random
 import re
 import tempfile
 from dataclasses import dataclass, field
@@ -212,9 +210,13 @@ def requirements_hold(requirements, model):
         return False
 
 
-def write_signed_fmb_problem(requirements):
+def write_signed_fmb_problem(requirements, min_domain_size=1):
     handle = tempfile.NamedTemporaryFile(mode="w+", suffix=".p", delete=False)
     try:
+        witnesses = [f"fic_domain_{i}" for i in range(min_domain_size)]
+        for i, left in enumerate(witnesses):
+            for right in witnesses[i + 1:]:
+                handle.write(f"cnf(fic_distinct_{left}_{right}, axiom, {left} != {right}).\n")
         for i, requirement in enumerate(requirements):
             formula = requirement["formula"]
             if requirement["should_be"]:
@@ -408,8 +410,8 @@ def complete_model(requirements, partial):
     return model
 
 
-def run_vampire_fmb_signed(requirements, time_limit_seconds="5"):
-    path = write_signed_fmb_problem(requirements)
+def run_vampire_fmb_signed(requirements, time_limit_seconds="5", min_domain_size=2):
+    path = write_signed_fmb_problem(requirements, min_domain_size=min_domain_size)
     try:
         result = get_prover_session().run_prover(
             "vampire",
@@ -431,7 +433,15 @@ def run_vampire_fmb_signed(requirements, time_limit_seconds="5"):
             os.remove(path)
 
 
-def serialize_model(model):
+def _default_and_exceptions(table):
+    counts = {}
+    for value in table.values():
+        counts[value] = counts.get(value, 0) + 1
+    default = max(counts, key=lambda value: (counts[value], str(value)))
+    return default, [(args, value) for args, value in sorted(table.items()) if value != default]
+
+
+def serialize_model(model, sparse=True):
     lines = ["Domain:", "{" + ", ".join(map(str, model.domain)) + "}", "", "Constants:"]
     lines.extend(
         (f"{name} = {value}" for name, value in sorted(model.constants.items()))
@@ -442,47 +452,42 @@ def serialize_model(model):
         lines.append("(none)")
     for name, table in sorted(model.functions.items()):
         lines.append(f"{name}:")
-        lines.extend(f"  {args} -> {value}" for args, value in sorted(table.items()))
+        if sparse and table:
+            default, exceptions = _default_and_exceptions(table)
+            lines.append(f"  default -> {default}")
+            lines.extend(f"  {args} -> {value}" for args, value in exceptions)
+        else:
+            lines.extend(f"  {args} -> {value}" for args, value in sorted(table.items()))
     lines.extend(["", "Predicates:"])
     if not model.predicates:
         lines.append("(none)")
     for name, table in sorted(model.predicates.items()):
         lines.append(f"{name}:")
-        lines.extend(f"  {args} -> {str(value).lower()}" for args, value in sorted(table.items()))
+        if sparse and table:
+            default, exceptions = _default_and_exceptions(table)
+            lines.append(f"  default -> {str(default).lower()}")
+            lines.extend(
+                f"  {args} -> {str(value).lower()}"
+                for args, value in exceptions
+            )
+        else:
+            lines.extend(f"  {args} -> {str(value).lower()}" for args, value in sorted(table.items()))
     return "\n".join(lines)
 
 
-def mutate_model(model):
-    candidate = copy.deepcopy(model)
-    choices = []
-    if len(candidate.domain) > 1:
-        choices.extend(("constant", name) for name in candidate.constants)
-        choices.extend(("function", name) for name, table in candidate.functions.items() if table)
-    choices.extend(("predicate", name) for name, table in candidate.predicates.items() if table)
-    if not choices:
-        return candidate
-
-    kind, name = random.choice(choices)
-    if kind == "constant":
-        old = candidate.constants[name]
-        candidate.constants[name] = random.choice([value for value in candidate.domain if value != old])
-    elif kind == "function":
-        args = random.choice(list(candidate.functions[name]))
-        old = candidate.functions[name][args]
-        candidate.functions[name][args] = random.choice(
-            [value for value in candidate.domain if value != old]
-        )
-    else:
-        args = random.choice(list(candidate.predicates[name]))
-        candidate.predicates[name][args] = not candidate.predicates[name][args]
-    return candidate
+def constant_symbols(model):
+    """Return predicate/function symbols whose table has only one output."""
+    constants = []
+    for kind, tables in (("function", model.functions), ("predicate", model.predicates)):
+        for name, table in tables.items():
+            if table and len(set(table.values())) == 1:
+                constants.append((kind, name))
+    return constants
 
 
-def make_near_miss_model(requirements, model, max_tries=100):
-    for target_failures in (1, 2):
-        for _ in range(max_tries):
-            candidate = mutate_model(model)
-            failures = sum(not requirement_holds(req, candidate) for req in requirements)
-            if failures == target_failures:
-                return candidate
-    return None
+def model_is_nondegenerate(model, min_domain_size=2, allow_constant_symbols=0):
+    return (
+        model is not None
+        and len(model.domain) >= min_domain_size
+        and len(constant_symbols(model)) <= allow_constant_symbols
+    )

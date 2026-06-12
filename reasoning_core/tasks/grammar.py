@@ -15,13 +15,12 @@ import string
 from easydict import EasyDict as edict
 from faker import Faker
 import re
-from nltk.tree import Tree
-from collections import defaultdict
+from collections import Counter, defaultdict
 from gramforge.grammars import simple_english_grammar, arith_grammar, dyck_grammar
 from gramforge import gramforge_to_nltk
 from rapidfuzz.distance import Levenshtein
 from itertools import islice
-from nltk.grammar import CFG, Nonterminal, Production
+from nltk.grammar import CFG, Nonterminal
 from itertools import islice, combinations
 
 
@@ -64,10 +63,6 @@ class GrammarConfig(Config):
     max_blanks: int = 3
     min_options: int = 4
     max_options: int = 25
-    min_decision_path_len: int = 2
-    skip_lexical_decisions: bool = True
-    max_path_candidates: int = 32
-
     def update(self, c):
         self.n_types += c
         self.n_terminals += c
@@ -463,158 +458,101 @@ class Parsing(DevTask):
         return Levenshtein.normalized_similarity(norm(answer), norm(reference))
 
 
-def numbered_grammar(g):
-    productions = list(g.productions())
-    prod_to_id = {prod: f"R{i}" for i, prod in enumerate(productions)}
-    lhs_counts = defaultdict(int)
-    for prod in productions:
-        lhs_counts[prod.lhs()] += 1
-    grammar_text = "\n".join(f"{prod_to_id[prod]}: {prod}" for prod in productions)
-    return grammar_text, prod_to_id, dict(lhs_counts)
-
-
-def tree_production(node):
-    lhs = node.label()
-    if not isinstance(lhs, Nonterminal):
-        lhs = Nonterminal(lhs)
-    rhs = tuple(
-        child.label()
-        if isinstance(child, Tree) and isinstance(child.label(), Nonterminal)
-        else Nonterminal(child.label())
-        if isinstance(child, Tree)
-        else child
-        for child in node
-    )
-    return Production(lhs, rhs)
-
-
-def leaf_rule_path(tree, leaf_pos):
-    return [
-        tree_production(tree[leaf_pos[:depth]])
-        for depth in range(len(leaf_pos))
-    ]
-
-
-def decision_chain(tree, leaf_pos, prod_to_id, lhs_counts, skip_lexical=True):
-    chain = []
-    for prod in leaf_rule_path(tree, leaf_pos):
-        if lhs_counts.get(prod.lhs(), 0) <= 1:
-            continue
-        if skip_lexical and all(not isinstance(symbol, Nonterminal) for symbol in prod.rhs()):
-            continue
-        chain.append(prod_to_id[prod])
-    return chain
-
-
 def mark_token(tokens, idx):
     marked = list(tokens)
     marked[idx] = f"<M> {marked[idx]} </M>"
     return " ".join(marked)
 
 
-class DecisionPathParsing(Task):
+def constituent_spans(tree, start=0, path=()):
+    if isinstance(tree, str):
+        return [], start + 1
+    rows, end = [], start
+    for i, child in enumerate(tree):
+        sub, end = constituent_spans(child, end, path + (i,))
+        rows.extend(sub)
+    rows.append(edict(
+        label=str(tree.label()), start=start, end=end, path=path,
+        depth=len(path), span_len=end - start,
+    ))
+    return rows, end
+
+
+def smallest_span_candidates(tree):
+    nodes, _ = constituent_spans(tree)
+    n = len(tree.leaves())
+    out = []
+    for idx, token in enumerate(tree.leaves()):
+        covering = [x for x in nodes if x.start <= idx < x.end and x.span_len >= 2]
+        if not covering:
+            continue
+        span = min(covering, key=lambda x: (x.span_len, -x.depth))
+        out.append(edict(
+            idx=idx, token=token, start=span.start, end=span.end,
+            span_len=span.span_len,
+            bucket=str(span.span_len) if span.span_len <= 5 else "6+",
+            is_root=span.span_len == n,
+            is_edge=idx in {0, n - 1},
+        ))
+    return out
+
+
+class CFGSpan(Task):
     def __init__(self, config: GrammarConfig = GrammarConfig()):
+        config.perturbation_rate = 0.0
         super().__init__(config=config)
-        self.config.perturbation_rate = 0.0
+        self.span_hist = Counter()
+        self.easy_accept = 0.30
 
-    def _candidates(self, tree, tokens, prod_to_id, lhs_counts):
-        candidates = []
-        for idx, leaf_pos in enumerate(tree.treepositions("leaves")):
-            path = leaf_rule_path(tree, leaf_pos)
-            decisions = [prod for prod in path if lhs_counts.get(prod.lhs(), 0) > 1]
-            chain = decision_chain(
-                tree, leaf_pos, prod_to_id, lhs_counts,
-                self.config.skip_lexical_decisions,
-            )
-            candidates.append(edict(
-                idx=idx,
-                leaf_pos=leaf_pos,
-                chain=chain,
-                lexical_only=bool(decisions) and all(
-                    all(not isinstance(symbol, Nonterminal) for symbol in prod.rhs())
-                    for prod in decisions
-                ),
-                recursive=any(prod.lhs() in prod.rhs() for prod in path),
-            ))
+    def _eligible(self, candidates):
+        candidates = [c for c in candidates if not c.is_root]
+        candidates = [c for c in candidates if not c.is_edge] or candidates
+        hard = [c for c in candidates if c.span_len > 2]
+        return hard or (candidates if random.random() < self.easy_accept else [])
 
-        chains_by_token = defaultdict(set)
+    def _pick(self, candidates):
+        by_bucket = defaultdict(list)
         for candidate in candidates:
-            chains_by_token[tokens[candidate.idx]].add(tuple(candidate.chain))
-        has_path_alternatives = any(len(chains) > 1 for chains in chains_by_token.values())
-
-        if len(candidates) > self.config.max_path_candidates:
-            candidates = random.sample(candidates, self.config.max_path_candidates)
-
-        eligible = [
-            candidate for candidate in candidates
-            if len(candidate.chain) >= self.config.min_decision_path_len
-            and (
-                not self.config.skip_lexical_decisions
-                or not candidate.lexical_only
-            )
-            and (
-                not has_path_alternatives
-                or len(chains_by_token[tokens[candidate.idx]]) > 1
-            )
-        ]
-        interior = [candidate for candidate in eligible if 0 < candidate.idx < len(tokens) - 1]
-        return interior or eligible, [candidate for candidate in candidates if not candidate.chain]
-
-    def _problem(self, meta, grammar_text, candidate):
-        meta.g = grammar_text
-        meta.marked_string = mark_token(meta.tokens, candidate.idx)
-        meta.marked_index = candidate.idx
-        meta.decision_chain = list(candidate.chain)
-        meta.pop("parses", None)
-        return Problem(meta, " ".join(candidate.chain) if candidate.chain else "NONE")
+            by_bucket[candidate.bucket].append(candidate)
+        least = min(self.span_hist[bucket] for bucket in by_bucket)
+        bucket = random.choice([
+            bucket for bucket in by_bucket if self.span_hist[bucket] == least
+        ])
+        return random.choice(by_bucket[bucket])
 
     def generate(self):
-        while True:
-            fallback = None
-            for _ in range(32):
-                meta = generate_parse(self.config)
-                if meta.label != "unambiguous":
-                    continue
-
-                tree = meta.parses[0]
-                grammar = CFG.fromstring(meta.g)
-                grammar_text, prod_to_id, lhs_counts = numbered_grammar(grammar)
-                candidates, empty = self._candidates(tree, meta.tokens, prod_to_id, lhs_counts)
-                if candidates:
-                    def rank(candidate):
-                        token_paths = {
-                            tuple(c.chain)
-                            for c in candidates
-                            if meta.tokens[c.idx] == meta.tokens[candidate.idx]
-                        }
-                        return (
-                            len(token_paths) > 1,
-                            len(candidate.chain),
-                            candidate.recursive,
-                            len(candidate.leaf_pos),
-                            random.random(),
-                        )
-
-                    return self._problem(meta, grammar_text, max(candidates, key=rank))
-                if empty:
-                    fallback = (meta, grammar_text, max(empty, key=lambda c: len(c.leaf_pos)))
-
-            if fallback:
-                return self._problem(*fallback)
+        for _ in range(200):
+            meta = generate_parse(self.config)
+            if meta.label != "unambiguous":
+                continue
+            candidates = self._eligible(smallest_span_candidates(meta.parses[0]))
+            if not candidates:
+                continue
+            candidate = self._pick(candidates)
+            self.span_hist[candidate.bucket] += 1
+            meta.marked_index = candidate.idx
+            meta.marked_string = mark_token(meta.tokens, candidate.idx)
+            meta.span_len = candidate.span_len
+            meta.span_bucket = candidate.bucket
+            meta.pop("parses", None)
+            meta.pop("cot", None)
+            return Problem(meta, f"{candidate.start} {candidate.end}")
+        raise ValueError("Failed to generate CFGSpan")
 
     def prompt(self, meta):
         return (
             f"(GRAMMAR)\n{meta.g}\n\n"
-            f"(STRING)\n{meta.marked_string}\n"
+            f"(STRING)\n{meta.marked_string}\n\n"
             "(QUESTION)\n"
-            "Answer should be the rule IDs (space separated) on the path from the root to the marked token.\n"
-            "Include only rules whose left-hand side has more than one possible production.\n"
-            "Answer NONE if there are no such rules.\n"
+            f"The marked token has index {meta.marked_index} before marking.\n"
+            "Return the start and end token indices of the smallest constituent spanning "
+            "at least 2 tokens that contains it.\n"
+            "Use 0-based, end-exclusive indices. Answer two integers: start end."
         )
 
     def score_answer(self, answer, entry):
-        normalize = lambda value: " ".join(str(value).split())
-        return float(normalize(answer) == normalize(entry["answer"]))
+        numbers = re.findall(r"-?\d+", str(answer))
+        return float(" ".join(numbers[:2]) == entry["answer"])
 
 
 def _edge_str(edge):

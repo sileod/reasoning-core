@@ -1,6 +1,6 @@
 # 📖 Task Gallery
 
-[`arithmetics`](#arithmetics) · [`equation_system`](#equation_system) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`lean_proof_repair`](#lean_proof_repair) · [`conjecture_entailment`](#conjecture_entailment) · [`finite_interpretation_check`](#finite_interpretation_check) · [`bayesian_association`](#bayesian_association) · [`bayesian_intervention`](#bayesian_intervention) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`planning`](#planning) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_isomorphism`](#graph_isomorphism) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`lexical_knowledge`](#lexical_knowledge) · [`decision_path_parsing`](#decision_path_parsing) · [`continuation`](#continuation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_conversion`](#table_conversion) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`code_execution`](#code_execution) · [`diff_prediction`](#diff_prediction)
+[`arithmetics`](#arithmetics) · [`equation_system`](#equation_system) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`lean_proof_repair`](#lean_proof_repair) · [`conjecture_entailment`](#conjecture_entailment) · [`finite_interpretation_check`](#finite_interpretation_check) · [`bayesian_association`](#bayesian_association) · [`bayesian_intervention`](#bayesian_intervention) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`planning`](#planning) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_isomorphism`](#graph_isomorphism) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`lexical_knowledge`](#lexical_knowledge) · [`cfg_span`](#cfg_span) · [`continuation`](#continuation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_conversion`](#table_conversion) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`code_execution`](#code_execution) · [`diff_prediction`](#diff_prediction)
 
 ---
 
@@ -803,31 +803,30 @@ The answer is a JSON list.
 
 ---
 
-## [decision_path_parsing](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+## [cfg_span](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
 
 **Prompt:**
 ```
 (GRAMMAR)
-R0: start -> seq
-R1: seq -> 
-R2: seq -> expr seq
-R3: expr -> '(' seq ')'
-R4: expr -> '[' seq ']'
-R5: expr -> '<' seq '>'
+S -> NP VP
+NP -> Det N
+VP -> V NP
+Det -> 'the'
+N -> 'robot' | 'package'
+V -> 'moves'
 
 (STRING)
-< [ ] > ( ) <M> ( </M> )
+the robot <M> moves </M> the package
 
 (QUESTION)
-Output the rule IDs on the path from the root to the marked token.
-Include only rules whose left-hand side has more than one possible production.
-Answer NONE if there are no such rules.
-One line only.
+The marked token has index 2 before marking.
+Return the start and end token indices of the smallest constituent spanning at least 2 tokens that contains it.
+Use 0-based, end-exclusive indices. Answer two integers: start end.
 ```
 
 **Answer:**
 ```
-R2 R2 R2 R3
+2 5
 ```
 
 ---
@@ -1095,4 +1094,3 @@ The answer is the diff chunks only (no file headers), or empty if no changes.
 ```
 
 ---
-

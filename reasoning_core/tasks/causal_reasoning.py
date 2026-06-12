@@ -8,7 +8,7 @@ from math import log, nan, floor, ceil
 import ast
 from abc import ABC, abstractmethod
 
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, DevTask, Problem, Config
 from dataclasses import dataclass
 
 from typing import (
@@ -307,7 +307,7 @@ class Rung12Config(Config):
     cot_scientific_notation : bool
         Whether to use scientific notation for chain of thought.
     generate_trivial : bool
-        Whether to accept problem where no computationn only retriavial skills are necessary (mainly usefull for law level problems).
+        Whether to accept problem where no computation only retrieval skills are necessary (mainly useful for low level problems).
     is_verbose : bool
         Whether to use a more humanlike description of the system, or a less verbose one that describe the Bayesian Network by listing all the conditional probabilities.
     """ 
@@ -461,7 +461,7 @@ class Rung(ABC):
         return js_reward(dict_truth, dict_pred)
 
 
-class BayesianAssociation(Rung, Task):
+class BayesianAssociation(Rung, DevTask):
     def __init__(self, config=Rung12Config()):
         super().__init__(config=config)
 

@@ -7,13 +7,15 @@ import tempfile
 import random
 import json
 import gzip
+import logging
 from easydict import EasyDict as edict
 from dataclasses import dataclass
 from appdirs import AppDirs
 from pathlib import Path
 from reasoning_core.utils.udocker_process import get_prover_session
 from ._tptp_finite_interpretation import (
-    make_near_miss_model,
+    model_is_nondegenerate,
+    requirement_holds,
     requirements_hold,
     run_vampire_fmb_signed,
     serialize_model,
@@ -26,6 +28,379 @@ import ast
 from reasoning_core.template import TimeoutException
 from itertools import combinations
 from math import comb
+
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class TPTPTerm:
+    name: str
+    args: tuple = ()
+
+
+@dataclass(frozen=True)
+class TPTPLiteral:
+    sign: bool
+    pred: str
+    args: tuple = ()
+
+
+_TPTP_TOKEN = re.compile(
+    r"""\s*(?:(?P<quoted>'(?:\\.|''|[^'\\])*'|"(?:\\.|""|[^"\\])*")|"""
+    r"(?P<op>!=|[()|~,=])|"
+    r"(?P<word>\$?[A-Za-z0-9_]+))"
+)
+
+
+def _tokenize_clause(text):
+    tokens = []
+    pos = 0
+    while pos < len(text):
+        match = _TPTP_TOKEN.match(text, pos)
+        if not match:
+            raise ValueError(f"Unexpected TPTP syntax at position {pos}: {text[pos:pos + 20]!r}")
+        tokens.append(match.group("quoted") or match.group("op") or match.group("word"))
+        pos = match.end()
+    return tokens
+
+
+def _matching_outer_parens(tokens):
+    if len(tokens) < 2 or tokens[0] != "(" or tokens[-1] != ")":
+        return False
+    depth = 0
+    for index, token in enumerate(tokens):
+        if token == "(":
+            depth += 1
+        elif token == ")":
+            depth -= 1
+            if depth < 0:
+                raise ValueError("Unbalanced parentheses")
+            if depth == 0 and index != len(tokens) - 1:
+                return False
+    if depth:
+        raise ValueError("Unbalanced parentheses")
+    return True
+
+
+def _strip_outer_parens(tokens):
+    while _matching_outer_parens(tokens):
+        tokens = tokens[1:-1]
+    return tokens
+
+
+def _split_top_level(tokens, separator):
+    parts = []
+    start = 0
+    depth = 0
+    for index, token in enumerate(tokens):
+        if token == "(":
+            depth += 1
+        elif token == ")":
+            depth -= 1
+            if depth < 0:
+                raise ValueError("Unbalanced parentheses")
+        elif token == separator and depth == 0:
+            parts.append(tokens[start:index])
+            start = index + 1
+    if depth:
+        raise ValueError("Unbalanced parentheses")
+    parts.append(tokens[start:])
+    if any(not part for part in parts):
+        raise ValueError(f"Missing expression around {separator!r}")
+    return parts
+
+
+def _parse_term_tokens(tokens, start=0):
+    if start >= len(tokens) or tokens[start] in {"(", ")", "|", "~", ",", "=", "!="}:
+        raise ValueError("Expected a term")
+    name = tokens[start]
+    index = start + 1
+    args = []
+    if index < len(tokens) and tokens[index] == "(":
+        index += 1
+        if index < len(tokens) and tokens[index] == ")":
+            return TPTPTerm(name, ()), index + 1
+        while True:
+            arg, index = _parse_term_tokens(tokens, index)
+            args.append(arg)
+            if index >= len(tokens):
+                raise ValueError("Unclosed term argument list")
+            if tokens[index] == ")":
+                index += 1
+                break
+            if tokens[index] != ",":
+                raise ValueError("Expected ',' or ')' in term")
+            index += 1
+    return TPTPTerm(name, tuple(args)), index
+
+
+def _parse_complete_term(tokens):
+    term, index = _parse_term_tokens(tokens)
+    if index != len(tokens):
+        raise ValueError("Unexpected tokens after term")
+    return term
+
+
+def _find_top_level_equality(tokens):
+    depth = 0
+    found = []
+    for index, token in enumerate(tokens):
+        if token == "(":
+            depth += 1
+        elif token == ")":
+            depth -= 1
+        elif token in {"=", "!="} and depth == 0:
+            found.append((index, token))
+    if len(found) > 1:
+        raise ValueError("A literal may contain only one top-level equality")
+    return found[0] if found else None
+
+
+def _parse_literal_tokens(tokens):
+    tokens = _strip_outer_parens(tokens)
+    sign = True
+    if tokens and tokens[0] == "~":
+        sign = False
+        tokens = _strip_outer_parens(tokens[1:])
+    if not tokens:
+        raise ValueError("Empty literal")
+
+    equality = _find_top_level_equality(tokens)
+    if equality:
+        index, operator = equality
+        left = _parse_complete_term(tokens[:index])
+        right = _parse_complete_term(tokens[index + 1:])
+        return TPTPLiteral(sign=(sign if operator == "=" else not sign), pred="=", args=(left, right))
+
+    atom = _parse_complete_term(tokens)
+    if _is_variable(atom):
+        raise ValueError("A variable cannot be used as a predicate")
+    return TPTPLiteral(sign=sign, pred=atom.name, args=atom.args)
+
+
+def parse_clause(text):
+    """Parse the first-order CNF subset emitted by E prover."""
+    tokens = _strip_outer_parens(_tokenize_clause(str(text).strip()))
+    if tokens == ["$false"]:
+        return []
+    return [_parse_literal_tokens(part) for part in _split_top_level(tokens, "|")]
+
+
+def _is_variable(term):
+    return not term.args and bool(re.fullmatch(r"[A-Z][A-Za-z0-9_]*", term.name))
+
+
+def _walk_term_variables(term):
+    if _is_variable(term):
+        yield term.name
+    for arg in term.args:
+        yield from _walk_term_variables(arg)
+
+
+def _walk_literal_variables(literal):
+    for arg in literal.args:
+        yield from _walk_term_variables(arg)
+
+
+def _replace_variables_term(term, replacements):
+    if _is_variable(term) and term.name in replacements:
+        return TPTPTerm(replacements[term.name])
+    return TPTPTerm(
+        term.name,
+        tuple(_replace_variables_term(arg, replacements) for arg in term.args),
+    )
+
+
+def _replace_variables_literal(literal, replacements):
+    return TPTPLiteral(
+        literal.sign,
+        literal.pred,
+        tuple(_replace_variables_term(arg, replacements) for arg in literal.args),
+    )
+
+
+def rename_apart(clause, prefix="Y", forbidden=()):
+    forbidden = set(forbidden)
+    replacements = {}
+    next_index = 1
+    for literal in clause:
+        for variable in _walk_literal_variables(literal):
+            if variable in replacements:
+                continue
+            candidate = f"{prefix}{next_index}"
+            while candidate in forbidden:
+                next_index += 1
+                candidate = f"{prefix}{next_index}"
+            replacements[variable] = candidate
+            forbidden.add(candidate)
+            next_index += 1
+    return [_replace_variables_literal(literal, replacements) for literal in clause]
+
+
+def _dereference(term, subst):
+    seen = set()
+    while _is_variable(term) and term.name in subst and term.name not in seen:
+        seen.add(term.name)
+        term = subst[term.name]
+    return term
+
+
+def _occurs(variable, term, subst):
+    term = _dereference(term, subst)
+    if _is_variable(term):
+        return term.name == variable
+    return any(_occurs(variable, arg, subst) for arg in term.args)
+
+
+def unify(left, right, subst=None):
+    """Return an MGU for two terms, with an occurs check, or None."""
+    subst = {} if subst is None else dict(subst)
+    pending = [(left, right)]
+    while pending:
+        first, second = pending.pop()
+        first = _dereference(first, subst)
+        second = _dereference(second, subst)
+        if first == second:
+            continue
+        if _is_variable(first):
+            if _occurs(first.name, second, subst):
+                return None
+            subst[first.name] = second
+            continue
+        if _is_variable(second):
+            if _occurs(second.name, first, subst):
+                return None
+            subst[second.name] = first
+            continue
+        if first.name != second.name or len(first.args) != len(second.args):
+            return None
+        pending.extend(zip(first.args, second.args))
+    return subst
+
+
+def _unify_args(left_args, right_args):
+    if len(left_args) != len(right_args):
+        return None
+    subst = {}
+    for left, right in zip(left_args, right_args):
+        subst = unify(left, right, subst)
+        if subst is None:
+            return None
+    return subst
+
+
+def apply_subst_term(term, subst):
+    term = _dereference(term, subst)
+    if _is_variable(term):
+        return term
+    return TPTPTerm(
+        term.name,
+        tuple(apply_subst_term(arg, subst) for arg in term.args),
+    )
+
+
+def apply_subst_literal(literal, subst):
+    return TPTPLiteral(
+        literal.sign,
+        literal.pred,
+        tuple(apply_subst_term(arg, subst) for arg in literal.args),
+    )
+
+
+def resolvents(clause_a, clause_b):
+    out = []
+    for index_a, literal_a in enumerate(clause_a):
+        for index_b, literal_b in enumerate(clause_b):
+            if literal_a.sign == literal_b.sign or literal_a.pred != literal_b.pred:
+                continue
+            subst = _unify_args(literal_a.args, literal_b.args)
+            if subst is None:
+                continue
+            remaining = [
+                apply_subst_literal(literal, subst)
+                for index, literal in enumerate(clause_a)
+                if index != index_a
+            ] + [
+                apply_subst_literal(literal, subst)
+                for index, literal in enumerate(clause_b)
+                if index != index_b
+            ]
+            out.append(list(dict.fromkeys(remaining)))
+    return out
+
+
+def _render_term(term, variable_mask=None):
+    name = variable_mask if variable_mask is not None and _is_variable(term) else term.name
+    if not term.args:
+        return name
+    return f"{name}({','.join(_render_term(arg, variable_mask) for arg in term.args)})"
+
+
+def _render_literal(literal, variable_mask=None):
+    if literal.pred == "=":
+        operator = "=" if literal.sign else "!="
+        return (
+            f"{_render_term(literal.args[0], variable_mask)} {operator} "
+            f"{_render_term(literal.args[1], variable_mask)}"
+        )
+    atom = literal.pred
+    if literal.args:
+        atom += f"({','.join(_render_term(arg, variable_mask) for arg in literal.args)})"
+    return atom if literal.sign else f"~{atom}"
+
+
+def render_clause(clause):
+    if not clause:
+        return "$false"
+    return f"({' | '.join(_render_literal(literal) for literal in clause)})"
+
+
+def canonical(clause):
+    """Sort literals and alpha-normalize variables, rejecting order ties."""
+    if not clause:
+        return "$false"
+    masked = [_render_literal(literal, variable_mask="X") for literal in clause]
+    if len(set(masked)) != len(masked):
+        return None
+    ordered = [literal for _, literal in sorted(zip(masked, clause), key=lambda item: item[0])]
+    replacements = {}
+    for literal in ordered:
+        for variable in _walk_literal_variables(literal):
+            if variable not in replacements:
+                replacements[variable] = f"X{len(replacements) + 1}"
+    return render_clause([_replace_variables_literal(literal, replacements) for literal in ordered])
+
+
+def _term_depth(term):
+    if not term.args:
+        return 0
+    return 1 + max(_term_depth(arg) for arg in term.args)
+
+
+def clause_term_depth(clause):
+    return max(
+        (_term_depth(arg) for literal in clause for arg in literal.args),
+        default=0,
+    )
+
+
+def _strip_answer_ticks(answer):
+    answer = str(answer).strip()
+    if answer.startswith("```") and answer.endswith("```"):
+        answer = answer[3:-3].strip()
+        if answer.startswith("tptp"):
+            answer = answer[4:].lstrip()
+    return answer.strip().strip("`").strip()
+
+
+def _inference_rule(inference):
+    inference = inference or ""
+    match = re.search(r"inference\(([A-Za-z0-9_]+)", inference)
+    if match:
+        return match.group(1)
+    match = re.match(r"([A-Za-z0-9_]+)", inference)
+    return match.group(1) if match else "inference"
 
 
 def extract_problem_from_graph(G: nx.DiGraph, node_id_str: str, max_length_proof: int):
@@ -403,6 +778,28 @@ class ConjectureEntailment(Task):
         return float(ref==pred)
 
 
+def _verdict_answer(verdicts):
+    return "\n".join(
+        f"{index}: {'True' if verdict else 'False'}"
+        for index, verdict in enumerate(verdicts, 1)
+    )
+
+
+def _parse_verdict_answer(answer, count):
+    rows = {}
+    for line in str(answer).strip().splitlines():
+        match = re.fullmatch(r"\s*(\d+)\s*:\s*(true|false)\s*", line, re.IGNORECASE)
+        if not match:
+            return None
+        index = int(match.group(1))
+        if index in rows or not 1 <= index <= count:
+            return None
+        rows[index] = match.group(2).lower() == "true"
+    if set(rows) != set(range(1, count + 1)):
+        return None
+    return [rows[index] for index in range(1, count + 1)]
+
+
 @dataclass
 class FiniteInterpretationCheckConfig(Config):
     proof_depth: int = 1
@@ -410,9 +807,13 @@ class FiniteInterpretationCheckConfig(Config):
     min_interesting_score: float = 0.6
     false_requirement_ratio: float = 0.7
     positive_problem_ratio: float = 0.5
-    fmb_time_limit: str = "5"
+    fmb_time_limit: str = "8"
     max_attempts: int = 50
-    max_context_axioms: int = 12
+    max_context_axioms: int = 0
+    min_domain_size: int = 2
+    max_domain_size: int = 3
+    allow_constant_symbols: int = 0
+    sparse_model_ratio: float = 0.75
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
     def update(self, c):
@@ -421,9 +822,9 @@ class FiniteInterpretationCheckConfig(Config):
 
 
 class FiniteInterpretationCheck(Task):
-    """Check signed first-order requirements against a finite interpretation."""
+    """Evaluate signed first-order requirements in a finite interpretation."""
     def __init__(self, config=FiniteInterpretationCheckConfig()):
-        super().__init__(config, timeout=120)
+        super().__init__(config, timeout=180)
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
 
@@ -438,32 +839,64 @@ class FiniteInterpretationCheck(Task):
                 if len(selected_hypotheses) > 1 and (not distractions or random.random() < 0.5):
                     selected_hypotheses.pop(random.randrange(len(selected_hypotheses)))
                 elif selected_hypotheses and distractions:
-                    index = random.randrange(len(selected_hypotheses))
-                    selected_hypotheses[index] = random.choice(distractions)
+                    selected_hypotheses[random.randrange(len(selected_hypotheses))] = random.choice(
+                        distractions
+                    )
             selected_hypotheses = list(dict.fromkeys(selected_hypotheses))
 
         requirements = [
             {"formula": hypothesis, "should_be": True}
             for hypothesis in selected_hypotheses
         ]
-        requirements.append({
-            "formula": theorem,
-            "should_be": not use_false_goal,
-        })
+        requirements.append({"formula": theorem, "should_be": not use_false_goal})
         return requirements
 
     def _context_axioms(self, theorem_node_id, requirements):
-        req_norm = {
-            normalize_formula(requirement["formula"])
-            for requirement in requirements
-        }
-        axioms = []
-        for node_id in extract_useful_axioms(self.graph, theorem_node_id):
-            data = self.graph.nodes[node_id]["data"]
-            if normalize_formula(data.clause_formula) not in req_norm:
-                axioms.append(data.full_cnf_clause)
+        if self.config.max_context_axioms <= 0:
+            return []
+        req_norm = {normalize_formula(req["formula"]) for req in requirements}
+        axioms = [
+            self.graph.nodes[node_id]["data"].full_cnf_clause
+            for node_id in extract_useful_axioms(self.graph, theorem_node_id)
+            if normalize_formula(self.graph.nodes[node_id]["data"].clause_formula) not in req_norm
+        ]
         random.shuffle(axioms)
-        return axioms[:self.config.max_context_axioms]
+        return axioms[:min(3, self.config.max_context_axioms)]
+
+    def _generate_model(self, requirements, make_negative):
+        solver_requirements = [dict(requirement) for requirement in requirements]
+        flipped_index = None
+        if make_negative:
+            flipped_index = random.randrange(len(solver_requirements))
+            solver_requirements[flipped_index]["should_be"] = not solver_requirements[
+                flipped_index
+            ]["should_be"]
+
+        domain_size = random.randint(
+            self.config.min_domain_size,
+            max(self.config.min_domain_size, self.config.max_domain_size),
+        )
+        model = run_vampire_fmb_signed(
+            solver_requirements,
+            time_limit_seconds=self.config.fmb_time_limit,
+            min_domain_size=domain_size,
+        )
+        if not model_is_nondegenerate(
+            model,
+            min_domain_size=domain_size,
+            allow_constant_symbols=self.config.allow_constant_symbols,
+        ):
+            return None
+        if not requirements_hold(solver_requirements, model):
+            return None
+
+        verdicts = [requirement_holds(requirement, model) for requirement in requirements]
+        if make_negative:
+            if all(verdicts) or verdicts[flipped_index]:
+                return None
+        elif not all(verdicts):
+            return None
+        return model, verdicts, flipped_index
 
     def generate(self):
         self._initialize_graph()
@@ -479,7 +912,6 @@ class FiniteInterpretationCheck(Task):
             )
             if not hypotheses:
                 continue
-
             requirements = self._make_requirements(hypotheses, theorem)
             try:
                 for requirement in requirements:
@@ -487,60 +919,203 @@ class FiniteInterpretationCheck(Task):
             except ValueError:
                 continue
 
-            model = run_vampire_fmb_signed(
-                requirements,
-                time_limit_seconds=self.config.fmb_time_limit,
-            )
-            if model is None or not requirements_hold(requirements, model):
+            make_negative = random.random() >= self.config.positive_problem_ratio
+            generated = self._generate_model(requirements, make_negative)
+            if generated is None:
                 continue
-
-            answer = random.random() < self.config.positive_problem_ratio
-            shown_model = model
-            if not answer:
-                shown_model = make_near_miss_model(requirements, model)
-                if shown_model is None or requirements_hold(requirements, shown_model):
-                    continue
-
+            model, verdicts, flipped_index = generated
+            largest_table = max(
+                [len(table) for table in model.functions.values()]
+                + [len(table) for table in model.predicates.values()]
+                + [0]
+            )
+            sparse = (
+                largest_table > 16
+                or random.random() < self.config.sparse_model_ratio
+            )
             metadata = edict({
                 "requirements": requirements,
-                "model": serialize_model(shown_model),
+                "model": serialize_model(model, sparse=sparse),
+                "model_format": "default-with-exceptions" if sparse else "full-table",
                 "context_axioms": self._context_axioms(theorem_node_id, requirements),
                 "axiom_set": self.axiom_set,
                 "proof_depth": self.config.proof_depth,
+                "domain_size": len(model.domain),
+                "flipped_requirement": (
+                    flipped_index + 1 if flipped_index is not None else None
+                ),
+                "verdicts": verdicts,
             })
-            return Problem(metadata, str(answer))
+            return Problem(metadata, _verdict_answer(verdicts))
         return None
 
     def prompt(self, metadata):
         domain_name = DOMAIN_MAP.get(metadata["axiom_set"][:3], metadata["axiom_set"])
-
-        context_text = "\n".join(
-            f"- {axiom}" for axiom in metadata.get("context_axioms", [])
-        ) or "- None."
-
-        req_text = "\n".join(
-            f"{i + 1}. {'True' if req['should_be'] else 'False'}: `{req['formula']}`"
-            for i, req in enumerate(metadata["requirements"])
+        requirements = "\n".join(
+            f"{i}. Must be {'True' if req['should_be'] else 'False'}: {req['formula']}"
+            for i, req in enumerate(metadata["requirements"], 1)
         )
-
+        context = metadata.get("context_axioms", [])
+        context_text = ""
+        if context:
+            context_text = "Context:\n" + "\n".join(f"- {axiom}" for axiom in context) + "\n\n"
         return (
-            "Check whether the finite interpretation satisfies all listed requirements.\n"
-            f"Domain: **{domain_name}**\n"
-            "Background axioms, for context only:\n"
-            f"{context_text}\n"
-            "Requirements:\n"
-            "Variables are universally quantified. A requirement marked `False` is satisfied "
-            "iff the formula is false for at least one assignment.\n"
-            f"{req_text}\n\n"
-            "Finite interpretation:\n"
-            f"{metadata['model']}\n"
-            "The answer is `True` or `False`."
+            "Evaluate each signed requirement in the finite interpretation.\n"
+            f"Domain area: {domain_name}\n"
+            "Variables are universally quantified. `Must be False` holds when the formula "
+            "is false for at least one variable assignment.\n"
+            "In compact tables, `default` applies to every tuple not listed.\n\n"
+            f"{context_text}Requirements:\n{requirements}\n\n"
+            f"Interpretation:\n{metadata['model']}\n\n"
+            "Answer one line per requirement: `N: True` if its signed requirement holds, "
+            "otherwise `N: False`."
         )
 
     def score_answer(self, answer, entry):
-        ref = entry.answer.lower()
-        pred = str(answer).lower().strip().strip('"').strip("'")
-        return float(ref == pred)
+        expected = entry.metadata.get("verdicts")
+        if expected is None:
+            expected = _parse_verdict_answer(entry.answer, len(entry.metadata["requirements"]))
+        predicted = _parse_verdict_answer(answer, len(expected))
+        return float(predicted == list(expected))
+
+    def balancing_key(self, problem):
+        return "all_true" if all(problem.metadata.verdicts) else "has_false"
+
+
+@dataclass
+class ResolutionStepConfig(Config):
+    min_total_literals: int = 3
+    min_term_depth: int = 1
+    min_interesting_score: float = 0.6
+    allow_superposition: bool = False
+    domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
+
+    def update(self, c):
+        self.min_total_literals += c
+        self.min_term_depth += c
+
+
+class ResolutionStep(Task):
+    """Reconstruct one validated binary-resolution step from an E derivation."""
+    def __init__(self, config=ResolutionStepConfig()):
+        super().__init__(config, timeout=120)
+        from reasoning_core.utils.udocker_process import initialize_prover_session
+        initialize_prover_session()
+        self.pool = []
+
+    _initialize_graph = ConjectureEntailment._initialize_graph
+
+    def _mine_pool(self):
+        candidates = 0
+        parsed = 0
+        unique = 0
+        accepted = []
+
+        for child_id, in_degree in self.graph.in_degree():
+            if in_degree != 2:
+                continue
+            candidates += 1
+            parent_a_id, parent_b_id = sorted(self.graph.predecessors(child_id), key=str)
+            parent_a = self.graph.nodes[parent_a_id]["data"]
+            parent_b = self.graph.nodes[parent_b_id]["data"]
+            child = self.graph.nodes[child_id]["data"]
+
+            try:
+                clause_a = parse_clause(parent_a.clause_formula)
+                original_b = parse_clause(parent_b.clause_formula)
+                child_clause = parse_clause(child.clause_formula)
+            except (TypeError, ValueError):
+                continue
+            parsed += 1
+
+            variables_a = {
+                variable
+                for literal in clause_a
+                for variable in _walk_literal_variables(literal)
+            }
+            clause_b = rename_apart(original_b, forbidden=variables_a)
+            possible = resolvents(clause_a, clause_b)
+            if len(possible) != 1:
+                continue
+            unique += 1
+
+            answer = canonical(possible[0])
+            child_canonical = canonical(child_clause)
+            if answer is None or child_canonical is None or answer != child_canonical:
+                continue
+
+            total_literals = len(clause_a) + len(clause_b)
+            term_depth = max(clause_term_depth(clause_a), clause_term_depth(clause_b))
+            if total_literals < self.config.min_total_literals:
+                continue
+            if term_depth < self.config.min_term_depth:
+                continue
+
+            metadata = edict({
+                "clause_a": render_clause(clause_a),
+                "clause_b": render_clause(clause_b),
+                "rule": _inference_rule(child.inference),
+                "axiom_set": self.axiom_set,
+                "total_literals": total_literals,
+                "term_depth": term_depth,
+                "resolvent_literals": len(possible[0]),
+            })
+            accepted.append(Problem(metadata, answer))
+
+        random.shuffle(accepted)
+        self.pool = accepted
+        mean_literals = (
+            sum(problem.metadata.total_literals for problem in accepted) / len(accepted)
+            if accepted else 0.0
+        )
+        mean_depth = (
+            sum(problem.metadata.term_depth for problem in accepted) / len(accepted)
+            if accepted else 0.0
+        )
+        logger.info(
+            "ResolutionStep level=%s candidates=%d parsed=%d unique=%d accepted=%d "
+            "yield=%.3f mean_literals=%.2f mean_term_depth=%.2f",
+            self.config.level,
+            candidates,
+            parsed,
+            unique,
+            len(accepted),
+            len(accepted) / candidates if candidates else 0.0,
+            mean_literals,
+            mean_depth,
+        )
+
+    def generate(self):
+        if not self.pool:
+            self._initialize_graph()
+            self._mine_pool()
+        if not self.pool:
+            return None
+        return self.pool.pop()
+
+    def prompt(self, metadata):
+        domain_name = DOMAIN_MAP.get(metadata["axiom_set"][:3], metadata["axiom_set"])
+        return (
+            "Apply one step of binary resolution.\n"
+            f"Domain: {domain_name}\n\n"
+            f"Clause A: {metadata['clause_a']}\n"
+            f"Clause B: {metadata['clause_b']}\n\n"
+            "A and B share no variables. Exactly one pair of complementary literals is unifiable.\n"
+            "Answer convention: write the conclusion with literals sorted alphabetically\n"
+            "(comparing literal text with every variable replaced by 'X'), and variables\n"
+            "renamed X1, X2, ... in order of first occurrence in that sorted clause.\n"
+            "The answer is the canonicalized resolvent, e.g. (p(X1,f(X2)) | ~q(X1))."
+        )
+
+    def score_answer(self, answer, entry):
+        prediction = _strip_answer_ticks(answer)
+        try:
+            parsed = canonical(parse_clause(prediction))
+        except (TypeError, ValueError):
+            compact_prediction = re.sub(r"\s+", "", prediction)
+            compact_reference = re.sub(r"\s+", "", str(entry.answer))
+            return float(compact_prediction == compact_reference)
+        return float(parsed is not None and parsed == entry.answer)
 
 
 @dataclass

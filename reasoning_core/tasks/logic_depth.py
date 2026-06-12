@@ -3,6 +3,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 import itertools
 import random
+from typing import Optional
 
 from easydict import EasyDict as edict
 
@@ -40,7 +41,7 @@ class Denial:
 class Derivation:
     atom: Atom
     depth: int
-    rule: object | None
+    rule: Optional[object]
     parents: tuple
 
 
@@ -67,8 +68,8 @@ class MultistepCase:
     res: ChaseResult
     label: str
     hyp: Atom
-    target: Atom | None
-    derivation: Derivation | None
+    target: Optional[Atom]
+    derivation: Optional[Derivation]
     support_atoms: set
     lines: list
     source: dict
@@ -92,6 +93,8 @@ class MultistepNLIConfig(Config):
     contradiction_rate: float = 0.33
     max_bin_size: int = 8
     domain_packs: tuple = ("surface",)
+    min_target_support_size: int = 1
+    max_target_support_size: Optional[int] = None
 
     def update(self, c):
         self.max_depth += int(c) // 2
@@ -99,6 +102,7 @@ class MultistepNLIConfig(Config):
         self.n_distractors += 2 * c
         self.n_unary_preds += c
         self.n_binary_preds += c
+        self.min_target_support_size = min(5, self.min_target_support_size + max(1, int(c)) / 3)
         self.max_target_depth = min(int(self.max_depth), int(self.max_target_depth) + max(1, int(c) // 2))
 
 
@@ -133,8 +137,6 @@ REL_WORDS = (
     "alpha-linked", "beta-linked", "gamma-linked", "delta-related",
     "omega-connected", "sigma-associated", "kappa-linked", "zeta-related",
 )
-REFLEXIVE_OK = set()
-IRREFLEXIVE_PACKS = {"spatial", "kinship"}
 
 
 def is_var(x):
@@ -143,15 +145,6 @@ def is_var(x):
 
 def opposite(a):
     return Atom(a.pred, a.args, not a.sign)
-
-
-def bad_head(head, theory):
-    return (
-        theory.domain_pack in IRREFLEXIVE_PACKS
-        and len(head.args) == 2
-        and head.args[0] == head.args[1]
-        and head.pred not in REFLEXIVE_OK
-    )
 
 
 def _subst(atom, env):
@@ -221,8 +214,6 @@ def chase(theory, max_depth=None):
         changed = False
         for rule in theory.rules:
             for head, parents in _rule_instances(rule, closure):
-                if bad_head(head, theory):
-                    continue
                 depth = 1 + max(deriv[p].depth for p in parents) if parents else 1
                 if max_depth is not None and depth > max_depth:
                     continue
@@ -261,7 +252,11 @@ def _domain_pack(name, cfg):
             Rule((Atom("above", ("?x", "?y")), Atom("above", ("?y", "?z"))), Atom("above", ("?x", "?z")), "spatial", "composition"),
             Rule((Atom("disjoint", ("?x", "?y")),), Atom("disjoint", ("?y", "?x")), "spatial", "converse"),
         ]
-        return ents, sigs, bg, []
+        irreflexive = ("left_of", "right_of", "above", "below", "inside", "contains", "disjoint")
+        asymmetric = ("left_of", "right_of", "above", "below", "inside", "contains")
+        denials = [Denial((Atom(p, ("?x", "?x")),)) for p in irreflexive]
+        denials += [Denial((Atom(p, ("?x", "?y")), Atom(p, ("?y", "?x")))) for p in asymmetric]
+        return ents, sigs, bg, denials
     ents = {"person": NAMES[:n]}
     if name == "kinship":
         unary = ("adult", "minor", "kind", "patient", "careful", "trusted", "female", "male")
@@ -279,6 +274,10 @@ def _domain_pack(name, cfg):
             Denial((Atom("male", ("?x",)), Atom("female", ("?x",)))),
             Denial((Atom("adult", ("?x",)), Atom("minor", ("?x",)))),
         ]
+        irreflexive = ("parent", "ancestor", "sibling", "spouse", "aunt_or_uncle")
+        asymmetric = ("parent", "ancestor")
+        denials += [Denial((Atom(p, ("?x", "?x")),)) for p in irreflexive]
+        denials += [Denial((Atom(p, ("?x", "?y")), Atom(p, ("?y", "?x")))) for p in asymmetric]
         return ents, sigs, bg, denials
     unary = GEN_UNARY[: cfg.n_unary_preds]
     binary = GEN_BINARY[: cfg.n_binary_preds]
@@ -322,7 +321,7 @@ def _sample_rule(sigs):
     if len(binaries) >= 2:
         shapes.append("converse")
     if len(binaries) >= 3:
-        shapes.append("compose")
+        shapes.append("composition")
     if not shapes:
         raise ValueError("not enough predicates to sample a rule")
     shape = random.choice(shapes)
@@ -346,8 +345,10 @@ def _sample_rule(sigs):
     if shape == "converse":
         r, s = random.sample(binaries, 2)
         return Rule((Atom(r.name, ("?x", "?y")),), Atom(s.name, ("?y", "?x"), not neg_head), shape=shape)
-    r, s, t = random.sample(binaries, 3)
-    return Rule((Atom(r.name, ("?x", "?y")), Atom(s.name, ("?y", "?z"))), Atom(t.name, ("?x", "?z"), not neg_head), shape="composition")
+    if shape == "composition":
+        r, s, t = random.sample(binaries, 3)
+        return Rule((Atom(r.name, ("?x", "?y")), Atom(s.name, ("?y", "?z"))), Atom(t.name, ("?x", "?z"), not neg_head), shape=shape)
+    raise AssertionError(f"unknown rule shape: {shape}")
 
 
 def _bad_rule(rule):
@@ -542,6 +543,16 @@ def choose_example(theory, res, cfg, label_signs=None, label_depths=None):
     non_direct = [a for a in derived if opposite(a) not in theory.facts and a not in theory.facts]
     target_depths = tuple(range(cfg.min_target_depth, min(cfg.max_target_depth, cfg.max_depth) + 1))
     depth_ok = lambda a: res.derivations[a].depth in target_depths
+    def support_size_ok(a):
+        n = len(support_atoms(a, res.derivations))
+        if n < cfg.min_target_support_size:
+            return False
+        if cfg.max_target_support_size is not None and n > cfg.max_target_support_size:
+            return False
+        return True
+    def prefer_support_range(pool, target=lambda x: x):
+        preferred = [h for h in pool if support_size_ok(target(h))]
+        return preferred or pool
     r = random.random()
     wants = "neutral" if r < cfg.neutral_rate else "contradiction" if r < cfg.neutral_rate + cfg.contradiction_rate else "entailment"
     labels = [wants, "entailment", "contradiction", "neutral"]
@@ -564,14 +575,17 @@ def choose_example(theory, res, cfg, label_signs=None, label_depths=None):
 
     for label in [x for x in labels if not (x in seen or seen.add(x))]:
         if label == "entailment":
-            pool = balanced(label, [a for a in non_direct if depth_ok(a)])
+            pool = prefer_support_range(balanced(label, [a for a in non_direct if depth_ok(a)]))
             if pool:
                 h = choose_by_depth(label, pool)
                 if h is None:
                     continue
                 return label, h, res.derivations[h], support_atoms(h, res.derivations)
         if label == "contradiction":
-            pool = balanced(label, [opposite(a) for a in non_direct if opposite(a) not in theory.facts and depth_ok(a)])
+            pool = prefer_support_range(
+                balanced(label, [opposite(a) for a in non_direct if opposite(a) not in theory.facts and depth_ok(a)]),
+                opposite,
+            )
             if pool:
                 h = choose_by_depth(label, pool, opposite)
                 if h is None:
@@ -836,6 +850,12 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         if label_signs[ls_key] > other + 6 and random.random() > 0.2:
             continue
         lines, source, surf = render(theory)
+        if surf and surface:
+            ordered = sorted(surface.values())
+            median = ordered[len(ordered) // 2]
+            overused = any(surface[x] > max(4, median * 2) for x in surf)
+            if overused and random.random() < 0.85:
+                continue
         target = target_for(label, hyp)
         d = None if target is None else res.derivations[target]
         used_rules = derivation_rules(target, res.derivations) if target is not None else set()

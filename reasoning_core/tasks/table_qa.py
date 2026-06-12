@@ -5,7 +5,6 @@ from faker import Faker
 import random
 import re
 from dataclasses import dataclass
-from nltk.metrics.distance import edit_distance
 from reasoning_core.template import Task, Problem, Config
 from reasoning_core.utils import score_scalar
 import csv

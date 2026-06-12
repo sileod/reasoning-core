@@ -19,6 +19,7 @@ DEBUG = True  # Set to True to see timing logs in console
 APP_NAME = "prover_tools"
 BASE_DIR = appdirs.user_cache_dir(APP_NAME)
 SIF_DIR = os.path.join(BASE_DIR, "images")
+DEFAULT_PROVER_IMAGE = "dsileo/tptp_tools:latest"
 
 UDOCKER_CMD_TIMEOUT = 120
 
@@ -158,7 +159,7 @@ def _get_native_vampire():
 # ============================================================================
 
 class Embeded_process:
-    def __init__(self, docker_image="valentinq76/tools:2.0", provers_to_check=['vampire', 'eprover']):
+    def __init__(self, docker_image=DEFAULT_PROVER_IMAGE, provers_to_check=['vampire', 'eprover']):
         self.docker_image = docker_image
         self.provers = provers_to_check
         self.is_setup = False
@@ -283,16 +284,22 @@ class Embeded_process:
 
 _prover_session = None
 
-def get_prover_session(docker_image="valentinq76/tools:2.0"):
+def get_prover_session(docker_image=DEFAULT_PROVER_IMAGE):
     global _prover_session
     current_pid = os.getpid()
     
-    if _prover_session is None or _prover_session.pid != current_pid:
+    if (
+        _prover_session is None
+        or _prover_session.pid != current_pid
+        or _prover_session.docker_image != docker_image
+    ):
+        if _prover_session is not None:
+            _prover_session.kill()
         _prover_session = Embeded_process(docker_image=docker_image)
     
     return _prover_session
 
-def initialize_prover_session(docker_image="valentinq76/tools:2.0"):
+def initialize_prover_session(docker_image=DEFAULT_PROVER_IMAGE):
     sess = get_prover_session(docker_image)
     sess.setup()
     return sess
