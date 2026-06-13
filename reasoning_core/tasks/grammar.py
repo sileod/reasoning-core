@@ -458,6 +458,47 @@ class Parsing(DevTask):
         return Levenshtein.normalized_similarity(norm(answer), norm(reference))
 
 
+def labeled_rules(meta):
+    lines = meta.g.splitlines()
+    return "\n".join(f"R{i}: {rule}" for i, rule in enumerate(lines)), {
+        rule: f"R{i}" for i, rule in enumerate(lines)
+    }
+
+
+class ParsingDerivation(Task):
+    def __init__(self, config: GrammarConfig = GrammarConfig()):
+        config.perturbation_rate = 0.0
+        super().__init__(config=config)
+
+    def generate(self):
+        while True:
+            meta = generate_parse(self.config)
+            if meta.label != "unambiguous" or len(meta.parses) != 1:
+                continue
+            _, labels = labeled_rules(meta)
+            try:
+                answer = " ".join(labels[str(p)] for p in meta.parses[0].productions())
+            except KeyError:
+                continue
+            meta.pop("parses", None)
+            meta.pop("cot", None)
+            return Problem(meta, answer)
+
+    def prompt(self, meta):
+        g, _ = labeled_rules(meta)
+        return (
+            f"(GRAMMAR)\n{g}\n\n"
+            f"(STRING)\n{' '.join(meta.tokens)}\n\n"
+            "(QUESTION)\n"
+            "Return the rule labels used in the leftmost derivation of STRING.\n"
+            "Answer only the labels in order, separated by spaces."
+        )
+
+    def score_answer(self, answer, entry):
+        labels = re.findall(r"\bR\d+\b", str(answer))
+        return float(" ".join(labels) == entry["answer"])
+
+
 def mark_token(tokens, idx):
     marked = list(tokens)
     marked[idx] = f"<M> {marked[idx]} </M>"
@@ -497,7 +538,7 @@ def smallest_span_candidates(tree):
     return out
 
 
-class CFGSpan(Task):
+class CFGSpan(DevTask):
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.perturbation_rate = 0.0
         super().__init__(config=config)
