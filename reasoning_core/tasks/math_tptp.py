@@ -821,7 +821,7 @@ class FiniteInterpretationCheckConfig(Config):
         self.perturbation += c
 
 
-class FiniteInterpretationCheck(Task):
+class FiniteInterpretationCheck(DevTask):
     """Evaluate signed first-order requirements in a finite interpretation."""
     def __init__(self, config=FiniteInterpretationCheckConfig()):
         super().__init__(config, timeout=180)

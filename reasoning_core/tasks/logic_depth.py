@@ -77,25 +77,26 @@ class MultistepCase:
     live_rule_rate: float
     proof_rule_rate: float
 
+SUPPORTED_DOMAIN_PACKS = ("surface", "abstract", "spatial", "kinship")
 
 @dataclass
 class MultistepNLIConfig(Config):
-    n_entities: int = 5
-    n_unary_preds: int = 8
-    n_binary_preds: int = 5
-    n_facts: int = 8
-    n_rules: int = 8
-    max_depth: int = 5
+    n_entities: int = 4
+    n_unary_preds: int = 6
+    n_binary_preds: int = 3
+    n_facts: int = 4
+    n_rules: int = 4
+    max_depth: int = 3
     min_target_depth: int = 2
-    max_target_depth: int = 5
-    n_distractors: int = 4
+    max_target_depth: int = 3
+    n_distractors: int = 1
     neutral_rate: float = 0.33
     contradiction_rate: float = 0.33
     max_bin_size: int = 8
-    domain_packs: tuple = ("surface",)
-    min_target_support_size: int = 1
-    max_target_support_size: Optional[int] = None
-
+    domain_packs: tuple = SUPPORTED_DOMAIN_PACKS
+    min_target_support_size: int = 2
+    max_target_support_size: Optional[int] = 3
+    
     def update(self, c):
         self.max_depth += int(c) // 2
         self.n_rules += c
@@ -137,6 +138,7 @@ REL_WORDS = (
     "alpha-linked", "beta-linked", "gamma-linked", "delta-related",
     "omega-connected", "sigma-associated", "kappa-linked", "zeta-related",
 )
+
 
 
 def is_var(x):
