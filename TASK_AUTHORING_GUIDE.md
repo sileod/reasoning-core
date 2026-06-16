@@ -11,6 +11,7 @@ Implement tasks that are:
 - concise in code, easy to audit
 - preferaby solver-backed (use strong external libraries instead of re-implementing),
 - distributionally broad (high structural variety),
+- not mostly solvable with shortcuts (some are good for robustness but they should be rare),
 - verifiable, formal and robustly scorable (`score_answer(generate().answer) == 1`).
 - favour answer uniqueness if possible (e.g. specify lexicographic order) to ease next token prediction training.
 
@@ -27,7 +28,9 @@ Every task should provide:
 - `answer` (ground-truth string),
 
 `Task.generate_example(...)` automatically adds metadata:
-- `_task`, `_level`, `_config`, `_time`, `_prompt_tokens`, `_cot_tokens`.
+- `_task`, `_level`, `_config`, `_time`, `_prompt_tokens`, `_answer_tokens`,
+- `_generator_name`, `_generator_version`, `_generator_commit`, `_task_version`,
+- `_task_behavior_hash` (AST-based module hash; ignores whitespace, comments, and docstrings).
 
 ## Config and Difficulty Scaling
 Base `Config` protected fields:
@@ -98,14 +101,16 @@ class MyTask(Task):
 
     def prompt(self, metadata):
         # Specify the answer format clearly, refer to it as "the answer" or "answer".
-        # Do not use answer as a verb
-        # The "wording logic" should be in the prompt and not buried in the code.
+        # Do not use answer as a verb, do not use "return".
+        # The "wording logic" should be in the .prompt() method and not buried elsewhere in the code.
         return f"Solve for x: {metadata['equation']}\n Answer is a scalar."
 
     def score_answer(self, answer, entry):
         # Answer is the answer to score (e.g. LLM prediction)
         # entry is a problem; entry.answer is the ground truth
         # use ast.literal_eval for safety if evaluation is need
+        # leniency is helpful (e.g. score 0.5 for half answer)
+        # but 1 should be reserved for correct answers
         return score_scalar(answer, entry)  # or custom semantic checker
 ```
 
@@ -114,11 +119,19 @@ class MyTask(Task):
 - `task.score_answer(x.answer, x) == 1`.
 - Wrong/random answers do not all score `1`.
 - `task.validate()` passes.
+- `task.validate(cache=True)` may be used for local cached validation examples.
 - `config.set_level(1)` changes difficulty, not `c`.
 - Prompt is unambiguous about output format.
+- Prompt is as concise as possible while allowing meaningful zero-shot solvability.
 - Metadata is ideally sufficient for offline debugging (instance params, optional `cot` entry).
 - Metadata is not too large (should not blow up memory).
 
 ## Registration and Discovery
 - Any `Task` subclass in `reasoning_core/tasks/*.py` is auto-discovered by AST and lazy-loaded through `reasoning_core.__init__.py`.
 - `task_name` defaults to snake_case class name.
+
+## Gallery
+- Refresh examples with `python scripts/build_gallery.py`.
+- Use `--cache` to build from cached validation examples.
+- Use `--refresh-cache` to regenerate cached examples for the current task behavior hash/config.
+- The cache is keyed per task and level, and keeps only the latest record for each key.
