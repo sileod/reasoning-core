@@ -670,30 +670,50 @@ class Continuation(Task):
         for _ in range(100):
             with resampled_grammar(self.config, productive_only=True) as g:
                 try:
-                    sentences = list(islice(nltk_generate(g, depth=self.config.max_depth), 50))
-                    if not sentences:
-                        continue
-                    sentence = random.choice(sentences)
+                    sentence = (gramforge_generate(
+                        nltk_to_gramforge(g),
+                        depth=self.config.max_prod_depth,
+                        min_depth=self.config.min_prod_depth,
+                        mode=self.config.gramforge_algorithm,
+                    ) @ "lang").split()
                 except (RecursionError, ValueError):
                     continue
                 
-                if len(sentence) < 2:
+                min_len = 3 + self.config.level
+                if len(sentence) < min_len or len(sentence) > self.config.max_tokens:
                     continue
-                
-                max_prefix = min(len(sentence) - 1, 5)
-                min_prefix = min(2, max_prefix)
-                if min_prefix > max_prefix:
+
+                max_prefix = len(sentence) - 1
+                min_prefix = min(max_prefix, 2 + self.config.level)
+                cuts = list(range(min_prefix, max_prefix + 1))
+                if len(cuts) > 6:
+                    cuts = [min_prefix, max_prefix] + random.sample(cuts[1:-1], 4)
+                candidates = []
+                for prefix_len in cuts:
+                    prefix = list(sentence[:prefix_len])
+                    try:
+                        tokens, can_stop, justifications = get_valid_next_tokens(g, prefix)
+                    except Exception:
+                        continue
+                    n_answers = len(tokens) + int(can_stop)
+                    if n_answers:
+                        candidates.append((prefix_len + n_answers, prefix,
+                                           tokens, can_stop, justifications))
+
+                if not candidates:
                     continue
-                prefix_len = random.randint(min_prefix, max_prefix)
-                prefix = list(sentence[:prefix_len])
-                
-                try:
-                    tokens, can_stop, justifications = get_valid_next_tokens(g, prefix)
-                except Exception:
-                    continue
-                
-                if not tokens and not can_stop:
-                    continue
+
+                preferred = [c for c in candidates
+                             if len(c[2]) + int(c[3]) > 1]
+                if self.config.level >= 3:
+                    preferred = [c for c in preferred
+                                 if len(c[2]) + int(c[3]) >= 3] or preferred
+                if preferred and random.random() < 0.8:
+                    candidates = preferred
+                best = max(c[0] for c in candidates)
+                _, prefix, tokens, can_stop, justifications = random.choice(
+                    [c for c in candidates if c[0] == best]
+                )
                 
                 answer = '|'.join(sorted(tokens))
                 if can_stop:

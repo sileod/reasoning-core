@@ -53,6 +53,7 @@ dependencies = [
     "udocker",
     "wrapt",
     "psutil",
+    "nfsdict",
 ]
 
 [project.optional-dependencies]

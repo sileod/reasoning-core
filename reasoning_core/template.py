@@ -1,6 +1,8 @@
 import wrapt
 import time
 import functools
+import ast
+import hashlib
 import pickle, base64
 import threading
 import subprocess
@@ -66,6 +68,40 @@ def _generator_commit():
         ).strip()
     except Exception:
         return None
+
+
+def _strip_docstrings(node):
+    node = copy.deepcopy(node)
+    for n in ast.walk(node):
+        body = getattr(n, "body", None)
+        if (isinstance(body, list) and body and isinstance(body[0], ast.Expr) and
+                isinstance(body[0].value, ast.Constant) and
+                isinstance(body[0].value.value, str)):
+            del body[0]
+    return node
+
+
+@functools.lru_cache(maxsize=None)
+def _module_behavior_hash(module_name):
+    module = sys.modules.get(module_name)
+    path = getattr(module, "__file__", None)
+    if not path or not path.endswith(".py"):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            tree = ast.parse(f.read(), filename=path)
+        canonical = ast.dump(_strip_docstrings(tree), include_attributes=False)
+        return hashlib.sha1(canonical.encode()).hexdigest()[:16]
+    except Exception:
+        return None
+
+
+@functools.lru_cache(maxsize=1)
+def _validation_store():
+    from nfsdict import NfsDict
+    base_dir = os.environ.get("RC_VALIDATE_CACHE_DIR",
+                              os.path.join(user_cache_dir("reasoning_core"), "validation"))
+    return NfsDict(name="examples", base_dir=base_dir, serializer="json")
 
 
 def _parquet_safe(x):
@@ -257,17 +293,36 @@ class Task(ProceduralDataset):
     def __call__(self, *args, **kwargs):
         return self.generate_example(*args, **kwargs)
     
-    def validate(self, n_samples=10):
+    def validate(self, n_samples=10, cache=False, refresh=False):
         """Smoke tests to ensure that generation and scoring are working as expected."""
-        x=self.generate_example()
-        assert isinstance(x, Problem), f"Generated example must be of type Problem, got {type(x)}"
-        assert self.score_answer(x.answer, x)==1, "The generated answer must be correct"
-        assert x.prompt, "Generated example must have a non-empty prompt"
-        ys=[self.generate_example() for _ in range(n_samples)]
-        assert len({y.prompt for y in ys})!=1 or n_samples==1, "Examples should not be identical"
-        score = [self.score_answer(y.answer, x) for y in ys]
-        assert set(score)!={1}, "score_answer must return values other than 1 for other answers"
-        assert {self.score_answer(y.answer,y)==1 for y in ys}=={True}, "The generated answer must be correct"
+        if cache:
+            key = f"{self.task_name}:{self.config.level}"
+            signature = {
+                "hash": self.behavior_hash(),
+                "config": self.config.to_dict() if hasattr(self.config, "to_dict") else dict(self.config),
+            }
+            record = None if refresh else _validation_store().get(key)
+            examples = record.get("examples", []) if record and record.get("signature") == signature else []
+            if len(examples) < n_samples + 1:
+                examples = [self.generate_example() for _ in range(n_samples + 1)]
+                _validation_store()[key] = {
+                    "signature": signature,
+                    "examples": [ex.to_dict() for ex in examples],
+                }
+            else:
+                restored = []
+                for ex in examples[:n_samples + 1]:
+                    problem = Problem.from_dict(ex)
+                    problem.prompt = ex.get("prompt")
+                    restored.append(problem)
+                examples = restored
+            x, ys = examples[0], examples[1:]
+            self._check_validation_examples(x, ys, n_samples)
+            return ys
+
+        x = self.generate_example()
+        ys = [self.generate_example() for _ in range(n_samples)]
+        self._check_validation_examples(x, ys, n_samples)
 
         # Serialization round-trip smoke test
         rt = copy.copy(x)
@@ -290,8 +345,19 @@ class Task(ProceduralDataset):
         r2=random.random()
         assert r1!=r2, "Example generation should not set a seed"
 
-
         return ys
+
+    def _check_validation_examples(self, x, ys, n_samples):
+        assert isinstance(x, Problem), f"Generated example must be of type Problem, got {type(x)}"
+        assert self.score_answer(x.answer, x)==1, "The generated answer must be correct"
+        assert x.prompt, "Generated example must have a non-empty prompt"
+        assert len({y.prompt for y in ys})!=1 or n_samples==1, "Examples should not be identical"
+        score = [self.score_answer(y.answer, x) for y in ys]
+        assert set(score)!={1}, "score_answer must return values other than 1 for other answers"
+        assert {self.score_answer(y.answer,y)==1 for y in ys}=={True}, "The generated answer must be correct"
+        self.score_answer('reajrjrje9595!',x)
+        self.score_answer('',x)
+        self.score_answer('import fakemodule',x)
 
     def postprocess_dataset(self, df):
         """to override, apply deduplication and filtering"""
@@ -313,6 +379,9 @@ class Task(ProceduralDataset):
 
     def on_config_level_change(self):
         pass
+
+    def behavior_hash(self):
+        return _module_behavior_hash(self.__class__.__module__)
         
 
 
@@ -369,6 +438,7 @@ class Task(ProceduralDataset):
                 problem.metadata['_generator_version'] = _generator_version(generator_name)
                 problem.metadata['_generator_commit'] = _generator_commit()
                 problem.metadata['_task_version'] = getattr(self, "task_version", "0")
+                problem.metadata['_task_behavior_hash'] = self.behavior_hash()
 
                 problem.balancing_key = self.balancing_key(problem)
                 problem.deduplication_key = self.deduplication_key(problem)

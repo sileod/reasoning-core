@@ -80,14 +80,14 @@ def _plan(pool, chain_len, n_distractors):
     return out
 
 
-def _query_candidates(mentions, pool):
+def _query_candidates(mentions, pool, target_hops=2):
     counts = {}
     for m in mentions:
         counts[m['entity']] = counts.get(m['entity'], 0) + 1
 
     top = max(counts.values())
     unique_top = list(counts.values()).count(top) == 1
-    cands, better = [], []
+    cands = []
 
     for m in mentions:
         if m['mode'] not in (PRONOUN, DESC):
@@ -103,13 +103,21 @@ def _query_candidates(mentions, pool):
 
         cands.append(m)
 
-        if m['mode'] == PRONOUN:
-            prev = [p for p in mentions
-                    if p['sent'] == m['sent'] - 1 and p['entity'] == m['entity']]
-            if prev and any(p['mode'] != NAME for p in prev):
-                better.append(m)
+    if not cands:
+        return []
 
-    return better or cands
+    def get_hops(m):
+        if m['mode'] in (INTRO, NAME):
+            return 0
+        prev = [p for p in mentions
+                if p['sent'] < m['sent'] and p['entity'] == m['entity']]
+        if not prev:
+            return 0
+        return 1 + get_hops(max(prev, key=lambda x: x['sent']))
+
+    cands.sort(key=lambda m: abs(get_hops(m) - target_hops))
+    best_dist = abs(get_hops(cands[0]) - target_hops)
+    return [c for c in cands if abs(get_hops(c) - target_hops) == best_dist]
 
 
 def _pick(e, pool, introduced, prev_ents, cur_subj, pos, p_pron, p_desc):
@@ -158,11 +166,13 @@ class CoreferenceConfig(Config):
     p_pronoun: float = 0.7
     p_desc: float = 0.5
     p_shortcut: float = 0.05   # prob. of using a shorter chain for diversity
+    target_hops: int = 2
 
     def update(self, c=1):
         self.n_entities += c
         self.chain_len += c
         self.n_distractors += c
+        self.target_hops += c
 
 
 class Coreference(Task):
@@ -171,7 +181,8 @@ class Coreference(Task):
 
     def generate(self):
         cfg = self.config
-        fallback = None
+        if cfg.n_entities < 2:
+            raise ValueError("Coreference requires at least 2 entities")
         for _ in range(100):
             clen = cfg.chain_len
             if clen > 2 and random.random() < cfg.p_shortcut:
@@ -180,20 +191,14 @@ class Coreference(Task):
             plan = _plan(pool, clen, cfg.n_distractors)
             lines, mentions = _emit(plan, pool, cfg.p_pronoun, cfg.p_desc)
 
-            all_cands = [m for m in mentions if m['mode'] in (PRONOUN, DESC)]
-            if all_cands and fallback is None:
-                fallback = (random.choice(all_cands), lines, mentions, pool)
-
-            cands = _query_candidates(mentions, pool)
+            cands = _query_candidates(mentions, pool, target_hops=cfg.target_hops)
             if not cands:
                 continue
             prons = [m for m in cands if m['mode'] == PRONOUN]
             if prons and random.random() < 0.7:
                 return self._build(random.choice(prons), lines, mentions, pool)
-            if fallback is None:
-                fallback = (random.choice(cands), lines, mentions, pool)
             return self._build(random.choice(cands), lines, mentions, pool)
-        return self._build(*fallback)
+        raise RuntimeError("Could not generate a valid coreference problem")
 
     def _build(self, q, lines, mentions, pool):
         target = q['entity']
@@ -202,9 +207,18 @@ class Coreference(Task):
             prev_names = sorted(m['entity'].name for m in mentions
                                 if m['sent'] == q['sent'] - 1)
             g = 'female' if target.gender == 'f' else 'male'
-            cot = (f"s{sid} pron '{q['surface']}' | "
-                   f"s{sid-1}: {{{', '.join(prev_names)}}} | "
-                   f"unique {g} → {target.name}")
+            if q['pos'] == 'object':
+                subj = next(m['entity'].name for m in mentions
+                            if m['sent'] == q['sent']
+                            and m['pos'] == 'subject')
+                cot = (f"s{sid} pron '{q['surface']}' | "
+                       f"s{sid-1}: {{{', '.join(prev_names)}}}; "
+                       f"subject={subj} | "
+                       f"unique non-subject {g} → {target.name}")
+            else:
+                cot = (f"s{sid} pron '{q['surface']}' | "
+                       f"s{sid-1}: {{{', '.join(prev_names)}}} | "
+                       f"unique {g} → {target.name}")
         else:
             surf = q['surface'][4:] if q['surface'].startswith('the ') else q['surface']
             parts = surf.split()
