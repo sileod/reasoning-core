@@ -219,8 +219,7 @@ class LambdaReduction(Task):
     def prompt(self, metadata):
         return (
             "Reduce the following untyped λ-term to β-normal form.\n"
-            "Syntax: `\\x.body` denotes λx.body; application is left-associative "
-            "juxtaposition; free identifiers are treated as constants.\n\n"
+            "Syntax: `\\x.body` is λx.body; juxtaposition is left-associative application; free identifiers are constants.\n\n"
             f"Term: {metadata['term']}\n\n"
             "The answer is the β-normal form (compared up to α-equivalence)."
         )

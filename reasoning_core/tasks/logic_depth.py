@@ -114,6 +114,10 @@ class MultistepAbductionConfig(MultistepNLIConfig):
     max_abduction_size: int = 1
     require_unique: bool = True
 
+    def update(self, c):
+        super().update(c)
+        self.n_candidates += 2 * c
+
 
 NAMES = ("alice", "bruno", "clara", "david", "elena", "farah", "george", "hannah")
 OBJECTS = ("box", "key", "lamp", "map", "coin", "vase", "book", "ring")
@@ -1000,6 +1004,11 @@ def make_direct_abduction_case(cfg):
             seen.add(fact)
     facts = clean_facts
     theory = Theory(facts, rules, [], sigs, entities, "surface")
+    used = set(theory.facts)
+    for _ in range(max(0, int(cfg.n_distractors) - 1)):
+        fact = _fresh_fact(theory, used)
+        if fact:
+            theory.facts.append(fact)
     if target in chase(theory, None).closure:
         return None
     if target not in close_with(theory, removed).closure:
@@ -1015,6 +1024,14 @@ def make_direct_abduction_case(cfg):
             filtered.append(cand)
         if len(filtered) >= cfg.n_candidates:
             break
+    used = set(filtered) | set(theory.facts)
+    while len(filtered) < cfg.n_candidates:
+        cand = _fresh_fact(theory, used)
+        if not cand:
+            break
+        cres = close_with(theory, [cand])
+        if not cres.inconsistent and target not in cres.closure:
+            filtered.append(cand)
     random.shuffle(filtered)
     sols = minimal_abductions(theory, filtered, target, cfg.max_abduction_size)
     if not sols or (cfg.require_unique and len(sols) != 1):
@@ -1041,10 +1058,8 @@ class MultistepNLI(Task):
         return (
             f"Premise:\n{prem}\n\n"
             f"Hypothesis:\n{meta.hypothesis}\n\n"
-            "If the Premise entails the Hypothesis, the label is 'entailment'.\n"
-            "If the Premise contradicts the Hypothesis, the label is 'contradiction'.\n"
-            "If neither, the label is 'neutral'.\n"
-            "The answer is exactly one word: neutral, contradiction, or entailment."
+            "Classify the hypothesis as entailment, contradiction, or neutral. "
+            "The answer is exactly one word."
         )
 
     def score_answer(self, answer, entry):
@@ -1119,7 +1134,7 @@ class MultistepAbduction(Task):
             f"Hypothesis:\n{meta.hypothesis}\n\n"
             f"Candidate additional facts:\n{indexed_premise(meta.candidates)}\n\n"
             f"Which candidate facts, if added to the premise, make the premise {mode}?\n"
-            "Return the smallest list of candidate indices, e.g. [0, 2]."
+            "The answer is the smallest list of candidate indices, e.g. [0, 2]."
         )
 
     def score_answer(self, answer, entry):

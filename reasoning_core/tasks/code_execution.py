@@ -12,7 +12,7 @@ class MesopyCodeCfg(Config):
     difficulty: float = 0.0
     min_depth: int = 4
     max_depth: int = 15
-    max_attempts: int = 100
+    max_attempts: int = 180
     timeout: float = 0.5
     magnitude: int = 3
     n_functions: int = 2
@@ -26,6 +26,7 @@ class MesopyCodeCfg(Config):
 
     def update(self, c):
         self.difficulty += c
+        self.min_depth += c / 2
         self.max_depth += int(c)
         self.n_functions += c / 2
         self.magnitude += c / 2
@@ -289,7 +290,7 @@ class CodeRunnability(Task):
             "Predict whether this Python call runs successfully or raises an exception.\n"
             f"```python\n{metadata.code}\n```\n"
             f"Call: `{metadata.call}`\n"
-            "Answer is `OK` if it runs successfully; exception class name otherwise."
+            "The answer is `OK` if it runs successfully; otherwise the exception class name."
         )
 
     def score_answer(self, answer, entry):

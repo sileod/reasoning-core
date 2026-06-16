@@ -678,6 +678,8 @@ def get_random_tptp_axioms(
 class EntailConfig(Config):
     proof_depth: int = 1
     perturbation: int = 1
+    max_hypotheses: int = 8
+    max_payload_chars: int = 2400
     min_interesting_score: float = 0.6
     positive_problem_ratio: float = 0.25
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
@@ -685,6 +687,8 @@ class EntailConfig(Config):
     def update(self, c):
         self.proof_depth += c
         self.perturbation += c
+        self.max_hypotheses += c
+        self.max_payload_chars += 500 * c
 
 class ConjectureEntailment(Task):
     """
@@ -729,10 +733,10 @@ class ConjectureEntailment(Task):
         for attempt in range(50):
             theorem_node_id = random.choice(list(self.interesting_thm))
             correct_hypotheses, theorem = extract_problem_from_graph(self.graph, theorem_node_id, self.config.proof_depth)
-            useful_axioms = extract_useful_axioms(self.graph, theorem_node_id)
-            useful_axioms_formula = [self.graph.nodes[node]['data'].full_cnf_clause for node in useful_axioms]
             if random.random() < self.config.positive_problem_ratio:
                 hypotheses = correct_hypotheses
+                if len(hypotheses) > self.config.max_hypotheses or sum(map(len, hypotheses)) + len(theorem) > self.config.max_payload_chars:
+                    continue
                 try:
                     if prove_conjecture(hypotheses, theorem, time_limit_seconds="15") is not True:
                         continue
@@ -742,6 +746,8 @@ class ConjectureEntailment(Task):
             else:
                 distraction_pool = list(set(self.all_formulas) - {theorem})
                 hypotheses = perturb_list(correct_hypotheses, distraction_pool ,self.config.perturbation)
+                if len(hypotheses) > self.config.max_hypotheses or sum(map(len, hypotheses)) + len(theorem) > self.config.max_payload_chars:
+                    continue
                 try:
                     answer = prove_conjecture(hypotheses, theorem, time_limit_seconds="15")
                 except TimeoutError:
@@ -753,7 +759,6 @@ class ConjectureEntailment(Task):
                             'correct_hypotheses': correct_hypotheses ,
                             'proof_depth' : self.config.proof_depth,
                             'perturbation' : self.config.perturbation ,
-                            'useful_axioms' : useful_axioms_formula,
                             'axiom_set' : self.axiom_set})
                 return Problem(metadata, str(answer))
         return None
@@ -764,8 +769,7 @@ class ConjectureEntailment(Task):
         domain_name = DOMAIN_MAP.get(metadata['axiom_set'][:3], metadata['axiom_set'])
 
         return (
-            f"Decide if the given premises entail the conjecture (i.e., the conjecture is provable) "
-            f"using Superposition/Resolution/Paramodulation.\n\n"
+            f"Decide if the premises entail the conjecture.\n\n"
             f"Domain: {domain_name}\n\n"
             f"Premises:\n{hypotheses_text}\n\n"
             f"Conjecture: `{metadata['conjecture']}`\n\n"
@@ -1003,6 +1007,9 @@ class ResolutionStep(Task):
         initialize_prover_session()
         self.pool = []
 
+    def on_config_level_change(self):
+        self.pool = []
+
     _initialize_graph = ConjectureEntailment._initialize_graph
 
     def _mine_pool(self):
@@ -1101,10 +1108,8 @@ class ResolutionStep(Task):
             f"Clause A: {metadata['clause_a']}\n"
             f"Clause B: {metadata['clause_b']}\n\n"
             "A and B share no variables. Exactly one pair of complementary literals is unifiable.\n"
-            "Answer convention: write the conclusion with literals sorted alphabetically\n"
-            "(comparing literal text with every variable replaced by 'X'), and variables\n"
-            "renamed X1, X2, ... in order of first occurrence in that sorted clause.\n"
-            "The answer is the canonicalized resolvent, e.g. (p(X1,f(X2)) | ~q(X1))."
+            "The answer is the canonicalized resolvent: literals sorted alphabetically after replacing variables by 'X', "
+            "then variables renamed X1, X2, ... by first occurrence; e.g. (p(X1,f(X2)) | ~q(X1))."
         )
 
     def score_answer(self, answer, entry):

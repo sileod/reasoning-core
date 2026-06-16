@@ -33,7 +33,7 @@ def sorted_lits(xs):
     return sorted(xs, key=lambda s: s.removeprefix("not "))
 
 
-def mpe_answer(src):
+def mpe_solution(src):
     atoms = hidden_atoms(src)
     queries, keys = [], []
 
@@ -48,7 +48,13 @@ def mpe_answer(src):
     ranked = sorted((p.get(k, 0.0), lits) for k, lits in keys)
     if len(ranked) > 1 and abs(ranked[-1][0] - ranked[-2][0]) < 1e-12:
         return None
-    return json.dumps(ranked[-1][1])
+    margin = ranked[-1][0] - ranked[-2][0] if len(ranked) > 1 else ranked[-1][0]
+    return json.dumps(ranked[-1][1]), margin
+
+
+def mpe_answer(src):
+    sol = mpe_solution(src)
+    return None if sol is None else sol[0]
 
 
 def norm_lits(s):
@@ -143,10 +149,12 @@ def evidence_grammar():
     return R
 
 
-def evidence_instance(node):
+def evidence_instance(node, config=None):
     formula, text = node @ problog, node @ eng
     atoms = re.findall(r"\b[a-f]\b", formula)
     if len(atoms) != len(set(atoms)) or len(atoms) < 2:
+        return None
+    if config and not config.min_atoms <= len(atoms) <= config.max_atoms:
         return None
     probs = dict(zip(atoms, random.choices([0.1, 0.2, 0.3, 0.4, 0.6, 0.7], k=len(atoms))))
     src = "\n".join(
@@ -222,9 +230,18 @@ def outcome_grammar(max_count=8, target=None):
 @dataclass
 class MostProbableEvidenceConfig(Config):
     depth: int = 5
+    min_atoms: int = 2
+    max_atoms: int = 3
+    max_attempts: int = 100
+    min_margin: float = 0.03
+    max_margin: float = 1.01
 
     def update(self, c=1):
         self.depth += c
+        self.max_atoms = min(6, self.max_atoms + c)
+        self.min_atoms = min(4, self.min_atoms + c / 2)
+        self.min_margin = max(0.005, self.min_margin * 0.75)
+        self.max_margin = max(0.12, self.max_margin * 0.7)
 
 
 class MostProbableEvidence(Task):
@@ -232,23 +249,26 @@ class MostProbableEvidence(Task):
         super().__init__(config=config)
 
     def generate(self):
-        for _ in range(100):
+        for _ in range(self.config.max_attempts):
             node = generate(evidence_grammar(), depth=self.config.depth, min_depth=4)
-            instance = evidence_instance(node)
+            instance = evidence_instance(node, self.config)
             if instance is None:
                 continue
             src, english = instance
             try:
-                answer = mpe_answer(src)
+                sol = mpe_solution(src)
             except Exception:
                 continue
-            if answer is None:
+            if sol is None:
                 continue
-            return Problem(edict(problog=src, english=english), answer)
+            answer, margin = sol
+            if not self.config.min_margin <= margin <= self.config.max_margin:
+                continue
+            return Problem(edict(problog=src, english=english, n_atoms=len(hidden_atoms(src)), margin=margin), answer)
         raise RuntimeError("Failed to generate probabilistic evidence task")
 
     def prompt(self, m):
-        return f"{m.english}\n\nAnswer as a sorted Python list of strings."
+        return f"{m.english}\n\nThe answer is a sorted Python list of strings."
 
     def score_answer(self, answer, entry):
         return float(norm_lits(answer) == norm_lits(entry.answer))
@@ -281,7 +301,7 @@ class MostProbableOutcome(Task):
         )
 
     def prompt(self, m):
-        return f"{m.english}\n\nAnswer exactly one of: A, B, equal."
+        return f"{m.english}\n\nThe answer is exactly one of: A, B, equal."
 
     def score_answer(self, answer, entry):
         m = re.fullmatch(r"\s*(A|B|equal)\.?\s*", answer, re.I)

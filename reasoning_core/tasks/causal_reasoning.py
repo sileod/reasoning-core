@@ -492,7 +492,7 @@ class BayesianAssociation(Rung, DevTask):
         return self.reason_graph.evidences_to_NL()
 
 
-class BayesianIntervention(Rung, Task):
+class BayesianIntervention(Rung, DevTask):
     def __init__(self, config=Rung12Config()):
         super().__init__(config=config)
 

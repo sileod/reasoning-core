@@ -24,6 +24,7 @@ class ReferenceTrackingConfig(Config):
     n_steps: int = 4
     bulk_move_p: float = 0.25
     pronoun_move_p: float = 0.3
+    swap_move_p: float = 0.2
 
     prefer_indirect_p: float = 0.2  # Bumped to force tracking coupling in Winograd zero-level
     winograd_p: float = 0.35
@@ -110,12 +111,23 @@ class ReferenceTracking(Task):
         n_steps: int,
         bulk_p: float,
         pronoun_p: float,
+        swap_p: float,
     ) -> Tuple[List[str], List[str]]:
         sents: List[str] = []
         resolved: List[str] = []
         last_explicit: Optional[str] = None
 
         for _ in range(n_steps):
+            singles = self._single_occupants(placement, boxes, balls)
+            if len(singles) >= 2 and random.random() < swap_p:
+                x, y = random.sample(list(singles), 2)
+                placement[singles[x]], placement[singles[y]] = y, x
+                text = f"Swap the balls in {x} and {y}."
+                sents.append(text)
+                resolved.append(text)
+                last_explicit = None
+                continue
+
             if len(boxes) >= 2 and random.random() < bulk_p:
                 inv = self._box_inv(placement, boxes, balls)
                 nonempty = [x for x, bs in inv.items() if bs]
@@ -244,6 +256,7 @@ class ReferenceTracking(Task):
         moves, resolved_moves = self._do_moves(
             placement, balls, boxes,
             int(c.n_steps), float(c.bulk_move_p), float(c.pronoun_move_p),
+            float(c.swap_move_p),
         )
         prefer_indirect = random.random() < float(c.prefer_indirect_p)
 

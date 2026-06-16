@@ -126,7 +126,7 @@ class SetIntersection(Task):
         return (
             f"Set1: {metadata['set_1']}\n"
             f"Set2: {metadata['set_2']}\n"
-            "The answer is the intersection of Set1 and Set2 as a Python set: {elem_1, elem_2, ..., elem_n}."
+            "The answer is Set1 ∩ Set2 as a Python set."
         )
 
     def score_answer(self, answer, entry):
@@ -216,8 +216,11 @@ class SetEquality(Task):
         super().__init__(config=config)
         self.domains = make_domains(self.config.domain_size)
 
+    def on_config_level_change(self):
+        self.domains = make_domains(self.config.domain_size)
+
     def generate(self):
-        chosen_domain =random.choice(self.domains)
+        chosen_domain = random.choice(self.domains[:self.config.n_domains])
         subset = random_subdomain(chosen_domain, size = self.config.set_size)
         meta = {}
         meta["base_subset"] = return_shuffle(subset)
@@ -234,6 +237,6 @@ class SetEquality(Task):
         return (
             f"Set1: {metadata['base_subset']}\n"
             f"Set2: {metadata['subset_bis']}\n"
-            "The answer is True if Set1 and Set2 contain exactly the same elements, False otherwise."
+            "Do Set1 and Set2 contain exactly the same elements? The answer is True or False."
         )
     

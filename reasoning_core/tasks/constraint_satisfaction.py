@@ -223,8 +223,8 @@ class ConstraintSatisfaction(Task):
     def prompt(self, metadata):
         order = ", ".join(f"x{i}" for i in range(len(metadata['domains'])))
         if metadata.get("solve_mode", "min") == "all":
-            return f"{metadata['instance']}\nEnumerate ALL satisfying assignments in variable order [{order}].\nThe answer is a Python list of lists of ints, sorted lexicographically, or UNSAT if no assignment exists.\n"
-        return f"{metadata['instance']}\nFind the lexicographically smallest satisfying assignment in variable order [{order}].\nThe answer is a Python list of ints, or UNSAT if no assignment exists."
+            return f"{metadata['instance']}\nEnumerate ALL satisfying assignments in variable order [{order}].\nThe answer is a lexicographically sorted Python list of int lists, or UNSAT.\n"
+        return f"{metadata['instance']}\nFind the lexicographically smallest satisfying assignment in variable order [{order}].\nThe answer is a Python list of ints, or UNSAT."
 
     def score_answer(self, answer, entry):
         def _parse(s):

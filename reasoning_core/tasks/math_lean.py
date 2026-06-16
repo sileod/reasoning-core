@@ -797,7 +797,13 @@ def _candidate_pool(inst, n_candidates, header):
     if base is None:
         base = ("rfl", "decide", "simp")
     candidates = []
-    for cand in (inst.primary, *base):
+    hnames = [h for h, _ in inst.hyps]
+    extras = (
+        "assumption", "simp_all", "aesop", "tauto", "linarith", "norm_num",
+        "ring_nf", "constructor", "intro h", "cases h", "exact False.elim h",
+        *(f"exact {h}" for h in hnames),
+    )
+    for cand in (inst.primary, *base, *extras):
         if cand not in candidates:
             candidates.append(cand)
         if len(candidates) >= int(n_candidates):
@@ -1026,6 +1032,17 @@ def make_proof_script(config):
 
 def _normalize_line(text):
     return str(text).strip().strip("`").strip()
+
+
+def _normalize_body(text):
+    s = str(text).strip()
+    m = re.fullmatch(r"```(?:lean)?\s*\n?(.*?)\n?```", s, re.S | re.I)
+    if m:
+        s = m.group(1)
+    lines = [line.strip() for line in s.strip().strip("`").splitlines() if line.strip()]
+    if lines:
+        lines[0] = re.sub(r"^(?:[-*]\s*|\d+[.)]\s*)", "", lines[0]).strip()
+    return "\n".join(lines)
 
 
 def _score_proof_template(answer, entry):
@@ -1447,14 +1464,14 @@ class LeanCandidateCompilation(Task):
             edict(kind=inst.kind,
                   theorem=inst.header + "  ?\n",
                   candidate=inst.candidates[idx],
+                  candidate_count=len(inst.candidates),
                   use_mathlib=inst.use_mathlib),
             "True" if inst.labels[idx] else "False",
         )
 
     def prompt(self, metadata):
         return (
-            "Decide whether the candidate Lean 4 tactic body closes the theorem.\n"
-            "The answer is exactly True or False.\n\n"
+            "Does this Lean 4 tactic body close the theorem? The answer is exactly True or False.\n\n"
             f"THEOREM WITH HOLE:\n{_mget(metadata, 'theorem')}\n"
             f"CANDIDATE:\n{_mget(metadata, 'candidate')}"
         )
@@ -1464,36 +1481,46 @@ class LeanCandidateCompilation(Task):
 
 
 class LeanProofRepair(Task):
-    """Replace a broken proof body with one that compiles."""
+    """Choose a replacement proof body that compiles."""
 
     def __init__(self, config=LeanConfig()):
         super().__init__(config=config, timeout=120)
 
     def generate(self):
-        inst = make_instance(self.config)
-        bad_idx = [i for i, ok in enumerate(inst.labels) if not ok]
-        if not bad_idx:
-            return None
-        bad = inst.candidates[random.choice(bad_idx)]
-        return Problem(
-            edict(kind=inst.kind,
-                  broken=inst.header + "  " + bad + "\n",
-                  template=inst.header + "  __ANSWER__\n",
-                  use_mathlib=inst.use_mathlib),
-            inst.elegant,
-        )
+        for _ in range(20):
+            inst = make_instance(self.config)
+            bad = [c for c, ok in zip(inst.candidates, inst.labels) if not ok]
+            if not bad:
+                continue
+            shown_bad = random.choice(bad)
+            distractors = [c for c in bad if c != shown_bad] or bad
+            k = max(1, int(self.config.n_candidates) - 1)
+            replacements = [inst.elegant] + random.sample(distractors, min(k, len(distractors)))
+            random.shuffle(replacements)
+            return Problem(
+                edict(kind=inst.kind,
+                      broken=inst.header + "  " + shown_bad + "\n",
+                      replacements=replacements,
+                      use_mathlib=inst.use_mathlib),
+                inst.elegant,
+            )
+        return None
 
     def prompt(self, metadata):
         imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
+        options = "\n\n".join(f"{i}. {body}" for i, body in enumerate(_mget(metadata, "replacements"), 1))
         return (
-            "The Lean 4 theorem below has a broken proof. Replace the proof body with "
-            f"one that compiles. {imports} The answer is only the replacement "
-            "tactic block.\n\n"
-            f"{_mget(metadata, 'broken')}"
+            f"Fix the broken Lean 4 proof below. {imports} "
+            "Choose one candidate replacement. The answer is exactly one candidate body.\n\n"
+            f"BROKEN PROOF:\n{_mget(metadata, 'broken')}\n"
+            f"CANDIDATE REPLACEMENTS:\n{options}"
         )
 
     def score_answer(self, answer, entry):
-        return _score_proof_template(answer, entry)
+        got = _normalize_body(answer)
+        if got not in {_normalize_body(x) for x in _mget(entry.metadata, "replacements")}:
+            return 0.0
+        return float(got == _normalize_body(entry.answer))
 
 
 class LeanCompileSelection(DevTask):

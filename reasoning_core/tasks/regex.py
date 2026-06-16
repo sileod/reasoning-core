@@ -579,8 +579,8 @@ class RegexRetrieval(Task):
         return (
             f"Text: {meta['text']}\n"
             f"Regex: {meta['regex']}\n"
-            f"Return only a JSON array of exact non-overlapping matches, left-to-right. "
-            f"Include duplicates. Return [] if none."
+            f"The answer is a JSON array of exact non-overlapping matches, left-to-right, including duplicates. "
+            f"The answer is [] if none."
         )
 
     def score_answer(self, answer, entry):
@@ -699,19 +699,19 @@ class RegexReasoning(Task):
         qt = metadata["qtype"]
         if qt == "equivalence":
             return (
-                f"Consider the regular expressions A = {a} and B = {b}\n"
+                f"A = {a}\nB = {b}\n"
                 f"Do A and B accept exactly the same set of strings?\n"
                 f"The answer is Yes or No."
             )
         elif qt == "containment":
             return (
-                f"Consider the regular expressions A = {a} and B = {b}\n"
+                f"A = {a}\nB = {b}\n"
                 f"Is every string accepted by A also accepted by B?\n"
                 f"The answer is Yes or No."
             )
         else:
             return (
-                f"Consider the regular expressions A = {a} and B = {b}\n"
+                f"A = {a}\nB = {b}\n"
                 f"Find the shortest string that is accepted by exactly one of A or B (but not both).\n"
                 f"The answer is the shortest such string."
             )

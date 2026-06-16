@@ -272,7 +272,7 @@ class SequentialInduction(Task):
         d = metadata["degree of recursion"]
 
         lines = [
-            f"Infer a recurrence for a sequence indexed from 0: [U0, U1, ..., U{n_vis - 1}].",
+            f"Infer a recurrence for sequence [U0, U1, ..., U{n_vis - 1}] indexed from 0.",
             f"Max recurrence degree: {d}.",
             "",
             "Allowed binary ops: +, -, *, **",
@@ -285,13 +285,11 @@ class SequentialInduction(Task):
             f"- Previous terms must be referenced exactly as: U[n - 1] ... U[n - {d}]",
             '- You may use "n" (current index).',
             '- The answer is the right-hand side only (do not write "U[n] =").',
-            f"- Your recurrence degree must be <= {d}.",
             "",
             f"Sequence: {metadata['first elements']}",
-            f"Degree of recurrence: {d}",
             f"Initial terms: {metadata['initial terms']}",
             "",
-            "The answer must hold for all n >= d and be as simple as possible.",
+            "The answer should be as simple as possible and valid for all n >= d.",
         ]
 
         return "\n".join(lines)

@@ -230,7 +230,7 @@ class Coreference(Task):
             f"In sentence {metadata['q_sentence']}, what does the "
             f"{metadata['q_position']} expression "
             f"'{metadata['q_expression']}' refer to?\n"
-            f"The answer is the name of the person it refers to."
+            f"The answer is the person's name."
         )
 
     def score_answer(self, answer, entry):

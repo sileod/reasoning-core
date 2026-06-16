@@ -161,7 +161,8 @@ def get_cot(text):
             continue
 
         if rule == 'input':
-            ctx = 'H' if 'hyp' in meta else f'P{ids[0]}'
+            input_id = re.fullmatch(r'p?(\d+)', rest[0]) if rest else None
+            ctx = 'H' if 'hyp' in meta or not input_id else f'P{input_id.group(1)}'
         elif rule == 'cnf' and not ids:
             ctx = 'H'
         else:
@@ -248,10 +249,8 @@ class LogicNLI(Task):
         P = (
             f"Premise:\n{prem}\n"
             f"Hypothesis:\n{hyp}\n\n"
-            "If the Premise entails the Hypothesis, the label is 'entailment'.\n"
-            "If the Premise contradicts the Hypothesis, the label is 'contradiction'.\n"
-            "If neither, the label is 'neutral'.\n"
-            "The answer is exactly one word: neutral, contradiction, or entailment."
+            "Classify the hypothesis as entailment, contradiction, or neutral. "
+            "The answer is exactly one word."
         )
 
         P=verbalize_predicates(P, seed=meta.verbalize_seed)
@@ -304,7 +303,7 @@ class EvidenceRetrieval(Task):
             f"Premise:\n{prem}\n"
             f"Hypothesis:\n{hyp}\n\n"
             f"Which statements in the premise {verb} the hypothesis?\n"
-            f"The answer is the list of supporting statements, e.g. [0, 6, 7]."
+            f"The answer is the list of supporting statement indices, e.g. [0, 6, 7]."
         )
         P=verbalize_predicates(P, seed=meta.verbalize_seed)
         return P

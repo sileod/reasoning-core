@@ -41,5 +41,5 @@ def test_code_runnability_has_ok_answer(monkeypatch):
     problem = task.generate()
 
     assert problem.answer == "OK"
-    assert "Answer is `OK`" in task.prompt(problem.metadata)
+    assert "The answer is `OK`" in task.prompt(problem.metadata)
     assert task.score_answer("OK", problem) == 1.0

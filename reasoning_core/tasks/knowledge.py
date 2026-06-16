@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from collections import defaultdict
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, DevTask, Problem, Config, edict
 import nltk
 from nltk.corpus import wordnet as wn
 from wordfreq import zipf_frequency
@@ -79,7 +79,7 @@ class LexicalKnowledgeConfig(Config):
     def update(self, c=1):
         self.n_words = min(int(self.n_words * (1 + c)), len(_FULL_WORDS) or float('inf'))
 
-class LexicalKnowledge(Task):
+class LexicalKnowledge(DevTask):
     def __init__(self, config=LexicalKnowledgeConfig()):
         super().__init__(config=config)
         _load_wn()

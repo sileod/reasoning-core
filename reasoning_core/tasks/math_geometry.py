@@ -9,7 +9,7 @@ from reasoning_core.template import Config, Problem, Task, edict
 
 
 LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-ID_RE = re.compile(r"\bp\d+\b")
+ID_RE = re.compile(r"p\d+")
 NUM_RE = r"[+-]?\d+(?:/\d+)?"
 
 
@@ -350,7 +350,7 @@ def query_orientation(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Where is point {p} relative to directed line {a}{b}?",
-                instruction="Return exactly one of: left, right, on.",
+                instruction="Answer isone of: left, right, on.",
                 balance=f"orientation:{ans}",
             )
     return None
@@ -386,7 +386,7 @@ def query_collinear(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Are points {a}, {b}, and {c} collinear?",
-                instruction="Return exactly one of: yes, no.",
+                instruction="Answer is either yes or no.",
                 balance=f"collinear:{ans}",
             )
     return None
@@ -428,7 +428,7 @@ def query_line_relation(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"What is the relation between lines {a}{b} and {c}{d}?",
-                instruction="Return exactly one of: parallel, perpendicular, neither.",
+                instruction="Answer is one of: parallel, perpendicular, neither.",
                 balance=f"line_relation:{ans}",
             )
     return None
@@ -467,7 +467,7 @@ def query_line_intersection(scene, cfg):
             answer="none" if P is None else pstr(P),
             additions=additions,
             question=f"What is the intersection point of lines {a}{b} and {c}{d}?",
-            instruction="Return an exact coordinate pair like (2, -1/3), or none.",
+            instruction="Answer is a coordinate pair (e.g., (2, -1/3)), or none.",
             balance=f"line_intersection:{'none' if P is None else 'point'}",
         )
     return None
@@ -511,7 +511,7 @@ def query_segment_intersection(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Do segments {a}{b} and {c}{d} intersect?",
-                instruction="Return exactly one of: yes, no.",
+                instruction="Answer is either yes or no.",
                 balance=f"segment_intersection:{ans}",
             )
     return None
@@ -547,7 +547,7 @@ def query_between(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Is point {p} on segment {a}{b}?",
-                instruction="Return exactly one of: yes, no.",
+                instruction="Answer is either yes or no.",
                 balance=f"between:{ans}",
             )
     return None
@@ -588,7 +588,7 @@ def query_angle_type(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"What type of angle is angle {a}{b}{c}?",
-                instruction="Return exactly one of: acute, right, obtuse.",
+                instruction="Answer is one of: acute, right, obtuse.",
                 balance=f"angle_type:{ans}",
             )
     return None
@@ -621,6 +621,8 @@ def query_inside_triangle(scene, cfg):
                 continue
             p = random.choice(candidates)
 
+        if p in {a, b, c}:
+            continue
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         ans = triangle_position(pts[a], pts[b], pts[c], pts[p])
         if ans == want:
@@ -630,7 +632,7 @@ def query_inside_triangle(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Where is point {p} relative to triangle {a}{b}{c}?",
-                instruction="Return exactly one of: inside, outside, boundary.",
+                instruction="Answer is one of: inside, outside, boundary.",
                 balance=f"inside_triangle:{ans}",
             )
     return None
@@ -675,7 +677,7 @@ def query_closer(scene, cfg):
             answer=ans,
             additions=additions,
             question=f"Which point is closer to {p}: {a} or {b}?",
-            instruction=f"Return exactly one of: {a}, {b}, tie.",
+            instruction=f"Answer is one of: {a}, {b}, tie.",
             balance=f"closer:{'tie' if ans == 'tie' else 'label'}",
         )
     return None
@@ -692,7 +694,7 @@ def query_x_order(scene, cfg):
         answer=ans,
         additions=[],
         question=f"Order points {', '.join(ids)} by increasing x-coordinate, breaking ties by increasing y-coordinate.",
-        instruction="Return comma-separated labels, for example A,C,B,D.",
+        instruction="Answer with comma-separated labels, for example A,C,B,D.",
         balance="x_order",
     )
 
@@ -776,7 +778,6 @@ class PlanarGeometryRelations(Task):
         lines += [
             "Question: " + metadata.query,
             metadata.instruction,
-            "Return only the answer.",
         ]
         return "\n".join(lines)
 

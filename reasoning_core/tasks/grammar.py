@@ -490,8 +490,7 @@ class ParsingDerivation(Task):
             f"(GRAMMAR)\n{g}\n\n"
             f"(STRING)\n{' '.join(meta.tokens)}\n\n"
             "(QUESTION)\n"
-            "Return the rule labels used in the leftmost derivation of STRING.\n"
-            "Answer only the labels in order, separated by spaces."
+            "The answer is the rule labels used in the leftmost derivation of STRING, in order, separated by spaces."
         )
 
     def score_answer(self, answer, entry):
@@ -711,8 +710,8 @@ class Continuation(Task):
     
     def prompt(self, meta):
         pfx = ' '.join(meta.prefix) if meta.prefix else '<empty>'
-        return (f"List all valid next tokens for this prefix. "
-                f"The answer is the list of valid tokens sorted alphabetically and separated by |, with STOP at the end if the prefix forms a complete string.\n"
+        return (f"List valid next tokens for this prefix. "
+                f"The answer is the valid tokens sorted alphabetically and separated by |, with STOP at the end if the prefix forms a complete string.\n"
                 f"(GRAMMAR)\n{meta.g}\n(PREFIX)\n{pfx}")
 
     def score_answer(self, answer, entry):
@@ -987,7 +986,9 @@ def exact_window_fills(grammar, prefix, k, suffix=(), max_states=1024):
             )
             for tok in toks:
                 nxt.add(win + (tok,))
-        if not nxt or len(nxt) > max_states:
+                if len(nxt) > max_states:
+                    return []
+        if not nxt:
             return []
         frontier = nxt
 
@@ -1059,7 +1060,7 @@ class ConstrainedContinuation(Task):
                     ) @ "lang").split()
                 except (ValueError, RecursionError):
                     continue
-                if len(sent) < self.config.min_k:
+                if not self.config.min_k <= len(sent) <= self.config.max_tokens:
                     continue
 
                 slots = [(start, k)

@@ -336,9 +336,9 @@ class Navigation(Task):
         steps_txt = "\n".join(f"{i+1}. {step_text(st)}" for i, st in enumerate(steps)) if steps else "None."
 
         if kind == "coord":
-            question = f"What is the final coordinate of {a}? Answer as (x, y)."
+            question = f"What is the final coordinate of {a}? The answer is (x, y)."
         elif kind == "distance":
-            question = f"What is the final Manhattan distance between {a} and {b}? Answer as an integer."
+            question = f"What is the final Manhattan distance between {a} and {b}? The answer is an integer."
         else:
             question = (
                 f"What is the final spatial relation of {a} to {b}? "

@@ -2,6 +2,7 @@ import random
 from dataclasses import dataclass
 from itertools import product
 from collections import defaultdict, deque
+from z3 import Distinct, Int, Solver, sat
 
 from reasoning_core.template import Task, Problem, Config, edict
 
@@ -242,12 +243,61 @@ def farthest_pair(n, edges):
     b, d = bfs(a)
     return a, b, d
 
+# ---- Ordinal ranking ----------------------------------------------------
+
+def _ordinal_label(k):
+    if 10 <= k % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(k % 10, "th")
+    return f"{k}{suffix}"
+
+def _rank_label(k, direction):
+    if k == 1:
+        return direction
+    return f"{_ordinal_label(k)}-{direction}"
+
+def _rank_expr(pos, clue):
+    a = clue["a"]
+    if clue["kind"] == "rank":
+        return pos[a] == clue["rank"]
+    b = clue["b"]
+    return pos[a] + 1 == pos[b] if clue["kind"] == "next" else pos[a] < pos[b]
+
+def _rank_text(clue):
+    a = clue["a"]
+    if clue["kind"] == "rank":
+        k = clue["rank"] + 1
+        return f"{a} is the {_rank_label(k, 'newest')}."
+    b = clue["b"]
+    word = "immediately newer" if clue["kind"] == "next" else "newer"
+    return f"{a} is {word} than {b}."
+
+def _rank_candidates(n, clues, query_rank):
+    pos = {f"E{i}": Int(f"rank_E{i}") for i in range(n)}
+    solver = Solver()
+    solver.add(Distinct(*pos.values()))
+    solver.add(*[p >= 0 for p in pos.values()], *[p < n for p in pos.values()])
+    solver.add(*[_rank_expr(pos, clue) for clue in clues])
+    return [
+        name for name, p in pos.items()
+        if solver.check(p == query_rank) == sat
+    ]
+
+def _rank_redundant(clue, clues):
+    return clue["kind"] in {"pair", "next"} and any(
+        {clue["kind"], other["kind"]} == {"pair", "next"}
+        and clue["a"] == other["a"] and clue["b"] == other["b"]
+        for other in clues
+    )
+
 # ---- Task ---------------------------------------------------------------
 
 @dataclass
 class QualitativeReasoningConfig(Config):
     n_entities: int = 5
     extra_edges: int = 0
+    ordinal_prob: float = 0.35
 
     def update(self, c=1):
         self.n_entities += c
@@ -258,11 +308,101 @@ class QualitativeReasoning(Task):
         super().__init__(config=config or QualitativeReasoningConfig())
 
     def generate(self):
+        if random.random() < self.config.ordinal_prob:
+            return self._ordinal_problem()
         for _ in range(80):
             p = self._try()
             if p is not None:
                 return p
         raise RuntimeError("QualitativeReasoning: could not build instance")
+
+    def _ordinal_problem(self):
+        if self.config.n_entities < 4:
+            min_clues = 2
+        else:
+            min_clues = random.choices([2, 3, 4], weights=[1, 2, 7])[0]
+        for _ in range(80):
+            problem = self._try_ordinal_problem(min_clues)
+            if problem is not None:
+                return problem
+        raise RuntimeError("Could not build a non-trivial ordinal ranking problem")
+
+    def _try_ordinal_problem(self, min_clues):
+        n = max(3, int(self.config.n_entities))
+        entities = [f"E{i}" for i in range(n)]
+        order = random.sample(entities, n)  # newest to oldest
+        query_rank = random.randrange(1, n - 1) if n >= 4 else 1
+
+        pools = {
+            "pair": [
+                {"kind": "pair", "a": order[i], "b": order[j]}
+                for i in range(n) for j in range(i + 1, n)
+            ],
+            "next": [
+                {"kind": "next", "a": order[i], "b": order[i + 1]}
+                for i in range(n - 1)
+            ],
+            "rank": [
+                {"kind": "rank", "a": order[i], "rank": i}
+                for i in range(n) if i != query_rank
+            ],
+        }
+        required = random.sample(list(pools), 2)
+        clues = []
+        for kind in required:
+            random.shuffle(pools[kind])
+            choices = [c for c in pools[kind] if not _rank_redundant(c, clues)]
+            clue = min(
+                choices,
+                key=lambda c: len(_rank_candidates(n, clues + [c], query_rank)),
+            )
+            clues.append(clue)
+            pools[kind].remove(clue)
+
+        pool = sum(pools.values(), [])
+        random.shuffle(pool)
+        while len(_rank_candidates(n, clues, query_rank)) != 1 and pool:
+            pool = [c for c in pool if not _rank_redundant(c, clues)]
+            if not pool:
+                break
+            current = len(_rank_candidates(n, clues, query_rank))
+            improving = [
+                c for c in pool
+                if len(_rank_candidates(n, clues + [c], query_rank)) < current
+            ]
+            clue = random.choice(improving or pool)
+            clues.append(clue)
+            pool.remove(clue)
+
+        for clue in clues[::-1]:
+            reduced = [c for c in clues if c is not clue]
+            if len({c["kind"] for c in reduced}) >= 2 and len(_rank_candidates(n, reduced, query_rank)) == 1:
+                clues = reduced
+
+        candidates = _rank_candidates(n, clues, query_rank)
+        min_clues = min(min_clues, n - 1)
+        if len(candidates) != 1 or len(clues) < min_clues:
+            return None
+        random.shuffle(clues)
+
+        from_oldest = random.random() < 0.5
+        k = n - query_rank if from_oldest else query_rank + 1
+        return Problem(
+            metadata=edict(
+                family="ordinal", n_entities=n, entities=entities,
+                clues=clues, clue_text=[_rank_text(c) for c in clues],
+                query_rank=query_rank, query_direction="oldest" if from_oldest else "newest",
+                query_k=k, hidden_order=order,
+                intro=(
+                    f"There are {n} objects: {', '.join(entities)}.\n"
+                    "They have distinct ages."
+                ),
+                facts=[_rank_text(c) for c in clues],
+                question=f"Which object is the {_rank_label(k, 'oldest' if from_oldest else 'newest')}?",
+                answer_instruction="The answer is one object label.",
+            ),
+            answer=candidates[0],
+        )
 
     def _try(self):
         cfg = self.config
@@ -314,22 +454,24 @@ class QualitativeReasoning(Task):
             entities=ents,
             revealed=[(i, j, label(gt[i, j])) for (i, j) in revealed],
             query=(qi, qj), vocabulary=vocab,
+            intro=(
+                f"There are {n} entities labeled 0 through {n - 1}.\n"
+                "Read 'i rel j' as 'entity i is rel to entity j'."
+            ),
+            facts=[f"{i} {label(gt[i, j])} {j}" for i, j in revealed],
+            question=f"What is {phrasing.format(i=qi, j=qj)}?",
+            answer_instruction=f"The answer is exactly one of: {', '.join(vocab)}.",
         )
         return Problem(metadata=metadata, answer=label(gt[qi, qj]))
 
     def prompt(self, metadata):
-        qi, qj = metadata.query
-        lines = [
-            f"There are {metadata.n_entities} entities labeled 0 through {metadata.n_entities - 1}.",
-            "You are given the following facts (read 'i rel j' as 'entity i is rel to entity j'):",
-        ]
-        lines += [f"  {i} {r} {j}" for i, j, r in metadata.revealed]
-        lines += [
-            "",
-            f"What is {metadata.phrasing.format(i=qi, j=qj)}?",
-            f"The answer is exactly one of: {', '.join(metadata.vocabulary)}.",
-        ]
-        return "\n".join(lines)
+        facts = "\n".join(f"- {x}" for x in metadata.facts)
+        return (
+            f"{metadata.intro}\n"
+            f"Facts:\n{facts}\n\n"
+            f"{metadata.question}\n"
+            f"{metadata.answer_instruction}"
+        )
         
     def score_answer(self, answer, entry):
         if answer is None:

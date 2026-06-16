@@ -159,72 +159,255 @@ class Arithmetics(Task):
 
 
 
-_SYM_TRANSFORMS = standard_transformations + (implicit_multiplication_application,)
+import random, sympy as sp
+from dataclasses import dataclass
+from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.utils import score_scalar
+
+
+UNITS = "stamps marbles coins books apples cards tokens beads tiles cookies shells stickers pebbles buttons".split()
+NAMES = ("Mara Jon Aisha Wei Sofia Diego Priya Tom Lena Omar Yuki Hana Carlos Nina "
+         "Zara Ravi Mei Iris Noah Amara Leo Sana Kof Tara").split()
+
+ORD = {2: "half", 3: "a third", 4: "a quarter", 5: "a fifth"}
+MUL = {2: "doubled", 3: "tripled", 4: "quadrupled"}
+
 
 @dataclass
-class SymbolicConfig(Config):
-    min_depth: int = 3
-    max_depth: int = 5
-    max_coeff: int = 9
-    variables: tuple = ('x', 'y')
+class WordProblemMathConfig(Config):
+    n_rel: int = 2
+    max_n: int = 12
+    inverse_p: float = .30
+    relational_p: float = .50
 
-    def update(self, c):
-        self.min_depth += c
-        self.max_depth += c
-        self.max_coeff += 3 * c
+    def update(self, c=1):
+        self.n_rel += .9 * c
+        self.max_n += 12 * c
+        self.inverse_p = min(.70, self.inverse_p + .08 * c)
 
 
-class SymbolicArithmetics(DevTask):
-    """Algebraic simplification via grammar-generated expressions."""
+def ri(a, b):
+    return random.randint(int(a), int(b))
 
-    def __init__(self, config=SymbolicConfig()):
+
+def unique(expr, observed, x, expect):
+    sols = sp.solve(sp.Eq(expr, observed), x, dict=True)
+    if len(sols) != 1 or x not in sols[0]:
+        return False
+    xv = sp.nsimplify(sols[0][x])
+    return bool(xv.is_integer) and int(xv) == expect
+
+
+def clean_answer(a):
+    return isinstance(a, int) and 0 < a < 6000
+
+
+def process_step_text(step, unit):
+    op, k = step
+    if op == "mul":
+        return MUL[k] if random.random() < .6 else f"multiplied by {k}"
+    if op == "div":
+        return f"cut to {ORD[k]}"
+    if op == "add":
+        return f"{k} more {unit} added"
+    return f"{k} {unit} removed"
+
+
+def relation_text(rel, unit):
+    op, a, b, k, c = rel
+    if op == "times":
+        return f"{a} has {k} times as many {unit} as {b}"
+    if op == "more":
+        return f"{a} has {k} more {unit} than {b}"
+    if op == "fewer":
+        return f"{a} has {k} fewer {unit} than {b}"
+    if op == "frac":
+        return f"{a} has {ORD[k]} as many {unit} as {b}"
+    return f"{a} has as many {unit} as {b} and {c} combined"
+
+
+def gen_process(config):
+    unit = random.choice(UNITS)
+    x = sp.Symbol("x", positive=True)
+    base = ri(2, config.max_n)
+    expr, cur, steps = x, sp.Integer(base), []
+
+    for _ in range(ri(2, 2 + config.n_rel)):
+        op = random.choice(["add", "sub", "mul", "div"])
+
+        if op == "mul":
+            k = ri(2, 4)
+            expr, cur = k * expr, k * cur
+
+        elif op == "div":
+            ks = [k for k in (2, 3, 4, 5) if int(cur) % k == 0 and int(cur) // k >= 2]
+            if not ks:
+                continue
+            k = random.choice(ks)
+            expr, cur = expr / k, cur // k
+
+        elif op == "add":
+            k = ri(2, config.max_n)
+            expr, cur = expr + k, cur + k
+
+        else:
+            if int(cur) <= 3:
+                continue
+            k = ri(2, int(cur) - 1)
+            expr, cur = expr - k, cur - k
+
+        steps.append((op, k))
+
+    if len(steps) < 2 or int(cur) < 2:
+        return None
+
+    observed = int(cur)
+    inverse = random.random() < config.inverse_p
+    answer = base if inverse else observed
+
+    if inverse and not unique(expr, observed, x, base):
+        return None
+
+    metadata = edict(
+        family="process",
+        unit=unit,
+        base=base,
+        observed=observed,
+        inverse=inverse,
+        steps=steps,
+        expr=str(expr),
+        equation=str(sp.Eq(expr, observed)),
+        cot=f"Solve {sp.Eq(expr, observed)} for x; x = {base}.",
+    )
+    return Problem(metadata=metadata, answer=str(answer))
+
+
+def gen_relational(config):
+    unit = random.choice(UNITS)
+    m = ri(3, min(6, 3 + config.n_rel))
+    names = random.sample(NAMES, m)
+
+    x = sp.Symbol("x", positive=True)
+    val, rels = {names[0]: x}, []
+
+    for i in range(1, m):
+        a = names[i]
+        parents = names[:i]
+        ops = ["times", "more", "fewer", "frac"] + (["combine"] if len(parents) >= 2 else [])
+        op = random.choice(ops)
+
+        if op == "times":
+            b, k = random.choice(parents), ri(2, 4)
+            val[a] = k * val[b]
+            rels.append((op, a, b, k, None))
+
+        elif op == "more":
+            b, k = random.choice(parents), ri(2, config.max_n)
+            val[a] = val[b] + k
+            rels.append((op, a, b, k, None))
+
+        elif op == "fewer":
+            b, k = random.choice(parents), ri(2, config.max_n)
+            val[a] = val[b] - k
+            rels.append((op, a, b, k, None))
+
+        elif op == "frac":
+            b, k = random.choice(parents), random.choice([2, 3, 4])
+            val[a] = val[b] / k
+            rels.append((op, a, b, k, None))
+
+        else:
+            b, c = random.sample(parents, 2)
+            val[a] = val[b] + val[c]
+            rels.append((op, a, b, None, c))
+
+    base = nums = None
+    candidates = list(range(2, int(config.max_n) + 1))
+    random.shuffle(candidates)
+
+    for cand in candidates[:24]:
+        cur = {k: sp.nsimplify(v.subs(x, cand)) for k, v in val.items()}
+        if all(t.is_integer and t > 0 for t in cur.values()):
+            base = cand
+            nums = {k: int(v) for k, v in cur.items()}
+            break
+
+    if base is None:
+        return None
+
+    revealable = [z for z in names if nums[z] >= 2]
+    if not revealable:
+        return None
+
+    given = random.choice(revealable)
+    asked = random.choice([z for z in names if z != given])
+
+    if not unique(val[given], nums[given], x, base):
+        return None
+
+    random.shuffle(rels)
+
+    metadata = edict(
+        family="relational",
+        unit=unit,
+        names=names,
+        relations=rels,
+        given=given,
+        asked=asked,
+        given_value=nums[given],
+        values=nums,
+        base=base,
+        equation=str(sp.Eq(val[given], nums[given])),
+        cot=f"Solve {sp.Eq(val[given], nums[given])}; then compute {asked} = {nums[asked]}.",
+    )
+    return Problem(metadata=metadata, answer=str(nums[asked]))
+
+
+class WordProblemMath(Task):
+    def __init__(self, config=WordProblemMathConfig()):
         super().__init__(config=config)
 
     def generate(self):
-        cfg = self.config
-        g_sym = _grammar(symbolic=True)
-        tree = gramforge.generate(g_sym, depth=cfg.max_depth, min_depth=cfg.min_depth)
+        for _ in range(100):
+            gen = gen_relational if random.random() < self.config.relational_p else gen_process
+            problem = gen(self.config)
+            if problem and clean_answer(int(problem.answer)):
+                return problem
+        return None
 
-        filler = lambda m: (random.choice(cfg.variables) if m.group() == 'VAR'
-                            else str(random.randint(1, cfg.max_coeff)))
-        expr_str = re.sub(r'\b(VAR|NUM)\b', filler, tree @ 'py')
+    def prompt(self, m):
+        if m.family == "process":
+            chain = "; then ".join(process_step_text(s, m.unit) for s in m.steps)
+            if m.inverse:
+                return (
+                    f"A jar holds some {m.unit}. In order: {chain}. "
+                    f"The jar now holds {m.observed} {m.unit}. "
+                    f"How many {m.unit} did it start with? Give the answer as a number."
+                )
+            return (
+                f"A jar holds {m.base} {m.unit}. In order: {chain}. "
+                f"How many {m.unit} are in the jar now? Give the answer as a number."
+            )
 
-        try:
-            parsed = parse_expr(expr_str, transformations=_SYM_TRANSFORMS)
-            ans = sympy.expand(parsed)
-            s = sympy.simplify(ans)
-            if len(str(s)) < len(str(ans)):
-                ans = s
-        except Exception:
-            return None
-
-        ans_str = str(ans)
-        if expr_str.replace(' ', '') == ans_str.replace(' ', ''):
-            return None
-        # Reject pure numeric or cosmetic changes (paren removal, reordering)
-        if not ans.free_symbols or len(expr_str) <= len(ans_str) + 3:
-            return None
-
-        # CoT: original → (expanded if distinct) → answer
-        cot = [expr_str]
-        exp_s = str(sympy.expand(parsed))
-        if exp_s.replace(' ', '') not in (expr_str.replace(' ', ''), ans_str.replace(' ', '')):
-            cot.append(exp_s)
-        cot.append(ans_str)
-
-        meta = edict(expr=expr_str, height=tree.height, cot="\n= ".join(cot))
-        return Problem(metadata=meta, answer=ans_str)
-
-    def prompt(self, meta):
-        return (f"Simplify the following algebraic expression:\n"
-                f"{meta.expr}\n\n"
-                f"The answer is the simplified python expression.")
+        lines = ". ".join(relation_text(r, m.unit) for r in m.relations)
+        return (
+            f"{lines}. {m.given} has {m.given_value} {m.unit}. "
+            f"How many {m.unit} does {m.asked} have? Give the answer as a number."
+        )
 
     def score_answer(self, answer, entry):
-        try:
-            clean = str(answer).split('=')[-1].strip().replace('^', '**')
-            got = parse_expr(clean, transformations=_SYM_TRANSFORMS)
-            want = parse_expr(entry['answer'], transformations=_SYM_TRANSFORMS)
-            return 1.0 if sympy.simplify(got - want) == 0 else 0.0
-        except Exception:
-            return 0.0
+        return score_scalar(answer, entry)
+
+    def balancing_key(self, problem):
+        m = problem.metadata
+        if m.family == "process":
+            ops = ",".join(op for op, _ in m.steps)
+            return f"process:{'inverse' if m.inverse else 'forward'}:{ops}"
+        ops = ",".join(r[0] for r in m.relations)
+        return f"relational:{ops}"
+
+    def deduplication_key(self, problem):
+        m = problem.metadata
+        if m.family == "process":
+            return str((m.family, m.unit, m.base, m.observed, tuple(map(tuple, m.steps)), m.inverse))
+        return str((m.family, m.unit, tuple(map(tuple, m.relations)), m.given, m.given_value, m.asked))

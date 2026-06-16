@@ -217,8 +217,7 @@ class GraphPathfinding(BaseGraphTask, Task):
         return (
             f"Consider the directed graph:\n\n{m['graph_description']}\n\n"
             f"Find the lexicographically smallest shortest directed path from Node {m['start_node']} to Node {m['end_node']}.\n"
-            "If no path exists, answer `None`.\n"
-            "The answer is a Python list of nodes or `None`."
+            "The answer is a Python list of nodes, or `None` if no path exists."
         )
 
     def score_answer(self, answer, entry):
@@ -345,8 +344,7 @@ class GraphIsomorphism(BaseGraphTask, Task):
         return (
             f"Consider two directed graphs described below.\n\nGraph A:\n{metadata['graph1_description']}\n\n"
             f"Graph B:\n{metadata['graph2_description']}\n\n"
-            "Do Graph A and Graph B have the exact same structure, just with different node labels? "
-            "(In other words, are they isomorphic?)\n"
+            "Are Graph A and Graph B isomorphic?\n"
             "The answer is `True` or `False`."
         )
 
@@ -476,9 +474,7 @@ class GraphDependencies(BaseGraphTask, Task):
             f"Consider the directed graph:\n\n{m['graph_description']}\n\n"
             f"In this scenario, a directed edge from U to V means V depends on U (so U is a prerequisite of V).\n"
             f"List all prerequisites of node {m['query']} (recursively), making sure to order base prerequisites first.\n"
-            "Do not include the query node itself.\n"
-            "If A is a prerequisite of B and both appear in your answer, A must appear before B.\n"
-            "Tie-break nodes with no mutual dependency lexicographically (smaller node ID first).\n"
+            "Exclude the query node; prerequisites must precede dependents, with lexicographic tie-breaks.\n"
             "The answer is a Python list of integers."
         )
 

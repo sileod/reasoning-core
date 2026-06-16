@@ -533,8 +533,7 @@ class Planning(Task):
         if random.random() < self.config.hint_proba:
             txt += f"\nHint: Reference solution has {meta.na} actions (but it may not be optimal)."
         txt += (
-            "\nThe answer is the plan."
-            "\nAnswer format: Multiple lines, one action per line: action(obj1, obj2)"
+            "\nThe answer is the plan, one action per line: action(obj1, obj2)."
         )
         return txt
 

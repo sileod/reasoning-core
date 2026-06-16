@@ -233,6 +233,7 @@ class Task(ProceduralDataset):
             setattr(self.config, k, v)
         self.balancing_key_ratio = 0.5
         self.tokenizer = _load_tokenizer()
+        self._config_level_seen = getattr(self.config, "level", None)
 
     def generate(self):
         """To override, return one problem"""
@@ -309,6 +310,9 @@ class Task(ProceduralDataset):
         This can prevent the generation of the same problem.
         """
         return None
+
+    def on_config_level_change(self):
+        pass
         
 
 
@@ -331,8 +335,11 @@ class Task(ProceduralDataset):
         @timeout_retry(self.timeout)
         def inner():
             t0=time.time()
-            if level:
+            if level is not None:
                 self.config.set_level(level)
+                if self.config.level != self._config_level_seen:
+                    self.on_config_level_change()
+                    self._config_level_seen = self.config.level
             with self._override_config(**kwargs) as generate_kwargs:
                 for _ in range(1_000):
                     problem = self.generate(**generate_kwargs)
@@ -389,13 +396,14 @@ class Task(ProceduralDataset):
             else:
                 submit = lambda pool: pool.submit(self.generate_example, **kwargs)
                 with ProcessPoolExecutor(max_workers=workers) as pool:
-                    pending = {submit(pool) for _ in range(workers)}
+                    pending = {submit(pool) for _ in range(min(workers, batch_size))}
                     while len(batch) < batch_size:
                         done, pending = wait(pending, return_when=FIRST_COMPLETED)
                         for f in done:
                             if len(batch) >= batch_size: break
                             if try_accept(f.result()): pbar.update(1)
-                        pending |= {submit(pool) for _ in range(workers - len(pending))}
+                        target = min(workers, batch_size - len(batch))
+                        pending |= {submit(pool) for _ in range(target - len(pending))}
         return batch
 
 
