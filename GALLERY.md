@@ -395,34 +395,27 @@ The answer is the smallest list of candidate indices, e.g. [0, 2].
 **Prompt:**
 ```
 Objects:
-object_1, object_2, object_3, object_4, object_5
+object_1
 
 Actions:
-action_0(x0, x1)
-  Requires: (not fluent_0)
-  Effect: fluent_0
-action_1(x0, x1)
-  Requires: fluent_0
-  Effect: not fluent_0
-action_2(x0, x1)
-  Requires: (not fluent_0)
-  Effect: fluent_0
-action_3(x0, x1)
-  Requires: fluent_0
-  Effect: not fluent_0
+action_0(x0)
+  Requires: (not fluent_3(x0)), (not fluent_2(x0))
+  Effect: not fluent_0(x0), fluent_3(x0), not fluent_1, fluent_2(x0)
 
 Initial state:
 True values: None
 
 Goal:
-fluent_0
+fluent_2(object_1)
+Hint: Reference solution has 1 actions (but it may not be optimal).
+
 Action format example: action_0(object1 object2).
 The answer is the plan, one action per line.
 ```
 
 **Answer:**
 ```
-action_0(object_5, object_5)
+action_0(object_1)
 ```
 
 ---
