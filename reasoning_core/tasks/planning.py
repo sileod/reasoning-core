@@ -366,7 +366,7 @@ def translate(problem: Problem, write_default=0.5) -> str:
     multi_type = len(types) > 1
 
     # --- [OBJECTS] ---
-    desc.append("[OBJECTS]")
+    desc.append("Objects:")
     if multi_type:
         for t in types:
             objs = list(problem.objects(t))
@@ -378,7 +378,7 @@ def translate(problem: Problem, write_default=0.5) -> str:
         desc.append(", ".join(o.name for o in all_objs) if all_objs else "None")
 
     # --- [ACTIONS] ---
-    desc.append("\n[ACTIONS]")
+    desc.append("\nActions:")
     for action in problem.actions:
         # Map internal names (action_0_param_1) to logical names (x0, x1)
         # We sort by length descending so regex doesn't match substrings (e.g. param1 inside param10)
@@ -417,7 +417,7 @@ def translate(problem: Problem, write_default=0.5) -> str:
             desc.append(f"  Effect: {', '.join(effects)}")
 
     # --- [STATE] ---
-    desc.append("\n[STATE]")
+    desc.append("\nInitial state:")
     
     # Handle Default Value logic
     if random.random() < write_default:
@@ -425,13 +425,13 @@ def translate(problem: Problem, write_default=0.5) -> str:
         vals = [v.is_true() for v in problem.initial_values.values()]
         # If vals is empty, default to False
         default_val = Counter(vals).most_common(1)[0][0] if vals else False
-        desc.append(f"Default: {default_val}")
+        desc.append(f"Default value: {default_val}")
 
     # Init (Standard PDDL assumption: list only True facts)
     init = [str(f) for f, v in problem.initial_values.items() if v.is_true()]
-    desc.append(f"Initial true values: {', '.join(init) if init else 'None'}")
+    desc.append(f"True values: {', '.join(init) if init else 'None'}")
 
-    desc.append('\n[GOAL]\n')
+    desc.append('\nGoal:')
     goals = [str(g) for g in problem.goals]
     desc.append(', '.join(goals) if goals else 'None')
     
@@ -511,7 +511,11 @@ class Planning(Task):
             except Exception as e:
                 print(f"ERR: {e}")
                 continue
-            plan = str(solution.plan).replace('SequentialPlan:\n', '').replace('\t', '')
+            plan = "\n".join(
+                line.strip()
+                for line in str(solution.plan).replace('SequentialPlan:\n', '').splitlines()
+                if line.strip()
+            )
 
             meta.na = na = plan.count('(')
 
@@ -533,7 +537,8 @@ class Planning(Task):
         if random.random() < self.config.hint_proba:
             txt += f"\nHint: Reference solution has {meta.na} actions (but it may not be optimal)."
         txt += (
-            "\nThe answer is the plan, one action per line: action(obj1, obj2)."
+            "\nAction format example: action_0(object1 object2)."
+            "\nThe answer is the plan, one action per line."
         )
         return txt
 

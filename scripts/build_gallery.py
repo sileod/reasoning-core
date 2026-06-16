@@ -95,8 +95,8 @@ def write_gallery(examples, out_path):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default="GALLERY.md")
-    parser.add_argument("--cache", action="store_true",
-                        help="Use validate(cache=True) examples.")
+    parser.add_argument("--no-cache", action="store_true",
+                        help="Use generate_balanced_batch instead of cached validation examples.")
     parser.add_argument("--refresh-cache", action="store_true")
     parser.add_argument("--tasks", nargs="*", default=None)
     return parser.parse_args()
@@ -106,7 +106,7 @@ def main():
     args = parse_args()
     names = args.tasks or list_tasks()
     tasks = sorted((get_task(name) for name in names), key=category_rank)
-    examples = build_examples(tasks, cache=args.cache,
+    examples = build_examples(tasks, cache=not args.no_cache,
                               refresh_cache=args.refresh_cache)
     write_gallery(examples, args.out)
 

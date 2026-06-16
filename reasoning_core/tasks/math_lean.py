@@ -1508,7 +1508,7 @@ class LeanProofRepair(Task):
 
     def prompt(self, metadata):
         imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
-        options = "\n\n".join(f"{i}. {body}" for i, body in enumerate(_mget(metadata, "replacements"), 1))
+        options = "\n".join(f"{i}. {body}" for i, body in enumerate(_mget(metadata, "replacements"), 1))
         return (
             f"Fix the broken Lean 4 proof below. {imports} "
             "Choose one candidate replacement. The answer is exactly one candidate body.\n\n"

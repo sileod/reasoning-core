@@ -132,6 +132,7 @@ class MyTask(Task):
 
 ## Gallery
 - Refresh examples with `python scripts/build_gallery.py`.
-- Use `--cache` to build from cached validation examples.
+- Gallery generation uses cached validation examples by default and builds missing cache entries.
 - Use `--refresh-cache` to regenerate cached examples for the current task behavior hash/config.
+- Use `--no-cache` to use balanced batch generation instead.
 - The cache is keyed per task and level, and keeps only the latest record for each key.

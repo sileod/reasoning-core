@@ -363,7 +363,7 @@ def gen_relational(config):
     return Problem(metadata=metadata, answer=str(nums[asked]))
 
 
-class WordProblemMath(Task):
+class MathWordProblem(Task):
     def __init__(self, config=WordProblemMathConfig()):
         super().__init__(config=config)
 
