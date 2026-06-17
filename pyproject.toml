@@ -41,6 +41,7 @@ dependencies = [
     "xpflow",
     "exrex",
     "nltk",
+    "music21",
     "wordfreq",
     "pgmpy",
     "unification",
