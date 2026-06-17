@@ -56,13 +56,13 @@ parser.add_argument('--model_name', type=str, default="smol135")
 parser.add_argument('--token_budget', type=parse_num, default=100_000_000)
 parser.add_argument('--aux_ratio', type=float, default=0.2)
 parser.add_argument('--phase_2_ratio', type=float, default=0.0)
-parser.add_argument('--main_data', type=str, default="dolci", choices=["fw", "synth", "dolci"])
+parser.add_argument('--main_data', type=str, default="dolci", choices=["fw", "synth", "dolci", "flan"])
 parser.add_argument('--aux_data', type=str, default="rc")
 parser.add_argument('--max_length', type=int, default=1024)
 parser.add_argument('--decay', type=float, default=0.01)
 parser.add_argument('--from_scratch', type=ast.literal_eval, default=True)
-parser.add_argument('--aux_version', type=str, default="rc13")
-parser.add_argument('--script_version', type=str, default="24")
+parser.add_argument('--aux_version', type=str, default="rc14")
+parser.add_argument('--script_version', type=str, default="25")
 parser.add_argument('--aux_token', type=str, default="")
 parser.add_argument('--iterable_mode', type=ast.literal_eval, default=True)
 parser.add_argument('--title', type=str, default='')
@@ -89,7 +89,8 @@ DATA_MAP = {
     "dolci": "tasksource/dolci-instruct",
     "rc": "reasoning-core/procedural-pretraining-pile",
     "rg": "reasoning-core/reasoning-gym",
-    'bp': "reasoning-core/basic-procedural"
+    "bp": "reasoning-core/basic-procedural",
+    "flan": "tasksource/flan"
 }
 
 MODEL_MAP = {
@@ -101,6 +102,7 @@ MODEL_MAP = {
     "microlm-5m": "sileod/microlm-ettin-swa-5m",
     "ettin68": "jhu-clsp/ettin-decoder-68m",
     "ettin150": "jhu-clsp/ettin-decoder-150m",
+    "lfm350":"LiquidAI/LFM2.5-350M-Base"
 }
 
 
