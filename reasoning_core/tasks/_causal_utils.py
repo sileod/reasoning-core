@@ -166,6 +166,63 @@ class BinaryInfluenceModel(TabularCPD):
         )
         return new_cpd
 
+    def derive_nl(self, n_round: int = 4, context: dict = None) -> List[str]:
+        """Worked derivation of this Noisy-OR/AND CPD from its mechanism formula.
+
+        Shows the generative rule and, for each parent configuration (optionally
+        pinned by ``context``), substitutes the weights to obtain P(child).
+        The resulting probabilities are read from ``self._evaluate`` so they are
+        always exact; the substitution string is best-effort exposition.
+        """
+        var = self.variable
+        states = self.state_names[var]
+        inactive_s, active_s = states[0], states[-1]
+        leak = float(self.leak[0]) if self.isleaky else 0.0
+        weights = {p: float(w) for p, w in zip(self.evidence, self.activation_magnitude)}
+        wstr = ", ".join(f"{p}={round(w, n_round)}" for p, w in weights.items())
+
+        lines = []
+        if self.mode == "OR":
+            formula = (f"P({var}={active_s} | parents) = 1 - (1-leak)·∏_(p active)(1-w_p)"
+                       if self.isleaky else
+                       f"P({var}={active_s} | parents) = 1 - ∏_(p active)(1-w_p)")
+            lines.append(f"Mechanism for {var} — Noisy-OR (leak={round(leak, n_round)}, weights: {wstr}): {formula}.")
+        else:
+            lines.append(f"Mechanism for {var} — Noisy-AND (leak={round(leak, n_round)}, weights: {wstr}): "
+                         f"{var}={active_s} requires every parent to be active (each succeeds with prob w_p).")
+
+        context = context or {}
+        parent_state_opts = []
+        for p in self.evidence:
+            sts = self.full_state_names[p]
+            parent_state_opts.append([context[p]] if p in context and context[p] in sts else list(sts))
+
+        combos = list(product(*parent_state_opts))
+        MAX = 8
+        for combo in combos[:MAX]:
+            inst = dict(zip(self.evidence, combo))
+            p_act = float(self._evaluate(inst)[1])
+            active_parents = [p for p in self.evidence if inst[p] == self.full_state_names[p][-1]]
+            cond = ", ".join(f"{p}={inst[p]}" for p in self.evidence) if self.evidence else "no parents"
+            if self.mode == "OR":
+                if active_parents:
+                    terms = "·".join(f"(1-{round(weights[p], n_round)})" for p in active_parents)
+                    sub = f"1-(1-{round(leak, n_round)})·{terms}" if self.isleaky else f"1-{terms}"
+                else:
+                    sub = f"{round(leak, n_round)} (leak only)" if self.isleaky else "0"
+            else:  # AND
+                if self.evidence and len(active_parents) == len(self.evidence):
+                    terms = "·".join(f"{round(weights[p], n_round)}" for p in self.evidence)
+                    sub = f"1-(1-{terms})·(1-{round(leak, n_round)})" if self.isleaky else terms
+                else:
+                    sub = f"{round(leak, n_round)} (leak only)" if self.isleaky else "0 (a parent is inactive)"
+            lines.append(f"  [{cond}] → active: {active_parents or 'none'} ⇒ "
+                         f"P({var}={active_s}) = {sub} = {round(p_act, n_round)}; "
+                         f"P({var}={inactive_s}) = {round(1 - p_act, n_round)}")
+        if len(combos) > MAX:
+            lines.append(f"  … ({len(combos) - MAX} more parent configurations omitted)")
+        return lines
+
 
 class MultilevelInfluenceModel(TabularCPD):
     def __init__(self, variable, evidence, influence_tables, levels, leak=None, mode="MAX", state_names=None):
@@ -264,13 +321,47 @@ class MultilevelInfluenceModel(TabularCPD):
         new_cpd = MultilevelInfluenceModel(
             variable=self.variable,
             evidence=self.evidence, # Use stored evidence
-            influence_tables=self.influence_tables, 
+            influence_tables=self.influence_tables,
             levels=self.levels,
             leak=self.leak.tolist() if self.leak is not None else None,
             mode=self.mode,
             state_names=self.state_names.copy()
         )
         return new_cpd
+
+    def derive_nl(self, n_round: int = 4, context: dict = None) -> List[str]:
+        """Worked derivation of this Noisy-MAX/MIN CPD from its mechanism.
+
+        States the combination rule and, for each parent configuration (optionally
+        pinned by ``context``), reports the resulting distribution over the child's
+        levels (read from ``self._evaluate`` so the numbers are exact).
+        """
+        var = self.variable
+        child_states = self.state_names[var]
+        intuition = ("the child rises toward the HIGHEST level promoted by any parent"
+                     if self.mode == "MAX" else
+                     "the child stays at the LOWEST level unless parents jointly push it up")
+        lines = [f"Mechanism for {var} — Noisy-{self.mode} over levels {child_states}: {intuition}; "
+                 f"obtained by combining each parent's cumulative influence"
+                 f"{' together with a leak term' if self.isleaky else ''}."]
+
+        context = context or {}
+        parent_state_opts = []
+        for p in self.evidence:
+            sts = self.full_state_names[p]
+            parent_state_opts.append([context[p]] if p in context and context[p] in sts else list(sts))
+
+        combos = list(product(*parent_state_opts))
+        MAX = 6
+        for combo in combos[:MAX]:
+            inst = dict(zip(self.evidence, combo))
+            probs = self._evaluate(inst)
+            cond = ", ".join(f"{p}={inst[p]}" for p in self.evidence) if self.evidence else "no parents"
+            dist = ", ".join(f"{child_states[i]}: {round(float(probs[i]), n_round)}" for i in range(len(probs)))
+            lines.append(f"  [{cond}] ⇒ P({var}) = {{{dist}}}")
+        if len(combos) > MAX:
+            lines.append(f"  … ({len(combos) - MAX} more parent configurations omitted)")
+        return lines
 
 
 def _is_stochastically_dominant(pmf_new: np.ndarray, pmf_old: np.ndarray, epsilon: float = 1e-9) -> bool:
@@ -1480,6 +1571,11 @@ class SemanticTraceVE(VariableElimination):
             step = entry['step']
             if step == 'GOAL':
                 lines.append(f"Goal: {entry['description']}")
+            elif step == 'RELEVANCE':
+                for line in entry['lines']:
+                    lines.append(f"Relevance: {line}")
+            elif step == 'MECHANISM':
+                lines.extend(entry['cpd'].derive_nl(n_round=precision, context=entry.get('context')))
             elif step == 'SURGERY':
                 surgery_parts = []
                 for d in entry['details']:
@@ -1489,6 +1585,8 @@ class SemanticTraceVE(VariableElimination):
                         surgery_parts.append(d)
                 if surgery_parts:
                     lines.append("Surgery: " + "; ".join(surgery_parts))
+                if entry.get('rationale'):
+                    lines.append(f"  {entry['rationale']}")
             elif step == 'INIT':
                 order = entry.get('elimination_order', [])
                 if order: lines.append(f"Elim order: {order}")
@@ -1547,6 +1645,17 @@ class SemanticTraceVE(VariableElimination):
             lines.append("\n")
             return "\n".join(lines)
         elif step == 'NORMALIZE':
+            u_factor, _ = entry['unnormalized_data']
+            u_sum = float(u_factor.values.sum())
+            # Dedup: a lone remaining factor that already sums to 1 needs no normalization.
+            if len(entry['final_input_data']) == 1 and abs(u_sum - 1.0) < 1e-6:
+                lines = ["--- Final Step: Normalization ---"]
+                lines.append(f"Only one factor remains, {entry['final_formula']}, and it already sums to 1 "
+                             f"(no normalization needed):")
+                n_factor, n_track = entry['normalized_data']
+                table_str = self._render_factor_table(n_factor, n_track, scientific, precision)
+                lines.append("\n".join(["   " + line for line in table_str.split('\n')]))
+                return "\n".join(lines)
             lines = [f"--- Final Step: Normalization ---"]
             lines.append(f"1. Gather all remaining factors (Query Variables + Priors):")
             for (factor, tracker) in entry['final_input_data']:
@@ -1565,6 +1674,19 @@ class SemanticTraceVE(VariableElimination):
             lines = ["--- Causal Graph Surgery ---"]
             for detail in entry.get('details', []):
                 lines.append(f"  - {detail}")
+            if entry.get('rationale'):
+                lines.append(f"  Rationale: {entry['rationale']}")
+            lines.append("")
+            return "\n".join(lines)
+        elif step == 'RELEVANCE':
+            lines = ["--- Relevance / Pruning ---"]
+            for line in entry['lines']:
+                lines.append(f"  - {line}")
+            lines.append("")
+            return "\n".join(lines)
+        elif step == 'MECHANISM':
+            lines = ["--- Mechanism Expansion ---"]
+            lines.extend(entry['cpd'].derive_nl(n_round=precision, context=entry.get('context')))
             lines.append("")
             return "\n".join(lines)
         return None
@@ -1626,6 +1748,68 @@ def get_robust_elimination_order(model, variables, evidence):
 
 
 # ==========================================
+# 3b. Reasoning-enrichment helpers (relevance / mechanism)
+# ==========================================
+def _relevant_subgraph(model, anchors):
+    """Anchors plus all their ancestors (the nodes that can affect the query)."""
+    keep = set(anchors)
+    for node in list(anchors):
+        try:
+            keep |= nx.ancestors(model, node)
+        except Exception:
+            pass
+    return keep
+
+
+def _relevance_lines(model, target, evidence):
+    """Explain which observations are irrelevant (d-separated) and which nodes
+    are barren (non-ancestors of the query), so a collapse to the prior is justified."""
+    ev_keys = list(evidence.keys())
+    relevant, irrelevant = [], []
+    for e in ev_keys:
+        others = [o for o in ev_keys if o != e]
+        try:
+            connected = model.is_dconnected(target, e, observed=others)
+        except Exception:
+            connected = True
+        (relevant if connected else irrelevant).append(e)
+
+    keep = _relevant_subgraph(model, {target} | set(relevant))
+    barren = sorted(n for n in model.nodes() if n not in keep and n not in ev_keys)
+
+    lines = []
+    for e in irrelevant:
+        others = [o for o in ev_keys if o != e]
+        cond = (" given " + ", ".join(f"{o}={evidence[o]}" for o in others)) if others else ""
+        lines.append(f"{e} is d-separated from {target}{cond} (no active path), "
+                     f"so the observation {e}={evidence[e]} is irrelevant and can be dropped.")
+    if barren:
+        lines.append(f"Nodes {barren} are non-ancestors of the query "
+                     f"(neither {target} nor any retained evidence depends on them); they are pruned.")
+    return lines
+
+
+def _mechanism_entries(model, target, evidence, do):
+    """One MECHANISM trace entry per CI-model (Noisy-OR/AND/MAX/MIN) node relevant
+    to the query. The CPD object is stored so rendering can apply the run's precision."""
+    anchors = {target} | set(evidence) | set(do)
+    relevant = _relevant_subgraph(model, anchors) | anchors
+    context = {**evidence, **dict(do)}
+    entries = []
+    for node in model.nodes():
+        if node not in relevant:
+            continue
+        cpd = model.get_cpds(node)
+        if isinstance(cpd, (BinaryInfluenceModel, MultilevelInfluenceModel)):
+            entries.append({
+                "step": "MECHANISM",
+                "cpd": cpd,
+                "context": {p: context[p] for p in cpd.evidence if p in context},
+            })
+    return entries
+
+
+# ==========================================
 # 4. Causal Inference Engine (Stable Wrapper)
 # ==========================================
 class CausalVE(SemanticTraceVE):
@@ -1654,6 +1838,15 @@ class CausalVE(SemanticTraceVE):
         if not do:
             if isinstance(elimination_order, str):
                 elimination_order = get_robust_elimination_order(self.model, variables, evidence)
+
+            # Reasoning enrichment: justify dropped/irrelevant evidence, then expand
+            # the generative mechanism of any Noisy-OR/AND/MAX/MIN node.
+            target = variables[0] if variables else None
+            if target is not None:
+                rel_lines = _relevance_lines(self.model, target, evidence)
+                if rel_lines:
+                    self.trace_log.append({"step": "RELEVANCE", "lines": rel_lines})
+                self.trace_log.extend(_mechanism_entries(self.model, target, evidence, {}))
 
             # Fix: Call base_query directly. It will populate self.trace_log naturally.
             # No need to wipe it or extend it!
@@ -1707,21 +1900,36 @@ class CausalVE(SemanticTraceVE):
         finally:
             logging.disable(logging.NOTSET)
 
-        self.trace_log.append({"step": "SURGERY", "details": surgery_details})
+        do_list = ", ".join(f"do({k}={repr(v)})" for k, v in do.items())
+        surgery_rationale = (
+            f"By the rules of do-calculus (graph surgery), intervening with {do_list} severs each "
+            f"intervened node from its parents and clamps its value. The post-surgery factorization is "
+            f"P(V | {do_list}) = ∏_(j: V_j not intervened) P(V_j | pa_j), with intervened nodes fixed to their set values."
+        )
+        self.trace_log.append({"step": "SURGERY", "details": surgery_details, "rationale": surgery_rationale})
+
+        # Reasoning enrichment on the post-surgery graph: relevance of the remaining
+        # observations and the generative mechanisms of any CI-model nodes.
+        target = variables[0] if variables else None
+        if target is not None:
+            rel_lines = _relevance_lines(model_prime, target, evidence)
+            if rel_lines:
+                self.trace_log.append({"step": "RELEVANCE", "lines": rel_lines})
+            self.trace_log.extend(_mechanism_entries(model_prime, target, evidence, do))
 
         # Inference on the surgically modified graph
         inference_prime = CausalVE(model_prime)
-        inference_prime.global_do = self.global_do 
-        
+        inference_prime.global_do = self.global_do
+
         final_order = elimination_order
         if isinstance(elimination_order, str):
              final_order = get_robust_elimination_order(model_prime, variables, evidence)
-        
+
         # Here we CAN use query_with_trace because inference_prime is a separate object
         result, prime_trace = inference_prime.query_with_trace(
             variables=variables,
-            evidence=evidence, 
-            elimination_order=final_order, 
+            evidence=evidence,
+            elimination_order=final_order,
             joint=True
         )
 
