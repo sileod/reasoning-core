@@ -1,6 +1,6 @@
 # 📖 Task Gallery
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`lean_proof_repair`](#lean_proof_repair) · [`conjecture_entailment`](#conjecture_entailment) · [`resolution_step`](#resolution_step) · [`planar_geometry_relations`](#planar_geometry_relations) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`planning`](#planning) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_isomorphism`](#graph_isomorphism) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`parsing_derivation`](#parsing_derivation) · [`continuation`](#continuation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_conversion`](#table_conversion) · [`diff_prediction`](#diff_prediction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`lean_proof_repair`](#lean_proof_repair) · [`conjecture_entailment`](#conjecture_entailment) · [`resolution_step`](#resolution_step) · [`planar_geometry_relations`](#planar_geometry_relations) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_isomorphism`](#graph_isomorphism) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`parsing_derivation`](#parsing_derivation) · [`continuation`](#continuation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_conversion`](#table_conversion) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution)
 
 ---
 
@@ -386,6 +386,39 @@ The answer is the smallest list of candidate indices, e.g. [0, 2].
 **Answer:**
 ```
 [4]
+```
+
+---
+
+## [logic_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+**Prompt:**
+```
+Premise:
+clara is trusted.
+david helps bruno.
+clara is active.
+alice advises bruno.
+bruno is careful.
+Being trusted implies being verified.
+Every verified entity is active.
+Every active entity is careful.
+Every careful entity is trained.
+Anyone who is trained and approved is active.
+Whenever x helps y, y advises x.
+Anyone who is verified and careful is approved.
+From x advises y and x is active, it follows that y is trained.
+Every trusted entity is careful.
+
+Question:
+How many entities are approved?
+
+Answer with one integer.
+```
+
+**Answer:**
+```
+1
 ```
 
 ---
@@ -965,41 +998,21 @@ The answer is the converted table.
 
 ---
 
-## [diff_prediction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_diff.py)
+## [string_transduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/string_transduction.py)
 
 **Prompt:**
 ```
-Below is the version history of a file.
-
-Version 5a15829:
-1    | Thus look generation friend mother from
-2    | House up usually cultural star sign
-3    | Shoulder glass resource standard world year
-4    | Course consider meeting ten none room
-5    | Heavy chance level study hotel service
-
-Version 6040b6a:
-1    | Thus look generation friend mother from
-2    | House up usually cultural star sign
-3    | Shoulder glass resource standard world year
-4    | rise meeting none room
-5    | field visit stuff goal project
-6    | Heavy chance level study hotel service
-
-Generate the Unified Diff to transform version 5a15829 into version 6040b6a.
-The answer is the diff chunks only (no file headers), or empty if no changes.
+String: adbdbceb
+Edits:
+- insert e at index 8
+- replace index 5 with a
+- delete at index 3
+Answer with the final string.
 ```
 
 **Answer:**
 ```
-@@ -1,5 +1,6 @@
- Thus look generation friend mother from
- House up usually cultural star sign
- Shoulder glass resource standard world year
--Course consider meeting ten none room
-+rise meeting none room
-+field visit stuff goal project
- Heavy chance level study hotel service
+adbbaebe
 ```
 
 ---
@@ -1058,4 +1071,3 @@ The answer is the exact Python `repr` of the returned value.
 ```
 
 ---
-
