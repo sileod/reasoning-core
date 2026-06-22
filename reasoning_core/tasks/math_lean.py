@@ -25,7 +25,6 @@ from appdirs import AppDirs
 from easydict import EasyDict as edict
 from gramforge import generate, init_grammar
 from reasoning_core.template import Config, Problem, Task, DevTask
-from .math_tptp import extract_useful_axioms
 
 
 # ============================================================================
@@ -784,8 +783,9 @@ _LEMMA_DISTRACTORS = ("rfl", "decide", "omega", "simp")
 
 def _render(inst, name="ex"):
     hyp_str = " ".join(f"({h} : {b})" for h, b in inst.hyps)
-    decl = inst.decl + " " if inst.decl else ""
-    return f"theorem {name} {decl}{hyp_str} : {inst.goal} := by\n"
+    args = " ".join(x for x in (inst.decl, hyp_str) if x)
+    args = f" {args}" if args else ""
+    return f"theorem {name}{args} : {inst.goal} := by\n"
 
 
 def _candidate_pool(inst, n_candidates, header):
@@ -799,9 +799,9 @@ def _candidate_pool(inst, n_candidates, header):
     candidates = []
     hnames = [h for h, _ in inst.hyps]
     extras = (
+        *(f"exact {h}" for h in hnames),
         "assumption", "simp_all", "aesop", "tauto", "linarith", "norm_num",
         "ring_nf", "constructor", "intro h", "cases h", "exact False.elim h",
-        *(f"exact {h}" for h in hnames),
     )
     for cand in (inst.primary, *base, *extras):
         if cand not in candidates:
@@ -816,6 +816,28 @@ def _candidate_pool(inst, n_candidates, header):
     pairs = list(zip(candidates, labels))
     random.shuffle(pairs)
     return [c for c, _ in pairs], [l for _, l in pairs]
+
+
+def _is_theorem_specific_candidate(candidate):
+    """Heuristic filter for candidates that depend on local theorem structure."""
+    s = str(candidate)
+    if re.search(r"\bh\d+\b", s):
+        return True
+    if re.search(r"\bhx\b|\bhp\b|\bhq\b|\bexact\s+[A-Za-z_][\w.]*\s+h", s):
+        return True
+    if any(tok in s for tok in ("le_trans", "lt_trans", "dvd_", "And.intro", "Or.inl", "Or.inr", "rcases", "cases ")):
+        return True
+    return False
+
+
+def _has_discriminative_candidate(candidates, labels):
+    strong = {"omega", "simp", "simp_all", "aesop", "tauto", "linarith", "ring", "ring_nf", "norm_num"}
+    specific = [_is_theorem_specific_candidate(c) for c in candidates]
+    generic_strong = [str(c).strip() in strong for c in candidates]
+    return (
+        any(s and ok for s, ok in zip(specific, labels))
+        or any(g and not ok for g, ok in zip(generic_strong, labels))
+    )
 
 
 def make_instance(config):
@@ -856,7 +878,7 @@ def _line_options(lines, answer, max_options=6):
         if line not in options:
             options.append(line)
     for line in (
-        "rfl", "simp", "omega", "tauto", "intro h", "intro x hx",
+        "rfl", "simp", "intro h", "intro x hx",
         "exact h0", "exact h1", "assumption",
     ):
         if line not in options:
@@ -1081,6 +1103,28 @@ def _node_data(G, node):
     return G.nodes[node]["data"]
 
 
+def _leaf_nodes(G):
+    return [n for n in nx.topological_sort(G) if G.in_degree(n) == 0]
+
+
+def _leaf_ancestor_nodes(G, target_node):
+    ancestors = nx.ancestors(G, target_node)
+    return [n for n in _leaf_nodes(G) if n in ancestors]
+
+
+def _closed_graph_rows(G, axiom_indices=None):
+    axiom_indices = axiom_indices or {}
+    rows = []
+    for n in nx.topological_sort(G):
+        data = _node_data(G, n)
+        parents = ", ".join(data.parents) if data.parents else "none"
+        if G.in_degree(n) == 0:
+            rows.append(f"{n}: {data.clause_formula} [axiom {axiom_indices[n]}; parents: {parents}]")
+        else:
+            rows.append(f"{n}: {data.clause_formula} [rule: {data.inference}; parents: {parents}]")
+    return rows
+
+
 def _add_lean_node(G, node):
     G.add_node(node.clause_id, data=node)
     for parent in node.parents:
@@ -1168,9 +1212,10 @@ def make_lean_have_chain(G, target_node, decl="", leaf_hyp_names=None):
 
 def _render_forward_theorem(decl, leaf_hyps, goal, proof_body, name="ex"):
     hyp_str = " ".join(f"({h} : {b})" for h, b in leaf_hyps)
-    decl = decl + " " if decl else ""
+    args = " ".join(x for x in (decl, hyp_str) if x)
+    args = f" {args}" if args else ""
     body = "\n".join(f"  {line}" for line in proof_body.splitlines())
-    return f"theorem {name} {decl}{hyp_str} : {goal} := by\n{body}\n"
+    return f"theorem {name}{args} : {goal} := by\n{body}\n"
 
 
 def _cheap_solvers(header, use_mathlib):
@@ -1240,10 +1285,19 @@ def gen_forward_order_graph(config):
         n for n in G.nodes
         if G.in_degree(n) > 0
         and _node_data(G, n).depth >= 3
-        and len(extract_useful_axioms(G, n)) >= 2
+        and len(_leaf_ancestor_nodes(G, n)) >= 2
     ]
     random.shuffle(candidates)
     for target in sorted(candidates, key=lambda n: _node_data(G, n).depth, reverse=True):
+        useful_leaf_nodes = _leaf_ancestor_nodes(G, target)
+        all_leaf_nodes = _leaf_nodes(G)
+        if (
+            len(useful_leaf_nodes) < 2
+            or len(useful_leaf_nodes) >= len(all_leaf_nodes)
+            or _node_data(G, target).depth < 3
+            or len(all_leaf_nodes) - len(useful_leaf_nodes) < 2
+        ):
+            continue
         leaf_names = _hypothesis_names(G.subgraph(nx.ancestors(G, target) | {target}).copy())
         leaf_hyps = [(leaf_names[n], _node_data(G, n).clause_formula) for n in leaf_names]
         goal = _node_data(G, target).clause_formula
@@ -1275,7 +1329,9 @@ def gen_forward_order_graph(config):
                 accepted=accepted,
                 acceptance_rate=(accepted / proposals if proposals else 0.0),
                 proof_depth=_node_data(G, target).depth,
-                useful_premises=len(extract_useful_axioms(G, target)),
+                useful_premises=len(useful_leaf_nodes),
+                total_premises=len(all_leaf_nodes),
+                distractor_premises=len(all_leaf_nodes) - len(useful_leaf_nodes),
                 final_verifies=True,
                 diag=diag,
             ),
@@ -1342,8 +1398,8 @@ class LeanForwardProof(DevTask):
         return float(get_runner(use_mathlib=_mget(entry.metadata, "use_mathlib")).check(code)[0])
 
 
-class LeanForwardPremiseSelection(DevTask):
-    """Select the Lean hypotheses needed by a forward derivation graph."""
+class LeanDerivationPremiseSelection(Task):
+    """Track axiom reachability in a displayed Lean derivation DAG."""
 
     def __init__(self, config=None, **kwargs):
         if config is None:
@@ -1357,47 +1413,43 @@ class LeanForwardPremiseSelection(DevTask):
             inst = gen_forward_order_graph(self.config)
             if inst is None:
                 continue
-            useful = extract_useful_axioms(inst.G, inst.target_node)
-            leaf_by_node = dict(inst.leaf_hyp_names)
-            useful_indices = sorted(int(leaf_by_node[n][1:]) + 1 for n in useful if n in leaf_by_node)
-            useful_formulas = [inst.leaf_hyps[i - 1][1] for i in useful_indices]
-            leaf_formulas = [
-                _node_data(inst.G, n).clause_formula
-                for n in inst.G.nodes
-                if inst.G.in_degree(n) == 0
-            ]
-            distractor_pool = [
-                f for f in leaf_formulas
-                if f not in useful_formulas and f != inst.goal
-            ]
-            n_distractors = min(len(distractor_pool), max(1, int(self.config.n_candidates) // 2))
-            pool = list(useful_formulas) + random.sample(distractor_pool, n_distractors)
-            random.shuffle(pool)
-            correct = sorted(pool.index(f) + 1 for f in useful_formulas if f in pool)
-            if len(correct) < 2:
+            leaf_nodes = _leaf_nodes(inst.G)
+            useful_leaf_nodes = set(_leaf_ancestor_nodes(inst.G, inst.target_node))
+            answer = [i + 1 for i, n in enumerate(leaf_nodes) if n in useful_leaf_nodes]
+            if (
+                len(answer) < 2
+                or len(answer) >= len(leaf_nodes)
+                or inst.stats.proof_depth < 3
+                or len(leaf_nodes) - len(answer) < 2
+            ):
                 continue
             return Problem(
                 edict(
-                    kind="lean_forward_premise_selection",
-                    hypotheses_pool=pool,
-                    theorem=inst.goal,
-                    correct_indices=correct,
-                    correct_minimal_hypotheses=useful_formulas,
-                    proof=inst.proof,
+                    kind="lean_derivation_premise_selection",
+                    axiom_nodes=[
+                        edict(index=i + 1, node=n, formula=_node_data(inst.G, n).clause_formula)
+                        for i, n in enumerate(leaf_nodes)
+                    ],
+                    graph_rows=_closed_graph_rows(
+                        inst.G, {n: i + 1 for i, n in enumerate(leaf_nodes)}
+                    ),
+                    target_node=inst.target_node,
+                    target_formula=inst.goal,
                     stats=inst.stats,
                     use_mathlib=getattr(self.config, "use_mathlib", True),
                 ),
-                str(correct),
+                str(answer),
             )
         raise RuntimeError("failed to generate a Lean forward premise-selection task")
 
     def prompt(self, metadata):
-        hypotheses_text = "\n".join(f"{i + 1}. {h}" for i, h in enumerate(_mget(metadata, "hypotheses_pool")))
+        graph_text = "\n".join(_mget(metadata, "graph_rows"))
         return (
-            "Identify the numbered Lean hypotheses needed by the forward proof of the theorem.\n\n"
-            f"Hypotheses:\n{hypotheses_text}\n\n"
-            f"Theorem: `{_mget(metadata, 'theorem')}`\n\n"
-            "The answer is a sorted Python list of numbers, for example `[1, 3, 4]`."
+            "Track reachability in this Lean derivation DAG. Return the indices of original "
+            "axiom nodes that reach the target.\n\n"
+            f"GRAPH:\n{graph_text}\n\n"
+            f"TARGET: {_mget(metadata, 'target_node')}: {_mget(metadata, 'target_formula')}\n\n"
+            "Answer as a sorted Python list, for example `[1, 3, 4]`."
         )
 
     def score_answer(self, answer, entry):
@@ -1411,25 +1463,40 @@ class LeanForwardPremiseSelection(DevTask):
 class LeanMissingProofLine(DevTask):
     """Recover one missing line from a short proof using a constrained inventory."""
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, **kwargs):
         if config is None:
             config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
+        for k, v in kwargs.items():
+            setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
     def generate(self):
-        script = make_proof_script(self.config)
-        idx = random.randrange(len(script.lines))
-        answer = script.lines[idx]
-        body = []
-        for i, line in enumerate(script.lines):
-            body.append("  __ANSWER__\n" if i == idx else f"  {line}\n")
-        return Problem(
-            edict(kind=script.kind, template=script.header + "".join(body),
-                  available_lines=_line_options(script.lines, answer, self.config.n_candidates),
-                  missing_line=idx + 1,
-                  use_mathlib=getattr(self.config, "use_mathlib", True)),
-            answer,
-        )
+        use_mathlib = getattr(self.config, "use_mathlib", True)
+        runner = get_runner(use_mathlib=use_mathlib)
+        for _ in range(30):
+            script = make_proof_script(self.config)
+            idx = random.randrange(len(script.lines))
+            answer = script.lines[idx]
+            body = []
+            for i, line in enumerate(script.lines):
+                body.append("  __ANSWER__\n" if i == idx else f"  {line}\n")
+            template = script.header + "".join(body)
+            available = _line_options(script.lines, answer, self.config.n_candidates)
+            compiling = [
+                line for line in available
+                if _safe(line) and runner.check(template.replace("__ANSWER__", line))[0]
+            ]
+            if compiling != [answer]:
+                continue
+            return Problem(
+                edict(kind=script.kind, template=template,
+                      available_lines=available,
+                      compiling_lines=compiling,
+                      missing_line=idx + 1,
+                      use_mathlib=use_mathlib),
+                answer,
+            )
+        raise RuntimeError("failed to generate a unique Lean missing-line task")
 
     def prompt(self, metadata):
         opts = "\n".join(f"- {line}" for line in _mget(metadata, "available_lines"))
@@ -1449,7 +1516,11 @@ class LeanMissingProofLine(DevTask):
 class LeanCandidateCompilation(Task):
     """True/False on whether a single candidate proof body closes the theorem."""
 
-    def __init__(self, config=LeanConfig()):
+    def __init__(self, config=None, **kwargs):
+        if config is None:
+            config = LeanConfig()
+        for k, v in kwargs.items():
+            setattr(config, k, v)
         super().__init__(config=config, timeout=120)
         self._want_positive = True
 
@@ -1480,10 +1551,14 @@ class LeanCandidateCompilation(Task):
         return float(str(answer).strip().strip("`").lower() == entry.answer.lower())
 
 
-class LeanProofRepair(Task):
+class LeanProofRepair(DevTask):
     """Choose a replacement proof body that compiles."""
 
-    def __init__(self, config=LeanConfig()):
+    def __init__(self, config=None, **kwargs):
+        if config is None:
+            config = LeanConfig()
+        for k, v in kwargs.items():
+            setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
     def generate(self):
@@ -1504,7 +1579,7 @@ class LeanProofRepair(Task):
                       use_mathlib=inst.use_mathlib),
                 inst.elegant,
             )
-        return None
+        raise RuntimeError("failed to generate a Lean proof-repair task")
 
     def prompt(self, metadata):
         imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
@@ -1523,43 +1598,44 @@ class LeanProofRepair(Task):
         return float(got == _normalize_body(entry.answer))
 
 
-class LeanCompileSelection(DevTask):
-    """From candidate proofs, copy the proof bodies that compile."""
+class LeanCompileSelectionIndices(Task):
+    """Select numbered candidate proof bodies that compile."""
 
-    def __init__(self, config=LeanConfig()):
+    def __init__(self, config=None, **kwargs):
+        if config is None:
+            config = LeanConfig()
+        for k, v in kwargs.items():
+            setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
     def generate(self):
-        for _ in range(20):
+        for _ in range(50):
             inst = make_instance(self.config)
-            pairs = list(zip(inst.candidates, inst.labels))[: max(2, int(self.config.n_candidates))]
-            labels = [l for _, l in pairs]
-            if not any(labels) or all(labels):
+            if not _has_discriminative_candidate(inst.candidates, inst.labels):
                 continue
-            answer = "\n".join(c for c, l in pairs if l)
+            answer = [i + 1 for i, ok in enumerate(inst.labels) if ok]
             return Problem(
                 edict(kind=inst.kind,
                       theorem=inst.header + "  ?\n",
-                      candidates=[c for c, _ in pairs],
-                      labels=labels,
+                      candidates=inst.candidates,
+                      labels=inst.labels,
                       use_mathlib=inst.use_mathlib),
                 str(answer),
             )
-        raise RuntimeError("failed to assemble a balanced compile-selection instance")
+        raise RuntimeError("failed to generate discriminative compile-selection task")
 
     def prompt(self, metadata):
-        opts = "\n".join(f"- {c}" for c in _mget(metadata, "candidates"))
+        opts = "\n".join(f"{i}. {c}" for i, c in enumerate(_mget(metadata, "candidates"), 1))
         imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
         return (
-            "Which candidate Lean 4 tactic blocks make the theorem compile? "
-            f"{imports} Copy each compiling candidate exactly, one per "
-            "line, in the same order as CANDIDATES. Do not include bullets, numbers, "
-            "or backticks.\n\n"
+            "Which numbered Lean 4 candidate proof bodies close the theorem? "
+            f"{imports} Do not copy proof bodies.\n\n"
             f"THEOREM WITH HOLE:\n{_mget(metadata, 'theorem')}\n"
-            f"CANDIDATES:\n{opts}"
+            f"CANDIDATES:\n{opts}\n\n"
+            "Answer with a sorted Python list of 1-based candidate indices, for example `[2, 5]`."
         )
 
     def score_answer(self, answer, entry):
-        clean = lambda s: [line.strip().strip("`").strip()
-                           for line in str(s).splitlines() if line.strip()]
-        return float(clean(answer) == clean(entry.answer))
+        truth = list(ast.literal_eval(entry.answer))
+        pred = [int(x) for x in re.findall(r"\d+", str(answer))]
+        return float(pred == truth)

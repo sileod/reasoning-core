@@ -234,6 +234,42 @@ def prepr_task_name(name):
     return underscore(name)
 
 
+class Payload(dict):
+    """Ordered prompt payload with a compact labeled-block string view."""
+
+    def __init__(self, *args, randomizable=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.randomizable = randomizable
+        self.original_order = list(self.keys())
+        self.order = list(self.original_order)
+
+    def __str__(self):
+        return "\n\n".join(
+            f"{key.replace('_', ' ').title()}:\n{self[key]}"
+            for key in self.order
+        )
+
+    def maybe_shuffle(self, p=0.2, seed=None):
+        rng = random.Random(seed)
+        if self.randomizable and rng.random() < p:
+            rng.shuffle(self.order)
+            items = [(key, self[key]) for key in self.order]
+            self.clear()
+            self.update(items)
+        return self
+
+    @classmethod
+    def maybe_shuffle_mapping(cls, payload, p=0.0):
+        if not p or not isinstance(payload, Mapping) or len(payload) < 2:
+            return payload
+        return cls(payload).maybe_shuffle(p=p, seed=random.randrange(1 << 32))
+
+    @classmethod
+    def maybe_shuffle_metadata(cls, metadata, p=0.0):
+        if p and "payload" in metadata:
+            metadata.payload = cls.maybe_shuffle_mapping(metadata.payload, p)
+
+
 @functools.lru_cache(maxsize=1)
 def _load_tokenizer():
     cache_dir = user_cache_dir("reasoning_core")  # ~/.cache/reasoning_core on Linux
@@ -399,7 +435,7 @@ class Task(ProceduralDataset):
             for k, v in saved.items():
                 setattr(self.config, k, v)
 
-    def generate_example(self, level=None, max_tokens=8192, **kwargs):
+    def generate_example(self, level=None, max_tokens=8192, payload_shuffle_prob=0.0, **kwargs):
         self.timeout = int(self.base_timeout * (1+level)) if level else int(self.base_timeout)
         @timeout_retry(self.timeout)
         def inner():
@@ -414,6 +450,7 @@ class Task(ProceduralDataset):
                     problem = self.generate(**generate_kwargs)
                     if problem is None:
                         continue
+                    Payload.maybe_shuffle_metadata(problem.metadata, payload_shuffle_prob)
                     problem.prompt = self.prompt(problem.metadata)
 
                     prompt_tokens = len(self.tokenizer.encode(problem.prompt))

@@ -7,7 +7,7 @@ from typing import Optional
 
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, Problem, Task
+from reasoning_core.template import Config, Payload, Problem, Task
 
 
 @dataclass(frozen=True)
@@ -1050,14 +1050,14 @@ class MultistepNLI(Task):
     def generate(self):
         case, key = generate_case(self.config, state=self._case_state)
         if case:
-            return Problem(case_metadata(case, key), case.label)
+            meta = case_metadata(case, key)
+            meta.payload = Payload(premise="\n".join(meta.premise), hypothesis=meta.hypothesis)
+            return Problem(meta, case.label)
         raise RuntimeError("could not generate a consistent multistep_nli example")
 
     def prompt(self, meta):
-        prem = "\n".join(meta.premise)
         return (
-            f"Premise:\n{prem}\n\n"
-            f"Hypothesis:\n{meta.hypothesis}\n\n"
+            f"{Payload(meta.payload)}\n\n"
             "Classify the hypothesis as entailment, contradiction, or neutral. "
             "The answer is exactly one word."
         )
@@ -1086,6 +1086,7 @@ class MultistepEvidenceRetrieval(Task):
             meta.necessary_indices = nec
             meta.valid_supports = [nec]
             meta.support_indices = nec
+            meta.payload = Payload(premise=indexed_premise(meta.premise), hypothesis=meta.hypothesis)
             answer = "[" + ", ".join(str(i) for i in nec) + "]"
             return Problem(meta, answer)
         raise RuntimeError("could not generate a unique-support multistep_evidence_retrieval example")
@@ -1093,8 +1094,7 @@ class MultistepEvidenceRetrieval(Task):
     def prompt(self, meta):
         verb = "entail" if meta.label == "entailment" else "contradict"
         return (
-            f"Premise:\n{indexed_premise(meta.premise)}\n\n"
-            f"Hypothesis:\n{meta.hypothesis}\n\n"
+            f"{Payload(meta.payload)}\n\n"
             f"Which premise statements are necessary to {verb} the hypothesis, "
             "meaning removing any one of them breaks that result?\n"
             "The answer is a list of indices, e.g. [0, 1]."
@@ -1123,6 +1123,11 @@ class MultistepAbduction(Task):
                 label=abd.label,
                 domain_pack=abd.domain_pack,
             )
+            meta.payload = Payload(
+                premise=indexed_premise(meta.premise),
+                hypothesis=meta.hypothesis,
+                candidate_facts=indexed_premise(meta.candidates),
+            )
             answer = "[" + ", ".join(str(i) for i in abd.answer) + "]"
             return Problem(meta, answer)
         raise RuntimeError("could not generate a consistent multistep_abduction example")
@@ -1130,9 +1135,7 @@ class MultistepAbduction(Task):
     def prompt(self, meta):
         mode = "entail the hypothesis" if meta.label == "entailment" else "contradict the hypothesis"
         return (
-            f"Premise:\n{indexed_premise(meta.premise)}\n\n"
-            f"Hypothesis:\n{meta.hypothesis}\n\n"
-            f"Candidate additional facts:\n{indexed_premise(meta.candidates)}\n\n"
+            f"{Payload(meta.payload)}\n\n"
             f"Which candidate facts, if added to the premise, make the premise {mode}?\n"
             "The answer is the smallest list of candidate indices, e.g. [0, 2]."
         )

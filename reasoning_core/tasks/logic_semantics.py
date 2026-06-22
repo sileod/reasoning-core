@@ -15,7 +15,7 @@ def run(expr, **kw):
 from gramforge.assets import fol_nli_verbalization
 
 import sys
-from reasoning_core.template import Task, DevTask, Problem, Config
+from reasoning_core.template import Task, DevTask, Problem, Config, Payload
 from gramforge.grammars.FOL import FOL_grammar
 from easydict import EasyDict as edict
 from functools import cache
@@ -242,13 +242,12 @@ class LogicNLI(Task):
                     continue
             
             meta.prem, meta.hyp = x.dict(), hyp.dict()
+            meta.payload = Payload(premise=meta.prem.eng, hypothesis=meta.hyp.eng)
             return Problem(meta, label)
 
     def prompt(self, meta):
-        prem, hyp = meta.prem.eng, meta.hyp.eng
         P = (
-            f"Premise:\n{prem}\n"
-            f"Hypothesis:\n{hyp}\n\n"
+            f"{Payload(meta.payload)}\n\n"
             "Classify the hypothesis as entailment, contradiction, or neutral. "
             "The answer is exactly one word."
         )

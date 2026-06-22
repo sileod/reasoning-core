@@ -263,6 +263,7 @@ class Navigation(Task):
 
     def __init__(self, config=NavigationConfig()):
         super().__init__(config=config)
+        self.balancing_key_ratio = 0.25
 
     def generate(self):
         rng = random.Random(self.config.seed)
@@ -361,3 +362,17 @@ class Navigation(Task):
         if not pa or not pg:
             return 0.0
         return float(pa.group() == pg.group() if kind == "distance" else pa.groups() == pg.groups())
+
+    def balancing_key(self, problem):
+        m = problem.metadata
+        objs = [m.query_a] + ([m.query_b] if m.get("query_b") else [])
+        touched = set()
+        for st in m.steps:
+            if st["k"] in ("move", "jump"):
+                touched.add(st["a"])
+            elif st["k"] == "swap":
+                touched.update([st["a"], st["b"]])
+        direct = any(f["k"] == "coord" and f["a"] in objs for f in m.facts)
+        changed = any(m.initial_state[o] != m.final_state[o] for o in objs)
+        n_touched = sum(o in touched for o in objs)
+        return f"{m.answer_type}:touched={n_touched}/{len(objs)}:direct={int(direct)}:changed={int(changed)}"

@@ -78,6 +78,31 @@ def canonicalize_floats(dataframe):
 class TableQA(Task):
     def __init__(self, config=TableQAConfig()):
         super().__init__(config=config)
+        self.balancing_key_ratio = 0.25
+
+    def _query_family(self, query):
+        q = " ".join(str(query).upper().split())
+        rules = [
+            ("count_distinct", "COUNT(DISTINCT" in q),
+            ("count_like", "COUNT(*)" in q and "LIKE" in q),
+            ("count_where", "COUNT(*)" in q and "WHERE" in q),
+            ("aggregate", q.startswith("SELECT ROUND(")),
+            ("group_limit", "GROUP BY" in q),
+            ("order_limit", "ORDER BY" in q and "LIMIT" in q),
+        ]
+        for name, ok in rules:
+            if ok:
+                return name
+        return "other"
+
+    def _result_bucket(self, result):
+        if result.shape != (1, 1):
+            return f"rows={min(len(result), 4)}"
+        try:
+            x = float(result.iloc[0, 0])
+            return "0" if x == 0 else "1" if x == 1 else "2-3" if x <= 3 else "4+"
+        except Exception:
+            return "text"
     
     def _query(self, dataframe):
         if len(dataframe) == 0: return "SELECT COUNT(*) FROM dataframe"
@@ -137,6 +162,8 @@ class TableQA(Task):
                 "table": tables[0],
                 "tables": tables,
                 "query": q,
+                "query_family": self._query_family(q),
+                "result_bucket": self._result_bucket(result),
                 "is_scalar": is_scalar,
                 "table_format": fmt_name
             },
@@ -194,6 +221,10 @@ class TableQA(Task):
             return 1.0
         except:
             return 0.0
+
+    def balancing_key(self, problem):
+        m = problem.metadata
+        return f"{m.query_family}:scalar={int(m.is_scalar)}:bucket={m.result_bucket}"
 
 class TableConversion(Task):
     def __init__(self, config=TableQAConfig()):

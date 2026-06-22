@@ -647,6 +647,7 @@ def _sample_regex(G, depth, min_depth, mode="sequential", max_tries=60):
 class RegexReasoning(Task):
     def __init__(self, config=RegexReasoningConfig()):
         super().__init__(config=config)
+        self.balancing_key_ratio = 0.25
 
     def generate(self):
         cfg = self.config
@@ -736,4 +737,8 @@ class RegexReasoning(Task):
         return 1.0 / (1.0 + max(0, len(answer) - expected_len))
 
     def balancing_key(self, problem):
-        return f"{problem.metadata.qtype}_{problem.answer}"
+        if problem.metadata.qtype == "distinguishing":
+            n = len(problem.answer)
+            bucket = "empty" if n == 0 else "1" if n == 1 else "2" if n == 2 else "3+"
+            return f"distinguishing:len={bucket}"
+        return f"{problem.metadata.qtype}:{problem.answer}"

@@ -1,7 +1,7 @@
 import networkx as nx
 
 from reasoning_core import get_task, list_tasks
-from reasoning_core.tasks.lean import (
+from reasoning_core.tasks.math_lean import (
     BANNED_LEAN_TOKENS,
     LeanConfig,
     gen_forward_order_graph,
@@ -10,8 +10,8 @@ from reasoning_core.tasks.lean import (
 
 
 def test_get_task_loads_dev_tasks_without_listing_them():
-    assert "lean_forward_proof_task" not in list_tasks()
-    assert type(get_task("LeanForwardProofTask", use_mathlib=False)).__name__ == "LeanForwardProofTask"
+    assert "lean_forward_proof" not in list_tasks()
+    assert type(get_task("LeanForwardProof", use_mathlib=False)).__name__ == "LeanForwardProof"
 
 
 def test_forward_graph_core_profile_verifies_and_is_well_formed():
@@ -43,7 +43,7 @@ def test_forward_graph_core_profile_verifies_and_is_well_formed():
 
 
 def test_forward_tasks_score_reference_answers():
-    for name in ("LeanForwardProofTask", "LeanForwardPremiseSelection"):
+    for name in ("LeanForwardProof", "LeanDerivationPremiseSelection"):
         task = get_task(name, use_mathlib=False)
         ex = task.generate_example(max_tokens=12000)
         assert task.score_answer(ex.answer, ex) == 1.0

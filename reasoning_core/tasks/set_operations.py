@@ -153,6 +153,7 @@ class SetMissingElementConfig(SetOpsConfig):
 class SetMissingElement(Task):
     def __init__(self, config=SetMissingElementConfig()):
         super().__init__(config=config)
+        self.balancing_key_ratio = 0.25
         self.domains = make_domains(self.config.domain_size, ordered=True)
         
     def generate(self):
@@ -163,7 +164,7 @@ class SetMissingElement(Task):
         missing = sorted(random.sample(removable, min(n_missing, len(removable))), key=str)
         for e in missing: intention.remove(e)
         answer = "{" + ", ".join(map(repr, missing)) + "}"
-        return Problem(metadata={'element_list': return_shuffle(intention)}, answer=answer)
+        return Problem(metadata={'element_list': return_shuffle(intention), 'missing_count': len(missing)}, answer=answer)
 
     def prompt(self, metadata) -> str:
         return (
@@ -177,6 +178,10 @@ class SetMissingElement(Task):
             return int(pred == truth) if not truth else intersection_metric(pred, truth)
         except:
             return 0
+
+    def balancing_key(self, problem):
+        n = problem.metadata.missing_count
+        return f"missing_count={n if n < 3 else '3+'}"
 
 @dataclass
 class CountElementsConfig(Config):
