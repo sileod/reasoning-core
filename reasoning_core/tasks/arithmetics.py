@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import random
 import gramforge
 import re
+import math
 from decimal import Decimal, getcontext, ROUND_HALF_UP
 import ast, operator
 from fractions import Fraction
@@ -12,6 +13,31 @@ import sympy
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
 getcontext().prec = 50
+
+def _as_int(x):
+    x = Fraction(x)
+    if x.denominator != 1:
+        raise ValueError("integer operation received a non-integer")
+    return x.numerator
+
+def _num_divisors(n):
+    n = abs(_as_int(n))
+    if n == 0:
+        raise ValueError("divisor count undefined for 0")
+    return int(sympy.divisor_count(n))
+
+SAFE_FUNCS = {
+    "max": max,
+    "min": min,
+    "abs": abs,
+    "round": lambda x: Fraction(round(float(x))),
+    "gcd": lambda a, b: math.gcd(_as_int(a), _as_int(b)),
+    "lcm": lambda a, b: math.lcm(_as_int(a), _as_int(b)),
+    "bit_count": lambda x: abs(_as_int(x)).bit_count(),
+    "is_prime": lambda x: int(sympy.isprime(abs(_as_int(x)))),
+    "prime_count": lambda x: int(sympy.primepi(abs(_as_int(x)))),
+    "num_divisors": _num_divisors,
+}
 
 def _grammar(symbolic=False, division=True):
     g = init_grammar(['py'], name="arith", preprocess_template=lambda s:s)
@@ -25,6 +51,13 @@ def _grammar(symbolic=False, division=True):
     g('expr(expr,expr)',  'min({0}, {1})',      weight=0.3)
     g('expr(expr)',       'abs({0})',           weight=0.3)
     g('expr(expr)',       'round({0})',         weight=0.2)
+    if not symbolic:
+        g('expr(int,int)',   'gcd({0}, {1})',   weight=0.25)
+        g('expr(pos,pos)',   'lcm({0}, {1})',   weight=0.2)
+        g('expr(nat)',       'bit_count({0})',  weight=0.2)
+        g('expr(nat)',       'is_prime({0})',   weight=0.15)
+        g('expr(nat)',       'prime_count({0})', weight=0.15)
+        g('expr(pos)',       'num_divisors({0})', weight=0.15)
     
     if division and not symbolic:
         g('expr(expr,expr)', '{0} / {1}')
@@ -35,6 +68,9 @@ def _grammar(symbolic=False, division=True):
     g('expr(atom)',       '{0}',                weight=8 if symbolic else 10)
     
     g('atom', 'NUM')
+    g('int', 'INT')
+    g('nat', 'NAT')
+    g('pos', 'POS')
     if symbolic: g('atom', 'VAR')
     return g
 
@@ -68,8 +104,8 @@ def _add_trailing_zeros(s, prob=0.2):
 
 
 def fill_num(expr, cfg=ArithmeticsConfig()):
-    pat = re.compile(r'\bNUM\b')
-    n = len(pat.findall(expr))
+    pat = re.compile(r'\b(NUM|INT|NAT|POS)\b')
+    tokens = pat.findall(expr)
 
     def to_decimal(v):
         f = Fraction(v)
@@ -86,18 +122,21 @@ def fill_num(expr, cfg=ArithmeticsConfig()):
     has_division = '/' in expr
     for _ in range(cfg.n_trials):
         vals_str = []
-        for _ in range(n):
+        for tok in tokens:
             r = random.random()
-            if   r < cfg.bool_prob:                    num = random.randint(0, 1)
+            if tok == "INT":                           num = random.randint(-30, 30)
+            elif tok == "NAT":                         num = random.randint(0, 80)
+            elif tok == "POS":                         num = random.randint(1, 80)
+            elif r < cfg.bool_prob:                    num = random.randint(0, 1)
             elif r < cfg.bool_prob + cfg.float_prob:   num = round(random.uniform(-12, 12), random.randint(1, cfg.in_decimals))
             else:                                      num = random.randint(-15, 15)
-            if has_division and num == 0: num = random.choice([-1, 1])
+            if tok == "NUM" and has_division and num == 0: num = random.choice([-1, 1])
             vals_str.append(str(num))
 
         it = iter(f"Fraction('{x}')" for x in vals_str)
         try:
             v = eval(pat.sub(lambda _: next(it), expr),
-                     {"Fraction": Fraction, "max": max, "min": min, "abs": abs, "round": round})
+                     {"Fraction": Fraction, **SAFE_FUNCS})
         except Exception: continue
 
         dec = to_decimal(v)
@@ -131,7 +170,6 @@ class Arithmetics(Task):
         ops = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, 
                ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv, ast.Pow: operator.pow, ast.Mod: operator.mod}
         syms = {ast.Add: '+', ast.Sub: '-', ast.Mult: '*', ast.Div: '/', ast.FloorDiv: '//', ast.Pow: '**', ast.Mod: '%'}
-        funcs = {'max': max, 'min': min, 'abs': abs, 'round': lambda x: Fraction(round(float(x)))}
         steps = []
         
         def fmt(n):
@@ -146,7 +184,7 @@ class Arithmetics(Task):
             if isinstance(node, ast.Call):
                 fname = node.func.id
                 args = [visit(a) for a in node.args]
-                res = Fraction(funcs[fname](*args))
+                res = Fraction(SAFE_FUNCS[fname](*args))
                 steps.append(f"{fname}({', '.join(fmt(a) for a in args)}) = {fmt(res)}")
                 return res
             l, r = visit(node.left), visit(node.right)

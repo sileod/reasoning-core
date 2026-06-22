@@ -6,6 +6,7 @@ def test_multistep_nli_registers_and_generates():
     assert "multistep_nli" in list_tasks()
     assert "multistep_evidence_retrieval" in list_tasks()
     assert "multistep_abduction" in list_tasks()
+    assert "logic_qa" in list_tasks()
     task = get_task("multistep_nli")
     seen = set()
     for _ in range(12):
@@ -37,6 +38,19 @@ def test_multistep_abduction_generates():
     assert ex.metadata.label in {"entailment", "contradiction"}
     assert ex.metadata.candidates
     assert task.score_answer(ex.answer, ex) == 1
+
+
+def test_logic_qa_generates():
+    task = get_task("logic_qa")
+    seen = set()
+    for _ in range(8):
+        ex = task.generate_example(max_tokens=0)
+        seen.add(ex.metadata.answer_mode)
+        assert ex.metadata.answer_mode in {"count", "list"}
+        assert ex.metadata.question
+        assert ex.metadata.support_indices
+        assert task.score_answer(ex.answer, ex) == 1
+    assert seen
 
 
 def test_chase_keeps_minimal_depth_derivation():

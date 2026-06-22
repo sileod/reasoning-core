@@ -17,7 +17,7 @@ CATEGORY_ORDER = [
     "set_operations", "sequential_induction", "qstr", "navigation",
     "tracking", "coreference", "constraint_satisfaction",
     "graph_operations", "regex", "knowledge", "grammar", "table_qa",
-    "code_diff", "code_execution",
+    "string_transduction", "code_execution",
 ]
 
 SINGLE_EXAMPLE_TASKS = {

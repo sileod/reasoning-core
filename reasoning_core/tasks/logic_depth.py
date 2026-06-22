@@ -119,6 +119,11 @@ class MultistepAbductionConfig(MultistepNLIConfig):
         self.n_candidates += 2 * c
 
 
+@dataclass
+class LogicQAConfig(MultistepNLIConfig):
+    answer_mode: str = "any"
+
+
 NAMES = ("alice", "bruno", "clara", "david", "elena", "farah", "george", "hannah")
 OBJECTS = ("box", "key", "lamp", "map", "coin", "vase", "book", "ring")
 PLACES = ("atrium", "lab", "office", "vault", "garden", "studio", "hall", "archive")
@@ -239,11 +244,16 @@ def _sigs(names, arity, typ="person"):
 
 def _domain_pack(name, cfg):
     n = min(max(3, cfg.n_entities), 7)
-    if name in {"abstract", "surface"}:
+    if name == "abstract":
         ents = {"entity": tuple(x.title() for x in NAMES[:n])}
         unary = ABS_UNARY[: cfg.n_unary_preds]
         binary = ABS_BINARY[: cfg.n_binary_preds]
         return ents, {**_sigs(unary, 1, "entity"), **_sigs(binary, 2, "entity")}, [], []
+    if name == "surface":
+        ents = {"person": NAMES[:n]}
+        unary = GEN_UNARY[: cfg.n_unary_preds]
+        binary = GEN_BINARY[: cfg.n_binary_preds]
+        return ents, {**_sigs(unary, 1), **_sigs(binary, 2)}, [], []
     if name == "spatial":
         ents = {"item": OBJECTS[:n], "place": PLACES[: max(3, n // 2)]}
         unary = SP_UNARY[: cfg.n_unary_preds]
@@ -620,29 +630,47 @@ def pred_words(pred):
 
 
 def tag_word(pred):
-    return TAG_WORDS[int(pred[1:]) % len(TAG_WORDS)] if pred.startswith("p") and pred[1:].isdigit() else pred_words(pred)
+    if pred.startswith("p") and pred[1:].isdigit():
+        i = int(pred[1:])
+        return TAG_WORDS[i] if i < len(TAG_WORDS) else f"tag {i}"
+    return pred_words(pred)
 
 
 def rel_word(pred):
-    return REL_WORDS[int(pred[1:]) % len(REL_WORDS)] if pred.startswith("r") and pred[1:].isdigit() else pred_words(pred)
+    if pred.startswith("r") and pred[1:].isdigit():
+        i = int(pred[1:])
+        return REL_WORDS[i] if i < len(REL_WORDS) else f"relation {i}"
+    return pred_words(pred)
+
+
+def binary_text(pred, args, sign=True, pack="surface"):
+    x, y = args
+    if pack in {"surface", "abstract"} and pred.startswith("r"):
+        rel = rel_word(pred)
+        return f"{x} is {'not ' if not sign else ''}{rel} to {y}"
+    if pred in {"parent", "ancestor", "sibling", "spouse", "aunt_or_uncle"}:
+        rel = pred_words(pred)
+        art = "an" if rel[0] in "aeiou" else "a"
+        return f"{x} is {'not ' if not sign else ''}{art} {rel} of {y}"
+    if pred in {"left_of", "right_of", "above", "below", "inside"}:
+        return f"{x} is {'not ' if not sign else ''}{pred_words(pred)} {y}"
+    if pred == "contains":
+        return f"{x} {'does not contain' if not sign else 'contains'} {y}"
+    if pred == "disjoint":
+        return f"{x} is {'not ' if not sign else ''}disjoint from {y}"
+    p = pred_words(pred)
+    return f"{x} {p} {y}" if sign else f"{x} does not {p} {y}"
 
 
 def atom_text(a, pack="surface"):
     if pack in {"surface", "abstract"} and a.pred.startswith("p"):
         t = tag_word(a.pred)
         return f"{a.args[0]} is {'not ' if not a.sign else ''}{t} tagged"
-    if pack in {"surface", "abstract"} and a.pred.startswith("r"):
-        r = rel_word(a.pred)
-        if a.sign:
-            return f"{a.args[0]} is {r} to {a.args[1]}"
-        return f"{a.args[0]} is not {r} to {a.args[1]}"
     p = pred_words(a.pred)
     neg = "not " if not a.sign else ""
     if len(a.args) == 1:
         return f"{a.args[0]} is {neg}{p}"
-    if a.sign:
-        return f"{a.args[0]} {p} {a.args[1]}"
-    return f"{a.args[0]} does not {p} {a.args[1]}"
+    return binary_text(a.pred, a.args, a.sign, pack)
 
 
 def _lit_schema(a, names=None, pack="surface"):
@@ -655,15 +683,14 @@ def _lit_schema(a, names=None, pack="surface"):
     p = pred_words(a.pred)
     if len(a.args) == 1:
         return f"{args[0]} is {'not ' if not a.sign else ''}{p}"
-    if a.sign:
-        return f"{args[0]} {p} {args[1]}"
-    return f"{args[0]} does not {p} {args[1]}"
+    return binary_text(a.pred, args, a.sign, pack)
 
 
 def rule_text(rule, rid=None, pack="surface"):
     atoms = [b for b in rule.body if isinstance(b, Atom)]
     checks = [b for b in rule.body if not isinstance(b, Atom)]
     names = {"?x": "x", "?y": "y", "?z": "z", "?p": "p"}
+    symbolic = pack == "abstract"
     parts = [_lit_schema(a, names, pack) for a in atoms]
     parts += [f"{c[1][1:]} is different from {c[2][1:]}" for c in checks if c[0] == "!="]
     body = " and ".join(parts)
@@ -676,7 +703,7 @@ def rule_text(rule, rid=None, pack="surface"):
         f"From {body}, it follows that {head}.",
     ]
     if len(atoms) == 1 and len(atoms[0].args) == 1 and len(rule.head.args) == 1:
-        if pack in {"surface", "abstract"}:
+        if symbolic:
             a = ("not " if not atoms[0].sign else "") + tag_word(atoms[0].pred)
             h = ("not " if not rule.head.sign else "") + tag_word(rule.head.pred)
             templates += [
@@ -689,47 +716,47 @@ def rule_text(rule, rid=None, pack="surface"):
             h = ("not " if not rule.head.sign else "") + pred_words(rule.head.pred)
             templates += [f"All things that are {a} are {h}.", f"Every {a} entity is {h}.", f"Being {a} implies being {h}."]
     elif len(atoms) == 2 and all(len(a.args) == 1 and a.args == ("?x",) for a in atoms) and rule.head.args == ("?x",):
-        a = tag_word(atoms[0].pred) if pack in {"surface", "abstract"} else pred_words(atoms[0].pred)
-        b = tag_word(atoms[1].pred) if pack in {"surface", "abstract"} else pred_words(atoms[1].pred)
-        h = ("not " if not rule.head.sign else "") + (tag_word(rule.head.pred) if pack in {"surface", "abstract"} else pred_words(rule.head.pred))
-        tagged = " tagged" if pack in {"surface", "abstract"} else ""
+        a = tag_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
+        b = tag_word(atoms[1].pred) if symbolic else pred_words(atoms[1].pred)
+        h = ("not " if not rule.head.sign else "") + (tag_word(rule.head.pred) if symbolic else pred_words(rule.head.pred))
+        tagged = " tagged" if symbolic else ""
         templates += [
             f"Anyone who is {a}{tagged} and {b}{tagged} is {h}{tagged}.",
-            f"Every {a}-tagged person who is {b}{tagged} is {h}{tagged}." if pack in {"surface", "abstract"} else f"Every {a} entity that is also {b} is {h}.",
+            f"Every {a}-tagged person who is {b}{tagged} is {h}{tagged}." if symbolic else f"Every {a} entity that is also {b} is {h}.",
             f"If a person is {a}{tagged} and {b}{tagged}, then that person is {h}{tagged}.",
         ]
     elif len(atoms) == 2 and len(atoms[0].args) == 2 and atoms[1].args == ("?y",) and rule.head.args == ("?x",):
-        r = rel_word(atoms[0].pred) if pack in {"surface", "abstract"} else pred_words(atoms[0].pred)
-        a = tag_word(atoms[1].pred) if pack in {"surface", "abstract"} else pred_words(atoms[1].pred)
-        h = ("not " if not rule.head.sign else "") + (tag_word(rule.head.pred) if pack in {"surface", "abstract"} else pred_words(rule.head.pred))
-        tagged = " tagged" if pack in {"surface", "abstract"} else ""
+        r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
+        a = tag_word(atoms[1].pred) if symbolic else pred_words(atoms[1].pred)
+        h = ("not " if not rule.head.sign else "") + (tag_word(rule.head.pred) if symbolic else pred_words(rule.head.pred))
+        tagged = " tagged" if symbolic else ""
         templates += [
-            f"Anyone {r} to a {a}-tagged person is {h}{tagged}.",
+            f"Anyone {r} to a {a}{tagged} person is {h}{tagged}." if symbolic else f"Anyone who {r} someone {a} is {h}.",
             f"If a person is {r} to someone {a}{tagged}, then that person is {h}{tagged}.",
-            f"A person is {h}{tagged} when they are {r} to a {a}-tagged person.",
+            f"A person is {h}{tagged} when they are {r} to a {a}{tagged} person." if symbolic else f"A person is {h} when they {r} someone {a}.",
         ]
     elif len(atoms) == 2 and len(atoms[0].args) == 2 and atoms[1].args == ("?x",) and rule.head.args == ("?y",):
-        r = rel_word(atoms[0].pred) if pack in {"surface", "abstract"} else pred_words(atoms[0].pred)
-        a = tag_word(atoms[1].pred) if pack in {"surface", "abstract"} else pred_words(atoms[1].pred)
-        h = ("not " if not rule.head.sign else "") + (tag_word(rule.head.pred) if pack in {"surface", "abstract"} else pred_words(rule.head.pred))
-        tagged = " tagged" if pack in {"surface", "abstract"} else ""
+        r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
+        a = tag_word(atoms[1].pred) if symbolic else pred_words(atoms[1].pred)
+        h = ("not " if not rule.head.sign else "") + (tag_word(rule.head.pred) if symbolic else pred_words(rule.head.pred))
+        tagged = " tagged" if symbolic else ""
         templates += [
-            f"Anyone {r} from a {a}-tagged person is {h}{tagged}.",
-            f"If a {a}-tagged person is {r} to someone, then that other person is {h}{tagged}.",
-            f"People reached by a {r} relation from a {a}-tagged person are {h}{tagged}.",
+            f"Anyone {r} from a {a}{tagged} person is {h}{tagged}." if symbolic else f"Anyone whom a {a} person {r} is {h}.",
+            f"If a {a}{tagged} person is {r} to someone, then that other person is {h}{tagged}.",
+            f"People reached by a {r} relation from a {a}{tagged} person are {h}{tagged}." if symbolic else f"People reached by {r} from a {a} person are {h}.",
         ]
     elif len(atoms) == 2 and all(len(a.args) == 2 for a in atoms) and rule.head.args == ("?x", "?z"):
-        r = rel_word(atoms[0].pred) if pack in {"surface", "abstract"} else pred_words(atoms[0].pred)
-        s = rel_word(atoms[1].pred) if pack in {"surface", "abstract"} else pred_words(atoms[1].pred)
-        h = rel_word(rule.head.pred) if pack in {"surface", "abstract"} else pred_words(rule.head.pred)
+        r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
+        s = rel_word(atoms[1].pred) if symbolic else pred_words(atoms[1].pred)
+        h = rel_word(rule.head.pred) if symbolic else pred_words(rule.head.pred)
         templates += [
             f"If one person is {r} to a second person, and the second is {s} to a third, then the first is {h} to the third.",
             f"Anyone {r} to someone who is {s} to a third person is {h} to that third person.",
             f"{r.title()} relations followed by {s} relations imply {h} relations.",
         ]
     elif len(atoms) == 1 and len(atoms[0].args) == 2 and len(rule.head.args) == 2 and rule.head.args == ("?y", "?x"):
-        r = rel_word(atoms[0].pred) if pack in {"surface", "abstract"} else pred_words(atoms[0].pred)
-        h = rel_word(rule.head.pred) if pack in {"surface", "abstract"} else pred_words(rule.head.pred)
+        r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
+        h = rel_word(rule.head.pred) if symbolic else pred_words(rule.head.pred)
         templates += [
             f"If one person is {r} to another, then the second is {h} to the first.",
             f"Every {r} relation creates a {h} relation in the reverse direction.",
@@ -957,9 +984,89 @@ def parse_indices(s):
         return set()
 
 
+def _entails(theory, res, atom):
+    return atom in res.closure and opposite(atom) not in res.closure
+
+
+def _query_words(pred, pack):
+    if pack in {"surface", "abstract"} and pred.startswith("p"):
+        return f"{tag_word(pred)} tagged"
+    return pred_words(pred)
+
+
+def _binary_query(pred, x, count, pack):
+    label = "How many entities" if count else "Which entities"
+    if pack in {"surface", "abstract"} and pred.startswith("r"):
+        return f"{label} is {x} {rel_word(pred)} to?"
+    if pred in {"parent", "ancestor", "sibling", "spouse", "aunt_or_uncle"}:
+        rel = pred_words(pred)
+        art = "an" if rel[0] in "aeiou" else "a"
+        return f"{label} is {x} {art} {rel} of?"
+    if pred in {"left_of", "right_of", "above", "below", "inside"}:
+        return f"{label} is {x} {pred_words(pred)}?"
+    if pred == "contains":
+        return f"{label} does {x} contain?"
+    if pred == "disjoint":
+        return f"{label} is {x} disjoint from?"
+    return f"{label} does {x} {pred_words(pred)}?"
+
+
+def _join_answer(xs):
+    return ", ".join(sorted(xs))
+
+
+def _hard_answer_atoms(atoms, res, cfg):
+    lo = int(cfg.min_target_depth)
+    hi = int(min(cfg.max_target_depth, cfg.max_depth))
+    return [
+        a for a in atoms
+        if a in res.derivations
+        and lo <= res.derivations[a].depth <= hi
+        and len(support_atoms(a, res.derivations)) >= cfg.min_target_support_size
+    ]
+
+
+def _world_query(theory, res, source, cfg):
+    mode = cfg.answer_mode
+    modes = ("count", "list") if mode == "any" else (mode,)
+    random_modes = random.sample(modes, len(modes))
+    sigs = list(theory.pred_sigs.values())
+    random.shuffle(sigs)
+
+    for qmode in random_modes:
+        for sig in sigs:
+            if len(sig.arg_types) == 1:
+                atoms = [Atom(sig.name, (x,)) for x in theory.entities[sig.arg_types[0]]]
+                answer_atoms = [a for a in atoms if _entails(theory, res, a)]
+                hard = _hard_answer_atoms(answer_atoms, res, cfg)
+                if not answer_atoms or not hard:
+                    continue
+                answers = sorted(a.args[0] for a in answer_atoms)
+                pred = _query_words(sig.name, theory.domain_pack)
+                question = f"Which entities are {pred}?" if qmode == "list" else f"How many entities are {pred}?"
+                answer = _join_answer(answers) if qmode == "list" else str(len(answers))
+                support = sorted(set().union(*(support_sources(a, res.derivations, source) for a in answer_atoms)))
+                return edict(mode=qmode, question=question, answer=answer, support_indices=support, atoms=answer_atoms, hard_atoms=hard)
+
+            if len(sig.arg_types) == 2:
+                xs, ys = (theory.entities[t] for t in sig.arg_types)
+                x = random.choice(tuple(xs))
+                atoms = [Atom(sig.name, (x, y)) for y in ys if y != x]
+                answer_atoms = [a for a in atoms if _entails(theory, res, a)]
+                hard = _hard_answer_atoms(answer_atoms, res, cfg)
+                if not answer_atoms or not hard:
+                    continue
+                answers = sorted(a.args[1] for a in answer_atoms)
+                question = _binary_query(sig.name, x, qmode == "count", theory.domain_pack)
+                answer = _join_answer(answers) if qmode == "list" else str(len(answers))
+                support = sorted(set().union(*(support_sources(a, res.derivations, source) for a in answer_atoms)))
+                return edict(mode=qmode, question=question, answer=answer, support_indices=support, atoms=answer_atoms, hard_atoms=hard)
+    return None
+
+
 def make_direct_abduction_case(cfg):
     entities, sigs, _, _ = _domain_pack("surface", cfg)
-    es = list(entities["entity"])
+    es = list(next(iter(entities.values())))
     x, y = random.sample(es, 2)
     unaries = [s.name for s in sigs.values() if len(s.arg_types) == 1]
     binaries = [s.name for s in sigs.values() if len(s.arg_types) == 2]
@@ -1143,3 +1250,65 @@ class MultistepAbduction(Task):
     def score_answer(self, answer, entry):
         parse = lambda s: {x.strip() for x in str(s).strip().strip("[]").split(",") if x.strip()}
         return float(parse(answer) == parse(entry.answer))
+
+
+class LogicQA(Task):
+    def __init__(self, config=LogicQAConfig()):
+        super().__init__(config=config)
+        self.balancing_key_ratio = 1 / 3
+
+    def generate(self):
+        for _ in range(300):
+            theory = sample_theory(self.config)
+            res = chase(theory, max_depth=None)
+            if res.inconsistent:
+                continue
+            lines, source, _ = render(theory)
+            query = _world_query(theory, res, source, self.config)
+            if not query:
+                continue
+            meta = edict(
+                premise=lines,
+                question=query.question,
+                answer_mode=query.mode,
+                domain_pack=theory.domain_pack,
+                support_indices=query.support_indices,
+                max_answer_depth=max(res.derivations[a].depth for a in query.atoms),
+                hard_answer_depths=[res.derivations[a].depth for a in query.hard_atoms],
+                cot="\n\n".join(trace_for(a, res.derivations, source, theory.domain_pack) for a in query.atoms if a in res.derivations),
+            )
+            meta.payload = Payload(premise="\n".join(lines), question=query.question)
+            return Problem(meta, query.answer)
+        raise RuntimeError("could not generate a logic_qa example")
+
+    def prompt(self, meta):
+        if meta.answer_mode == "count":
+            fmt = "Answer with one integer."
+        else:
+            fmt = "Answer with names in alphabetical order, comma-separated."
+        return f"{Payload(meta.payload)}\n\n{fmt}"
+
+    def score_answer(self, answer, entry):
+        metadata = entry.metadata if hasattr(entry, "metadata") else entry["metadata"]
+        reference = entry.answer if hasattr(entry, "answer") else entry["answer"]
+        if metadata["answer_mode"] == "count":
+            try:
+                return float(int(str(answer).strip()) == int(reference))
+            except ValueError:
+                return 0.0
+        try:
+            import ast
+            text = str(answer).strip()
+            try:
+                pred = ast.literal_eval(text)
+                if not isinstance(pred, (list, tuple)):
+                    pred = [str(pred)]
+            except Exception:
+                pred = [x.strip() for x in text.split(",") if x.strip()]
+            truth = [x.strip() for x in str(reference).split(",") if x.strip()]
+            return float(sorted(map(str, pred)) == truth)
+        except Exception:
+            return 0.0
+
+    def balancing_key(self, problem):
+        return (problem.metadata.domain_pack, problem.metadata.answer_mode)

@@ -32,6 +32,7 @@ class ConstraintSatisfactionConfig(Config):
     p_in: float = 0.6
     p_out: float = 0.1
     grid_width: Optional[int] = None
+    model_mode: str = "any"  # "linear" | "attribute" | "grid" | "any"
 
     def update(self, c=1):
         self.n_vars += 0.6 * c
@@ -51,6 +52,20 @@ class ConstraintSatisfaction(Task):
 
     def _rng(self):
         return random.Random(self.config.seed)
+
+    def _possible_values(self, solver, var, values):
+        out = []
+        for v in values:
+            solver.push()
+            solver.add(var == v)
+            if solver.check() == sat:
+                out.append(v)
+            solver.pop()
+        return out
+
+    def _unique_value(self, solver, var, values):
+        vals = self._possible_values(solver, var, values)
+        return vals[0] if len(vals) == 1 else None
 
     def _build_neighbors(self, rng, n, mode):
         nbrs = [set() for _ in range(n)]
@@ -171,6 +186,12 @@ class ConstraintSatisfaction(Task):
         return sorted(solutions) if solutions else None, False
 
     def generate(self):
+        mode = self.config.model_mode
+        if mode == "any":
+            mode = random.choices(["attribute", "grid", "linear"], weights=[3, 3, 2])[0]
+        return {"attribute": self._generate_attribute, "grid": self._generate_grid}.get(mode, self._generate_linear)()
+
+    def _generate_linear(self):
         rng = self._rng()
         n, max_dom, n_cons = max(2, self.config.n_vars), max(2, self.config.max_domain), max(1, self.config.n_constraints)
 
@@ -211,7 +232,7 @@ class ConstraintSatisfaction(Task):
 
             metadata = edict({
                 "domains": domains, "constraints": constraints, "solution": solution,
-                "solve_mode": solve_mode, "structure_mode": mode,
+                "solve_mode": solve_mode, "structure_mode": mode, "model_mode": "linear",
                 "instance": "Variables/domains:\n" + \
                             "\n".join(f"- 0 <= x{i} <= {ub}" for i, ub in enumerate(domains)) + \
                             "\n\nConstraints:\n" + "\n".join(f"{j+1}. {self._constraint_text(c)}" for j, c in enumerate(constraints))
@@ -220,13 +241,113 @@ class ConstraintSatisfaction(Task):
             
         raise RuntimeError("Failed to generate a CSP instance.")
 
+    def _generate_attribute(self):
+        rng = self._rng()
+        people = "Alice Bruno Clara David Elena".split()[:max(3, min(5, int(self.config.n_vars) + 2))]
+        cats = {
+            "color": "red blue green yellow white".split()[:len(people)],
+            "pet": "cat dog bird fish horse".split()[:len(people)],
+            "drink": "tea milk juice water coffee".split()[:len(people)],
+            "snack": "apple bread cake dates eggs".split()[:len(people)],
+            "hobby": "chess music art dance tennis".split()[:len(people)],
+        }
+        sol = {cat: dict(zip(vals, rng.sample(range(len(people)), len(people)))) for cat, vals in cats.items()}
+        var = {(cat, val): Int(f"{cat}_{val}") for cat, vals in cats.items() for val in vals}
+        base = Solver()
+        for cat, vals in cats.items():
+            base.add(Distinct(*[var[cat, v] for v in vals]))
+            for v in vals: base.add(var[cat, v] >= 0, var[cat, v] < len(people))
+
+        qcat = rng.choice(list(cats))
+        qval = rng.choice(cats[qcat])
+        answer_idx = sol[qcat][qval]
+        k = min(len(cats) - 1, len(people) - 1, max(2, int(self.config.n_constraints) // 2))
+        link_cats = rng.sample([c for c in cats if c != qcat], k)
+        decoys = rng.sample([i for i in range(len(people)) if i != answer_idx], k)
+        clues = []
+        for cat in link_cats:
+            val = next(v for v in cats[cat] if sol[cat][v] == answer_idx)
+            base.add(var[qcat, qval] == var[cat, val])
+            clues.append(f"{qval} {qcat} and {val} {cat} belong to the same person.")
+        for cat, decoy in zip(link_cats, decoys):
+            keep = {answer_idx, decoy}
+            for val in cats[cat]:
+                if sol[cat][val] not in keep:
+                    base.add(var[cat, val] == sol[cat][val])
+                    clues.append(f"{val} {cat} belongs to {people[sol[cat][val]]}.")
+        ans = self._unique_value(base, var[qcat, qval], range(len(people)))
+        if ans is not None:
+            answer = people[ans]
+            prompt = (
+                f"People: {', '.join(people)}.\n"
+                f"Each {', '.join(cats)} is used once.\n"
+                "Clues:\n" + "\n".join(f"- {c}" for c in clues) +
+                f"\n\nWho has the {qval} {qcat}?\nAnswer with one name."
+            )
+            return Problem(edict(model_mode="attribute", prompt=prompt, clues=clues, query=(qcat, qval), solution=answer), answer)
+        raise RuntimeError("Failed to generate an attribute CSP instance.")
+
+    def _generate_grid(self):
+        rng = self._rng()
+        n = max(3, min(5, int(self.config.n_vars) + 2))
+        nums = rng.sample(range(1, n + 1), n)
+        sol = [[nums[(r + c) % n] for c in range(n)] for r in range(n)]
+        rng.shuffle(sol)
+        var = [[Int(f"r{r+1}c{c+1}") for c in range(n)] for r in range(n)]
+        base = Solver()
+        for row in var:
+            base.add(Distinct(*row), *[x >= 1 for x in row], *[x <= n for x in row])
+        for c in range(n):
+            base.add(Distinct(*[var[r][c] for r in range(n)]))
+        qr, qc = rng.randrange(n), rng.randrange(n)
+        candidates = []
+        for r in range(n):
+            for c in range(n):
+                if (r, c) != (qr, qc):
+                    candidates.append((f"r{r+1}c{c+1} = {sol[r][c]}", var[r][c] == sol[r][c]))
+                for dr, dc in ((1, 0), (0, 1)):
+                    rr, cc = r + dr, c + dc
+                    if rr < n and cc < n:
+                        op = "<" if sol[r][c] < sol[rr][cc] else ">"
+                        z = var[r][c] < var[rr][cc] if op == "<" else var[r][c] > var[rr][cc]
+                        candidates.append((f"r{r+1}c{c+1} {op} r{rr+1}c{cc+1}", z))
+        k = min((n + 1) // 2, max(2, int(self.config.n_constraints) // 2))
+        ans = sol[qr][qc]
+        vals = [v for v in range(1, n + 1) if v != ans]
+        row_vals = set(rng.sample(vals, k - 1))
+        col_vals = set(rng.sample([v for v in vals if v not in row_vals], k - 1))
+        row_hide = {qc} | {c for c in range(n) if sol[qr][c] in row_vals}
+        col_hide = {qr} | {r for r in range(n) if sol[r][qc] in col_vals}
+        clues = []
+        for c in rng.sample([c for c in range(n) if c not in row_hide], n - k):
+            base.add(var[qr][c] == sol[qr][c])
+            clues.append(f"r{qr+1}c{c+1} = {sol[qr][c]}")
+        for r in rng.sample([r for r in range(n) if r not in col_hide], n - k):
+            base.add(var[r][qc] == sol[r][qc])
+            clues.append(f"r{r+1}c{qc+1} = {sol[r][qc]}")
+        rng.shuffle(clues)
+        ans = self._unique_value(base, var[qr][qc], range(1, n + 1))
+        if ans is not None:
+            prompt = (
+                f"{n}x{n} grid. Each row and column contains 1..{n} once.\n"
+                "Clues:\n" + "\n".join(f"- {c}" for c in clues) +
+                f"\n\nWhat is r{qr+1}c{qc+1}?\nAnswer with one number."
+            )
+            return Problem(edict(model_mode="grid", prompt=prompt, clues=clues, query=(qr + 1, qc + 1), solution=ans), str(ans))
+        raise RuntimeError("Failed to generate a grid CSP instance.")
+
     def prompt(self, metadata):
+        if "prompt" in metadata:
+            return metadata.prompt
         order = ", ".join(f"x{i}" for i in range(len(metadata['domains'])))
         if metadata.get("solve_mode", "min") == "all":
             return f"{metadata['instance']}\nEnumerate ALL satisfying assignments in variable order [{order}].\nThe answer is a lexicographically sorted Python list of int lists, or UNSAT.\n"
         return f"{metadata['instance']}\nFind the lexicographically smallest satisfying assignment in variable order [{order}].\nThe answer is a Python list of ints, or UNSAT."
 
     def score_answer(self, answer, entry):
+        metadata = entry.metadata if hasattr(entry, "metadata") else entry["metadata"]
+        if metadata.get("model_mode") in {"attribute", "grid"}:
+            return float(str(answer).strip().lower() == str(entry.answer if hasattr(entry, "answer") else entry["answer"]).strip().lower())
         def _parse(s):
             if not isinstance(s, str) or not (s := s.strip()): return None
             if s.upper() == "UNSAT": return "UNSAT"
@@ -239,7 +360,6 @@ class ConstraintSatisfaction(Task):
             return None
 
         parsed = _parse(answer)
-        metadata = entry.metadata if hasattr(entry, "metadata") else entry["metadata"]
         expected = metadata["solution"]
         if expected is None: return float(parsed == "UNSAT")
         if parsed == "UNSAT" or not isinstance(parsed, list): return 0.0
