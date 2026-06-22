@@ -292,66 +292,6 @@ class GraphNodeCentrality(BaseGraphTask, Task):
             return 0.0
 
 
-class GraphIsomorphism(BaseGraphTask, Task): 
-    """Task to determine if two directed graphs have the exact same structure."""
-
-    def generate(self):
-        G1 = self._generate_graph()
-        
-        if random.random() < 0.5:
-            # TRUE Case
-            nodes = list(G1.nodes())
-            mapping = dict(zip(nodes, random.sample(nodes, len(nodes))))
-            G2 = nx.relabel_nodes(G1, mapping)
-            answer = True
-        else:
-            # FALSE Case
-            G2 = G1.copy()
-            success = False
-            for _ in range(15):
-                edges = list(G2.edges())
-                if len(edges) >= 2:
-                    e1, e2 = random.sample(edges, 2)
-                    # Manually rewire to break isomorphism
-                    if e1[0] != e2[1] and e2[0] != e1[1]:
-                        G2.remove_edge(*e1)
-                        G2.remove_edge(*e2)
-                        G2.add_edge(e1[0], e2[1])
-                        G2.add_edge(e2[0], e1[1])
-                        if not nx.is_isomorphic(G1, G2):
-                            success = True
-                            break
-                            
-            if not success:
-                for _ in range(25):
-                    G2 = self._generate_graph()
-                    if (G2.number_of_nodes() == G1.number_of_nodes() and 
-                        not nx.is_isomorphic(G1, G2)):
-                        break            
-            answer = False
-
-        if random.random() < self.config.pairs_render_together_prob:
-            s1=s2=random.randint(1, 1000)
-        else:
-            s1=s2=None
-        metadata = {
-            "graph1_description": self._render_graph(G1, s1),
-            "graph2_description": self._render_graph(G2, s2),
-        }
-        return Problem(metadata=metadata, answer=str(answer))
-
-    def prompt(self, metadata):
-        return (
-            f"Consider two directed graphs described below.\n\nGraph A:\n{metadata['graph1_description']}\n\n"
-            f"Graph B:\n{metadata['graph2_description']}\n\n"
-            "Are Graph A and Graph B isomorphic?\n"
-            "The answer is `True` or `False`."
-        )
-
-    def score_answer(self, answer, entry):
-        return 1.0 if str(answer).strip().lower() == entry.answer.lower() else 0.0
-
-
 @dataclass
 class GraphSuccessorsConfig(Config):
     num_nodes: int = 6

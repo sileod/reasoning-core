@@ -498,102 +498,6 @@ class ParsingDerivation(Task):
         return float(" ".join(labels) == entry["answer"])
 
 
-def mark_token(tokens, idx):
-    marked = list(tokens)
-    marked[idx] = f"<M> {marked[idx]} </M>"
-    return " ".join(marked)
-
-
-def constituent_spans(tree, start=0, path=()):
-    if isinstance(tree, str):
-        return [], start + 1
-    rows, end = [], start
-    for i, child in enumerate(tree):
-        sub, end = constituent_spans(child, end, path + (i,))
-        rows.extend(sub)
-    rows.append(edict(
-        label=str(tree.label()), start=start, end=end, path=path,
-        depth=len(path), span_len=end - start,
-    ))
-    return rows, end
-
-
-def smallest_span_candidates(tree):
-    nodes, _ = constituent_spans(tree)
-    n = len(tree.leaves())
-    out = []
-    for idx, token in enumerate(tree.leaves()):
-        covering = [x for x in nodes if x.start <= idx < x.end and x.span_len >= 2]
-        if not covering:
-            continue
-        span = min(covering, key=lambda x: (x.span_len, -x.depth))
-        out.append(edict(
-            idx=idx, token=token, start=span.start, end=span.end,
-            span_len=span.span_len,
-            bucket=str(span.span_len) if span.span_len <= 5 else "6+",
-            is_root=span.span_len == n,
-            is_edge=idx in {0, n - 1},
-        ))
-    return out
-
-
-class CFGSpan(DevTask):
-    def __init__(self, config: GrammarConfig = GrammarConfig()):
-        config.perturbation_rate = 0.0
-        super().__init__(config=config)
-        self.span_hist = Counter()
-        self.easy_accept = 0.30
-
-    def _eligible(self, candidates):
-        candidates = [c for c in candidates if not c.is_root]
-        candidates = [c for c in candidates if not c.is_edge] or candidates
-        hard = [c for c in candidates if c.span_len > 2]
-        return hard or (candidates if random.random() < self.easy_accept else [])
-
-    def _pick(self, candidates):
-        by_bucket = defaultdict(list)
-        for candidate in candidates:
-            by_bucket[candidate.bucket].append(candidate)
-        least = min(self.span_hist[bucket] for bucket in by_bucket)
-        bucket = random.choice([
-            bucket for bucket in by_bucket if self.span_hist[bucket] == least
-        ])
-        return random.choice(by_bucket[bucket])
-
-    def generate(self):
-        for _ in range(200):
-            meta = generate_parse(self.config)
-            if meta.label != "unambiguous":
-                continue
-            candidates = self._eligible(smallest_span_candidates(meta.parses[0]))
-            if not candidates:
-                continue
-            candidate = self._pick(candidates)
-            self.span_hist[candidate.bucket] += 1
-            meta.marked_index = candidate.idx
-            meta.marked_string = mark_token(meta.tokens, candidate.idx)
-            meta.span_len = candidate.span_len
-            meta.span_bucket = candidate.bucket
-            meta.pop("parses", None)
-            meta.pop("cot", None)
-            return Problem(meta, f"{candidate.start} {candidate.end}")
-        raise ValueError("Failed to generate CFGSpan")
-
-    def prompt(self, meta):
-        return (
-            f"(GRAMMAR)\n{meta.g}\n\n"
-            f"(STRING)\n{meta.marked_string}\n\n"
-            "(QUESTION)\n"
-            f"The marked token has index {meta.marked_index} before marking.\n"
-            "Return the start and end token indices of the smallest constituent spanning "
-            "at least 2 tokens that contains it.\n"
-            "Use 0-based, end-exclusive indices. Answer two integers: start end."
-        )
-
-    def score_answer(self, answer, entry):
-        numbers = re.findall(r"-?\d+", str(answer))
-        return float(" ".join(numbers[:2]) == entry["answer"])
-
 
 def _edge_str(edge):
     rhs = [str(s) for s in edge.rhs()]
@@ -659,7 +563,7 @@ def _build_cot(tokens, can_stop, justifications):
     return "\n".join(parts) if parts else "continuation"
 
 
-class Continuation(Task):
+class Continuation(DevTask):
     """Grammar continuation task using proper CFG parsing."""
     
     def __init__(self, config: GrammarConfig = GrammarConfig()):

@@ -249,7 +249,7 @@ class LogicNLI(Task):
         P = (
             f"{Payload(meta.payload)}\n\n"
             "Classify the hypothesis as entailment, contradiction, or neutral. "
-            "The answer is exactly one word."
+            "The answer is one label."
         )
 
         P=verbalize_predicates(P, seed=meta.verbalize_seed)

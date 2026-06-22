@@ -268,31 +268,20 @@ class SequentialInduction(Task):
         
     def prompt(self, metadata) -> str:
         """Build a concise prompt for inferring a recurrence from first terms."""
-        n_vis = self.config.n_visible_terms
         d = metadata["degree of recursion"]
-
-        lines = [
-            f"Infer a recurrence for sequence [U0, U1, ..., U{n_vis - 1}] indexed from 0.",
-            f"Max recurrence degree: {d}.",
-            "",
-            "Allowed binary ops: +, -, *, **",
-        ]
+        ops = "+, -, *, **"
 
         if self.config.mode == "full":
-            lines.append("- Also allowed: / (Euclidean division), Mod(a,b), relu(x), sign(x)")
+            ops += ", / (Euclidean division), Mod(a,b), relu(x), sign(x)"
+        refs = "n" if d == 0 else ("U[n - 1] and n" if d == 1 else f"U[n - 1] ... U[n - {d}] and n")
 
-        lines += [
-            f"- Previous terms must be referenced exactly as: U[n - 1] ... U[n - {d}]",
-            '- You may use "n" (current index).',
-            '- The answer is the right-hand side only (do not write "U[n] =").',
-            "",
+        return "\n".join([
+            f"Infer U[n]. Max recurrence degree: {d}. Ops: {ops}.",
+            f"Use {refs}.",
             f"Sequence: {metadata['first elements']}",
             f"Initial terms: {metadata['initial terms']}",
-            "",
-            "The answer should be as simple as possible and valid for all n >= d.",
-        ]
-
-        return "\n".join(lines)
+            "The answer is the RHS only.",
+        ])
 
 
     def deduplication_key(self, problem):

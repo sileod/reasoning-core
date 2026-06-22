@@ -1,6 +1,6 @@
 # 📖 Task Gallery
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`lean_proof_repair`](#lean_proof_repair) · [`conjecture_entailment`](#conjecture_entailment) · [`resolution_step`](#resolution_step) · [`planar_geometry_relations`](#planar_geometry_relations) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_isomorphism`](#graph_isomorphism) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`parsing_derivation`](#parsing_derivation) · [`continuation`](#continuation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_conversion`](#table_conversion) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`evidence_retrieval`](#evidence_retrieval) · [`logic_nli`](#logic_nli) · [`logic_qa`](#logic_qa) · [`multistep_abduction`](#multistep_abduction) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`planning`](#planning) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_dependencies`](#graph_dependencies) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`regex_retrieval`](#regex_retrieval) · [`constrained_continuation`](#constrained_continuation) · [`locate_error`](#locate_error) · [`parsing_derivation`](#parsing_derivation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_execution`](#code_execution) · [`code_runnability`](#code_runnability) · [`analogical_case_retrieval`](#analogical_case_retrieval)
 
 ---
 
@@ -8,13 +8,13 @@
 
 **Prompt:**
 ```
-Evaluate (-3 - 7 * 0.8).
+Evaluate 0 * 0.
 The answer is a number.
 ```
 
 **Answer:**
 ```
--8.6
+0
 ```
 
 ---
@@ -23,12 +23,12 @@ The answer is a number.
 
 **Prompt:**
 ```
-A jar holds 9 tokens. In order: multiplied by 2; then quadrupled. How many tokens are in the jar now? Give the answer as a number.
+A jar holds 8 buttons. In order: 4 buttons removed; then cut to half. How many buttons are in the jar now? Give the answer as a number.
 ```
 
 **Answer:**
 ```
-72
+2
 ```
 
 ---
@@ -40,15 +40,15 @@ A jar holds 9 tokens. In order: multiplied by 2; then quadrupled. How many token
 Solve the following system of equations for the variable 'X2'.
 
 System:
-  X1 + X2 - 39 = 0
-  18 - X1 = 0
+  X1 + 2 = 0
+  X2 + 16 = 0
 
 The answer is the value of X2, or 'No solution' / 'Multiple solutions'.
 ```
 
 **Answer:**
 ```
-21
+-16
 ```
 
 ---
@@ -57,10 +57,11 @@ The answer is the value of X2, or 'No solution' / 'Multiple solutions'.
 
 **Prompt:**
 ```
-Does this Lean 4 tactic body close the theorem? The answer is exactly True or False.
+Does this Lean 4 tactic body close the theorem?
+The answer is True or False.
 
-THEOREM WITH HOLE:
-theorem ex (x y : List Nat)  : (x ++ y).length = x.length + y.length := by
+THEOREM:
+theorem ex (a b : Int) : (b^2 + 2 * b) = (2 * b + b^2) := by
   ?
 
 CANDIDATE:
@@ -74,26 +75,30 @@ False
 
 ---
 
-## [lean_proof_repair](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+## [lean_missing_proof_line_selection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
 
 **Prompt:**
 ```
-Fix the broken Lean 4 proof below. Mathlib is imported. Choose one candidate replacement. The answer is exactly one candidate body.
+Fill `__ANSWER__` with one listed Lean proof line. Mathlib is imported.
+The answer is the line number.
 
-BROKEN PROOF:
-theorem ex (a : Int)  : 0 ≤ |3 * a| := by
-  decide
+THEOREM:
+theorem ex (s t u : Set Int) (h0 : u ⊆ s) : t ∩ u ⊆ t ∩ s := by
+  intro x hx
+  __ANSWER__
 
-CANDIDATE REPLACEMENTS:
-1. exact abs_nonneg (3 * a)
-2. omega
-3. rfl
-4. assumption
+LINES:
+1. simp
+2. rfl
+3. intro x hx
+4. exact h0
+5. intro h
+6. exact ⟨hx.1, h0 hx.2⟩
 ```
 
 **Answer:**
 ```
-exact abs_nonneg (3 * a)
+6
 ```
 
 ---
@@ -123,23 +128,25 @@ True
 
 ---
 
-## [resolution_step](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
+## [tptp_consistency_repair](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
 
 **Prompt:**
 ```
-Apply one step of binary resolution.
-Domain: Geometry
+Unsatisfiable theory.
+Remove a smallest set of clauses to make it satisfiable.
+The answer is sorted clause numbers.
 
-Clause A: (~between(lower_dimension_point_3,lower_dimension_point_2,X1) | ~between(X1,lower_dimension_point_1,lower_dimension_point_2))
-Clause B: (between(extension(Y1,Y2,Y3,Y4),Y2,Y1))
-
-A and B share no variables. Exactly one pair of complementary literals is unifiable.
-The answer is the canonicalized resolvent: literals sorted alphabetically after replacing variables by 'X', then variables renamed X1, X2, ... by first occurrence; e.g. (p(X1,f(X2)) | ~q(X1)).
+Clauses:
+1. (p(b))
+2. (r(b))
+3. (~p(b) | s(b))
+4. (~r(b) | s(b))
+5. (~s(b))
 ```
 
 **Answer:**
 ```
-(~between(lower_dimension_point_3,lower_dimension_point_2,extension(lower_dimension_point_2,lower_dimension_point_1,X1,X2)))
+[5]
 ```
 
 ---
@@ -148,9 +155,9 @@ The answer is the canonicalized resolvent: literals sorted alphabetically after 
 
 **Prompt:**
 ```
-Given points: E=(21/5, -2/5); H=(-2, -4); N=(74/5, -8/5); O=(-3, 2); Q=(5, 2); R=(3, -4); W=(-5, 5).
-Definitions: E is the projection of O onto line RQ. N is the reflection of W across line EQ.
-Question: What type of angle is angle EOQ?
+Given points: C=(-4/21, 5/7); E=(-1, 4); F=(-4, 5); L=(-5, -2); M=(4, -4); S=(6, 10); Z=(2, 4).
+Definitions: S is the translation of E by vector LZ. C is the intersection of lines ZS and FM.
+Question: What type of angle is angle CSF?
 Answer is one of: acute, right, obtuse.
 ```
 
@@ -168,14 +175,14 @@ acute
 Reduce the following untyped λ-term to β-normal form.
 Syntax: `\x.body` is λx.body; juxtaposition is left-associative application; free identifiers are constants.
 
-Term: (b ((\_0._0) (\v0.c)))
+Term: (\v0.(((\_0.v0) c) v0))
 
 The answer is the β-normal form (compared up to α-equivalence).
 ```
 
 **Answer:**
 ```
-(b (\v0.c))
+(\v0.(v0 v0))
 ```
 
 ---
@@ -188,20 +195,19 @@ Normalize by the ordered rewrite rules. At each step, use the first applicable r
 
 Rules:
 - if(false,X,Y) -> Y
+- id(X) -> X
 - let(unit,X) -> X
 - if(true,X,Y) -> X
-- id(X) -> X
-- const(X,Y) -> X
 - fst(pair(X,Y)) -> X
 
-Term: pair(let(if(if(false,snd(pair(c,b)),true),true,let(unit,unit)),b),true)
+Term: if(true,fst(if(true,let(unit,unit),c)),true)
 
 The answer is the normal form.
 ```
 
 **Answer:**
 ```
-pair(let(true,b),true)
+fst(unit)
 ```
 
 ---
@@ -210,9 +216,9 @@ pair(let(true,b),true)
 
 **Prompt:**
 ```
-Factor c is independently true with probability 0.3.
-Factor e is independently true with probability 0.7.
-The observation holds exactly when (factor c or factor e).
+Factor d is independently true with probability 0.4.
+Factor a is independently true with probability 0.6.
+The observation holds exactly when (factor d or factor a).
 We observe it.
 Which hidden fact values form the most probable complete explanation?
 
@@ -221,7 +227,7 @@ The answer is a sorted Python list of strings.
 
 **Answer:**
 ```
-["not c", "e"]
+["a", "not d"]
 ```
 
 ---
@@ -230,42 +236,18 @@ The answer is a sorted Python list of strings.
 
 **Prompt:**
 ```
-A box contains 6 silver balls and 2 gold balls.
+A box contains 5 gold balls and 7 silver balls.
 Two balls are drawn without replacing the first ball.
 Which statement is more likely?
-A: the first selected ball is silver.
-B: the first selected ball is gold.
+A: both selected balls are gold.
+B: the selected balls have different colors.
 
 The answer is exactly one of: A, B, equal.
 ```
 
 **Answer:**
 ```
-A
-```
-
----
-
-## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
-
-**Prompt:**
-```
-Premise:
-there is a room.
-Ethan is yankee tagged or is yankee tagged or both
-if someone is not quiet then he is an old person and vice versa
-Reginald is quiet
-Reginald is not yankee tagged
-at least four people in the room are papa tagged
-Hypothesis:
-Ethan is yankee tagged
-
-Classify the hypothesis as entailment, contradiction, or neutral. The answer is exactly one word.
-```
-
-**Answer:**
-```
-entailment
+B
 ```
 
 ---
@@ -275,14 +257,14 @@ entailment
 **Prompt:**
 ```
 Premise:
-[0] Jeffery is the only person in the room.
-[1] everyone in the room who is not a quiet person is a quiet person
-[2] someone who is not bravo tagged hates someone who is sierra tagged
-[3] not everyone in the room who is victor tagged is sierra tagged
-[4] no old person in the room is old
-[5] only one person in the room is victor tagged
+[0] Brian is the only person in the room.
+[1] Steven is papa tagged
+[2] all old people in the room are old
+[3] if someone is echo tagged then he is november tagged, echo tagged and victor tagged and vice versa
+[4] someone in the room is quiet
+[5] everyone in the room who is echo tagged is not foxtrot tagged
 Hypothesis:
-Jeffery is old
+Steven and Brian are not quiet
 
 Which statements in the premise contradict the hypothesis?
 The answer is the list of supporting statement indices, e.g. [0, 6, 7].
@@ -295,97 +277,27 @@ The answer is the list of supporting statement indices, e.g. [0, 6, 7].
 
 ---
 
-## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
 
 **Prompt:**
 ```
 Premise:
-bruno parent clara.
-clara parent alice.
-alice is kind.
-clara is not careful.
-clara is not kind.
-clara is patient.
-Whenever x parent y, x ancestor y.
-Whenever x parent y and y ancestor z, x ancestor z.
-From p parent x and p parent y and x is different from y, it follows that x sibling y.
-If one person is sibling to another, then the second is sibling to the first.
-Whenever x spouse y, y spouse x.
-For all x, y, z, if x parent y and x sibling z, then z aunt or uncle y.
+Karen is the only person in the room.
+all old people in the room are old
+everyone in the room is an old person if she is mike tagged
+Jessica is juliet tagged
+Karen is old
+everyone in the room is an old person if she is a quiet person
 
 Hypothesis:
-bruno does not ancestor alice.
+Carolyn is an old person
 
-Classify the hypothesis as entailment, contradiction, or neutral. The answer is exactly one word.
+Classify the hypothesis as entailment, contradiction, or neutral. The answer is one label.
 ```
 
 **Answer:**
 ```
-contradiction
-```
-
----
-
-## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-[0] bruno parent alice.
-[1] alice parent clara.
-[2] bruno is not adult.
-[3] david is careful.
-[4] alice is not patient.
-[5] alice is trusted.
-[6] From x parent y, it follows that x ancestor y.
-[7] From x parent y and y ancestor z, it follows that x ancestor z.
-[8] From p parent x and p parent y and x is different from y, it follows that x sibling y.
-[9] From x sibling y, it follows that y sibling x.
-[10] If one person is spouse to another, then the second is spouse to the first.
-[11] For all x, y, z, if x parent y and x sibling z, then z aunt or uncle y.
-
-Hypothesis:
-bruno ancestor clara.
-
-Which premise statements are necessary to entail the hypothesis, meaning removing any one of them breaks that result?
-The answer is a list of indices, e.g. [0, 1].
-```
-
-**Answer:**
-```
-[0, 1, 6, 7]
-```
-
----
-
-## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-[0] David is echo tagged.
-[1] Clara is bravo tagged.
-[2] Anyone who is echo tagged is delta tagged.
-[3] From x is delta tagged, it follows that x is not bravo tagged.
-
-Hypothesis:
-Bruno is bravo tagged.
-
-Candidate additional facts:
-[0] Alice is delta tagged.
-[1] Clara is foxtrot tagged.
-[2] Bruno is not echo tagged.
-[3] Bruno is bravo tagged.
-[4] Bruno is echo tagged.
-[5] Alice is echo tagged.
-
-Which candidate facts, if added to the premise, make the premise contradict the hypothesis?
-The answer is the smallest list of candidate indices, e.g. [0, 2].
-```
-
-**Answer:**
-```
-[4]
+neutral
 ```
 
 ---
@@ -395,20 +307,19 @@ The answer is the smallest list of candidate indices, e.g. [0, 2].
 **Prompt:**
 ```
 Premise:
-clara is trusted.
-david helps bruno.
-clara is active.
-alice advises bruno.
-bruno is careful.
-Being trusted implies being verified.
-Every verified entity is active.
-Every active entity is careful.
-Every careful entity is trained.
-Anyone who is trained and approved is active.
-Whenever x helps y, y advises x.
-Anyone who is verified and careful is approved.
-From x advises y and x is active, it follows that y is trained.
-Every trusted entity is careful.
+alice trusts david.
+david is careful.
+clara advises david.
+clara advises bruno.
+alice helps david.
+clara is not trusted.
+Anyone who trusts someone careful is active.
+From x is active, it follows that x is trained.
+For all x, if x is careful and x is approved, then x is verified.
+Every trusted entity is not verified.
+From x trusts y, it follows that y helps x.
+For all x, y, z, if x advises y and y helps z, then x does not trusts z.
+Whenever x trusts y and x is trained, y is approved.
 
 Question:
 How many entities are approved?
@@ -423,24 +334,124 @@ Answer with one integer.
 
 ---
 
+## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+**Prompt:**
+```
+Premise:
+[0] bruno is approved.
+[1] clara is active.
+[2] Whenever x is approved, x is trusted.
+[3] All things that are trusted are verified.
+
+Hypothesis:
+clara is verified.
+
+Candidate Facts:
+[0] clara is trained.
+[1] alice is approved.
+[2] alice is careful.
+[3] clara is approved.
+[4] clara is not approved.
+[5] david is approved.
+
+Which candidate facts, if added to the premise, make the premise entail the hypothesis?
+The answer is the smallest list of candidate indices, e.g. [0, 2].
+```
+
+**Answer:**
+```
+[3]
+```
+
+---
+
+## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+**Prompt:**
+```
+Premise:
+[0] box is inside map.
+[1] map is inside key.
+[2] lamp is safe.
+[3] key is right of map.
+[4] lamp is not marked.
+[5] lamp is fixed.
+[6] If one person is left of to another, then the second is right of to the first.
+[7] From x is above y, it follows that y is below x.
+[8] Whenever x is inside y, y contains x.
+[9] Anyone inside to someone who is inside to a third person is inside to that third person.
+[10] For all x, y, z, if x is left of y and y is left of z, then x is left of z.
+[11] Above relations followed by above relations imply above relations.
+[12] Whenever x is disjoint from y, y is disjoint from x.
+
+Hypothesis:
+key does not contain box.
+
+Which premise statements are necessary to contradict the hypothesis, meaning removing any one of them breaks that result?
+The answer is a list of indices, e.g. [0, 1].
+```
+
+**Answer:**
+```
+[0, 1, 8, 9]
+```
+
+---
+
+## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+**Prompt:**
+```
+Premise:
+alice is approved.
+alice is verified.
+bruno is trained.
+david is trained.
+bruno is approved.
+clara is careful.
+Whenever x is approved and x is verified, x is careful.
+Whenever x is careful, x is trusted.
+Every careful entity that is also trained is approved.
+Anyone whom a careful person helps is trusted.
+Whenever x advises y and y is active, x is careful.
+Anyone who is trained and approved is not active.
+From x advises y and y is trusted, it follows that x is careful.
+
+Hypothesis:
+alice is trusted.
+
+Classify the hypothesis as entailment, contradiction, or neutral. The answer is one label.
+```
+
+**Answer:**
+```
+entailment
+```
+
+---
+
 ## [planning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/planning.py)
 
 **Prompt:**
 ```
 Objects:
-object_1
+object_1, object_2, object_3, object_4
 
 Actions:
-action_0(x0)
-  Requires: (not fluent_3(x0)), (not fluent_2(x0))
-  Effect: not fluent_0(x0), fluent_3(x0), not fluent_1, fluent_2(x0)
+action_0(x0, x1)
+  Requires: (not fluent_0)
+  Effect: fluent_0
+action_1(x0)
+  Requires: fluent_0
+  Effect: fluent_1(x0), not fluent_0
 
 Initial state:
 True values: None
 
 Goal:
-fluent_2(object_1)
-Hint: Reference solution has 1 actions (but it may not be optimal).
+fluent_1(object_1), fluent_0
+Hint: Reference solution has 3 actions (but it may not be optimal).
 
 Action format example: action_0(object1 object2).
 The answer is the plan, one action per line.
@@ -448,38 +459,9 @@ The answer is the plan, one action per line.
 
 **Answer:**
 ```
-action_0(object_1)
-```
-
----
-
-## [set_intersection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
-
-**Prompt:**
-```
-Set1: {473, 892, 97, 238, 717, 188, 54, 522}
-Set2: {54, 213, 144, 522, 106, 238}
-The answer is Set1 ∩ Set2 as a Python set.
-```
-
-**Answer:**
-```
-{54, 238, 522}
-```
-
----
-
-## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
-
-**Prompt:**
-```
-Set_A: {'ninety-eight', 'ninety-five', 'ninety-seven', 'eighty-nine', 'ninety-two', 'ninety-four', 'ninety', 'ninety-one', 'ninety-six'}
-The answer is the missing elements from Set_A as a Python set.
-```
-
-**Answer:**
-```
-{'ninety-three'}
+action_0(object_4, object_4)
+action_1(object_1)
+action_0(object_4, object_4)
 ```
 
 ---
@@ -488,13 +470,13 @@ The answer is the missing elements from Set_A as a Python set.
 
 **Prompt:**
 ```
-List: [2, 7, 5, 4, 8, 10, 20, 20, 19, 15]
-How many times does 2 appear? The answer is a number.
+List: [6, 1, 8, 4, 20, 8, 15, 4, 4, 3]
+How many times does 8 appear? The answer is a number.
 ```
 
 **Answer:**
 ```
-1
+2
 ```
 
 ---
@@ -503,14 +485,45 @@ How many times does 2 appear? The answer is a number.
 
 **Prompt:**
 ```
-Set1: {536, 668, 519, 22, 386, 214, 30, 172}
-Set2: {386, 30, 214, 519, 668, 22, 172, 536}
+Set1: {141, 399, 696, 820, 487, 408, 166, 753}
+Set2: {820, 166, 696, 408, 399, 141, 753}
 Do Set1 and Set2 contain exactly the same elements? The answer is True or False.
 ```
 
 **Answer:**
 ```
-True
+False
+```
+
+---
+
+## [set_intersection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+**Prompt:**
+```
+Set1: {596, 619, 157, 228, 1, 798, 651, 737}
+Set2: {666, 651, 157, 393, 227, 596}
+The answer is Set1 ∩ Set2 as a Python set.
+```
+
+**Answer:**
+```
+{157, 596, 651}
+```
+
+---
+
+## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+**Prompt:**
+```
+Set_A: {28, 24, 29, 27, 31, 26, 33}
+The answer is the missing elements from Set_A as a Python set.
+```
+
+**Answer:**
+```
+{25, 30, 32}
 ```
 
 ---
@@ -519,23 +532,16 @@ True
 
 **Prompt:**
 ```
-Infer a recurrence for sequence [U0, U1, ..., U7] indexed from 0.
-Max recurrence degree: 1.
-
-Allowed binary ops: +, -, *, **
-- Previous terms must be referenced exactly as: U[n - 1] ... U[n - 1]
-- You may use "n" (current index).
-- The answer is the right-hand side only (do not write "U[n] =").
-
-Sequence: [8, 9, 11, 14, 18, 23, 29, 36]
-Initial terms: [8]
-
-The answer should be as simple as possible and valid for all n >= d.
+Infer U[n]. Max recurrence degree: 0. Ops: +, -, *, **.
+Use n.
+Sequence: [0, 4, 16, 36, 64, 100, 144, 196]
+Initial terms: []
+The answer is the RHS only.
 ```
 
 **Answer:**
 ```
-n + U[n - 1]
+4*n**2
 ```
 
 ---
@@ -547,18 +553,18 @@ n + U[n - 1]
 There are 5 objects: E0, E1, E2, E3, E4.
 They have distinct ages.
 Facts:
-- E4 is newer than E2.
-- E3 is the newest.
-- E1 is newer than E4.
-- E1 is the 3rd-newest.
+- E1 is the 5th-newest.
+- E2 is the 2nd-newest.
+- E3 is newer than E0.
+- E2 is newer than E3.
 
-Which object is the 4th-oldest?
+Which object is the 3rd-newest?
 The answer is one object label.
 ```
 
 **Answer:**
 ```
-E0
+E3
 ```
 
 ---
@@ -567,25 +573,26 @@ E0
 
 **Prompt:**
 ```
-Objects occupy distinct points on the integer grid [0, 4] x [0, 4].
-North is +y and East is +x. Any object not mentioned in a step stays fixed.
-Initial facts:
-- A is left of C.
+Grid [0,4]x[0,4], N=+y, E=+x. Unmentioned objects stay fixed.
+
+Initial Facts:
+- B is in the same row as C.
+- C is right of A.
+- A is right of B.
 - C is right of B.
-- A starts at (1, 1).
-- C is above B.
-- A is left of B.
-- A is below B.
-- C is above A.
-- C starts at (3, 4).
+- C is below A.
+- A is above B.
+- A starts at (3, 4).
+
 Steps:
-1. B jumps to A's position offset by (-1, -1).
+1. B jumps to C's position offset by (-1, 1).
+
 What is the final coordinate of A? The answer is (x, y).
 ```
 
 **Answer:**
 ```
-(1, 1)
+(3, 4)
 ```
 
 ---
@@ -595,26 +602,26 @@ What is the final coordinate of A? The answer is (x, y).
 **Prompt:**
 ```
 Inventory:
-- b1: yellow
-- b2: white
+- b1: black
+- b2: yellow
 - b3: yellow
-- b4: yellow
+- b4: white
 Initial state:
-- b1 is in x2
+- b1 is in x1
 - b2 is in x1
-- b3 is in x2
+- b3 is in x1
 - b4 is in x3
 Moves:
-- Move b2 from x1 to x3.
 - Move b4 from x3 to x1.
-- Transfer b2 from x3 into x2.
-- Move it from x2 to x3.
-Where is b1 now? The answer is a box tag, like x1.
+- Move b1 from x1 to x3.
+- Move b3 from x1 to x3.
+- Relocate b4 from x1 to x3.
+Where is b2 now? The answer is a box tag, like x1.
 ```
 
 **Answer:**
 ```
-x2
+x1
 ```
 
 ---
@@ -623,21 +630,20 @@ x2
 
 **Prompt:**
 ```
-(1) A kind old doctor named Sara helped a kind short engineer named Zoe.
-(2) Zoe questioned a loud old pilot named Leo.
-(3) She avoided him.
-(4) A kind loud nurse named Lily questioned Sara.
-(5) Sara praised Lily.
-(6) A loud young scientist named Kate called Leo.
-(7) He avoided her.
+(1) A quiet young engineer named Max called a loud old pilot named Zoe.
+(2) He avoided an old quiet pilot named Noah.
+(3) A loud old writer named Mary helped Noah.
+(4) A kind young engineer named Iris greeted the loud pilot.
+(5) Max avoided the kind engineer.
+(6) She thanked him.
 
-In sentence 3, what does the subject expression 'She' refer to?
+In sentence 6, what does the subject expression 'She' refer to?
 The answer is the person's name.
 ```
 
 **Answer:**
 ```
-Zoe
+Iris
 ```
 
 ---
@@ -646,84 +652,20 @@ Zoe
 
 **Prompt:**
 ```
-Variables/domains:
-- 0 <= x0 <= 1
-- 0 <= x1 <= 1
+4x4 grid. Each row and column contains 1..4 once.
+Clues:
+- r3c2 = 2
+- r4c2 = 1
+- r1c1 = 4
+- r1c3 = 2
 
-Constraints:
-1. -x1 == 0
-2. (x0 + 3*x1) % 3 == 1
-3. -3*x0 <= -1
-Enumerate ALL satisfying assignments in variable order [x0, x1].
-The answer is a lexicographically sorted Python list of int lists, or UNSAT.
-
+What is r1c2?
+Answer with one number.
 ```
 
 **Answer:**
 ```
-[[1, 0]]
-```
-
----
-
-## [graph_pathfinding](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
-
-**Prompt:**
-```
-Consider the directed graph:
-
-0: 0->1 0->4 0->5; 1:; 2: 2->0; 3: 3->1; 4:; 5: 5->0
-
-Find the lexicographically smallest shortest directed path from Node 5 to Node 0.
-The answer is a Python list of nodes, or `None` if no path exists.
-```
-
-**Answer:**
-```
-[5, 0]
-```
-
----
-
-## [graph_isomorphism](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
-
-**Prompt:**
-```
-Consider two directed graphs described below.
-
-Graph A:
-0: 0->1; 1: 1->2 1->5; 2: 2->1; 3: 3->1; 4: 4->2; 5: 5->1
-
-Graph B:
-0: 0->1; 1: 1->3; 2:; 3: 3->0 3->2; 4: 4->5; 5: 5->1 5->4
-
-Are Graph A and Graph B isomorphic?
-The answer is `True` or `False`.
-```
-
-**Answer:**
-```
-False
-```
-
----
-
-## [graph_successors](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
-
-**Prompt:**
-```
-Consider the directed graph:
-
-digraph { 0->3; 1->1; 2->5; 3->4; 4->0; 5->2 }
-
-Queries: [(2, 2)]
-Each pair (x, k) asks for the k-th successor of x (following exact directed edges k times).
-The answer is a Python list of integers in query order.
-```
-
-**Answer:**
-```
-[2]
+3
 ```
 
 ---
@@ -734,17 +676,56 @@ The answer is a Python list of integers in query order.
 ```
 Consider the directed graph:
 
-digraph { 1->3; 2->3; 5->1; 5->4 }
+digraph { 0->2; 0->3; 0->4; 1->2; 1->3; 1->5; 4->3; 5->2; 5->4 }
 
 In this scenario, a directed edge from U to V means V depends on U (so U is a prerequisite of V).
-List all prerequisites of node 3 (recursively), making sure to order base prerequisites first.
+List all prerequisites of node 2 (recursively), making sure to order base prerequisites first.
 Exclude the query node; prerequisites must precede dependents, with lexicographic tie-breaks.
 The answer is a Python list of integers.
 ```
 
 **Answer:**
 ```
-[2, 5, 1]
+[0, 1, 5]
+```
+
+---
+
+## [graph_pathfinding](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
+
+**Prompt:**
+```
+Consider the directed graph:
+
+Node 0 points to 5. Node 1 points to 0, 2. Node 2 points to 3. Node 3 points to 4. Node 4 points to 3. Node 5 points to 4.
+
+Find the lexicographically smallest shortest directed path from Node 1 to Node 3.
+The answer is a Python list of nodes, or `None` if no path exists.
+```
+
+**Answer:**
+```
+[1, 2, 3]
+```
+
+---
+
+## [graph_successors](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
+
+**Prompt:**
+```
+Consider the directed graph:
+
+Directed Edges: 0->2, 1->4, 2->1, 3->0, 4->5, 5->3
+
+Queries: [(5, 1)]
+Each pair (x, k) asks for the k-th successor of x (following exact directed edges k times).
+The answer is a Python list of integers in query order.
+```
+
+**Answer:**
+```
+[3]
 ```
 
 ---
@@ -753,12 +734,12 @@ The answer is a Python list of integers.
 
 **Prompt:**
 ```
-The answer is a 5-character string that fully matches the regular expression: [4s5]+
+The answer is a 5-character string that fully matches the regular expression: [ETX]+
 ```
 
 **Answer:**
 ```
-5545s
+TXETX
 ```
 
 ---
@@ -767,30 +748,14 @@ The answer is a 5-character string that fully matches the regular expression: [4
 
 **Prompt:**
 ```
-Positive: 'abd', 'c'
-Negative: 'a', 'adbdb', 'bccca', 'cb', 'd', 'dbb', 'dca', 'dcc'
+Positive: 'aaad', 'dbb'
+Negative: 'aa', 'ab', 'c', 'cbaa', 'cdac', 'cdbb', 'dad', 'ddcd'
 The answer is the shortest regex matching all positives and no negatives. Use only literals from Σ={abcd}, concatenation, |, parentheses, and postfix *, +, ?. Break ties lexicographically.
 ```
 
 **Answer:**
 ```
-abd|c
-```
-
----
-
-## [regex_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
-
-**Prompt:**
-```
-Text: v, 1\, imageWz, Democrat8, 4\, .
-Regex: \d\\{1}
-The answer is a JSON array of exact non-overlapping matches, left-to-right, including duplicates. The answer is [] if none.
-```
-
-**Answer:**
-```
-["1\\","4\\"]
+a*db*
 ```
 
 ---
@@ -799,9 +764,9 @@ The answer is a JSON array of exact non-overlapping matches, left-to-right, incl
 
 **Prompt:**
 ```
-A = (aba)
-B = (abc)
-Is every string accepted by A also accepted by B?
+A = (c|bb)
+B = c|a?
+Do A and B accept exactly the same set of strings?
 The answer is Yes or No.
 ```
 
@@ -812,48 +777,47 @@ No
 
 ---
 
-## [parsing_derivation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+## [regex_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
 
 **Prompt:**
 ```
-(GRAMMAR)
-R0: start -> seq
-R1: seq -> 
-R2: seq -> expr seq
-R3: expr -> '(' seq ')'
-R4: expr -> '[' seq ']'
-R5: expr -> '<' seq '>'
-
-(STRING)
-( ( ) ) [ ]
-
-(QUESTION)
-The answer is the rule labels used in the leftmost derivation of STRING, in order, separated by spaces.
+Text: i. R. ]W. ]U. [. o
+Regex: \][M-Y]
+The answer is a JSON array of exact non-overlapping matches, left-to-right, including duplicates. The answer is [] if none.
 ```
 
 **Answer:**
 ```
-R0 R2 R3 R2 R3 R1 R1 R2 R4 R1 R1
+["]W","]U"]
 ```
 
 ---
 
-## [continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+## [constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
 
 **Prompt:**
 ```
-List valid next tokens for this prefix. The answer is the valid tokens sorted alphabetically and separated by |, with STOP at the end if the prefix forms a complete string.
 (GRAMMAR)
 S -> A
-A -> 'rock'
-A -> 'rock' A
+A -> 'sound'
+A -> A 'sound'
+
 (PREFIX)
-rock rock rock rock
+sound
+
+(TEMPLATE)
+sound ___ ___
+
+(SUFFIX)
+<empty>
+
+Fill in the 2 blanks (___) so that PREFIX + filled-TEMPLATE + SUFFIX is a grammatical sentence. Fixed tokens of TEMPLATE must remain in place.
+The answer is the 3 tokens of the filled TEMPLATE, space-separated.
 ```
 
 **Answer:**
 ```
-rock|STOP
+sound sound sound
 ```
 
 ---
@@ -863,12 +827,12 @@ rock|STOP
 **Prompt:**
 ```
 (GRAMMAR)
-S -> D
-D -> 'national'
-D -> D 'hour'
+S -> B
+B -> 'hold' B
+B -> 'seven'
 
 (STRING)
-national hour national hour hour
+hold hold hold hold hold seven seven
 
 The answer is the shortest contiguous span from STRING that ends at the first invalid token and occurs only once in STRING.
 Mark the invalid token as >>token<<.
@@ -880,36 +844,31 @@ One line only.
 
 **Answer:**
 ```
-hour >>national<<
+seven >>seven<<
 ```
 
 ---
 
-## [constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+## [parsing_derivation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
 
 **Prompt:**
 ```
 (GRAMMAR)
-S -> A
-A -> 'relate'
-A -> A 'factor'
+R0: S -> B
+R1: B -> B 'court'
+R2: B -> 'skill'
+R3: B -> C
 
-(PREFIX)
-<empty>
+(STRING)
+skill court court court court
 
-(TEMPLATE)
-relate ___ ___ factor
-
-(SUFFIX)
-<empty>
-
-Fill in the 2 blanks (___) so that PREFIX + filled-TEMPLATE + SUFFIX is a grammatical sentence. Fixed tokens of TEMPLATE must remain in place.
-The answer is the 4 tokens of the filled TEMPLATE, space-separated.
+(QUESTION)
+The answer is the rule labels used in the leftmost derivation of STRING, in order, separated by spaces.
 ```
 
 **Answer:**
 ```
-relate factor factor factor
+R0 R1 R1 R1 R1 R2
 ```
 
 ---
@@ -921,79 +880,27 @@ relate factor factor factor
 Execute this SQL query on the table named dataframe:
 
 Table 1:
-date,product
-2026-04-08,Structure
-2025-07-26,Interview
-2026-02-06,Research
-2025-10-09,Short
-2025-06-26,Successful
+\begin{tabular}{rr}
+\toprule
+qty & price \\
+\midrule
+879.0 & 495.56 \\
+932.0 & 303.56 \\
+15.0 & 35.43 \\
+502.0 & 475.31 \\
+799.0 & 464.51 \\
+\bottomrule
+\end{tabular}
 
 
-SQL: SELECT COUNT(*) FROM dataframe WHERE product = 'Interview'
+SQL: SELECT ROUND(MIN(price), 2) FROM dataframe
 
 The answer is the result as single value.
 ```
 
 **Answer:**
 ```
-1
-```
-
----
-
-## [table_conversion](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
-
-**Prompt:**
-```
-Convert the following table from yaml to html.
-
-- price: '424.73'
-  date: 2025-08-23
-- price: '315.78'
-  date: 2025-11-13
-- price: '350.42'
-  date: 2026-05-22
-- price: '215.47'
-  date: 2025-10-15
-- price: '53.21'
-  date: 2025-09-07
-
-
-The answer is the converted table.
-```
-
-**Answer:**
-```
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th>price</th>
-      <th>date</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>424.73</td>
-      <td>2025-08-23</td>
-    </tr>
-    <tr>
-      <td>315.78</td>
-      <td>2025-11-13</td>
-    </tr>
-    <tr>
-      <td>350.42</td>
-      <td>2026-05-22</td>
-    </tr>
-    <tr>
-      <td>215.47</td>
-      <td>2025-10-15</td>
-    </tr>
-    <tr>
-      <td>53.21</td>
-      <td>2025-09-07</td>
-    </tr>
-  </tbody>
-</table>
+35.43
 ```
 
 ---
@@ -1002,45 +909,16 @@ The answer is the converted table.
 
 **Prompt:**
 ```
-String: adbdbceb
-Edits:
-- insert e at index 8
-- replace index 5 with a
-- delete at index 3
+String: ccbcdbbc
+Operations:
+- replace c with b
+- sort ascending
 Answer with the final string.
 ```
 
 **Answer:**
 ```
-adbbaebe
-```
-
----
-
-## [code_runnability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
-
-**Prompt:**
-````
-Predict whether this Python call runs successfully or raises an exception.
-```python
-def f0(n: str) -> list:
-    a = f0(n)
-    print(n)
-    return a
-def f1(t: list, r: str) -> str:
-    a = [0, 1, 2]
-    return f1(a, r)
-def endpoint(x0: str) -> list:
-    return f0(x0)
-
-```
-Call: `endpoint('ax')`
-The answer is `OK` if it runs successfully; otherwise the exception class name.
-````
-
-**Answer:**
-```
-RecursionError
+bbbbbbbd
 ```
 
 ---
@@ -1051,23 +929,119 @@ RecursionError
 ````
 Predict the value returned by this Python call.
 ```python
-def f0(k: list, a: int) -> str:
-    a = a
-    return f1(8, k)
-def f1(q: int, s: list) -> str:
-    print(q)
-    return ""
-def endpoint(x0: list, x1: int) -> str:
-    return f0(x0, x1)
+def f0(y: int) -> int:
+    print(y)
+    return y - 5
+def f1(e: int) -> str:
+    e = [i % 3 for i in range(2, 8)]
+    return "go"
+def endpoint(x0: int) -> int:
+    return f0(x0)
 
 ```
-Call: `endpoint([1, -1, 0], -2)`
+Call: `endpoint(0)`
 The answer is the exact Python `repr` of the returned value.
 ````
 
 **Answer:**
 ```
-''
+-5
+```
+
+---
+
+## [code_runnability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
+
+**Prompt:**
+````
+Predict whether this Python call runs successfully or raises an exception.
+```python
+def f0(b: list, q: str) -> int:
+    assert 4 == 5
+    a = f0([0, 1, 2], "go") * f0(b, q)
+    return a + 1
+def f1(a: list, f: list) -> list:
+    print(f)
+    return f
+def endpoint(x0: list, x1: str) -> int:
+    return f0(x0, x1)
+
+```
+Call: `endpoint([-3, 1], 'czb')`
+The answer is `OK` if it runs successfully; otherwise the exception class name.
+````
+
+**Answer:**
+```
+AssertionError
+```
+
+---
+
+## [analogical_case_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/formal_analogies.py)
+
+**Prompt:**
+```
+Cases show facts that imply one new fact.
+Object names and link names may be consistently renamed.
+
+M0
+b is beta-linked to e.
+c is beta-linked to b.
+c is beta-linked to e.
+e is gamma-linked to b.
+Implies: c is beta-linked to a.
+
+M1
+d is alpha-linked to a.
+d is alpha-linked to c.
+d is beta-linked to c.
+c is gamma-linked to b.
+Implies: a is alpha-linked to c.
+
+M2
+b is beta-linked to e.
+d is beta-linked to b.
+b is gamma-linked to c.
+d is gamma-linked to c.
+Implies: b is beta-linked to c.
+
+M3
+a is alpha-linked to e.
+e is alpha-linked to b.
+c is beta-linked to d.
+e is gamma-linked to b.
+Implies: e is alpha-linked to d.
+
+M4
+a is beta-linked to e.
+b is beta-linked to c.
+d is beta-linked to b.
+b is gamma-linked to a.
+Implies: d is gamma-linked to a.
+
+M5
+c is alpha-linked to a.
+e is alpha-linked to d.
+d is beta-linked to e.
+c is gamma-linked to d.
+Implies: a is beta-linked to d.
+
+Query
+v is delta-linked to y.
+y is delta-linked to x.
+y is delta-linked to z.
+u is epsilon-linked to z.
+v is epsilon-linked to z.
+u is gamma-linked to z.
+y is gamma-linked to u.
+z is gamma-linked to y.
+Implies:
+```
+
+**Answer:**
+```
+x is delta-linked to z.
 ```
 
 ---

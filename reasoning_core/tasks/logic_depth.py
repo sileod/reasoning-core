@@ -1166,7 +1166,7 @@ class MultistepNLI(Task):
         return (
             f"{Payload(meta.payload)}\n\n"
             "Classify the hypothesis as entailment, contradiction, or neutral. "
-            "The answer is exactly one word."
+            "The answer is one label."
         )
 
     def score_answer(self, answer, entry):

@@ -91,26 +91,28 @@ class StringTransduction(Task):
         return edits
 
     def generate(self):
-        alphabet = ALPHA[: self.config.alphabet_size]
-        mode = "edit" if random.random() < self.config.edit_rate else "program"
-        if mode != "edit" and random.random() < 0.25:
-            xs = random.sample(WORDS, random.randint(4, min(8, len(WORDS))))
-            source = " ".join(xs)
-        else:
-            source = "".join(random.choice(alphabet) for _ in range(self.config.length))
+        for _ in range(20):
+            alphabet = ALPHA[: self.config.alphabet_size]
+            mode = "edit" if random.random() < self.config.edit_rate else "program"
+            if mode != "edit" and random.random() < 0.25:
+                xs = random.sample(WORDS, random.randint(4, min(8, len(WORDS))))
+                source = " ".join(xs)
+            else:
+                source = "".join(random.choice(alphabet) for _ in range(self.config.length))
 
-        if mode == "edit":
-            edits = self._edits(source, alphabet)
-            target = apply_edits(source, edits)
-            meta = edict(mode=mode, source=source, edits=edits)
-            return Problem(meta, target)
-
-        program = self._program(alphabet)
-        y = source
-        for _, f in program:
-            y = f(y)
-        meta = edict(mode=mode, source=source, ops=[name for name, _ in program])
-        return Problem(meta, y)
+            if mode == "edit":
+                edits = self._edits(source, alphabet)
+                target = apply_edits(source, edits)
+                meta = edict(mode=mode, source=source, edits=edits)
+            else:
+                program = self._program(alphabet)
+                target = source
+                for _, f in program:
+                    target = f(target)
+                meta = edict(mode=mode, source=source, ops=[name for name, _ in program])
+            if target:
+                return Problem(meta, target)
+        raise RuntimeError("failed to generate nonempty string transduction")
 
     def prompt(self, m):
         if m.mode == "edit":

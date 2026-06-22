@@ -5,7 +5,7 @@ from faker import Faker
 import random
 import re
 from dataclasses import dataclass
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, DevTask, Problem, Config
 from reasoning_core.utils import score_scalar
 import csv
 import yaml
@@ -226,7 +226,7 @@ class TableQA(Task):
         m = problem.metadata
         return f"{m.query_family}:scalar={int(m.is_scalar)}:bucket={m.result_bucket}"
 
-class TableConversion(Task):
+class TableConversion(DevTask):
     def __init__(self, config=TableQAConfig()):
         super().__init__(config=config)
 

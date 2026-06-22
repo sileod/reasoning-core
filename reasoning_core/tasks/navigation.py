@@ -7,7 +7,7 @@ from itertools import combinations
 
 from z3 import Int, Solver, Distinct, And, Abs, Not, sat, unsat
 
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Payload, Problem, Config, edict
 
 
 @dataclass
@@ -348,10 +348,8 @@ class Navigation(Task):
             )
 
         return (
-            f"Objects occupy distinct points on the integer grid [0, {G}] x [0, {G}].\n"
-            f"North is +y and East is +x. Any object not mentioned in a step stays fixed.\n"
-            f"Initial facts:\n{facts_txt}\n"
-            f"Steps:\n{steps_txt}\n"
+            f"Grid [0,{G}]x[0,{G}], N=+y, E=+x. Unmentioned objects stay fixed.\n\n"
+            f"{Payload(initial_facts=facts_txt, steps=steps_txt)}\n\n"
             f"{question}"
         )
 

@@ -1398,7 +1398,7 @@ class LeanForwardProof(DevTask):
         return float(get_runner(use_mathlib=_mget(entry.metadata, "use_mathlib")).check(code)[0])
 
 
-class LeanDerivationPremiseSelection(Task):
+class LeanDerivationPremiseSelection(DevTask):
     """Track axiom reachability in a displayed Lean derivation DAG."""
 
     def __init__(self, config=None, **kwargs):
@@ -1513,6 +1513,67 @@ class LeanMissingProofLine(DevTask):
         return float(_normalize_line(answer) == entry.answer)
 
 
+class LeanMissingProofLineSelection(Task):
+    """Choose the unique available proof line that fills a Lean proof hole."""
+
+    def __init__(self, config=None, **kwargs):
+        if config is None:
+            config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
+        for k, v in kwargs.items():
+            setattr(config, k, v)
+        super().__init__(config=config, timeout=120)
+
+    def generate(self):
+        use_mathlib = getattr(self.config, "use_mathlib", True)
+        runner = get_runner(use_mathlib=use_mathlib)
+        for _ in range(30):
+            script = make_proof_script(self.config)
+            idx = random.randrange(len(script.lines))
+            correct_line = script.lines[idx]
+            template = script.header + "".join(
+                "  __ANSWER__\n" if i == idx else f"  {line}\n"
+                for i, line in enumerate(script.lines)
+            )
+            available = _line_options(script.lines, correct_line, self.config.n_candidates)
+            compiling = [
+                j for j, line in enumerate(available, 1)
+                if _safe(line) and runner.check(template.replace("__ANSWER__", line))[0]
+            ]
+            correct_index = available.index(correct_line) + 1
+            if compiling != [correct_index]:
+                continue
+            return Problem(
+                edict(
+                    kind=script.kind,
+                    template=template,
+                    available_lines=available,
+                    compiling_indices=compiling,
+                    correct_line=correct_line,
+                    correct_index=correct_index,
+                    missing_line=idx + 1,
+                    use_mathlib=use_mathlib,
+                ),
+                str(correct_index),
+            )
+        raise RuntimeError("failed to generate a unique Lean missing-line-selection task")
+
+    def prompt(self, metadata):
+        opts = "\n".join(
+            f"{i + 1}. {line}" for i, line in enumerate(_mget(metadata, "available_lines"))
+        )
+        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
+        return (
+            f"Fill `__ANSWER__` with one listed Lean proof line. {imports}\n"
+            "The answer is the line number.\n\n"
+            f"THEOREM:\n{_mget(metadata, 'template')}\n"
+            f"LINES:\n{opts}"
+        )
+
+    def score_answer(self, answer, entry):
+        nums = re.findall(r"\d+", str(answer))
+        return float(bool(nums) and int(nums[-1]) == int(entry.answer))
+
+
 class LeanCandidateCompilation(Task):
     """True/False on whether a single candidate proof body closes the theorem."""
 
@@ -1542,8 +1603,9 @@ class LeanCandidateCompilation(Task):
 
     def prompt(self, metadata):
         return (
-            "Does this Lean 4 tactic body close the theorem? The answer is exactly True or False.\n\n"
-            f"THEOREM WITH HOLE:\n{_mget(metadata, 'theorem')}\n"
+            "Does this Lean 4 tactic body close the theorem?\n"
+            "The answer is True or False.\n\n"
+            f"THEOREM:\n{_mget(metadata, 'theorem')}\n"
             f"CANDIDATE:\n{_mget(metadata, 'candidate')}"
         )
 
@@ -1598,7 +1660,7 @@ class LeanProofRepair(DevTask):
         return float(got == _normalize_body(entry.answer))
 
 
-class LeanCompileSelectionIndices(Task):
+class LeanCompileSelectionIndices(DevTask):
     """Select numbered candidate proof bodies that compile."""
 
     def __init__(self, config=None, **kwargs):
