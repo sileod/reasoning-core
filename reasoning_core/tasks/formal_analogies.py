@@ -128,7 +128,8 @@ def _random_case(n_nodes, n_preds, n_context, rng):
 def _hard_negative_case(q_before, q_consequence, m, rng, reverse_rate=0.15):
     case = _inverse_case(q_before, q_consequence, m, rng, reverse_rate=reverse_rate)
     ctx = set(case.context)
-    nodes, preds = _nodes(ctx | {case.consequence}), _preds(ctx | {case.consequence})
+    cons = tuple(case.consequence)  # edict coerces the consequence tuple to a list; restore hashability
+    nodes, preds = _nodes(ctx | {cons}), _preds(ctx | {cons})
     for atom in rng.sample(list(ctx), len(ctx)):
         p, a, b = atom
         edits = [(p, b, a)]

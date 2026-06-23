@@ -440,6 +440,64 @@ def extract_useful_axioms(G: nx.DiGraph, node_id_str: str) :
     return useful_ax
 
 
+def _node_is_background(node):
+    role = (node.role or "").lower()
+    clause_id = (node.clause_id or "").lower()
+    if "conjecture" in role or "hypothesis" in role:
+        return False
+    if re.search(r"(goal|conj|theorem|lemma|prove|query|negated)", clause_id):
+        return False
+    if role in {"axiom", "definition", "type"}:
+        return True
+    return bool(node.inference and node.inference.startswith("file("))
+
+
+def _node_sort_key(node_id):
+    return (0, int(node_id)) if str(node_id).isdigit() else (1, str(node_id))
+
+
+def split_problem_from_proof(G: nx.DiGraph, target, is_background=_node_is_background, return_nodes=False):
+    useful = extract_useful_axioms(G, target)
+    background, premises = [], []
+    background_nodes, premise_nodes = [], []
+    used_split_fallback = False
+    theorem = G.nodes[target]["data"].clause_formula
+    theorem_norm = normalize_formula(theorem)
+    leaf_items = []
+    for n in sorted(useful, key=_node_sort_key):
+        node = G.nodes[n]["data"]
+        formula = node.clause_formula
+        if normalize_formula(formula) == theorem_norm:
+            continue
+        leaf_items.append((n, formula, bool(is_background(node))))
+
+    if leaf_items and (all(item[2] for item in leaf_items) or not any(item[2] for item in leaf_items)):
+        if len(leaf_items) < 3:
+            leaf_items = []
+        else:
+            used_split_fallback = True
+            random.shuffle(leaf_items)
+            background_count = random.randint(1, len(leaf_items) - 1)
+            background_ids = {n for n, _, _ in leaf_items[:background_count]}
+            leaf_items = [(n, formula, n in background_ids) for n, formula, _ in leaf_items]
+
+    if leaf_items and (not any(item[2] for item in leaf_items) or all(item[2] for item in leaf_items)):
+        leaf_items = []
+
+    for n, formula, is_bg in sorted(leaf_items, key=lambda item: _node_sort_key(item[0])):
+        if is_bg:
+            background_nodes.append(n)
+            background.append(formula)
+        else:
+            premise_nodes.append(n)
+            premises.append(formula)
+    background = list(dict.fromkeys(background))
+    premises = list(dict.fromkeys(premises))
+    if return_nodes:
+        return background, premises, theorem, background_nodes, premise_nodes, used_split_fallback
+    return background, premises, theorem
+
+
 def normalize_formula(f: str) -> str:
     """Canonicalize formula: remove whitespace and anonymize variables."""
     if not f: return ""
@@ -550,16 +608,54 @@ def perturb_list(input_l: list, base_domain: list, n_perturbations: int = 1) -> 
     return lst
 
 
+def symbols_of_formula(formula):
+    return {
+        token for token in re.findall(r"[a-z][A-Za-z0-9_]*", str(formula))
+        if not token.startswith("X")
+    }
+
+
+def same_signature_pool(pool, reference, min_overlap=0.7):
+    ref = set().union(*(symbols_of_formula(f) for f in reference))
+    if not ref:
+        return []
+    out = []
+    for formula in pool:
+        symbols = symbols_of_formula(formula)
+        if symbols and len(symbols & ref) / len(symbols | ref) >= min_overlap:
+            out.append(formula)
+    return out
+
+
+def valid_clause_list(clauses):
+    try:
+        for clause in clauses:
+            parse_clause(clause)
+    except Exception:
+        return False
+    return True
+
+
+def _clause_set_key(clauses, background=()):
+    return (
+        tuple(sorted(normalize_formula(c) for c in background)),
+        tuple(sorted(normalize_formula(c) for c in clauses)),
+    )
+
+
 def prove_conjecture(axioms: list[str], conjecture: str,
                         time_limit_seconds: str ="30", verb: bool = False,
                         disprove_first: bool = False,
                         disprove_time_limit_seconds = None,
-                        log_errors: bool = True):
+                        log_errors: bool = True,
+                        background=()):
     """
     Uses Vampire to prove or disprove a conjecture given a set of axioms.
     Returns True (provable), False (disprovable/countersatisfiable), or an error string.
     """
     with tempfile.NamedTemporaryFile(mode='w+', delete=True, suffix='.p') as temp_f:
+        for i, axiom in enumerate(background, 1):
+            temp_f.write(f"cnf(background_{i}, axiom, {axiom}).\n")
         for i, axiom in enumerate(axioms, 1):
             temp_f.write(f"cnf(axiom_{i}, axiom, {axiom}).\n")
         temp_f.write(f"fof(conjecture_1, conjecture, {universally_quantify(conjecture)}).\n")
@@ -617,8 +713,10 @@ def prove_conjecture(axioms: list[str], conjecture: str,
         return f"ERROR : {result_proove.stderr}{result_disproove.stderr}"
 
 
-def check_clause_set_satisfiability(clauses, time_limit_seconds="5", log_errors=True):
+def check_clause_set_satisfiability(clauses, time_limit_seconds="5", log_errors=True, background=()):
     with tempfile.NamedTemporaryFile(mode="w+", delete=True, suffix=".p") as temp_f:
+        for i, clause in enumerate(background, 1):
+            temp_f.write(f"cnf(bg{i}, axiom, {clause}).\n")
         for i, clause in enumerate(clauses, 1):
             temp_f.write(f"cnf(c{i}, axiom, {clause}).\n")
         temp_f.flush()
@@ -647,6 +745,54 @@ def check_clause_set_satisfiability(clauses, time_limit_seconds="5", log_errors=
                 file=sys.stderr,
             )
         return None
+
+
+def tptp_surface_features(entry):
+    metadata = entry.metadata if hasattr(entry, "metadata") else entry
+    clauses = list(metadata.get("background", [])) + list(metadata.get("hypotheses", []))
+    clauses += list(metadata.get("clauses", []))
+    if metadata.get("conjecture"):
+        clauses.append(metadata["conjecture"])
+    if metadata.get("negated_theorem"):
+        clauses.append(metadata["negated_theorem"])
+    text = "\n".join(map(str, clauses))
+    tokens = re.findall(r"[A-Za-z_][A-Za-z0-9_]*|!=|[=|~(),]", text)
+    counts = {
+        "chars": len(text),
+        "tokens": len(tokens),
+        "clauses": len(clauses),
+        "literals": text.count("|") + len(clauses),
+        "equals": text.count("="),
+        "negations": text.count("~"),
+    }
+    for token in tokens:
+        if token and token[0].islower():
+            counts[f"sym:{token}"] = counts.get(f"sym:{token}", 0) + 1
+    return counts
+
+
+def score_tptp_surface_baseline(entries, folds=5, model="logistic"):
+    """Cross-validate a bag-of-symbols baseline on generated TPTP examples."""
+    try:
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.feature_extraction import DictVectorizer
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.model_selection import cross_val_score
+        from sklearn.pipeline import make_pipeline
+    except ImportError as exc:
+        raise RuntimeError("scikit-learn is required for the TPTP surface baseline") from exc
+
+    entries = list(entries)
+    labels = [str(entry.answer).strip().lower() for entry in entries]
+    if len(set(labels)) < 2:
+        raise ValueError("surface baseline needs at least two answer classes")
+    if model == "forest":
+        estimator = RandomForestClassifier(n_estimators=100, random_state=0)
+    else:
+        estimator = LogisticRegression(max_iter=1000)
+    pipeline = make_pipeline(DictVectorizer(), estimator)
+    scores = cross_val_score(pipeline, [tptp_surface_features(e) for e in entries], labels, cv=folds)
+    return {"accuracy": float(scores.mean()), "std": float(scores.std()), "n": len(entries)}
 
 
 dirs = AppDirs("Axioms_TPTP")
@@ -714,6 +860,8 @@ class EntailConfig(Config):
     max_payload_chars: int = 2400
     min_interesting_score: float = 0.6
     positive_problem_ratio: float = 0.25
+    max_graph_attempts: int = 20
+    max_attempts: int = 80
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
     def update(self, c):
@@ -733,76 +881,193 @@ class ConjectureEntailment(Task):
         # This ensures docker setup happens before any generation timing
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
+        self._sat_cache = {}
+        self._prove_cache = {}
+        self.graph = nx.DiGraph()
+        self.axiom_set = None
+        self.all_formulas = []
+        self.interesting_thm = []
+
+    def _sat(self, clauses, time_limit="8", background=()):
+        key = (str(time_limit), *_clause_set_key(clauses, background))
+        if key not in self._sat_cache:
+            self._sat_cache[key] = check_clause_set_satisfiability(
+                list(clauses),
+                time_limit_seconds=str(time_limit),
+                log_errors=False,
+                background=list(background),
+            )
+        return self._sat_cache[key]
+
+    def _prove(self, axioms, theorem, time_limit="15", background=(), disprove_first=False):
+        key = (
+            str(time_limit),
+            bool(disprove_first),
+            tuple(sorted(normalize_formula(c) for c in background)),
+            tuple(sorted(normalize_formula(c) for c in axioms)),
+            normalize_formula(theorem),
+        )
+        if key not in self._prove_cache:
+            self._prove_cache[key] = prove_conjecture(
+                list(axioms),
+                theorem,
+                time_limit_seconds=str(time_limit),
+                background=list(background),
+                disprove_first=disprove_first,
+                log_errors=False,
+            )
+        return self._prove_cache[key]
 
     def _initialize_graph(self):
-        for _ in range(100):
+        for _ in range(self.config.max_graph_attempts):
             axiom_file_path, axiom_file_name = get_random_tptp_axioms(prefixes=self.config.domains)
 
-            if axiom_file_path:
+            if not axiom_file_path:
+                continue
+            try:
                 self.axiom_set = axiom_file_name
-            self.graph = generate_derivation_graph( 
-                    axiom_file = axiom_file_path, 
-                    save_output=False, 
-                    ranking=True, 
-                    e_limit=2
-                )
-            if os.path.exists(axiom_file_path):
-                os.remove(axiom_file_path)
+                self.graph = generate_derivation_graph(
+                        axiom_file = axiom_file_path,
+                        save_output=False,
+                        ranking=True,
+                        e_limit=2
+                    )
+            finally:
+                if os.path.exists(axiom_file_path):
+                    os.remove(axiom_file_path)
             
 
             self.all_formulas = [data['data'].clause_formula for _, data in self.graph.nodes(data=True)]
             self.interesting_thm = []
 
             for i in self.graph.nodes() : 
-                if self.graph.nodes[i]['data'].interesting_score > self.config.min_interesting_score and self.graph.in_degree(i) > 1 :
-                    self.interesting_thm.append(i)
+                if (
+                    self.graph.nodes[i]['data'].interesting_score <= self.config.min_interesting_score
+                    or self.graph.in_degree(i) <= 1
+                ):
+                    continue
+                try:
+                    background, premises, theorem = split_problem_from_proof(self.graph, i)
+                except Exception:
+                    continue
+                if not background or not premises:
+                    continue
+                if len(premises) > self.config.max_hypotheses:
+                    continue
+                if sum(map(len, background + premises)) + len(theorem) > self.config.max_payload_chars:
+                    continue
+                if not valid_clause_list(background + premises + [theorem]):
+                    continue
+                self.interesting_thm.append(i)
             if len(self.interesting_thm) >= 5 :
-                break
+                return True
+        return False
 
     def generate(self):
-        self._initialize_graph()
+        main_limit = "15"
+        ablation_limit = "15"
 
-        for attempt in range(50):
-            theorem_node_id = random.choice(list(self.interesting_thm))
-            correct_hypotheses, theorem = extract_problem_from_graph(self.graph, theorem_node_id, self.config.proof_depth)
-            if random.random() < self.config.positive_problem_ratio:
-                hypotheses = correct_hypotheses
-                if len(hypotheses) > self.config.max_hypotheses or sum(map(len, hypotheses)) + len(theorem) > self.config.max_payload_chars:
+        for _ in range(3):
+            if not self.interesting_thm and not self._initialize_graph():
+                raise RuntimeError("failed to build a TPTP proof graph with candidate theorem nodes")
+            candidates = list(self.interesting_thm)
+            random.shuffle(candidates)
+            for theorem_node_id in candidates[: self.config.max_attempts]:
+                (
+                    background,
+                    correct_hypotheses,
+                    theorem,
+                    background_nodes,
+                    premise_nodes,
+                    used_split_fallback,
+                ) = split_problem_from_proof(
+                    self.graph, theorem_node_id, return_nodes=True
+                )
+                if not background or not correct_hypotheses:
                     continue
-                try:
-                    if prove_conjecture(hypotheses, theorem, time_limit_seconds="15") is not True:
+                if not valid_clause_list(background + correct_hypotheses + [theorem]):
+                    continue
+                if self._sat(
+                    correct_hypotheses,
+                    time_limit="8",
+                    background=background,
+                ) is not True:
+                    continue
+                if self._prove(
+                    correct_hypotheses,
+                    theorem,
+                    time_limit=ablation_limit,
+                    background=[],
+                    disprove_first=True,
+                ) is not False:
+                    continue
+                if random.random() < self.config.positive_problem_ratio:
+                    hypotheses = correct_hypotheses
+                    if (
+                        len(hypotheses) > self.config.max_hypotheses
+                        or sum(map(len, background + hypotheses)) + len(theorem) > self.config.max_payload_chars
+                    ):
                         continue
-                except TimeoutError:
-                    continue
-                answer = True
-            else:
-                distraction_pool = list(set(self.all_formulas) - {theorem})
-                hypotheses = perturb_list(correct_hypotheses, distraction_pool ,self.config.perturbation)
-                if len(hypotheses) > self.config.max_hypotheses or sum(map(len, hypotheses)) + len(theorem) > self.config.max_payload_chars:
-                    continue
-                try:
-                    answer = prove_conjecture(hypotheses, theorem, time_limit_seconds="15")
-                except TimeoutError:
-                    continue
+                    try:
+                        if self._prove(
+                            hypotheses, theorem, time_limit=main_limit, background=background
+                        ) is not True:
+                            continue
+                    except TimeoutError:
+                        continue
+                    answer = True
+                else:
+                    broad_pool = set(self.all_formulas) - set(background) - set(correct_hypotheses) - {theorem}
+                    distraction_pool = same_signature_pool(
+                        broad_pool,
+                        background + correct_hypotheses + [theorem],
+                    )
+                    if not distraction_pool:
+                        continue
+                    hypotheses = perturb_list(correct_hypotheses, distraction_pool, self.config.perturbation)
+                    if (
+                        len(hypotheses) > self.config.max_hypotheses
+                        or sum(map(len, background + hypotheses)) + len(theorem) > self.config.max_payload_chars
+                    ):
+                        continue
+                    try:
+                        answer = self._prove(
+                            hypotheses,
+                            theorem,
+                            time_limit=main_limit,
+                            background=background,
+                            disprove_first=True,
+                        )
+                    except TimeoutError:
+                        continue
+                    if answer is not False:
+                        continue
 
-            if isinstance(answer, bool):
-                metadata = edict({'hypotheses': hypotheses,
-                            'conjecture': theorem,
-                            'correct_hypotheses': correct_hypotheses ,
-                            'proof_depth' : self.config.proof_depth,
-                            'perturbation' : self.config.perturbation ,
-                            'axiom_set' : self.axiom_set})
-                return Problem(metadata, str(answer))
-        return None
+                if isinstance(answer, bool):
+                    metadata = edict({'background': background,
+                                'background_nodes': background_nodes,
+                                'hypotheses': hypotheses,
+                                'premise_nodes': premise_nodes,
+                                'theorem_node': theorem_node_id,
+                                'used_split_fallback': used_split_fallback,
+                                'conjecture': theorem,
+                                'correct_hypotheses': correct_hypotheses,
+                                'proof_depth': self.config.proof_depth,
+                                'perturbation': self.config.perturbation,
+                                'axiom_set': self.axiom_set})
+                    return Problem(metadata, str(answer))
+            self.interesting_thm = []
+        raise RuntimeError("failed to build a compact TPTP entailment task with useful background")
 
     def prompt(self, metadata):
 
+        background_text = "\n".join([f"- {h}" for h in metadata.get('background', [])])
         hypotheses_text = "\n".join([f"- {h}" for h in metadata['hypotheses']])
-        domain_name = DOMAIN_MAP.get(metadata['axiom_set'][:3], metadata['axiom_set'])
 
         return (
             f"Decide if the premises entail the conjecture.\n\n"
-            f"Domain: {domain_name}\n\n"
+            f"TPTP source: {metadata['axiom_set']}\n\n"
+            f"Background axioms:\n{background_text}\n\n"
             f"Premises:\n{hypotheses_text}\n\n"
             f"Conjecture: `{metadata['conjecture']}`\n\n"
             f"The answer is `True` (provable) or `False` (not provable)."
@@ -832,11 +1097,14 @@ class ConsistencyRepairConfig(Config):
     max_axioms: int = 8
     max_payload_chars: int = 2400
     min_interesting_score: float = 0.6
+    quick_sat_time_limit: str = "5"
     sat_time_limit: str = "5"
     unsat_time_limit: str = "8"
-    max_graph_attempts: int = 6
-    max_attempts: int = 60
-    generation_time_budget: float = 120.0
+    max_graph_attempts: int = 12
+    max_attempts: int = 120
+    max_split_attempts: int = 5
+    graph_time_budget: float = 90.0
+    generation_time_budget: float = 600.0
     answer_style: str = "space"  # "space" or "list"
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
@@ -850,7 +1118,51 @@ class ConsistencyRepairConfig(Config):
 class TPTPConsistencyRepair(Task):
     """Find all singleton deletions that restore satisfiability."""
     def __init__(self, config=ConsistencyRepairConfig()):
-        super().__init__(config, timeout=180)
+        super().__init__(config, timeout=720)
+        self._sat_cache = {}
+        self._prove_cache = {}
+        self.graph = nx.DiGraph()
+        self.axiom_set = None
+        self.all_formulas = []
+        self.leaf_formulas = []
+        self.interesting_thm = []
+        from reasoning_core.utils.udocker_process import initialize_prover_session
+        initialize_prover_session()
+        for _ in range(self.config.max_graph_attempts):
+            if self._initialize_graph():
+                break
+
+    def _sat(self, clauses, time_limit=None, background=(), log_errors=False):
+        time_limit = str(time_limit or self.config.sat_time_limit)
+        key = (time_limit, *_clause_set_key(clauses, background))
+        if key not in self._sat_cache:
+            self._sat_cache[key] = check_clause_set_satisfiability(
+                list(clauses),
+                time_limit,
+                log_errors=log_errors,
+                background=list(background),
+            )
+        return self._sat_cache[key]
+
+    def _prove(self, axioms, theorem, time_limit=None, background=(), disprove_first=False):
+        time_limit = str(time_limit or self.config.sat_time_limit)
+        key = (
+            time_limit,
+            bool(disprove_first),
+            tuple(sorted(normalize_formula(c) for c in background)),
+            tuple(sorted(normalize_formula(c) for c in axioms)),
+            normalize_formula(theorem),
+        )
+        if key not in self._prove_cache:
+            self._prove_cache[key] = prove_conjecture(
+                list(axioms),
+                theorem,
+                time_limit_seconds=time_limit,
+                background=list(background),
+                disprove_first=disprove_first,
+                log_errors=False,
+            )
+        return self._prove_cache[key]
 
     def _initialize_graph(self):
         axiom_file_path, axiom_file_name = get_random_tptp_axioms(prefixes=self.config.domains)
@@ -861,7 +1173,7 @@ class TPTPConsistencyRepair(Task):
             self.graph = generate_derivation_graph(
                 axiom_file=axiom_file_path,
                 save_output=False,
-                ranking=True,
+                ranking=False,
                 e_limit=2,
             )
         finally:
@@ -869,95 +1181,217 @@ class TPTPConsistencyRepair(Task):
                 os.remove(axiom_file_path)
 
         self.all_formulas = [data["data"].clause_formula for _, data in self.graph.nodes(data=True)]
-        self.interesting_thm = [
-            node for node in self.graph.nodes()
-            if self.graph.nodes[node]["data"].interesting_score > self.config.min_interesting_score
-            and self.graph.in_degree(node) > 1
+        self.leaf_formulas = [
+            self.graph.nodes[node]["data"].clause_formula
+            for node, in_degree in self.graph.in_degree()
+            if in_degree == 0
         ]
+        rough_candidates = [node for node in self.graph.nodes() if self.graph.in_degree(node) > 1]
+        random.shuffle(rough_candidates)
+        self.interesting_thm = []
+        for node in rough_candidates[: max(self.config.max_attempts * 3, 60)]:
+            if len(self.interesting_thm) >= self.config.max_attempts:
+                break
+            try:
+                formulas, theorem = self._useful_leaf_formulas(node)
+            except Exception:
+                continue
+            if len(formulas) < 2 or len(formulas) > self.config.max_axioms + 4:
+                continue
+            if negate_clause_formula(theorem) is None:
+                continue
+            if sum(map(len, formulas + [theorem])) > self.config.max_payload_chars:
+                continue
+            if not valid_clause_list(formulas + [theorem]):
+                continue
+            self.interesting_thm.append(node)
         return bool(self.interesting_thm)
+
+    def _useful_leaf_formulas(self, theorem_node_id):
+        theorem = self.graph.nodes[theorem_node_id]["data"].clause_formula
+        theorem_norm = normalize_formula(theorem)
+        nodes = list(extract_useful_axioms(self.graph, theorem_node_id))
+        formulas = []
+        for node in nodes:
+            formula = self.graph.nodes[node]["data"].clause_formula
+            if normalize_formula(formula) != theorem_norm:
+                formulas.append(formula)
+        return list(dict.fromkeys(formulas)), theorem
+
+    def _validated_split_from_proof(self, theorem_node_id):
+        formulas, theorem = self._useful_leaf_formulas(theorem_node_id)
+        neg_theorem = negate_clause_formula(theorem)
+        if neg_theorem is None or len(formulas) < 2:
+            return None
+        if not valid_clause_list(formulas + [theorem, neg_theorem]):
+            return None
+        random.shuffle(formulas)
+        split_points = list(range(1, len(formulas)))
+        random.shuffle(split_points)
+        for k in split_points[: self.config.max_split_attempts]:
+            background = list(dict.fromkeys(formulas[:k]))
+            clauses = list(dict.fromkeys(formulas[k:]))
+            if not background or not clauses:
+                continue
+            if len(clauses) > self.config.max_axioms:
+                continue
+            if sum(map(len, background + clauses + [neg_theorem])) > self.config.max_payload_chars:
+                continue
+            if self._sat(clauses, self.config.sat_time_limit, background=background) is not True:
+                continue
+            if self._sat([neg_theorem], self.config.sat_time_limit, background=background) is not True:
+                continue
+            if self._prove(
+                clauses,
+                theorem,
+                self.config.sat_time_limit,
+                background=[],
+                disprove_first=True,
+            ) is not False:
+                continue
+            return background, clauses, theorem, neg_theorem
+        return None
+
+    def _add_signature_distractors(self, background, clauses, theorem, neg_theorem):
+        clauses = list(dict.fromkeys(clauses))
+        target_total = random.randint(max(3, len(clauses)), self.config.max_axioms)
+        pool = same_signature_pool(
+            set(self.leaf_formulas) - set(background) - set(clauses) - {theorem, neg_theorem},
+            background + clauses + [theorem, neg_theorem],
+            min_overlap=0.5,
+        )
+        random.shuffle(pool)
+        for candidate in pool:
+            if len(clauses) >= target_total:
+                break
+            trial = clauses + [candidate]
+            if len(trial) > self.config.max_axioms:
+                break
+            if sum(map(len, background + trial + [neg_theorem])) > self.config.max_payload_chars:
+                continue
+            if not valid_clause_list([candidate]):
+                continue
+            if self._sat(
+                [candidate],
+                self.config.quick_sat_time_limit,
+                background=background,
+            ) is not True:
+                continue
+            clauses.append(candidate)
+        return clauses
+
+    def _repair_indices(self, background, clauses, neg_theorem, time_limit):
+        repairs = []
+        for i in range(len(clauses)):
+            reduced = clauses[:i] + clauses[i + 1:] + [neg_theorem]
+            sat = self._sat(reduced, time_limit, background=background)
+            if sat is None:
+                return None
+            if sat is True:
+                repairs.append(i + 1)
+        return repairs
+
+    def _final_recheck_repair(self, background, clauses, neg_theorem, repairs):
+        if self._sat([neg_theorem], self.config.sat_time_limit, background=background) is not True:
+            return False
+        if self._sat(clauses, self.config.sat_time_limit, background=background) is not True:
+            return False
+        if any(
+            self._sat([c], self.config.sat_time_limit, background=background) is not True
+            for c in clauses
+        ):
+            return False
+        if self._sat(
+            clauses + [neg_theorem],
+            self.config.unsat_time_limit,
+            background=background,
+        ) is not False:
+            return False
+        return self._repair_indices(
+            background, clauses, neg_theorem, self.config.sat_time_limit
+        ) == repairs
 
     def _build_problem(self):
         deadline = time.time() + self.config.generation_time_budget
-        for _ in range(self.config.max_graph_attempts):
-            if time.time() > deadline:
+        while time.time() <= deadline:
+            if not self.interesting_thm and not self._initialize_graph():
                 break
-            if not self._initialize_graph():
-                continue
-            for _ in range(self.config.max_attempts):
-                if time.time() > deadline:
+            graph_deadline = min(deadline, time.time() + self.config.graph_time_budget)
+            candidates = list(self.interesting_thm)
+            random.shuffle(candidates)
+            for theorem_node_id in candidates[: self.config.max_attempts]:
+                if time.time() > graph_deadline:
                     break
-                theorem_node_id = random.choice(self.interesting_thm)
-                hypotheses, theorem = extract_problem_from_graph(
-                    self.graph, theorem_node_id, self.config.proof_depth
-                )
-                neg_theorem = negate_clause_formula(theorem)
-                if not hypotheses or neg_theorem is None:
+                built = self._validated_split_from_proof(theorem_node_id)
+                if built is None:
                     continue
+                background, core_clauses, theorem, neg_theorem = built
 
-                clauses = list(dict.fromkeys(hypotheses + [neg_theorem]))
-                if len(clauses) > self.config.max_axioms:
+                clauses = self._add_signature_distractors(background, core_clauses, theorem, neg_theorem)
+                if len(clauses) < 3 or len(clauses) > self.config.max_axioms:
                     continue
-                if sum(map(len, clauses)) > self.config.max_payload_chars:
+                if not valid_clause_list(background + clauses + [neg_theorem]):
                     continue
-                if check_clause_set_satisfiability(
-                    hypotheses, self.config.sat_time_limit, log_errors=False
-                ) is not True:
+                if sum(map(len, background + clauses + [neg_theorem])) > self.config.max_payload_chars:
                     continue
-
-                random.shuffle(clauses)
-                if check_clause_set_satisfiability(
-                    clauses, self.config.unsat_time_limit, log_errors=False
-                ) is not False:
+                quick_limit = self.config.quick_sat_time_limit
+                if self._sat([neg_theorem], quick_limit, background=background) is not True:
                     continue
-
-                repairs = []
-                for i in range(len(clauses)):
-                    reduced = clauses[:i] + clauses[i + 1:]
-                    sat = check_clause_set_satisfiability(
-                        reduced, self.config.sat_time_limit, log_errors=False
-                    )
-                    if sat is None:
-                        repairs = None
-                        break
-                    if sat is True:
-                        repairs.append(i + 1)
-                if not repairs or len(repairs) == len(clauses):
+                if self._sat(clauses, quick_limit, background=background) is not True:
                     continue
                 if any(
-                    check_clause_set_satisfiability(
-                        [clauses[i - 1]], self.config.sat_time_limit, log_errors=False
+                    self._sat(
+                        [c],
+                        quick_limit,
+                        background=background,
                     ) is not True
-                    for i in repairs
+                    for c in clauses
                 ):
                     continue
 
+                random.shuffle(clauses)
+                if self._sat(
+                    clauses + [neg_theorem],
+                    quick_limit,
+                    background=background,
+                ) is not False:
+                    continue
+
+                repairs = self._repair_indices(background, clauses, neg_theorem, quick_limit)
+                if not repairs or len(repairs) == len(clauses):
+                    continue
+                if not self._final_recheck_repair(background, clauses, neg_theorem, repairs):
+                    continue
+
                 metadata = edict({
+                    "background": background,
                     "clauses": clauses,
+                    "theorem_node": theorem_node_id,
+                    "used_split_fallback": True,
+                    "split_strategy": "random_validated_useful_leaves",
                     "repair_indices": repairs,
                     "negated_theorem": neg_theorem,
-                    "hypotheses": hypotheses,
+                    "hypotheses": core_clauses,
                     "axiom_set": self.axiom_set,
                     "proof_depth": self.config.proof_depth,
                 })
                 return Problem(metadata, self._format_indices(repairs))
+            self._initialize_graph()
 
         raise RuntimeError("failed to build a compact real TPTP consistency-repair task")
 
     def generate(self):
-        from reasoning_core.utils.udocker_process import initialize_prover_session
-        initialize_prover_session()
         return self._build_problem()
 
     def prompt(self, metadata):
+        background = "\n".join(f"- {c}" for c in metadata.get("background", []))
         clauses = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(metadata["clauses"]))
-        fmt = (
-            "Answer with a Python list of clause numbers.\n"
-            if self.config.answer_style == "list"
-            else "Answer with ordered, space-separated clause numbers.\n"
-        )
+
         return (
-            "Which single-clause deletions make the remaining set satisfiable?\n"
-            f"{fmt}"
+            "Which local single-clause deletions make the fixed axioms satisfiable with the negated theorem?\n"
+            f"Answer with ordered, space-separated clause numbers.\n"
+            f"Background axioms:\n{background}\n"
+            f"Negated theorem: `{metadata['negated_theorem']}`\n"
             f"Clauses:\n{clauses}"
         )
 

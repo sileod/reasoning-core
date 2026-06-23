@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 
 from z3 import Int, Solver, sat
 
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Problem, Config, Payload, edict
 
 
 # Symmetric inverse of a size relation, used for deduplication.
@@ -340,27 +340,30 @@ class ReferenceTracking(Task):
 
     def prompt(self, metadata) -> str:
         m = metadata
-        inv  = "Inventory:\n"     + "\n".join(f"- {b}: {m.colors[b]}" for b in m.balls)
-        init = "Initial state:\n" + "\n".join(f"- {b} is in {m.initial_placement[b]}" for b in m.balls)
-        mvs  = "Moves:\n"         + ("\n".join(f"- {s}" for s in m.moves) if m.moves else "- (none)")
+        base = dict(
+            inventory="\n".join(f"- {b}: {m.colors[b]}" for b in m.balls),
+            initial_state="\n".join(f"- {b} is in {m.initial_placement[b]}" for b in m.balls),
+            moves="\n".join(f"- {s}" for s in m.moves) if m.moves else "- (none)",
+        )
 
         if m.family == "track":
-            return "\n".join([inv, init, mvs, m.question])
+            return f"{Payload(base)}\n{m.question}"
 
-        rules = (
-            "Rules:\n"
-            "- Each ball has a positive integer size.\n"
-            "- Dock(X, Y) succeeds iff size(X) == size(Y).\n"
-            "- If docking fails and the failure sentence says 'it was too large/small',\n"
-            "  'it' refers to the larger/smaller of the two docked balls.\n"
+        payload = Payload(
+            rules="\n".join([
+                "- Each ball has a positive integer size.",
+                "- Dock(X, Y) succeeds iff size(X) == size(Y).",
+                "- If docking fails and the failure sentence says 'it was too large/small',",
+                "  'it' refers to the larger/smaller of the two docked balls.",
+            ]),
+            **base,
+            size_facts="\n".join(f"- {t}" for t in m.size_facts_text),
+            story=(
+                f"- After the moves, Rae tried to dock {m.dock.desc_a} with {m.dock.desc_b}.\n"
+                f"- It failed because it was {m.dock.reason}."
+            ),
         )
-        facts = "Size facts:\n" + "\n".join(f"- {t}" for t in m.size_facts_text)
-        story = (
-            "Story:\n"
-            f"- After the moves, Rae tried to dock {m.dock.desc_a} with {m.dock.desc_b}.\n"
-            f"- It failed because it was {m.dock.reason}."
-        )
-        return "\n".join([rules, inv, init, mvs, facts, story, m.question])
+        return f"{payload}\n{m.question}"
 
     def score_answer(self, answer: str, entry: Problem) -> float:
 
