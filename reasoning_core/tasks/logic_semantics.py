@@ -16,6 +16,7 @@ from gramforge.assets import fol_nli_verbalization
 
 import sys
 from reasoning_core.template import Task, DevTask, Problem, Config, Payload
+from reasoning_core.utils import parse_space_ints
 from gramforge.grammars.FOL import FOL_grammar
 from easydict import EasyDict as edict
 from functools import cache
@@ -289,8 +290,7 @@ class EvidenceRetrieval(Task):
                 break
 
         answer = [i for i in x.metadata.proof.indices if i != 'hyp']
-        answer = ', '.join([f'{i}' for i in answer])
-        answer = f'[{answer}]'
+        answer = ' '.join(f'{i}' for i in answer)
         return Problem(x.metadata, answer)
 
     def prompt(self, meta):
@@ -302,17 +302,17 @@ class EvidenceRetrieval(Task):
             f"Premise:\n{prem}\n"
             f"Hypothesis:\n{hyp}\n\n"
             f"Which statements in the premise {verb} the hypothesis?\n"
-            f"The answer is the list of supporting statement indices, e.g. [0, 6, 7]."
+            "Answer with space-separated indexes."
         )
         P=verbalize_predicates(P, seed=meta.verbalize_seed)
         return P
     
     def score_answer(self, answer, entry):
         reference = entry['answer']
-        prepr = lambda x: set(s.strip() for s in x.strip('[].').split(',') if s.strip())
-        reference, answer = prepr(reference), prepr(answer)
-        if not answer:
+        reference, answer = parse_space_ints(reference), parse_space_ints(answer)
+        if not answer or reference is None:
             return 0.0
+        reference, answer = set(reference), set(answer)
         return len(answer & reference) / len(answer | reference)
 
     def balancing_key(self, problem):

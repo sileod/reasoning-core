@@ -418,19 +418,19 @@ class MathWordProblem(Task):
             chain = "; then ".join(process_step_text(s, m.unit) for s in m.steps)
             if m.inverse:
                 return (
-                    f"A jar holds some {m.unit}. In order: {chain}. "
+                    f"A jar holds some {m.unit}. {chain}. "
                     f"The jar now holds {m.observed} {m.unit}. "
-                    f"How many {m.unit} did it start with? Give the answer as a number."
+                    f"How many {m.unit} did it start with? Answer with a number."
                 )
             return (
-                f"A jar holds {m.base} {m.unit}. In order: {chain}. "
-                f"How many {m.unit} are in the jar now? Give the answer as a number."
+                f"A jar holds {m.base} {m.unit}. {chain}. "
+                f"How many {m.unit} are in the jar now? Answer with a number."
             )
 
         lines = ". ".join(relation_text(r, m.unit) for r in m.relations)
         return (
             f"{lines}. {m.given} has {m.given_value} {m.unit}. "
-            f"How many {m.unit} does {m.asked} have? Give the answer as a number."
+            f"How many {m.unit} does {m.asked} have? Answer with s a number."
         )
 
     def score_answer(self, answer, entry):

@@ -216,15 +216,16 @@ def entailed(base_solver, expr):
     return s.check() == unsat
 
 
-def pick_query(rng, solver, gv, names, final):
+def pick_query(rng, solver, gv, names, final, query_names=None):
     T = gv.T
+    query_names = query_names or names
     pairs = list(combinations(names, 2))
     qtypes = ["coord", "distance", "relation"]
     rng.shuffle(qtypes)
 
     for qt in qtypes:
         if qt == "coord":
-            order = names[:]
+            order = query_names[:]
             rng.shuffle(order)
             for a in order:
                 if entailed(solver, gv.coord(a, T, final[a])):
@@ -235,6 +236,7 @@ def pick_query(rng, solver, gv, names, final):
                     }
 
         elif qt == "distance":
+            pairs = [p for p in pairs if set(p) & set(query_names)]
             rng.shuffle(pairs)
             for a, b in pairs:
                 d = abs(final[a][0] - final[b][0]) + abs(final[a][1] - final[b][1])
@@ -245,6 +247,7 @@ def pick_query(rng, solver, gv, names, final):
                     }
 
         else:
+            pairs = [p for p in pairs if set(p) & set(query_names)]
             rng.shuffle(pairs)
             for a, b in pairs:
                 h, v = pair_rel(final[a], final[b])
@@ -289,7 +292,11 @@ class Navigation(Task):
             if solver.check() != sat:
                 continue
 
-            query = pick_query(rng, solver, gv, names, final)
+            touched = sorted({
+                obj for st in steps
+                for obj in ([st["a"]] if st["k"] in ("move", "jump") else [st["a"], st["b"]])
+            })
+            query = pick_query(rng, solver, gv, names, final, touched)
             if query is None:
                 continue
 
@@ -348,7 +355,7 @@ class Navigation(Task):
             )
 
         return (
-            f"Grid [0,{G}]x[0,{G}], N=+y, E=+x. Unmentioned objects stay fixed.\n\n"
+            f"Grid [0,{G}]x[0,{G}], N=+y, E=+x.\n"
             f"{Payload(initial_facts=facts_txt, steps=steps_txt)}\n\n"
             f"{question}"
         )

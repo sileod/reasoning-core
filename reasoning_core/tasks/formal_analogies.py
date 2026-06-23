@@ -125,9 +125,29 @@ def _random_case(n_nodes, n_preds, n_context, rng):
     return edict(context=ctx, consequence=cons[0])
 
 
+def _hard_negative_case(q_before, q_consequence, m, rng, reverse_rate=0.15):
+    case = _inverse_case(q_before, q_consequence, m, rng, reverse_rate=reverse_rate)
+    ctx = set(case.context)
+    nodes, preds = _nodes(ctx | {case.consequence}), _preds(ctx | {case.consequence})
+    for atom in rng.sample(list(ctx), len(ctx)):
+        p, a, b = atom
+        edits = [(p, b, a)]
+        edits += [(p, x, b) for x in nodes if x not in (a, b)]
+        edits += [(p, a, x) for x in nodes if x not in (a, b)]
+        edits += [(q, a, b) for q in preds if q != p]
+        rng.shuffle(edits)
+        for new_atom in edits:
+            if new_atom not in ctx:
+                ctx.remove(atom)
+                ctx.add(new_atom)
+                case.context = ctx
+                return case
+    return None
+
+
 def _transported_consequences(case, q_before, allow_reverse=True, injective_predicates=True, cap=16):
     c_atoms = set(case.context)
-    c_cons = case.consequence
+    c_cons = tuple(case.consequence)  # edict coerces the consequence tuple to a list; restore hashability
     q_atoms = set(q_before)
 
     cnodes = _nodes(c_atoms | {c_cons})
@@ -184,7 +204,7 @@ class AnalogicalCaseRetrievalConfig(Config):
     n_query_objects: int = 5
     n_query_links: int = 3
     n_query_facts: int = 8
-    n_cases: int = 6
+    n_cases: int = 4
     n_gold_cases: int = 1
     context_facts: int = 4
     reverse_rate: float = 0.15
@@ -234,12 +254,17 @@ class AnalogicalCaseRetrieval(Task):
             tries = 0
             while len(cases) < n_cases and tries < 400:
                 tries += 1
-                case = _random_case(
-                    n_nodes=min(n_obj, max(3, len(_nodes(q_before)))),
-                    n_preds=n_rel,
-                    n_context=n_ctx,
-                    rng=rng,
-                )
+                if rng.random() < 0.75:
+                    case = _hard_negative_case(
+                        q_before, q_answer, n_ctx, rng, reverse_rate=k.reverse_rate
+                    )
+                else:
+                    case = _random_case(
+                        n_nodes=min(n_obj, max(3, len(_nodes(q_before)))),
+                        n_preds=n_rel,
+                        n_context=n_ctx,
+                        rng=rng,
+                    )
                 if case is None:
                     continue
                 if q_answer not in _transported_consequences(case, q_before):
@@ -289,7 +314,7 @@ class AnalogicalCaseRetrieval(Task):
     def prompt(self, metadata):
         lines = [
             "Cases show facts that imply one new fact.",
-            "Object names and link names may be consistently renamed.",
+            "Object names and link names may be consistently renamed, and each link direction may be consistently reversed.",
             "",
         ]
 
@@ -308,6 +333,6 @@ class AnalogicalCaseRetrieval(Task):
         return "\n".join(lines)
 
     def score_answer(self, answer, entry):
-        gold = entry.metadata["answer_atom"]
+        gold = tuple(entry.metadata["answer_atom"])  # edict stores answer_atom as a list; parse yields a tuple
         pred = _parse_sent(answer)
-        return 1.0 if pred == gold else 0.0
+        return 1.0 if pred is not None and tuple(pred) == gold else 0.0

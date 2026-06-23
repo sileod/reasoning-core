@@ -20,7 +20,7 @@ class StringTransductionConfig(Config):
 
     def update(self, c=1):
         self.length += 2 * c
-        self.n_ops += c // 2
+        self.n_ops += c
         self.alphabet_size = min(8, self.alphabet_size + int(c >= 2))
         self.edit_ops += c
 

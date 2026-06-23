@@ -350,7 +350,7 @@ def query_orientation(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Where is point {p} relative to directed line {a}{b}?",
-                instruction="Answer isone of: left, right, on.",
+                instruction="Answer is one of: left, right, on.",
                 balance=f"orientation:{ans}",
             )
     return None

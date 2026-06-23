@@ -1,9 +1,8 @@
 import networkx as nx
 import random
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Problem, Config, Payload
+from reasoning_core.utils import parse_space_ints
 from dataclasses import dataclass
-from ast import literal_eval
-import re
 
 # --- Configuration for All Graph Tasks ---
 @dataclass
@@ -26,14 +25,6 @@ _GRAPH_GENERATORS = [
 ]
 
 _GRID_GENERATOR = (nx.grid_2d_graph, {'m': (3, 5), 'n': (3, 5)})
-
-
-def _parse_list(x):
-    try:
-        x = literal_eval(x)
-        return x if isinstance(x, list) else None
-    except Exception:
-        return None
 
 
 class BaseGraphTask:
@@ -210,14 +201,14 @@ class GraphPathfinding(BaseGraphTask, Task):
                 "optimal_length": len(path) if path is not None else None,
                 "cot": self.make_cot(G, start, end)
             },
-            answer=str(path)
+            answer="None" if path is None else " ".join(map(str, path))
         )
 
     def prompt(self, m):
         return (
-            f"Consider the directed graph:\n\n{m['graph_description']}\n\n"
-            f"Find the lexicographically smallest shortest directed path from Node {m['start_node']} to Node {m['end_node']}.\n"
-            "The answer is a Python list of nodes, or `None` if no path exists."
+            f"Find the lexicographically smallest shortest directed path from node {m['start_node']} to node {m['end_node']}.\n"
+            "Answer with space-separated nodes, or `None` if no path exists.\n\n"
+            f"{Payload(graph=m['graph_description'])}"
         )
 
     def score_answer(self, answer, entry):
@@ -225,15 +216,10 @@ class GraphPathfinding(BaseGraphTask, Task):
             if "none" in text.lower():
                 pred = None
             else:
-                try: pred = literal_eval(text)
-                except Exception:
-                    m = re.search(r"\[[^\]]*\]", text)
-                    try: pred = literal_eval(m.group(0)) if m else None
-                    except Exception: return 0.0
+                pred = parse_space_ints(text)
 
             meta, opt_len = entry.metadata, entry.metadata.get("optimal_length")
             if pred is None: return 1.0 if opt_len is None else 0.0
-            if isinstance(pred, tuple): pred = list(pred)
             if not isinstance(pred, list) or not pred: return 0.0
 
             th = lambda x: tuple(x) if isinstance(x, list) else x
@@ -255,41 +241,6 @@ class GraphPathfinding(BaseGraphTask, Task):
             if not nx.is_path(G, pred) or opt_len is None or len(pred) < opt_len: return 0.0
             
             return opt_len / len(pred)
-
-class GraphNodeCentrality(BaseGraphTask, Task):
-    """Task to find all nodes with the highest degree centrality in a directed graph."""
-
-    def generate(self):
-        G = self._generate_graph()
-        
-        # Centrality is evaluated as total degree (incoming + outgoing connections)
-        degrees = dict(G.degree())
-        if not degrees:
-            return self.generate()
-
-        max_degree = max(degrees.values())
-        most_central_nodes = sorted([node for node, deg in degrees.items() if deg == max_degree])
-        
-        metadata = {"graph_description": self._render_graph(G)}
-        return Problem(metadata=metadata, answer=str(most_central_nodes))
-
-    def prompt(self, metadata):
-        return (
-            f"Consider the following directed network graph:\n\n{metadata['graph_description']}\n\n"
-            "Based on the total number of connections (summing both incoming and outgoing edges for each node), "
-            "identify all nodes that are the most central (i.e., have the highest total degree).\n"
-            "There may be more than one.\n"
-            "The answer is a Python list of node integers, sorted in increasing order. "
-            "Example: `[3, 8]`."
-        )
-
-    def score_answer(self, answer, entry):
-        try:
-            pred_list = literal_eval(answer)
-            true_list = literal_eval(entry.answer)
-            return 1.0 if pred_list == true_list else 0.0
-        except:
-            return 0.0
 
 
 @dataclass
@@ -335,20 +286,19 @@ class GraphSuccessors(BaseGraphTask, Task):
                 "nodes": nodes,
                 "edges": list(G.edges()),
             },
-            answer=str(answer),
+            answer=" ".join(map(str, answer)),
         )
 
     def prompt(self, m):
         return (
-            f"Consider the directed graph:\n\n{m['graph_description']}\n\n"
-            f"Queries: {m['queries']}\n"
-            "Each pair (x, k) asks for the k-th successor of x (following exact directed edges k times).\n"
-            "The answer is a Python list of integers in query order."
+            "For each query (x, k), give the k-th successor of x by following directed edges k times.\n"
+            "Answer with space-separated integers in query order.\n\n"
+            f"{Payload(graph=m['graph_description'], queries=m['queries'])}"
         )
 
     def score_answer(self, answer, entry):
-        pred = _parse_list(answer)
-        true = _parse_list(entry.answer)
+        pred = parse_space_ints(answer)
+        true = parse_space_ints(entry.answer)
         if pred is None or true is None or len(pred) != len(true):
             return 0.0
         return sum(p == t for p, t in zip(pred, true)) / len(true)
@@ -405,21 +355,20 @@ class GraphDependencies(BaseGraphTask, Task):
                     "nodes": list(G.nodes()),
                     "edges": list(G.edges()),
                 },
-                answer=str(answer),
+                answer=" ".join(map(str, answer)),
             )
         return self.generate()
 
     def prompt(self, m):
         return (
-            f"Consider the directed graph:\n\n{m['graph_description']}\n\n"
-            f"In this scenario, a directed edge from U to V means V depends on U (so U is a prerequisite of V).\n"
-            f"List all prerequisites of node {m['query']} (recursively), making sure to order base prerequisites first.\n"
-            "Exclude the query node; prerequisites must precede dependents, with lexicographic tie-breaks.\n"
-            "The answer is a Python list of integers."
+            f"List all ancestors of node {m['query']}.\n"
+            "Order them so predecessors come before successors, with lexicographic tie-breaks.\n"
+            "Answer with space-separated indexes.\n\n"
+            f"{Payload(graph=m['graph_description'])}"
         )
 
     def score_answer(self, answer, entry):
-        pred = _parse_list(answer)
+        pred = parse_space_ints(answer)
         if pred is None:
             return 0.0
 

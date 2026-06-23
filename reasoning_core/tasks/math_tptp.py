@@ -23,7 +23,6 @@ from ._tptp_finite_interpretation import (
 )
 from ._tptp_sat_graph import generate_derivation_graph
 from reasoning_core.template import Task, Problem, Config
-import ast
 from reasoning_core.template import TimeoutException
 from itertools import combinations
 from math import comb
@@ -833,6 +832,7 @@ class ConsistencyRepairConfig(Config):
     min_interesting_score: float = 0.6
     sat_time_limit: str = "5"
     unsat_time_limit: str = "8"
+    max_graph_attempts: int = 20
     max_attempts: int = 50
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
@@ -844,104 +844,107 @@ class ConsistencyRepairConfig(Config):
 
 
 class TPTPConsistencyRepair(Task):
-    """Find a smallest one-axiom deletion that restores satisfiability."""
+    """Find all singleton deletions that restore satisfiability."""
     def __init__(self, config=ConsistencyRepairConfig()):
         super().__init__(config, timeout=180)
-        from reasoning_core.utils.udocker_process import initialize_prover_session
-        initialize_prover_session()
 
-    _initialize_graph = ConjectureEntailment._initialize_graph
-
-    def _fallback_problem(self):
-        p, q, r = random.sample(["p", "q", "r", "s", "t"], 3)
-        a = random.choice(["a", "b", "c"])
-        clauses = [
-            f"({p}({a}))",
-            f"({q}({a}))",
-            f"(~{p}({a}) | {r}({a}))",
-            f"(~{q}({a}) | {r}({a}))",
-            f"(~{r}({a}))",
-        ]
-        sats = [
-            check_clause_set_satisfiability(
-                clauses[:i] + clauses[i + 1:], self.config.sat_time_limit, log_errors=False
+    def _initialize_graph(self):
+        axiom_file_path, axiom_file_name = get_random_tptp_axioms(prefixes=self.config.domains)
+        if not axiom_file_path:
+            return False
+        try:
+            self.axiom_set = axiom_file_name
+            self.graph = generate_derivation_graph(
+                axiom_file=axiom_file_path,
+                save_output=False,
+                ranking=True,
+                e_limit=2,
             )
-            for i in range(len(clauses))
+        finally:
+            if os.path.exists(axiom_file_path):
+                os.remove(axiom_file_path)
+
+        self.all_formulas = [data["data"].clause_formula for _, data in self.graph.nodes(data=True)]
+        self.interesting_thm = [
+            node for node in self.graph.nodes()
+            if self.graph.nodes[node]["data"].interesting_score > self.config.min_interesting_score
+            and self.graph.in_degree(node) > 1
         ]
-        repairs = [i + 1 for i, sat in enumerate(sats) if sat is True]
-        if (
-            check_clause_set_satisfiability(clauses, self.config.unsat_time_limit, log_errors=False) is False
-            and sats == [False, False, False, False, True]
-        ):
-            return Problem(edict({"clauses": clauses, "repair_indices": repairs, "axiom_set": "SYNTHETIC"}), str(repairs))
-        raise RuntimeError("failed to certify fallback TPTP consistency-repair task")
+        return bool(self.interesting_thm)
+
+    def _real_tptp_problem(self):
+        for _ in range(self.config.max_graph_attempts):
+            if not self._initialize_graph():
+                continue
+            for _ in range(self.config.max_attempts):
+                theorem_node_id = random.choice(self.interesting_thm)
+                hypotheses, theorem = extract_problem_from_graph(
+                    self.graph, theorem_node_id, self.config.proof_depth
+                )
+                neg_theorem = negate_clause_formula(theorem)
+                if not hypotheses or neg_theorem is None:
+                    continue
+
+                clauses = list(dict.fromkeys(hypotheses + [neg_theorem]))
+                if len(clauses) > self.config.max_axioms:
+                    continue
+                if sum(map(len, clauses)) > self.config.max_payload_chars:
+                    continue
+                if check_clause_set_satisfiability(
+                    hypotheses, self.config.sat_time_limit, log_errors=False
+                ) is not True:
+                    continue
+
+                random.shuffle(clauses)
+                if check_clause_set_satisfiability(
+                    clauses, self.config.unsat_time_limit, log_errors=False
+                ) is not False:
+                    continue
+
+                repairs = []
+                for i in range(len(clauses)):
+                    reduced = clauses[:i] + clauses[i + 1:]
+                    sat = check_clause_set_satisfiability(
+                        reduced, self.config.sat_time_limit, log_errors=False
+                    )
+                    if sat is None:
+                        repairs = None
+                        break
+                    if sat is True:
+                        repairs.append(i + 1)
+                if not repairs:
+                    continue
+
+                metadata = edict({
+                    "clauses": clauses,
+                    "repair_indices": repairs,
+                    "negated_theorem": neg_theorem,
+                    "hypotheses": hypotheses,
+                    "axiom_set": self.axiom_set,
+                    "proof_depth": self.config.proof_depth,
+                })
+                return Problem(metadata, " ".join(map(str, repairs)))
+
+        raise RuntimeError("failed to build a compact real TPTP consistency-repair task")
 
     def generate(self):
-        if self.config.max_attempts <= 0:
-            return self._fallback_problem()
-        self._initialize_graph()
-        if not self.interesting_thm:
-            raise RuntimeError("no interesting TPTP theorems found")
-
-        for _ in range(self.config.max_attempts):
-            theorem_node_id = random.choice(self.interesting_thm)
-            hypotheses, theorem = extract_problem_from_graph(
-                self.graph, theorem_node_id, self.config.proof_depth
-            )
-            if not hypotheses or prove_conjecture(hypotheses, theorem, time_limit_seconds="10") is not True:
-                continue
-            neg_theorem = negate_clause_formula(theorem)
-            if neg_theorem is None:
-                continue
-
-            clauses = list(dict.fromkeys(hypotheses + [neg_theorem]))
-            if len(clauses) > self.config.max_axioms:
-                continue
-            if sum(map(len, clauses)) > self.config.max_payload_chars:
-                continue
-            if check_clause_set_satisfiability(
-                clauses, self.config.unsat_time_limit, log_errors=False
-            ) is not False:
-                continue
-
-            repairs = []
-            for i in range(len(clauses)):
-                sat = check_clause_set_satisfiability(
-                    clauses[:i] + clauses[i + 1:],
-                    self.config.sat_time_limit,
-                    log_errors=False,
-                )
-                if sat is None:
-                    repairs = None
-                    break
-                if sat:
-                    repairs.append(i + 1)
-            if repairs is None or len(repairs) != 1:
-                continue
-
-            metadata = edict({
-                "clauses": clauses,
-                "repair_indices": repairs,
-                "negated_theorem": neg_theorem,
-                "hypotheses": hypotheses,
-                "axiom_set": self.axiom_set,
-                "proof_depth": self.config.proof_depth,
-            })
-            return Problem(metadata, str(repairs))
-        return self._fallback_problem()
+        from reasoning_core.utils.udocker_process import initialize_prover_session
+        initialize_prover_session()
+        return self._real_tptp_problem()
 
     def prompt(self, metadata):
         clauses = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(metadata["clauses"]))
         return (
-            "Unsatisfiable theory.\n"
-            "Remove a smallest set of clauses to make it satisfiable.\n"
-            "The answer is sorted clause numbers.\n\n"
+            "The clauses below are unsatisfiable.\n"
+            "Find all individual clauses whose deletion makes them satisfiable.\n"
+            "The answer is the clause numbers, ordered, space-separated.\n"
             f"Clauses:\n{clauses}"
         )
 
     def score_answer(self, answer, entry):
         try:
-            pred = set(ast.literal_eval(str(answer)))
-        except Exception:
-            pred = set(map(int, re.findall(r"\d+", str(answer))))
-        return float(pred == set(ast.literal_eval(entry.answer)))
+            pred = [int(part) for part in str(answer).strip().split()]
+        except ValueError:
+            return 0.0
+        ref = [int(part) for part in entry.answer.split()]
+        return float(pred == ref)

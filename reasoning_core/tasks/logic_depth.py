@@ -8,6 +8,7 @@ from typing import Optional
 from easydict import EasyDict as edict
 
 from reasoning_core.template import Config, Payload, Problem, Task
+from reasoning_core.utils import parse_space_ints, score_space_ints
 
 
 @dataclass(frozen=True)
@@ -978,10 +979,7 @@ def necessary_indices(case):
 
 
 def parse_indices(s):
-    try:
-        return {int(x.strip()) for x in str(s).strip().strip("[]").split(",") if x.strip()}
-    except ValueError:
-        return set()
+    return set(parse_space_ints(s) or [])
 
 
 def _entails(theory, res, atom):
@@ -1194,7 +1192,7 @@ class MultistepEvidenceRetrieval(Task):
             meta.valid_supports = [nec]
             meta.support_indices = nec
             meta.payload = Payload(premise=indexed_premise(meta.premise), hypothesis=meta.hypothesis)
-            answer = "[" + ", ".join(str(i) for i in nec) + "]"
+            answer = " ".join(str(i) for i in nec)
             return Problem(meta, answer)
         raise RuntimeError("could not generate a unique-support multistep_evidence_retrieval example")
 
@@ -1204,7 +1202,7 @@ class MultistepEvidenceRetrieval(Task):
             f"{Payload(meta.payload)}\n\n"
             f"Which premise statements are necessary to {verb} the hypothesis, "
             "meaning removing any one of them breaks that result?\n"
-            "The answer is a list of indices, e.g. [0, 1]."
+            "Answer with space-separated indexes."
         )
 
     def score_answer(self, answer, entry):
@@ -1235,7 +1233,7 @@ class MultistepAbduction(Task):
                 hypothesis=meta.hypothesis,
                 candidate_facts=indexed_premise(meta.candidates),
             )
-            answer = "[" + ", ".join(str(i) for i in abd.answer) + "]"
+            answer = " ".join(str(i) for i in abd.answer)
             return Problem(meta, answer)
         raise RuntimeError("could not generate a consistent multistep_abduction example")
 
@@ -1244,12 +1242,11 @@ class MultistepAbduction(Task):
         return (
             f"{Payload(meta.payload)}\n\n"
             f"Which candidate facts, if added to the premise, make the premise {mode}?\n"
-            "The answer is the smallest list of candidate indices, e.g. [0, 2]."
+            "Answer with space-separated indexes."
         )
 
     def score_answer(self, answer, entry):
-        parse = lambda s: {x.strip() for x in str(s).strip().strip("[]").split(",") if x.strip()}
-        return float(parse(answer) == parse(entry.answer))
+        return score_space_ints(answer, entry)
 
 
 class LogicQA(Task):

@@ -35,6 +35,19 @@ def score_scalar(answer, entry, k=10.0):
     return semantic_reward * format_reward
 
 
+def parse_space_ints(text):
+    try:
+        return [int(x) for x in str(text).strip().split()]
+    except ValueError:
+        return None
+
+
+def score_space_ints(answer, entry):
+    pred = parse_space_ints(answer)
+    ref = parse_space_ints(entry.answer if hasattr(entry, "answer") else entry["answer"])
+    return float(pred is not None and ref is not None and set(pred) == set(ref))
+
+
 def prettyorder(ds, cols="task", n_pretty=3, seed=42, progress=True):
     from tqdm.auto import tqdm
     import random

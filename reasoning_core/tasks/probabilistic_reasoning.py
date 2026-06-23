@@ -7,6 +7,7 @@ from gramforge import generate, init_grammar
 from problog import get_evaluatable
 from problog.program import PrologString
 from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.utils import score_space_ints
 
 
 problog, eng = "problog", "eng"
@@ -65,6 +66,10 @@ def norm_lits(s):
         return sorted_lits(map(str, ast.literal_eval(m.group(0))))
     except Exception:
         return None
+
+
+def lit_options(src):
+    return sorted_lits(x for a in hidden_atoms(src) for x in (a, f"not {a}"))
 
 
 def cmp_rules(cmp):
@@ -264,14 +269,18 @@ class MostProbableEvidence(Task):
             answer, margin = sol
             if not self.config.min_margin <= margin <= self.config.max_margin:
                 continue
-            return Problem(edict(problog=src, english=english, n_atoms=len(hidden_atoms(src)), margin=margin), answer)
+            opts = lit_options(src)
+            lits = sorted_lits(map(str, json.loads(answer)))
+            answer = " ".join(str(opts.index(x)) for x in lits)
+            return Problem(edict(problog=src, english=english, options=opts, n_atoms=len(hidden_atoms(src)), margin=margin), answer)
         raise RuntimeError("Failed to generate probabilistic evidence task")
 
     def prompt(self, m):
-        return f"{m.english}\n\nThe answer is a sorted Python list of strings."
+        opts = "\n".join(f"{i}. {x}" for i, x in enumerate(m.options))
+        return f"{m.english}\n\nHidden fact values:\n{opts}\n\nAnswer with space-separated indexes."
 
     def score_answer(self, answer, entry):
-        return float(norm_lits(answer) == norm_lits(entry.answer))
+        return score_space_ints(answer, entry)
 
 
 @dataclass

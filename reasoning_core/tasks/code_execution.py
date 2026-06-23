@@ -1,6 +1,7 @@
 import io, re, sys, os, time, random, signal, inspect, contextlib, multiprocessing as mp
 from dataclasses import dataclass
 from difflib import SequenceMatcher
+from itertools import product
 
 from reasoning_core.template import Task, Problem, Config, edict
 from gramforge import generate
@@ -116,7 +117,7 @@ def kill(p):
             p.join()
 
 
-def _worker(send, code, magnitude, recursionlimit, max_steps):
+def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None):
     out, err = CapIO(), CapIO()
     ns = {"__builtins__": __builtins__}
     steps, t0 = 0, time.perf_counter()
@@ -141,7 +142,7 @@ def _worker(send, code, magnitude, recursionlimit, max_steps):
     try:
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             exec(compile(code, "<mesopy>", "exec"), ns, ns)
-            args = endpoint_args(ns["endpoint"], magnitude)
+            args = call_args if call_args is not None else endpoint_args(ns["endpoint"], magnitude)
             sys.settrace(trace)
             try:
                 value = ns["endpoint"](*args)
@@ -192,10 +193,10 @@ def _worker(send, code, magnitude, recursionlimit, max_steps):
     send.close()
 
 
-def run_code(code, cfg, recursionlimit=80):
+def run_code(code, cfg, recursionlimit=80, call_args=None):
     ctx = mp.get_context("fork")
     recv, send = ctx.Pipe(duplex=False)
-    p = ctx.Process(target=_worker, args=(send, code, cfg.magnitude, recursionlimit, cfg.max_steps))
+    p = ctx.Process(target=_worker, args=(send, code, cfg.magnitude, recursionlimit, cfg.max_steps, call_args))
     p.start()
     send.close()
 
@@ -207,7 +208,7 @@ def run_code(code, cfg, recursionlimit=80):
             return r
 
         kill(p)
-        return RunReport(error="TimeoutError", elapsed=cfg.timeout)
+        return RunReport(error="TimeoutError", args=call_args, elapsed=cfg.timeout)
 
     except KeyboardInterrupt:
         kill(p)
@@ -323,3 +324,115 @@ class CodeExecution(Task):
 
     def balancing_key(self, problem):
         return value_kind(problem.answer)
+
+
+@dataclass
+class CodeInputDeductionCfg(MesopyCodeCfg):
+    min_depth: int = 3
+    max_depth: int = 8
+    n_functions: int = 1
+    lo: int = -6
+    hi: int = 9
+    max_len: int = 3
+    alphabet: str = "abc"
+    max_attempts: int = 100
+
+    def update(self, c):
+        self.lo -= c
+        self.hi += c
+        self.max_len += c // 2
+
+
+def bounded_strings(alphabet, max_len):
+    return [
+        "".join(xs)
+        for n in range(1, max_len + 1)
+        for xs in product(alphabet, repeat=n)
+    ]
+
+
+class CodeInputDeduction(Task):
+    def __init__(self, config=None):
+        super().__init__(config=config or CodeInputDeductionCfg())
+        self._mode_i = 0
+        self._recent_answers = []
+
+    def generate(self):
+        cfg = self.config
+        modes = ("int", "tuple", "str")
+        start = self._mode_i % len(modes)
+        self._mode_i += 1
+        for mode in modes[start:] + modes[:start]:
+            for _ in range(max(1, cfg.max_attempts // len(modes))):
+                if mode == "int":
+                    domain = list(range(cfg.lo, cfg.hi + 1))
+                    sig, call = (("int",), "int"), lambda x: [x]
+                    goal, call_text, answer_hint = f"smallest integer x in [{cfg.lo}, {cfg.hi}]", "endpoint(x)", "Answer with the integer."
+                    endpoint = f"def endpoint(x):\n    return f0(x) % {random.choice((3, 4, 5))}\n"
+                elif mode == "tuple":
+                    domain = [(x, y) for x in range(cfg.lo, cfg.hi + 1) for y in range(cfg.lo, cfg.hi + 1)]
+                    sig, call = (("int", "int"), "int"), lambda xy: list(xy)
+                    goal, call_text, answer_hint = f"lexicographically smallest integer pair (x, y) with each value in [{cfg.lo}, {cfg.hi}]", "endpoint(x, y)", "Answer as `x y`."
+                    endpoint = f"def endpoint(x, y):\n    return f0(x, y) % {random.choice((3, 4, 5))}\n"
+                else:
+                    domain = bounded_strings(cfg.alphabet, cfg.max_len)
+                    sig, call = (("int",), "int"), lambda s: [sum((len(cfg.alphabet) ** i) * cfg.alphabet.index(ch) for i, ch in enumerate(reversed(s)))]
+                    goal, call_text, answer_hint = f"lexicographically smallest string s over `{cfg.alphabet}` with length 1..{cfg.max_len}", "endpoint(s)", "Answer with the string."
+                    endpoint = f"def endpoint(s):\n    z = 0\n    for ch in s:\n        z = {len(cfg.alphabet)} * z + {repr(cfg.alphabet)}.index(ch)\n    return f0(z) % {random.choice((3, 4, 5))}\n"
+                core = generate(
+                    mesopy_grammar(
+                        mode="function",
+                        n_functions=max(1, int(cfg.n_functions)),
+                        main_signature=sig,
+                        max_number=max(4, int(8 + 2 * cfg.difficulty)),
+                        max_params=len(sig[0]),
+                        param_types=("int",),
+                        return_types=("int",),
+                        emit_endpoint=False,
+                        emit_result=False,
+                        failure_rate=0.05,
+                        triviality_rate=0.25,
+                        include_print=False,
+                        include_assert=False,
+                        include_try_except=False,
+                    ),
+                    depth=cfg.max_depth,
+                    min_depth=cfg.min_depth,
+                ) @ "py"
+                code = f"{core}\n\n{endpoint}"
+                buckets, reports = {}, []
+                for x in domain:
+                    r = run_code(code, cfg, call_args=call(x))
+                    reports.append(r)
+                    if r.ok and r.value is not None:
+                        buckets.setdefault(r.value, []).append(x)
+                if function_triviality(reports):
+                    continue
+                choices = [(y, min(xs)) for y, xs in buckets.items() if 1 < len(xs) < len(domain)]
+                choices = [c for c in choices if c[1] != domain[0]] or choices
+                if choices:
+                    fresh = [c for c in choices if (" ".join(map(str, c[1])) if isinstance(c[1], tuple) else str(c[1])) not in self._recent_answers]
+                    choices = fresh or choices
+                    target, answer = random.choice(choices)
+                    if isinstance(answer, tuple):
+                        answer = " ".join(map(str, answer))
+                    else:
+                        answer = str(answer)
+                    self._recent_answers = (self._recent_answers + [answer])[-8:]
+                    return Problem(
+                        edict(code=code, mode=mode, goal=goal, call_text=call_text, answer_hint=answer_hint, target=target),
+                        answer,
+                    )
+        raise RuntimeError("failed to generate code input deduction task")
+
+    def prompt(self, m):
+        return (
+            f"Find the {m.goal} such that `{m.call_text} == target`.\n"
+            f"{m.answer_hint}\n\n"
+            f"```python\n{m.code}\n```\n\n"
+            f"Target: {m.target}"
+        )
+
+    def score_answer(self, answer, entry):
+        reference = entry["answer"] if isinstance(entry, dict) else entry.answer
+        return float(str(answer).strip().strip("\"'") == reference)
