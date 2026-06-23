@@ -923,6 +923,13 @@ class TPTPConsistencyRepair(Task):
                         repairs.append(i + 1)
                 if not repairs or len(repairs) == len(clauses):
                     continue
+                if any(
+                    check_clause_set_satisfiability(
+                        [clauses[i - 1]], self.config.sat_time_limit, log_errors=False
+                    ) is not True
+                    for i in repairs
+                ):
+                    continue
 
                 metadata = edict({
                     "clauses": clauses,
@@ -949,8 +956,7 @@ class TPTPConsistencyRepair(Task):
             else "Answer with ordered, space-separated clause numbers.\n"
         )
         return (
-            "The clauses below are unsatisfiable.\n"
-            "Find all individual clauses whose deletion makes them satisfiable.\n"
+            "Which single-clause deletions make the remaining set satisfiable?\n"
             f"{fmt}"
             f"Clauses:\n{clauses}"
         )

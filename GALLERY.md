@@ -131,18 +131,17 @@ True
 
 **Prompt:**
 ```
-The clauses below are unsatisfiable.
-Find all individual clauses whose deletion makes them satisfiable.
+Which single-clause deletions make the remaining set satisfiable?
 Answer with ordered, space-separated clause numbers.
 Clauses:
-1. (join(X1,join(X2,X3)) != join(X3,join(X1,X2)))
-2. (join(join(X1,X2),X3)=join(X1,join(X2,X3)))
-3. (join(X1,X2)=join(X2,X1))
+1. (multiply(identity,X1)=X1)
+2. (multiply(identity,a)!=a)
+3. (multiply(X1,identity)=X1)
 ```
 
 **Answer:**
 ```
-1
+1 2
 ```
 
 ---
