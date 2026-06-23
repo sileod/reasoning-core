@@ -834,9 +834,9 @@ class ConsistencyRepairConfig(Config):
     min_interesting_score: float = 0.6
     sat_time_limit: str = "5"
     unsat_time_limit: str = "8"
-    max_graph_attempts: int = 3
-    max_attempts: int = 20
-    generation_time_budget: float = 30.0
+    max_graph_attempts: int = 6
+    max_attempts: int = 60
+    generation_time_budget: float = 120.0
     answer_style: str = "space"  # "space" or "list"
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 

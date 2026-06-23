@@ -25,6 +25,7 @@ SINGLE_EXAMPLE_TASKS = {
     "theorem_premise_selection",
     "proof_reconstruction",
     "parsing",
+    "tptp_consistency_repair",
 }
 
 GITHUB_BASE = "https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks"
@@ -62,8 +63,9 @@ def source_link(task):
     return f"{GITHUB_BASE}{rel_path}"
 
 
-def build_examples(tasks, cache=False, refresh_cache=False):
+def build_examples(tasks, cache=False, refresh_cache=False, allow_missing=False):
     examples = OrderedDict()
+    failures = []
     for task in tqdm(tasks):
         name = task.task_name
         if name in examples:
@@ -74,7 +76,11 @@ def build_examples(tasks, cache=False, refresh_cache=False):
             examples[name] = pick_example(task, batch_size, cache,
                                           refresh_cache)
         except Exception as e:
-            print(e)
+            failures.append((name, e))
+            print(f"{name}: {e}")
+    if failures and not allow_missing:
+        names = ", ".join(name for name, _ in failures)
+        raise RuntimeError(f"failed to build gallery examples for: {names}")
     return examples
 
 
@@ -98,6 +104,7 @@ def parse_args():
     parser.add_argument("--no-cache", action="store_true",
                         help="Use generate_balanced_batch instead of cached validation examples.")
     parser.add_argument("--refresh-cache", action="store_true")
+    parser.add_argument("--allow-missing", action="store_true")
     parser.add_argument("--tasks", nargs="*", default=None)
     return parser.parse_args()
 
@@ -107,7 +114,8 @@ def main():
     names = args.tasks or list_tasks()
     tasks = sorted((get_task(name) for name in names), key=category_rank)
     examples = build_examples(tasks, cache=not args.no_cache,
-                              refresh_cache=args.refresh_cache)
+                              refresh_cache=args.refresh_cache,
+                              allow_missing=args.allow_missing)
     write_gallery(examples, args.out)
 
 

@@ -134,9 +134,9 @@ True
 Which single-clause deletions make the remaining set satisfiable?
 Answer with ordered, space-separated clause numbers.
 Clauses:
-1. (multiply(identity,X1)=X1)
-2. (multiply(identity,a)!=a)
-3. (multiply(X1,identity)=X1)
+1. (greatest_lower_bound(identity,multiply(X1,inverse(greatest_lower_bound(X1,X2))))=identity)
+2. (greatest_lower_bound(identity,multiply(X1,inverse(greatest_lower_bound(X2,greatest_lower_bound(X3,X1))))) != identity)
+3. (greatest_lower_bound(X1,greatest_lower_bound(X2,greatest_lower_bound(X3,X1)))=greatest_lower_bound(X2,greatest_lower_bound(X3,X1)))
 ```
 
 **Answer:**
