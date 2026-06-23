@@ -7,6 +7,8 @@ import random
 import json
 import gzip
 import logging
+import ast
+import time
 from easydict import EasyDict as edict
 from dataclasses import dataclass
 from appdirs import AppDirs
@@ -832,8 +834,10 @@ class ConsistencyRepairConfig(Config):
     min_interesting_score: float = 0.6
     sat_time_limit: str = "5"
     unsat_time_limit: str = "8"
-    max_graph_attempts: int = 20
-    max_attempts: int = 50
+    max_graph_attempts: int = 3
+    max_attempts: int = 20
+    generation_time_budget: float = 30.0
+    answer_style: str = "space"  # "space" or "list"
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
     def update(self, c):
@@ -872,11 +876,16 @@ class TPTPConsistencyRepair(Task):
         ]
         return bool(self.interesting_thm)
 
-    def _real_tptp_problem(self):
+    def _build_problem(self):
+        deadline = time.time() + self.config.generation_time_budget
         for _ in range(self.config.max_graph_attempts):
+            if time.time() > deadline:
+                break
             if not self._initialize_graph():
                 continue
             for _ in range(self.config.max_attempts):
+                if time.time() > deadline:
+                    break
                 theorem_node_id = random.choice(self.interesting_thm)
                 hypotheses, theorem = extract_problem_from_graph(
                     self.graph, theorem_node_id, self.config.proof_depth
@@ -912,7 +921,7 @@ class TPTPConsistencyRepair(Task):
                         break
                     if sat is True:
                         repairs.append(i + 1)
-                if not repairs:
+                if not repairs or len(repairs) == len(clauses):
                     continue
 
                 metadata = edict({
@@ -923,28 +932,45 @@ class TPTPConsistencyRepair(Task):
                     "axiom_set": self.axiom_set,
                     "proof_depth": self.config.proof_depth,
                 })
-                return Problem(metadata, " ".join(map(str, repairs)))
+                return Problem(metadata, self._format_indices(repairs))
 
         raise RuntimeError("failed to build a compact real TPTP consistency-repair task")
 
     def generate(self):
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
-        return self._real_tptp_problem()
+        return self._build_problem()
 
     def prompt(self, metadata):
         clauses = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(metadata["clauses"]))
+        fmt = (
+            "Answer with a Python list of clause numbers.\n"
+            if self.config.answer_style == "list"
+            else "Answer with ordered, space-separated clause numbers.\n"
+        )
         return (
             "The clauses below are unsatisfiable.\n"
             "Find all individual clauses whose deletion makes them satisfiable.\n"
-            "The answer is the clause numbers, ordered, space-separated.\n"
+            f"{fmt}"
             f"Clauses:\n{clauses}"
         )
 
-    def score_answer(self, answer, entry):
+    def _format_indices(self, xs):
+        return str(list(xs)) if self.config.answer_style == "list" else " ".join(map(str, xs))
+
+    @staticmethod
+    def _parse_indices(text):
+        text = str(text).strip()
+        if text.startswith("["):
+            try:
+                xs = ast.literal_eval(text)
+                return [int(x) for x in xs]
+            except Exception:
+                return None
         try:
-            pred = [int(part) for part in str(answer).strip().split()]
+            return [int(part) for part in text.split()]
         except ValueError:
-            return 0.0
-        ref = [int(part) for part in entry.answer.split()]
-        return float(pred == ref)
+            return None
+
+    def score_answer(self, answer, entry):
+        return float(self._parse_indices(answer) == self._parse_indices(entry.answer))

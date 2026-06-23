@@ -277,7 +277,10 @@ class MostProbableEvidence(Task):
 
     def prompt(self, m):
         opts = "\n".join(f"{i}. {x}" for i, x in enumerate(m.options))
-        return f"{m.english}\n\nHidden fact values:\n{opts}\n\nAnswer with space-separated indexes."
+        return (
+            f"{m.english}\n\nHidden fact values:\n{opts}\n\n"
+            "Choose one value for each hidden factor. Answer with space-separated indexes."
+        )
 
     def score_answer(self, answer, entry):
         return score_space_ints(answer, entry)

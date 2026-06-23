@@ -58,16 +58,16 @@ Multiple solutions
 ```
 The clauses below are unsatisfiable.
 Find all individual clauses whose deletion makes them satisfiable.
-The answer is the clause numbers, ordered, space-separated.
+Answer with ordered, space-separated clause numbers.
 Clauses:
-1. (subset(X1,X2)|~member(member_of_1_not_of_2(X1,X2),X2))
-2. (~subset(X1,X1))
-3. (subset(X1,X2)|member(member_of_1_not_of_2(X1,X2),X1))
+1. (join(X1,join(X2,X3)) != join(X3,join(X1,X2)))
+2. (join(join(X1,X2),X3)=join(X1,join(X2,X3)))
+3. (join(X1,X2)=join(X2,X1))
 ```
 
 **Answer:**
 ```
-1 2 3
+1
 ```
 
 ---
@@ -131,7 +131,7 @@ Hidden fact values:
 2. b
 3. not b
 
-Answer with space-separated indexes.
+Choose one value for each hidden factor. Answer with space-separated indexes.
 ```
 
 **Answer:**
@@ -633,4 +633,3 @@ x is delta-linked to u.
 ```
 
 ---
-
