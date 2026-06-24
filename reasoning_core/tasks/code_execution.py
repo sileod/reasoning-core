@@ -117,7 +117,7 @@ def kill(p):
             p.join()
 
 
-def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None):
+def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, batch=False):
     out, err = CapIO(), CapIO()
     ns = {"__builtins__": __builtins__}
     steps, t0 = 0, time.perf_counter()
@@ -143,15 +143,19 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None):
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             exec(compile(code, "<mesopy>", "exec"), ns, ns)
             args = call_args if call_args is not None else endpoint_args(ns["endpoint"], magnitude)
-            sys.settrace(trace)
-            try:
-                value = ns["endpoint"](*args)
-            finally:
-                sys.settrace(None)
+            args_list = args if batch else None
+            values = []
+            for a in args_list or [args]:
+                steps = 0
+                sys.settrace(trace)
+                try:
+                    values.append(repr(ns["endpoint"](*a))[:500])
+                finally:
+                    sys.settrace(None)
 
         r = RunReport(
             True,
-            repr(value)[:500],
+            values if args_list else values[0],
             None,
             args,
             out.getvalue(),
@@ -193,22 +197,23 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None):
     send.close()
 
 
-def run_code(code, cfg, recursionlimit=80, call_args=None):
+def run_code(code, cfg, recursionlimit=80, call_args=None, batch=False):
     ctx = mp.get_context("fork")
     recv, send = ctx.Pipe(duplex=False)
-    p = ctx.Process(target=_worker, args=(send, code, cfg.magnitude, recursionlimit, cfg.max_steps, call_args))
+    p = ctx.Process(target=_worker, args=(send, code, cfg.magnitude, recursionlimit, cfg.max_steps, call_args, batch))
     p.start()
     send.close()
+    timeout = min(4.0, cfg.timeout + 0.01 * len(call_args)) if batch else cfg.timeout
 
     try:
-        if recv.poll(cfg.timeout):
+        if recv.poll(timeout):
             r = recv.recv()
             p.join(0.05)
             kill(p)
             return r
 
         kill(p)
-        return RunReport(error="TimeoutError", args=call_args, elapsed=cfg.timeout)
+        return RunReport(error="TimeoutError", args=call_args, elapsed=timeout)
 
     except KeyboardInterrupt:
         kill(p)
@@ -400,10 +405,14 @@ class CodeInputDeduction(Task):
                     min_depth=cfg.min_depth,
                 ) @ "py"
                 code = f"{core}\n\n{endpoint}"
-                buckets, reports = {}, []
-                for x in domain:
-                    r = run_code(code, cfg, call_args=call(x))
-                    reports.append(r)
+                call_args = [call(x) for x in domain]
+                r = run_code(code, cfg, call_args=call_args, batch=True)
+                reports = [
+                    RunReport(True, value, None, args, r.stdout, r.stderr, r.steps, r.elapsed)
+                    for args, value in zip(call_args, r.value or [])
+                ] if r.ok else [r]
+                buckets = {}
+                for x, r in zip(domain, reports):
                     if r.ok and r.value is not None:
                         buckets.setdefault(r.value, []).append(x)
                 if function_triviality(reports):

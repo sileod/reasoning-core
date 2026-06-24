@@ -67,23 +67,6 @@ def make_domains(size, ordered=False):
 
     return domains
 
-def perturb_list(input_l, base_domain, n_perturbation=1):
-    for _ in range(n_perturbation):
-        perturbation = random.choice(['add', 'remove', 'replace'])
-        lst = input_l[:]
-        complementary = list(set(base_domain) - set(lst))
-        if perturbation == 'add':
-            new_element = random.choice(complementary)
-            insert_pos = random.randint(0, len(lst))
-            lst.insert(insert_pos, new_element)
-        elif perturbation == 'remove' and len(lst) > 1:
-            del lst[random.randint(0, len(lst) - 1)]
-        elif perturbation == 'replace':
-            index = random.randint(0, len(lst) - 1)
-            lst[index] = random.choice(complementary)
-    return (lst , perturbation)
-
-
 def intersection_metric(set1, set2):
     return len(set1 & set2)/len(set1 | set2)
     
@@ -93,60 +76,18 @@ def intersection_metric(set1, set2):
 class SetOpsConfig(Config):
     domain_size: int = 1000
     set_size: int = 8
-    n_max_perturbation: int = 2
-    prob_equal: float = 0.5
     n_domains : int = 2
     def update(self, c):
         self.set_size *= 1 + c
         self.domain_size *= 1 + c
-        self.n_max_perturbation *= 1 + c
         self.n_domains += c
         
-class SetIntersection(Task):
-    def __init__(self, config=SetOpsConfig()):
-        super().__init__(config=config)
-        self.domains = make_domains(self.config.domain_size)
-    
-    def generate(self):
-        chosen_domain = random.choice(self.domains[:self.config.n_domains])
-        N=6
-        set_1 = random_subdomain( chosen_domain, size=self.config.set_size) 
-        others = list(set(chosen_domain) - set(set_1))
-        set_2 = random.sample(others, N//2) + random.sample(set_1, N//2)
-
-        inter = sorted(list(set(set_1) & set(set_2)))
-        inter = "{" + ", ".join(map(repr, inter)) + "}"
-
-        meta = {}
-        meta["set_1"] = return_shuffle(set_1)
-        meta["set_2"] = return_shuffle(set_2)
-        return Problem(metadata = meta, answer = inter)
-     
-    def prompt(self, metadata) -> str:
-        return (
-            f"Set1: {metadata['set_1']}\n"
-            f"Set2: {metadata['set_2']}\n"
-            "The answer is Set1 ∩ Set2 as a Python set."
-        )
-
-    def score_answer(self, answer, entry):
-        reference = entry['answer']
-        try:
-            set_pred , set_truth  = set(literal_eval(answer)),set(literal_eval(reference))
-            if set_truth == set():
-                return int(set_pred == set())
-    
-            return intersection_metric(set_pred, set_truth)
-        except:
-            return 0
-
 @dataclass
 class SetMissingElementConfig(SetOpsConfig):
     set_size: int = 10
     prob_no_missing: float = 0.1
     def update(self, c):
         self.set_size *= 1 + c
-        self.n_max_perturbation *= 1 + c
         self.domain_size *= 1 + c
         self.n_domains += c
 
@@ -215,33 +156,111 @@ class CountElements(Task):
         try: return 1 / (1 + abs(int(answer.strip()) - int(entry['answer'])))
         except: return 0
 
+def repr_set(xs):
+    xs = sorted(xs, key=str)
+    return "{}" if not xs else "{" + ", ".join(map(repr, xs)) + "}"
+
+
+def repr_answer(x):
+    return repr_set(x) if isinstance(x, set) else str(x)
+
+
+def eval_setops(expr, env):
+    return eval(expr, {"__builtins__": {}}, {"Card": len, **env})
+
+
+def make_set_expr(min_depth, max_depth):
+    def part(depth):
+        if depth >= max_depth or (depth >= min_depth and random.random() < 0.85):
+            return random.choice("ABC")
+        return binary(depth)
+
+    def binary(depth):
+        left = part(depth + 1)
+        right = part(depth + 1)
+        for _ in range(3):
+            if right != left:
+                break
+            right = part(depth + 1)
+        return f"({left}{random.choice('&|-^')}{right})"
+
+    expr = binary(0)
+    return f"Card({expr})" if random.random() < 0.25 else expr
+
+
 @dataclass
-class SetEquality(Task):
-    def __init__(self, config=SetOpsConfig()):
+class SetExpressionConfig(Config):
+    domain_size: int = 32
+    set_size: int = 8
+    n_domains: int = 2
+    min_depth: int = 1
+    max_depth: int = 2
+
+    def update(self, c):
+        self.set_size *= 1 + c
+        self.domain_size *= 1 + c
+        self.n_domains += c
+        self.max_depth += c
+
+
+class SetExpression(Task):
+    def __init__(self, config=SetExpressionConfig()):
         super().__init__(config=config)
+        self.balancing_key_ratio = 0.25
         self.domains = make_domains(self.config.domain_size)
 
     def on_config_level_change(self):
         self.domains = make_domains(self.config.domain_size)
 
-    def generate(self):
-        chosen_domain = random.choice(self.domains[:self.config.n_domains])
-        subset = random_subdomain(chosen_domain, size = self.config.set_size)
-        meta = {}
-        meta["base_subset"] = return_shuffle(subset)
-        subset_bis = subset
-        perturbation = None
-        n_pert = random.choice([k+1 for k in range(self.config.n_max_perturbation)])
-        if random.random() > self.config.prob_equal:
-            subset_bis , perturbation = perturb_list(subset, chosen_domain, n_pert)
-        meta["subset_bis"] = return_shuffle(subset_bis) 
-        meta["perturbation"] = perturbation
-        return Problem(metadata = meta, answer = str((set(subset) == set(subset_bis))))
+    def make_env(self, domain):
+        k = self.config.set_size
+        core = random_subdomain(domain, random.randint(max(1, k // 4), max(1, k // 2)))
+        rest = list(set(domain) - set(core))
+        return {x: set(core + random.sample(rest, k - len(core))) for x in "ABC"}
 
-    def prompt(self, metadata) -> str:
-        return (
-            f"Set1: {metadata['base_subset']}\n"
-            f"Set2: {metadata['subset_bis']}\n"
-            "Do Set1 and Set2 contain exactly the same elements? The answer is True or False."
+    def generate(self):
+        domain = random.choice(self.domains[:self.config.n_domains])
+        env = self.make_env(domain)
+        expr = make_set_expr(self.config.min_depth, self.config.max_depth)
+        answer = eval_setops(expr, env)
+
+        return Problem(
+            metadata={
+                **{x: return_shuffle(env[x]) for x in "ABC" if x in expr},
+                "expr": expr,
+            },
+            answer=repr_answer(answer),
         )
-    
+
+    def prompt(self, m):
+        sets = "\n".join(f"{x}: {m[x]}" for x in "ABC" if x in m)
+        return f"{sets}\nEvaluate {m['expr']}."
+
+    def score_answer(self, answer, entry):
+        truth = entry["answer"]
+
+        try:
+            if truth in {"True", "False"}:
+                return int(answer.strip() == truth)
+
+            if truth.lstrip("-").isdigit():
+                return 1 / (1 + abs(int(answer) - int(truth)))
+
+            pred = set() if answer.strip() == "set()" else set(literal_eval(answer))
+            truth = set() if truth == "set()" else set(literal_eval(truth))
+            return int(pred == truth) if not truth else intersection_metric(pred, truth)
+
+        except Exception:
+            return 0
+
+    def balancing_key(self, problem):
+        answer = problem.answer
+        if answer in {"True", "False"}:
+            return f"bool:{answer}"
+        if answer.lstrip("-").isdigit():
+            return f"number:{answer}"
+        try:
+            xs = set() if answer in {"{}", "set()"} else set(literal_eval(answer))
+            return f"set:{len(xs)}"
+        except Exception:
+            return "set"

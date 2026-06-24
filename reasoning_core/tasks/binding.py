@@ -12,7 +12,7 @@
 from dataclasses import dataclass
 import ast, random, re
 
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Problem, Config, Payload, edict
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -673,17 +673,16 @@ class RewriteSystem(Task):
             if len(rules_s) + len(term_s) + len(nf_s) + len(cot) > cfg.max_chars * 3:
                 continue
 
-            return Problem(
-                metadata=edict(
-                    theory=pack.name,
-                    rules=rules_s,
-                    term=term_s,
-                    normal_form=nf_s,
-                    used=used,
-                    cot=cot,
-                ),
-                answer=nf_s,
+            meta = edict(
+                theory=pack.name,
+                rules=rules_s,
+                term=term_s,
+                normal_form=nf_s,
+                used=used,
+                cot=cot,
             )
+            meta.payload = Payload(rules=rules_s, term=term_s)
+            return Problem(metadata=meta, answer=nf_s)
 
         raise RuntimeError("could not sample a rewrite-system instance")
 
@@ -692,8 +691,7 @@ class RewriteSystem(Task):
             "Normalize by the ordered rewrite rules. At each step, use the first "
             "applicable rule in the listed order, searching outermost-first and "
             "left-to-right.\n\n"
-            f"Rules:\n{metadata['rules']}\n\n"
-            f"Term: {metadata['term']}\n\n"
+            f"{Payload(metadata['payload'])}\n\n"
             "The answer is the normal form."
         )
 

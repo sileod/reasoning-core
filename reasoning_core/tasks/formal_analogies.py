@@ -83,12 +83,23 @@ def _candidate_consequences(before, nodes, preds, rng):
 
 
 def _near_context(q_before, q_consequence, m, rng):
-    _, u, v = q_consequence
-    near = [x for x in q_before if u in x[1:] or v in x[1:]]
-    far = [x for x in q_before if x not in near]
+    p, u, v = q_consequence
+    required = []
+    for group in (
+        [x for x in q_before if x[0] == p],
+        [x for x in q_before if u in x[1:]],
+        [x for x in q_before if v in x[1:]],
+    ):
+        rng.shuffle(group)
+        for atom in group:
+            if atom not in required:
+                required.append(atom)
+                break
+    near = [x for x in q_before if (x[0] == p or u in x[1:] or v in x[1:]) and x not in required]
+    far = [x for x in q_before if x not in near and x not in required]
     rng.shuffle(near)
     rng.shuffle(far)
-    return set((near + far)[:m])
+    return set((required + near + far)[:m])
 
 
 def _inverse_case(q_before, q_consequence, m, rng, reverse_rate=0.15):
@@ -160,35 +171,53 @@ def _transported_consequences(case, q_before, allow_reverse=True, injective_pred
         return []
 
     flips = [False, True] if allow_reverse else [False]
+    c_order = sorted(c_atoms, key=lambda atom: sum(atom[1:].count(x) for x in cnodes), reverse=True)
     out = set()
 
-    for qnode_tuple in it.permutations(qnodes, len(cnodes)):
-        omap = dict(zip(cnodes, qnode_tuple))
+    def bind(m, used, a, x):
+        if a in m:
+            return m if m[a] == x else None
+        if x in used:
+            return None
+        return {**m, a: x}
 
-        for qpred_tuple in it.permutations(qpreds, len(cpreds)):
-            pbase = dict(zip(cpreds, qpred_tuple))
+    def complete_nodes(omap, names):
+        missing = [x for x in names if x not in omap]
+        pool = [x for x in qnodes if x not in omap.values()]
+        for vals in it.permutations(pool, len(missing)):
+            yield {**omap, **dict(zip(missing, vals))}
 
-            for flip_tuple in it.product(flips, repeat=len(cpreds)):
-                fmap = dict(zip(cpreds, flip_tuple))
+    def search(i, omap, pmap, fmap):
+        if len(out) >= cap:
+            return
+        if i == len(c_order):
+            p, a, b = c_cons
+            preds = [pmap[p]] if p in pmap else [q for q in qpreds if not injective_predicates or q not in pmap.values()]
+            for q in preds:
+                for flip in ([fmap[p]] if p in fmap else flips):
+                    for omap2 in complete_nodes(omap, [a, b]):
+                        x, y = omap2[a], omap2[b]
+                        out.add((q, y, x) if flip else (q, x, y))
+                        if len(out) >= cap:
+                            return
+            return
 
-                ok = True
-                for p, a, b in c_atoms:
-                    q = pbase[p]
-                    x, y = omap[a], omap[b]
-                    mapped = (q, y, x) if fmap[p] else (q, x, y)
-                    if mapped not in q_atoms:
-                        ok = False
-                        break
-                if not ok:
+        p, a, b = c_order[i]
+        for q, x, y in q_atoms:
+            for flip in flips:
+                if p in pmap and (pmap[p] != q or fmap[p] != flip):
                     continue
+                if p not in pmap and injective_predicates and q in pmap.values():
+                    continue
+                x, y = (y, x) if flip else (x, y)
+                omap2 = bind(omap, set(omap.values()), a, x)
+                if omap2 is None:
+                    continue
+                omap2 = bind(omap2, set(omap2.values()), b, y)
+                if omap2 is not None:
+                    search(i + 1, omap2, {**pmap, p: q}, {**fmap, p: flip})
 
-                p, a, b = c_cons
-                q = pbase[p]
-                x, y = omap[a], omap[b]
-                out.add((q, y, x) if fmap[p] else (q, x, y))
-                if len(out) >= cap:
-                    return sorted(out)
-
+    search(0, {}, {}, {})
     return sorted(out)
 
 
@@ -268,7 +297,7 @@ class AnalogicalCaseRetrieval(Task):
                     )
                 if case is None:
                     continue
-                if q_answer not in _transported_consequences(case, q_before):
+                if not _transported_consequences(case, q_before, cap=1):
                     cases.append(case)
 
             if len(cases) < n_cases:
@@ -315,7 +344,7 @@ class AnalogicalCaseRetrieval(Task):
     def prompt(self, metadata):
         lines = [
             "Cases show facts that imply one new fact.",
-            "Object names and link names may be consistently renamed, and each link direction may be consistently reversed.",
+            "Object names and link names may be consistently renamed, and each link name may also have its direction consistently reversed.",
             "",
         ]
 

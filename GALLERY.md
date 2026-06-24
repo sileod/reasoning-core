@@ -1,6 +1,6 @@
 # 📖 Task Gallery
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_intersection`](#set_intersection) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_equality`](#set_equality) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`analogical_case_retrieval`](#analogical_case_retrieval)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`analogical_case_retrieval`](#analogical_case_retrieval)
 
 ---
 
@@ -8,13 +8,13 @@
 
 **Prompt:**
 ```
-Evaluate -5 + 9.
+Evaluate 0 - 6.
 The answer is a number.
 ```
 
 **Answer:**
 ```
-4
+-6
 ```
 
 ---
@@ -23,12 +23,12 @@ The answer is a number.
 
 **Prompt:**
 ```
-Jon has half as many apples as Wei. Wei has 2 fewer apples than Ravi. Ravi has 8 apples. How many apples does Wei have? Answer with s a number.
+A jar holds 3 beads. 10 more beads added; then 10 beads removed; then tripled. How many beads are in the jar now? Answer with a number.
 ```
 
 **Answer:**
 ```
-6
+9
 ```
 
 ---
@@ -40,14 +40,15 @@ Jon has half as many apples as Wei. Wei has 2 fewer apples than Ravi. Ravi has 8
 Solve the following system of equations for the variable 'X2'.
 
 System:
-  X2 + 13 = 0
+  X2 + 17 = 3
+  X2 + 17 = 0
 
 The answer is the value of X2, or 'No solution' / 'Multiple solutions'.
 ```
 
 **Answer:**
 ```
--13
+No solution
 ```
 
 ---
@@ -65,17 +66,17 @@ theorem ex (p q r : Prop) (h0 : p → q) : p ∧ r → q ∧ r := by
   __ANSWER__
 
 LINES:
-1. intro x hx
-2. exact ⟨h0 h.1, h.2⟩
-3. exact h0
-4. simp
-5. rfl
+1. simp
+2. intro x hx
+3. exact ⟨h0 h.1, h.2⟩
+4. rfl
+5. exact h0
 6. intro h
 ```
 
 **Answer:**
 ```
-2
+3
 ```
 
 ---
@@ -88,11 +89,11 @@ Does this Lean 4 tactic body close the theorem?
 The answer is True or False.
 
 THEOREM:
-theorem ex (p3 p4 p6 : Prop) : (p4 → p3) ∧ (p3 → p6) → (p4 → p6) := by
+theorem ex (s t u : Set Int) (h0 : s ⊆ u) : t ∪ s ⊆ t ∪ u := by
   ?
 
 CANDIDATE:
-decide
+exact h0
 ```
 
 **Answer:**
@@ -108,16 +109,18 @@ False
 ```
 Decide if the premises entail the conjecture.
 
-TPTP source: FLD002-0.ax
+TPTP source: GRP003-1.ax
 
 Background axioms:
-- (sum(additive_identity,X1,X1)|~defined(X1))
-- (defined(additive_identity))
+- (product(inverse(X1),X1,identity))
+- (subgroup_member(inverse(X1))|~subgroup_member(X1))
 
 Premises:
-- (sum(X1,X2,X3)|~sum(X1,X4,X5)|~sum(X4,X6,X2)|~sum(X5,X6,X3))
+- (X3=X4|~product(X1,X2,X3)|~product(X1,X2,X4))
+- (product(X1,X2,multiply(X1,X2)))
+- (product(identity,X1,X1))
 
-Conjecture: `(sum(X1,additive_identity,X2)|~sum(X3,additive_identity,X1)|~sum(X3,additive_identity,X2))`
+Conjecture: `(subgroup_member(X1)|~product(identity,identity,X1)|~subgroup_member(X2))`
 
 The answer is `True` (provable) or `False` (not provable).
 ```
@@ -136,20 +139,22 @@ False
 Which local single-clause deletions make the fixed axioms satisfiable with the negated theorem?
 Answer with ordered, space-separated clause numbers.
 Background axioms:
-- (X5=X4|~product(X1,X2,X3,X4)|~product(X1,X2,X3,X5))
-- (product(X1,X2,identity_for(X1),X2))
-Negated theorem: `(inverse(X1,multiply(X1,identity_for(X1),identity_for(X1))) != identity_for(X1))`
+- (between(X2,inner_pasch(X1,X2,X3,X5,X4),X4)|~between(X1,X2,X3)|~between(X4,X5,X3))
+Negated theorem: `(between(extension(lower_dimension_point_3,lower_dimension_point_2,X1,X2),lower_dimension_point_1,lower_dimension_point_2))`
 Clauses:
-1. (product(X2,X1,X3,multiply(X2,X1,X3))|~group_member(X1,X2)|~group_member(X3,X2))
-2. (group_member(identity_for(X1),X1))
-3. (product(X1,X2,inverse(X1,X2),identity_for(X1)))
-4. (product(X1,inverse(X1,X2),X2,identity_for(X1)))
-5. (product(X1,identity_for(X1),X2,X2))
+1. (~between(lower_dimension_point_1,lower_dimension_point_2,lower_dimension_point_3))
+2. (between(X1,X2,extension(X1,X2,X3,X4)))
+3. (equidistant(X1,extension(X2,X1,X3,X4),X3,X4))
+4. (~between(lower_dimension_point_2,lower_dimension_point_3,lower_dimension_point_1))
+5. (~between(lower_dimension_point_3,lower_dimension_point_1,lower_dimension_point_2))
+6. (between(X5,inner_pasch(X1,X2,X3,X5,X4),X1)|~between(X1,X2,X3)|~between(X4,X5,X3))
+7. (X1=X2|~equidistant(X1,X2,X3,X3))
+8. (X1=X2|~between(X1,X2,X1))
 ```
 
 **Answer:**
 ```
-1 2
+2 3 7 8
 ```
 
 ---
@@ -158,15 +163,15 @@ Clauses:
 
 **Prompt:**
 ```
-Given points: D=(1, 0); H=(5, 3); I=(-5, 0); O=(-12, 0); Q=(5, 0); X=(-2, 3); Y=(-1, -4).
-Definitions: O is the translation of I by vector HX. Q is the projection of H onto line IO.
-Question: Where is point Q relative to directed line OY?
-Answer is one of: left, right, on.
+Given points: E=(-3, -2); G=(4/5, -52/5); N=(3, 5); O=(-57/5, 9/5); P=(3, 4); T=(4, -3); V=(-1, 0).
+Definitions: G is the reflection of N across line TE. O is the reflection of G across line EP.
+Question: Is point T on segment VG?
+Answer is either yes or no.
 ```
 
 **Answer:**
 ```
-left
+no
 ```
 
 ---
@@ -178,14 +183,14 @@ left
 Reduce the following untyped λ-term to β-normal form.
 Syntax: `\x.body` is λx.body; juxtaposition is left-associative application; free identifiers are constants.
 
-Term: (d ((a ((\_0.c) d)) b))
+Term: ((a (a ((\_0.c) a))) (d c))
 
 The answer is the β-normal form (compared up to α-equivalence).
 ```
 
 **Answer:**
 ```
-(d ((a c) b))
+((a (a c)) (d c))
 ```
 
 ---
@@ -197,23 +202,21 @@ The answer is the β-normal form (compared up to α-equivalence).
 Normalize by the ordered rewrite rules. At each step, use the first applicable rule in the listed order, searching outermost-first and left-to-right.
 
 Rules:
-- sub(X,X) -> 0
-- neg(neg(X)) -> X
-- mul(1,X) -> X
-- add(mul(X,Y),mul(X,Z)) -> mul(X,add(Y,Z))
-- pow(X,1) -> X
-- add(X,0) -> X
-- sub(X,0) -> X
-- add(0,X) -> X
+- id(X) -> X
+- if(false,X,Y) -> Y
+- const(X,Y) -> X
+- fst(pair(X,Y)) -> X
+- let(unit,X) -> X
 
-Term: sub(add(sub(neg(neg(b)),2),pow(neg(1),1)),mul(a,pow(0,1)))
+Term:
+let(unit,const(fst(let(b,if(false,a,true))),b))
 
 The answer is the normal form.
 ```
 
 **Answer:**
 ```
-sub(add(sub(b,2),neg(1)),mul(a,0))
+fst(let(b,true))
 ```
 
 ---
@@ -222,17 +225,17 @@ sub(add(sub(b,2),neg(1)),mul(a,0))
 
 **Prompt:**
 ```
-Factor c is independently true with probability 0.2.
-Factor d is independently true with probability 0.7.
-The observation holds exactly when (factor c or factor d).
+Factor f is independently true with probability 0.6.
+Factor b is independently true with probability 0.4.
+The observation holds exactly when (factor f or factor b).
 We observe it.
 Which hidden fact values form the most probable complete explanation?
 
 Hidden fact values:
-0. c
-1. not c
-2. d
-3. not d
+0. b
+1. not b
+2. f
+3. not f
 
 Choose one value for each hidden factor. Answer with space-separated indexes.
 ```
@@ -248,10 +251,10 @@ Choose one value for each hidden factor. Answer with space-separated indexes.
 
 **Prompt:**
 ```
-A deck contains 8 red cards and 7 blue cards.
+A deck contains 2 red cards and 4 blue cards.
 Two cards are drawn without replacing the first card.
 Which statement is more likely?
-A: at least one selected card is red.
+A: both selected cards are red.
 B: both selected cards are blue.
 
 The answer is exactly one of: A, B, equal.
@@ -259,7 +262,7 @@ The answer is exactly one of: A, B, equal.
 
 **Answer:**
 ```
-A
+B
 ```
 
 ---
@@ -269,22 +272,22 @@ A
 **Prompt:**
 ```
 Premise:
-Bobby is the only person in the room.
-“everyone anywhere is zulu tagged” unless “Bobby is not old”
-Daniel is india tagged
-Joseph who is zulu tagged is an old person
-Bobby is november tagged
-Bobby is november tagged
+Mark is the only person in the room.
+all old people in the room are old
+no old person outside the room is old
+Benjamin is old and is papa tagged
+everyone in the room is old if he is quiet
+Richard is a quiet person
 
 Hypothesis:
-Joseph is not quiet and not old
+Benjamin is old
 
 Classify the hypothesis as entailment, contradiction, or neutral. The answer is one label.
 ```
 
 **Answer:**
 ```
-contradiction
+entailment
 ```
 
 ---
@@ -294,16 +297,16 @@ contradiction
 **Prompt:**
 ```
 Premise:
-[0] Angela is the only person in the room.
-[1] everyone in the room who is tango tagged is romeo tagged
-[2] Laura who is whiskey tagged is tango tagged
-[3] Susan is not tango tagged
-[4] Laura is not an old person
-[5] everyone in the room who is victor tagged is alpha tagged
+[0] there is a room.
+[1] someone in the room is november tagged
+[2] no old person in the room is old
+[3] Laurie is papa tagged
+[4] Ashley and Laurie are old people
+[5] Laurie is tango tagged
 Hypothesis:
-Laura is a quiet old person
+it is true that “Laurie is an old person”
 
-Which statements in the premise contradict the hypothesis?
+Which statements in the premise entail the hypothesis?
 Answer with space-separated indexes.
 ```
 
@@ -319,29 +322,30 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-map is above lamp.
-lamp is above key.
-lamp is visible.
-lamp is not blocked.
-key is visible.
-map is blocked.
-For all x, y, if x is left of y, then y is right of x.
-Whenever x is above y, y is below x.
-From x is inside y, it follows that y contains x.
-If one person is inside to a second person, and the second is inside to a third, then the first is inside to the third.
-Anyone left of to someone who is left of to a third person is left of to that third person.
-If one person is above to a second person, and the second is above to a third, then the first is above to the third.
-Every disjoint relation creates a disjoint relation in the reverse direction.
+alice is trained.
+clara is verified.
+david is not active.
+bruno is active.
+alice helps david.
+Whenever x is trained, x is active.
+From x is active, it follows that x is trusted.
+Being trusted implies being verified.
+Being verified implies being approved.
+Whenever x is verified and x is careful, x is active.
+Whenever x is verified and x is careful, x is not approved.
+Helps relations followed by trusts relations imply advises relations.
+All things that are approved are not careful.
+From x trusts y and y is verified, it follows that x is trusted.
 
 Hypothesis:
-key is not below map.
+bruno is verified.
 
 Classify the hypothesis as entailment, contradiction, or neutral. The answer is one label.
 ```
 
 **Answer:**
 ```
-contradiction
+entailment
 ```
 
 ---
@@ -351,22 +355,22 @@ contradiction
 **Prompt:**
 ```
 Premise:
-[0] bruno advises david.
-[1] david is approved.
-[2] bruno is not approved.
-[3] alice is trusted.
-[4] clara is approved.
-[5] clara trusts bruno.
-[6] bruno is trusted.
-[7] Whenever x advises y and y is approved, x is verified.
-[8] Whenever x is verified, x is careful.
-[9] Whenever x advises y and y trusts z, x helps z.
-[10] Every active entity is trained.
-[11] For all x, if x is verified and x is active, then x is careful.
-[12] If a person is helps to someone trusted, then that person is careful.
+[0] key is left of box.
+[1] box is left of map.
+[2] box is marked.
+[3] lamp is not safe.
+[4] key is safe.
+[5] lamp is right of key.
+[6] Whenever x is left of y, y is right of x.
+[7] Every above relation creates a below relation in the reverse direction.
+[8] Whenever x is inside y, y contains x.
+[9] For all x, y, z, if x is inside y and y is inside z, then x is inside z.
+[10] For all x, y, z, if x is left of y and y is left of z, then x is left of z.
+[11] Whenever x is above y and y is above z, x is above z.
+[12] If one person is disjoint to another, then the second is disjoint to the first.
 
 Hypothesis:
-bruno is careful.
+map is right of key.
 
 Which premise statements are necessary to entail the hypothesis, meaning removing any one of them breaks that result?
 Answer with space-separated indexes.
@@ -374,7 +378,7 @@ Answer with space-separated indexes.
 
 **Answer:**
 ```
-0 1 7 8
+0 1 6 10
 ```
 
 ---
@@ -384,20 +388,21 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-[0] alice is active.
-[1] For all x, if x is active, then x is verified.
-[2] All things that are verified are trained.
+[0] bruno is verified.
+[1] david is trusted.
+[2] From x is verified, it follows that x is active.
+[3] Whenever x is active, x is trained.
 
 Hypothesis:
 david is trained.
 
 Candidate Facts:
-[0] clara trusts alice.
-[1] alice is not approved.
-[2] bruno is active.
-[3] david is active.
-[4] david is not active.
-[5] clara is active.
+[0] david is not active.
+[1] alice is verified.
+[2] david is not verified.
+[3] david is verified.
+[4] bruno helps clara.
+[5] david advises alice.
 
 Which candidate facts, if added to the premise, make the premise entail the hypothesis?
 Answer with space-separated indexes.
@@ -416,28 +421,28 @@ Answer with space-separated indexes.
 ```
 Premise:
 david is careful.
-david is trusted.
+david is trained.
+alice is trusted.
+bruno is trained.
+bruno is verified.
 clara is trusted.
-alice is trained.
-bruno helps david.
-clara advises bruno.
-Anyone who is careful and trusted is approved.
-Every approved entity is trained.
-Every careful entity that is also active is approved.
-Every approved entity is trusted.
-If a careful person is advises to someone, then that other person is verified.
-Anyone helps to someone who is advises to a third person is trusts to that third person.
-For all x, if x is trained, then x is not verified.
+Anyone who is careful and trained is trusted.
+Every trusted entity is active.
+Anyone who is trained and verified is careful.
+From x helps y and y is active, it follows that x is careful.
+For all x, if x is trained and x is approved, then x is verified.
+From x trusts y and x is approved, it follows that y is trusted.
+Whenever x advises y and x is approved, y is trained.
 
 Question:
-How many entities are trained?
+How many entities are trusted?
 
 Answer with one integer.
 ```
 
 **Answer:**
 ```
-2
+4
 ```
 
 ---
@@ -451,17 +456,20 @@ object_1
 
 Actions:
 action_0(x0)
-  Requires: (not fluent_2(x0)), (not fluent_1)
-  Effect: fluent_2(x0), fluent_1
-action_1(x0, x1)
-  Effect: not fluent_2(x0)
+  Requires: (not fluent_0)
+  Effect: fluent_0
+action_1(x0)
+  Requires: fluent_0
+  Effect: not fluent_0
+action_2(x0)
+  Effect: fluent_0
 
 Initial state:
-Default value: False
 True values: None
 
 Goal:
-fluent_1
+fluent_0
+Hint: Reference solution has 1 actions (but it may not be optimal).
 
 Action format example: action_0(object1 object2).
 The answer is the plan, one action per line.
@@ -474,33 +482,17 @@ action_0(object_1)
 
 ---
 
-## [set_intersection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
-
-**Prompt:**
-```
-Set1: {351, 947, 14, 275, 132, 415, 378, 898}
-Set2: {296, 898, 892, 378, 14, 406}
-The answer is Set1 ∩ Set2 as a Python set.
-```
-
-**Answer:**
-```
-{14, 378, 898}
-```
-
----
-
 ## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
 
 **Prompt:**
 ```
-Set_A: {849, 851, 845, 846, 852, 848, 854}
+Set_A: {159, 162, 158, 164, 160, 161, 157, 155}
 The answer is the missing elements from Set_A as a Python set.
 ```
 
 **Answer:**
 ```
-{847, 850, 853}
+{156, 163}
 ```
 
 ---
@@ -509,29 +501,29 @@ The answer is the missing elements from Set_A as a Python set.
 
 **Prompt:**
 ```
-List: [19, 18, 9, 19, 17, 8, 11, 19, 20, 3]
-How many times does 8 appear? The answer is a number.
+List: ['o', 'o', 'k', 'l', 'h', 'l', 'l', 't', 'r', 'e']
+How many times does 'l' appear? The answer is a number.
 ```
 
 **Answer:**
 ```
-1
+3
 ```
 
 ---
 
-## [set_equality](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+## [set_expression](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
 
 **Prompt:**
 ```
-Set1: {362, 742, 131, 68, 71, 365, 994, 333}
-Set2: {68, 742, 333, 365, 994, 953, 131, 362}
-Do Set1 and Set2 contain exactly the same elements? The answer is True or False.
+B: {25, 7, 5, 15, 4, 22, 8, 3}
+C: {1, 8, 3, 4, 5, 26, 15, 21}
+Evaluate (C&B).
 ```
 
 **Answer:**
 ```
-False
+{15, 3, 4, 5, 8}
 ```
 
 ---
@@ -542,14 +534,14 @@ False
 ```
 Infer U[n]. Max recurrence degree: 0. Ops: +, -, *, **.
 Use n.
-Sequence: [9, 8, 7, 6, 5, 4, 3, 2]
+Sequence: [-2, -1, 0, 1, 2, 3, 4, 5]
 Initial terms: []
 The answer is the RHS only.
 ```
 
 **Answer:**
 ```
-9 - n
+-2 + n
 ```
 
 ---
@@ -561,18 +553,18 @@ The answer is the RHS only.
 There are 5 objects: E0, E1, E2, E3, E4.
 They have distinct ages.
 Facts:
-- E0 is newer than E3.
-- E2 is newer than E1.
-- E2 is immediately newer than E4.
-- E3 is newer than E2.
+- E3 is the 4th-newest.
+- E0 is the 5th-newest.
+- E1 is newer than E2.
+- E4 is newer than E1.
 
-Which object is the 4th-newest?
+Which object is the 4th-oldest?
 The answer is one object label.
 ```
 
 **Answer:**
 ```
-E4
+E1
 ```
 
 ---
@@ -583,22 +575,23 @@ E4
 ```
 Grid [0,4]x[0,4], N=+y, E=+x.
 Initial Facts:
-- C is right of A.
-- B is left of C.
-- A is above B.
-- A is left of B.
-- B is above C.
-- C is below A.
+- A is above C.
+- B is below A.
+- B is below C.
+- B is right of A.
+- C is left of A.
+- B is right of C.
+- A starts at (3, 4).
 
 Steps:
-1. A and B swap positions.
+1. A moves by (-1, 0).
 
-What is the final spatial relation of A to B? The answer is (horizontal, vertical), where horizontal is left/right/aligned and vertical is above/below/aligned.
+What is the final coordinate of A? The answer is (x, y).
 ```
 
 **Answer:**
 ```
-(right, below)
+(2, 4)
 ```
 
 ---
@@ -608,28 +601,28 @@ What is the final spatial relation of A to B? The answer is (horizontal, vertica
 **Prompt:**
 ```
 Inventory:
-- b1: green
-- b2: blue
-- b3: red
-- b4: red
+- b1: black
+- b2: red
+- b3: green
+- b4: green
 
 Initial State:
-- b1 is in x2
-- b2 is in x2
-- b3 is in x2
+- b1 is in x1
+- b2 is in x1
+- b3 is in x3
 - b4 is in x2
 
 Moves:
-- Transfer b4 from x2 into x3.
-- Transfer b3 from x2 into x1.
-- Move it from x1 to x2.
-- Relocate b3 from x2 to x1.
-Where is b4 now? The answer is a box tag, like x1.
+- Move b4 from x2 to x3.
+- Move b3 from x3 to x2.
+- Transfer everything in x3 into x2.
+- Transfer b4 from x2 into x1.
+Where is b1 now? The answer is a box tag, like x1.
 ```
 
 **Answer:**
 ```
-x3
+x1
 ```
 
 ---
@@ -638,21 +631,20 @@ x3
 
 **Prompt:**
 ```
-(1) A loud short lawyer named Rita called a short stern writer named Adam.
-(2) He watched an old tall teacher named Mia.
-(3) He met her.
-(4) He greeted Rita.
-(5) She questioned a quiet stern writer named Rose.
-(6) Rose helped the short writer.
-(7) The teacher greeted Rose.
+(1) A kind quiet lawyer named Mark avoided a loud tall writer named Mary.
+(2) A loud old pilot named Jane met him.
+(3) A kind tall nurse named Adam thanked her.
+(4) The writer praised a kind young pilot named Ben.
+(5) Jane met him.
+(6) He avoided a kind quiet doctor named Luke.
 
-In sentence 3, what does the object expression 'her' refer to?
+In sentence 6, what does the subject expression 'He' refer to?
 The answer is the person's name.
 ```
 
 **Answer:**
 ```
-Mia
+Ben
 ```
 
 ---
@@ -663,18 +655,18 @@ Mia
 ```
 4x4 grid. Each row and column contains 1..4 once.
 Clues:
-- r2c3 = 2
-- r1c4 = 1
-- r3c4 = 2
+- r2c3 = 3
+- r4c1 = 4
 - r2c2 = 4
+- r3c1 = 2
 
-What is r2c4?
+What is r2c1?
 Answer with one number.
 ```
 
 **Answer:**
 ```
-3
+1
 ```
 
 ---
@@ -683,16 +675,16 @@ Answer with one number.
 
 **Prompt:**
 ```
-Find the lexicographically smallest shortest directed path from node 3 to node 4.
+Find the lexicographically smallest shortest directed path from node 5 to node 0.
 Answer with space-separated nodes, or `None` if no path exists.
 
 Graph:
-Adjacency Dictionary (source to targets): {0: [1, 4], 1: [0], 2: [3], 3: [4], 4: [3], 5: [0]}
+0:; 1: 1->2 1->5; 2: 2->1 2->3; 3: 3->0 3->2; 4: 4->5; 5:
 ```
 
 **Answer:**
 ```
-3 4
+None
 ```
 
 ---
@@ -705,7 +697,7 @@ For each query (x, k), give the k-th successor of x by following directed edges 
 Answer with space-separated integers in query order.
 
 Graph:
-0: 0->1; 1: 1->4; 2: 2->0; 3: 3->3; 4: 4->2; 5: 5->5
+digraph { 0->3; 1->5; 2->4; 3->0; 4->1; 5->2 }
 
 Queries:
 [(1, 2)]
@@ -722,17 +714,17 @@ Queries:
 
 **Prompt:**
 ```
-List all ancestors of node 5.
+List all ancestors of node 2.
 Order them so predecessors come before successors, with lexicographic tie-breaks.
 Answer with space-separated indexes.
 
 Graph:
-0: 0->2; 1: 1->2 1->5; 2:; 3: 3->0; 4: 4->3 4->5; 5:
+0: 0->4; 1:; 2:; 3: 3->2; 4: 4->2; 5:
 ```
 
 **Answer:**
 ```
-1 4
+0 3 4
 ```
 
 ---
@@ -741,12 +733,12 @@ Graph:
 
 **Prompt:**
 ```
-The answer is a 1-character string that fully matches the regular expression: K|[S9K]
+The answer is a 2-character string that fully matches the regular expression: [c6I]{1,3}
 ```
 
 **Answer:**
 ```
-S
+cc
 ```
 
 ---
@@ -755,14 +747,14 @@ S
 
 **Prompt:**
 ```
-Positive: 'b', 'd'
-Negative: 'aaac', 'bdc', 'c', 'cadbd', 'cbac', 'ccac', 'da', 'dccca'
+Positive: 'd', 'dd'
+Negative: 'a', 'adc', 'bdddc', 'cb', 'cbcbc', 'cc', 'daa', 'dbdc'
 The answer is the shortest regex matching all positives and no negatives. Use only literals from Σ={abcd}, concatenation, |, parentheses, and postfix *, +, ?. Break ties lexicographically.
 ```
 
 **Answer:**
 ```
-b|d
+d+
 ```
 
 ---
@@ -771,14 +763,14 @@ b|d
 
 **Prompt:**
 ```
-Text: 14. 4439. 47. 0Bg. 626. v]]]
-Regex: \d{2,4}
+Text: ?? z ; v ?? G(
+Regex: (\?){2}
 The answer is a JSON array of exact non-overlapping matches, left-to-right, including duplicates. The answer is [] if none.
 ```
 
 **Answer:**
 ```
-["14","4439","47","626"]
+["??","??"]
 ```
 
 ---
@@ -787,8 +779,8 @@ The answer is a JSON array of exact non-overlapping matches, left-to-right, incl
 
 **Prompt:**
 ```
-A = c|ba?
-B = a|bb
+A = bba?
+B = (ab|ab)
 Is every string accepted by A also accepted by B?
 The answer is Yes or No.
 ```
@@ -813,7 +805,7 @@ R4: expr -> '[' seq ']'
 R5: expr -> '<' seq '>'
 
 (STRING)
-( ( ) ( ) ) [ ]
+[ ( ) < > ] [ < > ] [ ]
 
 (QUESTION)
 The answer is the rule labels used in the leftmost derivation of STRING, in order, separated by spaces.
@@ -821,7 +813,7 @@ The answer is the rule labels used in the leftmost derivation of STRING, in orde
 
 **Answer:**
 ```
-R0 R2 R3 R2 R3 R1 R2 R3 R1 R1 R2 R4 R1 R1
+R0 R2 R4 R2 R3 R1 R2 R5 R1 R1 R2 R4 R2 R5 R1 R1 R2 R4 R1 R1
 ```
 
 ---
@@ -831,12 +823,15 @@ R0 R2 R3 R2 R3 R1 R2 R3 R1 R1 R2 R4 R1 R1
 **Prompt:**
 ```
 (GRAMMAR)
-S -> D
-D -> 'certain'
-D -> 'more' D
+start -> seq
+seq ->
+seq -> expr seq
+expr -> '(' seq ')'
+expr -> '[' seq ']'
+expr -> '<' seq '>'
 
 (STRING)
-more more more certain
+< < > > (
 
 The answer is the shortest contiguous span from STRING that ends at the first invalid token and occurs only once in STRING.
 Mark the invalid token as >>token<<.
@@ -848,7 +843,7 @@ One line only.
 
 **Answer:**
 ```
-OK
+INCOMPLETE
 ```
 
 ---
@@ -858,18 +853,18 @@ OK
 **Prompt:**
 ```
 (GRAMMAR)
-S -> C
-C -> 'activity' C
-C -> 'gas'
+S -> D
+D -> D D
+D -> 'nature'
 
 (PREFIX)
-<empty>
+nature nature nature nature nature
 
 (TEMPLATE)
-___ activity ___
+___ nature ___
 
 (SUFFIX)
-gas
+nature nature nature
 
 Fill in the 2 blanks (___) so that PREFIX + filled-TEMPLATE + SUFFIX is a grammatical sentence. Fixed tokens of TEMPLATE must remain in place.
 The answer is the 3 tokens of the filled TEMPLATE, space-separated.
@@ -877,7 +872,7 @@ The answer is the 3 tokens of the filled TEMPLATE, space-separated.
 
 **Answer:**
 ```
-activity activity activity
+nature nature nature
 ```
 
 ---
@@ -889,22 +884,22 @@ activity activity activity
 Execute this SQL query on the table named dataframe:
 
 Table 1:
-| company         | price   |
-|:----------------|:--------|
-| Thompson-Owen   | 290.63  |
-| Anderson-Wilson | 163.28  |
-| Bishop LLC      | 95.23   |
-| Bryant Ltd      | 87.03   |
-| Paul Inc        | 430.13  |
+rating,country
+2.6,Seychelles
+2.1,Finland
+3.7,Andorra
+1.4,Andorra
+3.6,Grenada
 
-SQL: SELECT COUNT(*) FROM dataframe WHERE price > 163.28
+
+SQL: SELECT ROUND(MIN(rating), 2) FROM dataframe
 
 The answer is the result as single value.
 ```
 
 **Answer:**
 ```
-2
+1.4
 ```
 
 ---
@@ -913,16 +908,16 @@ The answer is the result as single value.
 
 **Prompt:**
 ```
-String: ababbbee
+String: amber quiet delta vector
 Operations:
-- sort ascending
-- caesar shift by 4
+- sort descending
+- reverse
 Answer with the final string.
 ```
 
 **Answer:**
 ```
-eeffffii
+   aabcdeeeeilmoqrrtttuv
 ```
 
 ---
@@ -933,23 +928,26 @@ eeffffii
 ````
 Predict whether this Python call runs successfully or raises an exception.
 ```python
-def f0(z: str, o: int) -> int:
-    o += 5
-    return f0(z, o)
-def f1(u: int) -> str:
-    print(u)
-    return ""
-def endpoint(x0: str, x1: int) -> int:
+def f0(h: list, i: str) -> str:
+    print(i)
+    print(i)
+    a = f"val={5}"
+    a = 0 // 6
+    return i
+def f1(i: str) -> str:
+    print(i)
+    return i
+def endpoint(x0: list, x1: str) -> str:
     return f0(x0, x1)
 
 ```
-Call: `endpoint('ba', 1)`
+Call: `endpoint([2], 'zb')`
 The answer is `OK` if it runs successfully; otherwise the exception class name.
 ````
 
 **Answer:**
 ```
-RecursionError
+OK
 ```
 
 ---
@@ -960,25 +958,24 @@ RecursionError
 ````
 Predict the value returned by this Python call.
 ```python
-def f0(y: str) -> list:
-    a = [0, 1, 2]
-    b = 0
-    b -= 7
+def f0(n: list) -> list:
+    a = [m * m for m in range(5, 11)]
     return a
-def f1(u: str, z: int) -> int:
-    z *= 1
-    return z + 4
-def endpoint(x0: str) -> list:
+def f1(h: str) -> int:
+    print(h)
+    a = 8
+    return a + 3
+def endpoint(x0: list) -> list:
     return f0(x0)
 
 ```
-Call: `endpoint('y')`
+Call: `endpoint([1, -1])`
 The answer is the exact Python `repr` of the returned value.
 ````
 
 **Answer:**
 ```
-[0, 1, 2]
+[25, 36, 49, 64, 81, 100]
 ```
 
 ---
@@ -991,9 +988,9 @@ Find the smallest integer x in [-6, 9] such that `endpoint(x) == target`.
 Answer with the integer.
 
 ```python
-def f0(x: int) -> int:
-    x -= 4
-    return x
+def f0(o: int) -> int:
+    o -= 6
+    return o + 3
 
 
 def endpoint(x):
@@ -1006,7 +1003,7 @@ Target: 0
 
 **Answer:**
 ```
--4
+-5
 ```
 
 ---
@@ -1016,52 +1013,51 @@ Target: 0
 **Prompt:**
 ```
 Cases show facts that imply one new fact.
-Object names and link names may be consistently renamed, and each link direction may be consistently reversed.
+Object names and link names may be consistently renamed, and each link name may also have its direction consistently reversed.
 
 M0
-a is alpha-linked to b.
-d is alpha-linked to b.
-a is beta-linked to c.
-b is beta-linked to a.
-Implies: a is beta-linked to d.
-
-M1
-c is alpha-linked to e.
-e is alpha-linked to a.
-e is alpha-linked to b.
-a is beta-linked to b.
+e is alpha-linked to c.
+e is beta-linked to c.
+d is gamma-linked to b.
+e is gamma-linked to c.
 Implies: d is alpha-linked to e.
 
-M2
+M1
 b is alpha-linked to e.
-a is beta-linked to b.
-b is beta-linked to c.
-d is beta-linked to e.
-Implies: d is beta-linked to b.
+b is beta-linked to a.
+b is beta-linked to d.
+b is gamma-linked to c.
+Implies: d is gamma-linked to b.
+
+M2
+d is alpha-linked to a.
+a is beta-linked to e.
+a is gamma-linked to c.
+c is gamma-linked to e.
+Implies: a is alpha-linked to c.
 
 M3
-a is beta-linked to c.
-b is beta-linked to a.
-e is beta-linked to a.
-e is beta-linked to d.
-Implies: a is beta-linked to d.
+a is alpha-linked to b.
+d is alpha-linked to a.
+d is alpha-linked to b.
+d is beta-linked to c.
+Implies: b is beta-linked to d.
 
 Query
-u is delta-linked to y.
-x is epsilon-linked to v.
-z is epsilon-linked to v.
-u is gamma-linked to z.
-v is gamma-linked to u.
-v is gamma-linked to z.
-y is gamma-linked to v.
-z is gamma-linked to y.
+u is delta-linked to x.
+v is delta-linked to y.
+x is delta-linked to z.
+y is delta-linked to u.
+y is delta-linked to x.
+z is delta-linked to u.
+y is epsilon-linked to v.
+y is gamma-linked to u.
 Implies:
 ```
 
 **Answer:**
 ```
-z is gamma-linked to x.
+x is epsilon-linked to y.
 ```
 
 ---
-
