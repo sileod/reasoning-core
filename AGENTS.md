@@ -7,5 +7,6 @@
 - Keep answers canonical and compact: booleans, numbers, or exact constrained strings. Avoid asking models to copy long bodies unless the task is explicitly about generation.
 - Do not touch unrelated dirty files. Check `git status --short` first; this repo often has work in progress.
 - `rg` may be unavailable in this environment. Fall back to `find`, `grep`, and `sed`.
+- Task files live in `reasoning_core/tasks/` (not top-level `tasks/`).
 - Avoid traversing `reasoning_core/openenv`, `.venv`, checkpoints, and other generated environments when searching.
 - Keep code concise, favor external libraries when possible.

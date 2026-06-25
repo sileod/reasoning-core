@@ -10,7 +10,7 @@ from __future__ import annotations
 import itertools
 import random
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -19,7 +19,7 @@ from urllib.request import urlretrieve
 from appdirs import AppDirs
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, Problem, Task
+from reasoning_core.template import Config, Payload, Problem, Task
 
 
 _SET_MM_URL = "https://raw.githubusercontent.com/metamath/set.mm/develop/set.mm"
@@ -35,30 +35,13 @@ _MATH_TOKENS = {
     "|^|", "i^i", "X.", "sSet", "Top", "Grp", "Mgm", "Ring", "Field",
     "Abel", "CMnd", "Mnd", "sin", "cos", "tan", "exp", "log", "`",
 }
-_STRUCTURAL_MATH_TOKENS = _MATH_TOKENS - {"="}
 _PURE_WFF = {"ph", "ps", "ch", "th", "ta", "et", "ze", "si"}
 _KEEP_HEADS = {"e.", "=", "=/=", "<", "<_", ">", ">_", "C_"}
 _KEEP_CONSTS = {"RR", "CC", "NN", "ZZ", "QQ", "Abel", "CMnd", "Mnd", "Grp", "Ring", "Field"}
-_BINOPS = {
-    "->": "=>",
-    "<->": "<=>",
-    "/\\": "∧",
-    "\\/": "∨",
-    "=": "=",
-    "=/=": "≠",
-    "e.": "∈",
-    "C_": "⊆",
-    "C.": "⊂",
-    "<": "<",
-    "<_": "≤",
-    ">": ">",
-    ">_": "≥",
-    "+": "+",
-    "-": "-",
-    "x.": "·",
-    "/": "/",
-    "^": "^",
-}
+_REL_TOKENS = {"=", "=/=", "e.", "C_", "C.", "<", "<_", ">", ">_"}
+_LOGIC_PRED_TOKENS = {"<->", "/\\", "\\/"}
+_BIN_FUNC_TOKENS = {"+", "-", "x.", "/", "^"}
+_OBJECT_CONSTS = {"0", "1", "2", "+oo", "-oo"}
 _PREFIX_APP = {
     "*": "conjugate",
     "sin": "sin",
@@ -77,6 +60,14 @@ _PRECEDENCE = [
     ("x.", "/"),
     ("^",),
 ]
+_DISPLAY_VARS = {
+    "ph": "ctx", "ps": "hyp", "ch": "p", "th": "q", "ta": "r", "et": "h1", "ze": "h2", "si": "h3",
+}
+_CONTEXT_NAMES = ("ctx", "hyp", "p", "q", "r", "h1", "h2", "h3")
+_OBJECT_NAMES = ("x", "y", "z", "u", "v", "s", "t", "x1", "y1", "z1")
+_MAX_CLOSURE_FORMULAS = 500
+_MAX_CLOSURE_MATCHES = 50_000
+_DV_RELAX_STATS = Counter()
 
 
 @dataclass(frozen=True)
@@ -236,6 +227,7 @@ def _database():
     return edict(labels=labels, rules=rules, var_type=var_type, var_flabel=var_flabel, constants=constants)
 
 
+@lru_cache(maxsize=None)
 def _rule_catalog(max_len=18):
     db = _database()
     out = []
@@ -249,6 +241,7 @@ def _rule_catalog(max_len=18):
     return out
 
 
+@lru_cache(maxsize=None)
 def _math_rule_catalog(max_len=18):
     return [r for r in _rule_catalog(max_len) if _keep_rule(r)]
 
@@ -285,35 +278,61 @@ def _find_top_level_binary(xs):
     return None
 
 
-def render_expr(expr):
+def _display_token(tok, env=None):
+    if env is not None:
+        if tok in env.var_map:
+            return env.var_map[tok]
+        if tok in env.const_map:
+            return env.const_map[tok]
+    return _DISPLAY_VARS.get(tok, tok)
+
+
+def _display_pred(op, env=None):
+    if env is not None and op in env.pred_map:
+        return env.pred_map[op]
+    return op
+
+
+def _display_func(op, env=None):
+    if env is not None and op in env.func_map:
+        return env.func_map[op]
+    return op
+
+
+def _is_context_var_expr(xs):
+    return len(xs) == 1 and _database().var_type.get(xs[0]) == "wff"
+
+
+def render_expr(expr, env=None):
     xs = _strip_outer(list(expr))
     if xs and xs[0] == "|-":
-        return render_expr(xs[1:])
+        return render_expr(xs[1:], env)
     xs = _strip_outer(xs)
     if not xs:
         return None
     if len(xs) == 1:
-        return xs[0]
+        return _display_token(xs[0], env)
     if len(xs) == 2 and xs[0] in _PREFIX_APP:
-        arg = render_expr([xs[1]])
-        return f"{_PREFIX_APP[xs[0]]}{arg}" if xs[0] == "-u" and arg is not None else (
-            f"{_PREFIX_APP[xs[0]]}({arg})" if arg is not None else None
-        )
-    if len(xs) == 3 and xs[1] == "`":
-        arg = render_expr([xs[2]])
+        arg = render_expr([xs[1]], env)
         if arg is None:
             return None
-        return f"{_PREFIX_APP.get(xs[0], xs[0])}({arg})"
+        return f"{_display_func(xs[0], env)}({arg})"
+    if len(xs) == 3 and xs[1] == "`":
+        arg = render_expr([xs[2]], env)
+        if arg is None:
+            return None
+        return f"{_display_func(xs[0], env)}({arg})"
     split = _find_top_level_binary(xs)
     if split:
         i, op = split
-        left, right = render_expr(xs[:i]), render_expr(xs[i + 1:])
+        left, right = render_expr(xs[:i], env), render_expr(xs[i + 1:], env)
         if left is None or right is None:
             return None
-        text = f"{left} {_BINOPS[op]} {right}"
-        if op in {"->", "<->", "/\\", "\\/"}:
-            return f"({text})"
-        return text
+        if op == "->" and _is_context_var_expr(xs[:i]):
+            return f"{left} => {right}"
+        if op in _BIN_FUNC_TOKENS:
+            return f"{_display_func(op, env)}({left}, {right})"
+        return f"{_display_pred(op, env)}({left}, {right})"
     return None
 
 
@@ -342,8 +361,20 @@ def _keep_rule(rule):
     )
 
 
-def _count_math_atoms(text):
-    return sum(text.count(tok) for tok in ("∈", "=", "≠", "<", "≤", ">", "≥", "⊆", "⊂"))
+def _display_score(text):
+    return len(re.findall(r"\b[PFDC]\d+\b", str(text)))
+
+
+def _raw_relation_count(exprs):
+    return sum(tok in _REL_TOKENS for expr in exprs for tok in expr)
+
+
+def _raw_term_count(exprs):
+    return sum(
+        tok in _BIN_FUNC_TOKENS or tok in _PREFIX_APP or (i + 1 < len(expr) and expr[i + 1] == "`")
+        for expr in exprs
+        for i, tok in enumerate(expr)
+    )
 
 
 def _target_is_wff_implication(text):
@@ -357,6 +388,52 @@ def _display(text):
     while xs.startswith("(") and xs.endswith(")") and _balanced(re.findall(r"\(|\)|[^()\s]+", xs[1:-1])):
         xs = xs[1:-1].strip()
     return xs
+
+
+def _display_env(exprs):
+    db = _database()
+    seen_vars, seen_consts, seen_preds, seen_funcs = [], [], [], []
+    syntax = {"|-", "(", ")", "`", "->"} | _REL_TOKENS | _LOGIC_PRED_TOKENS | _BIN_FUNC_TOKENS | set(_PREFIX_APP)
+    for expr in exprs:
+        xs = list(expr)
+        for i, tok in enumerate(xs):
+            if tok in db.var_type and tok not in seen_vars:
+                seen_vars.append(tok)
+            if tok in _REL_TOKENS | _LOGIC_PRED_TOKENS | {"->"} and tok not in seen_preds:
+                seen_preds.append(tok)
+            if tok in _BIN_FUNC_TOKENS and tok not in seen_funcs:
+                seen_funcs.append(tok)
+            if tok in _OBJECT_CONSTS and tok not in seen_consts:
+                seen_consts.append(tok)
+            if tok in _PREFIX_APP:
+                if tok not in seen_funcs:
+                    seen_funcs.append(tok)
+            if i + 1 < len(xs) and xs[i + 1] == "`":
+                if tok not in seen_funcs:
+                    seen_funcs.append(tok)
+            if (
+                tok not in db.var_type and tok not in syntax and tok not in seen_consts
+            ):
+                seen_consts.append(tok)
+    ctx_vars = [v for v in seen_vars if db.var_type.get(v) == "wff"]
+    obj_vars = [v for v in seen_vars if db.var_type.get(v) != "wff"]
+    object_const_names = {"0": "C0", "1": "C1", "2": "C2", "+oo": "C3", "-oo": "C4"}
+    const_map, domain_i = {}, 1
+    for c in seen_consts:
+        if c in object_const_names:
+            const_map[c] = object_const_names[c]
+        else:
+            const_map[c] = f"D{domain_i}"
+            domain_i += 1
+    return edict(
+        var_map={
+            **{v: _CONTEXT_NAMES[i % len(_CONTEXT_NAMES)] for i, v in enumerate(ctx_vars)},
+            **{v: _OBJECT_NAMES[i % len(_OBJECT_NAMES)] for i, v in enumerate(obj_vars)},
+        },
+        const_map=const_map,
+        pred_map={p: f"P{i + 1}" for i, p in enumerate(seen_preds)},
+        func_map={f: f"F{i + 1}" for i, f in enumerate(seen_funcs)},
+    )
 
 
 def _subst_expr(expr, subst):
@@ -384,40 +461,11 @@ def _head(expr):
     return next((t for t in body if t not in {"(", ")"} and t not in _database().var_type), "")
 
 
-def _match_pattern(pattern, target, subst=None):
-    db = _database()
-    subst = dict(subst or {})
-
-    def rec(pi, ti):
-        if pi == len(pattern) and ti == len(target):
-            return subst
-        if pi >= len(pattern) or ti > len(target):
-            return None
-        tok = pattern[pi]
-        if tok in db.var_type:
-            old = subst.get(tok)
-            if old is not None:
-                return rec(pi + 1, ti + len(old)) if tuple(target[ti:ti + len(old)]) == old else None
-            max_end = len(target) - (len(pattern) - pi - 1)
-            for end in range(ti + 1, max_end + 1):
-                subst[tok] = tuple(target[ti:end])
-                got = rec(pi + 1, end)
-                if got is not None:
-                    return got
-            subst.pop(tok, None)
-            return None
-        if ti < len(target) and tok == target[ti]:
-            return rec(pi + 1, ti + 1)
-        return None
-
-    return rec(0, 0)
-
-
-def _match_variable_only(pattern, target):
+def _unify_variable_only(pattern, target, subst=None):
     db = _database()
     if len(pattern) != len(target):
         return None
-    subst = {}
+    subst = dict(subst or {})
     for p, t in zip(pattern, target):
         if p in db.var_type:
             if t not in db.var_type or db.var_type[t] != db.var_type[p]:
@@ -428,6 +476,10 @@ def _match_variable_only(pattern, target):
         elif p != t:
             return None
     return subst
+
+
+def _match_variable_only(pattern, target):
+    return _unify_variable_only(pattern, target, {})
 
 
 def _rules_matching_variable_only(target, rules):
@@ -482,7 +534,7 @@ def _build_tree(rule, rules, depth, leaf_prob=0.45, target=None):
     return MMTree(target, tuple(leaves), tuple(proof), frozenset(used))
 
 
-def _verify(proof, target, premises, allowed_rules):
+def _verify(proof, target, premises, allowed_rules, check_dv=True):
     db = _database()
     labels = {k: db.labels[k] for k in db.var_flabel.values() if k in db.labels}
     rules = {k: db.rules[k] for k in allowed_rules if k in db.rules}
@@ -495,24 +547,24 @@ def _verify(proof, target, premises, allowed_rules):
             continue
         rule = rules[label]
         subst = {}
-        mandatory = list(rule.floating) + [(None, None, None)] * len(rule.essential)
         hyps = [tuple((t, v)) for _, t, v in rule.floating] + list(rule.essential)
         if len(stack) < len(hyps):
             return False
         args = stack[-len(hyps):] if hyps else []
         if hyps:
             del stack[-len(hyps):]
-        for (_, t, v), arg in zip(mandatory[:len(rule.floating)], args[:len(rule.floating)]):
+        for (_, t, v), arg in zip(rule.floating, args[:len(rule.floating)]):
             if not arg or arg[0] != t:
                 return False
             subst[v] = tuple(arg[1:])
         for hyp, arg in zip(rule.essential, args[len(rule.floating):]):
             if _subst_expr(hyp, subst) != tuple(arg):
                 return False
-        for a, b in rule.dv:
-            va, vb = subst.get(a, ()), subst.get(b, ())
-            if va == vb or set(va) & set(vb):
-                return False
+        if check_dv:
+            for a, b in rule.dv:
+                va, vb = subst.get(a, ()), subst.get(b, ())
+                if va == vb or set(va) & set(vb):
+                    return False
         stack.append(_subst_expr(rule.conclusion, subst))
     return stack == [tuple(target)]
 
@@ -532,54 +584,134 @@ def _tree_with_premise_labels(tree):
     return tuple(premises), tuple(proof)
 
 
-def _closure(premises, rules, cap=18, rounds=5):
-    known = set(map(tuple, premises))
-    rules = list(rules)
-    for _ in range(rounds):
-        before = len(known)
-        for r in rules:
-            if not r.essential:
+def _variable_only_subst(rule, subst, check_dv=True):
+    db = _database()
+    for _, typecode, var in rule.floating:
+        val = subst.get(var)
+        if not val or len(val) != 1 or db.var_type.get(val[0]) != typecode:
+            return False
+    return not check_dv or all(subst.get(a) != subst.get(b) for a, b in rule.dv)
+
+
+def _closure_proof(rule, subst, args, known):
+    proof = []
+    for _, _, var in rule.floating:
+        proof.append(_local_f_label(subst[var][0]))
+    for arg in args:
+        proof.extend(known[tuple(arg)])
+    proof.append(rule.label)
+    return tuple(proof)
+
+
+def _closure(premises, rules, cap=18, check_dv=True):
+    labels = tuple(sorted(r.label for r in rules))
+    return _closure_cached(tuple(map(tuple, premises)), labels, int(cap), bool(check_dv))
+
+
+def _relaxed_gap(real_closure, relaxed_closure, target, kind):
+    if real_closure is not None and relaxed_closure is not None:
+        if target not in real_closure and target in relaxed_closure:
+            _DV_RELAX_STATS[f"{kind}_real_absent_relaxed_present"] += 1
+            return True
+    return False
+
+
+def dv_relax_stats():
+    return dict(_DV_RELAX_STATS)
+
+
+@lru_cache(maxsize=512)
+def _closure_cached(premises, rule_labels, cap, check_dv):
+    db = _database()
+    rules = [db.rules[l] for l in rule_labels]
+    known = {tuple(p): (f"prem{i + 1}",) for i, p in enumerate(premises)}
+    by_head = defaultdict(list)
+    for formula in known:
+        by_head[_head(formula)].append(formula)
+    changed = True
+    matches = 0
+    while changed:
+        changed = False
+        known_items = list(known)
+        for rule in rules:
+            if not rule.essential:
                 continue
-            pools = [list(known) for _ in r.essential]
+            pools = [
+                by_head.get(_head(hyp), known_items) or known_items
+                for hyp in rule.essential
+            ]
             for args in itertools.product(*pools):
+                matches += 1
+                if matches > _MAX_CLOSURE_MATCHES:
+                    return None
                 subst = {}
-                ok = True
-                for hyp, arg in zip(r.essential, args):
-                    subst = _match_pattern(hyp, arg, subst)
+                for hyp, arg in zip(rule.essential, args):
+                    subst = _unify_variable_only(hyp, arg, subst)
                     if subst is None:
-                        ok = False
                         break
-                if not ok:
+                if subst is None or not _variable_only_subst(rule, subst, check_dv=check_dv):
                     continue
-                conc = _subst_expr(r.conclusion, subst)
-                if len(conc) <= cap:
-                    known.add(conc)
-        if len(known) == before:
-            break
+                conc = _subst_expr(rule.conclusion, subst)
+                if len(conc) > cap or conc in known:
+                    continue
+                proof = _closure_proof(rule, subst, args, known)
+                if not _verify(proof, conc, premises, rule_labels, check_dv=check_dv):
+                    continue
+                known[conc] = proof
+                by_head[_head(conc)].append(conc)
+                if len(known) > _MAX_CLOSURE_FORMULAS:
+                    return None
+                changed = True
     return known
 
 
-def _fmt(expr):
-    return _display(render_expr(expr))
+def _fmt(expr, env=None):
+    return _display(render_expr(expr, env))
 
 
-def _rule_schema(label):
+def _rule_schema(label, env=None):
     rule = _database().rules[label]
-    lhs = "; ".join(_fmt(h) for h in rule.essential)
-    return f"{label}: {lhs} ==> {_fmt(rule.conclusion)}"
+    lhs = "; ".join(_fmt(h, env) for h in rule.essential)
+    return f"{lhs} ==> {_fmt(rule.conclusion, env)}"
+
+
+def _rule_rows(labels, env=None):
+    return [
+        edict(id=f"r{i + 1}", label=label, schema=_rule_schema(label, env))
+        for i, label in enumerate(labels)
+    ]
+
+
+def _rule_text(rows, bullet=False):
+    prefix = "- " if bullet else ""
+    return "\n".join(f"{prefix}{r.id}: {r.schema}" for r in rows)
+
+
+def _rule_ids(labels, rows):
+    ids = {r.label: r.id for r in rows}
+    return [ids[label] for label in labels]
 
 
 def _keep_instance(inst):
-    rendered_premises = [_fmt(p) for p in inst.premises]
-    rendered_target = _fmt(inst.tree.target)
-    rendered_rules = [_rule_schema(label) for label in inst.rules]
+    display_exprs = list(inst.premises) + [inst.tree.target]
+    for label in inst.rules:
+        rule = _database().rules[label]
+        display_exprs.extend(rule.essential)
+        display_exprs.append(rule.conclusion)
+    env = _display_env(display_exprs)
+    rendered_premises = [_fmt(p, env) for p in inst.premises]
+    rendered_target = _fmt(inst.tree.target, env)
+    rendered_rules = [_rule_schema(label, env) for label in inst.rules]
     if rendered_target is None or any(p is None for p in rendered_premises + rendered_rules):
         return False
+    exprs = [inst.tree.target, *inst.premises]
     text = "\n".join([rendered_target, *rendered_premises])
     return (
         len(inst.premises) >= 2
         and len(inst.tree.used) >= 2
-        and _count_math_atoms(text) >= 3
+        and _raw_relation_count([inst.tree.target]) >= 1
+        and _raw_relation_count(exprs) >= 3
+        and _display_score(text) >= 3
         and not _target_is_wff_implication(rendered_target)
     )
 
@@ -607,19 +739,31 @@ def _sample_instance(config):
 
 
 def _negative_target(inst, config):
-    closure = _closure(inst.premises, [_database().rules[l] for l in inst.rules], int(config.formula_len_cap))
+    rules = [_database().rules[l] for l in inst.rules]
+    closure = _closure(inst.premises, rules, int(config.formula_len_cap), check_dv=True)
+    relaxed = _closure(inst.premises, rules, int(config.formula_len_cap), check_dv=False)
+    if closure is None or relaxed is None:
+        return None
     vars_ = sorted({t for f in list(inst.premises) + [inst.tree.target] for t in f if t in _database().var_type})
+    premise_vars = {t for f in inst.premises for t in f if t in _database().var_type}
     for _ in range(80):
         repl = {v: random.choice(_VARS.get(_database().var_type[v], (v,))) for v in vars_}
         cand = tuple(repl.get(t, t) for t in inst.tree.target)
+        if {t for t in cand if t in _database().var_type} - premise_vars:
+            continue
         if cand != inst.tree.target and len(cand) <= int(config.formula_len_cap) and _head(cand) == _head(inst.tree.target):
-            if cand not in closure:
+            _relaxed_gap(closure, relaxed, cand, "negative")
+            if cand not in closure and cand not in relaxed:
                 return cand
     for r in _math_rule_catalog(int(config.formula_len_cap)):
         subst = _fresh_subst(r)
         if subst:
             cand = _subst_expr(r.conclusion, subst)
-            if _head(cand) == _head(inst.tree.target) and cand not in closure:
+            if {t for t in cand if t in _database().var_type} - premise_vars:
+                continue
+            if _head(cand) == _head(inst.tree.target):
+                _relaxed_gap(closure, relaxed, cand, "negative")
+            if _head(cand) == _head(inst.tree.target) and cand not in closure and cand not in relaxed:
                 return cand
     return None
 
@@ -647,32 +791,53 @@ class MetamathEntailment(Task):
                 target = _negative_target(inst, self.config)
                 if target is None or _fmt(target) is None:
                     continue
+            display_exprs = list(inst.premises) + [target]
+            for label in inst.rules:
+                rule = _database().rules[label]
+                display_exprs.extend(rule.essential)
+                display_exprs.append(rule.conclusion)
+            env = _display_env(display_exprs)
+            rule_rows = _rule_rows(inst.rules, env)
+            premises = [f"{i + 1}. {_fmt(p, env)}" for i, p in enumerate(inst.premises)]
             self._want_positive = not self._want_positive
-            return Problem(
-                edict(
-                    premises=[_fmt(p) for p in inst.premises],
-                    raw_premises=[list(p) for p in inst.premises],
-                    rules=inst.rules,
-                    rule_schemas=[_rule_schema(r) for r in inst.rules],
-                    conjecture=_fmt(target),
-                    raw_conjecture=list(target),
-                    positive=positive,
-                    proof=list(inst.proof) if positive else [],
-                    source="set.mm",
+            meta = edict(
+                premises=[_fmt(p, env) for p in inst.premises],
+                raw_premises=[list(p) for p in inst.premises],
+                rules=[r.id for r in rule_rows],
+                raw_rule_labels=inst.rules,
+                rule_map={r.id: r.label for r in rule_rows},
+                rule_schemas={r.id: r.schema for r in rule_rows},
+                anonymization=dict(
+                    var_map=env.var_map,
+                    const_map=env.const_map,
+                    pred_map=env.pred_map,
+                    func_map=env.func_map,
                 ),
+                dv_relax_stats=dv_relax_stats(),
+                conjecture=_fmt(target, env),
+                raw_conjecture=list(target),
+                positive=positive,
+                proof=list(inst.proof) if positive else [],
+                source="set.mm",
+            )
+            meta.payload = Payload(
+                premises="\n".join(premises),
+                allowed_rules=_rule_text(rule_rows),
+                conjecture=meta.conjecture,
+            )
+            return Problem(
+                meta,
                 "True" if positive else "False",
             )
         raise RuntimeError("failed to generate Metamath entailment task")
 
     def prompt(self, metadata):
-        premises = "\n".join(f"{i + 1}. {p}" for i, p in enumerate(metadata.premises))
-        rules = "\n".join(f"{_abc(i)}. {r}" for i, r in enumerate(metadata.rule_schemas))
         return (
-            "Using only these displayed Metamath premises and rules, does the conjecture follow?\n"
+            "Using only these premises and rules, does the conjecture follow?\n"
+            "Use only the listed premises and rules. No hidden background facts.\n"
+            "Rules may only rename variables, not substitute compound terms.\n"
             "The answer is True or False.\n\n"
-            f"Premises:\n{premises}\n\n"
-            f"Allowed rules:\n{rules}\n\n"
-            f"Conjecture: {metadata.conjecture}"
+            f"{Payload(metadata.payload)}"
         )
 
 
@@ -690,58 +855,119 @@ class MetamathCoreSelect(Task):
         for _ in range(80):
             inst = _sample_instance(self.config)
             core = tuple(sorted(inst.tree.used))
-            if inst.tree.target in _closure(inst.premises, [_database().rules[l] for l in core if l in _database().rules], int(self.config.formula_len_cap)):
+            if len(core) < 2:
+                continue
+            core_closure = _closure(
+                inst.premises,
+                [_database().rules[l] for l in core if l in _database().rules],
+                int(self.config.formula_len_cap),
+                check_dv=True,
+            )
+            if core_closure is not None and inst.tree.target in core_closure:
                 pass
             else:
                 continue
-            if any(inst.tree.target in _closure(inst.premises, [_database().rules[l] for l in core if l != miss], int(self.config.formula_len_cap)) for miss in core):
+            minimal = True
+            for miss in core:
+                minus = _closure(
+                    inst.premises,
+                    [_database().rules[l] for l in core if l != miss],
+                    int(self.config.formula_len_cap),
+                    check_dv=False,
+                )
+                if minus is None or inst.tree.target in minus:
+                    minimal = False
+                    break
+            if not minimal:
                 continue
             wrong = set()
             if len(core) > 1:
                 wrong.add(tuple(x for x in core if x != random.choice(core)))
-            else:
-                wrong.add(tuple())
             near = [l for l in labels if l not in core]
             random.shuffle(near)
             for label in near:
                 cand = tuple(sorted((set(core) - {random.choice(core)}) | {label}))
-                if cand != core and cand not in wrong and inst.tree.target not in _closure(inst.premises, [_database().rules[l] for l in cand], int(self.config.formula_len_cap)):
+                cand_closure = _closure(
+                    inst.premises,
+                    [_database().rules[l] for l in cand],
+                    int(self.config.formula_len_cap),
+                    check_dv=True,
+                )
+                cand_relaxed = _closure(
+                    inst.premises,
+                    [_database().rules[l] for l in cand],
+                    int(self.config.formula_len_cap),
+                    check_dv=False,
+                )
+                if cand_closure is not None and cand_relaxed is not None:
+                    _relaxed_gap(cand_closure, cand_relaxed, inst.tree.target, "wrong_option")
+                if (
+                    cand != core and cand not in wrong
+                    and cand_closure is not None and cand_relaxed is not None
+                    and inst.tree.target not in cand_closure
+                    and inst.tree.target not in cand_relaxed
+                ):
                     wrong.add(cand)
                 if len(wrong) >= int(self.config.n_options) - 1:
                     break
             if len(wrong) < int(self.config.n_options) - 1:
                 continue
             options = [core] + list(wrong)[: int(self.config.n_options) - 1]
-            if len(set(options)) != int(self.config.n_options):
+            if len(set(options)) != int(self.config.n_options) or any(not o for o in options):
                 continue
             random.shuffle(options)
             answer = _abc(options.index(core))
-            return Problem(
-                edict(
-                    premises=[_fmt(p) for p in inst.premises],
-                    raw_premises=[list(p) for p in inst.premises],
-                    conjecture=_fmt(inst.tree.target),
-                    raw_conjecture=list(inst.tree.target),
-                    rule_schemas=[_rule_schema(r) for r in sorted(set().union(*map(set, options)))],
-                    options=[list(o) for o in options],
-                    proof=list(inst.proof),
-                    source="set.mm",
+            displayed_labels = sorted(set().union(*map(set, options)))
+            display_exprs = list(inst.premises) + [inst.tree.target]
+            for label in displayed_labels:
+                rule = _database().rules[label]
+                display_exprs.extend(rule.essential)
+                display_exprs.append(rule.conclusion)
+            env = _display_env(display_exprs)
+            rule_rows = _rule_rows(displayed_labels, env)
+            premises = [f"{i + 1}. {_fmt(p, env)}" for i, p in enumerate(inst.premises)]
+            option_text = "\n".join(
+                f"{_abc(i)}. [{', '.join(_rule_ids(o, rule_rows))}]"
+                for i, o in enumerate(options)
+            )
+            meta = edict(
+                premises=[_fmt(p, env) for p in inst.premises],
+                raw_premises=[list(p) for p in inst.premises],
+                conjecture=_fmt(inst.tree.target, env),
+                raw_conjecture=list(inst.tree.target),
+                rule_map={r.id: r.label for r in rule_rows},
+                rule_schemas={r.id: r.schema for r in rule_rows},
+                anonymization=dict(
+                    var_map=env.var_map,
+                    const_map=env.const_map,
+                    pred_map=env.pred_map,
+                    func_map=env.func_map,
                 ),
+                dv_relax_stats=dv_relax_stats(),
+                options=[_rule_ids(o, rule_rows) for o in options],
+                raw_options=[list(o) for o in options],
+                proof=list(inst.proof),
+                source="set.mm",
+            )
+            meta.payload = Payload(
+                premises="\n".join(premises),
+                rule_catalog=_rule_text(rule_rows, bullet=True),
+                conjecture=meta.conjecture,
+                options=option_text,
+            )
+            return Problem(
+                meta,
                 answer,
             )
         raise RuntimeError("failed to generate Metamath core-selection task")
 
     def prompt(self, metadata):
-        premises = "\n".join(f"{i + 1}. {p}" for i, p in enumerate(metadata.premises))
-        rules = "\n".join(f"- {r}" for r in metadata.rule_schemas)
-        options = "\n".join(f"{_abc(i)}. [{', '.join(o)}]" for i, o in enumerate(metadata.options))
         return (
-            "Which option is the minimal sufficient set of Metamath rules for the conjecture?\n"
+            "Which option is sufficient to derive the conjecture?\n"
+            "Use only the listed premises and rules. No hidden background facts.\n"
+            "Rules may only rename variables, not substitute compound terms.\n"
             "The answer is A, B, C, or D.\n\n"
-            f"Premises:\n{premises}\n\n"
-            f"Rule catalog:\n{rules}\n\n"
-            f"Conjecture: {metadata.conjecture}\n\n"
-            f"Options:\n{options}"
+            f"{Payload(metadata.payload)}"
         )
 
     def score_answer(self, answer, entry):

@@ -636,10 +636,24 @@ def valid_clause_list(clauses):
     return True
 
 
+def alpha_key(f):
+    """Alpha-normalize TPTP variables without merging distinct variables."""
+    seen = {}
+    f = re.sub(r"\s+", "", str(f))
+
+    def repl(m):
+        x = m.group()
+        if x not in seen:
+            seen[x] = f"V{len(seen)}"
+        return seen[x]
+
+    return re.sub(r"\b[A-Z][A-Za-z0-9_]*\b", repl, f)
+
+
 def _clause_set_key(clauses, background=()):
     return (
-        tuple(sorted(normalize_formula(c) for c in background)),
-        tuple(sorted(normalize_formula(c) for c in clauses)),
+        tuple(sorted(alpha_key(c) for c in background)),
+        tuple(sorted(alpha_key(c) for c in clauses)),
     )
 
 
@@ -903,9 +917,9 @@ class ConjectureEntailment(Task):
         key = (
             str(time_limit),
             bool(disprove_first),
-            tuple(sorted(normalize_formula(c) for c in background)),
-            tuple(sorted(normalize_formula(c) for c in axioms)),
-            normalize_formula(theorem),
+            tuple(sorted(alpha_key(c) for c in background)),
+            tuple(sorted(alpha_key(c) for c in axioms)),
+            alpha_key(theorem),
         )
         if key not in self._prove_cache:
             self._prove_cache[key] = prove_conjecture(
@@ -1149,9 +1163,9 @@ class TPTPConsistencyRepair(Task):
         key = (
             time_limit,
             bool(disprove_first),
-            tuple(sorted(normalize_formula(c) for c in background)),
-            tuple(sorted(normalize_formula(c) for c in axioms)),
-            normalize_formula(theorem),
+            tuple(sorted(alpha_key(c) for c in background)),
+            tuple(sorted(alpha_key(c) for c in axioms)),
+            alpha_key(theorem),
         )
         if key not in self._prove_cache:
             self._prove_cache[key] = prove_conjecture(
@@ -1413,4 +1427,5 @@ class TPTPConsistencyRepair(Task):
             return None
 
     def score_answer(self, answer, entry):
-        return float(self._parse_indices(answer) == self._parse_indices(entry.answer))
+        parse_indices = TPTPConsistencyRepair._parse_indices
+        return float(parse_indices(answer) == parse_indices(entry.answer))
