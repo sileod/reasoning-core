@@ -10,7 +10,7 @@
       "train_steps": 300
     }
   ],
-  "generated_at": "2026-06-30T07:44:14.023543+00:00",
+  "generated_at": "2026-06-30T08:03:32.935009+00:00",
   "influence_runs": [
     {
       "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/influence_TASKQUALITY_S43_T300_M20_dolci_pretrained.json",
@@ -39,7 +39,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 125.25,
+      "prompt_tokens_mean": 126.25,
       "rank": 1,
       "saturation": {
         "acc0": {
@@ -92,7 +92,7 @@
     {
       "acc_end": 0.73125,
       "acc_start": 0.0,
-      "answer_tokens_mean": 14.0,
+      "answer_tokens_mean": 27.0,
       "bbh_delta": -0.42671536489297424,
       "behavior_hash": "3cd7ee827f337ad5",
       "category": "logic_depth",
@@ -104,7 +104,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 194.25,
+      "prompt_tokens_mean": 190.0,
       "rank": 2,
       "saturation": {
         "acc0": {
@@ -169,7 +169,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 128.75,
+      "prompt_tokens_mean": 126.75,
       "rank": 3,
       "saturation": {
         "acc0": {
@@ -234,7 +234,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 126.75,
+      "prompt_tokens_mean": 130.75,
       "rank": 4,
       "saturation": {
         "acc0": {
@@ -287,7 +287,7 @@
     {
       "acc_end": 0.8048913043478261,
       "acc_start": 0.13043478260869565,
-      "answer_tokens_mean": 75.0,
+      "answer_tokens_mean": 49.75,
       "bbh_delta": -0.2820258340762769,
       "behavior_hash": "3cd7ee827f337ad5",
       "category": "logic_depth",
@@ -299,7 +299,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 169.5,
+      "prompt_tokens_mean": 153.75,
       "rank": 5,
       "saturation": {
         "acc0": {
@@ -352,7 +352,7 @@
     {
       "acc_end": 0.7036163522012578,
       "acc_start": 0.1792452830188679,
-      "answer_tokens_mean": 8.25,
+      "answer_tokens_mean": 9.25,
       "bbh_delta": -0.24019281122520653,
       "behavior_hash": "169a9ebe536d45fc",
       "category": "grammar",
@@ -364,7 +364,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 186.75,
+      "prompt_tokens_mean": 200.25,
       "rank": 6,
       "saturation": {
         "acc0": {
@@ -482,7 +482,7 @@
     {
       "acc_end": 0.7144324122479462,
       "acc_start": 0.28416728902165794,
-      "answer_tokens_mean": 20.75,
+      "answer_tokens_mean": 17.5,
       "bbh_delta": -0.1689619070473518,
       "behavior_hash": "da074542ea9f5644",
       "category": "binding",
@@ -494,7 +494,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 125.25,
+      "prompt_tokens_mean": 116.0,
       "rank": 8,
       "saturation": {
         "acc0": {
@@ -547,7 +547,7 @@
     {
       "acc_end": 0.8057692307692308,
       "acc_start": 0.2123076923076923,
-      "answer_tokens_mean": 58.25,
+      "answer_tokens_mean": 66.75,
       "bbh_delta": -0.15757324484013413,
       "behavior_hash": "3cd7ee827f337ad5",
       "category": "logic_depth",
@@ -559,7 +559,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 227.25,
+      "prompt_tokens_mean": 235.75,
       "rank": 9,
       "saturation": {
         "acc0": {
@@ -612,7 +612,7 @@
     {
       "acc_end": 0.7552321945401923,
       "acc_start": 0.3462847419171866,
-      "answer_tokens_mean": 11.75,
+      "answer_tokens_mean": 18.25,
       "bbh_delta": -0.1491970251534731,
       "behavior_hash": "657c1f4a98174d26",
       "category": "set_operations",

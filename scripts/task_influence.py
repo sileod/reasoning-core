@@ -658,7 +658,7 @@ def default_results_dirs():
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", default="TASK_INFLUENCE.md")
+    parser.add_argument("--out", default="scripts/TASK_INFLUENCE.md")
     parser.add_argument("--cache", default=".task_influence_cache.json")
     parser.add_argument("--json-out", default=None,
                         help="Machine-readable JSON output. Default: --out with .json suffix.")

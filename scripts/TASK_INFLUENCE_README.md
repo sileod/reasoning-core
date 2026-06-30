@@ -35,10 +35,10 @@ Use `--weight target=value` for one-off overrides.
 python scripts/task_influence.py \
   --results-dir ~/sandboxes/rc_grad/per_task_results \
   --include S43_T300_M20_dolci_pretrained \
-  --out TASK_INFLUENCE.md
+  --out scripts/TASK_INFLUENCE.md
 ```
 
-This also writes `TASK_INFLUENCE.json`. Use `--csv-out path.csv` only when
+This also writes `scripts/TASK_INFLUENCE.json`. Use `--csv-out path.csv` only when
 a CSV export is explicitly needed.
 
 Default behavior caches local task checks in `.task_influence_cache.json`.
