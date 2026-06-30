@@ -128,7 +128,7 @@ def write_gallery(task_names, examples, out_path, existing_sections=None):
     existing_sections = existing_sections or {}
     with out_path.open("w", encoding="utf-8") as f:
         menu = " · ".join(f"[`{t}`](#{slug(t)})" for t in task_names)
-        f.write(f"# 📖 Task Gallery\n\n{menu}\n\n---\n\n")
+        f.write(f"# 📖 Task Gallery\n\n{len(task_names)} tasks\n\n{menu}\n\n---\n\n")
         for name in task_names:
             if name in examples:
                 section = section_text(name, examples[name])

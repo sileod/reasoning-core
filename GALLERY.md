@@ -1,5 +1,7 @@
 # 📖 Task Gallery
 
+48 tasks
+
 [`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`stress_constrained_continuation`](#stress_constrained_continuation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win)
 
 ---
@@ -382,21 +384,22 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-alice is a parent of david.
-david is a parent of bruno.
-bruno is kind.
-clara is not adult.
-clara is kind.
-alice is a spouse of clara.
-For all x, y, if x is a parent of y, then x is an ancestor of y.
-Parent relations followed by ancestor relations imply ancestor relations.
-From p is a parent of x and p is a parent of y and x is different from y, it follows that x is a sibling of y.
-From x is a sibling of y, it follows that y is a sibling of x.
-Whenever x is a spouse of y, y is a spouse of x.
-Whenever x is a parent of y and x is a sibling of z, z is an aunt or uncle of y.
+box is above lamp.
+lamp is above map.
+map is not safe.
+lamp contains key.
+box is inside lamp.
+lamp is safe.
+For all x, y, if x is left of y, then y is right of x.
+Every above relation creates a below relation in the reverse direction.
+Whenever x is inside y, y contains x.
+Whenever x is inside y and y is inside z, x is inside z.
+Left Of relations followed by left of relations imply left of relations.
+Whenever x is above y and y is above z, x is above z.
+Every disjoint relation creates a disjoint relation in the reverse direction.
 
 Hypothesis:
-alice is an ancestor of bruno.
+map is below box.
 
 Does the premise entail the hypothesis? The answer is yes, no, or maybe.
 ```
@@ -413,22 +416,22 @@ yes
 **Prompt:**
 ```
 Premise:
-[0] david trusts bruno.
-[1] bruno advises clara.
-[2] bruno is careful.
-[3] bruno is not approved.
-[4] david is approved.
-[5] clara is verified.
-[6] Whenever x trusts y and y advises z, x helps z.
-[7] Whenever x helps z, x is careful.
-[8] Whenever x is careful and x is active, x is approved.
-[9] People reached when a trusted person trusts someone are approved.
-[10] Whenever x is trained and x is trusted, x is not active.
-[11] If one person advises a second person, and the second helps a third person, then the first trusts the third.
-[12] For all x, if x is careful and x is trusted, then x is not verified.
+[0] map is inside key.
+[1] key is inside lamp.
+[2] key is below box.
+[3] box contains key.
+[4] box is not safe.
+[5] lamp is left of key.
+[6] From x is left of y, it follows that y is right of x.
+[7] For all x, y, if x is above y, then y is below x.
+[8] Whenever x is inside y, y contains x.
+[9] When one person is inside a second person and the second is inside a third person, the first is inside the third.
+[10] Whenever x is left of y and y is left of z, x is left of z.
+[11] Whenever x is above y and y is above z, x is above z.
+[12] For all x, y, if x is disjoint from y, then y is disjoint from x.
 
 Hypothesis:
-david is careful.
+lamp contains map.
 
 Which premise statements are necessary to entail the hypothesis, meaning removing any one of them breaks that result?
 Answer with space-separated indexes.
@@ -436,7 +439,7 @@ Answer with space-separated indexes.
 
 **Answer:**
 ```
-0 1 6 7
+0 1 8 9
 ```
 
 ---
@@ -446,23 +449,23 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-[0] david is trained.
-[1] clara is active.
-[2] From x is trained, it follows that x is verified.
-[3] Every verified entity is not approved.
+[0] david is active.
+[1] clara is trusted.
+[2] Whenever x is active, x is verified.
+[3] Every verified entity is approved.
 
 Hypothesis:
-clara is approved.
+bruno is approved.
 
 Candidate Facts:
-[0] david trusts clara.
-[1] bruno is trained.
-[2] alice is active.
-[3] clara is trained.
-[4] bruno is approved.
-[5] clara is not trained.
+[0] bruno trusts clara.
+[1] alice helps bruno.
+[2] alice helps david.
+[3] bruno is active.
+[4] bruno is careful.
+[5] bruno is not active.
 
-Which candidate facts, if added to the premise, make the premise contradict the hypothesis?
+Which candidate facts, if added to the premise, make the premise entail the hypothesis?
 Answer with space-separated indexes.
 ```
 
@@ -478,29 +481,29 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-bruno trusts alice.
-alice helps david.
-bruno helps alice.
-bruno is not careful.
-alice is verified.
+bruno is trained.
+bruno is verified.
 bruno helps david.
-bruno helps clara.
-From x trusts y and y helps z, it follows that x advises z.
-For all x, z, if x advises z, then x is approved.
-Every helps relation creates a trusts relation in the reverse direction.
-Whenever x is active and x is approved, x is verified.
-Every approved entity that is also active is not trained.
-Every trusted entity is active.
+alice is approved.
+clara helps alice.
+alice does not helps clara.
+From x is trained and x is verified, it follows that x is trusted.
+Whenever x is trusted, x is active.
+Every active entity that is also careful is approved.
+For all x, if x is active and x is careful, then x is verified.
+Whenever x trusts y and x is trained, y is verified.
+From x is careful, it follows that x is active.
+For all x, y, z, if x trusts y and y helps z, then x advises z.
 
 Question:
-How many entities does david advises?
+Which entities are active?
 
-Answer with one integer.
+Answer with names in alphabetical order, comma-separated.
 ```
 
 **Answer:**
 ```
-2
+bruno
 ```
 
 ---
