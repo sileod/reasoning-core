@@ -1,6 +1,172 @@
 # 📖 Task Gallery
 
-[`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`string_transduction`](#string_transduction) · [`constraint_satisfaction`](#constraint_satisfaction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`planning`](#planning) · [`table_qa`](#table_qa) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`equation_system`](#equation_system) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win) · [`navigation`](#navigation) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`coreference`](#coreference) · [`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`sequential_induction`](#sequential_induction) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`stress_constrained_continuation`](#stress_constrained_continuation) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`reference_tracking`](#reference_tracking) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`stress_constrained_continuation`](#stress_constrained_continuation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win)
+
+---
+
+## [arithmetics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
+
+**Prompt:**
+```
+Evaluate 0 - 6.
+The answer is a number.
+```
+
+**Answer:**
+```
+-6
+```
+
+---
+
+## [math_word_problem](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
+
+**Prompt:**
+```
+A jar holds 3 beads. 10 more beads added; then 10 beads removed; then tripled. How many beads are in the jar now? Answer with a number.
+```
+
+**Answer:**
+```
+9
+```
+
+---
+
+## [equation_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/equation_system.py)
+
+**Prompt:**
+```
+Solve the following system of equations for the variable 'X2'.
+
+System:
+  X2 + 17 = 3
+  X2 + 17 = 0
+
+The answer is the value of X2, or 'No solution' / 'Multiple solutions'.
+```
+
+**Answer:**
+```
+No solution
+```
+
+---
+
+## [lean_missing_proof_line_selection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+
+**Prompt:**
+```
+Fill `__ANSWER__` with one listed Lean proof line. Mathlib is imported.
+The answer is the line number.
+
+THEOREM:
+theorem ex (p q r : Prop) (h0 : p → q) : p ∧ r → q ∧ r := by
+  intro h
+  __ANSWER__
+
+LINES:
+1. simp
+2. intro x hx
+3. exact ⟨h0 h.1, h.2⟩
+4. rfl
+5. exact h0
+6. intro h
+```
+
+**Answer:**
+```
+3
+```
+
+---
+
+## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+
+**Prompt:**
+```
+Does this Lean 4 tactic body close the theorem?
+The answer is True or False.
+
+THEOREM:
+theorem ex (s t u : Set Int) (h0 : s ⊆ u) : t ∪ s ⊆ t ∪ u := by
+  ?
+
+CANDIDATE:
+exact h0
+```
+
+**Answer:**
+```
+False
+```
+
+---
+
+## [conjecture_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
+
+**Prompt:**
+```
+Decide if the premises entail the conjecture.
+
+TPTP source: SET001-3.ax
+
+Background axioms:
+- (~member(X1,X2)|~member(X1,X3)|~difference(X4,X2,X3))
+- (difference(X1,X2,X3)|member(k(X1,X2,X3),X1)|member(k(X1,X2,X3),X3))
+- (member(X1,X3)|~member(X1,X2)|~subset(X2,X3))
+
+Premises:
+- (member(k(X1,X2,X3),X3)|difference(X1,X2,X3)|~member(k(X1,X2,X3),X2))
+
+Conjecture: `(difference(X1,X1,X2)|~subset(X3,X4)|~subset(X2,X3)|~difference(X5,X4,X3))`
+
+The answer is `True` (provable) or `False` (not provable).
+```
+
+**Answer:**
+```
+True
+```
+
+---
+
+## [tptp_consistency_repair](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
+
+**Prompt:**
+```
+Which local single-clause deletions make the fixed axioms satisfiable with the negated theorem?
+Answer with ordered, space-separated clause numbers.
+Background axioms:
+- (X3=X4|~product(X1,X2,X3)|~product(X1,X2,X4))
+Negated theorem: `(multiply(identity,X1) != X1)`
+Clauses:
+1. (product(X1,identity,X1))
+2. (product(X1,X2,multiply(X1,X2)))
+3. (product(identity,X1,X1))
+```
+
+**Answer:**
+```
+2
+```
+
+---
+
+## [planar_geometry_relations](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_geometry.py)
+
+**Prompt:**
+```
+Given points: E=(-3, -2); G=(4/5, -52/5); N=(3, 5); O=(-57/5, 9/5); P=(3, 4); T=(4, -3); V=(-1, 0).
+Definitions: G is the reflection of N across line TE. O is the reflection of G across line EP.
+Question: Is point T on segment VG?
+Answer is either yes or no.
+```
+
+**Answer:**
+```
+no
+```
 
 ---
 
@@ -70,69 +236,6 @@ C
 
 ---
 
-## [string_transduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/string_transduction.py)
-
-**Prompt:**
-```
-String: amber quiet delta vector
-Operations:
-- sort descending
-- reverse
-Answer with the final string.
-```
-
-**Answer:**
-```
-   aabcdeeeeilmoqrrtttuv
-```
-
----
-
-## [constraint_satisfaction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/constraint_satisfaction.py)
-
-**Prompt:**
-```
-4x4 grid. Each row and column contains 1..4 once.
-Clues:
-- r2c3 = 3
-- r4c1 = 4
-- r2c2 = 4
-- r3c1 = 2
-
-What is r2c1?
-Answer with one number.
-```
-
-**Answer:**
-```
-1
-```
-
----
-
-## [qualitative_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qstr.py)
-
-**Prompt:**
-```
-There are 5 objects: E0, E1, E2, E3, E4.
-They have distinct ages.
-Facts:
-- E3 is the 4th-newest.
-- E0 is the 5th-newest.
-- E1 is newer than E2.
-- E4 is newer than E1.
-
-Which object is the 4th-oldest?
-The answer is one object label.
-```
-
-**Answer:**
-```
-E1
-```
-
----
-
 ## [lambda_reduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
 
 **Prompt:**
@@ -178,214 +281,48 @@ if(and(if(true,b,true),b),c,eq(b,and(false,b)))
 
 ---
 
-## [planning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/planning.py)
+## [most_probable_evidence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
 
 **Prompt:**
 ```
-Objects:
-object_1
+Factor f is independently true with probability 0.6.
+Factor b is independently true with probability 0.4.
+The observation holds exactly when (factor f or factor b).
+We observe it.
+Which hidden fact values form the most probable complete explanation?
 
-Actions:
-action_0(x0)
-  Requires: (not fluent_0)
-  Effect: fluent_0
-action_1(x0)
-  Requires: fluent_0
-  Effect: not fluent_0
-action_2(x0)
-  Effect: fluent_0
+Hidden fact values:
+0. b
+1. not b
+2. f
+3. not f
 
-Initial state:
-True values: None
-
-Goal:
-fluent_0
-Hint: Reference solution has 1 actions (but it may not be optimal).
-
-Action format example: action_0(object1 object2).
-The answer is the plan, one action per line.
+Choose one value for each hidden factor. Answer with space-separated indexes.
 ```
 
 **Answer:**
 ```
-action_0(object_1)
+1 2
 ```
 
 ---
 
-## [table_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
+## [most_probable_outcome](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
 
 **Prompt:**
 ```
-Execute this SQL query on the table named dataframe:
+A deck contains 2 red cards and 4 blue cards.
+Two cards are drawn without replacing the first card.
+Which statement is more likely?
+A: both selected cards are red.
+B: both selected cards are blue.
 
-Table 1:
-rating,country
-2.6,Seychelles
-2.1,Finland
-3.7,Andorra
-1.4,Andorra
-3.6,Grenada
-
-
-SQL: SELECT ROUND(MIN(rating), 2) FROM dataframe
-
-The answer is the result as single value.
+The answer is exactly one of: A, B, equal.
 ```
 
 **Answer:**
 ```
-1.4
-```
-
----
-
-## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-bruno is verified.
-bruno is careful.
-bruno is trusted.
-alice is not trained.
-alice helps clara.
-alice advises clara.
-Anyone who is verified and careful is trusted.
-All things that are trusted are approved.
-If a person is careful and active, then that person is trusted.
-Trusts relations followed by helps relations imply advises relations.
-For all x, y, if x helps y and x is verified, then y is not careful.
-For all x, if x is trained, then x is verified.
-From x helps y, it follows that y advises x.
-
-Hypothesis:
-clara is trusted.
-
-Does the premise entail the hypothesis? The answer is yes, no, or maybe.
-```
-
-**Answer:**
-```
-maybe
-```
-
----
-
-## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-[0] bruno advises david.
-[1] david trusts clara.
-[2] alice is careful.
-[3] clara is active.
-[4] david is verified.
-[5] alice advises david.
-[6] For all x, y, z, if x advises y and y trusts z, then x helps z.
-[7] For all x, z, if x helps z, then x is verified.
-[8] For all x, if x is verified and x is trusted, then x is trained.
-[9] When a person advises a trusted person, that person is verified.
-[10] Every verified entity is trusted.
-[11] Advises relations followed by trusts relations imply helps relations.
-[12] Every approved entity that is also careful is trusted.
-
-Hypothesis:
-bruno is not verified.
-
-Which premise statements are necessary to contradict the hypothesis, meaning removing any one of them breaks that result?
-Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-0
-```
-
----
-
-## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-[0] alice trusts david.
-[1] clara is verified.
-[2] From x trusts y and y is trusted, it follows that x is careful.
-[3] All things that are careful are active.
-
-Hypothesis:
-alice is active.
-
-Candidate Facts:
-[0] alice is trusted.
-[1] bruno trusts clara.
-[2] bruno is active.
-[3] david is not trusted.
-[4] david is verified.
-[5] david is trusted.
-
-Which candidate facts, if added to the premise, make the premise entail the hypothesis?
-Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-5
-```
-
----
-
-## [logic_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-bruno helps david.
-david is approved.
-bruno helps clara.
-clara is approved.
-alice helps bruno.
-alice trusts bruno.
-bruno is trained.
-clara trusts bruno.
-When a person helps a approved person, that person is verified.
-From x is verified, it follows that x is trusted.
-For all x, y, if x helps y and x is verified, then y is active.
-Whenever x advises y, y does not trusts x.
-Whenever x advises y and x is active, y is verified.
-Anyone who is active and verified is careful.
-
-Question:
-How many entities are trusted?
-
-Answer with one integer.
-```
-
-**Answer:**
-```
-1
-```
-
----
-
-## [equation_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/equation_system.py)
-
-**Prompt:**
-```
-Solve the following system of equations for the variable 'X2'.
-
-System:
-  X2 + 17 = 3
-  X2 + 17 = 0
-
-The answer is the value of X2, or 'No solution' / 'Multiple solutions'.
-```
-
-**Answer:**
-```
-No solution
+B
 ```
 
 ---
@@ -440,37 +377,252 @@ Answer with space-separated indexes.
 
 ---
 
-## [game_best_move](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
+## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
 **Prompt:**
 ```
-In this graph game, choose player's best move. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score.
+Premise:
+alice is a parent of david.
+david is a parent of bruno.
+bruno is kind.
+clara is not adult.
+clara is kind.
+alice is a spouse of clara.
+For all x, y, if x is a parent of y, then x is an ancestor of y.
+Parent relations followed by ancestor relations imply ancestor relations.
+From p is a parent of x and p is a parent of y and x is different from y, it follows that x is a sibling of y.
+From x is a sibling of y, it follows that y is a sibling of x.
+Whenever x is a spouse of y, y is a spouse of x.
+Whenever x is a parent of y and x is a sibling of z, z is an aunt or uncle of y.
 
-Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n5:70; n6:50. Edges: n0->n6; n1->n5; n2->n3,n5; n3->n6; n4->n5.
-Legal player moves now: n3, n5.
-The answer is the destination node of the best move.
+Hypothesis:
+alice is an ancestor of bruno.
+
+Does the premise entail the hypothesis? The answer is yes, no, or maybe.
 ```
 
 **Answer:**
 ```
-n5
+yes
 ```
 
 ---
 
-## [game_forced_win](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
+## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
 **Prompt:**
 ```
-In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
+Premise:
+[0] david trusts bruno.
+[1] bruno advises clara.
+[2] bruno is careful.
+[3] bruno is not approved.
+[4] david is approved.
+[5] clara is verified.
+[6] Whenever x trusts y and y advises z, x helps z.
+[7] Whenever x helps z, x is careful.
+[8] Whenever x is careful and x is active, x is approved.
+[9] People reached when a trusted person trusts someone are approved.
+[10] Whenever x is trained and x is trusted, x is not active.
+[11] If one person advises a second person, and the second helps a third person, then the first trusts the third.
+[12] For all x, if x is careful and x is trusted, then x is not verified.
 
-Start: n1. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:0; n5:20; n6:10. Edges: n0->n5; n1->n4,n6; n2->n4; n3->n4.
-The answer is yes or no.
+Hypothesis:
+david is careful.
+
+Which premise statements are necessary to entail the hypothesis, meaning removing any one of them breaks that result?
+Answer with space-separated indexes.
 ```
 
 **Answer:**
 ```
-no
+0 1 6 7
+```
+
+---
+
+## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+**Prompt:**
+```
+Premise:
+[0] david is trained.
+[1] clara is active.
+[2] From x is trained, it follows that x is verified.
+[3] Every verified entity is not approved.
+
+Hypothesis:
+clara is approved.
+
+Candidate Facts:
+[0] david trusts clara.
+[1] bruno is trained.
+[2] alice is active.
+[3] clara is trained.
+[4] bruno is approved.
+[5] clara is not trained.
+
+Which candidate facts, if added to the premise, make the premise contradict the hypothesis?
+Answer with space-separated indexes.
+```
+
+**Answer:**
+```
+3
+```
+
+---
+
+## [logic_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+**Prompt:**
+```
+Premise:
+bruno trusts alice.
+alice helps david.
+bruno helps alice.
+bruno is not careful.
+alice is verified.
+bruno helps david.
+bruno helps clara.
+From x trusts y and y helps z, it follows that x advises z.
+For all x, z, if x advises z, then x is approved.
+Every helps relation creates a trusts relation in the reverse direction.
+Whenever x is active and x is approved, x is verified.
+Every approved entity that is also active is not trained.
+Every trusted entity is active.
+
+Question:
+How many entities does david advises?
+
+Answer with one integer.
+```
+
+**Answer:**
+```
+2
+```
+
+---
+
+## [planning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/planning.py)
+
+**Prompt:**
+```
+Objects:
+object_1
+
+Actions:
+action_0(x0)
+  Requires: (not fluent_0)
+  Effect: fluent_0
+action_1(x0)
+  Requires: fluent_0
+  Effect: not fluent_0
+action_2(x0)
+  Effect: fluent_0
+
+Initial state:
+True values: None
+
+Goal:
+fluent_0
+Hint: Reference solution has 1 actions (but it may not be optimal).
+
+Action format example: action_0(object1 object2).
+The answer is the plan, one action per line.
+```
+
+**Answer:**
+```
+action_0(object_1)
+```
+
+---
+
+## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+**Prompt:**
+```
+Set_A: {876, 871, 875, 874, 879, 878, 880}
+The answer is the missing elements from Set_A as a Python set.
+```
+
+**Answer:**
+```
+{872, 873, 877}
+```
+
+---
+
+## [count_elements](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+**Prompt:**
+```
+List: [3, 7, 1, 16, 13, 4, 1, 8, 1, 9]
+How many times does 1 appear? The answer is a number.
+```
+
+**Answer:**
+```
+3
+```
+
+---
+
+## [set_expression](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+**Prompt:**
+```
+A: {7, 20, 13, 5, 4, 25, 31, 23}
+C: {3, 8, 31, 19, 23, 20, 27, 13}
+Evaluate (C-A).
+```
+
+**Answer:**
+```
+{19, 27, 3, 8}
+```
+
+---
+
+## [sequential_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/sequential_induction.py)
+
+**Prompt:**
+```
+Infer U[n]. Max recurrence degree: 0. Ops: +, -, *, **.
+Use n.
+Sequence: [-2, -1, 0, 1, 2, 3, 4, 5]
+Initial terms: []
+The answer is the RHS only.
+```
+
+**Answer:**
+```
+-2 + n
+```
+
+---
+
+## [qualitative_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qstr.py)
+
+**Prompt:**
+```
+There are 5 objects: E0, E1, E2, E3, E4.
+They have distinct ages.
+Facts:
+- E3 is the 4th-newest.
+- E0 is the 5th-newest.
+- E1 is newer than E2.
+- E4 is newer than E1.
+
+Which object is the 4th-oldest?
+The answer is one object label.
+```
+
+**Answer:**
+```
+E1
 ```
 
 ---
@@ -498,6 +650,81 @@ What is the final coordinate of A? The answer is (x, y).
 **Answer:**
 ```
 (2, 4)
+```
+
+---
+
+## [reference_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/tracking.py)
+
+**Prompt:**
+```
+Inventory:
+- b1: black
+- b2: red
+- b3: green
+- b4: green
+
+Initial State:
+- b1 is in x1
+- b2 is in x1
+- b3 is in x3
+- b4 is in x2
+
+Moves:
+- Move b4 from x2 to x3.
+- Move b3 from x3 to x2.
+- Transfer everything in x3 into x2.
+- Transfer b4 from x2 into x1.
+Where is b1 now? The answer is a box tag, like x1.
+```
+
+**Answer:**
+```
+x1
+```
+
+---
+
+## [coreference](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/coreference.py)
+
+**Prompt:**
+```
+(1) A kind quiet lawyer named Mark avoided a loud tall writer named Mary.
+(2) A loud old pilot named Jane met him.
+(3) A kind tall nurse named Adam thanked her.
+(4) The writer praised a kind young pilot named Ben.
+(5) Jane met him.
+(6) He avoided a kind quiet doctor named Luke.
+
+In sentence 6, what does the subject expression 'He' refer to?
+The answer is the person's name.
+```
+
+**Answer:**
+```
+Ben
+```
+
+---
+
+## [constraint_satisfaction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/constraint_satisfaction.py)
+
+**Prompt:**
+```
+4x4 grid. Each row and column contains 1..4 once.
+Clues:
+- r2c3 = 3
+- r4c1 = 4
+- r2c2 = 4
+- r3c1 = 2
+
+What is r2c1?
+Answer with one number.
+```
+
+**Answer:**
+```
+1
 ```
 
 ---
@@ -556,274 +783,6 @@ Graph:
 **Answer:**
 ```
 0 3 4
-```
-
----
-
-## [code_runnability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
-
-**Prompt:**
-````
-Predict whether this Python call runs successfully or raises an exception.
-```python
-def f0(h: list, i: str) -> str:
-    print(i)
-    print(i)
-    a = f"val={5}"
-    a = 0 // 6
-    return i
-def f1(i: str) -> str:
-    print(i)
-    return i
-def endpoint(x0: list, x1: str) -> str:
-    return f0(x0, x1)
-
-```
-Call: `endpoint([2], 'zb')`
-The answer is `OK` if it runs successfully; otherwise the exception class name.
-````
-
-**Answer:**
-```
-OK
-```
-
----
-
-## [code_execution](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
-
-**Prompt:**
-````
-Predict the value returned by this Python call.
-```python
-def f0(n: list) -> list:
-    a = [m * m for m in range(5, 11)]
-    return a
-def f1(h: str) -> int:
-    print(h)
-    a = 8
-    return a + 3
-def endpoint(x0: list) -> list:
-    return f0(x0)
-
-```
-Call: `endpoint([1, -1])`
-The answer is the exact Python `repr` of the returned value.
-````
-
-**Answer:**
-```
-[25, 36, 49, 64, 81, 100]
-```
-
----
-
-## [code_input_deduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
-
-**Prompt:**
-````
-Find the smallest integer x in [-6, 9] such that `endpoint(x) == target`.
-Answer with the integer.
-
-```python
-def f0(o: int) -> int:
-    o -= 6
-    return o + 3
-
-
-def endpoint(x):
-    return f0(x) % 4
-
-```
-
-Target: 0
-````
-
-**Answer:**
-```
--5
-```
-
----
-
-## [most_probable_evidence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
-
-**Prompt:**
-```
-Factor f is independently true with probability 0.6.
-Factor b is independently true with probability 0.4.
-The observation holds exactly when (factor f or factor b).
-We observe it.
-Which hidden fact values form the most probable complete explanation?
-
-Hidden fact values:
-0. b
-1. not b
-2. f
-3. not f
-
-Choose one value for each hidden factor. Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-1 2
-```
-
----
-
-## [most_probable_outcome](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
-
-**Prompt:**
-```
-A deck contains 2 red cards and 4 blue cards.
-Two cards are drawn without replacing the first card.
-Which statement is more likely?
-A: both selected cards are red.
-B: both selected cards are blue.
-
-The answer is exactly one of: A, B, equal.
-```
-
-**Answer:**
-```
-B
-```
-
----
-
-## [coreference](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/coreference.py)
-
-**Prompt:**
-```
-(1) A kind quiet lawyer named Mark avoided a loud tall writer named Mary.
-(2) A loud old pilot named Jane met him.
-(3) A kind tall nurse named Adam thanked her.
-(4) The writer praised a kind young pilot named Ben.
-(5) Jane met him.
-(6) He avoided a kind quiet doctor named Luke.
-
-In sentence 6, what does the subject expression 'He' refer to?
-The answer is the person's name.
-```
-
-**Answer:**
-```
-Ben
-```
-
----
-
-## [arithmetics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
-
-**Prompt:**
-```
-Evaluate 0 - 6.
-The answer is a number.
-```
-
-**Answer:**
-```
--6
-```
-
----
-
-## [math_word_problem](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
-
-**Prompt:**
-```
-A jar holds 3 beads. 10 more beads added; then 10 beads removed; then tripled. How many beads are in the jar now? Answer with a number.
-```
-
-**Answer:**
-```
-9
-```
-
----
-
-## [sequential_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/sequential_induction.py)
-
-**Prompt:**
-```
-Infer U[n]. Max recurrence degree: 0. Ops: +, -, *, **.
-Use n.
-Sequence: [-2, -1, 0, 1, 2, 3, 4, 5]
-Initial terms: []
-The answer is the RHS only.
-```
-
-**Answer:**
-```
--2 + n
-```
-
----
-
-## [conjecture_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
-
-**Prompt:**
-```
-Decide if the premises entail the conjecture.
-
-TPTP source: SET001-3.ax
-
-Background axioms:
-- (~member(X1,X2)|~member(X1,X3)|~difference(X4,X2,X3))
-- (difference(X1,X2,X3)|member(k(X1,X2,X3),X1)|member(k(X1,X2,X3),X3))
-- (member(X1,X3)|~member(X1,X2)|~subset(X2,X3))
-
-Premises:
-- (member(k(X1,X2,X3),X3)|difference(X1,X2,X3)|~member(k(X1,X2,X3),X2))
-
-Conjecture: `(difference(X1,X1,X2)|~subset(X3,X4)|~subset(X2,X3)|~difference(X5,X4,X3))`
-
-The answer is `True` (provable) or `False` (not provable).
-```
-
-**Answer:**
-```
-True
-```
-
----
-
-## [tptp_consistency_repair](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
-
-**Prompt:**
-```
-Which local single-clause deletions make the fixed axioms satisfiable with the negated theorem?
-Answer with ordered, space-separated clause numbers.
-Background axioms:
-- (X3=X4|~product(X1,X2,X3)|~product(X1,X2,X4))
-Negated theorem: `(multiply(identity,X1) != X1)`
-Clauses:
-1. (product(X1,identity,X1))
-2. (product(X1,X2,multiply(X1,X2)))
-3. (product(identity,X1,X1))
-```
-
-**Answer:**
-```
-2
-```
-
----
-
-## [planar_geometry_relations](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_geometry.py)
-
-**Prompt:**
-```
-Given points: E=(-3, -2); G=(4/5, -52/5); N=(3, 5); O=(-57/5, 9/5); P=(3, 4); T=(4, -3); V=(-1, 0).
-Definitions: G is the reflection of N across line TE. O is the reflection of G across line EP.
-Question: Is point T on segment VG?
-Answer is either yes or no.
-```
-
-**Answer:**
-```
-no
 ```
 
 ---
@@ -1049,129 +1008,168 @@ kids that the kids that the kids see see happy
 
 ---
 
-## [lean_missing_proof_line_selection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+## [table_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
 
 **Prompt:**
 ```
-Fill `__ANSWER__` with one listed Lean proof line. Mathlib is imported.
-The answer is the line number.
+Execute this SQL query on the table named dataframe:
 
-THEOREM:
-theorem ex (p q r : Prop) (h0 : p → q) : p ∧ r → q ∧ r := by
-  intro h
-  __ANSWER__
+Table 1:
+rating,country
+2.6,Seychelles
+2.1,Finland
+3.7,Andorra
+1.4,Andorra
+3.6,Grenada
 
-LINES:
-1. simp
-2. intro x hx
-3. exact ⟨h0 h.1, h.2⟩
-4. rfl
-5. exact h0
-6. intro h
+
+SQL: SELECT ROUND(MIN(rating), 2) FROM dataframe
+
+The answer is the result as single value.
 ```
 
 **Answer:**
 ```
-3
+1.4
 ```
 
 ---
 
-## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+## [string_transduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/string_transduction.py)
 
 **Prompt:**
 ```
-Does this Lean 4 tactic body close the theorem?
-The answer is True or False.
-
-THEOREM:
-theorem ex (s t u : Set Int) (h0 : s ⊆ u) : t ∪ s ⊆ t ∪ u := by
-  ?
-
-CANDIDATE:
-exact h0
+String: amber quiet delta vector
+Operations:
+- sort descending
+- reverse
+Answer with the final string.
 ```
 
 **Answer:**
 ```
-False
+   aabcdeeeeilmoqrrtttuv
 ```
 
 ---
 
-## [reference_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/tracking.py)
+## [code_runnability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
 
 **Prompt:**
-```
-Inventory:
-- b1: black
-- b2: red
-- b3: green
-- b4: green
+````
+Predict whether this Python call runs successfully or raises an exception.
+```python
+def f0(h: list, i: str) -> str:
+    print(i)
+    print(i)
+    a = f"val={5}"
+    a = 0 // 6
+    return i
+def f1(i: str) -> str:
+    print(i)
+    return i
+def endpoint(x0: list, x1: str) -> str:
+    return f0(x0, x1)
 
-Initial State:
-- b1 is in x1
-- b2 is in x1
-- b3 is in x3
-- b4 is in x2
-
-Moves:
-- Move b4 from x2 to x3.
-- Move b3 from x3 to x2.
-- Transfer everything in x3 into x2.
-- Transfer b4 from x2 into x1.
-Where is b1 now? The answer is a box tag, like x1.
 ```
+Call: `endpoint([2], 'zb')`
+The answer is `OK` if it runs successfully; otherwise the exception class name.
+````
 
 **Answer:**
 ```
-x1
+OK
 ```
 
 ---
 
-## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+## [code_execution](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
 
 **Prompt:**
+````
+Predict the value returned by this Python call.
+```python
+def f0(n: list) -> list:
+    a = [m * m for m in range(5, 11)]
+    return a
+def f1(h: str) -> int:
+    print(h)
+    a = 8
+    return a + 3
+def endpoint(x0: list) -> list:
+    return f0(x0)
+
 ```
-Set_A: {876, 871, 875, 874, 879, 878, 880}
-The answer is the missing elements from Set_A as a Python set.
-```
+Call: `endpoint([1, -1])`
+The answer is the exact Python `repr` of the returned value.
+````
 
 **Answer:**
 ```
-{872, 873, 877}
+[25, 36, 49, 64, 81, 100]
 ```
 
 ---
 
-## [count_elements](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+## [code_input_deduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
 
 **Prompt:**
+````
+Find the smallest integer x in [-6, 9] such that `endpoint(x) == target`.
+Answer with the integer.
+
+```python
+def f0(o: int) -> int:
+    o -= 6
+    return o + 3
+
+
+def endpoint(x):
+    return f0(x) % 4
+
 ```
-List: [3, 7, 1, 16, 13, 4, 1, 8, 1, 9]
-How many times does 1 appear? The answer is a number.
-```
+
+Target: 0
+````
 
 **Answer:**
 ```
-3
+-5
 ```
 
 ---
 
-## [set_expression](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+## [game_best_move](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
 
 **Prompt:**
 ```
-A: {7, 20, 13, 5, 4, 25, 31, 23}
-C: {3, 8, 31, 19, 23, 20, 27, 13}
-Evaluate (C-A).
+In this graph game, choose player's best move. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score.
+
+Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n5:70; n6:50. Edges: n0->n6; n1->n5; n2->n3,n5; n3->n6; n4->n5.
+Legal player moves now: n3, n5.
+The answer is the destination node of the best move.
 ```
 
 **Answer:**
 ```
-{19, 27, 3, 8}
+n5
+```
+
+---
+
+## [game_forced_win](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
+
+**Prompt:**
+```
+In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
+
+Start: n1. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:0; n5:20; n6:10. Edges: n0->n5; n1->n4,n6; n2->n4; n3->n4.
+The answer is yes or no.
+```
+
+**Answer:**
+```
+no
 ```
 
 ---
