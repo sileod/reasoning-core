@@ -617,6 +617,9 @@ else:
 for i, task in enumerate(ALL_TASKS):
     if task in results["tasks"]:
         print(f"[{i+1}/{len(ALL_TASKS)}] {task} — already done"); continue
+    if _local_aux is not None and task != "__ALLMIX__" and not _local_aux.get(task):
+        print(f"[{i+1}/{len(ALL_TASKS)}] {task} — SKIP (no aux rows; slow-gen skipped upstream)")
+        continue
     t0 = time.time(); reset_model()
     sat_cbs, sat_curve = None, None
     if LOG_SAT:

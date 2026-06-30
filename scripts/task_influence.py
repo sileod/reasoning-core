@@ -16,6 +16,7 @@ import hashlib
 import inspect
 import json
 import math
+import os
 import re
 import shlex
 import statistics as stats
@@ -31,6 +32,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from reasoning_core import get_task, list_tasks  # noqa: E402
+from reasoning_core.template import TimeoutException as _RCTimeoutException  # noqa: E402
 
 SCRIPT_VERSION = 2
 WEIGHT_PROFILES = {
@@ -227,6 +229,13 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
         "aux_mode": aux_mode,
         "tasks": {},
     }
+    # Per-task robustness: the framework already hard-bounds each generate_example
+    # (signal alarm + 10 retries + subprocess kill). We must NOT add our own SIGALRM
+    # timeout — it shares the single process-wide alarm timer and clobbers theirs.
+    # Instead: (a) catch a propagated failure/timeout and keep partial output, and
+    # (b) stop sampling further levels once a cumulative wall-clock budget is spent.
+    # Better to ship a partial/skip one task than stall the whole phase to zero.
+    task_timeout = int(os.environ.get("AUX_TASK_TIMEOUT", "900") or 0)
     for name in task_names:
         print(f"aux {name}", flush=True)
         task = get_task(name)
@@ -235,27 +244,41 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
         examples_all, seen = [], set()
         per_level = max(1, math.ceil(examples_per_task / max(1, len(levels))))
         want = examples_per_task * (2 if aux_mode == "contrastive" else 1)
-        for level in levels:
-            examples = task.generate_balanced_batch(
-                batch_size=per_level,
-                max_tokens=max_tokens,
-                level=level,
-            )
-            for ex in examples:
+        t0 = time.time()
+        try:
+            for level in levels:
+                if task_timeout and time.time() - t0 > task_timeout:
+                    print(f"BUDGET {name}: {task_timeout}s spent after {time.time()-t0:.0f}s; "
+                          f"stopping at {len(examples_all)}/{want} (skipping remaining levels)",
+                          flush=True)
+                    break
+                examples = task.generate_balanced_batch(
+                    batch_size=per_level,
+                    max_tokens=max_tokens,
+                    level=level,
+                )
+                for ex in examples:
+                    if len(examples_all) >= want:
+                        break
+                    if max_tokens:
+                        pt = ex.metadata.get("_prompt_tokens", 0) or 0
+                        at = ex.metadata.get("_answer_tokens", 0) or 0
+                        if pt + at > max_tokens:
+                            continue
+                    if dedup:
+                        if ex.prompt in seen:
+                            continue
+                        seen.add(ex.prompt)
+                    examples_all.append(ex)
                 if len(examples_all) >= want:
                     break
-                if max_tokens:
-                    pt = ex.metadata.get("_prompt_tokens", 0) or 0
-                    at = ex.metadata.get("_answer_tokens", 0) or 0
-                    if pt + at > max_tokens:
-                        continue
-                if dedup:
-                    if ex.prompt in seen:
-                        continue
-                    seen.add(ex.prompt)
-                examples_all.append(ex)
-            if len(examples_all) >= want:
-                break
+        except (Exception, _RCTimeoutException) as exc:
+            # Keep whatever completed levels produced; skip below only if empty.
+            print(f"WARN {name}: aux-gen raised after {time.time()-t0:.0f}s "
+                  f"({type(exc).__name__}: {exc}); keeping {len(examples_all)}/{want}", flush=True)
+        if not examples_all:
+            print(f"SKIP {name}: produced 0 examples", flush=True)
+            continue
         if aux_mode == "contrastive":
             rows = _verification_rows(task, examples_all, examples_per_task)
         else:
