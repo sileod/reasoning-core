@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 """Run and summarize RC task influence measurements.
 
-The script can build LOCAL_AUX data from current task generators, launch the
-raw influence trainer, cache local smoke metrics by task behavior hash, and
-rewrite a compact Markdown report.
+Builds aux data — either generated locally from task generators (--source generate,
+default) or pulled from a pre-built HF staging repo (--source staging) — launches the
+raw influence trainer for tasks whose behavior hash changed, and rewrites a compact
+Markdown ranking table (+ JSON sidecar). Gallery rendering lives in build_gallery.py.
+
+Refresh everything that changed:   python scripts/task_influence.py --run-influence
+Pull staging instead of gen:       python scripts/task_influence.py --run-influence --source staging
+Rebuild the table from cache only:  python scripts/task_influence.py --no-local
 """
 
 import argparse
-import csv
 import hashlib
 import inspect
 import json
@@ -29,7 +33,6 @@ if str(ROOT) not in sys.path:
 from reasoning_core import get_task, list_tasks  # noqa: E402
 
 SCRIPT_VERSION = 2
-GITHUB_TASKS_BASE = "https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks"
 WEIGHT_PROFILES = {
     "dolci": {
         "dolci": 1.0,
@@ -171,86 +174,6 @@ def local_task_metrics(name, samples, refresh, cache):
     return out
 
 
-def markdown_fence(text):
-    text = str(text)
-    ticks = "```"
-    if ticks in text:
-        ticks = "````"
-    return f"{ticks}\n{text}\n{ticks}"
-
-
-def write_gallery(path, task_names, refresh, samples):
-    """Write a compact gallery, rebuilding examples only when validation cache misses."""
-    def clean_section(text):
-        lines = text.rstrip().splitlines()
-        while lines and not lines[-1].strip():
-            lines.pop()
-        if lines and lines[-1].strip() == "---":
-            lines.pop()
-        return "\n".join(lines).rstrip() + "\n"
-
-    path = Path(path)
-    existing_sections = {}
-    if path.exists() and not refresh:
-        current_name = None
-        current_lines = []
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if line.startswith("## "):
-                if current_name and current_lines:
-                    existing_sections[current_name] = clean_section("\n".join(current_lines))
-                current_lines = [line]
-                title = line[3:].strip()
-                title = re.sub(r"^\[([^\]]+)\].*$", r"\1", title)
-                current_name = title
-            elif current_name:
-                current_lines.append(line)
-        if current_name and current_lines:
-            existing_sections[current_name] = clean_section("\n".join(current_lines))
-
-    lines = ["# Task Gallery", ""]
-    failures = []
-    reused = 0
-    generated = 0
-    for name in task_names:
-        try:
-            task = get_task(name)
-            old = existing_sections.get(name)
-            if old and f"- hash: `{task.behavior_hash()}`" in old:
-                lines.append(old.rstrip())
-                lines.extend(["", "---", ""])
-                reused += 1
-                continue
-
-            examples = task.validate(n_samples=max(1, samples), cache=True, refresh=refresh)
-            generated += 1
-            example = sorted(examples, key=lambda ex: len(ex.prompt) - len(str(ex.answer)))[0]
-            source = Path(inspect.getfile(task.__class__)).resolve()
-            rel = source.relative_to(ROOT) if source.is_relative_to(ROOT) else source
-            github_rel = str(rel).split("reasoning_core/tasks/")[-1]
-            link = f"{GITHUB_TASKS_BASE}/{github_rel}" if "reasoning_core/tasks/" in str(rel) else str(rel)
-            lines.extend([
-                f"## [{name}]({link})",
-                "",
-                f"- hash: `{task.behavior_hash()}`",
-                f"- modified: {iso_time(source.stat().st_mtime)}",
-                "",
-                "**Prompt:**",
-                markdown_fence(example.prompt),
-                "",
-                "**Answer:**",
-                markdown_fence(example.answer),
-                "",
-                "",
-            ])
-        except Exception as exc:
-            failures.append((name, repr(exc)))
-            lines.extend([f"## {name}", "", f"Failed: `{repr(exc)}`", ""])
-        lines.extend(["---", ""])
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines) + "\n")
-    return {"failures": failures, "reused": reused, "generated": generated}
-
-
 def _verification_rows(task, examples, limit):
     pool = [str(ex.answer) for ex in examples]
     rows, yes, no = [], 0, 0
@@ -288,13 +211,16 @@ def _verification_rows(task, examples, limit):
     return rows
 
 
-def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refresh, aux_mode):
-    """Build LOCAL_AUX JSON keyed as task -> [[prompt, completion], ...]."""
+def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refresh, aux_mode,
+                   dedup=True):
+    """Build LOCAL_AUX JSON keyed as task -> [[prompt, completion], ...] from local generators."""
     path = Path(path)
     data = {}
     manifest = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "script_version": SCRIPT_VERSION,
+        "source": "generate",
+        "dedup": dedup,
         "examples_per_task": examples_per_task,
         "levels": levels,
         "max_tokens": max_tokens,
@@ -306,8 +232,9 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
         task = get_task(name)
         source = Path(inspect.getfile(task.__class__)).resolve()
         rel = source.relative_to(ROOT) if source.is_relative_to(ROOT) else source
-        examples_all = []
+        examples_all, seen = [], set()
         per_level = max(1, math.ceil(examples_per_task / max(1, len(levels))))
+        want = examples_per_task * (2 if aux_mode == "contrastive" else 1)
         for level in levels:
             examples = task.generate_balanced_batch(
                 batch_size=per_level,
@@ -315,15 +242,19 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
                 level=level,
             )
             for ex in examples:
-                if len(examples_all) >= examples_per_task * (2 if aux_mode == "contrastive" else 1):
+                if len(examples_all) >= want:
                     break
                 if max_tokens:
                     pt = ex.metadata.get("_prompt_tokens", 0) or 0
                     at = ex.metadata.get("_answer_tokens", 0) or 0
                     if pt + at > max_tokens:
                         continue
+                if dedup:
+                    if ex.prompt in seen:
+                        continue
+                    seen.add(ex.prompt)
                 examples_all.append(ex)
-            if len(examples_all) >= examples_per_task * (2 if aux_mode == "contrastive" else 1):
+            if len(examples_all) >= want:
                 break
         if aux_mode == "contrastive":
             rows = _verification_rows(task, examples_all, examples_per_task)
@@ -341,6 +272,68 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
     manifest_path = path.with_suffix(path.suffix + ".manifest.json")
     write_json(manifest_path, manifest)
     return manifest_path
+
+
+def pull_staging_aux(path, task_names, examples_per_task, levels, max_tokens, aux_mode,
+                     staging_repo, dedup=True):
+    """Build LOCAL_AUX JSON by pulling a pre-built HF staging repo (rows keyed by 'task'),
+    instead of generating locally. Fast path: data is produced on a cluster and pushed to HF."""
+    from datasets import load_dataset
+    path = Path(path)
+    data = {name: [] for name in task_names}
+    seen = {name: set() for name in task_names}
+    remaining = set(task_names)
+    print(f"pull staging: {staging_repo}  ({len(task_names)} tasks, dedup={dedup})", flush=True)
+    for x in load_dataset(staging_repo, split="train", streaming=True):
+        t = x.get("task") or ""
+        if t not in remaining:
+            continue
+        ans = x.get("answer")
+        if ans is None:
+            continue
+        p = x.get("prompt") or ""
+        if dedup:
+            if p in seen[t]:
+                continue
+            seen[t].add(p)
+        data[t].append([p, str(ans)])
+        if len(data[t]) >= examples_per_task:
+            remaining.discard(t)
+            if not remaining:
+                break
+    manifest = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "script_version": SCRIPT_VERSION,
+        "source": "staging",
+        "staging_repo": staging_repo,
+        "dedup": dedup,
+        "examples_per_task": examples_per_task,
+        "levels": levels,
+        "max_tokens": max_tokens,
+        "aux_mode": aux_mode,
+        "tasks": {},
+    }
+    for name in task_names:
+        if not data[name]:
+            print(f"  ! staging repo has no rows for {name}", file=sys.stderr)
+        manifest["tasks"][name] = {
+            "n": len(data[name]),
+            "behavior_hash": get_task(name).behavior_hash(),
+        }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+    manifest_path = path.with_suffix(path.suffix + ".manifest.json")
+    write_json(manifest_path, manifest)
+    return manifest_path
+
+
+def materialize_aux(aux_path, task_names, args):
+    """Produce LOCAL_AUX from local generators (--source generate) or a staging HF repo (--source staging)."""
+    if args.source == "staging":
+        return pull_staging_aux(aux_path, task_names, args.aux_examples, args.aux_levels,
+                                args.aux_max_tokens, args.aux_mode, args.staging_repo, args.dedup)
+    return build_aux_data(aux_path, task_names, args.aux_examples, args.aux_levels,
+                          args.aux_max_tokens, args.refresh, args.aux_mode, args.dedup)
 
 
 def parse_result_tag(path, prefix):
@@ -483,7 +476,7 @@ def markdown_table(rows, columns):
     return "\n".join(out)
 
 
-def write_machine_outputs(json_path, csv_path, records, influence_runs, sat_runs, contrast_runs, args):
+def write_machine_outputs(json_path, records, influence_runs, sat_runs, contrast_runs, args):
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "script_version": SCRIPT_VERSION,
@@ -495,23 +488,6 @@ def write_machine_outputs(json_path, csv_path, records, influence_runs, sat_runs
         "saturation_runs": sat_runs,
     }
     write_json(json_path, payload)
-
-    if not csv_path:
-        return
-
-    fieldnames = [
-        "rank", "task", "category", "influence_score", "n_runs",
-        "contrastive_score",
-        "flan_delta", "fw_delta", "bbh_delta", "dolci_delta",
-        "acc_start", "acc_end", "prompt_tokens_mean", "answer_tokens_mean",
-        "behavior_hash", "source_file", "source_modified", "ok", "issue",
-    ]
-    with Path(csv_path).open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        for rec in records:
-            row = {k: rec.get(k, "") for k in fieldnames}
-            writer.writerow(row)
 
 
 def build_records(local, inventory, scores, contrastive_scores=None):
@@ -558,7 +534,6 @@ def build_records(local, inventory, scores, contrastive_scores=None):
 
 def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args):
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    targets = sorted({t for r in records for t in r.get("targets", {})})
 
     lines = [
         "# Task Influence",
@@ -580,67 +555,50 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
         "",
     ]
 
+    # Compact ranking: score + the three scored deltas + flan reference, with token
+    # and accuracy diagnostics merged into one cell each. Full detail in the JSON sidecar.
+    def _pair(a, b, digits, sep):
+        sa, sb = fmt(a, digits), fmt(b, digits)
+        return f"{sa}{sep}{sb}" if (sa or sb) else ""
+
     rows = []
     for row in records:
         rows.append([
             str(row["rank"]),
             row["task"],
             fmt(row["influence_score"], 3, signed=True),
-            fmt(row.get("contrastive_score"), 3, signed=True),
-            fmt(row.get("flan_delta"), 4, signed=True),
+            fmt(row.get("dolci_delta"), 4, signed=True),
             fmt(row.get("bbh_delta"), 4, signed=True),
             fmt(row.get("fw_delta"), 4, signed=True),
-            fmt(row.get("acc_start"), 3),
-            fmt(row.get("acc_end"), 3),
-            fmt(row.get("prompt_tokens_mean"), 1),
-            fmt(row.get("answer_tokens_mean"), 1),
-            row.get("source_modified", ""),
-            row.get("behavior_hash", "") or "",
-            "" if row.get("ok") or row.get("ok") is None else str(row.get("issue", ""))[:80],
+            fmt(row.get("flan_delta"), 4, signed=True),
+            _pair(row.get("prompt_tokens_mean"), row.get("answer_tokens_mean"), 0, "/"),
+            _pair(row.get("acc_start"), row.get("acc_end"), 2, "→"),
+            (row.get("behavior_hash", "") or "")[:8],
         ])
 
     lines.append("## Ranking")
     lines.append("")
+    lines.append("Lower delta = helped. `score` higher = better helper. `flan` is reference-only. "
+                 "`tok` = prompt/answer tokens. `acc` = start→end (diagnostic, not scored).")
+    lines.append("")
     lines.append(markdown_table(rows, [
-        "#", "task", "influence_score", "contrastive_score", "flan_delta", "bbh_delta", "fw_delta",
-        "acc_start", "acc_end", "prompt_tok", "answer_tok", "modified", "hash", "issue",
+        "#", "task", "score", "dolci", "bbh", "fw", "flan", "tok", "acc", "hash",
     ]))
     lines.append("")
 
-    if targets:
-        lines.append("## Target Deltas")
+    issues = [(r["task"], str(r.get("issue", ""))[:120]) for r in records
+              if not (r.get("ok") or r.get("ok") is None) and r.get("issue")]
+    if issues:
+        lines.append("## Issues")
         lines.append("")
-        detail_rows = []
-        for row in records:
-            detail_rows.append([
-                row["task"],
-                *[
-                    fmt(row["targets"].get(t, {}).get("mean"), 4, signed=True)
-                    for t in targets
-                ],
-            ])
-        lines.append(markdown_table(detail_rows, ["task", *[f"{t}_delta" for t in targets]]))
+        for task, issue in issues:
+            lines.append(f"- `{task}`: {issue}")
         lines.append("")
 
-    lines.append("## Inputs")
+    lines.append(f"_Inputs: {len(influence_runs)} influence + {len(sat_runs)} saturation"
+                 + (f" + {len(contrast_runs)} contrastive" if contrast_runs else "")
+                 + " result file(s). Full per-target detail and diagnostics in the JSON sidecar._")
     lines.append("")
-    lines.append("Influence runs:")
-    for run in influence_runs[:80]:
-        lines.append(f"- `{Path(run['file']).name}`")
-    if len(influence_runs) > 80:
-        lines.append(f"- ... {len(influence_runs) - 80} more")
-    lines.append("")
-    lines.append("Saturation runs:")
-    for run in sat_runs[:80]:
-        lines.append(f"- `{Path(run['file']).name}`")
-    if len(sat_runs) > 80:
-        lines.append(f"- ... {len(sat_runs) - 80} more")
-    lines.append("")
-    if contrast_runs:
-        lines.append("Contrastive influence runs:")
-        for run in contrast_runs[:80]:
-            lines.append(f"- `{Path(run['file']).name}`")
-        lines.append("")
 
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     Path(path).write_text("\n".join(lines) + "\n")
@@ -671,6 +629,8 @@ def run_hash(task_names, args):
         "aux_levels": args.aux_levels,
         "aux_max_tokens": args.aux_max_tokens,
         "aux_mode": args.aux_mode,
+        "source": args.source,
+        "dedup": args.dedup,
     }
     return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:10]
 
@@ -703,6 +663,8 @@ def aux_manifest_fresh(aux_path, task_names, args):
         return False
     expected = {
         "script_version": SCRIPT_VERSION,
+        "source": args.source,
+        "dedup": args.dedup,
         "examples_per_task": args.aux_examples,
         "levels": args.aux_levels,
         "max_tokens": args.aux_max_tokens,
@@ -745,15 +707,7 @@ def launch_influence_run(args, task_names):
         aux_path = ROOT / aux_path
 
     if args.refresh or args.force_run or not aux_path.exists() or not aux_manifest_fresh(aux_path, task_names, args):
-        manifest_path = build_aux_data(
-            aux_path,
-            task_names,
-            args.aux_examples,
-            args.aux_levels,
-            args.aux_max_tokens,
-            args.refresh,
-            args.aux_mode,
-        )
+        manifest_path = materialize_aux(aux_path, task_names, args)
         print(f"wrote {aux_path}")
         print(f"wrote {manifest_path}")
     else:
@@ -813,12 +767,6 @@ def parse_args():
     parser.add_argument("--cache", default=".task_influence_cache.json")
     parser.add_argument("--json-out", default=None,
                         help="Machine-readable JSON output. Default: --out with .json suffix.")
-    parser.add_argument("--csv-out", default=None,
-                        help="Optional CSV output. By default only Markdown and JSON are written.")
-    parser.add_argument("--gallery-out", default=None,
-                        help="Optionally rebuild a human-readable task gallery.")
-    parser.add_argument("--gallery-refresh", action="store_true",
-                        help="Refresh all gallery cached examples instead of only changed hashes.")
     parser.add_argument("--build-aux", default=None,
                         help=("Write LOCAL_AUX generator data JSON keyed by task. "
                               "Use an ignored path such as task_influence_work/aux.json."))
@@ -865,6 +813,13 @@ def parse_args():
                         help="Run influence trainer in the current process instead of tmux.")
     parser.add_argument("--force-run", action="store_true",
                         help="Rerun raw influence even if the expected result file is complete.")
+    parser.add_argument("--source", choices=("generate", "staging"), default="generate",
+                        help="Aux data source: 'generate' locally from task generators (default), or "
+                             "'staging' to pull a pre-built HF repo (fast; built on a cluster).")
+    parser.add_argument("--staging-repo", default="reasoning-core/staging",
+                        help="HF dataset repo for --source staging (rows keyed by 'task').")
+    parser.add_argument("--dedup", action=argparse.BooleanOptionalAction, default=True,
+                        help="Drop duplicate prompts per task in the aux data (--no-dedup to keep them).")
     parser.add_argument("--aux-dataset", choices=("rc", "rgym"), default="rc")
     parser.add_argument("--main-data", choices=("dolci", "flan", "fw"), default="dolci")
     parser.add_argument("--model", default="HuggingFaceTB/SmolLM2-135M")
@@ -913,25 +868,8 @@ def main():
             local.append(local_task_metrics(name, args.samples, args.refresh, cache))
         write_json(args.cache, cache)
 
-    if args.gallery_out:
-        gallery = write_gallery(args.gallery_out, task_names, args.gallery_refresh or args.refresh, args.samples)
-        print(
-            f"wrote {args.gallery_out} "
-            f"(generated={gallery['generated']} reused={gallery['reused']})"
-        )
-        if gallery["failures"]:
-            print(f"gallery failures: {len(gallery['failures'])}", file=sys.stderr)
-
     if args.build_aux and not args.run_influence:
-        manifest_path = build_aux_data(
-            args.build_aux,
-            task_names,
-            args.aux_examples,
-            args.aux_levels,
-            args.aux_max_tokens,
-            args.refresh,
-            args.aux_mode,
-        )
+        manifest_path = materialize_aux(Path(args.build_aux), task_names, args)
         print(f"wrote {args.build_aux}")
         print(f"wrote {manifest_path}")
 
@@ -952,14 +890,11 @@ def main():
     c_scores = contrastive_scores(all_names, contrastive)
     records = build_records(local, inventory, scores, c_scores)
     json_out = args.json_out or str(Path(args.out).with_suffix(".json"))
-    csv_out = args.csv_out
     write_markdown(args.out, records, influence_runs, sat_runs, contrast_runs, args)
-    write_machine_outputs(json_out, csv_out, records, influence_runs, sat_runs, contrast_runs, args)
+    write_machine_outputs(json_out, records, influence_runs, sat_runs, contrast_runs, args)
 
     print(f"wrote {args.out}")
     print(f"wrote {json_out}")
-    if csv_out:
-        print(f"wrote {csv_out}")
     for row in records[:12]:
         print(
             f"{row['task']:<32} influence={fmt(row['influence_score'], 3, True):>8} "

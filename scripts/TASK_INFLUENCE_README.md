@@ -1,118 +1,76 @@
 # Task Influence Workflow
 
-Use `scripts/task_influence.py` as the repo-local, repeatable summary layer
-for task influence. It does not train models. It reads existing
-`per_task_influence.py` outputs and rewrites the public Markdown table plus a
-machine-readable JSON sidecar.
+`scripts/task_influence.py` maintains the task-quality table: it builds aux data,
+trains a small model to measure each task's influence on held-out loss, and rewrites
+a compact Markdown ranking (`scripts/TASK_INFLUENCE.md`) plus a JSON sidecar
+(`scripts/TASK_INFLUENCE.json`). Only tasks whose generator changed are re-measured.
 
-## Inputs
+Gallery rendering is a separate tool: `scripts/build_gallery.py`.
 
-- `per_task_results/influence_*.json`: per-task held-out loss deltas.
-- `per_task_results/sat_*.json`: per-task answer-token accuracy curves.
-- `reasoning_core/tasks/*.py`: local task definitions, used only for cached
-  smoke metrics and task behavior hashes.
+## Quick start
 
-Default scoring profile is `--profile dolci`:
-
-- `dolci_delta`: target-domain metric. Lower is better.
-- `bbh_delta`: reasoning-transfer metric. Lower is better.
-- `fw_delta`: language-model tax guardrail. Positive means the task hurt FW.
-- `flan_delta`: optional diagnostic metric, not part of the default Dolci
-  score.
-- `acc_start` / `acc_end`: diagnostic saturation accuracy, not part of the
-  score.
-
-Switch score regimes without editing code:
-
-- `--profile dolci`: `dolci=1, bbh=1, fw=1, flan=0`
-- `--profile flan`: `flan=1, bbh=1, fw=1, dolci=0`
-
-Use `--weight target=value` for one-off overrides.
-
-## Run / Refresh Influence
+Refresh everything that changed (generate aux locally, measure stale tasks, rewrite table):
 
 ```bash
-python scripts/task_influence.py \
-  --tasks task_a task_b \
-  --run-influence \
-  --run-tag MYTAG
+python scripts/task_influence.py --run-influence
 ```
 
-This builds `task_influence_work/MYTAG_instruct.json` from the local generators,
-launches `per_task_influence.py` in tmux, and writes raw results to the runner's
-`per_task_results/` directory. If the expected influence file already contains
-all requested tasks, it skips retraining and refreshes `scripts/TASK_INFLUENCE.md`
-plus `scripts/TASK_INFLUENCE.json` from the cached result.
+That's the whole workflow — no other flags required. Sensible defaults are baked in
+(SmolLM2-135M, dolci main data, answer-only loss, 300 steps, 20% aux mix, seed 43,
+dedup on). A run tag is auto-derived from the task/config hash; you never supply one.
 
-Use `--force-run` to rerun a completed raw influence file. Use `--foreground`
-when you do not want tmux.
-
-To refresh the public report from existing raw files only:
+Rebuild the table from already-measured results, no GPU:
 
 ```bash
-python scripts/task_influence.py \
-  --results-dir ~/sandboxes/rc_grad/per_task_results \
-  --include MYTAG \
-  --tasks task_a task_b \
-  --out scripts/TASK_INFLUENCE.md
+python scripts/task_influence.py --no-local
 ```
 
-Use `--csv-out path.csv` only when a CSV export is explicitly needed.
+## Aux data source: generate vs staging
 
-Default behavior caches local task checks in `.task_influence_cache.json`.
-The cache key includes task behavior hash, config, sample count, and script
-version, so edited tasks are recomputed automatically.
-
-Useful options:
-
-- `--refresh`: recompute all local task checks, even when hashes match.
-- `--no-local`: skip task generation and only aggregate existing result JSONs.
-- `--tasks task_a task_b`: restrict local checks and output rows.
-- `--include TAG`: only read result files containing `TAG`; repeatable.
-- `--exclude TAG`: skip result files containing `TAG`; repeatable.
-- `--weight flan=3`: override ranking weights; repeatable.
-
-## Build Aux Data From Generators
-
-To build a `LOCAL_AUX` file directly from current generators:
+By default aux data is generated locally from the task generators, which is slow.
+If you build task data on a cluster and push it to an HF repo, pull that instead:
 
 ```bash
-python scripts/task_influence.py \
-  --tasks task_a task_b \
-  --build-aux task_influence_work/staging_aux.json \
-  --aux-examples 256 \
-  --no-local
+python scripts/task_influence.py --run-influence --source staging \
+  --staging-repo reasoning-core/staging
 ```
 
-The JSON is keyed as expected by `per_task_influence.py`:
+`--source staging` streams the HF repo (rows keyed by `task`), takes the first
+`--aux-examples` per task, and **deduplicates prompts** before measuring. Dedup is on
+by default for both sources (`--no-dedup` to keep duplicates). Switching source or
+dedup invalidates the aux cache, so the affected tasks re-pull/re-measure.
 
-```json
-{
-  "task_a": [["prompt text", "answer text"]]
-}
-```
+## Scoring
 
-It also writes `task_influence_work/staging_aux.json.manifest.json` with task
-behavior hashes, source files, modified times, and row counts. `task_influence_work/`
-is ignored by git.
+Default profile `--profile dolci` weights `dolci=1, bbh=1, fw=1, flan=0`:
 
-## Selective Gallery
+- `dolci`: fine-tuning target. Lower is better (main-loss guardrail).
+- `bbh`: reasoning-transfer upside. Lower is better.
+- `fw`: FineWeb-edu LM tax. Positive = the task hurt FW (do-no-harm guardrail).
+- `flan`: reference-only, not in the score.
+- `acc` (`start→end`) and `tok` (`prompt/answer`) are diagnostics, not scored.
 
-The same script can rebuild a compact gallery:
+`--profile flan` flips to `flan=1, bbh=1, fw=1, dolci=0`. Use `--weight target=value`
+for one-off overrides (e.g. `--weight fw=0.5`).
 
-```bash
-python scripts/task_influence.py \
-  --results-dir ~/sandboxes/rc_grad/per_task_results \
-  --no-local \
-  --gallery-out GALLERY.md
-```
+## Useful options
 
-Gallery sections include each task behavior hash. On later runs, if a task's
-hash still matches the existing section, that section is reused directly and
-the task is not regenerated. Use `--gallery-refresh` to force all gallery
-examples to regenerate.
+- `--tasks a b c`: restrict to specific tasks (default: all registered, DevTasks excluded).
+- `--force-run`: re-measure a task even if its result file is already complete.
+- `--foreground`: run the trainer in this process instead of tmux.
+- `--refresh`: recompute local smoke metrics even when behavior hashes match.
+- `--results-dir DIR` / `--include TAG` / `--exclude TAG`: pick which raw result files to aggregate.
 
-The raw runner writes:
+## Caching
+
+Local task checks cache in `.task_influence_cache.json`, keyed by behavior hash + config,
+so edited tasks recompute automatically. Aux data caches under `task_influence_work/`
+(git-ignored) with a manifest carrying per-task behavior hashes, source, and dedup flag.
+
+The raw trainer (`per_task_influence.py`) writes:
 
 - `influence_<TAG>_S43_T300_M20_dolci_pretrained.json`
 - `sat_<TAG>_S43_T300_M20_dolci_pretrained.json`
+
+See `scripts/INFLUENCE_NOTES.md` for methodology and gotchas (answer-only loss,
+answer-format effects, the `flash_attn` GLIBC interpreter trap, 135M-proxy caveats).
