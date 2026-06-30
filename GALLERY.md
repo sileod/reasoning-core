@@ -1,177 +1,134 @@
 # 📖 Task Gallery
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_retrieval`](#regex_retrieval) · [`regex_reasoning`](#regex_reasoning) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`analogical_case_retrieval`](#analogical_case_retrieval)
+[`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`string_transduction`](#string_transduction) · [`constraint_satisfaction`](#constraint_satisfaction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`planning`](#planning) · [`table_qa`](#table_qa) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`equation_system`](#equation_system) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win) · [`navigation`](#navigation) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`coreference`](#coreference) · [`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`sequential_induction`](#sequential_induction) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`stress_constrained_continuation`](#stress_constrained_continuation) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`reference_tracking`](#reference_tracking) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression)
 
 ---
 
-## [arithmetics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
+## [metamath_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_metamath.py)
 
 **Prompt:**
 ```
-Evaluate 0 - 6.
-The answer is a number.
-```
-
-**Answer:**
-```
--6
-```
-
----
-
-## [math_word_problem](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
-
-**Prompt:**
-```
-A jar holds 3 beads. 10 more beads added; then 10 beads removed; then tripled. How many beads are in the jar now? Answer with a number.
-```
-
-**Answer:**
-```
-9
-```
-
----
-
-## [equation_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/equation_system.py)
-
-**Prompt:**
-```
-Solve the following system of equations for the variable 'X2'.
-
-System:
-  X2 + 17 = 3
-  X2 + 17 = 0
-
-The answer is the value of X2, or 'No solution' / 'Multiple solutions'.
-```
-
-**Answer:**
-```
-No solution
-```
-
----
-
-## [lean_missing_proof_line_selection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
-
-**Prompt:**
-```
-Fill `__ANSWER__` with one listed Lean proof line. Mathlib is imported.
-The answer is the line number.
-
-THEOREM:
-theorem ex (p q r : Prop) (h0 : p → q) : p ∧ r → q ∧ r := by
-  intro h
-  __ANSWER__
-
-LINES:
-1. simp
-2. intro x hx
-3. exact ⟨h0 h.1, h.2⟩
-4. rfl
-5. exact h0
-6. intro h
-```
-
-**Answer:**
-```
-3
-```
-
----
-
-## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
-
-**Prompt:**
-```
-Does this Lean 4 tactic body close the theorem?
+Using only these premises and rules, does the conjecture follow?
+Use only the listed premises and rules. No hidden background facts.
+Rules may only rename variables, not substitute compound terms.
 The answer is True or False.
 
-THEOREM:
-theorem ex (s t u : Set Int) (h0 : s ⊆ u) : t ∪ s ⊆ t ∪ u := by
-  ?
+Premises:
+1. ctx => P2(x, D1)
+2. ctx => P3(F1(x), C0)
 
-CANDIDATE:
-exact h0
+Allowed Rules:
+r1: ctx => P2(x, D1) ==> ctx => P2(x, D2)
+r2: ctx => P2(x, D2); ctx => P3(F1(x), C0) ==> ctx => P3(x, C0)
+
+Conjecture:
+ctx => P3(x, C0)
 ```
 
 **Answer:**
 ```
-False
+True
 ```
 
 ---
 
-## [conjecture_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
+## [metamath_core_select](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_metamath.py)
 
 **Prompt:**
 ```
-Decide if the premises entail the conjecture.
-
-TPTP source: GRP003-1.ax
-
-Background axioms:
-- (product(inverse(X1),X1,identity))
-- (subgroup_member(inverse(X1))|~subgroup_member(X1))
+Which option is sufficient to derive the conjecture?
+Use only the listed premises and rules. No hidden background facts.
+Rules may only rename variables, not substitute compound terms.
+The answer is A, B, C, or D.
 
 Premises:
-- (X3=X4|~product(X1,X2,X3)|~product(X1,X2,X4))
-- (product(X1,X2,multiply(X1,X2)))
-- (product(identity,X1,X1))
+1. P1(x, D1)
+2. P1(y, D2)
+3. P2(x, F1(y, C1))
 
-Conjecture: `(subgroup_member(X1)|~product(identity,identity,X1)|~subgroup_member(X2))`
+Rule Catalog:
+- r1: ctx => P1(x, D3) ==> ctx => P5(x, F3(x))
+- r2: P2(x, y); P2(x, z) ==> P2(y, z)
+- r3: P1(x, D2); P2(y, F1(x, C1)) ==> P1(y, D2)
+- r4: P1(x, D1); P3(x, C0) ==> P3(F2(x), C0)
+- r5: P1(x, D2) ==> P3(x, C0)
 
-The answer is `True` (provable) or `False` (not provable).
+Conjecture:
+P3(F2(x), C0)
+
+Options:
+A. [r1, r3, r5]
+B. [r2, r4, r5]
+C. [r3, r4, r5]
+D. [r3, r5]
 ```
 
 **Answer:**
 ```
-False
+C
 ```
 
 ---
 
-## [tptp_consistency_repair](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
+## [string_transduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/string_transduction.py)
 
 **Prompt:**
 ```
-Which local single-clause deletions make the fixed axioms satisfiable with the negated theorem?
-Answer with ordered, space-separated clause numbers.
-Background axioms:
-- (between(X2,inner_pasch(X1,X2,X3,X5,X4),X4)|~between(X1,X2,X3)|~between(X4,X5,X3))
-Negated theorem: `(between(extension(lower_dimension_point_3,lower_dimension_point_2,X1,X2),lower_dimension_point_1,lower_dimension_point_2))`
-Clauses:
-1. (~between(lower_dimension_point_1,lower_dimension_point_2,lower_dimension_point_3))
-2. (between(X1,X2,extension(X1,X2,X3,X4)))
-3. (equidistant(X1,extension(X2,X1,X3,X4),X3,X4))
-4. (~between(lower_dimension_point_2,lower_dimension_point_3,lower_dimension_point_1))
-5. (~between(lower_dimension_point_3,lower_dimension_point_1,lower_dimension_point_2))
-6. (between(X5,inner_pasch(X1,X2,X3,X5,X4),X1)|~between(X1,X2,X3)|~between(X4,X5,X3))
-7. (X1=X2|~equidistant(X1,X2,X3,X3))
-8. (X1=X2|~between(X1,X2,X1))
+String: amber quiet delta vector
+Operations:
+- sort descending
+- reverse
+Answer with the final string.
 ```
 
 **Answer:**
 ```
-2 3 7 8
+   aabcdeeeeilmoqrrtttuv
 ```
 
 ---
 
-## [planar_geometry_relations](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_geometry.py)
+## [constraint_satisfaction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/constraint_satisfaction.py)
 
 **Prompt:**
 ```
-Given points: E=(-3, -2); G=(4/5, -52/5); N=(3, 5); O=(-57/5, 9/5); P=(3, 4); T=(4, -3); V=(-1, 0).
-Definitions: G is the reflection of N across line TE. O is the reflection of G across line EP.
-Question: Is point T on segment VG?
-Answer is either yes or no.
+4x4 grid. Each row and column contains 1..4 once.
+Clues:
+- r2c3 = 3
+- r4c1 = 4
+- r2c2 = 4
+- r3c1 = 2
+
+What is r2c1?
+Answer with one number.
 ```
 
 **Answer:**
 ```
-no
+1
+```
+
+---
+
+## [qualitative_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qstr.py)
+
+**Prompt:**
+```
+There are 5 objects: E0, E1, E2, E3, E4.
+They have distinct ages.
+Facts:
+- E3 is the 4th-newest.
+- E0 is the 5th-newest.
+- E1 is newer than E2.
+- E4 is newer than E1.
+
+Which object is the 4th-oldest?
+The answer is one object label.
+```
+
+**Answer:**
+```
+E1
 ```
 
 ---
@@ -183,14 +140,14 @@ no
 Reduce the following untyped λ-term to β-normal form.
 Syntax: `\x.body` is λx.body; juxtaposition is left-associative application; free identifiers are constants.
 
-Term: ((a (a ((\_0.c) a))) (d c))
+Term: ((\v0.(((\v1.v0) (\v1.c)) (v0 (d d)))) (((\v0.(v0 v0)) d) (((\v0.(v0 b)) (a b)) ((c c) ((\v0.v0) d)))))
 
 The answer is the β-normal form (compared up to α-equivalence).
 ```
 
 **Answer:**
 ```
-((a (a c)) (d c))
+(((d d) (((a b) b) ((c c) d))) (((d d) (((a b) b) ((c c) d))) (d d)))
 ```
 
 ---
@@ -202,247 +159,21 @@ The answer is the β-normal form (compared up to α-equivalence).
 Normalize by the ordered rewrite rules. At each step, use the first applicable rule in the listed order, searching outermost-first and left-to-right.
 
 Rules:
-- id(X) -> X
+- or(true,X) -> true
+- and(true,X) -> X
 - if(false,X,Y) -> Y
-- const(X,Y) -> X
-- fst(pair(X,Y)) -> X
-- let(unit,X) -> X
+- or(X,false) -> X
+- not(not(X)) -> X
 
 Term:
-let(unit,const(fst(let(b,if(false,a,true))),b))
+and(true,if(and(or(if(true,b,true),false),b),c,and(true,eq(b,and(false,b)))))
 
 The answer is the normal form.
 ```
 
 **Answer:**
 ```
-fst(let(b,true))
-```
-
----
-
-## [most_probable_evidence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
-
-**Prompt:**
-```
-Factor f is independently true with probability 0.6.
-Factor b is independently true with probability 0.4.
-The observation holds exactly when (factor f or factor b).
-We observe it.
-Which hidden fact values form the most probable complete explanation?
-
-Hidden fact values:
-0. b
-1. not b
-2. f
-3. not f
-
-Choose one value for each hidden factor. Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-1 2
-```
-
----
-
-## [most_probable_outcome](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
-
-**Prompt:**
-```
-A deck contains 2 red cards and 4 blue cards.
-Two cards are drawn without replacing the first card.
-Which statement is more likely?
-A: both selected cards are red.
-B: both selected cards are blue.
-
-The answer is exactly one of: A, B, equal.
-```
-
-**Answer:**
-```
-B
-```
-
----
-
-## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
-
-**Prompt:**
-```
-Premise:
-Mark is the only person in the room.
-all old people in the room are old
-no old person outside the room is old
-Benjamin is old and is papa tagged
-everyone in the room is old if he is quiet
-Richard is a quiet person
-
-Hypothesis:
-Benjamin is old
-
-Classify the hypothesis as entailment, contradiction, or neutral. The answer is one label.
-```
-
-**Answer:**
-```
-entailment
-```
-
----
-
-## [evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
-
-**Prompt:**
-```
-Premise:
-[0] there is a room.
-[1] someone in the room is november tagged
-[2] no old person in the room is old
-[3] Laurie is papa tagged
-[4] Ashley and Laurie are old people
-[5] Laurie is tango tagged
-Hypothesis:
-it is true that “Laurie is an old person”
-
-Which statements in the premise entail the hypothesis?
-Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-4
-```
-
----
-
-## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-alice is trained.
-clara is verified.
-david is not active.
-bruno is active.
-alice helps david.
-Whenever x is trained, x is active.
-From x is active, it follows that x is trusted.
-Being trusted implies being verified.
-Being verified implies being approved.
-Whenever x is verified and x is careful, x is active.
-Whenever x is verified and x is careful, x is not approved.
-Helps relations followed by trusts relations imply advises relations.
-All things that are approved are not careful.
-From x trusts y and y is verified, it follows that x is trusted.
-
-Hypothesis:
-bruno is verified.
-
-Classify the hypothesis as entailment, contradiction, or neutral. The answer is one label.
-```
-
-**Answer:**
-```
-entailment
-```
-
----
-
-## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-[0] key is left of box.
-[1] box is left of map.
-[2] box is marked.
-[3] lamp is not safe.
-[4] key is safe.
-[5] lamp is right of key.
-[6] Whenever x is left of y, y is right of x.
-[7] Every above relation creates a below relation in the reverse direction.
-[8] Whenever x is inside y, y contains x.
-[9] For all x, y, z, if x is inside y and y is inside z, then x is inside z.
-[10] For all x, y, z, if x is left of y and y is left of z, then x is left of z.
-[11] Whenever x is above y and y is above z, x is above z.
-[12] If one person is disjoint to another, then the second is disjoint to the first.
-
-Hypothesis:
-map is right of key.
-
-Which premise statements are necessary to entail the hypothesis, meaning removing any one of them breaks that result?
-Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-0 1 6 10
-```
-
----
-
-## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-[0] bruno is verified.
-[1] david is trusted.
-[2] From x is verified, it follows that x is active.
-[3] Whenever x is active, x is trained.
-
-Hypothesis:
-david is trained.
-
-Candidate Facts:
-[0] david is not active.
-[1] alice is verified.
-[2] david is not verified.
-[3] david is verified.
-[4] bruno helps clara.
-[5] david advises alice.
-
-Which candidate facts, if added to the premise, make the premise entail the hypothesis?
-Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-3
-```
-
----
-
-## [logic_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-david is careful.
-david is trained.
-alice is trusted.
-bruno is trained.
-bruno is verified.
-clara is trusted.
-Anyone who is careful and trained is trusted.
-Every trusted entity is active.
-Anyone who is trained and verified is careful.
-From x helps y and y is active, it follows that x is careful.
-For all x, if x is trained and x is approved, then x is verified.
-From x trusts y and x is approved, it follows that y is trusted.
-Whenever x advises y and x is approved, y is trained.
-
-Question:
-How many entities are trusted?
-
-Answer with one integer.
-```
-
-**Answer:**
-```
-4
+if(and(if(true,b,true),b),c,eq(b,and(false,b)))
 ```
 
 ---
@@ -482,89 +213,264 @@ action_0(object_1)
 
 ---
 
-## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+## [table_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
 
 **Prompt:**
 ```
-Set_A: {159, 162, 158, 164, 160, 161, 157, 155}
-The answer is the missing elements from Set_A as a Python set.
+Execute this SQL query on the table named dataframe:
+
+Table 1:
+rating,country
+2.6,Seychelles
+2.1,Finland
+3.7,Andorra
+1.4,Andorra
+3.6,Grenada
+
+
+SQL: SELECT ROUND(MIN(rating), 2) FROM dataframe
+
+The answer is the result as single value.
 ```
 
 **Answer:**
 ```
-{156, 163}
+1.4
 ```
 
 ---
 
-## [count_elements](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
 **Prompt:**
 ```
-List: ['o', 'o', 'k', 'l', 'h', 'l', 'l', 't', 'r', 'e']
-How many times does 'l' appear? The answer is a number.
+Premise:
+bruno is verified.
+bruno is careful.
+bruno is trusted.
+alice is not trained.
+alice helps clara.
+alice advises clara.
+Anyone who is verified and careful is trusted.
+All things that are trusted are approved.
+If a person is careful and active, then that person is trusted.
+Trusts relations followed by helps relations imply advises relations.
+For all x, y, if x helps y and x is verified, then y is not careful.
+For all x, if x is trained, then x is verified.
+From x helps y, it follows that y advises x.
+
+Hypothesis:
+clara is trusted.
+
+Does the premise entail the hypothesis? The answer is yes, no, or maybe.
 ```
 
 **Answer:**
 ```
-3
+maybe
 ```
 
 ---
 
-## [set_expression](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
 **Prompt:**
 ```
-B: {25, 7, 5, 15, 4, 22, 8, 3}
-C: {1, 8, 3, 4, 5, 26, 15, 21}
-Evaluate (C&B).
+Premise:
+[0] bruno advises david.
+[1] david trusts clara.
+[2] alice is careful.
+[3] clara is active.
+[4] david is verified.
+[5] alice advises david.
+[6] For all x, y, z, if x advises y and y trusts z, then x helps z.
+[7] For all x, z, if x helps z, then x is verified.
+[8] For all x, if x is verified and x is trusted, then x is trained.
+[9] When a person advises a trusted person, that person is verified.
+[10] Every verified entity is trusted.
+[11] Advises relations followed by trusts relations imply helps relations.
+[12] Every approved entity that is also careful is trusted.
+
+Hypothesis:
+bruno is not verified.
+
+Which premise statements are necessary to contradict the hypothesis, meaning removing any one of them breaks that result?
+Answer with space-separated indexes.
 ```
 
 **Answer:**
 ```
-{15, 3, 4, 5, 8}
+0
 ```
 
 ---
 
-## [sequential_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/sequential_induction.py)
+## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
 **Prompt:**
 ```
-Infer U[n]. Max recurrence degree: 0. Ops: +, -, *, **.
-Use n.
-Sequence: [-2, -1, 0, 1, 2, 3, 4, 5]
-Initial terms: []
-The answer is the RHS only.
+Premise:
+[0] alice trusts david.
+[1] clara is verified.
+[2] From x trusts y and y is trusted, it follows that x is careful.
+[3] All things that are careful are active.
+
+Hypothesis:
+alice is active.
+
+Candidate Facts:
+[0] alice is trusted.
+[1] bruno trusts clara.
+[2] bruno is active.
+[3] david is not trusted.
+[4] david is verified.
+[5] david is trusted.
+
+Which candidate facts, if added to the premise, make the premise entail the hypothesis?
+Answer with space-separated indexes.
 ```
 
 **Answer:**
 ```
--2 + n
+5
 ```
 
 ---
 
-## [qualitative_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qstr.py)
+## [logic_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
 **Prompt:**
 ```
-There are 5 objects: E0, E1, E2, E3, E4.
-They have distinct ages.
-Facts:
-- E3 is the 4th-newest.
-- E0 is the 5th-newest.
-- E1 is newer than E2.
-- E4 is newer than E1.
+Premise:
+bruno helps david.
+david is approved.
+bruno helps clara.
+clara is approved.
+alice helps bruno.
+alice trusts bruno.
+bruno is trained.
+clara trusts bruno.
+When a person helps a approved person, that person is verified.
+From x is verified, it follows that x is trusted.
+For all x, y, if x helps y and x is verified, then y is active.
+Whenever x advises y, y does not trusts x.
+Whenever x advises y and x is active, y is verified.
+Anyone who is active and verified is careful.
 
-Which object is the 4th-oldest?
-The answer is one object label.
+Question:
+How many entities are trusted?
+
+Answer with one integer.
 ```
 
 **Answer:**
 ```
-E1
+1
+```
+
+---
+
+## [equation_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/equation_system.py)
+
+**Prompt:**
+```
+Solve the following system of equations for the variable 'X2'.
+
+System:
+  X2 + 17 = 3
+  X2 + 17 = 0
+
+The answer is the value of X2, or 'No solution' / 'Multiple solutions'.
+```
+
+**Answer:**
+```
+No solution
+```
+
+---
+
+## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
+
+**Prompt:**
+```
+Premise:
+Mackenzie is the only person in the room.
+all quiet people in the room are old
+Mackenzie is not golf tagged
+everyone anywhere either is not old and not quiet or is not juliet tagged or both
+Katelyn is quiet
+“The lighthouse on Cape Sorrow does not glow green.” or “No square cloud is over Silver Lake.” but not both
+
+Hypothesis:
+Katelyn is not old
+
+Does the premise entail the hypothesis? The answer is yes, no, or maybe.
+```
+
+**Answer:**
+```
+maybe
+```
+
+---
+
+## [evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
+
+**Prompt:**
+```
+Premise:
+[0] Craig is the only person in the room.
+[1] everyone in the room is foxtrot tagged
+[2] everyone in the room who is not uniform tagged is not a quiet person
+[3] everyone in the room is mike tagged
+[4] Craig is quiet
+[5] everyone in the room who is tango tagged is quiet and is romeo tagged
+Hypothesis:
+Craig is not not not quiet
+
+Which statements in the premise contradict the hypothesis?
+Answer with space-separated indexes.
+```
+
+**Answer:**
+```
+4
+```
+
+---
+
+## [game_best_move](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
+
+**Prompt:**
+```
+In this graph game, choose player's best move. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score.
+
+Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n5:70; n6:50. Edges: n0->n6; n1->n5; n2->n3,n5; n3->n6; n4->n5.
+Legal player moves now: n3, n5.
+The answer is the destination node of the best move.
+```
+
+**Answer:**
+```
+n5
+```
+
+---
+
+## [game_forced_win](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
+
+**Prompt:**
+```
+In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
+
+Start: n1. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:0; n5:20; n6:10. Edges: n0->n5; n1->n4,n6; n2->n4; n3->n4.
+The answer is yes or no.
+```
+
+**Answer:**
+```
+no
 ```
 
 ---
@@ -592,81 +498,6 @@ What is the final coordinate of A? The answer is (x, y).
 **Answer:**
 ```
 (2, 4)
-```
-
----
-
-## [reference_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/tracking.py)
-
-**Prompt:**
-```
-Inventory:
-- b1: black
-- b2: red
-- b3: green
-- b4: green
-
-Initial State:
-- b1 is in x1
-- b2 is in x1
-- b3 is in x3
-- b4 is in x2
-
-Moves:
-- Move b4 from x2 to x3.
-- Move b3 from x3 to x2.
-- Transfer everything in x3 into x2.
-- Transfer b4 from x2 into x1.
-Where is b1 now? The answer is a box tag, like x1.
-```
-
-**Answer:**
-```
-x1
-```
-
----
-
-## [coreference](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/coreference.py)
-
-**Prompt:**
-```
-(1) A kind quiet lawyer named Mark avoided a loud tall writer named Mary.
-(2) A loud old pilot named Jane met him.
-(3) A kind tall nurse named Adam thanked her.
-(4) The writer praised a kind young pilot named Ben.
-(5) Jane met him.
-(6) He avoided a kind quiet doctor named Luke.
-
-In sentence 6, what does the subject expression 'He' refer to?
-The answer is the person's name.
-```
-
-**Answer:**
-```
-Ben
-```
-
----
-
-## [constraint_satisfaction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/constraint_satisfaction.py)
-
-**Prompt:**
-```
-4x4 grid. Each row and column contains 1..4 once.
-Clues:
-- r2c3 = 3
-- r4c1 = 4
-- r2c2 = 4
-- r3c1 = 2
-
-What is r2c1?
-Answer with one number.
-```
-
-**Answer:**
-```
-1
 ```
 
 ---
@@ -725,199 +556,6 @@ Graph:
 **Answer:**
 ```
 0 3 4
-```
-
----
-
-## [regex_following](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
-
-**Prompt:**
-```
-The answer is a 2-character string that fully matches the regular expression: [c6I]{1,3}
-```
-
-**Answer:**
-```
-cc
-```
-
----
-
-## [regex_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
-
-**Prompt:**
-```
-Positive: 'd', 'dd'
-Negative: 'a', 'adc', 'bdddc', 'cb', 'cbcbc', 'cc', 'daa', 'dbdc'
-The answer is the shortest regex matching all positives and no negatives. Use only literals from Σ={abcd}, concatenation, |, parentheses, and postfix *, +, ?. Break ties lexicographically.
-```
-
-**Answer:**
-```
-d+
-```
-
----
-
-## [regex_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
-
-**Prompt:**
-```
-Text: ?? z ; v ?? G(
-Regex: (\?){2}
-The answer is a JSON array of exact non-overlapping matches, left-to-right, including duplicates. The answer is [] if none.
-```
-
-**Answer:**
-```
-["??","??"]
-```
-
----
-
-## [regex_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
-
-**Prompt:**
-```
-A = bba?
-B = (ab|ab)
-Is every string accepted by A also accepted by B?
-The answer is Yes or No.
-```
-
-**Answer:**
-```
-No
-```
-
----
-
-## [parsing_derivation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
-
-**Prompt:**
-```
-(GRAMMAR)
-R0: start -> seq
-R1: seq -> 
-R2: seq -> expr seq
-R3: expr -> '(' seq ')'
-R4: expr -> '[' seq ']'
-R5: expr -> '<' seq '>'
-
-(STRING)
-[ ( ) < > ] [ < > ] [ ]
-
-(QUESTION)
-The answer is the rule labels used in the leftmost derivation of STRING, in order, separated by spaces.
-```
-
-**Answer:**
-```
-R0 R2 R4 R2 R3 R1 R2 R5 R1 R1 R2 R4 R2 R5 R1 R1 R2 R4 R1 R1
-```
-
----
-
-## [locate_error](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
-
-**Prompt:**
-```
-(GRAMMAR)
-start -> seq
-seq ->
-seq -> expr seq
-expr -> '(' seq ')'
-expr -> '[' seq ']'
-expr -> '<' seq '>'
-
-(STRING)
-< < > > (
-
-The answer is the shortest contiguous span from STRING that ends at the first invalid token and occurs only once in STRING.
-Mark the invalid token as >>token<<.
-If the token alone is enough, answer just >>token<<.
-If STRING is fully grammatical, answer OK.
-If all shown tokens are valid but more are needed, answer INCOMPLETE.
-One line only.
-```
-
-**Answer:**
-```
-INCOMPLETE
-```
-
----
-
-## [constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
-
-**Prompt:**
-```
-(GRAMMAR)
-S -> D
-D -> D D
-D -> 'nature'
-
-(PREFIX)
-nature nature nature nature nature
-
-(TEMPLATE)
-___ nature ___
-
-(SUFFIX)
-nature nature nature
-
-Fill in the 2 blanks (___) so that PREFIX + filled-TEMPLATE + SUFFIX is a grammatical sentence. Fixed tokens of TEMPLATE must remain in place.
-The answer is the 3 tokens of the filled TEMPLATE, space-separated.
-```
-
-**Answer:**
-```
-nature nature nature
-```
-
----
-
-## [table_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
-
-**Prompt:**
-```
-Execute this SQL query on the table named dataframe:
-
-Table 1:
-rating,country
-2.6,Seychelles
-2.1,Finland
-3.7,Andorra
-1.4,Andorra
-3.6,Grenada
-
-
-SQL: SELECT ROUND(MIN(rating), 2) FROM dataframe
-
-The answer is the result as single value.
-```
-
-**Answer:**
-```
-1.4
-```
-
----
-
-## [string_transduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/string_transduction.py)
-
-**Prompt:**
-```
-String: amber quiet delta vector
-Operations:
-- sort descending
-- reverse
-Answer with the final string.
-```
-
-**Answer:**
-```
-   aabcdeeeeilmoqrrtttuv
 ```
 
 ---
@@ -1008,6 +646,235 @@ Target: 0
 
 ---
 
+## [most_probable_evidence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
+
+**Prompt:**
+```
+Factor f is independently true with probability 0.6.
+Factor b is independently true with probability 0.4.
+The observation holds exactly when (factor f or factor b).
+We observe it.
+Which hidden fact values form the most probable complete explanation?
+
+Hidden fact values:
+0. b
+1. not b
+2. f
+3. not f
+
+Choose one value for each hidden factor. Answer with space-separated indexes.
+```
+
+**Answer:**
+```
+1 2
+```
+
+---
+
+## [most_probable_outcome](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
+
+**Prompt:**
+```
+A deck contains 2 red cards and 4 blue cards.
+Two cards are drawn without replacing the first card.
+Which statement is more likely?
+A: both selected cards are red.
+B: both selected cards are blue.
+
+The answer is exactly one of: A, B, equal.
+```
+
+**Answer:**
+```
+B
+```
+
+---
+
+## [coreference](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/coreference.py)
+
+**Prompt:**
+```
+(1) A kind quiet lawyer named Mark avoided a loud tall writer named Mary.
+(2) A loud old pilot named Jane met him.
+(3) A kind tall nurse named Adam thanked her.
+(4) The writer praised a kind young pilot named Ben.
+(5) Jane met him.
+(6) He avoided a kind quiet doctor named Luke.
+
+In sentence 6, what does the subject expression 'He' refer to?
+The answer is the person's name.
+```
+
+**Answer:**
+```
+Ben
+```
+
+---
+
+## [arithmetics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
+
+**Prompt:**
+```
+Evaluate 0 - 6.
+The answer is a number.
+```
+
+**Answer:**
+```
+-6
+```
+
+---
+
+## [math_word_problem](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
+
+**Prompt:**
+```
+A jar holds 3 beads. 10 more beads added; then 10 beads removed; then tripled. How many beads are in the jar now? Answer with a number.
+```
+
+**Answer:**
+```
+9
+```
+
+---
+
+## [sequential_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/sequential_induction.py)
+
+**Prompt:**
+```
+Infer U[n]. Max recurrence degree: 0. Ops: +, -, *, **.
+Use n.
+Sequence: [-2, -1, 0, 1, 2, 3, 4, 5]
+Initial terms: []
+The answer is the RHS only.
+```
+
+**Answer:**
+```
+-2 + n
+```
+
+---
+
+## [conjecture_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
+
+**Prompt:**
+```
+Decide if the premises entail the conjecture.
+
+TPTP source: SET001-3.ax
+
+Background axioms:
+- (~member(X1,X2)|~member(X1,X3)|~difference(X4,X2,X3))
+- (difference(X1,X2,X3)|member(k(X1,X2,X3),X1)|member(k(X1,X2,X3),X3))
+- (member(X1,X3)|~member(X1,X2)|~subset(X2,X3))
+
+Premises:
+- (member(k(X1,X2,X3),X3)|difference(X1,X2,X3)|~member(k(X1,X2,X3),X2))
+
+Conjecture: `(difference(X1,X1,X2)|~subset(X3,X4)|~subset(X2,X3)|~difference(X5,X4,X3))`
+
+The answer is `True` (provable) or `False` (not provable).
+```
+
+**Answer:**
+```
+True
+```
+
+---
+
+## [tptp_consistency_repair](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
+
+**Prompt:**
+```
+Which local single-clause deletions make the fixed axioms satisfiable with the negated theorem?
+Answer with ordered, space-separated clause numbers.
+Background axioms:
+- (X3=X4|~product(X1,X2,X3)|~product(X1,X2,X4))
+Negated theorem: `(multiply(identity,X1) != X1)`
+Clauses:
+1. (product(X1,identity,X1))
+2. (product(X1,X2,multiply(X1,X2)))
+3. (product(identity,X1,X1))
+```
+
+**Answer:**
+```
+2
+```
+
+---
+
+## [planar_geometry_relations](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_geometry.py)
+
+**Prompt:**
+```
+Given points: E=(-3, -2); G=(4/5, -52/5); N=(3, 5); O=(-57/5, 9/5); P=(3, 4); T=(4, -3); V=(-1, 0).
+Definitions: G is the reflection of N across line TE. O is the reflection of G across line EP.
+Question: Is point T on segment VG?
+Answer is either yes or no.
+```
+
+**Answer:**
+```
+no
+```
+
+---
+
+## [regex_following](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
+
+**Prompt:**
+```
+The answer is a 5-character string that fully matches the regular expression: \d|[WVS]+
+```
+
+**Answer:**
+```
+SWVVW
+```
+
+---
+
+## [regex_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
+
+**Prompt:**
+```
+Positive: 'b', 'bb'
+Negative: 'a', 'aba', 'bdd', 'cbdca', 'ccaa', 'd', 'dc', 'dd'
+The answer is the shortest regex matching all positives and no negatives. Use only literals from Σ={abcd}, concatenation, |, parentheses, and postfix *, +, ?. Break ties lexicographically.
+```
+
+**Answer:**
+```
+b+
+```
+
+---
+
+## [regex_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
+
+**Prompt:**
+```
+A = (b)bbc
+B = cc
+Do A and B accept exactly the same set of strings?
+The answer is Yes or No.
+```
+
+**Answer:**
+```
+No
+```
+
+---
+
 ## [analogical_case_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/formal_analogies.py)
 
 **Prompt:**
@@ -1016,48 +883,296 @@ Cases show facts that imply one new fact.
 Object names and link names may be consistently renamed, and each link name may also have its direction consistently reversed.
 
 M0
-e is alpha-linked to c.
-e is beta-linked to c.
-d is gamma-linked to b.
-e is gamma-linked to c.
-Implies: d is alpha-linked to e.
+a is alpha-linked to c.
+b is alpha-linked to a.
+c is beta-linked to d.
+e is beta-linked to b.
+Implies: a is beta-linked to b.
 
 M1
-b is alpha-linked to e.
-b is beta-linked to a.
-b is beta-linked to d.
-b is gamma-linked to c.
-Implies: d is gamma-linked to b.
+a is alpha-linked to d.
+c is alpha-linked to a.
+a is beta-linked to d.
+d is beta-linked to b.
+Implies: a is beta-linked to c.
 
 M2
-d is alpha-linked to a.
-a is beta-linked to e.
-a is gamma-linked to c.
-c is gamma-linked to e.
-Implies: a is alpha-linked to c.
-
-M3
-a is alpha-linked to b.
-d is alpha-linked to a.
+b is alpha-linked to d.
 d is alpha-linked to b.
-d is beta-linked to c.
+d is alpha-linked to c.
+c is beta-linked to a.
 Implies: b is beta-linked to d.
 
+M3
+d is alpha-linked to b.
+d is alpha-linked to c.
+c is beta-linked to a.
+c is beta-linked to d.
+Implies: a is alpha-linked to c.
+
 Query
-u is delta-linked to x.
-v is delta-linked to y.
+u is delta-linked to v.
+u is delta-linked to z.
+x is delta-linked to y.
 x is delta-linked to z.
-y is delta-linked to u.
 y is delta-linked to x.
-z is delta-linked to u.
-y is epsilon-linked to v.
-y is gamma-linked to u.
+u is gamma-linked to x.
+z is gamma-linked to u.
+z is gamma-linked to v.
 Implies:
 ```
 
 **Answer:**
 ```
-x is epsilon-linked to y.
+y is gamma-linked to x.
 ```
 
 ---
+
+## [parsing_derivation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+
+**Prompt:**
+```
+(GRAMMAR)
+R0: S -> B
+R1: B -> 'if'
+R2: B -> B 'amount'
+R3: B -> D
+
+(STRING)
+if amount amount amount amount
+
+(QUESTION)
+The answer is the rule labels used in the leftmost derivation of STRING, in order, separated by spaces.
+```
+
+**Answer:**
+```
+R0 R2 R2 R2 R2 R1
+```
+
+---
+
+## [locate_error](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+
+**Prompt:**
+```
+(GRAMMAR)
+S -> B
+B -> B 'know'
+B -> 'character'
+
+(STRING)
+know know know know know
+
+The answer is the shortest contiguous span from STRING that ends at the first invalid token and occurs only once in STRING.
+Mark the invalid token as >>token<<.
+If the token alone is enough, answer just >>token<<.
+If STRING is fully grammatical, answer OK.
+If all shown tokens are valid but more are needed, answer INCOMPLETE.
+One line only.
+```
+
+**Answer:**
+```
+>>know<<
+```
+
+---
+
+## [constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+
+**Prompt:**
+```
+(GRAMMAR)
+start -> seq
+seq -> 
+seq -> expr seq
+expr -> '(' seq ')'
+expr -> '[' seq ']'
+expr -> '<' seq '>'
+
+(PREFIX)
+< [ ] < > > < > <
+
+(TEMPLATE)
+___ ___ )
+
+(SUFFIX)
+<empty>
+
+Fill in the 2 blanks (___) so that PREFIX + filled-TEMPLATE + SUFFIX is a grammatical sentence. Fixed tokens of TEMPLATE must remain in place.
+The answer is the 3 tokens of the filled TEMPLATE, space-separated.
+```
+
+**Answer:**
+```
+> ( )
+```
+
+---
+
+## [stress_constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+
+**Prompt:**
+```
+Given this CFG and a prefix from a deep derivation, continue it: provide terminals that, appended to the prefix, complete it into a grammatical string.
+The answer is the continuation terminals, space-separated.
+(GRAMMAR)
+S -> WHO AUX NP Vt
+S -> WHY AUX NP Adj
+WHO -> 'what'
+WHO -> 'who'
+WHY -> 'why'
+WHY -> 'when'
+AUX -> 'do'
+NP -> 'the' N RC
+NP -> 'the' N
+RC -> 'that' NP Vt
+N -> 'kids'
+N -> 'cooks'
+Vt -> 'see'
+Vt -> 'like'
+Vt -> 'find'
+Adj -> 'happy'
+Adj -> 'sad'
+Adj -> 'kind'
+
+(PREFIX)
+why do the
+```
+
+**Answer:**
+```
+kids that the kids that the kids see see happy
+```
+
+---
+
+## [lean_missing_proof_line_selection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+
+**Prompt:**
+```
+Fill `__ANSWER__` with one listed Lean proof line. Mathlib is imported.
+The answer is the line number.
+
+THEOREM:
+theorem ex (p q r : Prop) (h0 : p → q) : p ∧ r → q ∧ r := by
+  intro h
+  __ANSWER__
+
+LINES:
+1. simp
+2. intro x hx
+3. exact ⟨h0 h.1, h.2⟩
+4. rfl
+5. exact h0
+6. intro h
+```
+
+**Answer:**
+```
+3
+```
+
+---
+
+## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+
+**Prompt:**
+```
+Does this Lean 4 tactic body close the theorem?
+The answer is True or False.
+
+THEOREM:
+theorem ex (s t u : Set Int) (h0 : s ⊆ u) : t ∪ s ⊆ t ∪ u := by
+  ?
+
+CANDIDATE:
+exact h0
+```
+
+**Answer:**
+```
+False
+```
+
+---
+
+## [reference_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/tracking.py)
+
+**Prompt:**
+```
+Inventory:
+- b1: black
+- b2: red
+- b3: green
+- b4: green
+
+Initial State:
+- b1 is in x1
+- b2 is in x1
+- b3 is in x3
+- b4 is in x2
+
+Moves:
+- Move b4 from x2 to x3.
+- Move b3 from x3 to x2.
+- Transfer everything in x3 into x2.
+- Transfer b4 from x2 into x1.
+Where is b1 now? The answer is a box tag, like x1.
+```
+
+**Answer:**
+```
+x1
+```
+
+---
+
+## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+**Prompt:**
+```
+Set_A: {876, 871, 875, 874, 879, 878, 880}
+The answer is the missing elements from Set_A as a Python set.
+```
+
+**Answer:**
+```
+{872, 873, 877}
+```
+
+---
+
+## [count_elements](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+**Prompt:**
+```
+List: [3, 7, 1, 16, 13, 4, 1, 8, 1, 9]
+How many times does 1 appear? The answer is a number.
+```
+
+**Answer:**
+```
+3
+```
+
+---
+
+## [set_expression](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+**Prompt:**
+```
+A: {7, 20, 13, 5, 4, 25, 31, 23}
+C: {3, 8, 31, 19, 23, 20, 27, 13}
+Evaluate (C-A).
+```
+
+**Answer:**
+```
+{19, 27, 3, 8}
+```
+
+---
+

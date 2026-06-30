@@ -67,6 +67,16 @@ unsloth_compiled_cache/
 ehthumbs.db
 Thumbs.db
 reasoning_core/generated_data/
+generated_data/
+task_influence_work/
+upload_state/
+.task_influence_cache.json
+per_task_results/*.json
+per_task_results/*.jsonl
+per_task_results/*.log
+per_task_results_rgym/*.json
+per_task_results_rgym/*.jsonl
+per_task_results_rgym/*.log
 reasoning_core/checkpoints/
 reasoning_core/wandb/
 checkpoints/

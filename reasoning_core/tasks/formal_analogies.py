@@ -58,6 +58,10 @@ def _rand_atoms(nodes, preds, m, rng, avoid=()):
     return set(pool[:m])
 
 
+def _sample_param(value, value_range, rng):
+    return rng.randint(*value_range) if value_range is not None else int(value)
+
+
 def _weakly_connected(atoms):
     ns = _nodes(atoms)
     if not ns:
@@ -157,8 +161,24 @@ def _hard_negative_case(q_before, q_consequence, m, rng, reverse_rate=0.15):
     return None
 
 
+def _with_memory_distractors(case, n, rng):
+    if n <= 0:
+        case.core_context = set(case.context)
+        return case
+
+    core = set(case.context)
+    cons = tuple(case.consequence)
+    nodes = _nodes(core | {cons})
+    preds = _preds(core | {cons})
+
+    noise = _rand_atoms(nodes, preds, n, rng, avoid=core | {cons})
+    case.core_context = core
+    case.context = core | noise
+    return case
+
+
 def _transported_consequences(case, q_before, allow_reverse=True, injective_predicates=True, cap=16):
-    c_atoms = set(case.context)
+    c_atoms = set(getattr(case, "core_context", case.context))
     c_cons = tuple(case.consequence)  # edict coerces the consequence tuple to a list; restore hashability
     q_atoms = set(q_before)
 
@@ -229,20 +249,78 @@ def _all_consequences(cases, q_before):
     return hits
 
 
+def _visible_subset_consequences(case, q_before, min_size=2, max_size=None, cap=64):
+    shown = list(case.context)
+    max_size = len(shown) if max_size is None else min(max_size, len(shown))
+    out = set()
+
+    for r in range(min_size, max_size + 1):
+        for sub in it.combinations(shown, r):
+            sub = set(sub)
+            tmp = edict(context=sub, consequence=case.consequence)
+            out.update(_transported_consequences(tmp, q_before, cap=cap))
+            if len(out) >= cap:
+                return out
+
+    return out
+
+
+def _case_is_crisp(case, q_before, allowed):
+    core = set(getattr(case, "core_context", case.context))
+    distractors = set(case.context) - core
+    if distractors:
+        hits = _visible_subset_consequences(
+            edict(context=distractors, consequence=case.consequence),
+            q_before,
+            min_size=2,
+            max_size=len(distractors),
+        )
+        if not hits <= set(allowed):
+            return False
+
+    core_size = len(core)
+    hits = _visible_subset_consequences(
+        case,
+        q_before,
+        min_size=core_size,
+        max_size=core_size + 1,
+    )
+    return hits <= set(allowed)
+
+
+def _crisp_with_memory_distractors(case, n, rng, q_before, allowed, attempts=64):
+    if n <= 0:
+        return _with_memory_distractors(case, n, rng)
+
+    core = set(getattr(case, "core_context", case.context))
+    for _ in range(attempts):
+        candidate = edict(context=set(core), consequence=case.consequence)
+        candidate = _with_memory_distractors(candidate, n, rng)
+        if _case_is_crisp(candidate, q_before, allowed):
+            return candidate
+    return None
+
+
 @dataclass
 class AnalogicalCaseRetrievalConfig(Config):
     n_query_objects: int = 5
     n_query_links: int = 3
     n_query_facts: int = 8
+    n_query_facts_range: tuple | None = None
     n_cases: int = 4
     n_gold_cases: int = 1
     context_facts: int = 4
+    memory_distractors: int = 0
+    memory_distractors_range: tuple | None = None
     reverse_rate: float = 0.15
     max_attempts: int = 800
 
     def update(self, c=1):
         self.n_query_objects += c
         self.n_query_facts += 2 * c
+        if self.n_query_facts_range is not None:
+            lo, hi = self.n_query_facts_range
+            self.n_query_facts_range = (lo + 2 * c, hi + 2 * c)
         self.n_cases += c
         self.context_facts += c // 2
         self.reverse_rate = min(0.5, self.reverse_rate + 0.05 * c)
@@ -258,7 +336,8 @@ class AnalogicalCaseRetrieval(Task):
 
         n_obj = int(k.n_query_objects)
         n_rel = int(k.n_query_links)
-        n_facts = int(k.n_query_facts)
+        n_facts = _sample_param(k.n_query_facts, k.n_query_facts_range, rng)
+        n_mem_noise = _sample_param(k.memory_distractors, k.memory_distractors_range, rng)
         n_cases = int(k.n_cases)
         n_gold = int(k.n_gold_cases)
         n_ctx = int(k.context_facts)
@@ -276,13 +355,23 @@ class AnalogicalCaseRetrieval(Task):
                 continue
             q_answer = consequences[0]
 
-            cases = [
-                _inverse_case(q_before, q_answer, n_ctx, rng, reverse_rate=k.reverse_rate)
-                for _ in range(n_gold)
-            ]
+            cases = []
+            for _ in range(n_gold):
+                case = _crisp_with_memory_distractors(
+                    _inverse_case(q_before, q_answer, n_ctx, rng, reverse_rate=k.reverse_rate),
+                    n_mem_noise,
+                    rng,
+                    q_before,
+                    {q_answer},
+                )
+                if case is None:
+                    break
+                cases.append(case)
+            if len(cases) < n_gold:
+                continue
 
             tries = 0
-            while len(cases) < n_cases and tries < 400:
+            while len(cases) < n_cases and tries < 800:
                 tries += 1
                 if rng.random() < 0.75:
                     case = _hard_negative_case(
@@ -295,6 +384,9 @@ class AnalogicalCaseRetrieval(Task):
                         n_context=n_ctx,
                         rng=rng,
                     )
+                if case is None:
+                    continue
+                case = _crisp_with_memory_distractors(case, n_mem_noise, rng, q_before, set())
                 if case is None:
                     continue
                 if not _transported_consequences(case, q_before, cap=1):
@@ -319,6 +411,7 @@ class AnalogicalCaseRetrieval(Task):
                     edict(
                         id=case.id,
                         context=sorted(case.context),
+                        core_context=sorted(getattr(case, "core_context", case.context)),
                         consequence=case.consequence,
                     )
                     for case in cases
@@ -334,6 +427,7 @@ class AnalogicalCaseRetrieval(Task):
                     n_cases=n_cases,
                     n_gold_cases=n_gold,
                     context_facts=n_ctx,
+                    memory_distractors=n_mem_noise,
                     reverse_rate=k.reverse_rate,
                 ),
             )

@@ -29,6 +29,10 @@ SINGLE_EXAMPLE_TASKS = {
 }
 
 GITHUB_BASE = "https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks"
+README_MENU_RE = re.compile(
+    r"(\[GALLERY\]\([^)]+\)[^\n]*\n\n)(.*?)(\n\n\[TASK_AUTHORING_GUIDE\]\([^)]+\))",
+    re.S,
+)
 
 
 def fence(text):
@@ -98,9 +102,30 @@ def write_gallery(examples, out_path):
             )
 
 
+def gallery_menu(examples):
+    return " · ".join(f"[`{name}`](GALLERY.md#{slug(name)})" for name in examples)
+
+
+def refresh_readme_menu(examples, readme_path):
+    readme_path = Path(readme_path)
+    text = readme_path.read_text(encoding="utf-8")
+    menu = gallery_menu(examples)
+    new_text, n = README_MENU_RE.subn(rf"\1{menu}\3", text, count=1)
+    if n != 1:
+        raise RuntimeError(
+            f"could not find README gallery menu block in {readme_path}"
+        )
+    readme_path.write_text(new_text, encoding="utf-8")
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default="GALLERY.md")
+    parser.add_argument("--readme", default="README.md")
+    parser.add_argument("--update-readme", choices=["auto", "always", "never"],
+                        default="auto",
+                        help=("Refresh README gallery menu. auto updates only for "
+                              "full GALLERY.md builds."))
     parser.add_argument("--no-cache", action="store_true",
                         help="Use generate_balanced_batch instead of cached validation examples.")
     parser.add_argument("--refresh-cache", action="store_true")
@@ -117,6 +142,12 @@ def main():
                               refresh_cache=args.refresh_cache,
                               allow_missing=args.allow_missing)
     write_gallery(examples, args.out)
+    update_readme = args.update_readme == "always" or (
+        args.update_readme == "auto" and args.tasks is None and
+        Path(args.out).name == "GALLERY.md"
+    )
+    if update_readme:
+        refresh_readme_menu(examples, args.readme)
 
 
 if __name__ == "__main__":

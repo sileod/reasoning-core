@@ -1,8 +1,8 @@
 """Symbolic rewriting: λ-calculus β-reduction.
 
 - `lambda_reduction` — reduce an untyped λ-term to β-normal form.
-  Instances are built by *anti-reduction*: sample an NF, then insert redexes
-  that reduce back to it. Three elementary moves:
+  Instances mix arbitrary λ-term sampling with *anti-reduction*: sample an NF,
+  then insert redexes that reduce back to it. Three elementary moves:
       1. dummy        (λx.M) N          x ∉ FV(M)
       2. identity     (λx.x) M
       3. substitution (λx.M[T↦x]) T     (optionally duplicating T)
@@ -10,7 +10,8 @@
   result and checking α-equivalence with the target NF.
 """
 from dataclasses import dataclass
-import ast, random, re
+from collections import Counter
+import ast, hashlib, random, re
 
 from reasoning_core.template import Task, Problem, Config, Payload, edict
 
@@ -67,6 +68,33 @@ def _normalize(t, max_steps=200):
         t = n
     return None
 
+def _term_size(t):
+    if t[0] == 'v': return 1
+    if t[0] == 'l': return 1 + _term_size(t[2])
+    return 1 + _term_size(t[1]) + _term_size(t[2])
+
+def _normalize_trace(t, max_steps=500):
+    out = [t]
+    for _ in range(max_steps):
+        n = _step(t)
+        if n is None: return out
+        t = n
+        out.append(t)
+    return None
+
+def _safe_normalize_trace(t, max_steps=500, max_size=2000):
+    out = [t]
+    try:
+        for _ in range(max_steps):
+            if _term_size(t) > max_size: return None
+            n = _step(t)
+            if n is None: return out
+            t = n
+            out.append(t)
+    except RecursionError:
+        return None
+    return None
+
 def _pretty(t):
     if t[0] == 'v': return t[1]
     if t[0] == 'l': return f"(\\{t[1]}.{_pretty(t[2])})"
@@ -78,6 +106,103 @@ def _debruijn(t, env=()):
         return f"#{env.index(t[1])}" if t[1] in env else t[1]
     if k == 'l': return f"(\\.{_debruijn(t[2], (t[1],) + env)})"
     return f"({_debruijn(t[1], env)} {_debruijn(t[2], env)})"
+
+def _skeleton(t):
+    if t[0] == 'v': return 'v'
+    if t[0] == 'l': return ('l', _skeleton(t[2]))
+    return ('a', _skeleton(t[1]), _skeleton(t[2]))
+
+def _has_shadowing(t, bound=()):
+    if t[0] == 'l':
+        return t[1] in bound or _has_shadowing(t[2], bound + (t[1],))
+    if t[0] == 'a':
+        return _has_shadowing(t[1], bound) or _has_shadowing(t[2], bound)
+    return False
+
+def _shadowing_count(t, bound=()):
+    if t[0] == 'l':
+        return int(t[1] in bound) + _shadowing_count(t[2], bound + (t[1],))
+    if t[0] == 'a':
+        return _shadowing_count(t[1], bound) + _shadowing_count(t[2], bound)
+    return 0
+
+def _var_count(t, x):
+    if t[0] == 'v': return int(t[1] == x)
+    if t[0] == 'l': return 0 if t[1] == x else _var_count(t[2], x)
+    return _var_count(t[1], x) + _var_count(t[2], x)
+
+def _redexes(t, path=()):
+    if t[0] == 'a':
+        if t[1][0] == 'l': yield path, t
+        yield from _redexes(t[1], path + (1,))
+        yield from _redexes(t[2], path + (2,))
+    elif t[0] == 'l':
+        yield from _redexes(t[2], path + (2,))
+
+def _lo_redex(t, path=()):
+    if t[0] == 'a':
+        if t[1][0] == 'l': return path, t
+        out = _lo_redex(t[1], path + (1,))
+        return out if out is not None else _lo_redex(t[2], path + (2,))
+    if t[0] == 'l': return _lo_redex(t[2], path + (2,))
+    return None
+
+def _needs_alpha(body, x, arg):
+    if body[0] == 'v': return False
+    if body[0] == 'a':
+        return _needs_alpha(body[1], x, arg) or _needs_alpha(body[2], x, arg)
+    y, b = body[1], body[2]
+    if y == x: return False
+    return (y in _fv(arg) and x in _fv(b)) or _needs_alpha(b, x, arg)
+
+def _alpha_renaming_redexes(t):
+    return sum(_needs_alpha(r[1][2], r[1][1], r[2]) for _, r in _redexes(t))
+
+def _capture_risk_redexes(t):
+    return _alpha_renaming_redexes(t)
+
+_BUCKETS = ('identity', 'dummy', 'substitution', 'duplication', 'shadowing',
+            'alpha-renaming', 'deep-redex', 'root-redex', 'arbitrary')
+
+def _phenomena(t):
+    out = set()
+    if _has_shadowing(t): out.add('shadowing')
+    if _alpha_renaming_redexes(t): out.add('alpha-renaming')
+    for path, r in _redexes(t):
+        x, body = r[1][1], r[1][2]
+        if not path: out.add('root-redex')
+        else: out.add('deep-redex')
+        if body == ('v', x): out.add('identity')
+        elif x not in _fv(body): out.add('dummy')
+        else:
+            out.add('substitution')
+            if _var_count(body, x) > 1: out.add('duplication')
+    return out
+
+def _contracted_phenomena(trace):
+    out, counts = set(), Counter()
+    for t in trace[:-1]:
+        got = _lo_redex(t)
+        if got is None: continue
+        path, r = got
+        x, body, arg = r[1][1], r[1][2], r[2]
+        b = 'root-redex' if not path else 'deep-redex'
+        out.add(b); counts[b] += 1
+        if body == ('v', x):
+            out.add('identity'); counts['identity'] += 1
+        elif x not in _fv(body):
+            out.add('dummy'); counts['dummy'] += 1
+        else:
+            out.add('substitution'); counts['substitution'] += 1
+            if _var_count(body, x) > 1:
+                out.add('duplication'); counts['duplication'] += 1
+        if _needs_alpha(body, x, arg):
+            out.add('alpha-renaming'); counts['alpha-renaming'] += 1
+    return out, counts
+
+def _split_key(t, nf):
+    s = repr((_skeleton(t), _skeleton(nf))).encode()
+    return hashlib.sha1(s).hexdigest()[:16]
 
 _LAM_TOK = re.compile(r'[()\\.\u03bb]|[A-Za-z_]\w*')
 
@@ -119,7 +244,7 @@ def _gen_nf(depth, rng, env):
         neutral  ::=  (var|const) NF*          (head is never a λ)
     """
     if depth > 0 and rng.random() < 0.35:
-        name = f"v{len(env)}"
+        name = rng.choice(env) if env and rng.random() < 0.25 else f"v{len(env)}"
         return ('l', name, _gen_nf(depth - 1, rng, env + (name,)))
     head = ('v', rng.choice(env) if env and rng.random() < 0.7
                   else rng.choice(_LAM_CONSTS))
@@ -128,6 +253,22 @@ def _gen_nf(depth, rng, env):
     for _ in range(n_args):
         t = ('a', t, _gen_nf(depth - 1, rng, env))
     return t
+
+def _gen_term(depth, rng, env):
+    if depth <= 0 or rng.random() < 0.25:
+        return ('v', rng.choice(env) if env and rng.random() < 0.7 else rng.choice(_LAM_CONSTS))
+    if depth > 2 and rng.random() < 0.25:
+        x, y = f"v{len(env)}", f"v{len(env) + 1}"
+        body = ('l', y, ('l', y, ('a', ('v', x), _gen_term(depth - 3, rng, env + (x, y, y)))))
+        return ('a', ('l', x, body), ('v', y))
+    if rng.random() < 0.35:
+        name = rng.choice(env) if env and rng.random() < 0.3 else f"v{len(env)}"
+        return ('l', name, _gen_term(depth - 1, rng, env + (name,)))
+    if rng.random() < 0.25:
+        x = f"v{len(env)}"
+        return ('a', ('l', x, _gen_term(depth - 1, rng, env + (x,))),
+                     _gen_term(depth - 1, rng, env))
+    return ('a', _gen_term(depth - 1, rng, env), _gen_term(depth - 1, rng, env))
 
 def _positions(t, path=()):
     yield path, t
@@ -175,15 +316,33 @@ def _insert_redex(M, rng, arg_depth):
 
     return _replace_at(M, path, new)
 
+def _sample_by_antireduction(cfg, rng):
+    nf = _gen_nf(cfg.nf_depth, rng, ())
+    t = nf
+    for _ in range(cfg.n_insertions):
+        t2 = _insert_redex(t, rng, cfg.nf_depth)
+        if len(_pretty(t2)) > cfg.max_chars: break
+        t = t2
+    return t, nf
+
 
 @dataclass
 class LambdaReductionConfig(Config):
-    nf_depth: int = 2
-    n_insertions: int = 1
+    nf_depth: int = 5
+    term_depth: int = 5
+    n_insertions: int = 6
+    min_steps: int = 5
+    max_steps: int = 500
+    max_chars: int = 500
+    min_alpha_renaming: int = 1
+    min_shadowing: int = 1
+    anti_reduction_prob: float = 0.6
 
     def update(self, c=1):
-        self.nf_depth     += c
+        self.nf_depth += c
+        self.term_depth += c
         self.n_insertions += c
+        self.min_steps += c
 
 
 class LambdaReduction(Task):
@@ -193,26 +352,56 @@ class LambdaReduction(Task):
     def generate(self):
         rng = random.Random()
         cfg = self.config
-        for _ in range(500):
-            nf = _gen_nf(cfg.nf_depth, rng, ())
-            if not (3 <= len(_pretty(nf)) <= 60): continue
-            if _step(nf) is not None: continue        # invariant guard
+        source = 'anti_reduction' if rng.random() < cfg.anti_reduction_prob else 'arbitrary'
+        target = rng.choice(_BUCKETS[:-1]) if source == 'anti_reduction' else 'arbitrary'
+        for _ in range(3000):
+            if source == 'anti_reduction':
+                t, nf = _sample_by_antireduction(cfg, rng)
+            else:
+                t = _gen_term(cfg.term_depth, rng, ())
 
-            t = nf
-            for _ in range(cfg.n_insertions):
-                t2 = _insert_redex(t, rng, cfg.nf_depth)
-                if len(_pretty(t2)) > 200: break       # stop growing
-                t = t2
+            if _term_size(t) > cfg.max_chars * 4: continue
+            term = _pretty(t)
+            if len(term) > cfg.max_chars: continue
 
-            if _step(t) is None: continue              # no redex committed
-            result = _normalize(t)
-            if result is None: continue                # diverged
-            if _debruijn(result) != _debruijn(nf):     # move 3 captured
-                continue
+            trace = _safe_normalize_trace(t, cfg.max_steps, cfg.max_chars * 4)
+            if trace is None: continue
+            if len(trace) - 1 < cfg.min_steps: continue
+            if source == 'anti_reduction' and _debruijn(trace[-1]) != _debruijn(nf): continue
+            nf, normal = trace[-1], _pretty(trace[-1])
+            if not (3 <= len(normal) <= cfg.max_chars): continue
+            if _step(nf) is not None: continue
+            shadowing = _shadowing_count(t)
+            syntactic_alpha_renaming = _alpha_renaming_redexes(t)
+            syntactic_buckets = _phenomena(t)
+            trace_buckets, trace_bucket_counts = _contracted_phenomena(trace)
+            if shadowing:
+                trace_buckets.add('shadowing')
+            buckets = trace_buckets
+            if target == 'shadowing' and shadowing < cfg.min_shadowing: continue
+            if target == 'alpha-renaming' and trace_bucket_counts.get('alpha-renaming', 0) < cfg.min_alpha_renaming: continue
+            if target != 'arbitrary' and target not in buckets: continue
 
             return Problem(
-                metadata=edict(term=_pretty(t), normal_form=_pretty(nf)),
-                answer=_pretty(nf),
+                metadata=edict(
+                    term=term,
+                    normal_form=normal,
+                    beta_steps=len(trace) - 1,
+                    has_shadowing=_has_shadowing(t),
+                    shadowing=shadowing,
+                    capture_risk=trace_bucket_counts.get('alpha-renaming', 0),
+                    alpha_renaming=trace_bucket_counts.get('alpha-renaming', 0),
+                    syntactic_alpha_renaming=syntactic_alpha_renaming,
+                    skeleton=_skeleton(t),
+                    nf_skeleton=_skeleton(nf),
+                    split_key=_split_key(t, nf),
+                    generator=source,
+                    buckets=sorted(buckets),
+                    syntactic_buckets=sorted(syntactic_buckets),
+                    trace_bucket_counts=dict(trace_bucket_counts),
+                    target_bucket=target,
+                ),
+                answer=normal,
             )
         raise RuntimeError("could not sample a valid λ-term")
 
@@ -232,6 +421,78 @@ class LambdaReduction(Task):
             return 0.0
         ref = _parse_lam(entry.answer)
         return float(_debruijn(got) == _debruijn(ref))
+
+
+def lambda_reduction_shortcut_report(train, test, predictions=None):
+    """Diagnostics for splits and shortcut baselines; predictions are test-order or term-keyed."""
+    train, test = list(train), list(test)
+    def md(e): return e.metadata if hasattr(e, 'metadata') else edict(e['metadata'])
+    def ans(e): return e.answer if hasattr(e, 'answer') else e['answer']
+    def term(e): return _parse_lam(md(e).term)
+    def sk(e, k):
+        return repr(md(e).get(k) or _skeleton(term(e)))
+    def score(p, e):
+        try: return float(_debruijn(_parse_lam(str(p).strip())) == _debruijn(_parse_lam(ans(e))))
+        except Exception: return 0.0
+    def pred_for(i, e):
+        if predictions is None: return None
+        return predictions.get(md(e).term) if isinstance(predictions, dict) else predictions[i]
+    def acc(items, f):
+        items = list(items)
+        return None if not items else sum(f(i, e) for i, e in items) / len(items)
+    def root_only(t):
+        for _ in range(500):
+            if t[0] != 'a' or t[1][0] != 'l': return t
+            t = _subst(t[1][2], t[1][1], t[2])
+        return t
+    def delete_wrappers(t):
+        if t[0] == 'a' and t[1][0] == 'l' and t[1][1] not in _fv(t[1][2]):
+            return delete_wrappers(t[1][2])
+        if t[0] == 'a': return ('a', delete_wrappers(t[1]), delete_wrappers(t[2]))
+        if t[0] == 'l': return ('l', t[1], delete_wrappers(t[2]))
+        return t
+
+    train_pairs = {(md(e).term, ans(e)) for e in train}
+    train_in_skel = {sk(e, 'skeleton') for e in train}
+    train_nf_skel = {sk(e, 'nf_skeleton') for e in train}
+    all_items = list(train) + list(test)
+    source_counts = Counter(md(e).get('generator', 'unknown') for e in all_items)
+    indexed = list(enumerate(test))
+    lm_acc = None if predictions is None else acc(indexed, lambda i, e: score(pred_for(i, e), e))
+    by_steps = {}
+    if predictions is not None:
+        for s in sorted({md(e).beta_steps for e in test if 'beta_steps' in md(e)}):
+            by_steps[str(s)] = acc(((i, e) for i, e in indexed if md(e).get('beta_steps') == s),
+                                   lambda i, e: score(pred_for(i, e), e))
+    return edict(
+        exact_train_test_duplicate_rate=sum((md(e).term, ans(e)) in train_pairs for e in test) / len(test),
+        input_skeleton_overlap=sum(sk(e, 'skeleton') in train_in_skel for e in test) / len(test),
+        normal_form_skeleton_overlap=sum(sk(e, 'nf_skeleton') in train_nf_skel for e in test) / len(test),
+        accepted_generator_ratio={k: v / len(all_items) for k, v in source_counts.items()},
+        one_step_contraction_baseline=acc(indexed, lambda i, e: score(_pretty(_step(term(e)) or term(e)), e)),
+        root_redex_only_baseline=acc(indexed, lambda i, e: score(_pretty(root_only(term(e))), e)),
+        delete_wrapper_baseline=acc(indexed, lambda i, e: score(_pretty(delete_wrappers(term(e))), e)),
+        tuned_accuracy=lm_acc,
+        tuned_accuracy_by_beta_steps=by_steps or None,
+        tuned_capture_risk_accuracy=None if predictions is None else acc(
+            ((i, e) for i, e in indexed if md(e).get('capture_risk', 0)),
+            lambda i, e: score(pred_for(i, e), e)),
+        tuned_ood_steps_accuracy=None if predictions is None else acc(
+            ((i, e) for i, e in indexed if md(e).get('beta_steps', 0) >= 8),
+            lambda i, e: score(pred_for(i, e), e)),
+        tuned_unseen_skeleton_accuracy=None if predictions is None else acc(
+            ((i, e) for i, e in indexed if sk(e, 'skeleton') not in train_in_skel),
+            lambda i, e: score(pred_for(i, e), e)),
+        tuned_arbitrary_generator_accuracy=None if predictions is None else acc(
+            ((i, e) for i, e in indexed if md(e).get('generator') == 'arbitrary'),
+            lambda i, e: score(pred_for(i, e), e)),
+        tuned_alpha_renaming_required_accuracy=None if predictions is None else acc(
+            ((i, e) for i, e in indexed if md(e).get('alpha_renaming', md(e).get('capture_risk', 0))),
+            lambda i, e: score(pred_for(i, e), e)),
+        tuned_duplication_accuracy=None if predictions is None else acc(
+            ((i, e) for i, e in indexed if 'duplication' in md(e).get('buckets', ())),
+            lambda i, e: score(pred_for(i, e), e)),
+    )
 
 
 

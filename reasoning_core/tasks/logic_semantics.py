@@ -243,14 +243,16 @@ class LogicNLI(Task):
                     continue
             
             meta.prem, meta.hyp = x.dict(), hyp.dict()
+            meta.label = label
             meta.payload = Payload(premise=meta.prem.eng, hypothesis=meta.hyp.eng)
-            return Problem(meta, label)
+            mapping = {"entailment": "yes", "contradiction": "no", "neutral": "maybe"}
+            return Problem(meta, mapping[label])
 
     def prompt(self, meta):
         P = (
             f"{Payload(meta.payload)}\n\n"
-            "Classify the hypothesis as entailment, contradiction, or neutral. "
-            "The answer is one label."
+            "Does the premise entail the hypothesis? "
+            "The answer is yes, no, or maybe."
         )
 
         P=verbalize_predicates(P, seed=meta.verbalize_seed)
@@ -267,31 +269,37 @@ class EvidenceRetrievalConfig(LogicConfig):
     bloat_skip_rate: float= 0.2
 
 class EvidenceRetrieval(Task):
-    def __init__(self, config=LogicConfig()):
+    def __init__(self, config=EvidenceRetrievalConfig()):
         super().__init__(config=config)
         self.nli = LogicNLI(config=config)
 
     @staticmethod
     def compute_necessity(x):
-        proof_lines = x.metadata.proof.input.splitlines()
+        proof = x.metadata.get('proof')
+        if not proof or not proof.input or not proof.indices:
+            return False
+
+        proof_lines = proof.input.splitlines()
         changes = dict()    
-        for prefix in [f"fof({i}" for i in x.metadata.proof.indices]:
+        for prefix in [f"fof({i}" for i in proof.indices]:
             ablation = [p for p in proof_lines if not p.startswith(prefix)] 
             y=run("\n".join(ablation))
             changes[prefix]=y.status
         return set(changes.values())=={"Satisfiable"}
 
     def generate(self):
-        while True:
+        for _ in range(200):
             self.nli.config = self.config
             x = self.nli.generate()
-            x.metadata.label=x.answer
-            if x.answer != 'neutral' and self.compute_necessity(x):
-                break
+            label = x.metadata.get('label', x.answer)
+            label = {'yes': 'entailment', 'no': 'contradiction', 'maybe': 'neutral'}.get(label, label)
+            proof = x.metadata.get('proof')
+            answer = [i for i in proof.indices if i != 'hyp'] if proof else []
+            if label in ('entailment', 'contradiction') and answer and self.compute_necessity(x):
+                answer = ' '.join(f'{i}' for i in answer)
+                return Problem(x.metadata, answer)
 
-        answer = [i for i in x.metadata.proof.indices if i != 'hyp']
-        answer = ' '.join(f'{i}' for i in answer)
-        return Problem(x.metadata, answer)
+        raise RuntimeError("failed to generate evidence retrieval example with necessary proof inputs")
 
     def prompt(self, meta):
         prem_lines = [f"[{i}] {line}" for i, line in enumerate(meta.prem.eng.splitlines())]
@@ -325,9 +333,45 @@ class EvidenceRetrieval(Task):
 class LogicFormalizationConfig(LogicConfig):
     n_formulas: int = 3
 
+def _semanticize_tptp(expr, seed):
+    used, out = {}, expr
+    for k, v in sorted(predicate_mapping(seed).items(), key=lambda kv: len(kv[0]), reverse=True):
+        if k.startswith('~'): continue
+        name = safe_name(v.replace('not ', 'non_')) or k
+        name += f"_{len(used)}" if name in used.values() else ""
+        used[k] = name
+        out = re.sub(rf'\b{k}\b', name, out)
+    return out
+
+def _equivalent(a, b):
+    status = run(f"fof(eq, axiom, ~(({a}) <=> ({b}))).").status
+    if status not in ("Satisfiable", "Unsatisfiable"):
+        raise RuntimeError(f"Vampire inconclusive: {status}")
+    return status == "Unsatisfiable"
+
+def _alter_formula(f):
+    def rename_content_pred(x):
+        protected = {'in_the_room', 'anywhere', 'person', 'like', *ADJECTIVES}
+        for m in re.finditer(r'\b([a-z]\w*)\(', x):
+            if m.group(1) not in protected:
+                return x[:m.start()] + f"changed_{m.group(1)}(" + x[m.end():]
+        return f"(({x})&fresh_condition(fresh_object))"
+    ops = [
+        ("double_negation", lambda x: f"~(~({x}))"),
+        ("idempotent_and", lambda x: f"(({x})&({x}))"),
+        ("idempotent_or", lambda x: f"(({x})|({x}))"),
+        ("negate_whole", lambda x: f"~({x})"),
+        ("add_fresh_requirement", lambda x: f"(({x})&fresh_condition(fresh_object))"),
+        ("add_fresh_alternative", lambda x: f"(({x})|fresh_condition(fresh_object))"),
+        ("rename_one_predicate", rename_content_pred),
+    ]
+    random.shuffle(ops)
+    return ops[0][0], ops[0][1](f)
+
 class LogicFormalization(DevTask):
     def __init__(self, config=LogicFormalizationConfig()):
         super().__init__(config=config)
+        self.balancing_key_ratio = 0.5
         self.pronoun = random.choice(self.config.pronouns)
         self.names = gendered_names(self.config.n_names, self.pronoun)
         self.adjectives = ADJECTIVES[:self.config.n_adjectives]
@@ -340,42 +384,32 @@ class LogicFormalization(DevTask):
                        include_propositional=include_propositional,
                        include_setup=False,
                        pronoun=self.pronoun)
-        x = generate_N_premises(self.config.n_formulas, G,
-                                mode=self.config.generation_algorithm)
-        meta = edict(prem=x.dict(), verbalize_seed=random.randint(0, int(1e6)))
-        answer = (x@tptp).replace('room(','in_the_room(')
-        return Problem(meta, answer)
+        for _ in range(50):
+            x = generate_N_premises(self.config.n_formulas, G,
+                                    mode=self.config.generation_algorithm)
+            seed = random.randint(0, int(1e6))
+            gold = _semanticize_tptp((x@tptp).replace('room(', 'in_the_room('), seed)
+            op, candidate = _alter_formula(gold)
+            try:
+                same = _equivalent(gold, candidate)
+            except Exception:
+                continue
+            meta = edict(prem=x.dict(), verbalize_seed=seed, candidate=candidate,
+                         gold=gold, transformation=op)
+            return Problem(meta, str(same))
+        raise RuntimeError("Could not generate a Vampire-checkable contrastive formalization")
 
     def prompt(self, meta):
         meta = edict(meta)
         eng = verbalize_predicates(meta.prem.eng, seed=meta.verbalize_seed)
-        mapping = predicate_mapping(meta.verbalize_seed)
-        # only show symbols that actually appear; positive forms only (negations follow)
-        used = [k for k in preds_pattern + prop_pattern if k in meta.prem.tptp]
-        glossary = "\n".join(f"  {mapping[k]!r} -> {k}" for k in used) or "  none"
         return (
-            f"Premise:\n{eng}\n\n"
-            f"Glossary (English phrase -> TPTP symbol):\n{glossary}\n\n"
-            "Translate the premise into a single TPTP first-order-logic formula, "
-            "joining the lines with '&'.\n"
-            "Connectives: '&', '|', '~', '=>', '<=>'. "
-            "Quantifiers: '![X]:...' (forall) and '?[X]:...' (exists). Equality: '='.\n"
-            "Use the symbols from the glossary for verbalized predicates. "
-            f"Names ({', '.join(self.names)}), 'in_the_room', 'person', and adjectives (old, tall, ...) "
-            "appear as-is.\n"
-            "The answer is the TPTP formula only (no fof(...) wrapper, no commentary)."
+            f"{str(Payload(English=eng, TPTP=meta.candidate)).replace('Tptp:', 'TPTP:')}\n\n"
+            "Does the TPTP denotation match the English? "
+            "The answer is True or False."
         )
 
     def score_answer(self, answer, entry):
-        answer = answer.strip()
-        m = re.match(r'^fof\([^,]+,\s*[^,]+,\s*(.*)\)\s*\.\s*$', answer, re.DOTALL)
-        if m: answer = m.group(1).strip()
-        gold = entry.answer
-        try:
-            status = run(f"fof(eq, axiom, ~(({answer}) <=> ({gold}))).").status
-        except Exception:
-            return 0.0
-        return float(status == "Unsatisfiable")
+        return float(answer.strip().lower() == entry.answer.lower())
 
     def balancing_key(self, problem):
-        return None
+        return problem.answer

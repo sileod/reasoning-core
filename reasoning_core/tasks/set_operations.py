@@ -195,6 +195,7 @@ class SetExpressionConfig(Config):
     n_domains: int = 2
     min_depth: int = 1
     max_depth: int = 2
+    diff_like_prob: float = 0.15
 
     def update(self, c):
         self.set_size *= 1 + c
@@ -214,19 +215,34 @@ class SetExpression(Task):
 
     def make_env(self, domain):
         k = self.config.set_size
+        if self.config.diff_like_prob and random.random() < self.config.diff_like_prob:
+            base = random_subdomain(domain, k)
+            rest = [x for x in domain if x not in base]
+            edit_cap = min(max(1, k // 4), len(rest))
+            n_edits = random.randint(1, edit_cap) if edit_cap else 0
+            shown = {}
+            for name in "ABC":
+                xs = SetList(base)
+                edits = zip(random.sample(range(k), n_edits), random.sample(rest, n_edits))
+                for i, replacement in edits:
+                    xs[i] = replacement
+                shown[name] = xs
+            return {x: set(shown[x]) for x in "ABC"}, shown
+
         core = random_subdomain(domain, random.randint(max(1, k // 4), max(1, k // 2)))
         rest = list(set(domain) - set(core))
-        return {x: set(core + random.sample(rest, k - len(core))) for x in "ABC"}
+        env = {x: set(core + random.sample(rest, k - len(core))) for x in "ABC"}
+        return env, None
 
     def generate(self):
         domain = random.choice(self.domains[:self.config.n_domains])
-        env = self.make_env(domain)
+        env, shown = self.make_env(domain)
         expr = make_set_expr(self.config.min_depth, self.config.max_depth)
         answer = eval_setops(expr, env)
 
         return Problem(
             metadata={
-                **{x: return_shuffle(env[x]) for x in "ABC" if x in expr},
+                **{x: shown[x] if shown else return_shuffle(env[x]) for x in "ABC" if x in expr},
                 "expr": expr,
             },
             answer=repr_answer(answer),

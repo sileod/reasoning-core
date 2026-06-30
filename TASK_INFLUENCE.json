@@ -1,0 +1,703 @@
+{
+  "contrastive_runs": [
+    {
+      "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/influence_TASKQUALITY_CONTRAST_S43_T300_M20_dolci_pretrained.json",
+      "init": "pretrained",
+      "main": "dolci",
+      "model": "HuggingFaceTB/SmolLM2-135M",
+      "seed": 43,
+      "tag": "TASKQUALITY_CONTRAST_S43_T300_M20_dolci_pretrained",
+      "train_steps": 300
+    }
+  ],
+  "generated_at": "2026-06-30T07:44:14.023543+00:00",
+  "influence_runs": [
+    {
+      "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/influence_TASKQUALITY_S43_T300_M20_dolci_pretrained.json",
+      "init": "pretrained",
+      "main": "dolci",
+      "model": "HuggingFaceTB/SmolLM2-135M",
+      "seed": 43,
+      "tag": "TASKQUALITY_S43_T300_M20_dolci_pretrained",
+      "train_steps": 300
+    }
+  ],
+  "profile": "dolci",
+  "records": [
+    {
+      "acc_end": 0.7375,
+      "acc_start": 0.0,
+      "answer_tokens_mean": 1.0,
+      "bbh_delta": -0.45688368926066447,
+      "behavior_hash": "ebd1ce65f6b44ed5",
+      "category": "game_playing",
+      "contrastive_score": 0.10868536640576992,
+      "dolci_delta": -0.0027011630160154176,
+      "flan_delta": -0.06813538966003385,
+      "fw_delta": -0.0013292901811809976,
+      "influence_score": 0.15363804748595364,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 125.25,
+      "rank": 1,
+      "saturation": {
+        "acc0": {
+          "mean": 0.0,
+          "n": 2,
+          "std": 0.0
+        },
+        "acc_final": {
+          "mean": 0.7375,
+          "n": 2,
+          "std": 0.0
+        },
+        "auc": {
+          "mean": 0.5098214285714286,
+          "n": 2,
+          "std": 0.011364216126212408
+        },
+        "sat_step": {
+          "mean": 125.0,
+          "n": 2,
+          "std": 35.35533905932738
+        }
+      },
+      "source_file": "reasoning_core/tasks/game_playing.py",
+      "source_modified": "2026-06-29 15:02 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.45688368926066447,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": -0.0027011630160154176,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.06813538966003385,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": -0.0013292901811809976,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "game_forced_win"
+    },
+    {
+      "acc_end": 0.73125,
+      "acc_start": 0.0,
+      "answer_tokens_mean": 14.0,
+      "bbh_delta": -0.42671536489297424,
+      "behavior_hash": "3cd7ee827f337ad5",
+      "category": "logic_depth",
+      "contrastive_score": 0.10356663640173164,
+      "dolci_delta": -0.004150280457519084,
+      "flan_delta": -0.06960932477851589,
+      "fw_delta": 0.0015043841667283786,
+      "influence_score": 0.1431204203945883,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 194.25,
+      "rank": 2,
+      "saturation": {
+        "acc0": {
+          "mean": 0.0,
+          "n": 2,
+          "std": 0.0
+        },
+        "acc_final": {
+          "mean": 0.73125,
+          "n": 2,
+          "std": 0.00883883476483189
+        },
+        "auc": {
+          "mean": 0.5214285714285714,
+          "n": 2,
+          "std": 0.017677669529663705
+        },
+        "sat_step": {
+          "mean": 150.0,
+          "n": 2,
+          "std": 70.71067811865476
+        }
+      },
+      "source_file": "reasoning_core/tasks/logic_depth.py",
+      "source_modified": "2026-06-29 09:54 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.42671536489297424,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": -0.004150280457519084,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.06960932477851589,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": 0.0015043841667283786,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "multistep_nli"
+    },
+    {
+      "acc_end": 0.8166666666666667,
+      "acc_start": 0.029166666666666667,
+      "answer_tokens_mean": 2.0,
+      "bbh_delta": -0.32253124763947394,
+      "behavior_hash": "ebd1ce65f6b44ed5",
+      "category": "game_playing",
+      "contrastive_score": 0.10350968229010904,
+      "dolci_delta": -0.0030642366292765733,
+      "flan_delta": -0.049528514329641116,
+      "fw_delta": 0.0004102765116944518,
+      "influence_score": 0.10839506925235202,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 128.75,
+      "rank": 3,
+      "saturation": {
+        "acc0": {
+          "mean": 0.029166666666666667,
+          "n": 2,
+          "std": 0.04124789556921527
+        },
+        "acc_final": {
+          "mean": 0.8166666666666667,
+          "n": 2,
+          "std": 0.05892556509887891
+        },
+        "auc": {
+          "mean": 0.5508928571428571,
+          "n": 2,
+          "std": 0.011364216126212408
+        },
+        "sat_step": {
+          "mean": 150.0,
+          "n": 2,
+          "std": 70.71067811865476
+        }
+      },
+      "source_file": "reasoning_core/tasks/game_playing.py",
+      "source_modified": "2026-06-29 15:02 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.32253124763947394,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": -0.0030642366292765733,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.049528514329641116,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": 0.0004102765116944518,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "game_best_move"
+    },
+    {
+      "acc_end": 0.6812499999999999,
+      "acc_start": 0.0,
+      "answer_tokens_mean": 1.0,
+      "bbh_delta": -0.3008364450385552,
+      "behavior_hash": "3cd7ee827f337ad5",
+      "category": "logic_depth",
+      "contrastive_score": 0.09276331626724382,
+      "dolci_delta": -0.004326047857579729,
+      "flan_delta": -0.03996630771759824,
+      "fw_delta": 0.0006341600219301746,
+      "influence_score": 0.10150944429140159,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 126.75,
+      "rank": 4,
+      "saturation": {
+        "acc0": {
+          "mean": 0.0,
+          "n": 2,
+          "std": 0.0
+        },
+        "acc_final": {
+          "mean": 0.6812499999999999,
+          "n": 2,
+          "std": 0.11490485194281395
+        },
+        "auc": {
+          "mean": 0.46785714285714286,
+          "n": 2,
+          "std": 0.050507627227610555
+        },
+        "sat_step": {
+          "mean": 150.0,
+          "n": 2,
+          "std": 70.71067811865476
+        }
+      },
+      "source_file": "reasoning_core/tasks/logic_depth.py",
+      "source_modified": "2026-06-29 09:54 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.3008364450385552,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": -0.004326047857579729,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.03996630771759824,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": 0.0006341600219301746,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "multistep_abduction"
+    },
+    {
+      "acc_end": 0.8048913043478261,
+      "acc_start": 0.13043478260869565,
+      "answer_tokens_mean": 75.0,
+      "bbh_delta": -0.2820258340762769,
+      "behavior_hash": "3cd7ee827f337ad5",
+      "category": "logic_depth",
+      "contrastive_score": 0.08715665829867597,
+      "dolci_delta": -0.0022651551577330675,
+      "flan_delta": -0.03865351173043985,
+      "fw_delta": 0.0020818506110926727,
+      "influence_score": 0.09406971287430577,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 169.5,
+      "rank": 5,
+      "saturation": {
+        "acc0": {
+          "mean": 0.13043478260869565,
+          "n": 2,
+          "std": 0.1844626385704037
+        },
+        "acc_final": {
+          "mean": 0.8048913043478261,
+          "n": 2,
+          "std": 0.042272688005717464
+        },
+        "auc": {
+          "mean": 0.577057453416149,
+          "n": 2,
+          "std": 0.07109497528234306
+        },
+        "sat_step": {
+          "mean": 175.0,
+          "n": 2,
+          "std": 35.35533905932738
+        }
+      },
+      "source_file": "reasoning_core/tasks/logic_depth.py",
+      "source_modified": "2026-06-29 09:54 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.2820258340762769,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": -0.0022651551577330675,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.03865351173043985,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": 0.0020818506110926727,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "logic_qa"
+    },
+    {
+      "acc_end": 0.7036163522012578,
+      "acc_start": 0.1792452830188679,
+      "answer_tokens_mean": 8.25,
+      "bbh_delta": -0.24019281122520653,
+      "behavior_hash": "169a9ebe536d45fc",
+      "category": "grammar",
+      "contrastive_score": 0.08018044305567651,
+      "dolci_delta": 0.0005282913065285388,
+      "flan_delta": -0.03702849935900243,
+      "fw_delta": 0.0006552762229032894,
+      "influence_score": 0.07966974789859156,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 186.75,
+      "rank": 6,
+      "saturation": {
+        "acc0": {
+          "mean": 0.1792452830188679,
+          "n": 2,
+          "std": 0.25349111023668686
+        },
+        "acc_final": {
+          "mean": 0.7036163522012578,
+          "n": 2,
+          "std": 0.06559638378931812
+        },
+        "auc": {
+          "mean": 0.540318957771788,
+          "n": 2,
+          "std": 0.006511989674000116
+        },
+        "sat_step": {
+          "mean": 150.0,
+          "n": 2,
+          "std": 70.71067811865476
+        }
+      },
+      "source_file": "reasoning_core/tasks/grammar.py",
+      "source_modified": "2026-06-29 09:41 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.24019281122520653,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": 0.0005282913065285388,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.03702849935900243,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": 0.0006552762229032894,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "stress_constrained_continuation"
+    },
+    {
+      "acc_end": 0.7465277777777778,
+      "acc_start": 0.3236111111111111,
+      "answer_tokens_mean": 7.0,
+      "bbh_delta": -0.2187759825064024,
+      "behavior_hash": "4b703eedcda1b4ca",
+      "category": "formal_analogies",
+      "contrastive_score": 0.0857698579274252,
+      "dolci_delta": 0.004328327289664147,
+      "flan_delta": -0.03705518243502981,
+      "fw_delta": -0.0016053616084832356,
+      "influence_score": 0.07201767227507383,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 256.0,
+      "rank": 7,
+      "saturation": {
+        "acc0": {
+          "mean": 0.3236111111111111,
+          "n": 2,
+          "std": 0.45765522226795996
+        },
+        "acc_final": {
+          "mean": 0.7465277777777778,
+          "n": 2,
+          "std": 0.08347788389007854
+        },
+        "auc": {
+          "mean": 0.6439484126984127,
+          "n": 2,
+          "std": 0.16569307709946676
+        },
+        "sat_step": {
+          "mean": 100.0,
+          "n": 2,
+          "std": 0.0
+        }
+      },
+      "source_file": "reasoning_core/tasks/formal_analogies.py",
+      "source_modified": "2026-06-29 09:34 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.2187759825064024,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": 0.004328327289664147,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.03705518243502981,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": -0.0016053616084832356,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "analogical_case_retrieval"
+    },
+    {
+      "acc_end": 0.7144324122479462,
+      "acc_start": 0.28416728902165794,
+      "answer_tokens_mean": 20.75,
+      "bbh_delta": -0.1689619070473518,
+      "behavior_hash": "da074542ea9f5644",
+      "category": "binding",
+      "contrastive_score": 0.07500826430775215,
+      "dolci_delta": 0.0005703825557141773,
+      "flan_delta": -0.021424465047801267,
+      "fw_delta": -0.00011417813164626978,
+      "influence_score": 0.05616856754109464,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 125.25,
+      "rank": 8,
+      "saturation": {
+        "acc0": {
+          "mean": 0.28416728902165794,
+          "n": 2,
+          "std": 0.4018732341172238
+        },
+        "acc_final": {
+          "mean": 0.7144324122479462,
+          "n": 2,
+          "std": 0.05030016497984962
+        },
+        "auc": {
+          "mean": 0.5837645364344394,
+          "n": 2,
+          "std": 0.06795331624386891
+        },
+        "sat_step": {
+          "mean": 150.0,
+          "n": 2,
+          "std": 70.71067811865476
+        }
+      },
+      "source_file": "reasoning_core/tasks/binding.py",
+      "source_modified": "2026-06-29 09:18 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.1689619070473518,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": 0.0005703825557141773,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.021424465047801267,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": -0.00011417813164626978,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "lambda_reduction"
+    },
+    {
+      "acc_end": 0.8057692307692308,
+      "acc_start": 0.2123076923076923,
+      "answer_tokens_mean": 58.25,
+      "bbh_delta": -0.15757324484013413,
+      "behavior_hash": "3cd7ee827f337ad5",
+      "category": "logic_depth",
+      "contrastive_score": 0.09513525758848101,
+      "dolci_delta": -0.0012680143494931961,
+      "flan_delta": -0.03137916347000491,
+      "fw_delta": -0.0025955493519025374,
+      "influence_score": 0.05381226951384329,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 227.25,
+      "rank": 9,
+      "saturation": {
+        "acc0": {
+          "mean": 0.2123076923076923,
+          "n": 2,
+          "std": 0.3002484178576725
+        },
+        "acc_final": {
+          "mean": 0.8057692307692308,
+          "n": 2,
+          "std": 0.07886960251696111
+        },
+        "auc": {
+          "mean": 0.6214835164835164,
+          "n": 2,
+          "std": 0.12129600938815391
+        },
+        "sat_step": {
+          "mean": 100.0,
+          "n": 2,
+          "std": 0.0
+        }
+      },
+      "source_file": "reasoning_core/tasks/logic_depth.py",
+      "source_modified": "2026-06-29 09:54 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.15757324484013413,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": -0.0012680143494931961,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.03137916347000491,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": -0.0025955493519025374,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "multistep_evidence_retrieval"
+    },
+    {
+      "acc_end": 0.7552321945401923,
+      "acc_start": 0.3462847419171866,
+      "answer_tokens_mean": 11.75,
+      "bbh_delta": -0.1491970251534731,
+      "behavior_hash": "657c1f4a98174d26",
+      "category": "set_operations",
+      "contrastive_score": 0.07967184330733623,
+      "dolci_delta": 0.004958715659575175,
+      "flan_delta": -0.018136341484046525,
+      "fw_delta": -0.002533708232589582,
+      "influence_score": 0.04892400590882917,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 88.5,
+      "rank": 10,
+      "saturation": {
+        "acc0": {
+          "mean": 0.3462847419171866,
+          "n": 2,
+          "std": 0.48972057846215233
+        },
+        "acc_final": {
+          "mean": 0.7552321945401923,
+          "n": 2,
+          "std": 0.01646491203338807
+        },
+        "auc": {
+          "mean": 0.6435848609699999,
+          "n": 2,
+          "std": 0.140896424224324
+        },
+        "sat_step": {
+          "mean": 100.0,
+          "n": 2,
+          "std": 0.0
+        }
+      },
+      "source_file": "reasoning_core/tasks/set_operations.py",
+      "source_modified": "2026-06-29 09:59 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.1491970251534731,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": 0.004958715659575175,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.018136341484046525,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": -0.002533708232589582,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "set_expression"
+    }
+  ],
+  "saturation_runs": [
+    {
+      "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/sat_TASKQUALITY_CONTRAST_S43_T300_M20_dolci_pretrained.json",
+      "init": "pretrained",
+      "main": "dolci",
+      "seed": 43,
+      "tag": "TASKQUALITY_CONTRAST_S43_T300_M20_dolci_pretrained",
+      "train_steps": 300
+    },
+    {
+      "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/sat_TASKQUALITY_S43_T300_M20_dolci_pretrained.json",
+      "init": "pretrained",
+      "main": "dolci",
+      "seed": 43,
+      "tag": "TASKQUALITY_S43_T300_M20_dolci_pretrained",
+      "train_steps": 300
+    }
+  ],
+  "script_version": 2,
+  "weights": {
+    "bbh": 1.0,
+    "dolci": 1.0,
+    "flan": 0.0,
+    "fw": 1.0
+  }
+}

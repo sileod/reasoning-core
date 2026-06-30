@@ -99,13 +99,15 @@ class MultistepNLIConfig(Config):
     max_target_support_size: Optional[int] = 3
     
     def update(self, c):
-        self.max_depth += int(c) // 2
+        self.max_depth += c // 2
         self.n_rules += c
         self.n_distractors += 2 * c
         self.n_unary_preds += c
         self.n_binary_preds += c
-        self.min_target_support_size = min(5, self.min_target_support_size + max(1, int(c)) / 3)
-        self.max_target_depth = min(int(self.max_depth), int(self.max_target_depth) + max(1, int(c) // 2))
+        self.min_target_support_size = min(5, 2 + c // 2)
+        self.max_target_support_size = None
+        self.min_target_depth = min(self.max_depth, 2 + c // 2)
+        self.max_target_depth = min(self.max_depth, self.min_target_depth + 1)
 
 
 @dataclass
@@ -538,6 +540,16 @@ def support_sources(atom, deriv, source):
     return out
 
 
+def hard_target(a, deriv, cfg):
+    d = deriv[a].depth
+    s = len(support_atoms(a, deriv))
+    return (
+        cfg.min_target_depth <= d <= min(cfg.max_target_depth, cfg.max_depth)
+        and s >= cfg.min_target_support_size
+        and (cfg.max_target_support_size is None or s <= cfg.max_target_support_size)
+    )
+
+
 def _all_ground_atoms(theory, signs=(True, False)):
     for sig in theory.pred_sigs.values():
         pools = [theory.entities[t] for t in sig.arg_types]
@@ -556,20 +568,18 @@ def close_with(theory, extra):
 def choose_example(theory, res, cfg, label_signs=None, label_depths=None):
     label_signs = label_signs or Counter()
     label_depths = label_depths or Counter()
-    derived = [a for a in res.closure if res.derivations[a].depth > 0]
-    non_direct = [a for a in derived if opposite(a) not in theory.facts and a not in theory.facts]
     target_depths = tuple(range(cfg.min_target_depth, min(cfg.max_target_depth, cfg.max_depth) + 1))
-    depth_ok = lambda a: res.derivations[a].depth in target_depths
-    def support_size_ok(a):
-        n = len(support_atoms(a, res.derivations))
-        if n < cfg.min_target_support_size:
-            return False
-        if cfg.max_target_support_size is not None and n > cfg.max_target_support_size:
-            return False
-        return True
+    derived = [a for a in res.closure if res.derivations[a].depth > 0]
+    non_direct = [
+        a for a in derived
+        if a not in theory.facts
+        and opposite(a) not in theory.facts
+        and hard_target(a, res.derivations, cfg)
+    ]
+
     def prefer_support_range(pool, target=lambda x: x):
-        preferred = [h for h in pool if support_size_ok(target(h))]
-        return preferred or pool
+        return [h for h in pool if hard_target(target(h), res.derivations, cfg)]
+
     r = random.random()
     wants = "neutral" if r < cfg.neutral_rate else "contradiction" if r < cfg.neutral_rate + cfg.contradiction_rate else "entailment"
     labels = [wants, "entailment", "contradiction", "neutral"]
@@ -592,7 +602,7 @@ def choose_example(theory, res, cfg, label_signs=None, label_depths=None):
 
     for label in [x for x in labels if not (x in seen or seen.add(x))]:
         if label == "entailment":
-            pool = prefer_support_range(balanced(label, [a for a in non_direct if depth_ok(a)]))
+            pool = prefer_support_range(balanced(label, non_direct))
             if pool:
                 h = choose_by_depth(label, pool)
                 if h is None:
@@ -600,7 +610,7 @@ def choose_example(theory, res, cfg, label_signs=None, label_depths=None):
                 return label, h, res.derivations[h], support_atoms(h, res.derivations)
         if label == "contradiction":
             pool = prefer_support_range(
-                balanced(label, [opposite(a) for a in non_direct if opposite(a) not in theory.facts and depth_ok(a)]),
+                balanced(label, [opposite(a) for a in non_direct if opposite(a) not in theory.facts]),
                 opposite,
             )
             if pool:
@@ -646,7 +656,7 @@ def rel_word(pred):
 
 def binary_text(pred, args, sign=True, pack="surface"):
     x, y = args
-    if pack in {"surface", "abstract"} and pred.startswith("r"):
+    if pack == "abstract" and pred.startswith("r"):
         rel = rel_word(pred)
         return f"{x} is {'not ' if not sign else ''}{rel} to {y}"
     if pred in {"parent", "ancestor", "sibling", "spouse", "aunt_or_uncle"}:
@@ -664,7 +674,7 @@ def binary_text(pred, args, sign=True, pack="surface"):
 
 
 def atom_text(a, pack="surface"):
-    if pack in {"surface", "abstract"} and a.pred.startswith("p"):
+    if len(a.args) == 1 and pack == "abstract" and a.pred.startswith("p"):
         t = tag_word(a.pred)
         return f"{a.args[0]} is {'not ' if not a.sign else ''}{t} tagged"
     p = pred_words(a.pred)
@@ -677,14 +687,18 @@ def atom_text(a, pack="surface"):
 def _lit_schema(a, names=None, pack="surface"):
     names = names or {"?x": "x", "?y": "y", "?z": "z", "?p": "p"}
     args = [names.get(x, x) for x in a.args]
-    if pack in {"surface", "abstract"} and a.pred.startswith("p"):
+    if len(a.args) == 1 and pack == "abstract" and a.pred.startswith("p"):
         return f"{args[0]} is {'not ' if not a.sign else ''}{tag_word(a.pred)} tagged"
-    if pack in {"surface", "abstract"} and a.pred.startswith("r"):
+    if len(a.args) == 2 and pack == "abstract" and a.pred.startswith("r"):
         return f"{args[0]} is {'not ' if not a.sign else ''}{rel_word(a.pred)} to {args[1]}"
     p = pred_words(a.pred)
     if len(a.args) == 1:
         return f"{args[0]} is {'not ' if not a.sign else ''}{p}"
     return binary_text(a.pred, args, a.sign, pack)
+
+
+def _rel_phrase(pred, subj, obj, pack="surface"):
+    return _lit_schema(Atom(pred, (subj, obj)), pack=pack)
 
 
 def rule_text(rule, rid=None, pack="surface"):
@@ -731,35 +745,42 @@ def rule_text(rule, rid=None, pack="surface"):
         a = tag_word(atoms[1].pred) if symbolic else pred_words(atoms[1].pred)
         h = ("not " if not rule.head.sign else "") + (tag_word(rule.head.pred) if symbolic else pred_words(rule.head.pred))
         tagged = " tagged" if symbolic else ""
+        rel = _rel_phrase(atoms[0].pred, "a person", f"a {a}{tagged} person", pack)
         templates += [
-            f"Anyone {r} to a {a}{tagged} person is {h}{tagged}." if symbolic else f"Anyone who {r} someone {a} is {h}.",
-            f"If a person is {r} to someone {a}{tagged}, then that person is {h}{tagged}.",
-            f"A person is {h}{tagged} when they are {r} to a {a}{tagged} person." if symbolic else f"A person is {h} when they {r} someone {a}.",
+            f"Anyone {r} to a {a}{tagged} person is {h}{tagged}." if symbolic else f"If {rel}, then that person is {h}.",
+            f"If a person is {r} to someone {a}{tagged}, then that person is {h}{tagged}." if symbolic else f"When {rel}, that person is {h}.",
+            f"A person is {h}{tagged} when they are {r} to a {a}{tagged} person." if symbolic else f"A person is {h} when {rel}.",
         ]
     elif len(atoms) == 2 and len(atoms[0].args) == 2 and atoms[1].args == ("?x",) and rule.head.args == ("?y",):
         r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
         a = tag_word(atoms[1].pred) if symbolic else pred_words(atoms[1].pred)
         h = ("not " if not rule.head.sign else "") + (tag_word(rule.head.pred) if symbolic else pred_words(rule.head.pred))
         tagged = " tagged" if symbolic else ""
+        rel = _rel_phrase(atoms[0].pred, f"a {a}{tagged} person", "someone", pack)
         templates += [
-            f"Anyone {r} from a {a}{tagged} person is {h}{tagged}." if symbolic else f"Anyone whom a {a} person {r} is {h}.",
-            f"If a {a}{tagged} person is {r} to someone, then that other person is {h}{tagged}.",
-            f"People reached by a {r} relation from a {a}{tagged} person are {h}{tagged}." if symbolic else f"People reached by {r} from a {a} person are {h}.",
+            f"Anyone {r} from a {a}{tagged} person is {h}{tagged}." if symbolic else f"If {rel}, then that other person is {h}.",
+            f"If a {a}{tagged} person is {r} to someone, then that other person is {h}{tagged}." if symbolic else f"When {rel}, that other person is {h}.",
+            f"People reached by a {r} relation from a {a}{tagged} person are {h}{tagged}." if symbolic else f"People reached when {rel} are {h}.",
         ]
     elif len(atoms) == 2 and all(len(a.args) == 2 for a in atoms) and rule.head.args == ("?x", "?z"):
         r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
         s = rel_word(atoms[1].pred) if symbolic else pred_words(atoms[1].pred)
         h = rel_word(rule.head.pred) if symbolic else pred_words(rule.head.pred)
+        b1 = _rel_phrase(atoms[0].pred, "one person", "a second person", pack)
+        b2 = _rel_phrase(atoms[1].pred, "the second", "a third person", pack)
+        hd = _rel_phrase(rule.head.pred, "the first", "the third", pack)
         templates += [
-            f"If one person is {r} to a second person, and the second is {s} to a third, then the first is {h} to the third.",
-            f"Anyone {r} to someone who is {s} to a third person is {h} to that third person.",
+            f"If {b1}, and {b2}, then {hd}.",
+            f"When {b1} and {b2}, {hd}.",
             f"{r.title()} relations followed by {s} relations imply {h} relations.",
         ]
     elif len(atoms) == 1 and len(atoms[0].args) == 2 and len(rule.head.args) == 2 and rule.head.args == ("?y", "?x"):
         r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
         h = rel_word(rule.head.pred) if symbolic else pred_words(rule.head.pred)
+        body = _rel_phrase(atoms[0].pred, "one person", "another", pack)
+        head = _rel_phrase(rule.head.pred, "the second", "the first", pack)
         templates += [
-            f"If one person is {r} to another, then the second is {h} to the first.",
+            f"If {body}, then {head}.",
             f"Every {r} relation creates a {h} relation in the reverse direction.",
         ]
     if rid is None:
@@ -860,6 +881,24 @@ def case_metadata(case, key=None):
     )
 
 
+def shallow_closure(theory, keep_shapes):
+    rules = [r for r in theory.rules if r.shape in keep_shapes]
+    return chase(Theory(
+        theory.facts, rules, theory.denials,
+        theory.pred_sigs, theory.entities, theory.domain_pack
+    ))
+
+
+def reject_shortcut(case):
+    if case.target is None:
+        return False
+    for shapes in ({"u_imp"}, {"u_imp", "converse"}, {"u_imp", "u_and"}):
+        res = shallow_closure(case.theory, shapes)
+        if case.target in res.closure or opposite(case.target) in res.closure:
+            return True
+    return False
+
+
 def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral"), state=None):
     state = state or {}
     bins = state.setdefault("bins", Counter())
@@ -900,6 +939,9 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         if label != "neutral" and proof_rule_rate < 0.10:
             continue
         key = bin_key(label, hyp, d, support, theory, target, res.derivations)
+        case = MultistepCase(theory, res, label, hyp, target, d, support, lines, source, surf, live_rule_rate, proof_rule_rate)
+        if reject_shortcut(case):
+            continue
         min_label = min([label_counts[x] for x in allowed_labels] or [0])
         label_needs_examples = label_counts[label] <= min_label + 3
         if bins[key] >= cfg.max_bin_size and not label_needs_examples and random.random() > 0.2:
@@ -910,7 +952,7 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         if d is not None:
             label_depths[(label, d.depth)] += 1
         surface.update(surf)
-        return MultistepCase(theory, res, label, hyp, target, d, support, lines, source, surf, live_rule_rate, proof_rule_rate), key
+        return case, key
     return None, None
 
 
@@ -987,14 +1029,14 @@ def _entails(theory, res, atom):
 
 
 def _query_words(pred, pack):
-    if pack in {"surface", "abstract"} and pred.startswith("p"):
+    if pack == "abstract" and pred.startswith("p"):
         return f"{tag_word(pred)} tagged"
     return pred_words(pred)
 
 
 def _binary_query(pred, x, count, pack):
     label = "How many entities" if count else "Which entities"
-    if pack in {"surface", "abstract"} and pred.startswith("r"):
+    if pack == "abstract" and pred.startswith("r"):
         return f"{label} is {x} {rel_word(pred)} to?"
     if pred in {"parent", "ancestor", "sibling", "spouse", "aunt_or_uncle"}:
         rel = pred_words(pred)
@@ -1014,14 +1056,7 @@ def _join_answer(xs):
 
 
 def _hard_answer_atoms(atoms, res, cfg):
-    lo = int(cfg.min_target_depth)
-    hi = int(min(cfg.max_target_depth, cfg.max_depth))
-    return [
-        a for a in atoms
-        if a in res.derivations
-        and lo <= res.derivations[a].depth <= hi
-        and len(support_atoms(a, res.derivations)) >= cfg.min_target_support_size
-    ]
+    return [a for a in atoms if a in res.derivations and hard_target(a, res.derivations, cfg)]
 
 
 def _world_query(theory, res, source, cfg):
@@ -1037,7 +1072,7 @@ def _world_query(theory, res, source, cfg):
                 atoms = [Atom(sig.name, (x,)) for x in theory.entities[sig.arg_types[0]]]
                 answer_atoms = [a for a in atoms if _entails(theory, res, a)]
                 hard = _hard_answer_atoms(answer_atoms, res, cfg)
-                if not answer_atoms or not hard:
+                if not answer_atoms or len(hard) != len(answer_atoms):
                     continue
                 answers = sorted(a.args[0] for a in answer_atoms)
                 pred = _query_words(sig.name, theory.domain_pack)
@@ -1052,7 +1087,7 @@ def _world_query(theory, res, source, cfg):
                 atoms = [Atom(sig.name, (x, y)) for y in ys if y != x]
                 answer_atoms = [a for a in atoms if _entails(theory, res, a)]
                 hard = _hard_answer_atoms(answer_atoms, res, cfg)
-                if not answer_atoms or not hard:
+                if not answer_atoms or len(hard) != len(answer_atoms):
                     continue
                 answers = sorted(a.args[1] for a in answer_atoms)
                 question = _binary_query(sig.name, x, qmode == "count", theory.domain_pack)
@@ -1157,14 +1192,15 @@ class MultistepNLI(Task):
         if case:
             meta = case_metadata(case, key)
             meta.payload = Payload(premise="\n".join(meta.premise), hypothesis=meta.hypothesis)
-            return Problem(meta, case.label)
+            mapping = {"entailment": "yes", "contradiction": "no", "neutral": "maybe"}
+            return Problem(meta, mapping[case.label])
         raise RuntimeError("could not generate a consistent multistep_nli example")
 
     def prompt(self, meta):
         return (
             f"{Payload(meta.payload)}\n\n"
-            "Classify the hypothesis as entailment, contradiction, or neutral. "
-            "The answer is one label."
+            "Does the premise entail the hypothesis? "
+            "The answer is yes, no, or maybe."
         )
 
     def score_answer(self, answer, entry):

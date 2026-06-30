@@ -1080,3 +1080,344 @@ class ConstrainedContinuation(Task):
         if grammatical:
             return 0.3 + 0.6 * blank_correct   # 0.3 – 0.9
         return 0.15 * blank_correct             # 0.0 – 0.15
+
+
+# --- Stress continuation: valid_next(G, prefix) with delayed recursive state ---
+#
+# One generic constructor, no per-grammar templates. Given a recursive CFG, it
+# builds a paired prefix: identical k-token tail, different valid-next sets. The
+# shared window certifies the answer is non-local; it depends on carried parse
+# state rather than the visible suffix.
+
+INF = float("inf")
+
+@dataclass
+class StressContinuationConfig(Config):
+    depth: int = 2
+    n_types: int = 3
+    window: int = 4
+    max_answer: int = 8
+    def update(self, c):
+        self.depth += c
+        self.n_types = min(6, self.n_types + c)
+
+def _typed_dyck(n_types):
+    pairs = [("(", ")"), ("[", "]"), ("<", ">"), ("{", "}"),
+             ("/", "\\"), (":", ";")][:n_types]
+    items = " | ".join(f"'{o}' S '{c}'" for o, c in pairs) + " | 'x'"
+    return CFG.fromstring(f"S -> Item Tail\nTail -> Item Tail |\nItem -> {items}")
+
+def _stress_sources(config):
+    return {
+        "dyck": _typed_dyck(config.n_types),
+        "agreement": CFG.fromstring("""
+            S -> NP_sg VP_sg | NP_pl VP_pl
+            NP_sg -> 'the' N_sg RC | 'the' N_sg
+            NP_pl -> 'the' N_pl RC | 'the' N_pl
+            RC -> 'that' NP_sg V_sg | 'that' NP_pl V_pl
+            VP_sg -> 'runs' | 'sleeps'
+            VP_pl -> 'run' | 'sleep'
+            V_sg -> 'sees' | 'likes'
+            V_pl -> 'see' | 'like'
+            N_sg -> 'student' | 'teacher'
+            N_pl -> 'students' | 'teachers'
+        """),
+        "filler_gap": CFG.fromstring("""
+            S -> WHO AUX NP Vt | WHY AUX NP Adj
+            WHO -> 'what' | 'who'
+            WHY -> 'why' | 'when'
+            AUX -> 'do'
+            NP -> 'the' N RC | 'the' N
+            RC -> 'that' NP Vt
+            N -> 'kids' | 'cooks'
+            Vt -> 'see' | 'like' | 'find'
+            Adj -> 'happy' | 'sad' | 'kind'
+        """),
+    }
+
+def _render_rules(g):
+    return "\n".join(str(p) for p in g.productions())
+
+def _stress_answer(g, prefix):
+    toks, stop, _ = get_valid_next_tokens(g, prefix)
+    out = set(toks)
+    if stop:
+        out.add("STOP")
+    return out
+
+def _by_lhs(g):
+    d = defaultdict(list)
+    for p in g.productions():
+        d[p.lhs()].append(p)
+    return d
+
+def _reaches(by):
+    reach = {nt: {s for p in ps for s in p.rhs()
+                  if isinstance(s, Nonterminal)}
+             for nt, ps in by.items()}
+    changed = True
+    while changed:
+        changed = False
+        for nt in reach:
+            add = set().union(*(reach.get(m, set()) for m in reach[nt]))
+            add -= reach[nt]
+            if add:
+                reach[nt] |= add
+                changed = True
+    return reach
+
+def _min_height(by):
+    h = {nt: INF for nt in by}
+    changed = True
+    while changed:
+        changed = False
+        for nt, prods in by.items():
+            for p in prods:
+                v = 1 + max((0 if isinstance(s, str) else h.get(s, INF)
+                             for s in p.rhs()), default=0)
+                if v < h[nt]:
+                    h[nt] = v
+                    changed = True
+    return h
+
+def _terminable(p, h):
+    return all(isinstance(s, str) or h.get(s, INF) < INF for s in p.rhs())
+
+def _children(by, x):
+    return {s for p in by[x] for s in p.rhs() if isinstance(s, Nonterminal)}
+
+def _expand_min(sym, h, by):
+    if isinstance(sym, str):
+        return [sym]
+    p = min((p for p in by[sym] if _terminable(p, h)),
+            key=lambda p: max((0 if isinstance(s, str) else h[s]
+                               for s in p.rhs()), default=0))
+    return [t for s in p.rhs() for t in _expand_min(s, h, by)]
+
+def _expand_deep(sym, depth, h, by, reach, rec):
+    if isinstance(sym, str) or depth <= 0 or sym not in rec:
+        return _expand_min(sym, h, by)
+    reentr = lambda s: isinstance(s, Nonterminal) and (
+        s == sym or sym in reach.get(s, set()))
+    rp = [p for p in by[sym] if _terminable(p, h)
+          and any(reentr(s) for s in p.rhs())]
+    if not rp:
+        return _expand_min(sym, h, by)
+    p = random.choice(rp)
+    ri = next(i for i, s in enumerate(p.rhs()) if reentr(s))
+    return [t for i, s in enumerate(p.rhs())
+            for t in (_expand_deep(s, depth - 1, h, by, reach, rec)
+                      if i == ri else _expand_min(s, h, by))]
+
+def _route_to(sym, R, shared, h, by, reach, _d=0):
+    if sym == R:
+        return list(shared)
+    if isinstance(sym, str) or _d > 40:
+        return _expand_min(sym, h, by) if isinstance(sym, Nonterminal) else [sym]
+    reaching = lambda s: isinstance(s, Nonterminal) and (
+        s == R or R in reach.get(s, set()))
+    cands = [p for p in by[sym] if any(reaching(s) for s in p.rhs())]
+    if not cands:
+        return _expand_min(sym, h, by)
+    p = random.choice(cands)
+    ri = next(j for j, s in enumerate(p.rhs()) if reaching(s))
+    out = []
+    for j, s in enumerate(p.rhs()):
+        if j == ri:
+            out += _route_to(s, R, shared, h, by, reach, _d + 1)
+        else:
+            out += _expand_min(s, h, by) if isinstance(s, Nonterminal) else [s]
+    return out
+
+def _feature_sites(by, reach, rec):
+    sites = []
+    for prods in by.values():
+        for p, q in ((a, b) for a in prods for b in prods if a is not b):
+            for i in range(min(len(p.rhs()), len(q.rhs())) - 1):
+                xp, xq = p.rhs()[i], q.rhs()[i]
+                if not (isinstance(xp, Nonterminal) and isinstance(xq, Nonterminal)):
+                    continue
+                common = ({xp} | reach.get(xp, set())) & (
+                    {xq} | reach.get(xq, set())) & rec
+                if not common:
+                    continue
+                kids = common & _children(by, xp) & _children(by, xq)
+                R = xp if xp == xq and xp in common else min(kids or common, key=str)
+                sites.append((p, q, i, R))
+    return sites
+
+def _build_side(prod, i, R, shared, h, by, reach):
+    out = []
+    for j, s in enumerate(prod.rhs()):
+        if j < i:
+            out += _expand_min(s, h, by) if isinstance(s, Nonterminal) else [s]
+        elif j == i:
+            out += _route_to(s, R, shared, h, by, reach)
+        else:
+            break
+    return out
+
+def _analyze(g):
+    by = _by_lhs(g)
+    reach = _reaches(by)
+    rec = {nt for nt in reach if nt in reach[nt]}
+    return by, reach, rec, _min_height(by), _feature_sites(by, reach, rec)
+
+def _stress_pair(g, analysis, depth, k, max_answer, tries=60):
+    by, reach, rec, h, sites = analysis
+    for p, q, i, R in random.sample(sites, min(tries, len(sites))):
+        shared = _expand_deep(R, depth, h, by, reach, rec)
+        pa = _build_side(p, i, R, shared, h, by, reach)
+        pb = _build_side(q, i, R, shared, h, by, reach)
+        if len(pa) < k or len(pb) < k or pa[-k:] != pb[-k:]:
+            continue
+        aa, ab = _stress_answer(g, pa), _stress_answer(g, pb)
+        if aa == ab or not (aa and ab):
+            continue
+        if max(len(aa), len(ab)) > max_answer:
+            continue
+        return (pa, aa), (pb, ab), dict(lhs=str(p.lhs()), R=str(R))
+    return None
+
+class StressContinuation(DevTask):
+    def __init__(self, config: StressContinuationConfig = StressContinuationConfig()):
+        super().__init__(config=config)
+        self._sources = _stress_sources(self.config)
+        self._analysis = {name: _analyze(g) for name, g in self._sources.items()}
+        self.bank = defaultdict(list)
+
+    def generate(self):
+        names = list(self._sources)
+        k = self.config.window
+        for _ in range(200):
+            name = random.choice(names)
+            g = self._sources[name]
+            depth = self.config.depth + k + random.randint(0, 2)
+            pair = _stress_pair(g, self._analysis[name], depth, k,
+                                self.config.max_answer)
+            if not pair:
+                continue
+            (pa, aa), (pb, ab), m = pair
+            for pfx, ans in ((pa, aa), (pb, ab)):
+                self.bank[tuple(pfx[-k:])].append(frozenset(ans))
+            prefix, answer = random.choice([(pa, aa), (pb, ab)])
+            meta = edict(g=_render_rules(g), prefix=prefix, source=name,
+                         depth=depth, lhs=m["lhs"], feature=m["R"],
+                         answer_size=len(answer), window=" ".join(prefix[-k:]),
+                         suffix_flip=True)
+            return Problem(meta, "|".join(sorted(answer)))
+        raise ValueError("Failed to generate StressContinuation case after 200 attempts")
+
+    def prompt(self, meta):
+        pfx = " ".join(meta.prefix) if meta.prefix else "<empty>"
+        return (
+            "Given this projected CFG and prefix, list every terminal that may legally come next.\n"
+            "If the prefix is already a complete string, include STOP. "
+            "The answer is sorted alphabetically and separated by |.\n"
+            f"(GRAMMAR)\n{meta.g}\n\n(PREFIX)\n{pfx}"
+        )
+
+    def score_answer(self, answer, entry):
+        try:
+            ref = {x.strip() for x in entry["answer"].split("|") if x.strip()}
+            ans = {x.strip() for x in str(answer).split("|") if x.strip()}
+            return len(ref & ans) / max(1, len(ref | ans))
+        except Exception:
+            return 0.0
+
+
+# --- Stress + constrained continuation: deep reentrant difficulty, worked (space-separated) answer ---
+#
+# Keeps stress_continuation's controlled-difficulty generator (deep recursive derivations via
+# _expand_deep routed from the start through a recursive symbol with _route_to) but, like
+# constrained_continuation, asks for a WORKED continuation (terminals that complete the prefix into a
+# grammatical string), space-separated — NOT the |-joined set of legal next tokens. Under answer-only
+# loss this trains the procedure (close nested brackets / satisfy center-embedded agreement) in a
+# natural token format, instead of an unnatural option-set answer key.
+
+def _recursive_targets(start, by, reach, rec):
+    return [R for R in rec if R == start or R in reach.get(start, set())]
+
+@dataclass
+class StressConstrainedContinuationConfig(Config):
+    depth: int = 3
+    n_types: int = 4
+    min_cont: int = 2
+    max_cont: int = 12
+    dyck_weight: float = 0.34   # favor word grammars (agreement/filler_gap) over bracket-heavy dyck
+    def update(self, c):
+        self.depth += c
+        self.n_types = min(6, self.n_types + c)
+        self.max_cont = min(20, self.max_cont + 2 * c)
+
+class StressConstrainedContinuation(Task):
+    def __init__(self, config: StressConstrainedContinuationConfig = StressConstrainedContinuationConfig()):
+        super().__init__(config=config)
+        self._sources = _stress_sources(self.config)
+        self._analysis = {name: _analyze(g) for name, g in self._sources.items()}
+        self.balancing_key_ratio = 0.34
+
+    def generate(self):
+        names = list(self._sources)
+        weights = [self.config.dyck_weight if n == "dyck" else 1.0 for n in names]
+        for _ in range(300):
+            name = random.choices(names, weights=weights, k=1)[0]
+            g = self._sources[name]
+            by, reach, rec, h, sites = self._analysis[name]
+            start = g.start()
+            targets = _recursive_targets(start, by, reach, rec)
+            if not targets:
+                continue
+            R = random.choice(targets)
+            depth = self.config.depth + random.randint(0, 2)
+            shared = _expand_deep(R, depth, h, by, reach, rec)
+            full = _route_to(start, R, shared, h, by, reach)
+            if len(full) < 4:
+                continue
+            lo, hi = max(1, len(full) // 4), max(2, (3 * len(full)) // 4)
+            cut = random.randint(lo, hi)
+            prefix, cont = full[:cut], full[cut:]
+            if not (self.config.min_cont <= len(cont) <= self.config.max_cont):
+                continue
+            nxt, stp, _u = get_valid_next_tokens(g, prefix)
+            if not nxt and not stp:    # prefix must be a valid grammatical prefix
+                continue
+            try:
+                ok = next(EarleyChartParser(g).parse(full), None) is not None
+            except Exception:
+                ok = False
+            if not ok:
+                continue
+            meta = edict(g=_render_rules(g), source=name, prefix=prefix,
+                         depth=depth, full_len=len(full), cont_len=len(cont),
+                         lhs=str(start), feature=str(R))
+            return Problem(meta, " ".join(cont))
+        raise ValueError("Failed to generate StressConstrainedContinuation after 300 attempts")
+
+    def prompt(self, meta):
+        pfx = " ".join(meta.prefix) if meta.prefix else "<empty>"
+        return (
+            "Given this CFG and a prefix from a deep derivation, continue it: provide terminals that, "
+            "appended to the prefix, complete it into a grammatical string.\n"
+            "The answer is the continuation terminals, space-separated.\n"
+            f"(GRAMMAR)\n{meta.g}\n\n(PREFIX)\n{pfx}"
+        )
+
+    def score_answer(self, answer, entry):
+        if not answer:
+            return 0.0
+        ans = str(answer).strip().split()
+        ref = entry["answer"].split()
+        try:
+            g = CFG.fromstring(entry.metadata["g"])
+            full = list(entry.metadata["prefix"]) + ans
+            grammatical = next(EarleyChartParser(g).parse(full), None) is not None
+        except Exception:
+            grammatical = False
+        if grammatical:
+            return 1.0
+        m = sum(1 for a, b in zip(ans, ref) if a == b)   # partial credit: aligned-token agreement
+        return 0.5 * m / max(1, len(ref))
+
+    def balancing_key(self, problem):
+        return problem.metadata["source"]

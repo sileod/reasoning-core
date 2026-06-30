@@ -1,4 +1,3 @@
-
 import json
 import random, re, itertools
 from pathlib import Path
@@ -7,7 +6,7 @@ import exrex
 import regex
 from dataclasses import dataclass
 from gramforge import init_grammar, generate
-from reasoning_core.template import Task, Problem, register_dataset, Reward, Config
+from reasoning_core.template import Task, DevTask, Problem, register_dataset, Reward, Config
 from easydict import EasyDict as edict
 from faker import Faker
 import sys, os
@@ -510,7 +509,7 @@ def _has_regex_abstraction(pattern):
     return bool(regex.search(r"(?<!\\)[|*+?{\[.]|\\[dDwW]", pattern))
 
 
-class RegexRetrieval(Task):
+class RegexRetrieval(DevTask):
     def __init__(self, config=RegexRetrievalConfig()):
         super().__init__(config=config)
 
