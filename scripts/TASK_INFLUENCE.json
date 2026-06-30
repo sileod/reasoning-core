@@ -10,8 +10,17 @@
       "train_steps": 300
     }
   ],
-  "generated_at": "2026-06-30T08:03:32.935009+00:00",
+  "generated_at": "2026-06-30T09:25:56.555350+00:00",
   "influence_runs": [
+    {
+      "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/influence_TABLETASKS0630_S43_T300_M20_dolci_pretrained.json",
+      "init": "pretrained",
+      "main": "dolci",
+      "model": "HuggingFaceTB/SmolLM2-135M",
+      "seed": 43,
+      "tag": "TABLETASKS0630_S43_T300_M20_dolci_pretrained",
+      "train_steps": 300
+    },
     {
       "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/influence_TASKQUALITY_S43_T300_M20_dolci_pretrained.json",
       "init": "pretrained",
@@ -39,7 +48,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 126.25,
+      "prompt_tokens_mean": 127.5,
       "rank": 1,
       "saturation": {
         "acc0": {
@@ -92,7 +101,7 @@
     {
       "acc_end": 0.73125,
       "acc_start": 0.0,
-      "answer_tokens_mean": 27.0,
+      "answer_tokens_mean": 13.0,
       "bbh_delta": -0.42671536489297424,
       "behavior_hash": "3cd7ee827f337ad5",
       "category": "logic_depth",
@@ -104,7 +113,7 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 190.0,
+      "prompt_tokens_mean": 168.75,
       "rank": 2,
       "saturation": {
         "acc0": {
@@ -155,6 +164,71 @@
       "task": "multistep_nli"
     },
     {
+      "acc_end": 0.7625,
+      "acc_start": 0.0,
+      "answer_tokens_mean": 1.0,
+      "bbh_delta": -0.36773221370197184,
+      "behavior_hash": "830dbc7a45a4813d",
+      "category": "table_qa",
+      "contrastive_score": NaN,
+      "dolci_delta": 0.004845011789542442,
+      "flan_delta": -0.03227824723793704,
+      "fw_delta": -0.0019131503673897043,
+      "influence_score": 0.12160011742660637,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 178.5,
+      "rank": 3,
+      "saturation": {
+        "acc0": {
+          "mean": 0.0,
+          "n": 1,
+          "std": 0.0
+        },
+        "acc_final": {
+          "mean": 0.7625,
+          "n": 1,
+          "std": 0.0
+        },
+        "auc": {
+          "mean": 0.47678571428571426,
+          "n": 1,
+          "std": 0.0
+        },
+        "sat_step": {
+          "mean": 200.0,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "source_file": "reasoning_core/tasks/table_qa.py",
+      "source_modified": "2026-06-30 09:25 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.36773221370197184,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": 0.004845011789542442,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.03227824723793704,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": -0.0019131503673897043,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "table_equivalence"
+    },
+    {
       "acc_end": 0.8166666666666667,
       "acc_start": 0.029166666666666667,
       "answer_tokens_mean": 2.0,
@@ -169,8 +243,8 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 126.75,
-      "rank": 3,
+      "prompt_tokens_mean": 126.0,
+      "rank": 4,
       "saturation": {
         "acc0": {
           "mean": 0.029166666666666667,
@@ -234,8 +308,8 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 130.75,
-      "rank": 4,
+      "prompt_tokens_mean": 122.5,
+      "rank": 5,
       "saturation": {
         "acc0": {
           "mean": 0.0,
@@ -287,7 +361,7 @@
     {
       "acc_end": 0.8048913043478261,
       "acc_start": 0.13043478260869565,
-      "answer_tokens_mean": 49.75,
+      "answer_tokens_mean": 54.75,
       "bbh_delta": -0.2820258340762769,
       "behavior_hash": "3cd7ee827f337ad5",
       "category": "logic_depth",
@@ -299,8 +373,8 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 153.75,
-      "rank": 5,
+      "prompt_tokens_mean": 148.5,
+      "rank": 6,
       "saturation": {
         "acc0": {
           "mean": 0.13043478260869565,
@@ -350,69 +424,69 @@
       "task": "logic_qa"
     },
     {
-      "acc_end": 0.7036163522012578,
-      "acc_start": 0.1792452830188679,
-      "answer_tokens_mean": 9.25,
-      "bbh_delta": -0.24019281122520653,
-      "behavior_hash": "169a9ebe536d45fc",
-      "category": "grammar",
-      "contrastive_score": 0.08018044305567651,
-      "dolci_delta": 0.0005282913065285388,
-      "flan_delta": -0.03702849935900243,
-      "fw_delta": 0.0006552762229032894,
-      "influence_score": 0.07966974789859156,
+      "acc_end": 0.6491228070175439,
+      "acc_start": 0.3508771929824561,
+      "answer_tokens_mean": 12.25,
+      "bbh_delta": -0.28339384839704707,
+      "behavior_hash": "830dbc7a45a4813d",
+      "category": "table_qa",
+      "contrastive_score": NaN,
+      "dolci_delta": 0.0014972859583344267,
+      "flan_delta": -0.028328871288182622,
+      "fw_delta": 0.0003618438090180476,
+      "influence_score": 0.0938449062098982,
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 200.25,
-      "rank": 6,
+      "prompt_tokens_mean": 140.0,
+      "rank": 7,
       "saturation": {
         "acc0": {
-          "mean": 0.1792452830188679,
-          "n": 2,
-          "std": 0.25349111023668686
+          "mean": 0.3508771929824561,
+          "n": 1,
+          "std": 0.0
         },
         "acc_final": {
-          "mean": 0.7036163522012578,
-          "n": 2,
-          "std": 0.06559638378931812
+          "mean": 0.6491228070175439,
+          "n": 1,
+          "std": 0.0
         },
         "auc": {
-          "mean": 0.540318957771788,
-          "n": 2,
-          "std": 0.006511989674000116
+          "mean": 0.5396825396825397,
+          "n": 1,
+          "std": 0.0
         },
         "sat_step": {
-          "mean": 150.0,
-          "n": 2,
-          "std": 70.71067811865476
+          "mean": 200.0,
+          "n": 1,
+          "std": 0.0
         }
       },
-      "source_file": "reasoning_core/tasks/grammar.py",
-      "source_modified": "2026-06-29 09:41 UTC",
+      "source_file": "reasoning_core/tasks/table_qa.py",
+      "source_modified": "2026-06-30 09:25 UTC",
       "targets": {
         "bbh": {
-          "mean": -0.24019281122520653,
+          "mean": -0.28339384839704707,
           "n": 1,
           "std": 0.0
         },
         "dolci": {
-          "mean": 0.0005282913065285388,
+          "mean": 0.0014972859583344267,
           "n": 1,
           "std": 0.0
         },
         "flan": {
-          "mean": -0.03702849935900243,
+          "mean": -0.028328871288182622,
           "n": 1,
           "std": 0.0
         },
         "fw": {
-          "mean": 0.0006552762229032894,
+          "mean": 0.0003618438090180476,
           "n": 1,
           "std": 0.0
         }
       },
-      "task": "stress_constrained_continuation"
+      "task": "table_qa"
     },
     {
       "acc_end": 0.7465277777777778,
@@ -430,7 +504,7 @@
       "n_runs": 1,
       "ok": true,
       "prompt_tokens_mean": 256.0,
-      "rank": 7,
+      "rank": 8,
       "saturation": {
         "acc0": {
           "mean": 0.3236111111111111,
@@ -482,7 +556,7 @@
     {
       "acc_end": 0.7144324122479462,
       "acc_start": 0.28416728902165794,
-      "answer_tokens_mean": 17.5,
+      "answer_tokens_mean": 12.25,
       "bbh_delta": -0.1689619070473518,
       "behavior_hash": "da074542ea9f5644",
       "category": "binding",
@@ -494,8 +568,8 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 116.0,
-      "rank": 8,
+      "prompt_tokens_mean": 111.25,
+      "rank": 9,
       "saturation": {
         "acc0": {
           "mean": 0.28416728902165794,
@@ -547,7 +621,7 @@
     {
       "acc_end": 0.8057692307692308,
       "acc_start": 0.2123076923076923,
-      "answer_tokens_mean": 66.75,
+      "answer_tokens_mean": 59.0,
       "bbh_delta": -0.15757324484013413,
       "behavior_hash": "3cd7ee827f337ad5",
       "category": "logic_depth",
@@ -559,8 +633,8 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 235.75,
-      "rank": 9,
+      "prompt_tokens_mean": 233.75,
+      "rank": 10,
       "saturation": {
         "acc0": {
           "mean": 0.2123076923076923,
@@ -612,7 +686,7 @@
     {
       "acc_end": 0.7552321945401923,
       "acc_start": 0.3462847419171866,
-      "answer_tokens_mean": 18.25,
+      "answer_tokens_mean": 10.25,
       "bbh_delta": -0.1491970251534731,
       "behavior_hash": "657c1f4a98174d26",
       "category": "set_operations",
@@ -624,8 +698,8 @@
       "issue": "",
       "n_runs": 1,
       "ok": true,
-      "prompt_tokens_mean": 88.5,
-      "rank": 10,
+      "prompt_tokens_mean": 68.75,
+      "rank": 11,
       "saturation": {
         "acc0": {
           "mean": 0.3462847419171866,
@@ -673,9 +747,82 @@
         }
       },
       "task": "set_expression"
+    },
+    {
+      "acc_end": 0.21428571428571427,
+      "acc_start": 0.21428571428571427,
+      "answer_tokens_mean": 2.0,
+      "bbh_delta": -0.03267564583773641,
+      "behavior_hash": "830dbc7a45a4813d",
+      "category": "table_qa",
+      "contrastive_score": NaN,
+      "dolci_delta": 0.01160822800859207,
+      "flan_delta": -0.0016325478758552059,
+      "fw_delta": -0.004655809484992002,
+      "influence_score": 0.008574409104712114,
+      "issue": "",
+      "n_runs": 1,
+      "ok": true,
+      "prompt_tokens_mean": 403.75,
+      "rank": 12,
+      "saturation": {
+        "acc0": {
+          "mean": 0.21428571428571427,
+          "n": 1,
+          "std": 0.0
+        },
+        "acc_final": {
+          "mean": 0.21428571428571427,
+          "n": 1,
+          "std": 0.0
+        },
+        "auc": {
+          "mean": 0.21428571428571427,
+          "n": 1,
+          "std": 0.0
+        },
+        "sat_step": {
+          "mean": 0.0,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "source_file": "reasoning_core/tasks/table_qa.py",
+      "source_modified": "2026-06-30 09:25 UTC",
+      "targets": {
+        "bbh": {
+          "mean": -0.03267564583773641,
+          "n": 1,
+          "std": 0.0
+        },
+        "dolci": {
+          "mean": 0.01160822800859207,
+          "n": 1,
+          "std": 0.0
+        },
+        "flan": {
+          "mean": -0.0016325478758552059,
+          "n": 1,
+          "std": 0.0
+        },
+        "fw": {
+          "mean": -0.004655809484992002,
+          "n": 1,
+          "std": 0.0
+        }
+      },
+      "task": "table_statistics"
     }
   ],
   "saturation_runs": [
+    {
+      "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/sat_TABLETASKS0630_S43_T300_M20_dolci_pretrained.json",
+      "init": "pretrained",
+      "main": "dolci",
+      "seed": 43,
+      "tag": "TABLETASKS0630_S43_T300_M20_dolci_pretrained",
+      "train_steps": 300
+    },
     {
       "file": "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/per_task_results/sat_TASKQUALITY_CONTRAST_S43_T300_M20_dolci_pretrained.json",
       "init": "pretrained",

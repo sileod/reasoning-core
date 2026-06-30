@@ -754,7 +754,7 @@ def main():
     contrastive, contrast_runs = collect_influence(contrast_paths)
     saturation, sat_runs = collect_saturation(sat_paths)
 
-    all_names = sorted(set(task_names) | set(influence) | set(saturation))
+    all_names = task_names if args.tasks else sorted(set(task_names) | set(influence) | set(saturation))
     inventory = task_inventory(all_names)
     scores = aggregate_scores(all_names, influence, saturation, args.weights)
     c_scores = contrastive_scores(all_names, contrastive)

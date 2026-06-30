@@ -1350,7 +1350,7 @@ class StressConstrainedContinuationConfig(Config):
         self.n_types = min(6, self.n_types + c)
         self.max_cont = min(20, self.max_cont + 2 * c)
 
-class StressConstrainedContinuation(Task):
+class StressConstrainedContinuation(DevTask):
     def __init__(self, config: StressConstrainedContinuationConfig = StressConstrainedContinuationConfig()):
         super().__init__(config=config)
         self._sources = _stress_sources(self.config)

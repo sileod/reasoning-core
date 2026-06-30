@@ -49,7 +49,7 @@ Useful options:
 
 - `--refresh`: recompute all local task checks, even when hashes match.
 - `--no-local`: skip task generation and only aggregate existing result JSONs.
-- `--tasks task_a task_b`: restrict local checks/ranking seed tasks.
+- `--tasks task_a task_b`: restrict local checks and output rows.
 - `--include TAG`: only read result files containing `TAG`; repeatable.
 - `--exclude TAG`: skip result files containing `TAG`; repeatable.
 - `--weight flan=3`: override ranking weights; repeatable.

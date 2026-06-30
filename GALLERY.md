@@ -1,8 +1,8 @@
 # 📖 Task Gallery
 
-48 tasks
+49 tasks
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`tptp_entailement`](#tptp_entailement) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`stress_constrained_continuation`](#stress_constrained_continuation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`tptp_entailement`](#tptp_entailement) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_equivalence`](#table_equivalence) · [`table_statistics`](#table_statistics) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win)
 
 ---
 
@@ -250,14 +250,14 @@ C
 Reduce the following untyped λ-term to β-normal form.
 Syntax: `\x.body` is λx.body; juxtaposition is left-associative application; free identifiers are constants.
 
-Term: ((\v0.(((\v1.v0) (\v1.c)) (v0 (d d)))) (((\v0.(v0 v0)) d) (((\v0.(v0 b)) (a b)) ((c c) ((\v0.v0) d)))))
+Term: ((\_5.(\v0.(_5 (\v1.(b (\v2.((\_1.(\v1.((\_4._1) c))) ((\_2.(_2 a)) (\_0.v0))))))))) (\_3._3))
 
 The answer is the β-normal form (compared up to α-equivalence).
 ```
 
 **Answer:**
 ```
-(((d d) (((a b) b) ((c c) d))) (((d d) (((a b) b) ((c c) d))) (d d)))
+(\v0.(\v1.(b (\v2.(\v1.v0)))))
 ```
 
 ---
@@ -389,22 +389,21 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-clara trusts alice.
-alice helps david.
-alice is not active.
-bruno is active.
-alice is approved.
-alice is not trained.
-david is careful.
-From x trusts y and y helps z, it follows that x advises z.
-From x advises z, it follows that x is active.
-Every trusted entity is not trained.
-From x helps y and y trusts z, it follows that x advises z.
-For all x, y, if x advises y and y is trusted, then x is careful.
-When one person trusts a second person and the second helps a third person, the first advises the third.
+bruno is a parent of alice.
+alice is a parent of david.
+clara is a sibling of bruno.
+alice helps bruno.
+bruno is careful.
+clara is patient.
+Whenever x is a parent of y, x is an ancestor of y.
+Whenever x is a parent of y and y is an ancestor of z, x is an ancestor of z.
+For all p, x, y, if p is a parent of x and p is a parent of y and x is different from y, then x is a sibling of y.
+From x is a sibling of y, it follows that y is a sibling of x.
+Whenever x is a spouse of y, y is a spouse of x.
+For all x, y, z, if x is a parent of y and x is a sibling of z, then z is an aunt or uncle of y.
 
 Hypothesis:
-clara is active.
+clara is an aunt or uncle of alice.
 
 Does the premise entail the hypothesis? The answer is yes, no, or maybe.
 ```
@@ -421,30 +420,30 @@ yes
 **Prompt:**
 ```
 Premise:
-[0] david helps bruno.
-[1] bruno is verified.
-[2] david advises bruno.
-[3] clara is careful.
-[4] bruno helps david.
-[5] clara trusts alice.
-[6] clara is not trusted.
-[7] From x helps y and y is verified, it follows that x is trusted.
-[8] All things that are trusted are careful.
-[9] For all x, y, if x advises y and y is careful, then x is approved.
-[10] From x trusts y and x is careful, it follows that y is not active.
-[11] If a trained person trusts someone, then that other person is trusted.
-[12] For all x, y, if x trusts y and y is approved, then x is trusted.
+[0] map is inside box.
+[1] box is inside lamp.
+[2] key is blocked.
+[3] lamp is fixed.
+[4] key is visible.
+[5] lamp is left of box.
+[6] From x is left of y, it follows that y is right of x.
+[7] Whenever x is above y, y is below x.
+[8] For all x, y, if x is inside y, then y contains x.
+[9] From x is inside y and y is inside z, it follows that x is inside z.
+[10] Whenever x is left of y and y is left of z, x is left of z.
+[11] When one person is above a second person and the second is above a third person, the first is above the third.
+[12] For all x, y, if x is disjoint from y, then y is disjoint from x.
 
 Hypothesis:
-david is careful.
+lamp does not contain map.
 
-Which premise statements are necessary to entail the hypothesis, meaning removing any one of them breaks that result?
+Which premise statements are necessary to contradict the hypothesis, meaning removing any one of them breaks that result?
 Answer with space-separated indexes.
 ```
 
 **Answer:**
 ```
-0 1 7 8
+0 1 8 9
 ```
 
 ---
@@ -454,21 +453,21 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-[0] david is trusted.
-[1] alice is active.
-[2] Every trusted entity is approved.
-[3] For all x, if x is approved, then x is verified.
+[0] clara is careful.
+[1] alice is verified.
+[2] Every careful entity is trained.
+[3] Every trained entity is active.
 
 Hypothesis:
-alice is verified.
+bruno is active.
 
 Candidate Facts:
-[0] alice is trusted.
-[1] bruno is trusted.
-[2] clara is careful.
-[3] alice is not trusted.
-[4] alice is trained.
-[5] clara is trusted.
+[0] bruno is not careful.
+[1] alice helps clara.
+[2] david trusts clara.
+[3] alice is active.
+[4] david is careful.
+[5] bruno is careful.
 
 Which candidate facts, if added to the premise, make the premise entail the hypothesis?
 Answer with space-separated indexes.
@@ -476,7 +475,7 @@ Answer with space-separated indexes.
 
 **Answer:**
 ```
-0
+5
 ```
 
 ---
@@ -486,22 +485,22 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-clara advises bruno.
-bruno is active.
-clara is not active.
-bruno trusts alice.
-bruno is careful.
-alice is careful.
-david is careful.
-If a person advises a active person, then that person is careful.
-Every careful entity is trained.
-For all x, y, if x trusts y, then y helps x.
-A person is trusted when a person advises a trained person.
-From x is active and x is approved, it follows that x is trained.
-For all x, if x is verified, then x is careful.
+clara trusts david.
+david advises alice.
+clara helps david.
+clara is not verified.
+bruno is verified.
+clara is active.
+alice is active.
+For all x, y, z, if x trusts y and y advises z, then x helps z.
+For all x, z, if x helps z, then x is trained.
+Whenever x is approved, x is trained.
+Whenever x trusts y, y does not advises x.
+For all x, y, if x helps y and y is active, then x is approved.
+For all x, y, z, if x helps y and y trusts z, then x advises z.
 
 Question:
-How many entities are trusted?
+How many entities are approved?
 
 Answer with one integer.
 ```
@@ -582,14 +581,14 @@ How many times does 1 appear? The answer is a number.
 
 **Prompt:**
 ```
-A: {7, 20, 13, 5, 4, 25, 31, 23}
-C: {3, 8, 31, 19, 23, 20, 27, 13}
-Evaluate (C-A).
+A: {11, 6, 3, 17, 19, 32, 16, 29}
+C: {1, 23, 20, 17, 11, 15, 2, 29}
+Evaluate (A^C).
 ```
 
 **Answer:**
 ```
-{19, 27, 3, 8}
+{1, 15, 16, 19, 2, 20, 23, 3, 32, 6}
 ```
 
 ---
@@ -850,48 +849,48 @@ Cases show facts that imply one new fact.
 Object names and link names may be consistently renamed, and each link name may also have its direction consistently reversed.
 
 M0
-a is alpha-linked to c.
-b is alpha-linked to a.
-c is beta-linked to d.
-e is beta-linked to b.
-Implies: a is beta-linked to b.
+a is alpha-linked to d.
+b is alpha-linked to e.
+e is alpha-linked to c.
+e is gamma-linked to c.
+Implies: c is gamma-linked to e.
 
 M1
-a is alpha-linked to d.
-c is alpha-linked to a.
-a is beta-linked to d.
+e is alpha-linked to d.
+c is beta-linked to a.
 d is beta-linked to b.
-Implies: a is beta-linked to c.
+a is gamma-linked to d.
+Implies: d is beta-linked to a.
 
 M2
-b is alpha-linked to d.
+a is alpha-linked to b.
+c is alpha-linked to a.
 d is alpha-linked to b.
-d is alpha-linked to c.
-c is beta-linked to a.
-Implies: b is beta-linked to d.
+b is beta-linked to a.
+Implies: d is beta-linked to a.
 
 M3
-d is alpha-linked to b.
-d is alpha-linked to c.
-c is beta-linked to a.
-c is beta-linked to d.
-Implies: a is alpha-linked to c.
+c is alpha-linked to b.
+d is beta-linked to b.
+e is beta-linked to b.
+a is gamma-linked to d.
+Implies: d is alpha-linked to b.
 
 Query
-u is delta-linked to v.
-u is delta-linked to z.
-x is delta-linked to y.
-x is delta-linked to z.
-y is delta-linked to x.
-u is gamma-linked to x.
-z is gamma-linked to u.
+u is delta-linked to x.
+z is epsilon-linked to v.
+v is gamma-linked to z.
+x is gamma-linked to v.
+y is gamma-linked to v.
+y is gamma-linked to x.
 z is gamma-linked to v.
+z is gamma-linked to y.
 Implies:
 ```
 
 **Answer:**
 ```
-y is gamma-linked to x.
+x is epsilon-linked to v.
 ```
 
 ---
@@ -901,13 +900,15 @@ y is gamma-linked to x.
 **Prompt:**
 ```
 (GRAMMAR)
-R0: S -> B
-R1: B -> 'if'
-R2: B -> B 'amount'
-R3: B -> D
+R0: start -> seq
+R1: seq -> 
+R2: seq -> expr seq
+R3: expr -> '(' seq ')'
+R4: expr -> '[' seq ']'
+R5: expr -> '<' seq '>'
 
 (STRING)
-if amount amount amount amount
+( < > [ ] ) ( ) < > [ ]
 
 (QUESTION)
 The answer is the rule labels used in the leftmost derivation of STRING, in order, separated by spaces.
@@ -915,7 +916,7 @@ The answer is the rule labels used in the leftmost derivation of STRING, in orde
 
 **Answer:**
 ```
-R0 R2 R2 R2 R2 R1
+R0 R2 R3 R2 R5 R1 R2 R4 R1 R1 R2 R3 R1 R2 R5 R1 R2 R4 R1 R1
 ```
 
 ---
@@ -925,12 +926,12 @@ R0 R2 R2 R2 R2 R1
 **Prompt:**
 ```
 (GRAMMAR)
-S -> B
-B -> B 'know'
-B -> 'character'
+S -> D
+D -> 'international'
+D -> 'direction' D
 
 (STRING)
-know know know know know
+direction direction direction international direction
 
 The answer is the shortest contiguous span from STRING that ends at the first invalid token and occurs only once in STRING.
 Mark the invalid token as >>token<<.
@@ -942,7 +943,7 @@ One line only.
 
 **Answer:**
 ```
->>know<<
+international >>direction<<
 ```
 
 ---
@@ -952,18 +953,15 @@ One line only.
 **Prompt:**
 ```
 (GRAMMAR)
-start -> seq
-seq -> 
-seq -> expr seq
-expr -> '(' seq ')'
-expr -> '[' seq ']'
-expr -> '<' seq '>'
+S -> D
+D -> 'respond'
+D -> D 'when'
 
 (PREFIX)
-< [ ] < > > < > <
+respond when
 
 (TEMPLATE)
-___ ___ )
+when ___ ___
 
 (SUFFIX)
 <empty>
@@ -974,44 +972,7 @@ The answer is the 3 tokens of the filled TEMPLATE, space-separated.
 
 **Answer:**
 ```
-> ( )
-```
-
----
-
-## [stress_constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
-
-**Prompt:**
-```
-Given this CFG and a prefix from a deep derivation, continue it: provide terminals that, appended to the prefix, complete it into a grammatical string.
-The answer is the continuation terminals, space-separated.
-(GRAMMAR)
-S -> WHO AUX NP Vt
-S -> WHY AUX NP Adj
-WHO -> 'what'
-WHO -> 'who'
-WHY -> 'why'
-WHY -> 'when'
-AUX -> 'do'
-NP -> 'the' N RC
-NP -> 'the' N
-RC -> 'that' NP Vt
-N -> 'kids'
-N -> 'cooks'
-Vt -> 'see'
-Vt -> 'like'
-Vt -> 'find'
-Adj -> 'happy'
-Adj -> 'sad'
-Adj -> 'kind'
-
-(PREFIX)
-why do the
-```
-
-**Answer:**
-```
-kids that the kids that the kids see see happy
+when when when
 ```
 
 ---
@@ -1023,22 +984,95 @@ kids that the kids that the kids see see happy
 Execute this SQL query on the table named dataframe:
 
 Table 1:
-rating,country
-2.6,Seychelles
-2.1,Finland
-3.7,Andorra
-1.4,Andorra
-3.6,Grenada
+product|revenue
+Draw|509,32
+Poor|998,28
+Glass|226,93
+Range|115,46
+General|469,89
 
 
-SQL: SELECT ROUND(MIN(rating), 2) FROM dataframe
+SQL: SELECT COUNT(*) FROM dataframe WHERE revenue > 501.43399999999997
 
 The answer is the result as single value.
 ```
 
 **Answer:**
 ```
-1.4
+2
+```
+
+---
+
+## [table_equivalence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
+
+**Prompt:**
+```
+Do these tables contain the same data?
+Ignore row order, column order, and table syntax. Match values by column name.
+
+Table A:
+customer	company
+Dylan Thompson	Adams and Sons
+Katie Taylor	Burch and Sons
+Veronica Sawyer	Green Group
+Mikayla Lee	Mcneil, Rivera and Pugh
+Robert Mann DDS	Wolf, Carter and Martinez
+
+
+Table B:
+- customer: Mikayla Lee
+  company: Mcneil, Rivera and Pugh
+- customer: Robert Mann DDS
+  company: Wolf, Carter and Martinez
+- customer: Veronica Sawyer
+  company: Green Group
+- customer: Dylan Thompson
+  company: Adams and Sons
+- customer: Katie Taylor
+  company: Burch and Sons
+
+
+Answer yes or no.
+```
+
+**Answer:**
+```
+yes
+```
+
+---
+
+## [table_statistics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
+
+**Prompt:**
+```
+Table:
+x0: 0.561; x1: 0.601; x2: 0.026; x3: 1.547; x4: -1.444
+x0: -1.539; x1: -1.575; x2: -1.508; x3: -0.376; x4: -0.025
+x0: 1.098; x1: 1.235; x2: 0.84; x3: 1.045; x4: 0.802
+x0: -0.019; x1: -0.069; x2: -0.775; x3: 1.434; x4: 0.976
+x0: 0.577; x1: 0.709; x2: 1.154; x3: 0.069; x4: 0.89
+x0: 1.452; x1: 1.456; x2: -0.222; x3: 1.067; x4: 0.243
+x0: -0.49; x1: -0.654; x2: 0.84; x3: -0.001; x4: 0.813
+x0: -0.601; x1: -0.659; x2: 1.142; x3: 0.235; x4: -1.041
+x0: 0.952; x1: 0.943; x2: 1.401; x3: -0.026; x4: 1.195
+x0: 0.546; x1: 0.47; x2: 0.483; x3: -0.854; x4: 2.048
+x0: 0.552; x1: 0.396; x2: 1.181; x3: 0.017; x4: -1.634
+x0: -0.91; x1: -0.92; x2: 0.807; x3: -0.841; x4: -1.97
+
+Find:
+column name most associated with column x0
+
+Metric:
+absolute Pearson correlation
+
+Answer with only the identifier.
+```
+
+**Answer:**
+```
+x1
 ```
 
 ---
@@ -1153,14 +1187,14 @@ Target: 0
 ```
 In this graph game, choose player's best move. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score.
 
-Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n5:70; n6:50. Edges: n0->n6; n1->n5; n2->n3,n5; n3->n6; n4->n5.
-Legal player moves now: n3, n5.
+Start: n0. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:80; n5:90; n6:40. Edges: n0->n1,n4; n1->n6; n2->n3; n3->n5,n6.
+Legal player moves now: n1, n4.
 The answer is the destination node of the best move.
 ```
 
 **Answer:**
 ```
-n5
+n4
 ```
 
 ---
@@ -1171,7 +1205,7 @@ n5
 ```
 In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
 
-Start: n1. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:0; n5:20; n6:10. Edges: n0->n5; n1->n4,n6; n2->n4; n3->n4.
+Start: n0. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n5:40; n6:0. Edges: n0->n1,n5; n1->n2,n4; n2->n6; n3->n6; n4->n6.
 The answer is yes or no.
 ```
 
