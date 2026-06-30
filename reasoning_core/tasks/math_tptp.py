@@ -884,7 +884,7 @@ class EntailConfig(Config):
         self.max_hypotheses += c
         self.max_payload_chars += 500 * c
 
-class ConjectureEntailment(Task):
+class TptpEntailement(Task):
     """
     A task that generates problems to determine if a set of hypotheses
     proves a given conjecture.

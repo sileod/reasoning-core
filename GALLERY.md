@@ -2,7 +2,7 @@
 
 48 tasks
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`conjecture_entailment`](#conjecture_entailment) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`stress_constrained_continuation`](#stress_constrained_continuation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`tptp_entailement`](#tptp_entailement) · [`tptp_consistency_repair`](#tptp_consistency_repair) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`multistep_nli`](#multistep_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`count_elements`](#count_elements) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`stress_constrained_continuation`](#stress_constrained_continuation) · [`table_qa`](#table_qa) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win)
 
 ---
 
@@ -105,30 +105,33 @@ False
 
 ---
 
-## [conjecture_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
+## [tptp_entailement](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
 
 **Prompt:**
 ```
 Decide if the premises entail the conjecture.
 
-TPTP source: SET001-3.ax
+TPTP source: LCL002-1.ax
 
 Background axioms:
-- (~member(X1,X2)|~member(X1,X3)|~difference(X4,X2,X3))
-- (difference(X1,X2,X3)|member(k(X1,X2,X3),X1)|member(k(X1,X2,X3),X3))
-- (member(X1,X3)|~member(X1,X2)|~subset(X2,X3))
+- (implies(implies(not(X1),not(X2)),implies(X2,X1))=truth)
+- (not(truth)=falsehood)
+- (or(X1,X2)=or(X2,X1))
+- (or(X1,X2)=implies(not(X1),X2))
+- (implies(implies(X1,X2),X2)=implies(implies(X2,X1),X1))
+- (or(or(X1,X2),X3)=or(X1,or(X2,X3)))
 
 Premises:
-- (member(k(X1,X2,X3),X3)|difference(X1,X2,X3)|~member(k(X1,X2,X3),X2))
+- (implies(implies(X1,X2),implies(implies(X2,X3),implies(X1,X3)))=truth)
 
-Conjecture: `(difference(X1,X1,X2)|~subset(X3,X4)|~subset(X2,X3)|~difference(X5,X4,X3))`
+Conjecture: `(implies(not(X1),not(implies(X2,not(X3))))=implies(implies(X3,not(X2)),X1))`
 
 The answer is `True` (provable) or `False` (not provable).
 ```
 
 **Answer:**
 ```
-True
+False
 ```
 
 ---
@@ -140,17 +143,19 @@ True
 Which local single-clause deletions make the fixed axioms satisfiable with the negated theorem?
 Answer with ordered, space-separated clause numbers.
 Background axioms:
-- (X3=X4|~product(X1,X2,X3)|~product(X1,X2,X4))
-Negated theorem: `(multiply(identity,X1) != X1)`
+- (product(X1,X2,X3)|~product(X2,X1,X3))
+- (product(X1,X2,X3)|~product(X1,X4,X5)|~product(X4,X6,X2)|~product(X5,X6,X3))
+- (product(multiplicative_identity,X1,X1)|~defined(X1))
+Negated theorem: `(~product(multiplicative_identity,multiplicative_identity,multiplicative_identity))`
 Clauses:
-1. (product(X1,identity,X1))
-2. (product(X1,X2,multiply(X1,X2)))
-3. (product(identity,X1,X1))
+1. (defined(multiplicative_identity))
+2. (product(multiplicative_inverse(X1),X1,multiplicative_identity)|sum(additive_identity,X1,additive_identity)|~defined(X1))
+3. (product(X1,X2,multiply(X1,X2))|~defined(X1)|~defined(X2))
 ```
 
 **Answer:**
 ```
-2
+1
 ```
 
 ---
@@ -384,22 +389,22 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-box is above lamp.
-lamp is above map.
-map is not safe.
-lamp contains key.
-box is inside lamp.
-lamp is safe.
-For all x, y, if x is left of y, then y is right of x.
-Every above relation creates a below relation in the reverse direction.
-Whenever x is inside y, y contains x.
-Whenever x is inside y and y is inside z, x is inside z.
-Left Of relations followed by left of relations imply left of relations.
-Whenever x is above y and y is above z, x is above z.
-Every disjoint relation creates a disjoint relation in the reverse direction.
+clara trusts alice.
+alice helps david.
+alice is not active.
+bruno is active.
+alice is approved.
+alice is not trained.
+david is careful.
+From x trusts y and y helps z, it follows that x advises z.
+From x advises z, it follows that x is active.
+Every trusted entity is not trained.
+From x helps y and y trusts z, it follows that x advises z.
+For all x, y, if x advises y and y is trusted, then x is careful.
+When one person trusts a second person and the second helps a third person, the first advises the third.
 
 Hypothesis:
-map is below box.
+clara is active.
 
 Does the premise entail the hypothesis? The answer is yes, no, or maybe.
 ```
@@ -416,22 +421,22 @@ yes
 **Prompt:**
 ```
 Premise:
-[0] map is inside key.
-[1] key is inside lamp.
-[2] key is below box.
-[3] box contains key.
-[4] box is not safe.
-[5] lamp is left of key.
-[6] From x is left of y, it follows that y is right of x.
-[7] For all x, y, if x is above y, then y is below x.
-[8] Whenever x is inside y, y contains x.
-[9] When one person is inside a second person and the second is inside a third person, the first is inside the third.
-[10] Whenever x is left of y and y is left of z, x is left of z.
-[11] Whenever x is above y and y is above z, x is above z.
-[12] For all x, y, if x is disjoint from y, then y is disjoint from x.
+[0] david helps bruno.
+[1] bruno is verified.
+[2] david advises bruno.
+[3] clara is careful.
+[4] bruno helps david.
+[5] clara trusts alice.
+[6] clara is not trusted.
+[7] From x helps y and y is verified, it follows that x is trusted.
+[8] All things that are trusted are careful.
+[9] For all x, y, if x advises y and y is careful, then x is approved.
+[10] From x trusts y and x is careful, it follows that y is not active.
+[11] If a trained person trusts someone, then that other person is trusted.
+[12] For all x, y, if x trusts y and y is approved, then x is trusted.
 
 Hypothesis:
-lamp contains map.
+david is careful.
 
 Which premise statements are necessary to entail the hypothesis, meaning removing any one of them breaks that result?
 Answer with space-separated indexes.
@@ -439,7 +444,7 @@ Answer with space-separated indexes.
 
 **Answer:**
 ```
-0 1 8 9
+0 1 7 8
 ```
 
 ---
@@ -449,21 +454,21 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-[0] david is active.
-[1] clara is trusted.
-[2] Whenever x is active, x is verified.
-[3] Every verified entity is approved.
+[0] david is trusted.
+[1] alice is active.
+[2] Every trusted entity is approved.
+[3] For all x, if x is approved, then x is verified.
 
 Hypothesis:
-bruno is approved.
+alice is verified.
 
 Candidate Facts:
-[0] bruno trusts clara.
-[1] alice helps bruno.
-[2] alice helps david.
-[3] bruno is active.
-[4] bruno is careful.
-[5] bruno is not active.
+[0] alice is trusted.
+[1] bruno is trusted.
+[2] clara is careful.
+[3] alice is not trusted.
+[4] alice is trained.
+[5] clara is trusted.
 
 Which candidate facts, if added to the premise, make the premise entail the hypothesis?
 Answer with space-separated indexes.
@@ -471,7 +476,7 @@ Answer with space-separated indexes.
 
 **Answer:**
 ```
-3
+0
 ```
 
 ---
@@ -481,29 +486,29 @@ Answer with space-separated indexes.
 **Prompt:**
 ```
 Premise:
-bruno is trained.
-bruno is verified.
-bruno helps david.
-alice is approved.
-clara helps alice.
-alice does not helps clara.
-From x is trained and x is verified, it follows that x is trusted.
-Whenever x is trusted, x is active.
-Every active entity that is also careful is approved.
-For all x, if x is active and x is careful, then x is verified.
-Whenever x trusts y and x is trained, y is verified.
-From x is careful, it follows that x is active.
-For all x, y, z, if x trusts y and y helps z, then x advises z.
+clara advises bruno.
+bruno is active.
+clara is not active.
+bruno trusts alice.
+bruno is careful.
+alice is careful.
+david is careful.
+If a person advises a active person, then that person is careful.
+Every careful entity is trained.
+For all x, y, if x trusts y, then y helps x.
+A person is trusted when a person advises a trained person.
+From x is active and x is approved, it follows that x is trained.
+For all x, if x is verified, then x is careful.
 
 Question:
-Which entities are active?
+How many entities are trusted?
 
-Answer with names in alphabetical order, comma-separated.
+Answer with one integer.
 ```
 
 **Answer:**
 ```
-bruno
+1
 ```
 
 ---

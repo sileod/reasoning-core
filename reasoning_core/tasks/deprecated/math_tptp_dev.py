@@ -12,7 +12,7 @@ from easydict import EasyDict as edict
 
 from reasoning_core.template import Config, DevTask, Problem, TimeoutException
 from reasoning_core.tasks.math_tptp import (
-    ConjectureEntailment, DOMAIN_MAP, apply_subst_literal, canonical,
+    TptpEntailement, DOMAIN_MAP, apply_subst_literal, canonical,
     check_clause_set_satisfiability, clause_term_depth, extract_problem_from_graph,
     extract_useful_axioms, generate_derivation_graph, make_cot, normalize_formula,
     parse_clause, prove_conjecture, rename_apart, render_clause, resolvents,
@@ -71,7 +71,7 @@ class FiniteInterpretationCheck(DevTask):
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
 
-    _initialize_graph = ConjectureEntailment._initialize_graph
+    _initialize_graph = TptpEntailement._initialize_graph
 
     def _make_requirements(self, hypotheses, theorem):
         use_false_goal = random.random() < self.config.false_requirement_ratio
@@ -249,7 +249,7 @@ class ResolutionStep(DevTask):
     def on_config_level_change(self):
         self.pool = []
 
-    _initialize_graph = ConjectureEntailment._initialize_graph
+    _initialize_graph = TptpEntailement._initialize_graph
 
     def _mine_pool(self):
         candidates = 0
@@ -386,7 +386,7 @@ class TheoremPremiseSelection(DevTask):
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
 
-    _initialize_graph = ConjectureEntailment._initialize_graph
+    _initialize_graph = TptpEntailement._initialize_graph
     max_pool_validation_checks = 512
 
     def _reprove_with_minimal(self, hypotheses: list) -> nx.DiGraph:
@@ -664,7 +664,7 @@ class ProofReconstruction(DevTask):
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
         
-    _initialize_graph = ConjectureEntailment._initialize_graph
+    _initialize_graph = TptpEntailement._initialize_graph
     
 
     def generate(self):

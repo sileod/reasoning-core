@@ -22,7 +22,7 @@ CATEGORY_ORDER = [
 ]
 
 SINGLE_EXAMPLE_TASKS = {
-    "conjecture_entailment",
+    "tptp_entailement",
     "theorem_premise_selection",
     "proof_reconstruction",
     "parsing",
