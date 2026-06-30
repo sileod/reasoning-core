@@ -1,4 +1,8 @@
 import io, re, sys, os, time, random, signal, inspect, contextlib, multiprocessing as mp
+import ast
+import copy
+import threading
+from typing import Optional
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from itertools import product
@@ -117,7 +121,7 @@ def kill(p):
             p.join()
 
 
-def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, batch=False):
+def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, batch=False, exec_only=False):
     out, err = CapIO(), CapIO()
     ns = {"__builtins__": __builtins__}
     steps, t0 = 0, time.perf_counter()
@@ -142,27 +146,39 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, ba
     try:
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             exec(compile(code, "<mesopy>", "exec"), ns, ns)
-            args = call_args if call_args is not None else endpoint_args(ns["endpoint"], magnitude)
-            args_list = args if batch else None
-            values = []
-            for a in args_list or [args]:
-                steps = 0
-                sys.settrace(trace)
-                try:
-                    values.append(repr(ns["endpoint"](*a))[:500])
-                finally:
-                    sys.settrace(None)
+            if exec_only:
+                r = RunReport(
+                    True,
+                    None,
+                    None,
+                    None,
+                    out.getvalue(),
+                    err.getvalue(),
+                    steps,
+                    time.perf_counter() - t0,
+                )
+            else:
+                args = call_args if call_args is not None else endpoint_args(ns["endpoint"], magnitude)
+                args_list = args if batch else None
+                values = []
+                for a in args_list or [args]:
+                    steps = 0
+                    sys.settrace(trace)
+                    try:
+                        values.append(repr(ns["endpoint"](*a))[:500])
+                    finally:
+                        sys.settrace(None)
 
-        r = RunReport(
-            True,
-            values if args_list else values[0],
-            None,
-            args,
-            out.getvalue(),
-            err.getvalue(),
-            steps,
-            time.perf_counter() - t0,
-        )
+                r = RunReport(
+                    True,
+                    values if args_list else values[0],
+                    None,
+                    args,
+                    out.getvalue(),
+                    err.getvalue(),
+                    steps,
+                    time.perf_counter() - t0,
+                )
 
     except StepLimit:
         sys.settrace(None)
@@ -197,13 +213,19 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, ba
     send.close()
 
 
-def run_code(code, cfg, recursionlimit=80, call_args=None, batch=False):
+def run_code(code, cfg=None, timeout=None, recursionlimit=80, call_args=None, batch=False, exec_only=False):
     ctx = mp.get_context("fork")
     recv, send = ctx.Pipe(duplex=False)
-    p = ctx.Process(target=_worker, args=(send, code, cfg.magnitude, recursionlimit, cfg.max_steps, call_args, batch))
+    
+    magnitude = cfg.magnitude if cfg else 0
+    max_steps = cfg.max_steps if cfg else 10_000
+    
+    p = ctx.Process(target=_worker, args=(send, code, magnitude, recursionlimit, max_steps, call_args, batch, exec_only))
     p.start()
     send.close()
-    timeout = min(4.0, cfg.timeout + 0.01 * len(call_args)) if batch else cfg.timeout
+    
+    if timeout is None:
+        timeout = min(4.0, cfg.timeout + 0.01 * len(call_args)) if batch else cfg.timeout
 
     try:
         if recv.poll(timeout):
@@ -293,10 +315,12 @@ class CodeRunnability(Task):
 
     def prompt(self, metadata):
         return (
-            "Predict whether this Python call runs successfully or raises an exception.\n"
+            "Predict whether this Python call runs successfully "
+            "or raises an exception.\n"
             f"```python\n{metadata.code}\n```\n"
             f"Call: `{metadata.call}`\n"
-            "The answer is `OK` if it runs successfully; otherwise the exception class name."
+            "The answer is `OK` if it runs successfully; "
+            "otherwise the exception class name."
         )
 
     def score_answer(self, answer, entry):
@@ -320,7 +344,8 @@ class CodeExecution(Task):
             "Predict the value returned by this Python call.\n"
             f"```python\n{metadata.code}\n```\n"
             f"Call: `{metadata.call}`\n"
-            "The answer is the exact Python `repr` of the returned value."
+            "The answer is the exact Python `repr` "
+            "of the returned value."
         )
 
     def score_answer(self, answer, entry):
@@ -372,17 +397,25 @@ class CodeInputDeduction(Task):
                 if mode == "int":
                     domain = list(range(cfg.lo, cfg.hi + 1))
                     sig, call = (("int",), "int"), lambda x: [x]
-                    goal, call_text, answer_hint = f"smallest integer x in [{cfg.lo}, {cfg.hi}]", "endpoint(x)", "Answer with the integer."
+                    goal = f"smallest integer x in [{cfg.lo}, {cfg.hi}]"
+                    call_text = "endpoint(x)"
+                    answer_hint = "Answer with the integer."
                     endpoint = f"def endpoint(x):\n    return f0(x) % {random.choice((3, 4, 5))}\n"
                 elif mode == "tuple":
                     domain = [(x, y) for x in range(cfg.lo, cfg.hi + 1) for y in range(cfg.lo, cfg.hi + 1)]
                     sig, call = (("int", "int"), "int"), lambda xy: list(xy)
-                    goal, call_text, answer_hint = f"lexicographically smallest integer pair (x, y) with each value in [{cfg.lo}, {cfg.hi}]", "endpoint(x, y)", "Answer as `x y`."
+                    goal = f"lexicographically smallest integer pair (x, y) with each value in [{cfg.lo}, {cfg.hi}]"
+                    call_text = "endpoint(x, y)"
+                    answer_hint = "Answer as `x y`."
                     endpoint = f"def endpoint(x, y):\n    return f0(x, y) % {random.choice((3, 4, 5))}\n"
                 else:
                     domain = bounded_strings(cfg.alphabet, cfg.max_len)
-                    sig, call = (("int",), "int"), lambda s: [sum((len(cfg.alphabet) ** i) * cfg.alphabet.index(ch) for i, ch in enumerate(reversed(s)))]
-                    goal, call_text, answer_hint = f"lexicographically smallest string s over `{cfg.alphabet}` with length 1..{cfg.max_len}", "endpoint(s)", "Answer with the string."
+                    sig, call = (("int",), "int"), lambda s: [
+                        sum((len(cfg.alphabet) ** i) * cfg.alphabet.index(ch) for i, ch in enumerate(reversed(s)))
+                    ]
+                    goal = f"lexicographically smallest string s over `{cfg.alphabet}` with length 1..{cfg.max_len}"
+                    call_text = "endpoint(s)"
+                    answer_hint = "Answer with the string."
                     endpoint = f"def endpoint(s):\n    z = 0\n    for ch in s:\n        z = {len(cfg.alphabet)} * z + {repr(cfg.alphabet)}.index(ch)\n    return f0(z) % {random.choice((3, 4, 5))}\n"
                 core = generate(
                     mesopy_grammar(
@@ -417,10 +450,16 @@ class CodeInputDeduction(Task):
                         buckets.setdefault(r.value, []).append(x)
                 if function_triviality(reports):
                     continue
-                choices = [(y, min(xs)) for y, xs in buckets.items() if 1 < len(xs) < len(domain)]
+                choices = [
+                    (y, min(xs)) for y, xs in buckets.items() if 1 < len(xs) < len(domain)
+                ]
                 choices = [c for c in choices if c[1] != domain[0]] or choices
                 if choices:
-                    fresh = [c for c in choices if (" ".join(map(str, c[1])) if isinstance(c[1], tuple) else str(c[1])) not in self._recent_answers]
+                    fresh = [
+                        c for c in choices 
+                        if (" ".join(map(str, c[1])) if isinstance(c[1], tuple) else str(c[1])) 
+                        not in self._recent_answers
+                    ]
                     choices = fresh or choices
                     target, answer = random.choice(choices)
                     if isinstance(answer, tuple):
@@ -429,7 +468,10 @@ class CodeInputDeduction(Task):
                         answer = str(answer)
                     self._recent_answers = (self._recent_answers + [answer])[-8:]
                     return Problem(
-                        edict(code=code, mode=mode, goal=goal, call_text=call_text, answer_hint=answer_hint, target=target),
+                        edict(
+                            code=code, mode=mode, goal=goal, 
+                            call_text=call_text, answer_hint=answer_hint, target=target
+                        ),
                         answer,
                     )
         raise RuntimeError("failed to generate code input deduction task")
@@ -445,3 +487,766 @@ class CodeInputDeduction(Task):
     def score_answer(self, answer, entry):
         reference = entry["answer"] if isinstance(entry, dict) else entry.answer
         return float(str(answer).strip().strip("\"'") == reference)
+
+
+
+def _run_sandbox(code: str, timeout: float) -> Optional[str]:
+    r = run_code(code, timeout=timeout, exec_only=True)
+    if not r.ok:
+        return None
+    out = r.stdout.strip()
+    return out if out else None
+def _too_many_pass(code: str, threshold: float = 0.25) -> bool:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return True
+    stmts = [n for n in ast.walk(tree) if isinstance(n, ast.stmt)]
+    passes = [n for n in stmts if isinstance(n, ast.Pass)]
+    return bool(stmts) and len(passes) / len(stmts) > threshold
+
+
+def _line_count(code: str) -> int:
+    return len(code.strip().splitlines())
+
+
+def _get_called_functions(node: ast.AST) -> set[str]:
+    """Return every function name that appears as a direct call inside node."""
+    calls: set[str] = set()
+    for n in ast.walk(node):
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
+            calls.add(n.func.id)
+    return calls
+
+
+def _safe_parse(code: str) -> Optional[ast.Module]:
+    try:
+        return ast.parse(code)
+    except Exception:
+        return None
+
+
+def _func_defs(tree: ast.Module) -> dict[str, ast.FunctionDef]:
+    return {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+
+
+def _prune_to_reachable(code: str) -> Optional[str]:
+    """Remove function defs not reachable from any top-level exec statement."""
+    tree = _safe_parse(code)
+    if tree is None:
+        return None
+
+    func_defs = _func_defs(tree)
+    exec_stmts = [n for n in tree.body if not isinstance(n, ast.FunctionDef)]
+
+    reachable: set[str] = set()
+    frontier: set[str] = set()
+    for stmt in exec_stmts:
+        frontier |= _get_called_functions(stmt)
+
+    while frontier:
+        name = frontier.pop()
+        if name in reachable or name not in func_defs:
+            continue
+        reachable.add(name)
+        frontier |= _get_called_functions(func_defs[name])
+
+    tree.body = [
+        n for n in tree.body
+        if not isinstance(n, ast.FunctionDef) or n.name in reachable
+    ]
+    ast.fix_missing_locations(tree)
+    try:
+        return ast.unparse(tree)
+    except Exception:
+        return None
+
+
+def _call_chain_depth(code: str) -> int:
+    """
+    Maximum transitive call-chain depth reachable from any top-level exec
+    statement.  Cycles are handled via a 'visiting' frozenset; memoization
+    is keyed on (name, visiting) so a value computed under one cycle-guard
+    context is never reused under a different one.
+    """
+    tree = _safe_parse(code)
+    if tree is None:
+        return 0
+
+    func_defs = _func_defs(tree)
+    exec_stmts = [n for n in tree.body if not isinstance(n, ast.FunctionDef)]
+    memo: dict[tuple[str, frozenset], int] = {}
+
+    def _depth(name: str, visiting: frozenset) -> int:
+        key = (name, visiting)
+        if key in memo:
+            return memo[key]
+        if name not in func_defs or name in visiting:
+            return 0
+        called = _get_called_functions(func_defs[name]) & func_defs.keys()
+        d = 1 + max((_depth(c, visiting | {name}) for c in called), default=0)
+        memo[key] = d
+        return d
+
+    top_calls: set[str] = set()
+    for stmt in exec_stmts:
+        top_calls |= _get_called_functions(stmt)
+    top_calls &= func_defs.keys()
+
+    if not top_calls:
+        return 0
+    return max(_depth(c, frozenset()) for c in top_calls)
+
+
+def _func_call_signature(code: str) -> str:
+    """Shape-only fingerprint of a program's call graph (names stripped, topology kept)."""
+    tree = _safe_parse(code)
+    if tree is None:
+        return ""
+
+    func_defs = _func_defs(tree)
+    exec_stmts = [n for n in tree.body if not isinstance(n, ast.FunctionDef)]
+    memo: dict[tuple[str, frozenset], str] = {}
+
+    def sig(name: str, visiting: frozenset) -> str:
+        key = (name, visiting)
+        if key in memo:
+            return memo[key]
+        if name not in func_defs or name in visiting:
+            return "leaf"
+        called = sorted(_get_called_functions(func_defs[name]) & func_defs.keys())
+        s = (
+            f"node({','.join(sig(c, visiting | {name}) for c in called)})"
+            if called
+            else "leaf"
+        )
+        memo[key] = s
+        return s
+
+    top_calls = sorted(
+        set().union(*[_get_called_functions(s) for s in exec_stmts]) & func_defs.keys()
+    )
+    return f"root({','.join(sig(c, frozenset()) for c in top_calls)})"
+
+
+class _ReturnWrapper(ast.NodeTransformer):
+    """Rewrites `return <expr>` to `return dead_fn(param=<expr>)`."""
+
+    def __init__(self, dead_fn_name: str, param_name: str):
+        self.dead_fn_name = dead_fn_name
+        self.param_name = param_name
+        self.modified = False
+
+    def visit_Return(self, node: ast.Return) -> ast.Return:
+        if node.value is None:
+            return node
+        self.modified = True
+        wrapped = ast.Return(
+            value=ast.Call(
+                func=ast.Name(id=self.dead_fn_name, ctx=ast.Load()),
+                args=[],
+                keywords=[ast.keyword(arg=self.param_name, value=node.value)],
+            )
+        )
+        ast.fix_missing_locations(wrapped)
+        return wrapped
+
+
+def _try_entangle(
+    p_correct: str,
+    dead_funcs: list[ast.FunctionDef],
+    rng: random.Random,
+) -> Optional[tuple[str, str]]:
+    """
+    Inject one dead-program leaf function into P_correct's call chain,
+    bumping its depth by 1.  Returns (new_p_correct_source, shared_fn_name),
+    or None if no compatible (leaf, injectable dead function) pair exists.
+
+    A dead function is "injectable" if it takes exactly one argument, makes
+    no print() calls, and calls nothing outside its own/P_correct's namespace.
+    Its definition is inserted immediately before the rewritten leaf, whose
+    `return <expr>` becomes `return dead_fn(param=<expr>)`.
+    """
+    tree = _safe_parse(p_correct)
+    if tree is None:
+        return None
+
+    p_func_defs = _func_defs(tree)
+    p_func_names = set(p_func_defs.keys())
+
+    leaves = [
+        fname
+        for fname, fdef in p_func_defs.items()
+        if not (_get_called_functions(fdef) & p_func_names)
+    ]
+    if not leaves:
+        return None
+
+    def is_injectable(fdef: ast.FunctionDef) -> bool:
+        if len(fdef.args.args) != 1:
+            return False
+        for node in ast.walk(fdef):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                callee = node.func.id
+                if callee == "print":
+                    return False                         # would corrupt stdout
+                if callee not in p_func_names and callee != fdef.name:
+                    return False                         # external dependency
+        return True
+
+    safe_dead = [f for f in dead_funcs if is_injectable(f)]
+    if not safe_dead:
+        return None
+
+    leaf_candidates = list(leaves)
+    rng.shuffle(leaf_candidates)
+    rng.shuffle(safe_dead)
+
+    for leaf_name in leaf_candidates:
+        for dead_fn in safe_dead:
+            try:
+                leaf_def = copy.deepcopy(p_func_defs[leaf_name])
+                dead_fn_copy = copy.deepcopy(dead_fn)
+                param_name = dead_fn.args.args[0].arg
+
+                wrapper = _ReturnWrapper(dead_fn.name, param_name)
+                new_leaf = wrapper.visit(leaf_def)
+                if not wrapper.modified:
+                    continue
+
+                new_body: list[ast.stmt] = []
+                for node in tree.body:
+                    if isinstance(node, ast.FunctionDef) and node.name == leaf_name:
+                        new_body.append(dead_fn_copy)
+                        new_body.append(new_leaf)
+                    else:
+                        new_body.append(node)
+
+                new_tree = ast.Module(body=new_body, type_ignores=[])
+                ast.fix_missing_locations(new_tree)
+                return ast.unparse(new_tree), dead_fn.name
+
+            except Exception:
+                continue
+
+    return None
+
+
+def _patch_ren_with_entangled(
+    ren: list[str],
+    entangled: str,
+    original: str,
+) -> list[str]:
+    """
+    Propagate _try_entangle's rewritten leaf body back into ren, so that
+    merge(ren) stays consistent with the entangled P_correct. Without this,
+    P_merged would still show the leaf's old body, making the task unsolvable.
+    The injected dead_fn itself needs no patching — it already exists in ren
+    verbatim from its source program.
+    """
+    orig_tree = _safe_parse(original)
+    ent_tree = _safe_parse(entangled)
+    if orig_tree is None or ent_tree is None:
+        return ren
+
+    orig_funcs = {name: ast.unparse(fd) for name, fd in _func_defs(orig_tree).items()}
+    ent_funcs = _func_defs(ent_tree)
+
+    # Functions that existed before AND changed — i.e. the patched leaf
+    modified = {
+        name: node
+        for name, node in ent_funcs.items()
+        if name in orig_funcs and ast.unparse(node) != orig_funcs[name]
+    }
+    if not modified:
+        return ren
+
+    new_ren: list[str] = []
+    for prog in ren:
+        try:
+            tree = ast.parse(prog)
+            new_body: list[ast.stmt] = []
+            changed = False
+            for node in tree.body:
+                if isinstance(node, ast.FunctionDef) and node.name in modified:
+                    new_body.append(copy.deepcopy(modified[node.name]))
+                    changed = True
+                else:
+                    new_body.append(node)
+            if changed:
+                tree.body = new_body
+                ast.fix_missing_locations(tree)
+                new_ren.append(ast.unparse(tree))
+            else:
+                new_ren.append(prog)
+        except Exception:
+            new_ren.append(prog)
+
+    return new_ren
+
+
+class _ConsolidationRegistry:
+    """
+    Prevent structurally identical problems across generate() calls.
+    Keyed on (call_graph_signature, call_depth) — same topology at same depth
+    is considered a duplicate.
+    """
+
+    def __init__(self) -> None:
+        self._seen: set[tuple[str, int]] = set()
+
+    def _key(self, p_correct: str) -> tuple[str, int]:
+        return (_func_call_signature(p_correct), _call_chain_depth(p_correct))
+
+    def is_duplicate(self, p_correct: str) -> bool:
+        return self._key(p_correct) in self._seen
+
+    def register(self, p_correct: str) -> None:
+        self._seen.add(self._key(p_correct))
+
+    def reset(self) -> None:
+        self._seen.clear()
+
+
+def _inline_result_print(code: str) -> Optional[str]:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return None
+    new_body = []
+    i = 0
+    while i < len(tree.body):
+        s = tree.body[i]
+        n = tree.body[i + 1] if i + 1 < len(tree.body) else None
+        if (
+            isinstance(s, ast.Assign)
+            and len(s.targets) == 1
+            and isinstance(s.targets[0], ast.Name)
+            and s.targets[0].id == "_result"
+            and n
+            and isinstance(n, ast.Expr)
+            and isinstance(n.value, ast.Call)
+            and isinstance(n.value.func, ast.Name)
+            and n.value.func.id == "print"
+            and len(n.value.args) == 1
+            and isinstance(n.value.args[0], ast.Name)
+            and n.value.args[0].id == "_result"
+        ):
+            new_body.append(
+                ast.Expr(
+                    ast.Call(
+                        func=ast.Name("print", ast.Load()),
+                        args=[s.value],
+                        keywords=[],
+                    )
+                )
+            )
+            i += 2
+        else:
+            new_body.append(s)
+            i += 1
+    tree.body = new_body
+    ast.fix_missing_locations(tree)
+    try:
+        return ast.unparse(tree)
+    except Exception:
+        return None
+
+
+def _collect_func_names(code: str) -> list[str]:
+    tree = _safe_parse(code)
+    return list(_func_defs(tree)) if tree else []
+
+
+def _apply_name_map(code: str, name_map: dict[str, str]) -> Optional[str]:
+    tree = _safe_parse(code)
+    if tree is None:
+        return None
+
+    class R(ast.NodeTransformer):
+        def visit_FunctionDef(self, node):
+            node.name = name_map.get(node.name, node.name)
+            self.generic_visit(node)
+            return node
+
+        def visit_Call(self, node):
+            self.generic_visit(node)
+            if isinstance(node.func, ast.Name):
+                node.func.id = name_map.get(node.func.id, node.func.id)
+            return node
+
+        def visit_Name(self, node):
+            if isinstance(node.ctx, ast.Load):
+                node.id = name_map.get(node.id, node.id)
+            return node
+
+    tree = R().visit(tree)
+    ast.fix_missing_locations(tree)
+    try:
+        return ast.unparse(tree)
+    except Exception:
+        return None
+
+
+def rename_all(
+    progs: list[str], rng: random.Random
+) -> Optional[list[str]]:
+    names = [_collect_func_names(p) for p in progs]
+    total = sum(len(n) for n in names)
+    if total == 0:
+        return None
+
+    pool = rng.sample(range(1000, 9999), min(total * 4, 8999))
+    rng.shuffle(pool)
+    it = iter(pool)
+
+    out = []
+    for p, ns in zip(progs, names):
+        m: dict[str, str] = {}
+        try:
+            for old in ns:
+                m[old] = f"g{next(it)}"
+        except StopIteration:
+            return None
+        r = _apply_name_map(p, m)
+        if r is None:
+            return None
+        out.append(r)
+    return out
+
+
+def merge(progs: list[str], rng: random.Random) -> Optional[str]:
+    try:
+        trees = [ast.parse(p) for p in progs]
+    except Exception:
+        return None
+    defs = []
+    execs = []
+    for t in trees:
+        defs.extend(n for n in t.body if isinstance(n, ast.FunctionDef))
+        execs.append([n for n in t.body if not isinstance(n, ast.FunctionDef)])
+    rng.shuffle(defs)
+    order = list(range(len(progs)))
+    rng.shuffle(order)
+    mx = max((len(e) for e in execs), default=0)
+    body: list[ast.stmt] = []
+    for i in range(mx):
+        for idx in order:
+            if i < len(execs[idx]):
+                body.append(execs[idx][i])
+    mod = ast.Module(body=defs + body, type_ignores=[])
+    ast.fix_missing_locations(mod)
+    try:
+        return ast.unparse(mod)
+    except Exception:
+        return None
+
+
+def _normalise(code: str) -> Optional[str]:
+    try:
+        tree = ast.parse(code)
+    except Exception:
+        return None
+    fdefs = sorted(
+        (n for n in tree.body if isinstance(n, ast.FunctionDef)),
+        key=lambda n: n.name,
+    )
+    other = [n for n in tree.body if not isinstance(n, ast.FunctionDef)]
+    tree.body = fdefs + other
+    ast.fix_missing_locations(tree)
+    try:
+        return ast.unparse(tree)
+    except Exception:
+        return None
+
+
+@dataclass
+class ConsolidationConfig(Config):
+    timeout: float = 3.0
+    n_programs: int = 3
+
+    # GramForge knobs
+    depth_range: tuple = (6, 18)
+    n_classes_range: tuple = (0, 5)
+    inherit_rate_range: tuple = (0.5, 0.85)
+    n_functions_range: tuple = (3, 8)
+    min_body_stmts_range: tuple = (3, 8)
+    failure_rate_range: tuple = (0.0, 0.15)
+    usage_bias_range: tuple = (0.2, 0.6)
+    include_comprehensions: bool = True
+    include_fstrings: bool = True
+    include_ternary: bool = True
+    include_break_continue: bool = True
+    include_try_except: bool = True
+    include_classes: bool = False
+
+    # Complexity controls
+    min_call_depth: int = 2
+    """Minimum required call-chain depth for P_correct (1 = trivial exec->f())."""
+
+    entangle: bool = True
+    """If True, inject one dead-program function into P_correct's call chain."""
+
+    deduplicate: bool = True
+    """If True, reject problems whose call-graph shape+depth was already seen."""
+
+    max_attempts: int = 1000
+
+    def update(self, c: int) -> None:
+        def shift(t, d):
+            return (max(t[0] + d, 1), t[1] + d)
+
+        self.n_functions_range = shift(self.n_functions_range, c)
+        self.min_body_stmts_range = shift(self.min_body_stmts_range, c)
+        self.depth_range = shift(self.depth_range, c)
+        self.failure_rate_range = (
+            max(self.failure_rate_range[0], 0.0),
+            min(self.failure_rate_range[1] + 0.05 * c, 0.5),
+        )
+        self.usage_bias_range = (
+            max(self.usage_bias_range[0] - 0.02 * c, 0.0),
+            min(self.usage_bias_range[1] + 0.02 * c, 1.0),
+        )
+        self.max_attempts = max(int(self.max_attempts * (1 + 0.05 * c)), 200)
+        self.min_call_depth = min(self.min_call_depth + c, 4)
+
+
+class Consolidation(Task):
+    task_name = "code_consolidation"
+    balancing_key_ratio = 1.0
+    _seed_counter = 0
+    _seed_lock = threading.Lock()
+
+    def __init__(self, config=None):
+        super().__init__(config=config or ConsolidationConfig())
+        self._registry = _ConsolidationRegistry()
+
+    def _next_seed(self) -> int:
+        with self._seed_lock:
+            Consolidation._seed_counter += 1
+            return (os.getpid() << 32) + Consolidation._seed_counter
+
+    @classmethod
+    def reset_pools(cls) -> None:
+        pass
+
+    def reset_registry(self) -> None:
+        self._registry.reset()
+
+    def _sample_kwargs(self, rng: random.Random) -> dict:
+        c = self.config
+        return dict(
+            mode="function",
+            n_functions=rng.randint(*c.n_functions_range),
+            min_body_stmts=rng.randint(*c.min_body_stmts_range),
+            include_comprehensions=c.include_comprehensions,
+            include_fstrings=c.include_fstrings,
+            include_ternary=c.include_ternary,
+            include_break_continue=c.include_break_continue,
+            include_try_except=c.include_try_except,
+            include_classes=c.include_classes,
+            n_classes=rng.randint(*c.n_classes_range) if c.include_classes else 1,
+            inherit_rate=rng.uniform(*c.inherit_rate_range),
+            failure_rate=rng.uniform(*c.failure_rate_range),
+            usage_bias=rng.uniform(*c.usage_bias_range),
+            triviality_rate=0.0,
+            emit_endpoint=True,
+            emit_result=True,
+            print_result=True,
+        )
+
+    def _generate_one(self, rng: random.Random) -> Optional[str]:
+        c = self.config
+        d = rng.randint(*c.depth_range)
+        try:
+            kwargs = self._sample_kwargs(rng)
+            g = mesopy_grammar(**kwargs)
+            code = generate(g, depth=d, min_depth=max(d - 3, 3), seed=rng.randint(0, 2 ** 31)) @ "py"
+        except Exception:
+            return None
+        if _too_many_pass(code):
+            return None
+        return code
+
+    def generate(self) -> Problem:
+        cfg = self.config
+
+        for _ in range(cfg.max_attempts):
+            rng = random.Random(self._next_seed())
+
+            # 1. Generate N raw programs
+            raw = [
+                self._generate_one(random.Random(self._next_seed()))
+                for _ in range(cfg.n_programs)
+            ]
+            if any(p is None for p in raw):
+                continue
+
+            # 2. Inline _result = …; print(_result) → print(…)
+            inl = [_inline_result_print(p) for p in raw]
+            if any(p is None for p in inl):
+                continue
+
+            # 3. Rename all functions to neutral tokens from a shared pool
+            ren = rename_all(inl, rng)
+            if ren is None:
+                continue
+
+            # 4. Run each renamed program; keep runnable ones
+            runnable_raw: list[tuple[str, str]] = []
+            for p in ren:
+                r = run_code(p, timeout=cfg.timeout, exec_only=True)
+                runnable_raw.append((p, r.stdout.strip() if r.ok else None))
+            runnable_raw = [(p, o) for p, o in runnable_raw if o is not None]
+            if len(runnable_raw) < 2:
+                continue
+
+            # 5. Prune each runnable program to its reachable call graph,
+            #    removing intra-program functions that are defined but
+            #    never called.
+            runnable: list[tuple[str, str]] = []
+            for p_raw, expected_out in runnable_raw:
+                pruned = _prune_to_reachable(p_raw)
+                if pruned is None:
+                    continue
+                r_pruned = run_code(pruned, timeout=cfg.timeout, exec_only=True)
+                if (r_pruned.stdout.strip() if r_pruned.ok else None) != expected_out:
+                    continue
+                runnable.append((pruned, expected_out))
+
+            if len(runnable) < 2:
+                continue
+
+            # 6. Keep only programs meeting the depth requirement, then
+            #    pick the fewest-line one as P_correct.
+            min_d = cfg.min_call_depth
+            deep_runnable = [
+                (p, o) for p, o in runnable
+                if _call_chain_depth(p) >= min_d
+            ]
+            if not deep_runnable:
+                continue
+
+            p_correct, out = min(deep_runnable, key=lambda x: _line_count(x[0]))
+
+            others_out = {o for p, o in runnable if p != p_correct}
+            if out in others_out:
+                continue
+
+            # 7. Optional cross-program entanglement: inject one dead-program
+            #    function into P_correct's call chain (depth n → n+1).
+            entangled_flag = False
+            p_correct_before_entangle = p_correct
+            if cfg.entangle:
+                p_correct_funcs = set(_func_defs(ast.parse(p_correct)))
+                dead_funcs: list[ast.FunctionDef] = []
+                for p in ren:
+                    tree = _safe_parse(p)
+                    if tree is None:
+                        continue
+                    for node in tree.body:
+                        if (
+                            isinstance(node, ast.FunctionDef)
+                            and node.name not in p_correct_funcs
+                        ):
+                            dead_funcs.append(node)
+
+                entangle_result = _try_entangle(p_correct, dead_funcs, rng)
+                if entangle_result is not None:
+                    entangled_code, shared_fn = entangle_result
+                    r_new = run_code(entangled_code, timeout=cfg.timeout, exec_only=True)
+                    new_out = r_new.stdout.strip() if r_new.ok else None
+                    if new_out is not None and new_out not in others_out:
+                        p_correct = entangled_code
+                        out = new_out
+                        entangled_flag = True
+                        # Keep P_merged consistent with the entangled P_correct
+                        ren = _patch_ren_with_entangled(
+                            ren, p_correct, p_correct_before_entangle
+                        )
+
+            # 8. Deduplication registry
+            if cfg.deduplicate and self._registry.is_duplicate(p_correct):
+                continue
+
+            # 9. Merge the ORIGINAL renamed programs, so P_merged also
+            #    contains intra-program dead functions.
+            merged = merge(ren, rng)
+            if merged is None or not run_code(merged, timeout=cfg.timeout, exec_only=True).ok:
+                continue
+
+            # 10. If entangled, confirm the shared helper survived into P_merged
+            if entangled_flag:
+                p_correct_funcs_final = set(_func_defs(ast.parse(p_correct)))
+                merged_funcs = set(_func_defs(ast.parse(merged)))
+                if not p_correct_funcs_final.issubset(merged_funcs):
+                    continue
+
+            # 11. Register and build Problem
+            if cfg.deduplicate:
+                self._registry.register(p_correct)
+
+            meta = edict(
+                merged_code=merged,
+                correct_code=p_correct,
+                correct_stdout=out,
+                n_programs=cfg.n_programs,
+                n_runnable=len(runnable),
+                call_depth=_call_chain_depth(p_correct),
+                entangled=entangled_flag,
+                call_graph_signature=_func_call_signature(p_correct),
+            )
+            return Problem(metadata=meta, answer=p_correct)
+
+        raise RuntimeError(
+            f"Consolidation: failed after {cfg.max_attempts} attempts"
+        )
+
+    def prompt(self, m) -> str:
+        depth_hint = (
+            "The correct program has a call chain of depth "
+            f"{m.call_depth} (functions calling other functions)."
+        )
+        entangle_hint = (
+            "\nNote: some functions in the dead code are also called by the "
+            "correct program — you must trace the full call graph to know "
+            "what to keep."
+            if m.get("entangled")
+            else ""
+        )
+        return (
+            "You are given a Python program P created by merging several "
+            "independent programs.\n\n"
+            f"Program P:\n```python\n{m.merged_code}\n```\n\n"
+            "Each original program defined its own functions, then called them "
+            "to produce output. Their definitions were collected, renamed to "
+            "neutral tokens (g1234…), shuffled, and all executable statements "
+            "interleaved.\n\n"
+            "Exactly ONE program produces this output on its own:\n\n"
+            f"```\n{m.correct_stdout}\n```\n\n"
+            f"{depth_hint}{entangle_hint}\n\n"
+            "Extract the MINIMAL program. Remove ALL dead code.\n"
+            "RULES (any violation = failure):\n"
+            "1. NEVER rename any function, class, method, or variable.\n"
+            "2. Do NOT modify the body of any function you keep.\n"
+            "3. Do NOT add new code.\n"
+            "4. Your cleaned program must print EXACTLY the output above.\n"
+            "5. It must contain ONLY what is needed — trace the full call \n"
+            "graph from the exec statement(s) to find every required function.\n\n"
+            "Return ONLY the cleaned Python program, no explanation."
+        )
+
+    def score_answer(self, a, entry) -> int:
+        if a is None:
+            return 0
+        m = entry["metadata"] if isinstance(entry, dict) else entry.metadata
+        out = m.correct_stdout
+        t = self.config.timeout
+        r = run_code(a, timeout=t, exec_only=True)
+        g1 = (r.stdout.strip() if r.ok else None) == out
+        ref_answer = entry["answer"] if isinstance(entry, dict) else entry.answer
+        g2 = _normalise(a) == _normalise(ref_answer)
+        return 1 if g1 and g2 else 0
+
+    def balancing_key(self, p) -> str:
+        return str(p.metadata.n_programs)

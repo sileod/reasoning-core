@@ -100,3 +100,10 @@ ROADMAP.md
 .claude/
 .test/
 data-gym-cache/
+
+# Temp
+reasoning_core/tasks/build_refactored.py
+reasoning_core/tasks/code_additional.py
+reasoning_core/tasks/code_additional.py.backup
+reasoning_core/tasks/part_1.py
+test_code_execution.py
