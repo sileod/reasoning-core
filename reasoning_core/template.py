@@ -191,7 +191,7 @@ class Problem(Mapping):
         self.answer = answer
         self.prompt = None
         self.task = self.metadata.get('task', None)
-        if cot is not None and self.metadata.cot is None:
+        if cot is not None and self.metadata.get('cot') is None:
             self.metadata.cot = cot
         self.cot= self.metadata.get('cot','')
         
