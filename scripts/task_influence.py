@@ -605,11 +605,7 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
 
 
 def default_results_dirs():
-    candidates = [
-        ROOT / "per_task_results",
-        Path("~/sandboxes/rc_grad/per_task_results").expanduser(),
-    ]
-    return [p for p in candidates if p.exists()] or [ROOT / "per_task_results"]
+    return [ROOT / "per_task_results"]
 
 
 def clean_run_tag(tag):
@@ -640,10 +636,9 @@ def run_init_tag(args):
 
 
 def runner_results_dir(args):
-    runner = Path(args.runner).expanduser()
-    workdir = Path(args.run_workdir).expanduser() if args.run_workdir else runner.parent
+    base = Path(args.run_workdir).expanduser() if args.run_workdir else ROOT
     subdir = "per_task_results_rgym" if args.aux_dataset == "rgym" else "per_task_results"
-    return workdir / subdir
+    return base / subdir
 
 
 def run_result_paths(args):
@@ -695,7 +690,7 @@ def launch_influence_run(args, task_names):
     runner = Path(args.runner).expanduser()
     if not runner.exists():
         raise SystemExit(f"--runner does not exist: {runner}")
-    workdir = Path(args.run_workdir).expanduser() if args.run_workdir else runner.parent
+    workdir = Path(args.run_workdir).expanduser() if args.run_workdir else ROOT
     if not workdir.exists():
         raise SystemExit(f"--run-workdir does not exist: {workdir}")
 
@@ -725,6 +720,7 @@ def launch_influence_run(args, task_names):
     env = {
         "RUN_TAG": args.run_tag,
         "LOCAL_AUX": str(aux_path),
+        "OUT_DIR": str(runner_results_dir(args)),
         "AUX_DATASET": args.aux_dataset,
         "MODEL": args.model,
         "BATCH": str(args.batch),
@@ -799,10 +795,10 @@ def parse_args():
                         help="Named scoring profile. --weight overrides individual values.")
     parser.add_argument("--run-influence", action="store_true",
                         help="Build/reuse aux data and launch the raw per-task influence trainer.")
-    parser.add_argument("--runner", default="~/sandboxes/rc_grad/per_task_influence.py",
-                        help="Path to per_task_influence.py.")
+    parser.add_argument("--runner", default=str(ROOT / "scripts" / "per_task_influence.py"),
+                        help="Path to the vendored per_task_influence.py trainer.")
     parser.add_argument("--run-workdir", default=None,
-                        help="Working directory for --runner. Default: runner parent.")
+                        help="Working directory for --runner. Default: repo root.")
     parser.add_argument("--run-tag", default=None,
                         help="RUN_TAG for raw result files. Default: LOCAL_<task/config hash>.")
     parser.add_argument("--run-log", default=None,
