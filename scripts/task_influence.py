@@ -555,34 +555,37 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
         "",
     ]
 
-    # Compact ranking: score + the three scored deltas + flan reference, with token
-    # and accuracy diagnostics merged into one cell each. Full detail in the JSON sidecar.
+    # Compact ranking: real tasks only (skip mixture/experiment artifacts), the three
+    # scored deltas + merged tok/acc diagnostics. flan + full detail live in the JSON sidecar.
+    registered = set(list_tasks())
+
     def _pair(a, b, digits, sep):
         sa, sb = fmt(a, digits), fmt(b, digits)
         return f"{sa}{sep}{sb}" if (sa or sb) else ""
 
     rows = []
     for row in records:
+        if row["task"] not in registered:
+            continue
         rows.append([
-            str(row["rank"]),
+            str(len(rows) + 1),
             row["task"],
-            fmt(row["influence_score"], 3, signed=True),
+            fmt(row["influence_score"], 2, signed=True),
             fmt(row.get("dolci_delta"), 4, signed=True),
-            fmt(row.get("bbh_delta"), 4, signed=True),
+            fmt(row.get("bbh_delta"), 3, signed=True),
             fmt(row.get("fw_delta"), 4, signed=True),
-            fmt(row.get("flan_delta"), 4, signed=True),
             _pair(row.get("prompt_tokens_mean"), row.get("answer_tokens_mean"), 0, "/"),
             _pair(row.get("acc_start"), row.get("acc_end"), 2, "→"),
-            (row.get("behavior_hash", "") or "")[:8],
+            (row.get("behavior_hash", "") or "")[:7],
         ])
 
     lines.append("## Ranking")
     lines.append("")
-    lines.append("Lower delta = helped. `score` higher = better helper. `flan` is reference-only. "
-                 "`tok` = prompt/answer tokens. `acc` = start→end (diagnostic, not scored).")
+    lines.append("Lower delta = helped. `score` higher = better helper. `tok` = prompt/answer tokens, "
+                 "`acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.")
     lines.append("")
     lines.append(markdown_table(rows, [
-        "#", "task", "score", "dolci", "bbh", "fw", "flan", "tok", "acc", "hash",
+        "#", "task", "score", "dolci", "bbh", "fw", "tok", "acc", "hash",
     ]))
     lines.append("")
 
