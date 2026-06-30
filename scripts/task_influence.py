@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""Analyze RC task influence signals from local generation and SFT result JSONs.
+"""Run and summarize RC task influence measurements.
 
-The script is intentionally read-only with respect to tasks. It caches local
-task smoke metrics by task behavior hash, then rewrites a compact Markdown
-report every run.
+The script can build LOCAL_AUX data from current task generators, launch the
+raw influence trainer, cache local smoke metrics by task behavior hash, and
+rewrite a compact Markdown report.
 """
 
 import argparse
@@ -13,7 +13,9 @@ import inspect
 import json
 import math
 import re
+import shlex
 import statistics as stats
+import subprocess
 import sys
 import time
 from collections import defaultdict
@@ -307,15 +309,11 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
         examples_all = []
         per_level = max(1, math.ceil(examples_per_task / max(1, len(levels))))
         for level in levels:
-            if refresh:
-                examples = task.generate_balanced_batch(
-                    batch_size=per_level,
-                    max_tokens=max_tokens,
-                    level=level,
-                )
-            else:
-                task.config.set_level(level)
-                examples = task.validate(n_samples=per_level, cache=True)
+            examples = task.generate_balanced_batch(
+                batch_size=per_level,
+                max_tokens=max_tokens,
+                level=level,
+            )
             for ex in examples:
                 if len(examples_all) >= examples_per_task * (2 if aux_mode == "contrastive" else 1):
                     break
@@ -656,6 +654,159 @@ def default_results_dirs():
     return [p for p in candidates if p.exists()] or [ROOT / "per_task_results"]
 
 
+def clean_run_tag(tag):
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", str(tag).strip().lstrip("_"))
+
+
+def run_hash(task_names, args):
+    inventory = task_inventory(task_names)
+    payload = {
+        "tasks": task_names,
+        "hashes": {name: inventory.get(name, {}).get("behavior_hash", "") for name in task_names},
+        "main_data": args.main_data,
+        "seed": args.seed,
+        "train_steps": args.train_steps,
+        "mix_aux": args.mix_aux,
+        "aux_examples": args.aux_examples,
+        "aux_levels": args.aux_levels,
+        "aux_max_tokens": args.aux_max_tokens,
+        "aux_mode": args.aux_mode,
+    }
+    return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:10]
+
+
+def run_init_tag(args):
+    return "scratch" if args.from_scratch_bool else "pretrained"
+
+
+def runner_results_dir(args):
+    runner = Path(args.runner).expanduser()
+    workdir = Path(args.run_workdir).expanduser() if args.run_workdir else runner.parent
+    subdir = "per_task_results_rgym" if args.aux_dataset == "rgym" else "per_task_results"
+    return workdir / subdir
+
+
+def run_result_paths(args):
+    mix = int(args.mix_aux * 100)
+    suffix = (
+        f"_{args.run_tag}_S{args.seed}_T{args.train_steps}_M{mix}_"
+        f"{args.main_data}_{run_init_tag(args)}.json"
+    )
+    root = runner_results_dir(args)
+    return root / f"influence{suffix}", root / f"sat{suffix}"
+
+
+def aux_manifest_fresh(aux_path, task_names, args):
+    aux_path = Path(aux_path)
+    manifest = load_json(aux_path.with_suffix(aux_path.suffix + ".manifest.json"))
+    if not isinstance(manifest, dict):
+        return False
+    expected = {
+        "script_version": SCRIPT_VERSION,
+        "examples_per_task": args.aux_examples,
+        "levels": args.aux_levels,
+        "max_tokens": args.aux_max_tokens,
+        "aux_mode": args.aux_mode,
+    }
+    for key, value in expected.items():
+        if manifest.get(key) != value:
+            return False
+    tasks = manifest.get("tasks", {})
+    inventory = task_inventory(task_names)
+    for name in task_names:
+        rec = tasks.get(name)
+        if not rec or rec.get("n", 0) <= 0:
+            return False
+        if rec.get("behavior_hash") != inventory.get(name, {}).get("behavior_hash"):
+            return False
+    return True
+
+
+def completed_result(path, task_names):
+    data = load_json(path)
+    if not isinstance(data, dict) or not isinstance(data.get("tasks"), dict):
+        return False
+    return all(name in data["tasks"] for name in task_names)
+
+
+def launch_influence_run(args, task_names):
+    runner = Path(args.runner).expanduser()
+    if not runner.exists():
+        raise SystemExit(f"--runner does not exist: {runner}")
+    workdir = Path(args.run_workdir).expanduser() if args.run_workdir else runner.parent
+    if not workdir.exists():
+        raise SystemExit(f"--run-workdir does not exist: {workdir}")
+
+    args.run_tag = clean_run_tag(args.run_tag or f"LOCAL_{run_hash(task_names, args)}")
+    if not args.build_aux:
+        args.build_aux = str(ROOT / "task_influence_work" / f"{args.run_tag}_{args.aux_mode}.json")
+    aux_path = Path(args.build_aux).expanduser()
+    if not aux_path.is_absolute():
+        aux_path = ROOT / aux_path
+
+    if args.refresh or args.force_run or not aux_path.exists() or not aux_manifest_fresh(aux_path, task_names, args):
+        manifest_path = build_aux_data(
+            aux_path,
+            task_names,
+            args.aux_examples,
+            args.aux_levels,
+            args.aux_max_tokens,
+            args.refresh,
+            args.aux_mode,
+        )
+        print(f"wrote {aux_path}")
+        print(f"wrote {manifest_path}")
+    else:
+        print(f"aux cache fresh: {aux_path}")
+
+    influence_path, sat_path = run_result_paths(args)
+    if completed_result(influence_path, task_names) and not args.force_run:
+        print(f"influence cache fresh: {influence_path}")
+        return {"launched": False, "influence": influence_path, "sat": sat_path}
+
+    log_path = Path(args.run_log).expanduser() if args.run_log else ROOT / "task_influence_work" / f"{args.run_tag}.log"
+    script_path = ROOT / "task_influence_work" / f"run_{args.run_tag}.sh"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    script_path.parent.mkdir(parents=True, exist_ok=True)
+    env = {
+        "RUN_TAG": args.run_tag,
+        "LOCAL_AUX": str(aux_path),
+        "AUX_DATASET": args.aux_dataset,
+        "MODEL": args.model,
+        "BATCH": str(args.batch),
+        "GRAD_ACCUM": str(args.grad_accum),
+        "MAIN_DATA": args.main_data,
+        "FROM_SCRATCH": "1" if args.from_scratch_bool else "0",
+        "SEED": str(args.seed),
+        "TRAIN_STEPS": str(args.train_steps),
+        "MIX_AUX": str(args.mix_aux),
+        "COMPLETION_ONLY": "1" if args.completion_only else "0",
+        "EVAL_FLAN": "0" if args.no_eval_flan else "1",
+        "LOG_SAT": "1",
+        "SAT_EVERY": str(args.sat_every),
+        "TASKS": ",".join(task_names),
+    }
+    exports = " ".join(f"{k}={shlex.quote(v)}" for k, v in env.items())
+    script_path.write_text(
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        f"cd {shlex.quote(str(workdir))}\n"
+        f"{exports} python {shlex.quote(str(runner))} 2>&1 | tee {shlex.quote(str(log_path))}\n",
+        encoding="utf-8",
+    )
+    script_path.chmod(0o755)
+
+    if args.foreground:
+        subprocess.run(["bash", str(script_path)], check=True)
+    else:
+        session = clean_run_tag(args.tmux_session or f"rc_influence_{args.run_tag.lower()}")[:80]
+        subprocess.run(["tmux", "new-session", "-d", "-s", session, "bash", str(script_path)], check=True)
+        print(f"launched tmux: {session}")
+        print(f"log: {log_path}")
+        print(f"expected: {influence_path}")
+    return {"launched": not args.foreground, "influence": influence_path, "sat": sat_path}
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="scripts/TASK_INFLUENCE.md")
@@ -698,14 +849,55 @@ def parse_args():
                         help="Override target score weight, e.g. --weight flan=3 --weight fw=0.5")
     parser.add_argument("--profile", choices=sorted(WEIGHT_PROFILES), default="dolci",
                         help="Named scoring profile. --weight overrides individual values.")
+    parser.add_argument("--run-influence", action="store_true",
+                        help="Build/reuse aux data and launch the raw per-task influence trainer.")
+    parser.add_argument("--runner", default="~/sandboxes/rc_grad/per_task_influence.py",
+                        help="Path to per_task_influence.py.")
+    parser.add_argument("--run-workdir", default=None,
+                        help="Working directory for --runner. Default: runner parent.")
+    parser.add_argument("--run-tag", default=None,
+                        help="RUN_TAG for raw result files. Default: LOCAL_<task/config hash>.")
+    parser.add_argument("--run-log", default=None,
+                        help="Log path for --run-influence. Default: task_influence_work/<tag>.log.")
+    parser.add_argument("--tmux-session", default=None,
+                        help="tmux session name for background --run-influence.")
+    parser.add_argument("--foreground", action="store_true",
+                        help="Run influence trainer in the current process instead of tmux.")
+    parser.add_argument("--force-run", action="store_true",
+                        help="Rerun raw influence even if the expected result file is complete.")
+    parser.add_argument("--aux-dataset", choices=("rc", "rgym"), default="rc")
+    parser.add_argument("--main-data", choices=("dolci", "flan", "fw"), default="dolci")
+    parser.add_argument("--model", default="HuggingFaceTB/SmolLM2-135M")
+    parser.add_argument("--seed", type=int, default=43)
+    parser.add_argument("--train-steps", type=int, default=300)
+    parser.add_argument("--mix-aux", type=float, default=0.2)
+    parser.add_argument("--batch", type=int, default=8)
+    parser.add_argument("--grad-accum", type=int, default=1)
+    parser.add_argument("--from-scratch", choices=("0", "1"), default="0")
+    parser.add_argument("--completion-only", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--no-eval-flan", action="store_true")
+    parser.add_argument("--sat-every", type=int, default=50)
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     args.weights = parse_weights(args.profile, args.weight)
+    args.from_scratch_bool = args.from_scratch == "1"
     task_names = args.tasks or list_tasks()
     results_dirs = [Path(p).expanduser() for p in (args.results_dir or default_results_dirs())]
+
+    run_info = None
+    if args.run_influence:
+        run_info = launch_influence_run(args, task_names)
+        run_dir = runner_results_dir(args)
+        if run_dir not in results_dirs:
+            results_dirs.insert(0, run_dir)
+        if not args.include:
+            args.include = [args.run_tag]
+        if run_info.get("launched") and not args.foreground:
+            print("raw influence run is in progress; rerun this command after it completes to refresh the report")
+            return
 
     cache = load_json(args.cache) if Path(args.cache).exists() else {}
     if not isinstance(cache, dict):
@@ -730,7 +922,7 @@ def main():
         if gallery["failures"]:
             print(f"gallery failures: {len(gallery['failures'])}", file=sys.stderr)
 
-    if args.build_aux:
+    if args.build_aux and not args.run_influence:
         manifest_path = build_aux_data(
             args.build_aux,
             task_names,

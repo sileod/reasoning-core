@@ -29,17 +29,35 @@ Switch score regimes without editing code:
 
 Use `--weight target=value` for one-off overrides.
 
-## Produce / Refresh Report
+## Run / Refresh Influence
+
+```bash
+python scripts/task_influence.py \
+  --tasks task_a task_b \
+  --run-influence \
+  --run-tag MYTAG
+```
+
+This builds `task_influence_work/MYTAG_instruct.json` from the local generators,
+launches `per_task_influence.py` in tmux, and writes raw results to the runner's
+`per_task_results/` directory. If the expected influence file already contains
+all requested tasks, it skips retraining and refreshes `scripts/TASK_INFLUENCE.md`
+plus `scripts/TASK_INFLUENCE.json` from the cached result.
+
+Use `--force-run` to rerun a completed raw influence file. Use `--foreground`
+when you do not want tmux.
+
+To refresh the public report from existing raw files only:
 
 ```bash
 python scripts/task_influence.py \
   --results-dir ~/sandboxes/rc_grad/per_task_results \
-  --include S43_T300_M20_dolci_pretrained \
+  --include MYTAG \
+  --tasks task_a task_b \
   --out scripts/TASK_INFLUENCE.md
 ```
 
-This also writes `scripts/TASK_INFLUENCE.json`. Use `--csv-out path.csv` only when
-a CSV export is explicitly needed.
+Use `--csv-out path.csv` only when a CSV export is explicitly needed.
 
 Default behavior caches local task checks in `.task_influence_cache.json`.
 The cache key includes task behavior hash, config, sample count, and script
@@ -94,23 +112,7 @@ hash still matches the existing section, that section is reused directly and
 the task is not regenerated. Use `--gallery-refresh` to force all gallery
 examples to regenerate.
 
-## Generating Raw Results
-
-The trainer/evaluator lives in `~/sandboxes/rc_grad/per_task_influence.py`.
-Typical run shape:
-
-```bash
-RUN_TAG=MYTAG LOCAL_AUX=staging_fresh_aux.json AUX_DATASET=rc \
-MODEL=HuggingFaceTB/SmolLM2-135M BATCH=8 \
-MAIN_DATA=dolci FROM_SCRATCH=0 SEED=43 TRAIN_STEPS=300 MIX_AUX=0.2 \
-COMPLETION_ONLY=1 EVAL_FLAN=1 LOG_SAT=1 SAT_EVERY=50 \
-TASKS=task_a,task_b \
-python ~/sandboxes/rc_grad/per_task_influence.py
-```
-
-This writes:
+The raw runner writes:
 
 - `influence_<TAG>_S43_T300_M20_dolci_pretrained.json`
 - `sat_<TAG>_S43_T300_M20_dolci_pretrained.json`
-
-Then rerun `scripts/task_influence.py` to refresh the Markdown report.
