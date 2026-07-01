@@ -486,6 +486,32 @@ def aggregate_scores(task_names, influence, sat, weights):
     return rows
 
 
+def estimate_global_sigma(influence, weights, runs):
+    """Global seed-noise sigma on influence_score: pooled cross-seed std of per-task scores.
+    Only pools TRUE replicates — same config (model/main/steps/init), differing seed — so
+    mixing configs or same-seed reruns doesn't fake a tiny sigma. Needs >=2 distinct seeds
+    for a task at one config; None otherwise. z = score / sigma = effect in noise-sigmas."""
+    meta = {r["tag"]: r for r in runs}
+    def cfg(tag):
+        m = meta.get(tag, {})
+        return (m.get("model"), m.get("main"), m.get("train_steps"), m.get("init"))
+    groups = defaultdict(lambda: defaultdict(dict))        # (task, config) -> seed -> {target: delta}
+    for task, tdata in influence.items():
+        for target, items in tdata.items():
+            for it in items:
+                groups[(task, cfg(it["run"]))][meta.get(it["run"], {}).get("seed")][target] = it["value"]
+    variances = []
+    for seeds in groups.values():
+        scores = []
+        for deltas in seeds.values():                     # one score per distinct seed
+            terms = [(target_weight(weights, t), -d) for t, d in deltas.items() if target_weight(weights, t)]
+            if terms:
+                scores.append(sum(w * v for w, v in terms) / sum(w for w, _ in terms))
+        if len(scores) >= 2:                              # >=2 distinct seeds at this config
+            variances.append(stdev(scores) ** 2)
+    return (sum(variances) / len(variances)) ** 0.5 if variances else None
+
+
 def contrastive_scores(task_names, influence):
     rows = aggregate_scores(task_names, influence, {}, CONTRAST_WEIGHTS)
     return {name: rows[name]["influence_score"] for name in rows}
@@ -523,7 +549,7 @@ def write_machine_outputs(json_path, records, influence_runs, sat_runs, contrast
     write_json(json_path, payload)
 
 
-def build_records(local, inventory, scores, contrastive_scores=None):
+def build_records(local, inventory, scores, contrastive_scores=None, global_sigma=None):
     contrastive_scores = contrastive_scores or {}
     local_by_task = {r["task"]: r for r in local}
     ranked = sorted(
@@ -543,6 +569,8 @@ def build_records(local, inventory, scores, contrastive_scores=None):
             "task": row["task"],
             "category": loc.get("category") or inv.get("category", ""),
             "influence_score": row["influence_score"],
+            "z": (row["influence_score"] / global_sigma
+                  if global_sigma and math.isfinite(row["influence_score"]) else None),
             "n_runs": row["n_runs"],
             "contrastive_score": contrastive_scores.get(row["task"]),
             "behavior_hash": loc.get("behavior_hash") or inv.get("behavior_hash", ""),
@@ -609,6 +637,7 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
             str(len(rows) + 1),
             row["task"],
             fmt(row["influence_score"], 2, signed=True),
+            fmt(row.get("z"), 1, signed=True),
             fmt(row.get("dolci_delta"), 4, signed=True),
             fmt(row.get("bbh_delta"), 3, signed=True),
             fmt(row.get("fw_delta"), 4, signed=True),
@@ -619,12 +648,15 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
 
     lines.append("## Ranking")
     lines.append("")
+    sigma = getattr(args, "global_sigma", None)
+    zline = (f" `z` = score / global seed-noise σ={sigma:.3f} (|z|≳2 ⇒ effect exceeds seed noise);"
+             if sigma else " `z` needs ≥2 seeds (run more --seed replicates) — blank until then;")
     lines.append("Arrows mark the good direction: `score ↑` (higher = better helper); the deltas "
-                 "`↓` (lower = reduced held-out loss = helped). `tok` = prompt/answer tokens, "
-                 "`acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.")
+                 "`↓` (lower = reduced held-out loss = helped)." + zline + " `tok` = prompt/answer "
+                 "tokens, `acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.")
     lines.append("")
     lines.append(markdown_table(rows, [
-        "#", "task", "score ↑", "dolci ↓", "bbh ↓", "fw ↓", "tok", "acc", "hash",
+        "#", "task", "score ↑", "z ↑", "dolci ↓", "bbh ↓", "fw ↓", "tok", "acc", "hash",
     ]))
     lines.append("")
 
@@ -662,6 +694,7 @@ def run_hash(task_names, args):
     payload = {
         "tasks": task_names,
         "hashes": {name: inventory.get(name, {}).get("behavior_hash", "") for name in task_names},
+        "model": args.model,                 # distinct tag per model (else runs collide across models)
         "main_data": args.main_data,
         "seed": args.seed,
         "train_steps": args.train_steps,
@@ -872,7 +905,9 @@ def parse_args():
                         help="Drop duplicate prompts per task in the aux data (--no-dedup to keep them).")
     parser.add_argument("--aux-dataset", choices=("rc", "rgym"), default="rc")
     parser.add_argument("--main-data", choices=("dolci", "flan", "fw"), default="dolci")
-    parser.add_argument("--model", default="HuggingFaceTB/SmolLM2-135M")
+    parser.add_argument("--model", dest="models", nargs="+", default=["HuggingFaceTB/SmolLM2-135M"],
+                        help="One or more decoder models; each runs separately with a distinct "
+                             "model-specific tag/file (compare models from their per-model JSON).")
     parser.add_argument("--seed", type=int, default=43)
     parser.add_argument("--train-steps", type=int, default=300)
     parser.add_argument("--mix-aux", type=float, default=0.2)
@@ -894,15 +929,25 @@ def main():
 
     run_info = None
     if args.run_influence:
-        run_info = launch_influence_run(args, task_names)
-        run_dir = runner_results_dir(args)
-        if run_dir not in results_dirs:
-            results_dirs.insert(0, run_dir)
-        if not args.include:
-            args.include = [args.run_tag]
-        if run_info.get("launched") and not args.foreground:
-            print("raw influence run is in progress; rerun this command after it completes to refresh the report")
+        run_tags, launched = [], False
+        for m in args.models:                     # one influence run per model (distinct tag/file)
+            args.model = m
+            run_info = launch_influence_run(args, task_names)
+            run_tags.append(args.run_tag)
+            run_dir = runner_results_dir(args)
+            if run_dir not in results_dirs:
+                results_dirs.insert(0, run_dir)
+            launched = launched or (run_info.get("launched") and not args.foreground)
+        if launched:
+            print("raw influence run(s) in progress; rerun this command after they complete to refresh the report")
             return
+        if len(args.models) > 1:                  # combined table would conflate models -> report per-model files
+            print("multi-model run complete; refresh a per-model table with --no-local and one --include tag:")
+            for t in run_tags:
+                print(f"  --include {t}")
+            return
+        if not args.include:
+            args.include = run_tags
 
     cache = load_json(args.cache) if Path(args.cache).exists() else {}
     if not isinstance(cache, dict):
@@ -938,7 +983,8 @@ def main():
     inventory = task_inventory(all_names)
     scores = aggregate_scores(all_names, influence, saturation, args.weights)
     c_scores = contrastive_scores(all_names, contrastive)
-    records = build_records(local, inventory, scores, c_scores)
+    args.global_sigma = estimate_global_sigma(influence, args.weights, influence_runs)   # seed noise from replicates
+    records = build_records(local, inventory, scores, c_scores, args.global_sigma)
     json_out = args.json_out or str(Path(args.out).with_suffix(".json"))
     if args.dry_run:                          # render + print, touch no files
         print(write_markdown(None, records, influence_runs, sat_runs, contrast_runs, args))
