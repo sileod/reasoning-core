@@ -32,6 +32,7 @@ import hashlib
 import json
 import sys
 from collections import defaultdict
+from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -67,9 +68,14 @@ def _phash(prompt):
     return hashlib.sha1(prompt.encode()).hexdigest()[:12]
 
 
-def generate(task, n):
-    """Generate n FRESH (non-deterministic — no seeding) examples; return (examples, mean_gen_s)."""
-    exs = task.generate_balanced_batch(batch_size=n)[:n]
+def generate(task, n, workers=1):
+    """Generate n FRESH (non-deterministic — no seeding) examples; return (examples, mean_gen_s).
+    workers>1 = real ProcessPoolExecutor procs (~2x on pure-Python tasks); prover tasks
+    (rocq/lean/tptp) can't run in the pool, so fall back to serial for those."""
+    try:
+        exs = task.generate_balanced_batch(batch_size=n, workers=workers)[:n]
+    except BrokenProcessPool:
+        exs = task.generate_balanced_batch(batch_size=n, workers=1)[:n]
     times = [e.metadata.get("_time") for e in exs if e.metadata.get("_time") is not None]
     return exs, (sum(times) / len(times) if times else None)
 
@@ -100,10 +106,13 @@ def main():
     ap.add_argument("--max-tokens", type=int, default=640)
     ap.add_argument("--max-concurrency", type=int, default=8,
                     help="Cap simultaneous API calls (litlm semaphore) — lower for rate-limited free tiers.")
+    ap.add_argument("--gen-workers", type=int, default=1,
+                    help="Parallel generator processes (real ProcessPoolExecutor) — ~2x on pure-Python "
+                         "generators; prover tasks (rocq/lean/tptp) auto-fall-back to serial.")
     ap.add_argument("--system", default=SYSTEM)
     ap.add_argument("--refresh", action="store_true", help="Recompute even where cached rows exist.")
-    ap.add_argument("--preds", default=str(ROOT / "task_diagnostics" / "RESULTS" / "zero_shot_preds.jsonl"))
-    ap.add_argument("--out", default=str(ROOT / "task_diagnostics" / "RESULTS" / "ZERO_SHOT.json"))
+    ap.add_argument("--preds", default=str(ROOT / "task_diagnostics" / "zero_shot_preds.jsonl"))
+    ap.add_argument("--out", default=str(ROOT / "task_diagnostics" / "TASK_ZEROSHOT_RESULTS.json"))
     args = ap.parse_args()
 
     preds_path, out_path = Path(args.preds), Path(args.out)
@@ -124,7 +133,7 @@ def main():
                 print(f"{name:<30} {model:<42} cached ({have}/{args.n})", flush=True)
                 continue
             try:
-                exs, gt = generate(task, need)
+                exs, gt = generate(task, need, workers=args.gen_workers)
                 gen_time[name] = gt
             except BaseException as exc:                 # framework TimeoutException is BaseException
                 print(f"{name:<30} {model:<42} GEN-ERR {type(exc).__name__}"[:110], flush=True)

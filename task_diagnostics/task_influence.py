@@ -24,6 +24,7 @@ import subprocess
 import sys
 import time
 from collections import defaultdict
+from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -214,7 +215,7 @@ def _verification_rows(task, examples, limit):
 
 
 def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refresh, aux_mode,
-                   dedup=True):
+                   dedup=True, workers=1):
     """Build LOCAL_AUX JSON keyed as task -> [[prompt, completion], ...] from local generators."""
     path = Path(path)
     data = {}
@@ -252,11 +253,19 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
                           f"stopping at {len(examples_all)}/{want} (skipping remaining levels)",
                           flush=True)
                     break
-                examples = task.generate_balanced_batch(
-                    batch_size=per_level,
-                    max_tokens=max_tokens,
-                    level=level,
-                )
+                # workers>1 = real ProcessPoolExecutor procs; ~2x on pure-Python generators.
+                # Prover-backed tasks (rocq/lean/tptp) CRASH under the pool (BrokenProcessPool:
+                # the containerized prover can't be forked into a worker) — fall back to serial
+                # for those so a --gen-workers run doesn't abort on them.
+                try:
+                    examples = task.generate_balanced_batch(
+                        batch_size=per_level, max_tokens=max_tokens, level=level, workers=workers,
+                    )
+                except BrokenProcessPool:
+                    print(f"PARALLEL-UNSAFE {name}: falling back to serial gen", flush=True)
+                    examples = task.generate_balanced_batch(
+                        batch_size=per_level, max_tokens=max_tokens, level=level, workers=1,
+                    )
                 for ex in examples:
                     if len(examples_all) >= want:
                         break
@@ -356,7 +365,8 @@ def materialize_aux(aux_path, task_names, args):
         return pull_staging_aux(aux_path, task_names, args.aux_examples, args.aux_levels,
                                 args.aux_max_tokens, args.aux_mode, args.staging_repo, args.dedup)
     return build_aux_data(aux_path, task_names, args.aux_examples, args.aux_levels,
-                          args.aux_max_tokens, args.refresh, args.aux_mode, args.dedup)
+                          args.aux_max_tokens, args.refresh, args.aux_mode, args.dedup,
+                          workers=args.gen_workers)
 
 
 def parse_result_tag(path, prefix):
@@ -786,7 +796,7 @@ def launch_influence_run(args, task_names):
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", default="task_diagnostics/RESULTS/TASK_INFLUENCE.md")
+    parser.add_argument("--out", default="task_diagnostics/TASK_INFLUENCE_RESULTS.md")
     parser.add_argument("--cache", default=".task_influence_cache.json")
     parser.add_argument("--json-out", default=None,
                         help="Machine-readable JSON output. Default: --out with .json suffix.")
@@ -795,6 +805,10 @@ def parse_args():
                               "Use an ignored path such as task_influence_work/aux.json."))
     parser.add_argument("--aux-examples", type=int, default=256,
                         help="Examples per task for --build-aux.")
+    parser.add_argument("--gen-workers", type=int, default=1,
+                        help="Parallel generator processes for --build-aux (real ProcessPoolExecutor). "
+                             ">1 gives ~2x on pure-Python generators; prover tasks (rocq/lean/tptp) "
+                             "can't run in the pool and auto-fall-back to serial.")
     parser.add_argument("--aux-levels", nargs="+", type=int, default=[0, 1, 2],
                         help="Difficulty levels sampled for --build-aux.")
     parser.add_argument("--aux-max-tokens", type=int, default=5000,
