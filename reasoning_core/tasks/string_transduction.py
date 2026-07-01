@@ -110,7 +110,8 @@ class StringTransduction(Task):
                 for _, f in program:
                     target = f(target)
                 meta = edict(mode=mode, source=source, ops=[name for name, _ in program])
-            if target:
+            target = target.strip()  # word-source ops (e.g. sort) push the join spaces to an
+            if target:                # end; drop that leading/trailing whitespace (scorer strips too)
                 return Problem(meta, target)
         raise RuntimeError("failed to generate nonempty string transduction")
 

@@ -1192,7 +1192,7 @@ class MultistepNLI(Task):
         if case:
             meta = case_metadata(case, key)
             meta.payload = Payload(premise="\n".join(meta.premise), hypothesis=meta.hypothesis)
-            mapping = {"entailment": "yes", "contradiction": "no", "neutral": "maybe"}
+            mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
             return Problem(meta, mapping[case.label])
         raise RuntimeError("could not generate a consistent multistep_nli example")
 
@@ -1200,7 +1200,7 @@ class MultistepNLI(Task):
         return (
             f"{Payload(meta.payload)}\n\n"
             "Does the premise entail the hypothesis? "
-            "The answer is yes, no, or maybe."
+            "The answer is Yes, No, or Maybe."
         )
 
     def score_answer(self, answer, entry):

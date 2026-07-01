@@ -245,18 +245,21 @@ class LogicNLI(Task):
             meta.prem, meta.hyp = x.dict(), hyp.dict()
             meta.label = label
             meta.payload = Payload(premise=meta.prem.eng, hypothesis=meta.hyp.eng)
-            mapping = {"entailment": "yes", "contradiction": "no", "neutral": "maybe"}
+            mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
             return Problem(meta, mapping[label])
 
     def prompt(self, meta):
         P = (
             f"{Payload(meta.payload)}\n\n"
             "Does the premise entail the hypothesis? "
-            "The answer is yes, no, or maybe."
+            "The answer is Yes, No, or Maybe."
         )
 
         P=verbalize_predicates(P, seed=meta.verbalize_seed)
         return P
+
+    def score_answer(self, answer, entry):
+        return float(str(answer).strip().lower() == str(entry.answer).strip().lower())
 
     def balancing_key(self, problem):
         return problem.answer
@@ -292,7 +295,7 @@ class EvidenceRetrieval(Task):
             self.nli.config = self.config
             x = self.nli.generate()
             label = x.metadata.get('label', x.answer)
-            label = {'yes': 'entailment', 'no': 'contradiction', 'maybe': 'neutral'}.get(label, label)
+            label = {'yes': 'entailment', 'no': 'contradiction', 'maybe': 'neutral'}.get(str(label).lower(), label)
             proof = x.metadata.get('proof')
             answer = [i for i in proof.indices if i != 'hyp'] if proof else []
             if label in ('entailment', 'contradiction') and answer and self.compute_necessity(x):
@@ -368,7 +371,7 @@ def _alter_formula(f):
     random.shuffle(ops)
     return ops[0][0], ops[0][1](f)
 
-class LogicFormalization(DevTask):
+class LogicFormalization(Task):
     def __init__(self, config=LogicFormalizationConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.5
