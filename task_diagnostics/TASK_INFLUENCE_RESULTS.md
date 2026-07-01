@@ -1,6 +1,6 @@
 # Task Influence
 
-Updated: 2026-07-01 10:37 UTC
+Updated: 2026-07-01 10:57 UTC
 
 Lower delta means the task reduced held-out loss versus the baseline. `influence_score` is the weighted mean of `-delta`, so positive means the task helped on the weighted targets. Default target weights: bbh=1, dolci=1, flan=0, fw=1
 
@@ -53,7 +53,7 @@ Arrows mark the good direction: `score ↑` (higher = better helper); the deltas
 | 35 | locate_error | +0.07 | -0.0032 | -0.213 | +0.0028 |  | 0.09→0.44 | efadf80 |
 | 36 | parsing_derivation | +0.07 | +0.0002 | -0.212 | +0.0008 |  | 0.51→0.66 | efadf80 |
 | 37 | code_runnability | +0.07 | -0.0010 | -0.208 | +0.0009 |  | 0.10→0.72 | 83ade9e |
-| 38 | analogical_case_retrieval | +0.07 | +0.0056 | -0.207 | -0.0032 |  | 0.63→0.78 | 4b703ee |
+| 38 | analogical_case_retrieval | +0.07 | +0.0056 | -0.207 | -0.0032 |  | 0.63→0.78 | 7b5d425 |
 | 39 | arithmetics | +0.07 | -0.0013 | -0.202 | +0.0015 |  | 0.15→0.32 | 598d63b |
 | 40 | graph_pathfinding | +0.07 | +0.0021 | -0.203 | -0.0001 |  | 0.22→0.68 | 9b2bff9 |
 | 41 | lambda_reduction | +0.06 | -0.0007 | -0.194 | +0.0022 |  | 0.51→0.63 | da07454 |

@@ -590,7 +590,12 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
 
     # Compact ranking: real tasks only (skip mixture/experiment artifacts), the three
     # scored deltas + merged tok/acc diagnostics. flan + full detail live in the JSON sidecar.
-    registered = set(list_tasks()) | set(getattr(args, "include_dev", []) or [])
+    # Allow into the table: all registered tasks, anything explicitly named via --tasks
+    # (naming a DevTask is enough — no --include-dev needed), and the --include-dev allowlist
+    # (for sweeps where DevTasks arrive via the influence files rather than --tasks).
+    registered = (set(list_tasks())
+                  | set(getattr(args, "tasks", None) or [])
+                  | set(getattr(args, "include_dev", []) or []))
 
     def _pair(a, b, digits, sep):
         sa, sb = fmt(a, digits), fmt(b, digits)
