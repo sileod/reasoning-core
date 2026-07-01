@@ -709,6 +709,24 @@ def run_hash(task_names, args):
     return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:10]
 
 
+def aux_hash(task_names, args):
+    """Hash of only what the AUX generator data depends on — tasks + their behavior hashes +
+    aux config. Independent of model/seed/main_data/train_steps/mix_aux, so different models
+    and seeds share one aux file (no rebuild). Mirrors what aux_manifest_fresh checks."""
+    inventory = task_inventory(task_names)
+    payload = {
+        "tasks": task_names,
+        "hashes": {name: inventory.get(name, {}).get("behavior_hash", "") for name in task_names},
+        "aux_examples": args.aux_examples,
+        "aux_levels": args.aux_levels,
+        "aux_max_tokens": args.aux_max_tokens,
+        "aux_mode": args.aux_mode,
+        "source": args.source,
+        "dedup": args.dedup,
+    }
+    return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:10]
+
+
 def run_init_tag(args):
     return "scratch" if args.from_scratch_bool else "pretrained"
 
@@ -774,7 +792,9 @@ def launch_influence_run(args, task_names):
 
     args.run_tag = clean_run_tag(args.run_tag or f"LOCAL_{run_hash(task_names, args)}")
     if not args.build_aux:
-        args.build_aux = str(ROOT / "task_influence_work" / f"{args.run_tag}_{args.aux_mode}.json")
+        # aux path keyed by aux_hash (model/seed-independent) so models & seeds share one
+        # aux file — rerun a new model/seed without regenerating identical task data.
+        args.build_aux = str(ROOT / "task_influence_work" / f"AUX_{aux_hash(task_names, args)}_{args.aux_mode}.json")
     aux_path = Path(args.build_aux).expanduser()
     if not aux_path.is_absolute():
         aux_path = ROOT / aux_path
