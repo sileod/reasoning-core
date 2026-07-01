@@ -214,6 +214,25 @@ def _verification_rows(task, examples, limit):
     return rows
 
 
+def _reuse_aux(name, bh, aux_mode, examples_per_task, levels, max_tokens, dedup, workdir):
+    """Rows for this task already generated with a MATCHING behavior_hash + aux config in any
+    existing aux file — so a new model/seed/task-set run reuses them instead of regenerating
+    (matters most for the slow prover tasks). Scans task_influence_work/*_<mode>.json manifests."""
+    want = {"aux_mode": aux_mode, "examples_per_task": examples_per_task, "levels": levels,
+            "max_tokens": max_tokens, "dedup": dedup, "source": "generate"}
+    for f in sorted(Path(workdir).glob(f"*_{aux_mode}.json")):
+        man = load_json(f.with_suffix(f.suffix + ".manifest.json"))
+        if not isinstance(man, dict) or any(man.get(k) != v for k, v in want.items()):
+            continue
+        rec = (man.get("tasks") or {}).get(name)
+        if not rec or rec.get("behavior_hash") != bh or rec.get("n", 0) <= 0:
+            continue
+        rows = (load_json(f) or {}).get(name)
+        if isinstance(rows, list) and rows:
+            return rows[:examples_per_task], rec
+    return None, None
+
+
 def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refresh, aux_mode,
                    dedup=True, workers=1):
     """Build LOCAL_AUX JSON keyed as task -> [[prompt, completion], ...] from local generators."""
@@ -238,8 +257,18 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
     # Better to ship a partial/skip one task than stall the whole phase to zero.
     task_timeout = int(os.environ.get("AUX_TASK_TIMEOUT", "900") or 0)
     for name in task_names:
-        print(f"aux {name}", flush=True)
         task = get_task(name)
+        bh = task.behavior_hash()
+        if not refresh:                           # reuse cached rows for an unchanged task (any prior file)
+            rows, rec = _reuse_aux(name, bh, aux_mode, examples_per_task, levels, max_tokens, dedup, path.parent)
+            if rows:
+                print(f"aux {name}: reused {len(rows)} cached rows (behavior_hash {bh[:7]})", flush=True)
+                data[name] = rows
+                manifest["tasks"][name] = {"n": len(rows), "behavior_hash": bh,
+                                           "source_file": rec.get("source_file", ""),
+                                           "source_modified": rec.get("source_modified", "")}
+                continue
+        print(f"aux {name}", flush=True)
         source = Path(inspect.getfile(task.__class__)).resolve()
         rel = source.relative_to(ROOT) if source.is_relative_to(ROOT) else source
         examples_all, seen = [], set()
