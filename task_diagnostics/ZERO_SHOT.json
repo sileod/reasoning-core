@@ -1,0 +1,151 @@
+{
+  "generated_at": "2026-07-01T06:52:22.005634+00:00",
+  "models": [
+    "nvidia_nim/meta/llama-3.1-8b-instruct",
+    "nvidia_nim/meta/llama-3.3-70b-instruct"
+  ],
+  "n_per_task": 25,
+  "system": "You are solving a reasoning task. Read the problem and reply with ONLY the final answer, in exactly the format the problem asks for \u2014 no explanation. Put the final answer inside <answer></answer> tags.",
+  "tasks": {
+    "analogical_case_retrieval": {
+      "gen_time": 0.009034280776977538,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.04
+        }
+      }
+    },
+    "code_input_deduction": {
+      "gen_time": 1.0346241569519044,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.0
+        }
+      }
+    },
+    "count_elements": {
+      "gen_time": 0.00029885292053222657,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 1.0
+        }
+      }
+    },
+    "game_forced_win": {
+      "gen_time": 0.3021186637878418,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.4
+        }
+      }
+    },
+    "graph_pathfinding": {
+      "gen_time": 0.001144275665283203,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.44333333333333336
+        }
+      }
+    },
+    "logic_nli": {
+      "gen_time": 0.13445481300354004,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.28
+        }
+      }
+    },
+    "math_word_problem": {
+      "gen_time": 0.00515223503112793,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.29112950999029985
+        }
+      }
+    },
+    "multistep_nli": {
+      "gen_time": 0.0042742919921875,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.36
+        }
+      }
+    },
+    "parsing_derivation": {
+      "gen_time": 0.9204346942901611,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 24,
+          "n_ok": 24,
+          "reward": 0.16666666666666666
+        }
+      }
+    },
+    "planar_geometry_relations": {
+      "gen_time": 0.03640827178955078,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.2
+        }
+      }
+    },
+    "planning": {
+      "gen_time": 0.13185341835021971,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.28800000000000003
+        }
+      }
+    },
+    "set_expression": {
+      "gen_time": 0.00043681144714355466,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.3663628593628594
+        }
+      }
+    },
+    "table_equivalence": {
+      "gen_time": 0.005652360916137696,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.44
+        }
+      }
+    },
+    "table_statistics": {
+      "gen_time": 0.010210895538330078,
+      "models": {
+        "nvidia_nim/meta/llama-3.1-8b-instruct": {
+          "n": 25,
+          "n_ok": 25,
+          "reward": 0.08
+        }
+      }
+    }
+  }
+}
