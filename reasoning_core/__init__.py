@@ -141,7 +141,8 @@ def get_task(k, *args, **kwargs):
     return cls(*args, **kwargs)
 
 DEPRECATED = ['symbolic_arithmetics', 'graph_node_centrality']
-ignored = DEPRECATED + ['reasonining_gym']
+# count_elements absorbed into set_expression's multiset Count(x, S) mode (toyish standalone; zero-shot 1.0)
+ignored = DEPRECATED + ['reasonining_gym', 'count_elements']
 
 def list_tasks():
     return [k for k in DATASETS.keys() if k not in ignored]

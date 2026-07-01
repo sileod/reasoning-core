@@ -157,11 +157,21 @@ class CountElements(Task):
         except: return 0
 
 def _elem_key(x):
-    # Numeric-aware: sort int elements by value, not lexicographically. sorted(key=str)
-    # scrambles integers ({1, 18, 2, 21, ...}) into a high-entropy order the model must
-    # memorize; natural numeric order ({1, 2, 18, 21, ...}) is far more learnable. Strings
-    # keep alphabetical order. The tuple's leading 0/1 keeps mixed sets comparable.
+    # Numeric-aware: sort ints by value, not lexicographically (sorted(key=str) gives the
+    # scrambled {1, 18, 2, 21, ...}). Natural order is a cleaner gold string; strings stay
+    # alphabetical. The tuple's leading 0/1 keeps mixed sets comparable.
     return (0, x) if isinstance(x, int) else (1, str(x))
+
+
+class MSet(dict):
+    """Multiset {element: count}. &, |, - give per-element min, max, floored difference."""
+    def __and__(s, o): return MSet({k: min(s[k], o[k]) for k in s if k in o})
+    def __or__(s, o):  return MSet({k: max(s.get(k, 0), o.get(k, 0)) for k in {*s, *o}})
+    def __sub__(s, o): return MSet({k: s[k] - o.get(k, 0) for k in s if s[k] > o.get(k, 0)})
+
+
+def _ms_elems(ms):  # elements with repetition, in canonical (sorted) order
+    return sorted((e for e, c in ms.items() for _ in range(c)), key=_elem_key)
 
 
 def repr_set(xs):
@@ -170,14 +180,18 @@ def repr_set(xs):
 
 
 def repr_answer(x):
+    if isinstance(x, MSet):                    # multiset -> sorted list (repeats preserved & parseable)
+        return "[" + ", ".join(map(repr, _ms_elems(x))) + "]"
     return repr_set(x) if isinstance(x, set) else str(x)
 
 
-def eval_setops(expr, env):
-    return eval(expr, {"__builtins__": {}}, {"Card": len, **env})
+def eval_setops(expr, env, multiset=False):
+    card = (lambda s: sum(s.values())) if multiset else len       # multiset Card = total multiplicity
+    return eval(expr, {"__builtins__": {}},
+                {"Card": card, "Count": lambda x, s: s.get(x, 0), **env})
 
 
-def make_set_expr(min_depth, max_depth):
+def make_set_expr(min_depth, max_depth, ops="&|-^"):
     def part(depth):
         if depth >= max_depth or (depth >= min_depth and random.random() < 0.85):
             return random.choice("ABC")
@@ -190,7 +204,7 @@ def make_set_expr(min_depth, max_depth):
             if right != left:
                 break
             right = part(depth + 1)
-        return f"({left}{random.choice('&|-^')}{right})"
+        return f"({left}{random.choice(ops)}{right})"
 
     expr = binary(0)
     return f"Card({expr})" if random.random() < 0.25 else expr
@@ -204,12 +218,15 @@ class SetExpressionConfig(Config):
     min_depth: int = 1
     max_depth: int = 2
     diff_like_prob: float = 0.15
+    multiset_prob: float = 0.35
+    max_mult: int = 3
 
     def update(self, c):
         self.set_size *= 1 + c
         self.domain_size *= 1 + c
         self.n_domains += c
         self.max_depth += c
+        self.max_mult += c
 
 
 class SetExpression(Task):
@@ -245,20 +262,33 @@ class SetExpression(Task):
     def generate(self):
         domain = random.choice(self.domains[:self.config.n_domains])
         env, shown = self.make_env(domain)
-        expr = make_set_expr(self.config.min_depth, self.config.max_depth)
-        answer = eval_setops(expr, env)
+        # multiset only for the plain-random case — keep the diff-like "same ordered + edits" mode
+        multiset = shown is None and random.random() < self.config.multiset_prob
+        if multiset:
+            env = {x: MSet({e: random.randint(1, self.config.max_mult) for e in env[x]}) for x in env}
+        expr = make_set_expr(self.config.min_depth, self.config.max_depth, "&|-" if multiset else "&|-^")
+        if multiset and "Card(" not in expr and random.random() < 0.4:   # counting op (subsumes count_elements)
+            pool = sorted(set().union(*(set(env[x]) for x in "ABC")), key=_elem_key)
+            expr = f"Count({random.choice(pool)!r}, {expr})"
+        answer = eval_setops(expr, env, multiset)
 
-        return Problem(
-            metadata={
-                **{x: shown[x] if shown else return_shuffle(env[x]) for x in "ABC" if x in expr},
-                "expr": expr,
-            },
-            answer=repr_answer(answer),
-        )
+        used = expr.replace("Card", "").replace("Count", "")   # set vars only, not the Card/Count keywords
+        meta = {"expr": expr, "multiset": multiset}
+        for x in "ABC":
+            if x not in used:
+                continue
+            if multiset:
+                xs = _ms_elems(env[x]); random.shuffle(xs); meta[x] = xs
+            else:
+                meta[x] = shown[x] if shown else return_shuffle(env[x])
+        return Problem(metadata=meta, answer=repr_answer(answer))
 
     def prompt(self, m):
         sets = "\n".join(f"{x}: {m[x]}" for x in "ABC" if x in m)
-        return f"{sets}\nEvaluate {m['expr']}."
+        note = ("\nA, B, C are multisets (elements repeat); &, |, - combine counts by min, max, "
+                "subtract; Count(x, S) is x's count. Give a multiset result as a sorted list."
+                if m.get("multiset") else "")
+        return f"{sets}\nEvaluate {m['expr']}.{note}"
 
     def score_answer(self, answer, entry):
         truth = entry["answer"]
@@ -269,6 +299,9 @@ class SetExpression(Task):
 
             if truth.lstrip("-").isdigit():
                 return 1 / (1 + abs(int(answer) - int(truth)))
+
+            if truth.startswith("["):                     # multiset: multiplicity-aware, order-invariant
+                return int(sorted(literal_eval(answer)) == sorted(literal_eval(truth)))
 
             pred = set() if answer.strip() == "set()" else set(literal_eval(answer))
             truth = set() if truth == "set()" else set(literal_eval(truth))
