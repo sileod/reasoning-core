@@ -305,9 +305,9 @@ def _crisp_with_memory_distractors(case, n, rng, q_before, allowed, attempts=64)
 class AnalogicalCaseRetrievalConfig(Config):
     n_query_objects: int = 5
     n_query_links: int = 3
-    n_query_facts: int = 8
+    n_query_facts: int = 6
     n_query_facts_range: tuple | None = None
-    n_cases: int = 4
+    n_cases: int = 3
     n_gold_cases: int = 1
     context_facts: int = 4
     memory_distractors: int = 0
@@ -404,10 +404,11 @@ class AnalogicalCaseRetrieval(Task):
                 continue
 
             gold_ids = sorted(hits[q_answer], key=lambda x: int(x[1:]))
-            # Retrieval framing: answer is the matching case NUMBER (short), not the full
-            # consequence sentence. Same reasoning (find the renaming/reversal-isomorphic case),
-            # minimal answer — the short answer roughly doubled BBH transfer (Δ -0.152 -> -0.318).
-            answer = gold_ids[0][1:]
+            # ICL framing: answer is the query's consequence (predict-the-relation), not the
+            # matching case number. Kept deliberately over the shorter case-number variant — it
+            # is a more general in-context-learning task (fills the ICL gap) even though it
+            # transfers a bit less. Difficulty is trimmed via the config (fewer cases/facts).
+            answer = _sent(q_answer)
 
             md = edict(
                 cases=[
@@ -442,7 +443,6 @@ class AnalogicalCaseRetrieval(Task):
         lines = [
             "Cases show facts that imply one new fact.",
             "Object names and link names may be consistently renamed, and each link name may also have its direction consistently reversed.",
-            "Exactly one case has the same relational structure as the query.",
             "",
         ]
 
@@ -456,12 +456,11 @@ class AnalogicalCaseRetrieval(Task):
         lines.append("Query")
         for atom in sorted(metadata["query_context"]):
             lines.append(_sent(atom))
-        lines.append("")
-        lines.append("Which case has the same structure as the query? Answer with its case number only.")
+        lines.append("Implies:")
 
         return "\n".join(lines)
 
     def score_answer(self, answer, entry):
-        gold = str(entry.metadata["matching_case_ids"][0]).lstrip("M")
-        m = re.search(r"\d+", str(answer))  # accept "M2", "2", "case 2", ...
-        return 1.0 if m is not None and m.group() == gold else 0.0
+        gold = tuple(entry.metadata["answer_atom"])  # edict stores answer_atom as a list; parse yields a tuple
+        pred = _parse_sent(answer)
+        return 1.0 if pred is not None and tuple(pred) == gold else 0.0
