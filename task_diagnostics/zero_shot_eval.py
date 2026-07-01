@@ -96,6 +96,8 @@ def main():
     ap.add_argument("--models", nargs="+", default=DEFAULT_MODELS, help="litlm model ids (cheap/free).")
     ap.add_argument("--n", type=int, default=25, help="Target ok examples per (task, model); runs accumulate to it.")
     ap.add_argument("--max-tokens", type=int, default=640)
+    ap.add_argument("--max-concurrency", type=int, default=8,
+                    help="Cap simultaneous API calls (litlm semaphore) — lower for rate-limited free tiers.")
     ap.add_argument("--system", default=SYSTEM)
     ap.add_argument("--refresh", action="store_true", help="Recompute even where cached rows exist.")
     ap.add_argument("--preds", default=str(ROOT / "task_diagnostics" / "zero_shot_preds.jsonl"))
@@ -127,7 +129,8 @@ def main():
                 continue
             try:
                 outs = litlm.complete([e.prompt for e in exs], model=model, system=args.system,
-                                      caching=True, max_tokens=args.max_tokens, show_progress=False)
+                                      caching=True, max_tokens=args.max_tokens, show_progress=False,
+                                      max_concurrency=args.max_concurrency)
             except Exception as exc:
                 print(f"{name:<30} {model:<42} API-ERR {type(exc).__name__}"[:110], flush=True)
                 continue
