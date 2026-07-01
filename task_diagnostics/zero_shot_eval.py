@@ -155,12 +155,12 @@ def main():
             print(f"{name:<30} {model:<42} reward={tag}  ({len(okr)}/{args.n} ok)", flush=True)
 
     _write_aggregate(out_path, rows, args, gen_time)
-    print(f"\nwrote {preds_path}\nwrote {out_path}")
+    print(f"\nwrote {preds_path}\nwrote {out_path}\nwrote {out_path.with_suffix('.md')}")
 
 
 def _write_aggregate(out_path, rows, args, gen_time):
-    """Derive per-(task, model) reward from the per-example rows. Report-card rendering
-    (combined with influence/saturation) lives in the diagnostics aggregator, not here."""
+    """Derive per-(task, model) reward from the per-example rows -> JSON + a small MD table."""
+    prev = (json.loads(out_path.read_text()).get("tasks", {}) if out_path.exists() else {})
     by = defaultdict(list)
     for r in rows.values():
         by[r["task"]].append(r)
@@ -171,13 +171,32 @@ def _write_aggregate(out_path, rows, args, gen_time):
             okr = [r for r in rs if r["model"] == m and r.get("ok")]
             models[m] = {"reward": (sum(r["score"] for r in okr) / len(okr)) if okr else None,
                          "n_ok": len(okr), "n": sum(r["model"] == m for r in rs)}
-        tasks[t] = {"gen_time": gen_time.get(t), "models": models}
+        gt = gen_time.get(t)                             # fall back to prior JSON on cached-only rebuilds
+        tasks[t] = {"gen_time": gt if gt is not None else prev.get(t, {}).get("gen_time"),
+                    "models": models}
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps({
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "n_per_task": args.n, "models": args.models, "system": args.system,
         "tasks": tasks,
     }, indent=2, sort_keys=True) + "\n")
+
+    ms = sorted({m for t in tasks.values() for m in t["models"]})
+    def rew(t, m): return (tasks[t]["models"].get(m) or {}).get("reward")
+    def meanrew(t):
+        vs = [rew(t, m) for m in ms if rew(t, m) is not None]
+        return sum(vs) / len(vs) if vs else -1
+    md = ["# Zero-shot task solvability", "",
+          "Real free-gen reward (`task.score_answer`) via litlm — hardest first. Low reward on a "
+          "capable model = genuinely hard/unlearnable (teacher-forced token_acc inflates). "
+          "`gen` = mean generator s/example. Per-example labels: zero_shot_preds.jsonl (local).", "",
+          "| task | " + " | ".join(m.split("/")[-1] + " ↑" for m in ms) + " | gen |",
+          "|" + "---|" * (len(ms) + 2)]
+    for t in sorted(tasks, key=meanrew):
+        cells = [f"{rew(t, m):.2f}" if rew(t, m) is not None else "—" for m in ms]
+        gt = tasks[t].get("gen_time")
+        md.append(f"| {t} | " + " | ".join(cells) + (f" | {gt:.2f}s |" if gt is not None else " | — |"))
+    out_path.with_suffix(".md").write_text("\n".join(md) + "\n")
 
 
 if __name__ == "__main__":
