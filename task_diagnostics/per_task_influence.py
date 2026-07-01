@@ -130,7 +130,7 @@ WARMED_CKPT_DIR = Path(os.environ.get("WARMED_CKPT_DIR",
                       "/mnt/nfs_share_magnet2/dsileo/sandboxes/rc_grad/model_checkpoints/"
                       "HuggingFaceTB_SmolLM2-135M_fw_rc_W300"))
 # OUT_DIR: where raw result JSONs are written. Default = <repo>/per_task_results (this file
-# lives in <repo>/scripts/). The orchestrator passes OUT_DIR explicitly so the two always agree.
+# lives in <repo>/task_diagnostics/). The orchestrator passes OUT_DIR explicitly so the two always agree.
 OUT_DIR     = Path(os.environ.get("OUT_DIR") or (Path(__file__).resolve().parent.parent / _RESULTS_SUB))
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 _init_tag   = "scratch" if FROM_SCRATCH else "pretrained"

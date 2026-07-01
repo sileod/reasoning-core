@@ -1,6 +1,6 @@
 # Task Influence
 
-Updated: 2026-07-01 04:01 UTC
+Updated: 2026-07-01 06:23 UTC
 
 Lower delta means the task reduced held-out loss versus the baseline. `influence_score` is the weighted mean of `-delta`, so positive means the task helped on the weighted targets. Default target weights: bbh=1, dolci=1, flan=0, fw=1
 

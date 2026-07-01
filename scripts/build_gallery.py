@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 import argparse
+import ast
+import functools
+import hashlib
 import inspect
 import re
 from collections import OrderedDict
@@ -7,9 +10,12 @@ from pathlib import Path
 
 from tqdm.auto import tqdm
 
-from reasoning_core import get_task, list_tasks
+from reasoning_core import _task_to_module_map, get_task, list_tasks
+from reasoning_core.template import _strip_docstrings
 
 
+ROOT = Path(__file__).resolve().parents[1]
+TASKS_DIR = ROOT / "reasoning_core" / "tasks"
 CATEGORY_ORDER = [
     "arithmetics", "equation_system", "math_lean", "math_tptp",
     "math_geometry", "math_metamath", "binding",
@@ -47,22 +53,45 @@ def slug(name):
     return re.sub(r"[^\w\s-]", "", name.lower()).replace(" ", "-")
 
 
-def category_rank(task):
+def task_module(name):
+    return _task_to_module_map[name][0]
+
+
+def task_source(name):
+    return TASKS_DIR / f"{task_module(name)}.py"
+
+
+@functools.lru_cache(maxsize=None)
+def _source_behavior_hash(path_str):
+    tree = ast.parse(Path(path_str).read_text(encoding="utf-8"), filename=path_str)
+    canonical = ast.dump(_strip_docstrings(tree), include_attributes=False)
+    return hashlib.sha1(canonical.encode()).hexdigest()[:16]
+
+
+def source_behavior_hash(path):
+    # Many tasks share one module file; memoize per file so the changed-task
+    # scan parses each module once, not once per task.
+    return _source_behavior_hash(str(Path(path)))
+
+
+def category_rank_name(name):
     try:
-        return CATEGORY_ORDER.index(task.category_name)
+        return CATEGORY_ORDER.index(task_module(name))
     except ValueError:
         return len(CATEGORY_ORDER)
 
 
-def sort_tasks(names):
+def sort_task_names(names):
     registry_rank = {name: i for i, name in enumerate(list_tasks())}
     return sorted(
-        (get_task(name) for name in names),
-        key=lambda task: (category_rank(task), registry_rank.get(task.task_name, 10**9)),
+        names,
+        key=lambda name: (category_rank_name(name), registry_rank.get(name, 10**9)),
     )
 
 
 def pick_example(task, batch_size, cache=False, refresh_cache=False):
+    if batch_size <= 1:
+        return task.generate_example()
     if cache:
         batch = task.validate(n_samples=batch_size, cache=True,
                               refresh=refresh_cache)
@@ -99,11 +128,25 @@ def build_examples(tasks, cache=False, refresh_cache=False, allow_missing=False)
 
 def section_text(name, example):
     task = get_task(name)
+    source = Path(inspect.getfile(task.__class__)).resolve()
     return (
         f"## [{name}]({source_link(task)})\n\n"
+        f"- hash: `{task.behavior_hash()}`\n"
+        f"- modified: {source.stat().st_mtime:.0f}\n\n"
         f"**Prompt:**\n{fence(example.prompt)}\n\n"
         f"**Answer:**\n{fence(example.answer)}"
     )
+
+
+def changed_tasks(task_names, existing_sections, refresh=False):
+    if refresh:
+        return task_names
+    changed = []
+    for name in task_names:
+        section = existing_sections.get(name, "")
+        if f"- hash: `{source_behavior_hash(task_source(name))}`" not in section:
+            changed.append(name)
+    return changed
 
 
 def read_sections(path):
@@ -172,12 +215,13 @@ def parse_args():
 def main():
     args = parse_args()
     names = args.tasks or list_tasks()
-    tasks = sort_tasks(names)
-    examples = build_examples(tasks, cache=not args.no_cache,
+    task_names = sort_task_names(names)
+    existing_sections = read_sections(args.out)
+    tasks_to_build = changed_tasks(task_names, existing_sections, args.refresh_cache)
+    examples = build_examples((get_task(name) for name in tasks_to_build),
+                              cache=not args.no_cache,
                               refresh_cache=args.refresh_cache,
                               allow_missing=args.allow_missing)
-    task_names = [task.task_name for task in tasks]
-    existing_sections = read_sections(args.out)
     missing = [name for name in task_names if name not in examples and name not in existing_sections]
     if missing:
         raise RuntimeError(f"no generated or existing gallery section for: {', '.join(missing)}")

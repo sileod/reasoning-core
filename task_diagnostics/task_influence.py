@@ -6,9 +6,9 @@ default) or pulled from a pre-built HF staging repo (--source staging) — launc
 raw influence trainer for tasks whose behavior hash changed, and rewrites a compact
 Markdown ranking table (+ JSON sidecar). Gallery rendering lives in build_gallery.py.
 
-Refresh everything that changed:   python scripts/task_influence.py --run-influence
-Pull staging instead of gen:       python scripts/task_influence.py --run-influence --source staging
-Rebuild the table from cache only:  python scripts/task_influence.py --no-local
+Refresh everything that changed:   python task_diagnostics/task_influence.py --run-influence
+Pull staging instead of gen:       python task_diagnostics/task_influence.py --run-influence --source staging
+Rebuild the table from cache only:  python task_diagnostics/task_influence.py --no-local
 """
 
 import argparse
@@ -785,7 +785,7 @@ def launch_influence_run(args, task_names):
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", default="scripts/TASK_INFLUENCE.md")
+    parser.add_argument("--out", default="task_diagnostics/TASK_INFLUENCE.md")
     parser.add_argument("--cache", default=".task_influence_cache.json")
     parser.add_argument("--json-out", default=None,
                         help="Machine-readable JSON output. Default: --out with .json suffix.")
@@ -821,7 +821,7 @@ def parse_args():
                         help="Named scoring profile. --weight overrides individual values.")
     parser.add_argument("--run-influence", action="store_true",
                         help="Build/reuse aux data and launch the raw per-task influence trainer.")
-    parser.add_argument("--runner", default=str(ROOT / "scripts" / "per_task_influence.py"),
+    parser.add_argument("--runner", default=str(ROOT / "task_diagnostics" / "per_task_influence.py"),
                         help="Path to the vendored per_task_influence.py trainer.")
     parser.add_argument("--run-workdir", default=None,
                         help="Working directory for --runner. Default: repo root.")
