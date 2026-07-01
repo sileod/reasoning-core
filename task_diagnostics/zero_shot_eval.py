@@ -42,10 +42,12 @@ if str(ROOT) not in sys.path:
 from reasoning_core import get_task, list_tasks  # noqa: E402
 import litlm  # noqa: E402
 
-DEFAULT_MODELS = [                                       # free NVIDIA NIM endpoints (need NVIDIA_NIM_API_KEY)
-    "nvidia_nim/meta/llama-3.1-8b-instruct",             # small, fast, reliable instruct
-    "nvidia_nim/meta/llama-3.3-70b-instruct",            # stronger instruct reference
+DEFAULT_MODELS = [                                       # free NVIDIA NIM endpoint (needs NVIDIA_NIM_API_KEY)
+    "nvidia_nim/meta/llama-3.1-8b-instruct",             # fast, reliable instruct — the default signal
 ]                                                         # plain instruct > reasoning models here (clean answers, no <think>)
+# Scaling test (bigger model, same task set — does capacity solve more?): run separately, throttled,
+# it accumulates into the same preds store. The free 70B tier is slow, so keep concurrency low:
+#   zero_shot_eval.py --models nvidia_nim/meta/llama-3.3-70b-instruct --max-concurrency 2
 SYSTEM = (
     "You are solving a reasoning task. Read the problem and reply with ONLY the final "
     "answer, in exactly the format the problem asks for — no explanation. Put the final "
