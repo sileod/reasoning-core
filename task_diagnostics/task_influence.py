@@ -604,11 +604,12 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
 
     lines.append("## Ranking")
     lines.append("")
-    lines.append("Lower delta = helped. `score` higher = better helper. `tok` = prompt/answer tokens, "
+    lines.append("Arrows mark the good direction: `score ↑` (higher = better helper); the deltas "
+                 "`↓` (lower = reduced held-out loss = helped). `tok` = prompt/answer tokens, "
                  "`acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.")
     lines.append("")
     lines.append(markdown_table(rows, [
-        "#", "task", "score", "dolci", "bbh", "fw", "tok", "acc", "hash",
+        "#", "task", "score ↑", "dolci ↓", "bbh ↓", "fw ↓", "tok", "acc", "hash",
     ]))
     lines.append("")
 

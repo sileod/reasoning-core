@@ -1,6 +1,6 @@
 # Task Influence
 
-Updated: 2026-07-01 06:23 UTC
+Updated: 2026-07-01 07:28 UTC
 
 Lower delta means the task reduced held-out loss versus the baseline. `influence_score` is the weighted mean of `-delta`, so positive means the task helped on the weighted targets. Default target weights: bbh=1, dolci=1, flan=0, fw=1
 
@@ -12,9 +12,9 @@ Saturation accuracy is diagnostic and is not part of the score.
 
 ## Ranking
 
-Lower delta = helped. `score` higher = better helper. `tok` = prompt/answer tokens, `acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.
+Arrows mark the good direction: `score ↑` (higher = better helper); the deltas `↓` (lower = reduced held-out loss = helped). `tok` = prompt/answer tokens, `acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.
 
-| # | task | score | dolci | bbh | fw | tok | acc | hash |
+| # | task | score ↑ | dolci ↓ | bbh ↓ | fw ↓ | tok | acc | hash |
 |---|---|---|---|---|---|---|---|---|
 | 1 | game_forced_win | +0.15 | -0.0017 | -0.460 | -0.0019 |  | 0.00→0.78 | ebd1ce6 |
 | 2 | planar_geometry_relations | +0.14 | -0.0028 | -0.422 | -0.0003 |  | 0.29→0.71 | f8127b7 |
