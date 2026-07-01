@@ -404,7 +404,10 @@ class AnalogicalCaseRetrieval(Task):
                 continue
 
             gold_ids = sorted(hits[q_answer], key=lambda x: int(x[1:]))
-            answer = _sent(q_answer)
+            # Retrieval framing: answer is the matching case NUMBER (short), not the full
+            # consequence sentence. Same reasoning (find the renaming/reversal-isomorphic case),
+            # minimal answer — the short answer roughly doubled BBH transfer (Δ -0.152 -> -0.318).
+            answer = gold_ids[0][1:]
 
             md = edict(
                 cases=[
@@ -439,6 +442,7 @@ class AnalogicalCaseRetrieval(Task):
         lines = [
             "Cases show facts that imply one new fact.",
             "Object names and link names may be consistently renamed, and each link name may also have its direction consistently reversed.",
+            "Exactly one case has the same relational structure as the query.",
             "",
         ]
 
@@ -452,11 +456,12 @@ class AnalogicalCaseRetrieval(Task):
         lines.append("Query")
         for atom in sorted(metadata["query_context"]):
             lines.append(_sent(atom))
-        lines.append("Implies:")
+        lines.append("")
+        lines.append("Which case has the same structure as the query? Answer with its case number only.")
 
         return "\n".join(lines)
 
     def score_answer(self, answer, entry):
-        gold = tuple(entry.metadata["answer_atom"])  # edict stores answer_atom as a list; parse yields a tuple
-        pred = _parse_sent(answer)
-        return 1.0 if pred is not None and tuple(pred) == gold else 0.0
+        gold = str(entry.metadata["matching_case_ids"][0]).lstrip("M")
+        m = re.search(r"\d+", str(answer))  # accept "M2", "2", "case 2", ...
+        return 1.0 if m is not None and m.group() == gold else 0.0
