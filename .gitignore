@@ -100,3 +100,6 @@ ROADMAP.md
 .claude/
 .test/
 data-gym-cache/
+
+# task_diagnostics: keep RESULTS markdown, not the regenerable raw json
+task_diagnostics/RESULTS/*.json

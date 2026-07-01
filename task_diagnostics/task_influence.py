@@ -786,7 +786,7 @@ def launch_influence_run(args, task_names):
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", default="task_diagnostics/TASK_INFLUENCE.md")
+    parser.add_argument("--out", default="task_diagnostics/RESULTS/TASK_INFLUENCE.md")
     parser.add_argument("--cache", default=".task_influence_cache.json")
     parser.add_argument("--json-out", default=None,
                         help="Machine-readable JSON output. Default: --out with .json suffix.")

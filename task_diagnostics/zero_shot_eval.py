@@ -102,8 +102,8 @@ def main():
                     help="Cap simultaneous API calls (litlm semaphore) — lower for rate-limited free tiers.")
     ap.add_argument("--system", default=SYSTEM)
     ap.add_argument("--refresh", action="store_true", help="Recompute even where cached rows exist.")
-    ap.add_argument("--preds", default=str(ROOT / "task_diagnostics" / "zero_shot_preds.jsonl"))
-    ap.add_argument("--out", default=str(ROOT / "task_diagnostics" / "ZERO_SHOT.json"))
+    ap.add_argument("--preds", default=str(ROOT / "task_diagnostics" / "RESULTS" / "zero_shot_preds.jsonl"))
+    ap.add_argument("--out", default=str(ROOT / "task_diagnostics" / "RESULTS" / "ZERO_SHOT.json"))
     args = ap.parse_args()
 
     preds_path, out_path = Path(args.preds), Path(args.out)
