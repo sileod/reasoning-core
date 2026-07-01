@@ -637,8 +637,11 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
                  + " result file(s). Full per-target detail and diagnostics in the JSON sidecar._")
     lines.append("")
 
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Path(path).write_text("\n".join(lines) + "\n")
+    md = "\n".join(lines) + "\n"
+    if path is not None:                     # path=None (dry-run): return text, write nothing
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(path).write_text(md)
+    return md
 
 
 def default_results_dirs():
@@ -828,6 +831,8 @@ def parse_args():
                         help="Validation samples per task for local generator metrics.")
     parser.add_argument("--refresh", action="store_true",
                         help="Recompute local metrics even when task behavior hashes match.")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Render the table to stdout without writing the .md/.json (report-only).")
     parser.add_argument("--no-local", action="store_true",
                         help="Skip local task generation/validation and only aggregate result JSONs.")
     parser.add_argument("--weight", action="append", default=[],
@@ -927,6 +932,10 @@ def main():
     c_scores = contrastive_scores(all_names, contrastive)
     records = build_records(local, inventory, scores, c_scores)
     json_out = args.json_out or str(Path(args.out).with_suffix(".json"))
+    if args.dry_run:                          # render + print, touch no files
+        print(write_markdown(None, records, influence_runs, sat_runs, contrast_runs, args))
+        print(f"[dry-run] would write {args.out} and {json_out}")
+        return
     write_markdown(args.out, records, influence_runs, sat_runs, contrast_runs, args)
     write_machine_outputs(json_out, records, influence_runs, sat_runs, contrast_runs, args)
 

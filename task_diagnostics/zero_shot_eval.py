@@ -111,6 +111,8 @@ def main():
                          "generators; prover tasks (rocq/lean/tptp) auto-fall-back to serial.")
     ap.add_argument("--system", default=SYSTEM)
     ap.add_argument("--refresh", action="store_true", help="Recompute even where cached rows exist.")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="Report the cached aggregate to stdout — no generation, no API, no file writes.")
     ap.add_argument("--preds", default=str(ROOT / "task_diagnostics" / "zero_shot_preds.jsonl"))
     ap.add_argument("--out", default=str(ROOT / "task_diagnostics" / "TASK_ZEROSHOT_RESULTS.json"))
     args = ap.parse_args()
@@ -119,7 +121,7 @@ def main():
     rows = load_preds(preds_path)
     gen_time = {}
 
-    for name in (args.tasks or list_tasks()):
+    for name in (() if args.dry_run else (args.tasks or list_tasks())):  # dry-run: report cache only
         task = get_task(name)
         bh = task.behavior_hash()
         sig = _sig(bh, args)
@@ -163,12 +165,16 @@ def main():
             tag = f"{mean:.3f}" if mean is not None else "n/a"
             print(f"{name:<30} {model:<42} reward={tag}  ({len(okr)}/{args.n} ok)", flush=True)
 
-    _write_aggregate(out_path, rows, args, gen_time)
-    print(f"\nwrote {preds_path}\nwrote {out_path}\nwrote {out_path.with_suffix('.md')}")
+    md = _write_aggregate(out_path, rows, args, gen_time, write=not args.dry_run)
+    if args.dry_run:
+        print(md + f"\n[dry-run] would write {out_path} and {out_path.with_suffix('.md')}")
+    else:
+        print(f"\nwrote {preds_path}\nwrote {out_path}\nwrote {out_path.with_suffix('.md')}")
 
 
-def _write_aggregate(out_path, rows, args, gen_time):
-    """Derive per-(task, model) reward from the per-example rows -> JSON + a small MD table."""
+def _write_aggregate(out_path, rows, args, gen_time, write=True):
+    """Derive per-(task, model) reward from the per-example rows -> JSON + a small MD table.
+    Returns the rendered MD; write=False (dry-run) skips both file writes."""
     prev = (json.loads(out_path.read_text()).get("tasks", {}) if out_path.exists() else {})
     by = defaultdict(list)
     for r in rows.values():
@@ -183,12 +189,13 @@ def _write_aggregate(out_path, rows, args, gen_time):
         gt = gen_time.get(t)                             # fall back to prior JSON on cached-only rebuilds
         tasks[t] = {"gen_time": gt if gt is not None else prev.get(t, {}).get("gen_time"),
                     "models": models}
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps({
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "n_per_task": args.n, "models": args.models, "system": args.system,
-        "tasks": tasks,
-    }, indent=2, sort_keys=True) + "\n")
+    if write:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps({
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "n_per_task": args.n, "models": args.models, "system": args.system,
+            "tasks": tasks,
+        }, indent=2, sort_keys=True) + "\n")
 
     ms = sorted({m for t in tasks.values() for m in t["models"]})
     def rew(t, m): return (tasks[t]["models"].get(m) or {}).get("reward")
@@ -205,7 +212,10 @@ def _write_aggregate(out_path, rows, args, gen_time):
         cells = [f"{rew(t, m):.2f}" if rew(t, m) is not None else "—" for m in ms]
         gt = tasks[t].get("gen_time")
         md.append(f"| {t} | " + " | ".join(cells) + (f" | {gt:.2f}s |" if gt is not None else " | — |"))
-    out_path.with_suffix(".md").write_text("\n".join(md) + "\n")
+    text = "\n".join(md) + "\n"
+    if write:
+        out_path.with_suffix(".md").write_text(text)
+    return text
 
 
 if __name__ == "__main__":
