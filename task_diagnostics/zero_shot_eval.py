@@ -17,10 +17,11 @@ Storage (kept SEPARATE from the canonical task examples):
                            (Combined report card w/ influence+saturation is rendered
                            by the diagnostics aggregator, not here.)
 
-Hash-cached + incremental: each row is keyed by a signature over the task's
-behavior_hash + n + system + max_tokens + seed. Re-runs recompute ONLY missing or
-failed (ok=False) examples — so free-tier rate-limit gaps self-heal on re-run, and
-unchanged work is skipped. Pass --refresh to force recompute.
+Examples are NON-deterministic by design (no seeding — diverse generation is the point).
+Hash-cached + accumulate-to-n: predictions are keyed by a signature over the task's
+behavior_hash + system + max_tokens; each run tops up to --n ok examples per (task,
+model), so re-runs fill free-tier rate-limit gaps and skip once the target is met.
+A changed generator (behavior_hash) invalidates old rows. Pass --refresh to recompute.
 
   python task_diagnostics/zero_shot_eval.py
   python task_diagnostics/zero_shot_eval.py --tasks logic_nli count_elements analogical_case_retrieval
@@ -29,7 +30,6 @@ unchanged work is skipped. Pass --refresh to force recompute.
 import argparse
 import hashlib
 import json
-import random
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -54,9 +54,10 @@ SYSTEM = (
 
 
 def _sig(behavior_hash, args):
-    """Signature that invalidates cached predictions when the task or eval config changes."""
-    payload = json.dumps({"bh": behavior_hash, "n": args.n, "sys": args.system,
-                          "max_tokens": args.max_tokens, "seed": args.seed}, sort_keys=True)
+    """Signature over what changes a prediction's MEANING (task version + eval config).
+    NOT n/seed: examples are non-deterministic by design; n is a target we accumulate to."""
+    payload = json.dumps({"bh": behavior_hash, "sys": args.system,
+                          "max_tokens": args.max_tokens}, sort_keys=True)
     return hashlib.sha1(payload.encode()).hexdigest()[:16]
 
 
@@ -64,9 +65,8 @@ def _phash(prompt):
     return hashlib.sha1(prompt.encode()).hexdigest()[:12]
 
 
-def generate(task, n, seed):
-    """Generate n examples once per task; return (examples, mean_gen_seconds)."""
-    random.seed(seed)
+def generate(task, n):
+    """Generate n FRESH (non-deterministic — no seeding) examples; return (examples, mean_gen_s)."""
     exs = task.generate_balanced_batch(batch_size=n)[:n]
     times = [e.metadata.get("_time") for e in exs if e.metadata.get("_time") is not None]
     return exs, (sum(times) / len(times) if times else None)
@@ -94,8 +94,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tasks", nargs="+", default=None, help="Tasks to eval (default: all registered).")
     ap.add_argument("--models", nargs="+", default=DEFAULT_MODELS, help="litlm model ids (cheap/free).")
-    ap.add_argument("--n", type=int, default=25, help="Examples per task (default 25).")
-    ap.add_argument("--seed", type=int, default=43)
+    ap.add_argument("--n", type=int, default=25, help="Target ok examples per (task, model); runs accumulate to it.")
     ap.add_argument("--max-tokens", type=int, default=640)
     ap.add_argument("--system", default=SYSTEM)
     ap.add_argument("--refresh", action="store_true", help="Recompute even where cached rows exist.")
@@ -111,28 +110,28 @@ def main():
         task = get_task(name)
         bh = task.behavior_hash()
         sig = _sig(bh, args)
-        exs = None                                       # lazy: only generate if some model needs work
         for model in args.models:
-            done = {k[3] for k in rows if k[0] == name and k[1] == model and k[2] == sig
-                    and rows[k].get("ok")}
-            if exs is None:
-                try:
-                    exs, gt = generate(task, args.n, args.seed)
-                    gen_time[name] = gt
-                except BaseException as exc:             # framework TimeoutException is BaseException
-                    print(f"{name:<30} GEN-ERR {type(exc).__name__}: {exc}"[:110], flush=True)
-                    exs = []
-            todo = [e for e in exs if args.refresh or _phash(e.prompt) not in done]
-            if not todo:
-                print(f"{name:<30} {model:<42} cached ({len(done)}/{args.n})", flush=True)
+            if args.refresh:                             # drop this (task, model, config) and recompute
+                for k in [k for k in rows if k[:3] == (name, model, sig)]:
+                    del rows[k]
+            have = sum(1 for k in rows if k[:3] == (name, model, sig) and rows[k].get("ok"))
+            need = max(0, args.n - have)                 # top up to n fresh, diverse examples
+            if need == 0:
+                print(f"{name:<30} {model:<42} cached ({have}/{args.n})", flush=True)
                 continue
             try:
-                outs = litlm.complete([e.prompt for e in todo], model=model, system=args.system,
+                exs, gt = generate(task, need)
+                gen_time[name] = gt
+            except BaseException as exc:                 # framework TimeoutException is BaseException
+                print(f"{name:<30} {model:<42} GEN-ERR {type(exc).__name__}"[:110], flush=True)
+                continue
+            try:
+                outs = litlm.complete([e.prompt for e in exs], model=model, system=args.system,
                                       caching=True, max_tokens=args.max_tokens, show_progress=False)
             except Exception as exc:
                 print(f"{name:<30} {model:<42} API-ERR {type(exc).__name__}"[:110], flush=True)
                 continue
-            for e, o in zip(todo, outs):
+            for e, o in zip(exs, outs):
                 out = str(o)
                 ans = litlm.extract_answer(out)
                 try:
@@ -145,9 +144,7 @@ def main():
                     "output": out, "answer": ans, "score": score, "ok": bool(out.strip()),
                 }
             save_preds(preds_path, rows)
-            ok = [rows[(name, model, sig, _phash(e.prompt))] for e in exs
-                  if (name, model, sig, _phash(e.prompt)) in rows]
-            okr = [r for r in ok if r["ok"]]
+            okr = [rows[k] for k in rows if k[:3] == (name, model, sig) and rows[k].get("ok")]
             mean = sum(r["score"] for r in okr) / len(okr) if okr else None
             tag = f"{mean:.3f}" if mean is not None else "n/a"
             print(f"{name:<30} {model:<42} reward={tag}  ({len(okr)}/{args.n} ok)", flush=True)
