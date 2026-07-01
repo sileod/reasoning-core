@@ -1,12 +1,12 @@
 # Task Influence
 
-Updated: 2026-07-01 07:55 UTC
+Updated: 2026-07-01 10:37 UTC
 
 Lower delta means the task reduced held-out loss versus the baseline. `influence_score` is the weighted mean of `-delta`, so positive means the task helped on the weighted targets. Default target weights: bbh=1, dolci=1, flan=0, fw=1
 
 Profile: `dolci`.
 
-Influence files: 1. Saturation files: 1. Contrastive influence files: 0. Local task checks: 0/50 ok.
+Influence files: 2. Saturation files: 2. Contrastive influence files: 0. Local task checks: 0/51 ok.
 
 Saturation accuracy is diagnostic and is not part of the score.
 
@@ -44,28 +44,29 @@ Arrows mark the good direction: `score ↑` (higher = better helper); the deltas
 | 26 | equation_system | +0.08 | -0.0016 | -0.250 | -0.0002 |  | 0.14→0.50 | 78d5fb6 |
 | 27 | lean_candidate_compilation | +0.08 | +0.0005 | -0.248 | +0.0025 |  | 0.00→0.78 | 58e7849 |
 | 28 | graph_dependencies | +0.08 | -0.0001 | -0.245 | +0.0003 |  | 0.25→0.45 | 9b2bff9 |
-| 29 | lean_missing_proof_line_selection | +0.08 | -0.0017 | -0.227 | -0.0006 |  | 0.00→0.54 | 58e7849 |
-| 30 | rewrite_system | +0.08 | -0.0035 | -0.226 | +0.0005 |  | 0.59→0.76 | da07454 |
-| 31 | regex_induction | +0.07 | -0.0014 | -0.216 | -0.0022 |  | 0.07→0.46 | 6230448 |
-| 32 | regex_following | +0.07 | -0.0004 | -0.219 | +0.0013 |  | 0.03→0.05 | 6230448 |
-| 33 | table_equivalence | +0.07 | +0.0050 | -0.222 | -0.0011 |  | 0.00→0.72 | 830dbc7 |
-| 34 | locate_error | +0.07 | -0.0032 | -0.213 | +0.0028 |  | 0.09→0.44 | efadf80 |
-| 35 | parsing_derivation | +0.07 | +0.0002 | -0.212 | +0.0008 |  | 0.51→0.66 | efadf80 |
-| 36 | code_runnability | +0.07 | -0.0010 | -0.208 | +0.0009 |  | 0.10→0.72 | 83ade9e |
-| 37 | analogical_case_retrieval | +0.07 | +0.0056 | -0.207 | -0.0032 |  | 0.63→0.78 | 4b703ee |
-| 38 | arithmetics | +0.07 | -0.0013 | -0.202 | +0.0015 |  | 0.15→0.32 | 598d63b |
-| 39 | graph_pathfinding | +0.07 | +0.0021 | -0.203 | -0.0001 |  | 0.22→0.68 | 9b2bff9 |
-| 40 | lambda_reduction | +0.06 | -0.0007 | -0.194 | +0.0022 |  | 0.51→0.63 | da07454 |
-| 41 | code_execution | +0.06 | -0.0013 | -0.182 | -0.0009 |  | 0.19→0.56 | 83ade9e |
-| 42 | set_expression | +0.06 | +0.0022 | -0.184 | -0.0008 |  | 0.63→0.74 | 657c1f4 |
-| 43 | table_qa | +0.06 | +0.0009 | -0.183 | +0.0003 |  | 0.42→0.65 | 830dbc7 |
-| 44 | string_transduction | +0.05 | -0.0002 | -0.160 | +0.0002 |  | 0.09→0.19 | 5dcd3d2 |
-| 45 | sequential_induction | +0.05 | -0.0014 | -0.149 | -0.0019 |  | 0.42→0.65 | a679ad1 |
-| 46 | table_statistics | +0.05 | +0.0058 | -0.153 | -0.0043 |  | 0.20→0.41 | 830dbc7 |
-| 47 | planning | +0.05 | -0.0005 | -0.149 | -0.0014 |  | 0.61→0.83 | 605ba89 |
-| 48 | set_missing_element | +0.05 | +0.0007 | -0.148 | -0.0016 |  | 0.58→0.77 | 657c1f4 |
-| 49 | multistep_evidence_retrieval | +0.04 | -0.0005 | -0.132 | -0.0020 |  | 0.42→0.88 | 3cd7ee8 |
-| 50 | code_input_deduction | +0.02 | +0.0005 | -0.075 | +0.0003 |  | 0.00→0.71 | 83ade9e |
+| 29 | rocq_compute_nf | +0.08 | -0.0011 | -0.239 | +0.0004 |  | 0.33→0.66 | c31cf78 |
+| 30 | lean_missing_proof_line_selection | +0.08 | -0.0017 | -0.227 | -0.0006 |  | 0.00→0.54 | 58e7849 |
+| 31 | rewrite_system | +0.08 | -0.0035 | -0.226 | +0.0005 |  | 0.59→0.76 | da07454 |
+| 32 | regex_induction | +0.07 | -0.0014 | -0.216 | -0.0022 |  | 0.07→0.46 | 6230448 |
+| 33 | regex_following | +0.07 | -0.0004 | -0.219 | +0.0013 |  | 0.03→0.05 | 6230448 |
+| 34 | table_equivalence | +0.07 | +0.0050 | -0.222 | -0.0011 |  | 0.00→0.72 | 830dbc7 |
+| 35 | locate_error | +0.07 | -0.0032 | -0.213 | +0.0028 |  | 0.09→0.44 | efadf80 |
+| 36 | parsing_derivation | +0.07 | +0.0002 | -0.212 | +0.0008 |  | 0.51→0.66 | efadf80 |
+| 37 | code_runnability | +0.07 | -0.0010 | -0.208 | +0.0009 |  | 0.10→0.72 | 83ade9e |
+| 38 | analogical_case_retrieval | +0.07 | +0.0056 | -0.207 | -0.0032 |  | 0.63→0.78 | 4b703ee |
+| 39 | arithmetics | +0.07 | -0.0013 | -0.202 | +0.0015 |  | 0.15→0.32 | 598d63b |
+| 40 | graph_pathfinding | +0.07 | +0.0021 | -0.203 | -0.0001 |  | 0.22→0.68 | 9b2bff9 |
+| 41 | lambda_reduction | +0.06 | -0.0007 | -0.194 | +0.0022 |  | 0.51→0.63 | da07454 |
+| 42 | code_execution | +0.06 | -0.0013 | -0.182 | -0.0009 |  | 0.19→0.56 | 83ade9e |
+| 43 | set_expression | +0.06 | +0.0022 | -0.184 | -0.0008 |  | 0.63→0.74 | 657c1f4 |
+| 44 | table_qa | +0.06 | +0.0009 | -0.183 | +0.0003 |  | 0.42→0.65 | 830dbc7 |
+| 45 | string_transduction | +0.05 | -0.0002 | -0.160 | +0.0002 |  | 0.09→0.19 | 5dcd3d2 |
+| 46 | sequential_induction | +0.05 | -0.0014 | -0.149 | -0.0019 |  | 0.42→0.65 | a679ad1 |
+| 47 | table_statistics | +0.05 | +0.0058 | -0.153 | -0.0043 |  | 0.20→0.41 | 830dbc7 |
+| 48 | planning | +0.05 | -0.0005 | -0.149 | -0.0014 |  | 0.61→0.83 | 605ba89 |
+| 49 | set_missing_element | +0.05 | +0.0007 | -0.148 | -0.0016 |  | 0.58→0.77 | 657c1f4 |
+| 50 | multistep_evidence_retrieval | +0.04 | -0.0005 | -0.132 | -0.0020 |  | 0.42→0.88 | 3cd7ee8 |
+| 51 | code_input_deduction | +0.02 | +0.0005 | -0.075 | +0.0003 |  | 0.00→0.71 | 83ade9e |
 
-_Inputs: 1 influence + 1 saturation result file(s). Full per-target detail and diagnostics in the JSON sidecar._
+_Inputs: 2 influence + 2 saturation result file(s). Full per-target detail and diagnostics in the JSON sidecar._
 

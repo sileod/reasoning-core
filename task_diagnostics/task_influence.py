@@ -590,7 +590,7 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
 
     # Compact ranking: real tasks only (skip mixture/experiment artifacts), the three
     # scored deltas + merged tok/acc diagnostics. flan + full detail live in the JSON sidecar.
-    registered = set(list_tasks())
+    registered = set(list_tasks()) | set(getattr(args, "include_dev", []) or [])
 
     def _pair(a, b, digits, sep):
         sa, sb = fmt(a, digits), fmt(b, digits)
@@ -827,6 +827,9 @@ def parse_args():
     parser.add_argument("--exclude", action="append", default=[],
                         help="Skip result files whose filename contains this string. Can repeat.")
     parser.add_argument("--tasks", nargs="*", default=None)
+    parser.add_argument("--include-dev", nargs="*", default=[],
+                        help="DevTask names to allow into the ranking table (they are excluded by "
+                             "default since list_tasks() omits DevTasks). e.g. rocq_compute_nf.")
     parser.add_argument("--samples", type=int, default=4,
                         help="Validation samples per task for local generator metrics.")
     parser.add_argument("--refresh", action="store_true",
