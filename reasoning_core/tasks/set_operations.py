@@ -156,8 +156,16 @@ class CountElements(Task):
         try: return 1 / (1 + abs(int(answer.strip()) - int(entry['answer'])))
         except: return 0
 
+def _elem_key(x):
+    # Numeric-aware: sort int elements by value, not lexicographically. sorted(key=str)
+    # scrambles integers ({1, 18, 2, 21, ...}) into a high-entropy order the model must
+    # memorize; natural numeric order ({1, 2, 18, 21, ...}) is far more learnable. Strings
+    # keep alphabetical order. The tuple's leading 0/1 keeps mixed sets comparable.
+    return (0, x) if isinstance(x, int) else (1, str(x))
+
+
 def repr_set(xs):
-    xs = sorted(xs, key=str)
+    xs = sorted(xs, key=_elem_key)
     return "{}" if not xs else "{" + ", ".join(map(repr, xs)) + "}"
 
 
