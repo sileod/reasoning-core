@@ -235,7 +235,7 @@ class LogicNLI(Task):
             if label=="paradox":
                 continue
             if label=="other":
-                print("WARNING","\n".join(proofs))
+                print("WARNING", "\n".join(str(p) for p in proofs))
                 continue
 
             if is_bloat(meta, label):
@@ -251,7 +251,7 @@ class LogicNLI(Task):
     def prompt(self, meta):
         P = (
             f"{Payload(meta.payload)}\n\n"
-            "Does the premise entail the hypothesis? "
+            "Is the hypothesis true given the premise? "
             "The answer is Yes, No, or Maybe."
         )
 
