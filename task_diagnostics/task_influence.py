@@ -264,9 +264,15 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
             if rows:
                 print(f"aux {name}: reused {len(rows)} cached rows (behavior_hash {bh[:7]})", flush=True)
                 data[name] = rows
-                manifest["tasks"][name] = {"n": len(rows), "behavior_hash": bh,
-                                           "source_file": rec.get("source_file", ""),
-                                           "source_modified": rec.get("source_modified", "")}
+                trec = {"n": len(rows), "behavior_hash": bh,
+                        "source_file": rec.get("source_file", ""),
+                        "source_modified": rec.get("source_modified", "")}
+                # carry forward generation-cost timing (sec/example, per-level) if a prior
+                # manifest recorded it — so timing persists across cache-reuse runs.
+                for _k in ("gen_total_s", "gen_n", "gen_s_per_ex", "gen_levels", "gen_per_level"):
+                    if rec.get(_k) is not None:
+                        trec[_k] = rec[_k]
+                manifest["tasks"][name] = trec
                 continue
         print(f"aux {name}", flush=True)
         source = Path(inspect.getfile(task.__class__)).resolve()
@@ -275,6 +281,7 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
         per_level = max(1, math.ceil(examples_per_task / max(1, len(levels))))
         want = examples_per_task * (2 if aux_mode == "contrastive" else 1)
         t0 = time.time()
+        level_stats = []                    # per-level generation cost (level-dependent by design)
         try:
             for level in levels:
                 if task_timeout and time.time() - t0 > task_timeout:
@@ -282,6 +289,7 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
                           f"stopping at {len(examples_all)}/{want} (skipping remaining levels)",
                           flush=True)
                     break
+                _lt0 = time.time(); _n_before = len(examples_all)
                 # workers>1 = real ProcessPoolExecutor procs; ~2x on pure-Python generators.
                 # Prover-backed tasks (rocq/lean/tptp) CRASH under the pool (BrokenProcessPool:
                 # the containerized prover can't be forked into a worker) — fall back to serial
@@ -308,6 +316,8 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
                             continue
                         seen.add(ex.prompt)
                     examples_all.append(ex)
+                level_stats.append({"level": level, "s": round(time.time() - _lt0, 3),
+                                    "n": len(examples_all) - _n_before})
                 if len(examples_all) >= want:
                     break
         except (Exception, _RCTimeoutException) as exc:
@@ -322,11 +332,18 @@ def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refr
         else:
             rows = [[ex.prompt, str(ex.answer)] for ex in examples_all[:examples_per_task]]
         data[name] = rows
+        _gen_s = round(time.time() - t0, 3)
+        _n_gen = len(examples_all)
         manifest["tasks"][name] = {
             "n": len(rows),
             "behavior_hash": task.behavior_hash(),
             "source_file": str(rel),
             "source_modified": iso_time(source.stat().st_mtime),
+            "gen_total_s": _gen_s,
+            "gen_n": _n_gen,
+            "gen_s_per_ex": round(_gen_s / _n_gen, 4) if _n_gen else None,
+            "gen_levels": list(levels),
+            "gen_per_level": level_stats,
         }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
@@ -953,7 +970,8 @@ def parse_args():
     parser.add_argument("--dedup", action=argparse.BooleanOptionalAction, default=True,
                         help="Drop duplicate prompts per task in the aux data (--no-dedup to keep them).")
     parser.add_argument("--aux-dataset", choices=("rc", "rgym"), default="rc")
-    parser.add_argument("--main-data", choices=("dolci", "flan", "fw"), default="dolci")
+    parser.add_argument("--main-data", choices=("dolci", "flan", "fw", "fw_recent", "tasksource",
+                                                "fwdolci", "fwtasksource", "codealpaca", "fwdolcicode"), default="dolci")
     parser.add_argument("--model", dest="models", nargs="+", default=["HuggingFaceTB/SmolLM2-135M"],
                         help="One or more decoder models; each runs separately with a distinct "
                              "model-specific tag/file (compare models from their per-model JSON).")

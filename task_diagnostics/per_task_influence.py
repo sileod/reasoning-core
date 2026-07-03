@@ -90,7 +90,7 @@ if MODE_MIX:
         _m, _w = _p.split(":"); _mode_mix.append((_m.strip(), float(_w)))
     _ws = sum(w for _, w in _mode_mix); _mode_mix = [(m, w/_ws) for m, w in _mode_mix]
 MAIN_DATA    = os.environ.get("MAIN_DATA", "dolci").lower()
-assert MAIN_DATA in ("fw", "dolci", "flan"), MAIN_DATA
+assert MAIN_DATA in ("fw", "dolci", "flan", "fw_recent", "tasksource", "fwdolci", "fwtasksource", "codealpaca", "fwdolcicode"), MAIN_DATA
 # Default to the local cache when present so EVERY run is stream-free (HF xet-bridge 408s crash long
 # streaming runs). Set MAIN_LOCAL="" to force HF streaming. Training data = same first-20k docs as the
 # stream; only the eval slice differs (skip 25k) → BBH (primary) identical, dolci/fw deltas shift slightly.
@@ -117,6 +117,11 @@ if AUX_DATASET == "rgym":  # task list discovered/cached separately (98 tasks)
 _filter      = os.environ.get("TASKS", "").strip()
 if _filter: ALL_TASKS = [t.strip() for t in _filter.split(",") if t.strip()]
 if MODE_MIX: ALL_TASKS = ["__ALLMIX__"]     # single full-mixture arm under the mode blend
+# GROUP mode: measure a CHOSEN SET of tasks POOLED into ONE aux arm at the SAME total MIX budget
+# (round-robin so each member gets MIX/|group| dose), to test complementarity against the individual
+# per-task deltas. e.g. GROUP_TASKS=logic_nli,multistep_nli  → one arm, comparable to each alone.
+GROUP_TASKS = [t.strip() for t in os.environ.get("GROUP_TASKS", "").split(",") if t.strip()]
+if GROUP_TASKS: ALL_TASKS = ["__GROUP__"]
 # PEER_MIX background: fixed seeded sample of N_PEERS tasks (independent of target).
 import random as _random
 _FULL_TASKS  = (json.loads(Path("rgym_tasks.json").read_text())["tasks"]
@@ -139,11 +144,12 @@ _peer_tag   = f"_PEERS{N_PEERS}" if PEER_MIX else ""
 _co_tag     = "" if COMPLETION_ONLY else "_FULLLM"   # answer-only = canonical clean name
 _dedup_tag  = "_DEDUP" if DEDUP_PROMPT else ""
 _mode_tag   = f"_MODE-{MODE_FILTER}" if MODE_FILTER else ""
+_grp_tag    = ("_GRP-" + "+".join(GROUP_TASKS)) if GROUP_TASKS else ""   # distinct file per group
 # RUN_TAG: optional free-form suffix to write to distinct files without overwriting canonical
 # results (e.g. re-measuring tasks after the rc dataset was updated on HF). Default OFF.
 _run_tag    = os.environ.get("RUN_TAG", "")
 if _run_tag and not _run_tag.startswith("_"): _run_tag = "_" + _run_tag
-_tag        = f"{_ovs_tag}{_peer_tag}{_co_tag}{_dedup_tag}{_mode_tag}{_run_tag}"
+_tag        = f"{_ovs_tag}{_peer_tag}{_co_tag}{_dedup_tag}{_mode_tag}{_grp_tag}{_run_tag}"
 OUT_FILE    = OUT_DIR / f"influence{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
 LOG_PER_EX  = os.environ.get("LOG_PER_EX", "0") != "0"
 PEREX_FILE  = OUT_DIR / f"perex{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
@@ -193,8 +199,10 @@ if FROM_SCRATCH:
     model = AutoModelForCausalLM.from_config(cfg, dtype=DTYPE,
                                               attn_implementation="sdpa").to(DEVICE)
     print(f"🆕 Random-init {MODEL_NAME} ({sum(p.numel() for p in model.parameters())/1e6:.1f}M params)")
-elif MAIN_DATA in ("dolci", "flan"):
-    # Use raw pretrained model (no FW warmup needed — instruction data is novel).
+elif MAIN_DATA in ("dolci", "flan", "tasksource", "fw_recent", "fwdolci", "fwtasksource", "codealpaca", "fwdolcicode"):
+    # Use raw pretrained model. dolci/flan/tasksource = instruction FT (novel data);
+    # fw_recent = continued pretraining on FRESH post-cutoff FineWeb; fwdolci/fwtasksource = realistic
+    # BLEND of continued-pretraining text + instruction (mid-training regime). All start from pretrained.
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME, dtype=DTYPE, attn_implementation="sdpa",
     ).to(DEVICE)
@@ -229,7 +237,8 @@ DOLCI_EVAL, FW_EVAL = [], []
 if MAIN_LOCAL:                                   # stream-free eval slices
     for r in _read_jsonl(Path(MAIN_LOCAL) / "dolci_eval.jsonl"):
         if r.get("answer"): DOLCI_EVAL.append((f"{r['prompt']}\n", f"{r['answer']}{EOS}"))
-    for r in _read_jsonl(Path(MAIN_LOCAL) / "fw_eval.jsonl"):
+    _fw_eval_name = "fw_recent_eval.jsonl" if MAIN_DATA == "fw_recent" else "fw_eval.jsonl"
+    for r in _read_jsonl(Path(MAIN_LOCAL) / _fw_eval_name):
         txt = r["text"][:1500]
         if len(txt) >= 100: FW_EVAL.append(txt)
     DOLCI_EVAL, FW_EVAL = DOLCI_EVAL[:200], FW_EVAL[:200]
@@ -244,19 +253,25 @@ else:
         FW_EVAL.append(txt)
         if len(FW_EVAL) >= 200: break
 
-# Optional 4th held-out TRANSFER target: FLAN (broad instruction following). Gated by EVAL_FLAN=1 so
-# default behaviour/output schema is unchanged. When on, every eval also reports flan_nll/flan_delta —
-# a broader instruction benchmark than BBH, used to de-risk BBH overfitting (fw=general-LM guardrail).
-EVAL_FLAN = os.environ.get("EVAL_FLAN", "0") == "1"
-FLAN_EVAL = []
-if EVAL_FLAN:
-    _fe = os.environ.get("FLAN_EVAL_PATH", "data_cache/flan_eval.jsonl")
-    for r in _read_jsonl(Path(_fe)):
-        if r.get("prompt") and r.get("answer"):
-            FLAN_EVAL.append((f"{r['prompt']}\n", f"{r['answer']}{EOS}"))
-    FLAN_EVAL = FLAN_EVAL[:200]
+# Optional held-out TRANSFER targets beyond the always-on BBH/Dolci/FW. Each is a QA-NLL (answer-only)
+# eval gated by EVAL_<NAME>=1, loaded from a {prompt,answer} jsonl. Adding a capability leg = one line
+# in _EXTRA_SPEC. Output schema per task: <name>_nll / <name>_delta. Capability map for the aggregate:
+#   fw=WEB_LM, bbh=REASONING, mmlu_math=MATH, mmlu_logic=LOGIC, mbpp=CODING, dolci=CONVERSATION.
+_EXTRA_SPEC = [   # (name, default_jsonl, cap)
+    ("flan",       "data_cache/flan_eval.jsonl",       200),
+    ("mbpp",       "data_cache/mbpp_eval.jsonl",       257),
+    ("mmlu_math",  "data_cache/mmlu_math_eval.jsonl",  400),
+    ("mmlu_logic", "data_cache/mmlu_logic_eval.jsonl", 200),
+]
+EXTRA_EVALS = {}   # name -> [(prompt, answer)]
+for _nm, _path, _cap in _EXTRA_SPEC:
+    if os.environ.get(f"EVAL_{_nm.upper()}", "0") == "1":
+        _p = os.environ.get(f"{_nm.upper()}_EVAL_PATH", _path)
+        _rows = [(f"{r['prompt']}\n", f"{r['answer']}{EOS}")
+                 for r in _read_jsonl(Path(_p)) if r.get("prompt") and r.get("answer")]
+        EXTRA_EVALS[_nm] = _rows[:_cap]
 print(f"  BBH={len(BBH_EVAL)}  Dolci={len(DOLCI_EVAL)}  FW={len(FW_EVAL)}"
-      + (f"  FLAN={len(FLAN_EVAL)}" if EVAL_FLAN else "") + "\n")
+      + "".join(f"  {k}={len(v)}" for k, v in EXTRA_EVALS.items()) + "\n")
 
 
 @torch.no_grad()
@@ -298,11 +313,12 @@ def eval_all():
     dolci_m, _, dolci_px = eval_qa(DOLCI_EVAL)
     fw_m,    _, fw_px    = eval_lm(FW_EVAL)
     perex = {"bbh": bbh_px, "dolci": dolci_px, "fw": fw_px}
-    flan_m = None
-    if EVAL_FLAN:
-        flan_m, _, flan_px = eval_qa(FLAN_EVAL)
-        perex["flan"] = flan_px
-    return (bbh_m, dolci_m, fw_m, flan_m), perex
+    extra = {}
+    for _nm, _ex in EXTRA_EVALS.items():
+        m, _, px = eval_qa(_ex)
+        extra[_nm] = m
+        perex[_nm] = px
+    return (bbh_m, dolci_m, fw_m, extra), perex
 
 def save_perex(key, perex):
     if not LOG_PER_EX: return
@@ -398,9 +414,12 @@ def main_gen():
         import itertools as _it
         rows = _read_jsonl(Path(MAIN_LOCAL) / f"{MAIN_DATA}_main.jsonl")
         for r in _it.cycle(rows):
-            if MAIN_DATA in ("dolci", "flan"):
-                if r.get("answer"): yield _fmt_qa(r["prompt"], r["answer"])
-            else:
+            # Dispatch by ROW content, not the global MAIN_DATA, so a BLENDED main jsonl that mixes
+            # qa rows ({prompt,answer}) and raw-text rows ({text}) trains each with its correct loss
+            # mask (answer-only vs full-text). Single-main jsonls are unaffected (homogeneous rows).
+            if r.get("answer"):
+                yield _fmt_qa(r.get("prompt", ""), r["answer"])
+            elif r.get("text"):
                 yield _fmt_text(r["text"][:1200])
         return
     if MAIN_DATA == "dolci":
@@ -493,6 +512,27 @@ def peer_aux_gen():
             seen.add(p)
         yield _fmt_qa(p, x["answer"])
 
+def group_aux_gen():
+    """GROUP mode: pool the CHOSEN GROUP_TASKS into ONE aux arm (round-robin, equal share each)."""
+    grp = list(GROUP_TASKS)
+    if _local_aux is not None:                 # local data (no HF stream): round-robin the members
+        import itertools as _it
+        iters = [_it.cycle(_local_aux[t]) for t in grp if _local_aux.get(t)]
+        if not iters: return
+        for it in _it.cycle(iters):
+            r = next(it)
+            if len(r) >= 2 and r[1]: yield _fmt_qa(r[0], r[1])
+        return
+    grp = set(grp); seen = set()
+    for x in load_dataset(_AUX_HF, split="train", streaming=True):
+        if (x.get("task") or "") not in grp: continue
+        if not x.get("answer"): continue
+        p = x.get("prompt") or ""
+        if DEDUP_PROMPT:
+            if p in seen: continue
+            seen.add(p)
+        yield _fmt_qa(p, x["answer"])
+
 def baseline_ds():
     if PEER_MIX:     # realistic K-peer background: main + peers at MIX (peer set fixed)
         return interleave_datasets(
@@ -519,27 +559,36 @@ def mixed_ds(task_name):
             probs.append(MIX_AUX * w)
         return interleave_datasets(parts, probabilities=probs, seed=SEED,
                                    stopping_strategy="first_exhausted")
-    if PEER_MIX:     # upweight X on top of fixed K-peer background; total aux = MIX
+    # x_gen = the "X" arm: a single task, or (GROUP mode) the pooled chosen set — same downstream shape.
+    x_gen = group_aux_gen if task_name == "__GROUP__" else rc_gen_factory(task_name)
+    if task_name == "__GROUP__" and not OVERSAMPLE:   # group pooled, alone (no background) at total MIX
+        return interleave_datasets(
+            [IterableDataset.from_generator(main_gen),
+             IterableDataset.from_generator(x_gen)],
+            probabilities=[1.0 - MIX_AUX, MIX_AUX],
+            seed=SEED, stopping_strategy="first_exhausted",
+        )
+    if PEER_MIX:     # upweight X (task or group) on top of fixed K-peer background; total aux = MIX
         half = MIX_AUX / 2.0
         return interleave_datasets(
             [IterableDataset.from_generator(main_gen),
-             IterableDataset.from_generator(rc_gen_factory(task_name)),
+             IterableDataset.from_generator(x_gen),
              IterableDataset.from_generator(peer_aux_gen)],
             probabilities=[1.0 - MIX_AUX, half, half],
             seed=SEED, stopping_strategy="first_exhausted",
         )
-    if OVERSAMPLE:   # upweight X: main + X(MIX/2) + all-aux(MIX/2); total aux = MIX
+    if OVERSAMPLE:   # upweight X (task or group) on top of the FULL all-rc background; total aux = MIX
         half = MIX_AUX / 2.0
         return interleave_datasets(
             [IterableDataset.from_generator(main_gen),
-             IterableDataset.from_generator(rc_gen_factory(task_name)),
+             IterableDataset.from_generator(x_gen),
              IterableDataset.from_generator(all_aux_gen)],
             probabilities=[1.0 - MIX_AUX, half, half],
             seed=SEED, stopping_strategy="first_exhausted",
         )
     return interleave_datasets(
         [IterableDataset.from_generator(main_gen),
-         IterableDataset.from_generator(rc_gen_factory(task_name))],
+         IterableDataset.from_generator(x_gen)],
         probabilities=[1.0 - MIX_AUX, MIX_AUX],
         seed=SEED, stopping_strategy="first_exhausted",
     )
@@ -581,11 +630,11 @@ else:
 
 # Pretrained-only sanity
 if results.get("pretrained_only") is None:
-    (pb, pd, pf, pfl), px = eval_all(); save_perex("pretrained_only", px)
+    (pb, pd, pf, pex), px = eval_all(); save_perex("pretrained_only", px)
     print(f"📏 Pre-training eval: BBH={pb:.4f}  Dolci={pd:.4f}  FW={pf:.4f}"
-          + (f"  FLAN={pfl:.4f}" if pfl is not None else "") + "\n")
+          + "".join(f"  {k}={v:.4f}" for k, v in pex.items()) + "\n")
     results["pretrained_only"] = {"bbh_nll": pb, "dolci_nll": pd, "fw_nll": pf}
-    if pfl is not None: results["pretrained_only"]["flan_nll"] = pfl
+    for k, v in pex.items(): results["pretrained_only"][f"{k}_nll"] = v
     OUT_FILE.write_text(json.dumps(results, indent=2))
 
 # Baseline: train on MAIN_DATA only
@@ -597,27 +646,27 @@ if results.get("baseline") is None:
         _bl_curve = []; _bl_cb = [CkptEvalCB(_bl_curve)]
     train_on(baseline_ds(), callbacks=_bl_cb)
     if CKPT_EVAL: save_ckpt("baseline", _bl_curve)
-    (b_bbh, b_dolci, b_fw, b_flan), px = eval_all(); save_perex("baseline", px)
+    (b_bbh, b_dolci, b_fw, b_ex), px = eval_all(); save_perex("baseline", px)
     dt = time.time() - t0
     print(f"  BBH={b_bbh:.4f}  Dolci={b_dolci:.4f}  FW={b_fw:.4f}"
-          + (f"  FLAN={b_flan:.4f}" if b_flan is not None else "") + f"  ({dt:.0f}s)\n")
+          + "".join(f"  {k}={v:.4f}" for k, v in b_ex.items()) + f"  ({dt:.0f}s)\n")
     results["baseline"] = {"bbh_nll": b_bbh, "dolci_nll": b_dolci, "fw_nll": b_fw}
-    if b_flan is not None: results["baseline"]["flan_nll"] = b_flan
+    for k, v in b_ex.items(): results["baseline"][f"{k}_nll"] = v
     OUT_FILE.write_text(json.dumps(results, indent=2))
 else:
     b_bbh, b_dolci, b_fw = (results["baseline"]["bbh_nll"],
                             results["baseline"]["dolci_nll"],
                             results["baseline"]["fw_nll"])
-    b_flan = results["baseline"].get("flan_nll")
+    b_ex = {k: results["baseline"][f"{k}_nll"] for k in EXTRA_EVALS if f"{k}_nll" in results["baseline"]}
     print(f"📏 Baseline (cached): BBH={b_bbh:.4f}  Dolci={b_dolci:.4f}  FW={b_fw:.4f}"
-          + (f"  FLAN={b_flan:.4f}" if b_flan is not None else "") + "\n")
+          + "".join(f"  {k}={v:.4f}" for k, v in b_ex.items()) + "\n")
 
 
 # Per-task loop
 for i, task in enumerate(ALL_TASKS):
     if task in results["tasks"]:
         print(f"[{i+1}/{len(ALL_TASKS)}] {task} — already done"); continue
-    if _local_aux is not None and task != "__ALLMIX__" and not _local_aux.get(task):
+    if _local_aux is not None and task not in ("__ALLMIX__", "__GROUP__") and not _local_aux.get(task):
         print(f"[{i+1}/{len(ALL_TASKS)}] {task} — SKIP (no aux rows; slow-gen skipped upstream)")
         continue
     t0 = time.time(); reset_model()
@@ -632,7 +681,7 @@ for i, task in enumerate(ALL_TASKS):
         ckpt_curve = []; sat_cbs = (sat_cbs or []) + [CkptEvalCB(ckpt_curve)]
     train_on(mixed_ds(task), callbacks=sat_cbs)
     if ckpt_curve is not None: save_ckpt(task, ckpt_curve)
-    (m_bbh, m_dolci, m_fw, m_flan), px = eval_all(); save_perex(task, px)
+    (m_bbh, m_dolci, m_fw, m_ex), px = eval_all(); save_perex(task, px)
     if sat_curve is not None:
         rec = {"curve": sat_curve}; rec.update(derive_sat(sat_curve)); save_sat(task, rec)
     dt = time.time() - t0
@@ -642,14 +691,15 @@ for i, task in enumerate(ALL_TASKS):
         "dolci_delta": m_dolci - b_dolci,
         "fw_delta":    m_fw - b_fw,
     }
-    if m_flan is not None and b_flan is not None:
-        results["tasks"][task]["flan_nll"]   = m_flan
-        results["tasks"][task]["flan_delta"] = m_flan - b_flan
+    for k, v in m_ex.items():
+        if k in b_ex:
+            results["tasks"][task][f"{k}_nll"]   = v
+            results["tasks"][task][f"{k}_delta"] = v - b_ex[k]
     OUT_FILE.write_text(json.dumps(results, indent=2))
     print(f"[{i+1:2d}/{len(ALL_TASKS)}] {task:<26s}  "
           f"BBH Δ={m_bbh-b_bbh:+.4f}  Dolci Δ={m_dolci-b_dolci:+.4f}  "
           f"FW Δ={m_fw-b_fw:+.4f}"
-          + (f"  FLAN Δ={m_flan-b_flan:+.4f}" if m_flan is not None and b_flan is not None else "")
+          + "".join(f"  {k}Δ={m_ex[k]-b_ex[k]:+.4f}" for k in m_ex if k in b_ex)
           + f"  ({dt:.0f}s)")
 
 print(f"\n✅ Done → {OUT_FILE}")
