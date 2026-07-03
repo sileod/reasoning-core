@@ -129,7 +129,6 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, ba
 
     try:
         import resource
-
         resource.setrlimit(resource.RLIMIT_CPU, (1, 1))
         resource.setrlimit(resource.RLIMIT_AS, (512 * 1024**2, 512 * 1024**2))
     except Exception:
@@ -147,16 +146,7 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, ba
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             exec(compile(code, "<mesopy>", "exec"), ns, ns)
             if exec_only:
-                r = RunReport(
-                    True,
-                    None,
-                    None,
-                    None,
-                    out.getvalue(),
-                    err.getvalue(),
-                    steps,
-                    time.perf_counter() - t0,
-                )
+                r = RunReport(True, None, None, None, out.getvalue(), err.getvalue(), steps, time.perf_counter() - t0)
             else:
                 args = call_args if call_args is not None else endpoint_args(ns["endpoint"], magnitude)
                 args_list = args if batch else None
@@ -168,43 +158,15 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, ba
                         values.append(repr(ns["endpoint"](*a))[:500])
                     finally:
                         sys.settrace(None)
-
-                r = RunReport(
-                    True,
-                    values if args_list else values[0],
-                    None,
-                    args,
-                    out.getvalue(),
-                    err.getvalue(),
-                    steps,
-                    time.perf_counter() - t0,
-                )
+                r = RunReport(True, values if args_list else values[0], None, args, out.getvalue(), err.getvalue(), steps, time.perf_counter() - t0)
 
     except StepLimit:
         sys.settrace(None)
-        r = RunReport(
-            False,
-            None,
-            "TimeoutError",
-            locals().get("args"),
-            out.getvalue(),
-            err.getvalue(),
-            steps,
-            time.perf_counter() - t0,
-        )
+        r = RunReport(False, None, "TimeoutError", locals().get("args"), out.getvalue(), err.getvalue(), steps, time.perf_counter() - t0)
 
     except Exception as e:
         sys.settrace(None)
-        r = RunReport(
-            False,
-            None,
-            type(e).__name__,
-            locals().get("args"),
-            out.getvalue(),
-            err.getvalue(),
-            steps,
-            time.perf_counter() - t0,
-        )
+        r = RunReport(False, None, type(e).__name__, locals().get("args"), out.getvalue(), err.getvalue(), steps, time.perf_counter() - t0)
 
     try:
         send.send(r)
@@ -216,14 +178,14 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, ba
 def run_code(code, cfg=None, timeout=None, recursionlimit=80, call_args=None, batch=False, exec_only=False):
     ctx = mp.get_context("fork")
     recv, send = ctx.Pipe(duplex=False)
-    
+
     magnitude = cfg.magnitude if cfg else 0
     max_steps = cfg.max_steps if cfg else 10_000
-    
+
     p = ctx.Process(target=_worker, args=(send, code, magnitude, recursionlimit, max_steps, call_args, batch, exec_only))
     p.start()
     send.close()
-    
+
     if timeout is None:
         timeout = min(4.0, cfg.timeout + 0.01 * len(call_args)) if batch else cfg.timeout
 
@@ -233,14 +195,11 @@ def run_code(code, cfg=None, timeout=None, recursionlimit=80, call_args=None, ba
             p.join(0.05)
             kill(p)
             return r
-
         kill(p)
         return RunReport(error="TimeoutError", args=call_args, elapsed=timeout)
-
     except KeyboardInterrupt:
         kill(p)
         raise
-
     finally:
         recv.close()
 
@@ -279,23 +238,16 @@ def sample_problem(cfg, want_error, failure_rate):
         code = make_code(cfg, failure_rate)
         if "def endpoint" not in code:
             continue
-
         r = run_code(code, cfg)
-
         if want_error:
             if r.error and r.args is not None and r.error != "TimeoutError":
                 return code, r
-
         elif r.ok and r.value is not None and len(r.value) <= cfg.max_answer_len:
             probes = [r] + [run_code(code, cfg) for _ in range(cfg.trivial_probes - 1)]
             triviality = function_triviality(probes)
-            if (
-                accept_steps(r.steps, cfg)
-                and (not triviality or random.random() < cfg.trivial_accept_prob)
-            ):
+            if accept_steps(r.steps, cfg) and (not triviality or random.random() < cfg.trivial_accept_prob):
                 r.triviality = triviality
                 return code, r
-
     raise RuntimeError(f"Failed to generate valid task. Config: {cfg}")
 
 
@@ -306,21 +258,15 @@ class CodeRunnability(Task):
 
     def generate(self):
         want_error = random.random() >= self.config.runnable_prob
-        code, r = sample_problem(
-            self.config,
-            want_error=want_error,
-            failure_rate=0.65 if want_error else 0.05,
-        )
+        code, r = sample_problem(self.config, want_error=want_error, failure_rate=0.65 if want_error else 0.05)
         return Problem(metadata=meta(code, r), answer=r.error or "OK")
 
     def prompt(self, metadata):
         return (
-            "Predict whether this Python call runs successfully "
-            "or raises an exception.\n"
+            "Predict whether this Python call runs successfully or raises an exception.\n"
             f"```python\n{metadata.code}\n```\n"
             f"Call: `{metadata.call}`\n"
-            "The answer is `OK` if it runs successfully; "
-            "otherwise the exception class name."
+            "The answer is `OK` if it runs successfully; otherwise the exception class name."
         )
 
     def score_answer(self, answer, entry):
@@ -344,8 +290,7 @@ class CodeExecution(Task):
             "Predict the value returned by this Python call.\n"
             f"```python\n{metadata.code}\n```\n"
             f"Call: `{metadata.call}`\n"
-            "The answer is the exact Python `repr` "
-            "of the returned value."
+            "The answer is the exact Python `repr` of the returned value."
         )
 
     def score_answer(self, answer, entry):
@@ -450,14 +395,12 @@ class CodeInputDeduction(Task):
                         buckets.setdefault(r.value, []).append(x)
                 if function_triviality(reports):
                     continue
-                choices = [
-                    (y, min(xs)) for y, xs in buckets.items() if 1 < len(xs) < len(domain)
-                ]
+                choices = [(y, min(xs)) for y, xs in buckets.items() if 1 < len(xs) < len(domain)]
                 choices = [c for c in choices if c[1] != domain[0]] or choices
                 if choices:
                     fresh = [
-                        c for c in choices 
-                        if (" ".join(map(str, c[1])) if isinstance(c[1], tuple) else str(c[1])) 
+                        c for c in choices
+                        if (" ".join(map(str, c[1])) if isinstance(c[1], tuple) else str(c[1]))
                         not in self._recent_answers
                     ]
                     choices = fresh or choices
@@ -468,10 +411,7 @@ class CodeInputDeduction(Task):
                         answer = str(answer)
                     self._recent_answers = (self._recent_answers + [answer])[-8:]
                     return Problem(
-                        edict(
-                            code=code, mode=mode, goal=goal, 
-                            call_text=call_text, answer_hint=answer_hint, target=target
-                        ),
+                        edict(code=code, mode=mode, goal=goal, call_text=call_text, answer_hint=answer_hint, target=target),
                         answer,
                     )
         raise RuntimeError("failed to generate code input deduction task")
@@ -489,13 +429,14 @@ class CodeInputDeduction(Task):
         return float(str(answer).strip().strip("\"'") == reference)
 
 
-
 def _run_sandbox(code: str, timeout: float) -> Optional[str]:
     r = run_code(code, timeout=timeout, exec_only=True)
     if not r.ok:
         return None
     out = r.stdout.strip()
     return out if out else None
+
+
 def _too_many_pass(code: str, threshold: float = 0.25) -> bool:
     try:
         tree = ast.parse(code)
@@ -511,7 +452,6 @@ def _line_count(code: str) -> int:
 
 
 def _get_called_functions(node: ast.AST) -> set[str]:
-    """Return every function name that appears as a direct call inside node."""
     calls: set[str] = set()
     for n in ast.walk(node):
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
@@ -531,30 +471,22 @@ def _func_defs(tree: ast.Module) -> dict[str, ast.FunctionDef]:
 
 
 def _prune_to_reachable(code: str) -> Optional[str]:
-    """Remove function defs not reachable from any top-level exec statement."""
     tree = _safe_parse(code)
     if tree is None:
         return None
-
     func_defs = _func_defs(tree)
     exec_stmts = [n for n in tree.body if not isinstance(n, ast.FunctionDef)]
-
     reachable: set[str] = set()
     frontier: set[str] = set()
     for stmt in exec_stmts:
         frontier |= _get_called_functions(stmt)
-
     while frontier:
         name = frontier.pop()
         if name in reachable or name not in func_defs:
             continue
         reachable.add(name)
         frontier |= _get_called_functions(func_defs[name])
-
-    tree.body = [
-        n for n in tree.body
-        if not isinstance(n, ast.FunctionDef) or n.name in reachable
-    ]
+    tree.body = [n for n in tree.body if not isinstance(n, ast.FunctionDef) or n.name in reachable]
     ast.fix_missing_locations(tree)
     try:
         return ast.unparse(tree)
@@ -563,16 +495,9 @@ def _prune_to_reachable(code: str) -> Optional[str]:
 
 
 def _call_chain_depth(code: str) -> int:
-    """
-    Maximum transitive call-chain depth reachable from any top-level exec
-    statement.  Cycles are handled via a 'visiting' frozenset; memoization
-    is keyed on (name, visiting) so a value computed under one cycle-guard
-    context is never reused under a different one.
-    """
     tree = _safe_parse(code)
     if tree is None:
         return 0
-
     func_defs = _func_defs(tree)
     exec_stmts = [n for n in tree.body if not isinstance(n, ast.FunctionDef)]
     memo: dict[tuple[str, frozenset], int] = {}
@@ -592,18 +517,15 @@ def _call_chain_depth(code: str) -> int:
     for stmt in exec_stmts:
         top_calls |= _get_called_functions(stmt)
     top_calls &= func_defs.keys()
-
     if not top_calls:
         return 0
     return max(_depth(c, frozenset()) for c in top_calls)
 
 
 def _func_call_signature(code: str) -> str:
-    """Shape-only fingerprint of a program's call graph (names stripped, topology kept)."""
     tree = _safe_parse(code)
     if tree is None:
         return ""
-
     func_defs = _func_defs(tree)
     exec_stmts = [n for n in tree.body if not isinstance(n, ast.FunctionDef)]
     memo: dict[tuple[str, frozenset], str] = {}
@@ -615,23 +537,15 @@ def _func_call_signature(code: str) -> str:
         if name not in func_defs or name in visiting:
             return "leaf"
         called = sorted(_get_called_functions(func_defs[name]) & func_defs.keys())
-        s = (
-            f"node({','.join(sig(c, visiting | {name}) for c in called)})"
-            if called
-            else "leaf"
-        )
+        s = f"node({','.join(sig(c, visiting | {name}) for c in called)})" if called else "leaf"
         memo[key] = s
         return s
 
-    top_calls = sorted(
-        set().union(*[_get_called_functions(s) for s in exec_stmts]) & func_defs.keys()
-    )
+    top_calls = sorted(set().union(*[_get_called_functions(s) for s in exec_stmts]) & func_defs.keys())
     return f"root({','.join(sig(c, frozenset()) for c in top_calls)})"
 
 
 class _ReturnWrapper(ast.NodeTransformer):
-    """Rewrites `return <expr>` to `return dead_fn(param=<expr>)`."""
-
     def __init__(self, dead_fn_name: str, param_name: str):
         self.dead_fn_name = dead_fn_name
         self.param_name = param_name
@@ -652,33 +566,13 @@ class _ReturnWrapper(ast.NodeTransformer):
         return wrapped
 
 
-def _try_entangle(
-    p_correct: str,
-    dead_funcs: list[ast.FunctionDef],
-    rng: random.Random,
-) -> Optional[tuple[str, str]]:
-    """
-    Inject one dead-program leaf function into P_correct's call chain,
-    bumping its depth by 1.  Returns (new_p_correct_source, shared_fn_name),
-    or None if no compatible (leaf, injectable dead function) pair exists.
-
-    A dead function is "injectable" if it takes exactly one argument, makes
-    no print() calls, and calls nothing outside its own/P_correct's namespace.
-    Its definition is inserted immediately before the rewritten leaf, whose
-    `return <expr>` becomes `return dead_fn(param=<expr>)`.
-    """
+def _try_entangle(p_correct: str, dead_funcs: list[ast.FunctionDef], rng: random.Random) -> Optional[tuple[str, str]]:
     tree = _safe_parse(p_correct)
     if tree is None:
         return None
-
     p_func_defs = _func_defs(tree)
     p_func_names = set(p_func_defs.keys())
-
-    leaves = [
-        fname
-        for fname, fdef in p_func_defs.items()
-        if not (_get_called_functions(fdef) & p_func_names)
-    ]
+    leaves = [fname for fname, fdef in p_func_defs.items() if not (_get_called_functions(fdef) & p_func_names)]
     if not leaves:
         return None
 
@@ -689,15 +583,14 @@ def _try_entangle(
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 callee = node.func.id
                 if callee == "print":
-                    return False                         # would corrupt stdout
+                    return False
                 if callee not in p_func_names and callee != fdef.name:
-                    return False                         # external dependency
+                    return False
         return True
 
     safe_dead = [f for f in dead_funcs if is_injectable(f)]
     if not safe_dead:
         return None
-
     leaf_candidates = list(leaves)
     rng.shuffle(leaf_candidates)
     rng.shuffle(safe_dead)
@@ -708,12 +601,10 @@ def _try_entangle(
                 leaf_def = copy.deepcopy(p_func_defs[leaf_name])
                 dead_fn_copy = copy.deepcopy(dead_fn)
                 param_name = dead_fn.args.args[0].arg
-
                 wrapper = _ReturnWrapper(dead_fn.name, param_name)
                 new_leaf = wrapper.visit(leaf_def)
                 if not wrapper.modified:
                     continue
-
                 new_body: list[ast.stmt] = []
                 for node in tree.body:
                     if isinstance(node, ast.FunctionDef) and node.name == leaf_name:
@@ -721,46 +612,24 @@ def _try_entangle(
                         new_body.append(new_leaf)
                     else:
                         new_body.append(node)
-
                 new_tree = ast.Module(body=new_body, type_ignores=[])
                 ast.fix_missing_locations(new_tree)
                 return ast.unparse(new_tree), dead_fn.name
-
             except Exception:
                 continue
-
     return None
 
 
-def _patch_ren_with_entangled(
-    ren: list[str],
-    entangled: str,
-    original: str,
-) -> list[str]:
-    """
-    Propagate _try_entangle's rewritten leaf body back into ren, so that
-    merge(ren) stays consistent with the entangled P_correct. Without this,
-    P_merged would still show the leaf's old body, making the task unsolvable.
-    The injected dead_fn itself needs no patching — it already exists in ren
-    verbatim from its source program.
-    """
+def _patch_ren_with_entangled(ren: list[str], entangled: str, original: str) -> list[str]:
     orig_tree = _safe_parse(original)
     ent_tree = _safe_parse(entangled)
     if orig_tree is None or ent_tree is None:
         return ren
-
     orig_funcs = {name: ast.unparse(fd) for name, fd in _func_defs(orig_tree).items()}
     ent_funcs = _func_defs(ent_tree)
-
-    # Functions that existed before AND changed — i.e. the patched leaf
-    modified = {
-        name: node
-        for name, node in ent_funcs.items()
-        if name in orig_funcs and ast.unparse(node) != orig_funcs[name]
-    }
+    modified = {name: node for name, node in ent_funcs.items() if name in orig_funcs and ast.unparse(node) != orig_funcs[name]}
     if not modified:
         return ren
-
     new_ren: list[str] = []
     for prog in ren:
         try:
@@ -781,17 +650,10 @@ def _patch_ren_with_entangled(
                 new_ren.append(prog)
         except Exception:
             new_ren.append(prog)
-
     return new_ren
 
 
 class _ConsolidationRegistry:
-    """
-    Prevent structurally identical problems across generate() calls.
-    Keyed on (call_graph_signature, call_depth) — same topology at same depth
-    is considered a duplicate.
-    """
-
     def __init__(self) -> None:
         self._seen: set[tuple[str, int]] = set()
 
@@ -832,15 +694,7 @@ def _inline_result_print(code: str) -> Optional[str]:
             and isinstance(n.value.args[0], ast.Name)
             and n.value.args[0].id == "_result"
         ):
-            new_body.append(
-                ast.Expr(
-                    ast.Call(
-                        func=ast.Name("print", ast.Load()),
-                        args=[s.value],
-                        keywords=[],
-                    )
-                )
-            )
+            new_body.append(ast.Expr(ast.Call(func=ast.Name("print", ast.Load()), args=[s.value], keywords=[])))
             i += 2
         else:
             new_body.append(s)
@@ -888,18 +742,14 @@ def _apply_name_map(code: str, name_map: dict[str, str]) -> Optional[str]:
         return None
 
 
-def rename_all(
-    progs: list[str], rng: random.Random
-) -> Optional[list[str]]:
+def rename_all(progs: list[str], rng: random.Random) -> Optional[list[str]]:
     names = [_collect_func_names(p) for p in progs]
     total = sum(len(n) for n in names)
     if total == 0:
         return None
-
     pool = rng.sample(range(1000, 9999), min(total * 4, 8999))
     rng.shuffle(pool)
     it = iter(pool)
-
     out = []
     for p, ns in zip(progs, names):
         m: dict[str, str] = {}
@@ -947,10 +797,7 @@ def _normalise(code: str) -> Optional[str]:
         tree = ast.parse(code)
     except Exception:
         return None
-    fdefs = sorted(
-        (n for n in tree.body if isinstance(n, ast.FunctionDef)),
-        key=lambda n: n.name,
-    )
+    fdefs = sorted((n for n in tree.body if isinstance(n, ast.FunctionDef)), key=lambda n: n.name)
     other = [n for n in tree.body if not isinstance(n, ast.FunctionDef)]
     tree.body = fdefs + other
     ast.fix_missing_locations(tree)
@@ -965,8 +812,8 @@ class ConsolidationConfig(Config):
     timeout: float = 3.0
     n_programs: int = 3
 
-    # GramForge knobs
     depth_range: tuple = (6, 18)
+    # FIX 1: was ((0, 5),) — extra parens made it a 1-tuple of a tuple
     n_classes_range: tuple = (0, 5)
     inherit_rate_range: tuple = (0.5, 0.85)
     n_functions_range: tuple = (3, 8)
@@ -980,16 +827,9 @@ class ConsolidationConfig(Config):
     include_try_except: bool = True
     include_classes: bool = False
 
-    # Complexity controls
     min_call_depth: int = 2
-    """Minimum required call-chain depth for P_correct (1 = trivial exec->f())."""
-
     entangle: bool = True
-    """If True, inject one dead-program function into P_correct's call chain."""
-
     deduplicate: bool = True
-    """If True, reject problems whose call-graph shape+depth was already seen."""
-
     max_attempts: int = 1000
 
     def update(self, c: int) -> None:
@@ -1033,6 +873,7 @@ class Consolidation(Task):
     def reset_registry(self) -> None:
         self._registry.reset()
 
+    # FIX 2: added mode, n_classes, inherit_rate, emit_endpoint, emit_result, print_result
     def _sample_kwargs(self, rng: random.Random) -> dict:
         c = self.config
         return dict(
@@ -1055,6 +896,7 @@ class Consolidation(Task):
             print_result=True,
         )
 
+    # FIX 3: was pygram_grammar (undefined) — replaced with mesopy_grammar (already imported)
     def _generate_one(self, rng: random.Random) -> Optional[str]:
         c = self.config
         d = rng.randint(*c.depth_range)
@@ -1074,25 +916,18 @@ class Consolidation(Task):
         for _ in range(cfg.max_attempts):
             rng = random.Random(self._next_seed())
 
-            # 1. Generate N raw programs
-            raw = [
-                self._generate_one(random.Random(self._next_seed()))
-                for _ in range(cfg.n_programs)
-            ]
+            raw = [self._generate_one(random.Random(self._next_seed())) for _ in range(cfg.n_programs)]
             if any(p is None for p in raw):
                 continue
 
-            # 2. Inline _result = …; print(_result) → print(…)
             inl = [_inline_result_print(p) for p in raw]
             if any(p is None for p in inl):
                 continue
 
-            # 3. Rename all functions to neutral tokens from a shared pool
             ren = rename_all(inl, rng)
             if ren is None:
                 continue
 
-            # 4. Run each renamed program; keep runnable ones
             runnable_raw: list[tuple[str, str]] = []
             for p in ren:
                 r = run_code(p, timeout=cfg.timeout, exec_only=True)
@@ -1101,9 +936,6 @@ class Consolidation(Task):
             if len(runnable_raw) < 2:
                 continue
 
-            # 5. Prune each runnable program to its reachable call graph,
-            #    removing intra-program functions that are defined but
-            #    never called.
             runnable: list[tuple[str, str]] = []
             for p_raw, expected_out in runnable_raw:
                 pruned = _prune_to_reachable(p_raw)
@@ -1117,24 +949,16 @@ class Consolidation(Task):
             if len(runnable) < 2:
                 continue
 
-            # 6. Keep only programs meeting the depth requirement, then
-            #    pick the fewest-line one as P_correct.
             min_d = cfg.min_call_depth
-            deep_runnable = [
-                (p, o) for p, o in runnable
-                if _call_chain_depth(p) >= min_d
-            ]
+            deep_runnable = [(p, o) for p, o in runnable if _call_chain_depth(p) >= min_d]
             if not deep_runnable:
                 continue
 
             p_correct, out = min(deep_runnable, key=lambda x: _line_count(x[0]))
-
             others_out = {o for p, o in runnable if p != p_correct}
             if out in others_out:
                 continue
 
-            # 7. Optional cross-program entanglement: inject one dead-program
-            #    function into P_correct's call chain (depth n → n+1).
             entangled_flag = False
             p_correct_before_entangle = p_correct
             if cfg.entangle:
@@ -1145,10 +969,7 @@ class Consolidation(Task):
                     if tree is None:
                         continue
                     for node in tree.body:
-                        if (
-                            isinstance(node, ast.FunctionDef)
-                            and node.name not in p_correct_funcs
-                        ):
+                        if isinstance(node, ast.FunctionDef) and node.name not in p_correct_funcs:
                             dead_funcs.append(node)
 
                 entangle_result = _try_entangle(p_correct, dead_funcs, rng)
@@ -1160,29 +981,21 @@ class Consolidation(Task):
                         p_correct = entangled_code
                         out = new_out
                         entangled_flag = True
-                        # Keep P_merged consistent with the entangled P_correct
-                        ren = _patch_ren_with_entangled(
-                            ren, p_correct, p_correct_before_entangle
-                        )
+                        ren = _patch_ren_with_entangled(ren, p_correct, p_correct_before_entangle)
 
-            # 8. Deduplication registry
             if cfg.deduplicate and self._registry.is_duplicate(p_correct):
                 continue
 
-            # 9. Merge the ORIGINAL renamed programs, so P_merged also
-            #    contains intra-program dead functions.
             merged = merge(ren, rng)
             if merged is None or not run_code(merged, timeout=cfg.timeout, exec_only=True).ok:
                 continue
 
-            # 10. If entangled, confirm the shared helper survived into P_merged
             if entangled_flag:
                 p_correct_funcs_final = set(_func_defs(ast.parse(p_correct)))
                 merged_funcs = set(_func_defs(ast.parse(merged)))
                 if not p_correct_funcs_final.issubset(merged_funcs):
                     continue
 
-            # 11. Register and build Problem
             if cfg.deduplicate:
                 self._registry.register(p_correct)
 
@@ -1198,30 +1011,21 @@ class Consolidation(Task):
             )
             return Problem(metadata=meta, answer=p_correct)
 
-        raise RuntimeError(
-            f"Consolidation: failed after {cfg.max_attempts} attempts"
-        )
+        raise RuntimeError(f"Consolidation: failed after {cfg.max_attempts} attempts")
 
     def prompt(self, m) -> str:
-        depth_hint = (
-            "The correct program has a call chain of depth "
-            f"{m.call_depth} (functions calling other functions)."
-        )
+        depth_hint = f"The correct program has a call chain of depth {m.call_depth} (functions calling other functions)."
         entangle_hint = (
             "\nNote: some functions in the dead code are also called by the "
-            "correct program — you must trace the full call graph to know "
-            "what to keep."
-            if m.get("entangled")
-            else ""
+            "correct program — you must trace the full call graph to know what to keep."
+            if m.get("entangled") else ""
         )
         return (
-            "You are given a Python program P created by merging several "
-            "independent programs.\n\n"
+            "You are given a Python program P created by merging several independent programs.\n\n"
             f"Program P:\n```python\n{m.merged_code}\n```\n\n"
-            "Each original program defined its own functions, then called them "
-            "to produce output. Their definitions were collected, renamed to "
-            "neutral tokens (g1234…), shuffled, and all executable statements "
-            "interleaved.\n\n"
+            "Each original program defined its own functions, then called them to produce output. "
+            "Their definitions were collected, renamed to neutral tokens (g1234…), shuffled, and "
+            "all executable statements interleaved.\n\n"
             "Exactly ONE program produces this output on its own:\n\n"
             f"```\n{m.correct_stdout}\n```\n\n"
             f"{depth_hint}{entangle_hint}\n\n"
@@ -1236,6 +1040,7 @@ class Consolidation(Task):
             "Return ONLY the cleaned Python program, no explanation."
         )
 
+    # FIX 4: handle both dict and Problem object for metadata and answer access
     def score_answer(self, a, entry) -> int:
         if a is None:
             return 0
