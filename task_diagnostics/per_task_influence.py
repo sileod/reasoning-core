@@ -61,6 +61,10 @@ MIX_AUX      = float(os.environ.get("MIX_AUX", 0.2))
 #   baseline = main(1-MIX) + all-aux(MIX);  treatment_X = main(1-MIX) + X(MIX/2) + all-aux(MIX/2)
 #   delta = NLL(treatment_X) - NLL(baseline_mix). Total aux stays MIX (fair compute).
 OVERSAMPLE   = os.environ.get("OVERSAMPLE", "0") != "0"
+# OVS_X_FRAC: fraction of the aux budget (MIX) given to the measured task X; the rest goes to the
+# all-rc background. Default 0.5 (the classic 50/50 split). Small values (e.g. 0.1) = the REALISTIC
+# marginal setting: a large all-rc mixture + a small extra dose of X (X is already ~1/N in the mix).
+OVS_X_FRAC   = float(os.environ.get("OVS_X_FRAC", "0.5"))
 # PEER_MIX: like OVERSAMPLE but the aux background is a SMALL fixed sample of N_PEERS
 #   peer tasks (not the full pile) — a more realistic "this task among a few others"
 #   mixture. baseline = main(1-MIX) + peers(MIX) [trained once, peer set fixed by SEED];
@@ -139,7 +143,7 @@ WARMED_CKPT_DIR = Path(os.environ.get("WARMED_CKPT_DIR",
 OUT_DIR     = Path(os.environ.get("OUT_DIR") or (Path(__file__).resolve().parent.parent / _RESULTS_SUB))
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 _init_tag   = "scratch" if FROM_SCRATCH else "pretrained"
-_ovs_tag    = "_OVS" if OVERSAMPLE else ""
+_ovs_tag    = ("_OVS" + (f"x{int(OVS_X_FRAC*100)}" if OVS_X_FRAC != 0.5 else "")) if OVERSAMPLE else ""
 _peer_tag   = f"_PEERS{N_PEERS}" if PEER_MIX else ""
 _co_tag     = "" if COMPLETION_ONLY else "_FULLLM"   # answer-only = canonical clean name
 _dedup_tag  = "_DEDUP" if DEDUP_PROMPT else ""
@@ -262,6 +266,8 @@ _EXTRA_SPEC = [   # (name, default_jsonl, cap)
     ("mbpp",       "data_cache/mbpp_eval.jsonl",       257),
     ("mmlu_math",  "data_cache/mmlu_math_eval.jsonl",  400),
     ("mmlu_logic", "data_cache/mmlu_logic_eval.jsonl", 200),
+    ("mmlu_math_cloze",  "data_cache/mmlu_math_cloze_eval.jsonl",  400),   # format-fair: answer-text NLL
+    ("mmlu_logic_cloze", "data_cache/mmlu_logic_cloze_eval.jsonl", 200),   # (no listed options in prompt)
 ]
 EXTRA_EVALS = {}   # name -> [(prompt, answer)]
 for _nm, _path, _cap in _EXTRA_SPEC:
@@ -578,12 +584,13 @@ def mixed_ds(task_name):
             seed=SEED, stopping_strategy="first_exhausted",
         )
     if OVERSAMPLE:   # upweight X (task or group) on top of the FULL all-rc background; total aux = MIX
-        half = MIX_AUX / 2.0
+        x_share  = MIX_AUX * OVS_X_FRAC          # extra dose of the measured task
+        bg_share = MIX_AUX * (1.0 - OVS_X_FRAC)  # all-rc background (already contains X at ~1/N)
         return interleave_datasets(
             [IterableDataset.from_generator(main_gen),
              IterableDataset.from_generator(x_gen),
              IterableDataset.from_generator(all_aux_gen)],
-            probabilities=[1.0 - MIX_AUX, half, half],
+            probabilities=[1.0 - MIX_AUX, x_share, bg_share],
             seed=SEED, stopping_strategy="first_exhausted",
         )
     return interleave_datasets(
