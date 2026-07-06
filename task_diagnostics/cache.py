@@ -56,6 +56,48 @@ def _cache_id(tasks, levels, n, mode, gen_ver, bhashes, task_versions, configs) 
     return hashlib.sha1(key.encode()).hexdigest()[:12]
 
 
+def _task_spec(name):
+    task = _task_obj(name)
+    cfg = getattr(task, "config", None)
+    return {
+        "behavior_hash": _behavior_hash(task),
+        "task_version": str(getattr(task, "task_version", getattr(task, "version", "0"))),
+        "config": canonical_json(cfg.to_dict() if hasattr(cfg, "to_dict")
+                                 else getattr(cfg, "__dict__", {}) or {}),
+    }
+
+
+def cached_task_specs(out_dir=DEFAULT_OUT, levels=(0, 1, 2, 3, 4), n_per_task=64,
+                      mode="instruct"):
+    """task -> current cache spec for manifests matching this sampling request."""
+    out, specs = Path(out_dir), {}
+    for mf in out.glob("*/manifest.json"):
+        try:
+            m = json.loads(mf.read_text())
+        except Exception:
+            continue
+        if tuple(m.get("levels", ())) != tuple(levels):
+            continue
+        if m.get("n_per_task") != n_per_task or m.get("mode") != mode:
+            continue
+        for task in m.get("tasks", ()):
+            if task in m.get("behavior_hashes", {}):
+                specs[task] = {
+                    "behavior_hash": m["behavior_hashes"].get(task),
+                    "task_version": str(m.get("task_versions", {}).get(task, "0")),
+                    "config": m.get("configs", {}).get(task, "{}"),
+                }
+    return specs
+
+
+def changed_tasks(tasks=None, levels=(0, 1, 2, 3, 4), n_per_task=64,
+                  out_dir=DEFAULT_OUT, mode="instruct"):
+    """Tasks without a matching current cache for this sampling request."""
+    tasks = list(tasks or rc.list_tasks())
+    cached = cached_task_specs(out_dir, levels, n_per_task, mode)
+    return [t for t in tasks if cached.get(t) != _task_spec(t)]
+
+
 def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
                      out_dir=DEFAULT_OUT, mode="instruct", analyze=True):
     """Generate rows for each (task, level), write Parquet + manifest, and (default) an analysis summary.
@@ -156,32 +198,24 @@ def load_task_rows(path=None, repo=None, revision=None, tasks=None, levels=None,
                 d.get("task"), d.get("level", 0), d.get("prompt", ""), str(d.get("answer", "")), md))
 
 
-def aux_pairs_to_rows(pairs_json_path, mode="instruct"):
-    """Compat adapter: old {task: [[prompt, answer], ...]} local aux → TaskRow (level unknown = -1).
-    Lets existing pair-format caches feed the new row-based analyses without a big-bang migration."""
-    data = json.loads(Path(pairs_json_path).read_text())
-    for task, rows in data.items():
-        for r in rows:
-            if not (isinstance(r, (list, tuple)) and len(r) >= 2 and r[1]):
-                continue
-            p, a = r[0], str(r[1])
-            yield TaskRow(task=task, level=-1, prompt=p, answer=a, metadata="{}", mode=mode,
-                          task_version="0", behavior_hash="?", config="{}",
-                          prompt_tokens=-1, answer_tokens=-1, gen_time_s=-1.0,
-                          row_hash=TaskRow.compute_hash(task, -1, p, a, "{}"))
-
-
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(description="build/inspect the canonical task-row cache")
     sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build")
-    b.add_argument("--tasks", nargs="+", required=True)
+    b.add_argument("--tasks", nargs="+", default=None,
+                   help="Tasks to build. Default: tasks changed or missing from matching caches.")
+    b.add_argument("--all", action="store_true", help="Build all registered tasks.")
     b.add_argument("--levels", nargs="+", type=int, default=[0, 1, 2, 3, 4])
     b.add_argument("--n", type=int, default=64, dest="n_per_task")
     b.add_argument("--out", default=DEFAULT_OUT)
     b.add_argument("--no-analyze", action="store_true")
     a = ap.parse_args()
     if a.cmd == "build":
-        man, out = build_task_cache(a.tasks, a.levels, a.n_per_task, a.out, analyze=not a.no_analyze)
+        tasks = rc.list_tasks() if a.all else (a.tasks or changed_tasks(
+            levels=a.levels, n_per_task=a.n_per_task, out_dir=a.out))
+        if not tasks:
+            print("✅ cache fresh: no changed tasks for this sampling request")
+            raise SystemExit(0)
+        man, out = build_task_cache(tasks, a.levels, a.n_per_task, a.out, analyze=not a.no_analyze)
         print(f"\n✅ cache {man.cache_id}: {man.n_rows} rows → {out}")

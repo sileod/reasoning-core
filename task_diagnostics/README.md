@@ -24,7 +24,13 @@ For agentic audits and repeatable experiments, build immutable HF-compatible Par
 rows first, then run analyses on those rows:
 
 ```bash
+# default: build tasks changed or missing for this sampling request
+python -m task_diagnostics.cache build --levels 0 1 2 --n 16
+
+# explicit subset or full rebuild
 python -m task_diagnostics.cache build --tasks logic_nli arithmetics --levels 0 1 2 --n 16
+python -m task_diagnostics.cache build --all --levels 0 1 2 --n 16
+
 python task_diagnostics/zero_shot_eval.py --cache task_diagnostics/cache/task_rows/<cache_id>
 python task_diagnostics/task_influence.py --run-influence --taskrow-cache task_diagnostics/cache/task_rows/<cache_id>
 ```
@@ -37,18 +43,9 @@ See `MIGRATION.md` for the short transition notes.
 
 ## task_influence.py — transfer ranking
 
-Builds aux data, trains SmolLM2-135M to measure each task's influence on held-out
-loss, and rewrites a compact Markdown ranking plus a JSON sidecar. Only tasks whose
-generator changed (behavior hash) are re-measured.
-
-Refresh everything that changed (generate aux locally, measure stale tasks, rewrite table):
-
-```bash
-python task_diagnostics/task_influence.py --run-influence
-```
-
-Use a fixed TaskRow cache for aux training rows, saturation token accuracy, and
-begin/end `score_answer` reward:
+Trains SmolLM2-135M to measure each cached task's influence on held-out loss, and
+rewrites a compact Markdown ranking plus a JSON sidecar. Use a TaskRow cache for aux
+training rows, saturation token accuracy, and begin/end `score_answer` reward:
 
 ```bash
 python task_diagnostics/task_influence.py --run-influence \
@@ -56,7 +53,7 @@ python task_diagnostics/task_influence.py --run-influence \
 ```
 
 That's the whole workflow — defaults are baked in (SmolLM2-135M, dolci main data,
-answer-only loss, 300 steps, 20% aux mix, seed 43, dedup on). The run tag is
+answer-only loss, 300 steps, 20% aux mix, seed 43). The run tag is
 auto-derived from the task/config hash; you never supply one.
 
 Rebuild the table from already-measured results, no GPU:
@@ -64,22 +61,6 @@ Rebuild the table from already-measured results, no GPU:
 ```bash
 python task_diagnostics/task_influence.py --no-local
 ```
-
-### Aux data source: generate vs staging
-
-By default aux data is generated locally from the task generators (serial, slow —
-see `--gen-workers`). If you build task data on a cluster and push it to an HF repo,
-pull that instead:
-
-```bash
-python task_diagnostics/task_influence.py --run-influence --source staging \
-  --staging-repo reasoning-core/staging
-```
-
-`--source staging` streams the HF repo (rows keyed by `task`), takes the first
-`--aux-examples` per task, and **deduplicates prompts** before measuring. Dedup is on
-by default for both sources (`--no-dedup` to keep duplicates). Switching source or
-dedup invalidates the aux cache, so the affected tasks re-pull/re-measure.
 
 ### Scoring
 
@@ -101,9 +82,6 @@ for one-off overrides (e.g. `--weight fw=0.5`).
   flag needed (e.g. `--tasks rocq_compute_nf`).
 - `--include-dev NAME ...`: allow named DevTasks into a *full sweep* (when you don't
   pass `--tasks` and the DevTask arrives via its influence file rather than by name).
-- `--gen-workers N`: parallel generator processes for `--build-aux` (real
-  `ProcessPoolExecutor`). ~2x on pure-Python generators; **prover tasks
-  (rocq/lean/tptp) can't run in the pool and auto-fall-back to serial**.
 - `--dry-run`: render the table to stdout and write no files (report-only).
 - `--force-run`: re-measure a task even if its result file is already complete.
 - `--foreground`: run the trainer in this process instead of tmux.
@@ -114,8 +92,8 @@ for one-off overrides (e.g. `--weight fw=0.5`).
 ### Caching
 
 Local task checks cache in `.task_influence_cache.json`, keyed by behavior hash + config,
-so edited tasks recompute automatically. Aux data caches under `task_influence_work/`
-(git-ignored) with a manifest carrying per-task behavior hashes, source, and dedup flag.
+so edited tasks recompute automatically. Aux/training rows come from TaskRow Parquet
+caches under `task_diagnostics/cache/task_rows/` (git-ignored).
 
 The raw trainer (`per_task_influence.py`) writes:
 

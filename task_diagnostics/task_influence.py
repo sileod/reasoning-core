@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """Run and summarize RC task influence measurements.
 
-Builds aux data — either generated locally from task generators (--source generate,
-default) or pulled from a pre-built HF staging repo (--source staging) — launches the
-raw influence trainer for tasks whose behavior hash changed, and rewrites a compact
-Markdown ranking table (+ JSON sidecar). Gallery rendering lives in build_gallery.py.
+Influence runs consume a canonical TaskRow Parquet cache built by task_diagnostics.cache.
+The runner trains the raw per-task influence kernel and rewrites a compact Markdown
+ranking table (+ JSON sidecar). Gallery rendering lives in build_gallery.py.
 
-Refresh everything that changed:   python task_diagnostics/task_influence.py --run-influence
-Pull staging instead of gen:       python task_diagnostics/task_influence.py --run-influence --source staging
+Build changed/missing task rows:    python -m task_diagnostics.cache build --levels 0 1 2 --n 64
+Run influence from those rows:      python task_diagnostics/task_influence.py --run-influence --taskrow-cache <cache_dir>
 Rebuild the table from cache only:  python task_diagnostics/task_influence.py --no-local
 """
 
@@ -24,7 +23,6 @@ import subprocess
 import sys
 import time
 from collections import defaultdict
-from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -33,7 +31,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from reasoning_core import get_task, list_tasks  # noqa: E402
-from reasoning_core.template import TimeoutException as _RCTimeoutException  # noqa: E402
 
 SCRIPT_VERSION = 2
 WEIGHT_PROFILES = {
@@ -175,244 +172,6 @@ def local_task_metrics(name, samples, refresh, cache):
 
     cache[cache_key] = {"signature": signature, "metrics": out}
     return out
-
-
-def _verification_rows(task, examples, limit):
-    pool = [str(ex.answer) for ex in examples]
-    rows, yes, no = [], 0, 0
-    for i, ex in enumerate(examples):
-        prompt, answer = ex.prompt, str(ex.answer)
-        want_yes = yes <= no
-        if want_yes:
-            candidate, label = answer, "Yes"
-        else:
-            order = sorted(
-                range(len(pool)),
-                key=lambda j: hashlib.sha1(f"{prompt}\0{j}".encode()).hexdigest(),
-            )
-            candidate = None
-            for j in order:
-                cand = pool[j]
-                if cand == answer:
-                    continue
-                try:
-                    if float(task.score_answer(cand, ex)) != 1.0:
-                        candidate = cand
-                        break
-                except Exception:
-                    if cand != answer:
-                        candidate = cand
-                        break
-            if candidate is None:
-                continue
-            label = "No"
-        rows.append([f"{prompt}\nAnswer:\n{candidate}\nCorrect? (Yes/No)", label])
-        yes += label == "Yes"
-        no += label == "No"
-        if len(rows) >= limit:
-            break
-    return rows
-
-
-def _reuse_aux(name, bh, aux_mode, examples_per_task, levels, max_tokens, dedup, workdir):
-    """Rows for this task already generated with a MATCHING behavior_hash + aux config in any
-    existing aux file — so a new model/seed/task-set run reuses them instead of regenerating
-    (matters most for the slow prover tasks). Scans task_influence_work/*_<mode>.json manifests."""
-    want = {"aux_mode": aux_mode, "examples_per_task": examples_per_task, "levels": levels,
-            "max_tokens": max_tokens, "dedup": dedup, "source": "generate"}
-    for f in sorted(Path(workdir).glob(f"*_{aux_mode}.json")):
-        man = load_json(f.with_suffix(f.suffix + ".manifest.json"))
-        if not isinstance(man, dict) or any(man.get(k) != v for k, v in want.items()):
-            continue
-        rec = (man.get("tasks") or {}).get(name)
-        if not rec or rec.get("behavior_hash") != bh or rec.get("n", 0) <= 0:
-            continue
-        rows = (load_json(f) or {}).get(name)
-        if isinstance(rows, list) and rows:
-            return rows[:examples_per_task], rec
-    return None, None
-
-
-def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refresh, aux_mode,
-                   dedup=True, workers=1):
-    """Build LOCAL_AUX JSON keyed as task -> [[prompt, completion], ...] from local generators."""
-    path = Path(path)
-    data = {}
-    manifest = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "script_version": SCRIPT_VERSION,
-        "source": "generate",
-        "dedup": dedup,
-        "examples_per_task": examples_per_task,
-        "levels": levels,
-        "max_tokens": max_tokens,
-        "aux_mode": aux_mode,
-        "tasks": {},
-    }
-    # Per-task robustness: the framework already hard-bounds each generate_example
-    # (signal alarm + 10 retries + subprocess kill). We must NOT add our own SIGALRM
-    # timeout — it shares the single process-wide alarm timer and clobbers theirs.
-    # Instead: (a) catch a propagated failure/timeout and keep partial output, and
-    # (b) stop sampling further levels once a cumulative wall-clock budget is spent.
-    # Better to ship a partial/skip one task than stall the whole phase to zero.
-    task_timeout = int(os.environ.get("AUX_TASK_TIMEOUT", "900") or 0)
-    for name in task_names:
-        task = get_task(name)
-        bh = task.behavior_hash()
-        if not refresh:                           # reuse cached rows for an unchanged task (any prior file)
-            rows, rec = _reuse_aux(name, bh, aux_mode, examples_per_task, levels, max_tokens, dedup, path.parent)
-            if rows:
-                print(f"aux {name}: reused {len(rows)} cached rows (behavior_hash {bh[:7]})", flush=True)
-                data[name] = rows
-                trec = {"n": len(rows), "behavior_hash": bh,
-                        "source_file": rec.get("source_file", ""),
-                        "source_modified": rec.get("source_modified", "")}
-                # carry forward generation-cost timing (sec/example, per-level) if a prior
-                # manifest recorded it — so timing persists across cache-reuse runs.
-                for _k in ("gen_total_s", "gen_n", "gen_s_per_ex", "gen_levels", "gen_per_level"):
-                    if rec.get(_k) is not None:
-                        trec[_k] = rec[_k]
-                manifest["tasks"][name] = trec
-                continue
-        print(f"aux {name}", flush=True)
-        source = Path(inspect.getfile(task.__class__)).resolve()
-        rel = source.relative_to(ROOT) if source.is_relative_to(ROOT) else source
-        examples_all, seen = [], set()
-        per_level = max(1, math.ceil(examples_per_task / max(1, len(levels))))
-        want = examples_per_task * (2 if aux_mode == "contrastive" else 1)
-        t0 = time.time()
-        level_stats = []                    # per-level generation cost (level-dependent by design)
-        try:
-            for level in levels:
-                if task_timeout and time.time() - t0 > task_timeout:
-                    print(f"BUDGET {name}: {task_timeout}s spent after {time.time()-t0:.0f}s; "
-                          f"stopping at {len(examples_all)}/{want} (skipping remaining levels)",
-                          flush=True)
-                    break
-                _lt0 = time.time(); _n_before = len(examples_all)
-                # workers>1 = real ProcessPoolExecutor procs; ~2x on pure-Python generators.
-                # Prover-backed tasks (rocq/lean/tptp) CRASH under the pool (BrokenProcessPool:
-                # the containerized prover can't be forked into a worker) — fall back to serial
-                # for those so a --gen-workers run doesn't abort on them.
-                try:
-                    examples = task.generate_balanced_batch(
-                        batch_size=per_level, max_tokens=max_tokens, level=level, workers=workers,
-                    )
-                except BrokenProcessPool:
-                    print(f"PARALLEL-UNSAFE {name}: falling back to serial gen", flush=True)
-                    examples = task.generate_balanced_batch(
-                        batch_size=per_level, max_tokens=max_tokens, level=level, workers=1,
-                    )
-                for ex in examples:
-                    if len(examples_all) >= want:
-                        break
-                    if max_tokens:
-                        pt = ex.metadata.get("_prompt_tokens", 0) or 0
-                        at = ex.metadata.get("_answer_tokens", 0) or 0
-                        if pt + at > max_tokens:
-                            continue
-                    if dedup:
-                        if ex.prompt in seen:
-                            continue
-                        seen.add(ex.prompt)
-                    examples_all.append(ex)
-                level_stats.append({"level": level, "s": round(time.time() - _lt0, 3),
-                                    "n": len(examples_all) - _n_before})
-                if len(examples_all) >= want:
-                    break
-        except (Exception, _RCTimeoutException) as exc:
-            # Keep whatever completed levels produced; skip below only if empty.
-            print(f"WARN {name}: aux-gen raised after {time.time()-t0:.0f}s "
-                  f"({type(exc).__name__}: {exc}); keeping {len(examples_all)}/{want}", flush=True)
-        if not examples_all:
-            print(f"SKIP {name}: produced 0 examples", flush=True)
-            continue
-        if aux_mode == "contrastive":
-            rows = _verification_rows(task, examples_all, examples_per_task)
-        else:
-            rows = [[ex.prompt, str(ex.answer)] for ex in examples_all[:examples_per_task]]
-        data[name] = rows
-        _gen_s = round(time.time() - t0, 3)
-        _n_gen = len(examples_all)
-        manifest["tasks"][name] = {
-            "n": len(rows),
-            "behavior_hash": task.behavior_hash(),
-            "source_file": str(rel),
-            "source_modified": iso_time(source.stat().st_mtime),
-            "gen_total_s": _gen_s,
-            "gen_n": _n_gen,
-            "gen_s_per_ex": round(_gen_s / _n_gen, 4) if _n_gen else None,
-            "gen_levels": list(levels),
-            "gen_per_level": level_stats,
-        }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
-    manifest_path = path.with_suffix(path.suffix + ".manifest.json")
-    write_json(manifest_path, manifest)
-    return manifest_path
-
-
-def pull_staging_aux(path, task_names, examples_per_task, levels, max_tokens, aux_mode,
-                     staging_repo, dedup=True):
-    """Build LOCAL_AUX JSON by pulling a pre-built HF staging repo (rows keyed by 'task'),
-    instead of generating locally. Fast path: data is produced on a cluster and pushed to HF."""
-    from datasets import load_dataset
-    path = Path(path)
-    data = {name: [] for name in task_names}
-    seen = {name: set() for name in task_names}
-    remaining = set(task_names)
-    print(f"pull staging: {staging_repo}  ({len(task_names)} tasks, dedup={dedup})", flush=True)
-    for x in load_dataset(staging_repo, split="train", streaming=True):
-        t = x.get("task") or ""
-        if t not in remaining:
-            continue
-        ans = x.get("answer")
-        if ans is None:
-            continue
-        p = x.get("prompt") or ""
-        if dedup:
-            if p in seen[t]:
-                continue
-            seen[t].add(p)
-        data[t].append([p, str(ans)])
-        if len(data[t]) >= examples_per_task:
-            remaining.discard(t)
-            if not remaining:
-                break
-    manifest = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "script_version": SCRIPT_VERSION,
-        "source": "staging",
-        "staging_repo": staging_repo,
-        "dedup": dedup,
-        "examples_per_task": examples_per_task,
-        "levels": levels,
-        "max_tokens": max_tokens,
-        "aux_mode": aux_mode,
-        "tasks": {},
-    }
-    for name in task_names:
-        if not data[name]:
-            print(f"  ! staging repo has no rows for {name}", file=sys.stderr)
-        manifest["tasks"][name] = {
-            "n": len(data[name]),
-            "behavior_hash": get_task(name).behavior_hash(),
-        }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
-    manifest_path = path.with_suffix(path.suffix + ".manifest.json")
-    write_json(manifest_path, manifest)
-    return manifest_path
-
-
-def materialize_aux(aux_path, task_names, args):
-    """Produce LOCAL_AUX from local generators (--source generate) or a staging HF repo (--source staging)."""
-    if args.source == "staging":
-        return pull_staging_aux(aux_path, task_names, args.aux_examples, args.aux_levels,
-                                args.aux_max_tokens, args.aux_mode, args.staging_repo, args.dedup)
-    return build_aux_data(aux_path, task_names, args.aux_examples, args.aux_levels,
-                          args.aux_max_tokens, args.refresh, args.aux_mode, args.dedup,
-                          workers=args.gen_workers)
 
 
 def parse_result_tag(path, prefix):
@@ -745,12 +504,6 @@ def run_hash(task_names, args):
         "seed": args.seed,
         "train_steps": args.train_steps,
         "mix_aux": args.mix_aux,
-        "aux_examples": args.aux_examples,
-        "aux_levels": args.aux_levels,
-        "aux_max_tokens": args.aux_max_tokens,
-        "aux_mode": args.aux_mode,
-        "source": args.source,
-        "dedup": args.dedup,
         "taskrow_cache": taskrow_cache_sig(args.taskrow_cache),
     }
     return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:10]
@@ -764,24 +517,6 @@ def taskrow_cache_sig(path):
     if isinstance(manifest, dict):
         return manifest.get("cache_id") or hashlib.sha1(json.dumps(manifest, sort_keys=True).encode()).hexdigest()[:12]
     return str(p)
-
-
-def aux_hash(task_names, args):
-    """Hash of only what the AUX generator data depends on — tasks + their behavior hashes +
-    aux config. Independent of model/seed/main_data/train_steps/mix_aux, so different models
-    and seeds share one aux file (no rebuild). Mirrors what aux_manifest_fresh checks."""
-    inventory = task_inventory(task_names)
-    payload = {
-        "tasks": task_names,
-        "hashes": {name: inventory.get(name, {}).get("behavior_hash", "") for name in task_names},
-        "aux_examples": args.aux_examples,
-        "aux_levels": args.aux_levels,
-        "aux_max_tokens": args.aux_max_tokens,
-        "aux_mode": args.aux_mode,
-        "source": args.source,
-        "dedup": args.dedup,
-    }
-    return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:10]
 
 
 def run_init_tag(args):
@@ -804,34 +539,6 @@ def run_result_paths(args):
     return root / f"influence{suffix}", root / f"sat{suffix}"
 
 
-def aux_manifest_fresh(aux_path, task_names, args):
-    aux_path = Path(aux_path)
-    manifest = load_json(aux_path.with_suffix(aux_path.suffix + ".manifest.json"))
-    if not isinstance(manifest, dict):
-        return False
-    expected = {
-        "script_version": SCRIPT_VERSION,
-        "source": args.source,
-        "dedup": args.dedup,
-        "examples_per_task": args.aux_examples,
-        "levels": args.aux_levels,
-        "max_tokens": args.aux_max_tokens,
-        "aux_mode": args.aux_mode,
-    }
-    for key, value in expected.items():
-        if manifest.get(key) != value:
-            return False
-    tasks = manifest.get("tasks", {})
-    inventory = task_inventory(task_names)
-    for name in task_names:
-        rec = tasks.get(name)
-        if not rec or rec.get("n", 0) <= 0:
-            return False
-        if rec.get("behavior_hash") != inventory.get(name, {}).get("behavior_hash"):
-            return False
-    return True
-
-
 def completed_result(path, task_names):
     data = load_json(path)
     if not isinstance(data, dict) or not isinstance(data.get("tasks"), dict):
@@ -846,29 +553,14 @@ def launch_influence_run(args, task_names):
     workdir = Path(args.run_workdir).expanduser() if args.run_workdir else ROOT
     if not workdir.exists():
         raise SystemExit(f"--run-workdir does not exist: {workdir}")
+    if not args.taskrow_cache:
+        raise SystemExit("--run-influence requires --taskrow-cache. Build one with `python -m task_diagnostics.cache build`.")
 
     args.run_tag = clean_run_tag(args.run_tag or f"LOCAL_{run_hash(task_names, args)}")
-    aux_path = None
-    if args.taskrow_cache:
-        cache_path = Path(args.taskrow_cache).expanduser()
-        if not cache_path.exists():
-            raise SystemExit(f"--taskrow-cache does not exist: {cache_path}")
-        print(f"TaskRow cache: {cache_path}")
-    elif not args.build_aux:
-        # aux path keyed by aux_hash (model/seed-independent) so models & seeds share one
-        # aux file — rerun a new model/seed without regenerating identical task data.
-        args.build_aux = str(ROOT / "task_influence_work" / f"AUX_{aux_hash(task_names, args)}_{args.aux_mode}.json")
-    if not args.taskrow_cache:
-        aux_path = Path(args.build_aux).expanduser()
-        if not aux_path.is_absolute():
-            aux_path = ROOT / aux_path
-
-        if args.refresh or args.force_run or not aux_path.exists() or not aux_manifest_fresh(aux_path, task_names, args):
-            manifest_path = materialize_aux(aux_path, task_names, args)
-            print(f"wrote {aux_path}")
-            print(f"wrote {manifest_path}")
-        else:
-            print(f"aux cache fresh: {aux_path}")
+    cache_path = Path(args.taskrow_cache).expanduser()
+    if not cache_path.exists():
+        raise SystemExit(f"--taskrow-cache does not exist: {cache_path}")
+    print(f"TaskRow cache: {cache_path}")
 
     influence_path, sat_path = run_result_paths(args)
     if completed_result(influence_path, task_names) and not args.force_run:
@@ -881,8 +573,7 @@ def launch_influence_run(args, task_names):
     script_path.parent.mkdir(parents=True, exist_ok=True)
     env = {
         "RUN_TAG": args.run_tag,
-        "LOCAL_AUX": "" if args.taskrow_cache else str(aux_path),
-        "TASKROW_CACHE": str(Path(args.taskrow_cache).expanduser()) if args.taskrow_cache else "",
+        "TASKROW_CACHE": str(cache_path),
         "OUT_DIR": str(runner_results_dir(args)),
         "AUX_DATASET": args.aux_dataset,
         "MODEL": args.model,
@@ -926,23 +617,8 @@ def parse_args():
     parser.add_argument("--cache", default=".task_influence_cache.json")
     parser.add_argument("--json-out", default=None,
                         help="Machine-readable JSON output. Default: --out with .json suffix.")
-    parser.add_argument("--build-aux", default=None,
-                        help=("Write LOCAL_AUX generator data JSON keyed by task. "
-                              "Use an ignored path such as task_influence_work/aux.json."))
     parser.add_argument("--taskrow-cache", default=None,
                         help="Use a canonical TaskRow Parquet cache for aux, saturation, and reward rows.")
-    parser.add_argument("--aux-examples", type=int, default=256,
-                        help="Examples per task for --build-aux.")
-    parser.add_argument("--gen-workers", type=int, default=1,
-                        help="Parallel generator processes for --build-aux (real ProcessPoolExecutor). "
-                             ">1 gives ~2x on pure-Python generators; prover tasks (rocq/lean/tptp) "
-                             "can't run in the pool and auto-fall-back to serial.")
-    parser.add_argument("--aux-levels", nargs="+", type=int, default=[0, 1, 2],
-                        help="Difficulty levels sampled for --build-aux.")
-    parser.add_argument("--aux-max-tokens", type=int, default=5000,
-                        help="Drop generated aux examples above this prompt+answer token budget.")
-    parser.add_argument("--aux-mode", choices=("instruct", "contrastive"), default="instruct",
-                        help="LOCAL_AUX format: original prompt/answer or verification yes/no.")
     parser.add_argument("--results-dir", action="append", default=None,
                         help="Directory with influence_*.json and sat_*.json. Can repeat.")
     parser.add_argument("--include", action="append", default=[],
@@ -983,13 +659,6 @@ def parse_args():
                         help="Run influence trainer in the current process instead of tmux.")
     parser.add_argument("--force-run", action="store_true",
                         help="Rerun raw influence even if the expected result file is complete.")
-    parser.add_argument("--source", choices=("generate", "staging"), default="generate",
-                        help="Aux data source: 'generate' locally from task generators (default), or "
-                             "'staging' to pull a pre-built HF repo (fast; built on a cluster).")
-    parser.add_argument("--staging-repo", default="reasoning-core/staging",
-                        help="HF dataset repo for --source staging (rows keyed by 'task').")
-    parser.add_argument("--dedup", action=argparse.BooleanOptionalAction, default=True,
-                        help="Drop duplicate prompts per task in the aux data (--no-dedup to keep them).")
     parser.add_argument("--aux-dataset", choices=("rc", "rgym"), default="rc")
     parser.add_argument("--main-data", choices=("dolci", "flan", "fw", "fw_recent", "tasksource",
                                                 "fwdolci", "fwtasksource", "codealpaca", "fwdolcicode"), default="dolci")
@@ -1050,11 +719,6 @@ def main():
             print(f"local {name}", flush=True)
             local.append(local_task_metrics(name, args.samples, args.refresh, cache))
         write_json(args.cache, cache)
-
-    if args.build_aux and not args.run_influence:
-        manifest_path = materialize_aux(Path(args.build_aux), task_names, args)
-        print(f"wrote {args.build_aux}")
-        print(f"wrote {manifest_path}")
 
     contrast_paths = result_files(results_dirs, "influence", args.contrastive_include, args.exclude)
     contrast_names = {p.name for p in contrast_paths}

@@ -21,6 +21,10 @@ examples implicitly.
 Build a small local cache:
 
 ```bash
+# default: changed or missing tasks for this levels/n/mode request
+python -m task_diagnostics.cache build --levels 0 1 2 --n 16
+
+# explicit subset
 python -m task_diagnostics.cache build --tasks logic_nli arithmetics --levels 0 1 2 --n 16
 ```
 
@@ -49,6 +53,7 @@ python task_diagnostics/zero_shot_eval.py --cache-repo reasoning-core/staging --
 - Cached rows carry enough metadata for native `reasoning_core.score_answer`.
 - GPU saturation/reward can use the same TaskRows as aux training rows.
 - Fresh generation is an explicit cache-build step, not an analysis side effect.
+- `task_influence.py --run-influence` now requires `--taskrow-cache`.
 - Local generated cache data is ignored by git; commit code and reports, not Parquet
   scratch caches.
 
