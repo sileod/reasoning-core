@@ -26,6 +26,11 @@ A changed generator (behavior_hash) invalidates old rows. Pass --refresh to reco
   python task_diagnostics/zero_shot_eval.py
   python task_diagnostics/zero_shot_eval.py --tasks logic_nli count_elements analogical_case_retrieval
   python task_diagnostics/zero_shot_eval.py --models nvidia_nim/nvidia/nemotron-3-super-120b-a12b --n 25
+
+PILE / by-LEVEL hardness (rc vs rg across difficulty levels, unified score_answer, multi-model):
+  python task_diagnostics/zero_shot_eval.py --datasets rc rg --n 40 --max-concurrency 1 \
+      --models nvidia_nim/meta/llama-3.1-8b-instruct nvidia_nim/meta/llama-3.3-70b-instruct
+  python task_diagnostics/zero_shot_eval.py --datasets rc rg --report      # by-level summary, no API
 """
 import argparse
 import hashlib
@@ -64,6 +69,13 @@ def _sig(behavior_hash, args):
     return hashlib.sha1(payload.encode()).hexdigest()[:16]
 
 
+def _row_sig(args):
+    """Eval signature for immutable TaskRow caches. Row identity/version is in row_hash."""
+    payload = json.dumps({"row_schema": "TaskRow.v1", "sys": args.system,
+                          "max_tokens": args.max_tokens}, sort_keys=True)
+    return hashlib.sha1(payload.encode()).hexdigest()[:16]
+
+
 def _phash(prompt):
     return hashlib.sha1(prompt.encode()).hexdigest()[:12]
 
@@ -81,21 +93,219 @@ def generate(task, n, workers=1):
 
 
 def load_preds(path):
-    """Return dict keyed (task, model, sig, phash) -> row."""
+    """Return dict keyed (task, model, sig, row_hash-or-phash) -> row."""
     rows = {}
     if path.exists():
         for line in path.read_text().splitlines():
             if not line.strip():
                 continue
             r = json.loads(line)
-            rows[(r["task"], r["model"], r["sig"], r["phash"])] = r
+            rows[(r["task"], r["model"], r["sig"], r.get("row_hash") or r["phash"])] = r
     return rows
 
 
 def save_preds(path, rows):
     path.parent.mkdir(parents=True, exist_ok=True)
-    ordered = sorted(rows.values(), key=lambda r: (r["task"], r["model"], r["phash"]))
+    ordered = sorted(rows.values(), key=lambda r: (r["task"], r["model"], r.get("row_hash") or r["phash"]))
     path.write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in ordered))
+
+
+# ── PILE + by-LEVEL mode (rc vs rg across difficulty levels) ────────────────────────────────
+# Sources held-out examples from the HF piles (which carry {task,prompt,answer,metadata,level})
+# instead of the in-repo generators, so it covers BOTH rc and rg and stratifies by `level`. Scores
+# with the unified reasoning_core.score_answer (rc + rg-wrapper via metadata). Same litlm plumbing,
+# slow/serial/backoff, resume-safe. Needs reasoning_gym importable for rg (conda libstdc++ + Agg).
+PILE_REPO = {"rc": "reasoning-core/procedural-pretraining-pile",
+             "rg": "reasoning-core/reasoning-gym"}
+_RG_FN = {}
+
+
+def pile_pool(ds, n_per_level, scan_cap, cache_dir):
+    """First-n-per-(task,level) FULL rows streamed from the HF pile; cached for stable restarts."""
+    from datasets import load_dataset
+    pf = cache_dir / f"zs_pool_{ds}.jsonl"
+    if pf.exists():
+        return [json.loads(l) for l in pf.open()]
+    counts, rows, scanned = {}, [], 0
+    for x in load_dataset(PILE_REPO[ds], split="train", streaming=True):
+        scanned += 1
+        t = (x.get("task") or "").strip(); lv = x.get("level")
+        if not t or t == "reasoning_gym" or lv is None or not x.get("answer") or not x.get("prompt"):
+            continue
+        k = (t, str(lv))
+        if counts.get(k, 0) < n_per_level:
+            rows.append({"src": ds, "task": t, "level": str(lv), "idx": counts.get(k, 0),
+                         "prompt": x["prompt"], "answer": x["answer"], "metadata": x.get("metadata")})
+            counts[k] = counts.get(k, 0) + 1
+        if scanned >= scan_cap:
+            break
+    pf.parent.mkdir(parents=True, exist_ok=True)
+    with pf.open("w") as f:
+        for r in rows:
+            f.write(json.dumps(r) + "\n")
+    print(f"[pile] {ds}: {len(counts)} (task,level) buckets, {len(rows)} ex (scanned {scanned})", flush=True)
+    return rows
+
+
+def score_native(row, pred):
+    """Native reward via reasoning_core.score_answer (needs a pandas Series for attr access); falls
+    back to reasoning_gym's scorer for checkouts whose rg routing is skewed. Float, or None on error."""
+    import pandas as pd
+    import reasoning_core
+    try:
+        return float(reasoning_core.score_answer(pred, pd.Series(row)))
+    except Exception:
+        try:
+            import reasoning_gym
+            md = row.get("metadata")
+            md = json.loads(md) if isinstance(md, str) else (md or {})
+            fn = _RG_FN.get(row["task"]) or reasoning_gym.get_score_answer_fn(row["task"])
+            _RG_FN[row["task"]] = fn
+            return float(fn(pred, pd.Series({"question": row["prompt"], "answer": row["answer"],
+                                             "metadata": md})))
+        except Exception:
+            return None
+
+
+def pile_report(preds_path):
+    """Mean native reward by source × level (higher = easier), + hardest tasks. Safe mid-run."""
+    from collections import defaultdict
+    rows = [r for r in (json.loads(l) for l in preds_path.open()) if r.get("score") is not None] \
+        if preds_path.exists() else []
+    if not rows:
+        print("[pile] no scored rows yet"); return
+    by_sl, by_st = defaultdict(list), defaultdict(list)
+    models = sorted({r["model"] for r in rows})
+    for r in rows:
+        by_sl[(r["src"], str(r["level"]))].append(r["score"])
+        by_st[(r["src"], r["task"])].append(r["score"])
+    levels = sorted({lv for _, lv in by_sl})
+    print(f"\n# zero-shot hardness rc vs rg (native score_answer) — {len(rows)} scored, models={models}")
+    for src in ("rc", "rg"):
+        cells = [f"L{lv}:{sum(by_sl[(src,lv)])/len(by_sl[(src,lv)]):.2f}(n={len(by_sl[(src,lv)])})"
+                 for lv in levels if (src, lv) in by_sl]
+        allv = [x for (s, _), v in by_sl.items() if s == src for x in v]
+        print(f"  {src}:  " + "  ".join(cells) + (f"   | all={sum(allv)/len(allv):.2f}" if allv else ""))
+
+
+def run_pile_levels(args):
+    import litlm, time as _time, random as _random
+    preds = Path(args.preds); preds.parent.mkdir(parents=True, exist_ok=True)
+    done = set()
+    if preds.exists():
+        for l in preds.open():
+            try:
+                r = json.loads(l); done.add((r["src"], r["task"], r["level"], r["model"], r["idx"]))
+            except Exception:
+                pass
+    work = []
+    for ds in args.datasets:
+        for r in pile_pool(ds, args.n, args.scan_cap, preds.parent):
+            for m in args.models:
+                if (ds, r["task"], r["level"], m, r["idx"]) not in done:
+                    work.append((m, r))
+    work.sort(key=lambda w: (w[1]["idx"], w[0], w[1]["src"], w[1]["task"], w[1]["level"]))
+    print(f"[pile] {len(work)} (model,example) to score  models={args.models}  done={len(done)}", flush=True)
+    out = preds.open("a")
+    t0 = _time.time(); delay = args.sleep; n429 = 0
+    for i, (model, r) in enumerate(work):
+        for attempt in range(8):
+            try:
+                res = litlm.complete([r["prompt"]], model=model, system=args.system, caching=True,
+                                     max_tokens=args.max_tokens, show_progress=False,
+                                     num_retries=args.num_retries, max_concurrency=args.max_concurrency)
+                pred = litlm.extract_answer(res[0] or "") or ""
+                out.write(json.dumps({"src": r["src"], "task": r["task"], "level": r["level"],
+                    "model": model, "idx": r["idx"], "gold": str(r["answer"])[:400],
+                    "pred": str(pred)[:400], "score": score_native(r, pred), "ts": _time.time()}) + "\n")
+                out.flush()
+                if args.adaptive:                        # AIMD: gently relax the base rate on success
+                    delay = max(args.sleep, delay * 0.97)
+                break
+            except Exception as e:
+                rate = "429" in str(e) or "ratelimit" in (type(e).__name__ + str(e)).lower()
+                n429 += rate
+                if rate and args.adaptive:               # AIMD: multiplicatively back off the base rate
+                    delay = min(delay * 1.5, args.max_delay)
+                w = min((delay if rate else 1.0) * (1.6 ** attempt) + _random.random(), 120)
+                print(f"[retry{attempt}] {r['src']}/{r['task']}/L{r['level']} "
+                      f"{'429' if rate else type(e).__name__ + ':' + str(e)[:50]} sleep {w:.0f}s", flush=True)
+                _time.sleep(w)
+        if i % args.log_every == 0:                      # ETA logging (honest wall-clock incl. backoff)
+            el = _time.time() - t0; rt = (i + 1) / el if el > 0 else 0
+            eta = (len(work) - i - 1) / rt if rt > 0 else 0
+            print(f"[prog] {i+1}/{len(work)} ({100*(i+1)/max(len(work),1):.1f}%)  rate={rt*60:.0f}/min  "
+                  f"delay={delay:.1f}s  429s={n429}  elapsed={el/3600:.2f}h  ETA={eta/3600:.1f}h", flush=True)
+        _time.sleep(delay)
+    out.close()
+    pile_report(preds)
+
+
+def _score_task_row(row, pred):
+    import reasoning_core
+    try:
+        return float(reasoning_core.score_answer(pred, row.to_series()))
+    except Exception:
+        return 0.0
+
+
+def _load_cached_task_rows(args):
+    try:
+        from .cache import load_task_rows
+    except ImportError:
+        from cache import load_task_rows
+    src = {"path": args.cache} if args.cache else {"repo": args.cache_repo, "revision": args.cache_revision}
+    return list(load_task_rows(**src, tasks=args.tasks, levels=args.levels, n_per_task=args.n))
+
+
+def run_taskrow_cache(args, rows, pred_rows):
+    by_task = defaultdict(list)
+    for row in rows:
+        by_task[row.task].append(row)
+    sig = _row_sig(args)
+    active = set()
+    for task_name in sorted(by_task):
+        target = by_task[task_name][:args.n]
+        wanted = {r.row_hash for r in target}
+        for model in args.models:
+            active.add((task_name, model, sig))
+            if args.refresh:
+                for k in [k for k in pred_rows if k[:3] == (task_name, model, sig) and k[3] in wanted]:
+                    del pred_rows[k]
+            have = sum(1 for r in target
+                       if pred_rows.get((task_name, model, sig, r.row_hash), {}).get("ok"))
+            todo = [r for r in target
+                    if not pred_rows.get((task_name, model, sig, r.row_hash), {}).get("ok")]
+            if not todo:
+                print(f"{task_name:<30} {model:<42} cached ({have}/{len(target)})", flush=True)
+                continue
+            if args.dry_run:
+                continue
+            try:
+                outs = litlm.complete([r.prompt for r in todo], model=model, system=args.system,
+                                      caching=True, max_tokens=args.max_tokens, show_progress=False,
+                                      max_concurrency=args.max_concurrency)
+            except Exception as exc:
+                print(f"{task_name:<30} {model:<42} API-ERR {type(exc).__name__}"[:110], flush=True)
+                continue
+            for r, o in zip(todo, outs):
+                out = str(o)
+                ans = litlm.extract_answer(out)
+                pred_rows[(task_name, model, sig, r.row_hash)] = {
+                    "task": task_name, "model": model, "sig": sig, "row_hash": r.row_hash,
+                    "behavior_hash": r.behavior_hash, "task_version": r.task_version,
+                    "level": r.level, "mode": r.mode, "phash": _phash(r.prompt),
+                    "prompt": r.prompt, "gold": str(r.answer), "output": out, "answer": ans,
+                    "score": _score_task_row(r, ans), "ok": bool(out.strip()),
+                }
+            save_preds(Path(args.preds), pred_rows)
+            okr = [pred_rows[(task_name, model, sig, r.row_hash)] for r in target
+                   if pred_rows.get((task_name, model, sig, r.row_hash), {}).get("ok")]
+            mean = sum(r["score"] for r in okr) / len(okr) if okr else None
+            tag = f"{mean:.3f}" if mean is not None else "n/a"
+            print(f"{task_name:<30} {model:<42} reward={tag}  ({len(okr)}/{len(target)} ok)",
+                  flush=True)
+    return active
 
 
 def main():
@@ -115,17 +325,56 @@ def main():
                     help="Report the cached aggregate to stdout — no generation, no API, no file writes.")
     ap.add_argument("--preds", default=str(ROOT / "task_diagnostics" / "zero_shot_preds.jsonl"))
     ap.add_argument("--out", default=str(ROOT / "task_diagnostics" / "TASK_ZEROSHOT_RESULTS.json"))
+    ap.add_argument("--cache", default=None, help="Evaluate rows from a local TaskRow Parquet cache.")
+    ap.add_argument("--cache-repo", default=None, help="Evaluate rows from a HF dataset repo with TaskRow schema.")
+    ap.add_argument("--cache-revision", default=None, help="Pinned HF revision for --cache-repo.")
+    ap.add_argument("--levels", nargs="+", type=int, default=None, help="Filter cached rows by level.")
+    # PILE + by-LEVEL mode (rc vs rg across levels) — omit for default in-repo generation mode.
+    ap.add_argument("--datasets", nargs="+", default=None, choices=["rc", "rg"],
+                    help="Pile/by-level hardness: stream these HF piles, stratify by `level`, score via "
+                         "reasoning_core.score_answer. `--n` becomes examples per (task, level, model). "
+                         "Writes to --preds (default zero_shot_levels_preds.jsonl in this mode).")
+    ap.add_argument("--scan-cap", type=int, default=400000, help="[pile] max rows streamed per dataset.")
+    ap.add_argument("--sleep", type=float, default=0.4, help="[pile] base inter-call delay (adaptive floor).")
+    ap.add_argument("--adaptive", dest="adaptive", action="store_true", default=True,
+                    help="[pile] AIMD adaptive delay: ×1.5 on 429, ×0.97 on success — auto-tunes to the "
+                         "server's rate limit (on by default).")
+    ap.add_argument("--no-adaptive", dest="adaptive", action="store_false",
+                    help="[pile] fixed --sleep delay instead of AIMD.")
+    ap.add_argument("--max-delay", type=float, default=15.0, help="[pile] adaptive delay ceiling (s).")
+    ap.add_argument("--num-retries", type=int, default=3, help="[pile] litlm per-call retries (in-call backoff).")
+    ap.add_argument("--log-every", type=int, default=25, help="[pile] progress+ETA log cadence (examples).")
+    ap.add_argument("--report", action="store_true", help="[pile] print by-level report from --preds and exit.")
     args = ap.parse_args()
+
+    if args.datasets:                                    # pile/by-level hardness mode
+        if args.preds == str(ROOT / "task_diagnostics" / "zero_shot_preds.jsonl"):
+            args.preds = str(ROOT / "task_diagnostics" / "zero_shot_levels_preds.jsonl")
+        if args.report:
+            return pile_report(Path(args.preds))
+        return run_pile_levels(args)
 
     preds_path, out_path = Path(args.preds), Path(args.out)
     rows = load_preds(preds_path)
     gen_time = {}
+    active = set()
+
+    if args.cache or args.cache_repo:
+        cache_rows = _load_cached_task_rows(args)
+        active = run_taskrow_cache(args, cache_rows, rows)
+        md = _write_aggregate(out_path, rows, args, gen_time, active=active, write=not args.dry_run)
+        if args.dry_run:
+            print(md + f"\n[dry-run] would write {out_path} and {out_path.with_suffix('.md')}")
+        else:
+            print(f"\nwrote {preds_path}\nwrote {out_path}\nwrote {out_path.with_suffix('.md')}")
+        return
 
     for name in (() if args.dry_run else (args.tasks or list_tasks())):  # dry-run: report cache only
         task = get_task(name)
         bh = task.behavior_hash()
         sig = _sig(bh, args)
         for model in args.models:
+            active.add((name, model, sig))
             if args.refresh:                             # drop this (task, model, config) and recompute
                 for k in [k for k in rows if k[:3] == (name, model, sig)]:
                     del rows[k]
@@ -165,19 +414,31 @@ def main():
             tag = f"{mean:.3f}" if mean is not None else "n/a"
             print(f"{name:<30} {model:<42} reward={tag}  ({len(okr)}/{args.n} ok)", flush=True)
 
-    md = _write_aggregate(out_path, rows, args, gen_time, write=not args.dry_run)
+    if args.dry_run:
+        for name in (args.tasks or list_tasks()):
+            try:
+                task = get_task(name)
+                sig = _sig(task.behavior_hash(), args)
+            except Exception:
+                continue
+            for model in args.models:
+                active.add((name, model, sig))
+
+    md = _write_aggregate(out_path, rows, args, gen_time, active=active, write=not args.dry_run)
     if args.dry_run:
         print(md + f"\n[dry-run] would write {out_path} and {out_path.with_suffix('.md')}")
     else:
         print(f"\nwrote {preds_path}\nwrote {out_path}\nwrote {out_path.with_suffix('.md')}")
 
 
-def _write_aggregate(out_path, rows, args, gen_time, write=True):
+def _write_aggregate(out_path, rows, args, gen_time, active=None, write=True):
     """Derive per-(task, model) reward from the per-example rows -> JSON + a small MD table.
     Returns the rendered MD; write=False (dry-run) skips both file writes."""
     prev = (json.loads(out_path.read_text()).get("tasks", {}) if out_path.exists() else {})
     by = defaultdict(list)
     for r in rows.values():
+        if active is not None and (r["task"], r["model"], r["sig"]) not in active:
+            continue
         by[r["task"]].append(r)
     tasks = {}
     for t, rs in by.items():
