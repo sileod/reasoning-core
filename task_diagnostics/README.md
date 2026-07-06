@@ -26,6 +26,7 @@ rows first, then run analyses on those rows:
 ```bash
 python -m task_diagnostics.cache build --tasks logic_nli arithmetics --levels 0 1 2 --n 16
 python task_diagnostics/zero_shot_eval.py --cache task_diagnostics/cache/task_rows/<cache_id>
+python task_diagnostics/task_influence.py --run-influence --taskrow-cache task_diagnostics/cache/task_rows/<cache_id>
 ```
 
 Each row preserves prompt, answer, full metadata, level, config, behavior hash, token
@@ -44,6 +45,14 @@ Refresh everything that changed (generate aux locally, measure stale tasks, rewr
 
 ```bash
 python task_diagnostics/task_influence.py --run-influence
+```
+
+Use a fixed TaskRow cache for aux training rows, saturation token accuracy, and
+begin/end `score_answer` reward:
+
+```bash
+python task_diagnostics/task_influence.py --run-influence \
+  --taskrow-cache task_diagnostics/cache/task_rows/<cache_id>
 ```
 
 That's the whole workflow — defaults are baked in (SmolLM2-135M, dolci main data,

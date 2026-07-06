@@ -84,6 +84,14 @@ DEDUP_PROMPT = os.environ.get("DEDUP_PROMPT", "0") != "0"
 # cot answers embed the reasoning trace (longer/structured target); instruct emits only the
 # final answer. Lets us isolate whether cot vs instruct examples help or hurt.
 MODE_FILTER  = os.environ.get("MODE_FILTER", "").strip()
+# LEVEL_MAX: cap the per-task aux stream (train + sat/reward eval) to instances with level <= LEVEL_MAX
+# ("easier calibration"). Tasks calibrated too hard sit past the inverted-U peak and hurt; capping tests
+# them where they are learnable, and matches rc/rg to a common easy calibration. Empty = all levels.
+LEVEL_MAX    = os.environ.get("LEVEL_MAX", "").strip()
+def _level_ok(x):
+    if not LEVEL_MAX: return True
+    try: return int(x.get("level")) <= int(LEVEL_MAX)
+    except (TypeError, ValueError): return True   # rows without a numeric level pass through
 # MODE_MIX: realistic FULL-MIXTURE answer-format ablation — aux = ALL tasks, but the mode column
 # blended at given weights (e.g. "verification:0.5,instruct:0.5"). Runs ONE pseudo-task __ALLMIX__
 # (main + the blended all-aux stream at MIX_AUX) vs the main-only baseline. Empty = off.
@@ -108,16 +116,21 @@ MAX_LEN      = 512
 BATCH        = int(os.environ.get("BATCH", 8))   # reduce for larger decoders (e.g. BATCH=2 for 400-600M)
 GRAD_ACCUM   = int(os.environ.get("GRAD_ACCUM", 1))  # effective batch = BATCH*GRAD_ACCUM; raise for cleaner PRETRAINING-regime gradients (max_steps counts optimizer steps → N× more tokens)
 
-# Aux-task source: rc (procedural-pretraining-pile) | rgym (reasoning-gym).
+# Aux-task source: rc (procedural-pretraining-pile) | rgym (reasoning-gym) | basic (basic-procedural).
 AUX_DATASET  = os.environ.get("AUX_DATASET", "rc").lower()
-assert AUX_DATASET in ("rc", "rgym"), AUX_DATASET
+assert AUX_DATASET in ("rc", "rgym", "basic"), AUX_DATASET
 # AUX_HF overrides the HF repo the aux stream pulls from (e.g. a freshly cluster-built
-# staging repo). Default = the canonical repo for AUX_DATASET.
+# staging repo). Default = the canonical repo for AUX_DATASET. All three share the same
+# {task, prompt, answer, mode} row schema, so the aux stream is source-agnostic.
 _AUX_HF      = os.environ.get("AUX_HF") or {"rc": "reasoning-core/procedural-pretraining-pile",
-                "rgym": "reasoning-core/reasoning-gym"}[AUX_DATASET]
-_RESULTS_SUB = {"rc": "per_task_results", "rgym": "per_task_results_rgym"}[AUX_DATASET]
-if AUX_DATASET == "rgym":  # task list discovered/cached separately (98 tasks)
-    ALL_TASKS = json.loads(Path("rgym_tasks.json").read_text())["tasks"]
+                "rgym": "reasoning-core/reasoning-gym",
+                "basic": "reasoning-core/basic-procedural"}[AUX_DATASET]
+_RESULTS_SUB = {"rc": "per_task_results", "rgym": "per_task_results_rgym",
+                "basic": "per_task_results_bproc"}[AUX_DATASET]
+# non-rc datasets carry their own {ds}_tasks.json task list in cwd (rc uses the builtin default list)
+_TASKLIST_F  = {"rgym": "rgym_tasks.json", "basic": "basic_tasks.json"}
+if AUX_DATASET in _TASKLIST_F:
+    ALL_TASKS = json.loads(Path(_TASKLIST_F[AUX_DATASET]).read_text())["tasks"]
 _filter      = os.environ.get("TASKS", "").strip()
 if _filter: ALL_TASKS = [t.strip() for t in _filter.split(",") if t.strip()]
 if MODE_MIX: ALL_TASKS = ["__ALLMIX__"]     # single full-mixture arm under the mode blend
@@ -128,8 +141,8 @@ GROUP_TASKS = [t.strip() for t in os.environ.get("GROUP_TASKS", "").split(",") i
 if GROUP_TASKS: ALL_TASKS = ["__GROUP__"]
 # PEER_MIX background: fixed seeded sample of N_PEERS tasks (independent of target).
 import random as _random
-_FULL_TASKS  = (json.loads(Path("rgym_tasks.json").read_text())["tasks"]
-                if AUX_DATASET == "rgym" else list(_DEFAULT_RC_TASKS))
+_FULL_TASKS  = (json.loads(Path(_TASKLIST_F[AUX_DATASET]).read_text())["tasks"]
+                if AUX_DATASET in _TASKLIST_F else list(_DEFAULT_RC_TASKS))
 PEER_TASKS   = sorted(_random.Random(SEED).sample(
                    _FULL_TASKS, min(N_PEERS, len(_FULL_TASKS)))) if PEER_MIX else []
 
@@ -148,12 +161,13 @@ _peer_tag   = f"_PEERS{N_PEERS}" if PEER_MIX else ""
 _co_tag     = "" if COMPLETION_ONLY else "_FULLLM"   # answer-only = canonical clean name
 _dedup_tag  = "_DEDUP" if DEDUP_PROMPT else ""
 _mode_tag   = f"_MODE-{MODE_FILTER}" if MODE_FILTER else ""
+_level_tag  = f"_L{LEVEL_MAX}" if LEVEL_MAX else ""                       # easier-calibration runs → distinct file
 _grp_tag    = ("_GRP-" + "+".join(GROUP_TASKS)) if GROUP_TASKS else ""   # distinct file per group
 # RUN_TAG: optional free-form suffix to write to distinct files without overwriting canonical
 # results (e.g. re-measuring tasks after the rc dataset was updated on HF). Default OFF.
 _run_tag    = os.environ.get("RUN_TAG", "")
 if _run_tag and not _run_tag.startswith("_"): _run_tag = "_" + _run_tag
-_tag        = f"{_ovs_tag}{_peer_tag}{_co_tag}{_dedup_tag}{_mode_tag}{_grp_tag}{_run_tag}"
+_tag        = f"{_ovs_tag}{_peer_tag}{_co_tag}{_dedup_tag}{_mode_tag}{_level_tag}{_grp_tag}{_run_tag}"
 OUT_FILE    = OUT_DIR / f"influence{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
 LOG_PER_EX  = os.environ.get("LOG_PER_EX", "0") != "0"
 PEREX_FILE  = OUT_DIR / f"perex{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
@@ -164,6 +178,17 @@ PEREX_FILE  = OUT_DIR / f"perex{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}
 LOG_SAT     = os.environ.get("LOG_SAT", "1") != "0"
 SAT_EVERY   = int(os.environ.get("SAT_EVERY", 50))
 SAT_NEVAL   = int(os.environ.get("SAT_NEVAL", 40))
+# LOG_REWARD: also log FREE-GENERATION exact-match reward at BEGIN + END of training. This is the
+# honest learnability signal — teacher-forced token_acc is an inverted proxy (see analogical: tf
+# 0.63→0.80 but free-gen ~0.04). Reuses the SAME held-out sat rows (no fresh data). Default ON.
+LOG_REWARD   = os.environ.get("LOG_REWARD", "1") != "0"
+REWARD_NEVAL = int(os.environ.get("REWARD_NEVAL", 25))
+REWARD_MAXTOK= int(os.environ.get("REWARD_MAXTOK", 256))
+# REWARD_MODE: gates ONLY the free-gen score_answer reward (NOT token_acc/sat, which is a next-token
+# measure valid on every mode). score_answer on the pile's mode blend conflates generation solvability
+# with trivial verification Yes/No, so restrict the reward to a single clean mode. Default "instruct"
+# (the real free-gen task). "" / "all" = no filter.
+REWARD_MODE  = os.environ.get("REWARD_MODE", "instruct")
 SAT_FILE    = OUT_DIR / f"sat{_ovs_tag}{_peer_tag}{_dedup_tag}{_mode_tag}{_run_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
 # CKPT_EVAL: budget-convergence study — eval BBH/Dolci/FW every CKPT_EVAL steps DURING training
 # (baseline + each task), so influence@T = task_nll@T - baseline_nll@T from ONE run per task. 0=off.
@@ -337,17 +362,22 @@ _SAT_SAMPLES = Path(f"{AUX_DATASET}_samples.json")
 _SAT_CACHE   = json.loads(_SAT_SAMPLES.read_text()) if (LOG_SAT and _SAT_SAMPLES.exists()) else None
 
 def sat_eval_rows(task):
-    """Held-out (prompt, answer) rows for measuring task token-accuracy."""
+    """Held-out rows for measuring task learnability. Returns full-metadata DICTS (prompt/answer/task +
+    whatever fields the native score_answer needs). Streaming keeps the whole pile row; local/cache
+    paths (pairs only) synthesise a minimal dict."""
+    if _taskrow_aux is not None:
+        return list(_taskrow_aux.get(task, [])[:SAT_NEVAL])
     if _local_aux is not None:                 # local aux (e.g. lean): sat from the same local data
-        return [(r[0], r[1]) for r in _local_aux.get(task, [])[:SAT_NEVAL]
+        return [{"prompt": r[0], "answer": r[1], "task": task} for r in _local_aux.get(task, [])[:SAT_NEVAL]
                 if isinstance(r, (list, tuple)) and len(r) >= 2 and r[1]]
     if _SAT_CACHE is not None:
-        return [(r[0], r[1]) for r in _SAT_CACHE.get(task, [])[:SAT_NEVAL]
+        return [{"prompt": r[0], "answer": r[1], "task": task} for r in _SAT_CACHE.get(task, [])[:SAT_NEVAL]
                 if isinstance(r, (list, tuple)) and len(r) >= 2 and r[1]]
-    out = []
+    out = []   # ALL modes — token_acc/sat is a next-token measure valid on every mode
     for x in load_dataset(_AUX_HF, split="train", streaming=True):
         if (x.get("task") or "") != task or not x.get("answer"): continue
-        out.append((x.get("prompt") or "", x["answer"]))
+        if not _level_ok(x): continue          # match training's easier-calibration cap (LEVEL_MAX)
+        out.append(dict(x))
         if len(out) >= SAT_NEVAL: break
     return out
 
@@ -355,7 +385,8 @@ def sat_eval_rows(task):
 def token_acc(rows):
     """Teacher-forced argmax==gold over answer tokens (TRL's mean_token_accuracy)."""
     model.eval(); correct = total = 0
-    for prompt, answer in rows:
+    for r in rows:
+        prompt, answer = r["prompt"], r["answer"]
         p_ids = tok(f"{prompt}\n", add_special_tokens=False).input_ids
         a_ids = tok(f"{answer}{EOS}", add_special_tokens=False).input_ids
         if len(p_ids) + len(a_ids) > MAX_LEN or not a_ids: continue
@@ -365,6 +396,46 @@ def token_acc(rows):
         gold = ids[0, start + 1:]
         correct += (pred == gold).sum().item(); total += gold.numel()
     model.train(); return correct / max(total, 1)
+
+# Native task scorer (reasoning_core.score_answer / rg fallback), reused from zero_shot_eval so we don't
+# duplicate the rc/rg routing. Import both ways: script run puts task_diagnostics/ on sys.path (bare
+# name), package run needs the qualified name. Cheap: zero_shot_eval's top imports are stdlib only.
+try:
+    from zero_shot_eval import score_native as _score_native
+except Exception:
+    try:
+        from task_diagnostics.zero_shot_eval import score_native as _score_native
+    except Exception:
+        _score_native = None
+
+def _reward_one(row, gen):
+    """Per-example native reward, or None when the scorer cannot evaluate this row."""
+    return None if _score_native is None else _score_native(row, gen)
+
+@torch.no_grad()
+def free_gen_reward(rows):
+    """Greedy free-generation reward over held-out rows via native score_answer. Same prompt format as
+    training (`{prompt}\\n` → answer). Logged by default at BEGIN + END of every task's training."""
+    if not rows: return None
+    if REWARD_MODE not in ("", "all"):     # score_answer is only meaningful on the generate-the-answer mode
+        instruct = [r for r in rows if (r.get("mode") or "") == REWARD_MODE]
+        if len(instruct) >= 5: rows = instruct     # else keep all (local/cache rows carry no mode field)
+    eos_id = tok.eos_token_id
+    model.eval(); tot = 0.0; n = 0
+    for r in rows[:REWARD_NEVAL]:
+        prompt, answer = r["prompt"], r["answer"]
+        p_ids = tok(f"{prompt}\n", add_special_tokens=False).input_ids
+        a_ids = tok(f"{answer}{EOS}", add_special_tokens=False).input_ids
+        if not a_ids or len(p_ids) >= MAX_LEN: continue
+        cap = min(len(a_ids) + 8, REWARD_MAXTOK, MAX_LEN - len(p_ids))
+        ids = torch.tensor([p_ids], device=DEVICE)
+        out = model.generate(ids, max_new_tokens=cap, do_sample=False,
+                             pad_token_id=eos_id, eos_token_id=eos_id)
+        gen = tok.decode(out[0][len(p_ids):], skip_special_tokens=True)
+        score = _reward_one(r, gen)
+        if score is not None:
+            tot += float(score); n += 1
+    model.train(); return (tot / n) if n else None
 
 class SatCurveCB(TrainerCallback):
     def __init__(self, rows, curve): self.rows, self.curve = rows, curve
@@ -448,10 +519,42 @@ def _to_yaml(ans):
     except Exception:
         return ans
 
+TASKROW_CACHE = os.environ.get("TASKROW_CACHE", "")  # canonical TaskRow Parquet cache
 LOCAL_AUX = os.environ.get("LOCAL_AUX", "")   # path to {task:[[prompt,answer],...]} (e.g. lean_samples.json)
 _local_aux = json.loads(Path(LOCAL_AUX).read_text()) if LOCAL_AUX and Path(LOCAL_AUX).exists() else None
+_taskrow_aux = None
+
+def _load_taskrow_aux(path):
+    try:
+        from task_diagnostics.cache import load_task_rows
+    except Exception:
+        from cache import load_task_rows
+    wanted = {t for t in (ALL_TASKS + PEER_TASKS + GROUP_TASKS)
+              if t not in ("__ALLMIX__", "__GROUP__")}
+    by_task = {}
+    for row in load_task_rows(path=path, tasks=sorted(wanted) or None):
+        d = row.to_dict()
+        if MODE_FILTER and (d.get("mode") or "") != MODE_FILTER:
+            continue
+        if not _level_ok(d):
+            continue
+        by_task.setdefault(d["task"], []).append(d)
+    return by_task
+
+if TASKROW_CACHE:
+    _taskrow_aux = _load_taskrow_aux(TASKROW_CACHE)
+    print(f"📦 TaskRow cache: {sum(len(v) for v in _taskrow_aux.values())} rows "
+          f"across {len(_taskrow_aux)} tasks from {TASKROW_CACHE}")
+
+def _cycle_rows(rows):
+    import itertools as _it
+    for r in _it.cycle(rows):
+        if r.get("answer"):
+            yield _fmt_qa(r.get("prompt", ""), r["answer"])
 
 def rc_gen_factory(task_name):
+    if _taskrow_aux is not None:
+        return lambda: _cycle_rows(_taskrow_aux.get(task_name, []))
     if _local_aux is not None:                 # local instruct data (cycled), no HF stream
         def gl():
             rows = _local_aux.get(task_name, [])
@@ -465,6 +568,7 @@ def rc_gen_factory(task_name):
             if (x.get("task") or "") != task_name: continue
             if not x.get("answer"): continue
             if MODE_FILTER and (x.get("mode") or "") != MODE_FILTER: continue
+            if not _level_ok(x): continue          # easier-calibration cap (LEVEL_MAX)
             p = x.get("prompt") or ""
             if DEDUP_PROMPT:
                 if p in seen: continue
@@ -476,6 +580,10 @@ def rc_gen_factory(task_name):
 
 def all_aux_gen():
     """Every aux example (all tasks), natural rate — the 'full mixture' component."""
+    if _taskrow_aux is not None:
+        rows = [r for rs in _taskrow_aux.values() for r in rs]
+        yield from _cycle_rows(rows)
+        return
     seen = set()
     for x in load_dataset(_AUX_HF, split="train", streaming=True):
         if (x.get("task") or "") in ("", "reasoning_gym"): continue
@@ -489,6 +597,10 @@ def all_aux_gen():
 def all_aux_gen_mode(mode):
     """All-tasks aux stream restricted to one answer mode (for MODE_MIX full-mixture blends)."""
     def g():
+        if _taskrow_aux is not None:
+            yield from _cycle_rows([r for rs in _taskrow_aux.values() for r in rs
+                                    if (r.get("mode") or "") == mode])
+            return
         for x in load_dataset(_AUX_HF, split="train", streaming=True):
             if (x.get("task") or "") in ("", "reasoning_gym"): continue
             if not x.get("answer"): continue
@@ -499,6 +611,10 @@ def all_aux_gen_mode(mode):
 def peer_aux_gen():
     """PEER_MIX background: only the fixed N_PEERS sampled tasks."""
     peers = list(PEER_TASKS)
+    if _taskrow_aux is not None:
+        rows = [r for t in peers for r in _taskrow_aux.get(t, [])]
+        yield from _cycle_rows(rows)
+        return
     if _local_aux is not None:                 # local data (no HF stream): round-robin the peers
         import itertools as _it
         iters = [_it.cycle(_local_aux[t]) for t in peers if _local_aux.get(t)]
@@ -521,6 +637,10 @@ def peer_aux_gen():
 def group_aux_gen():
     """GROUP mode: pool the CHOSEN GROUP_TASKS into ONE aux arm (round-robin, equal share each)."""
     grp = list(GROUP_TASKS)
+    if _taskrow_aux is not None:
+        rows = [r for t in grp for r in _taskrow_aux.get(t, [])]
+        yield from _cycle_rows(rows)
+        return
     if _local_aux is not None:                 # local data (no HF stream): round-robin the members
         import itertools as _it
         iters = [_it.cycle(_local_aux[t]) for t in grp if _local_aux.get(t)]
@@ -673,40 +793,63 @@ else:
 for i, task in enumerate(ALL_TASKS):
     if task in results["tasks"]:
         print(f"[{i+1}/{len(ALL_TASKS)}] {task} — already done"); continue
+    if _taskrow_aux is not None and task not in ("__ALLMIX__", "__GROUP__") and not _taskrow_aux.get(task):
+        print(f"[{i+1}/{len(ALL_TASKS)}] {task} — SKIP (no TaskRow cache rows)")
+        continue
     if _local_aux is not None and task not in ("__ALLMIX__", "__GROUP__") and not _local_aux.get(task):
         print(f"[{i+1}/{len(ALL_TASKS)}] {task} — SKIP (no aux rows; slow-gen skipped upstream)")
         continue
     t0 = time.time(); reset_model()
-    sat_cbs, sat_curve = None, None
-    if LOG_SAT:
-        sat_rows = sat_eval_rows(task)
-        if len(sat_rows) >= 5:
+    try:  # one task's transient failure (e.g. HF streaming timeout) must not kill the whole 51-task run
+        sat_cbs, sat_curve, reward0 = None, None, None
+        sat_rows = sat_eval_rows(task) if (LOG_SAT or LOG_REWARD) else []
+        if LOG_SAT and len(sat_rows) >= 5:
             sat_curve = [[0, token_acc(sat_rows)]]
             sat_cbs = [SatCurveCB(sat_rows, sat_curve)]
-    ckpt_curve = None
-    if CKPT_EVAL:
-        ckpt_curve = []; sat_cbs = (sat_cbs or []) + [CkptEvalCB(ckpt_curve)]
-    train_on(mixed_ds(task), callbacks=sat_cbs)
-    if ckpt_curve is not None: save_ckpt(task, ckpt_curve)
-    (m_bbh, m_dolci, m_fw, m_ex), px = eval_all(); save_perex(task, px)
-    if sat_curve is not None:
-        rec = {"curve": sat_curve}; rec.update(derive_sat(sat_curve)); save_sat(task, rec)
-    dt = time.time() - t0
-    results["tasks"][task] = {
-        "bbh_nll": m_bbh, "dolci_nll": m_dolci, "fw_nll": m_fw,
-        "bbh_delta":   m_bbh - b_bbh,
-        "dolci_delta": m_dolci - b_dolci,
-        "fw_delta":    m_fw - b_fw,
-    }
-    for k, v in m_ex.items():
-        if k in b_ex:
-            results["tasks"][task][f"{k}_nll"]   = v
-            results["tasks"][task][f"{k}_delta"] = v - b_ex[k]
-    OUT_FILE.write_text(json.dumps(results, indent=2))
-    print(f"[{i+1:2d}/{len(ALL_TASKS)}] {task:<26s}  "
-          f"BBH Δ={m_bbh-b_bbh:+.4f}  Dolci Δ={m_dolci-b_dolci:+.4f}  "
-          f"FW Δ={m_fw-b_fw:+.4f}"
-          + "".join(f"  {k}Δ={m_ex[k]-b_ex[k]:+.4f}" for k in m_ex if k in b_ex)
-          + f"  ({dt:.0f}s)")
+        if LOG_REWARD and len(sat_rows) >= 5:
+            reward0 = free_gen_reward(sat_rows)   # BEGIN free-gen reward (before training)
+        ckpt_curve = None
+        if CKPT_EVAL:
+            ckpt_curve = []; sat_cbs = (sat_cbs or []) + [CkptEvalCB(ckpt_curve)]
+        train_on(mixed_ds(task), callbacks=sat_cbs)
+        if ckpt_curve is not None: save_ckpt(task, ckpt_curve)
+        (m_bbh, m_dolci, m_fw, m_ex), px = eval_all(); save_perex(task, px)
+        reward_final = free_gen_reward(sat_rows) if (reward0 is not None) else None  # END free-gen reward
+        if sat_curve is not None or reward0 is not None:
+            rec = {}
+            if sat_curve is not None:
+                rec["curve"] = sat_curve; rec.update(derive_sat(sat_curve))
+            if reward0 is not None:
+                rec["reward0"] = reward0; rec["reward_final"] = reward_final
+                rec["reward_gain"] = (reward_final - reward0) if reward_final is not None else None
+            save_sat(task, rec)
+        dt = time.time() - t0
+        results["tasks"][task] = {
+            "bbh_nll": m_bbh, "dolci_nll": m_dolci, "fw_nll": m_fw,
+            "bbh_delta":   m_bbh - b_bbh,
+            "dolci_delta": m_dolci - b_dolci,
+            "fw_delta":    m_fw - b_fw,
+            "time_s":      round(dt, 1),   # wall-clock per task (train + all-leg eval)
+        }
+        if reward0 is not None:   # native score_answer solve-rate, begin -> end (cheap + informative)
+            results["tasks"][task]["reward0"] = reward0
+            results["tasks"][task]["reward_final"] = reward_final
+        for k, v in m_ex.items():
+            if k in b_ex:
+                results["tasks"][task][f"{k}_nll"]   = v
+                results["tasks"][task][f"{k}_delta"] = v - b_ex[k]
+        OUT_FILE.write_text(json.dumps(results, indent=2))
+        print(f"[{i+1:2d}/{len(ALL_TASKS)}] {task:<26s}  "
+              f"BBH Δ={m_bbh-b_bbh:+.4f}  Dolci Δ={m_dolci-b_dolci:+.4f}  "
+              f"FW Δ={m_fw-b_fw:+.4f}"
+              + "".join(f"  {k}Δ={m_ex[k]-b_ex[k]:+.4f}" for k in m_ex if k in b_ex)
+              + (f"  solve {reward0:.2f}->{reward_final:.2f}" if reward0 is not None and reward_final is not None else "")
+              + f"  ({dt:.0f}s)")
+    except Exception as _e:
+        import traceback
+        print(f"[{i+1:2d}/{len(ALL_TASKS)}] {task:<26s}  ERROR ({type(_e).__name__}: {_e}) "
+              f"— skipping, will be recomputed on resume", flush=True)
+        traceback.print_exc()
+        continue
 
 print(f"\n✅ Done → {OUT_FILE}")

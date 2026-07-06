@@ -751,8 +751,19 @@ def run_hash(task_names, args):
         "aux_mode": args.aux_mode,
         "source": args.source,
         "dedup": args.dedup,
+        "taskrow_cache": taskrow_cache_sig(args.taskrow_cache),
     }
     return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:10]
+
+
+def taskrow_cache_sig(path):
+    if not path:
+        return ""
+    p = Path(path).expanduser()
+    manifest = load_json(p / "manifest.json")
+    if isinstance(manifest, dict):
+        return manifest.get("cache_id") or hashlib.sha1(json.dumps(manifest, sort_keys=True).encode()).hexdigest()[:12]
+    return str(p)
 
 
 def aux_hash(task_names, args):
@@ -837,20 +848,27 @@ def launch_influence_run(args, task_names):
         raise SystemExit(f"--run-workdir does not exist: {workdir}")
 
     args.run_tag = clean_run_tag(args.run_tag or f"LOCAL_{run_hash(task_names, args)}")
-    if not args.build_aux:
+    aux_path = None
+    if args.taskrow_cache:
+        cache_path = Path(args.taskrow_cache).expanduser()
+        if not cache_path.exists():
+            raise SystemExit(f"--taskrow-cache does not exist: {cache_path}")
+        print(f"TaskRow cache: {cache_path}")
+    elif not args.build_aux:
         # aux path keyed by aux_hash (model/seed-independent) so models & seeds share one
         # aux file — rerun a new model/seed without regenerating identical task data.
         args.build_aux = str(ROOT / "task_influence_work" / f"AUX_{aux_hash(task_names, args)}_{args.aux_mode}.json")
-    aux_path = Path(args.build_aux).expanduser()
-    if not aux_path.is_absolute():
-        aux_path = ROOT / aux_path
+    if not args.taskrow_cache:
+        aux_path = Path(args.build_aux).expanduser()
+        if not aux_path.is_absolute():
+            aux_path = ROOT / aux_path
 
-    if args.refresh or args.force_run or not aux_path.exists() or not aux_manifest_fresh(aux_path, task_names, args):
-        manifest_path = materialize_aux(aux_path, task_names, args)
-        print(f"wrote {aux_path}")
-        print(f"wrote {manifest_path}")
-    else:
-        print(f"aux cache fresh: {aux_path}")
+        if args.refresh or args.force_run or not aux_path.exists() or not aux_manifest_fresh(aux_path, task_names, args):
+            manifest_path = materialize_aux(aux_path, task_names, args)
+            print(f"wrote {aux_path}")
+            print(f"wrote {manifest_path}")
+        else:
+            print(f"aux cache fresh: {aux_path}")
 
     influence_path, sat_path = run_result_paths(args)
     if completed_result(influence_path, task_names) and not args.force_run:
@@ -863,7 +881,8 @@ def launch_influence_run(args, task_names):
     script_path.parent.mkdir(parents=True, exist_ok=True)
     env = {
         "RUN_TAG": args.run_tag,
-        "LOCAL_AUX": str(aux_path),
+        "LOCAL_AUX": "" if args.taskrow_cache else str(aux_path),
+        "TASKROW_CACHE": str(Path(args.taskrow_cache).expanduser()) if args.taskrow_cache else "",
         "OUT_DIR": str(runner_results_dir(args)),
         "AUX_DATASET": args.aux_dataset,
         "MODEL": args.model,
@@ -910,6 +929,8 @@ def parse_args():
     parser.add_argument("--build-aux", default=None,
                         help=("Write LOCAL_AUX generator data JSON keyed by task. "
                               "Use an ignored path such as task_influence_work/aux.json."))
+    parser.add_argument("--taskrow-cache", default=None,
+                        help="Use a canonical TaskRow Parquet cache for aux, saturation, and reward rows.")
     parser.add_argument("--aux-examples", type=int, default=256,
                         help="Examples per task for --build-aux.")
     parser.add_argument("--gen-workers", type=int, default=1,

@@ -30,6 +30,12 @@ Run zero-shot on cached rows:
 python task_diagnostics/zero_shot_eval.py --cache task_diagnostics/cache/task_rows/<cache_id>
 ```
 
+Run GPU influence on the same cached rows:
+
+```bash
+python task_diagnostics/task_influence.py --run-influence --taskrow-cache task_diagnostics/cache/task_rows/<cache_id>
+```
+
 Read rows from a pinned HF dataset revision:
 
 ```bash
@@ -41,6 +47,7 @@ python task_diagnostics/zero_shot_eval.py --cache-repo reasoning-core/staging --
 - Zero-shot predictions are keyed by `row_hash + model + eval signature`; stale rows
   from older task versions no longer enter current aggregates.
 - Cached rows carry enough metadata for native `reasoning_core.score_answer`.
+- GPU saturation/reward can use the same TaskRows as aux training rows.
 - Fresh generation is an explicit cache-build step, not an analysis side effect.
 - Local generated cache data is ignored by git; commit code and reports, not Parquet
   scratch caches.
