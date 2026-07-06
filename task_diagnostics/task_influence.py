@@ -659,7 +659,7 @@ def parse_args():
                         help="Run influence trainer in the current process instead of tmux.")
     parser.add_argument("--force-run", action="store_true",
                         help="Rerun raw influence even if the expected result file is complete.")
-    parser.add_argument("--aux-dataset", choices=("rc", "rgym"), default="rc")
+    parser.add_argument("--aux-dataset", choices=("rc", "rgym", "basic"), default="rc")
     parser.add_argument("--main-data", choices=("dolci", "flan", "fw", "fw_recent", "tasksource",
                                                 "fwdolci", "fwtasksource", "codealpaca", "fwdolcicode"), default="dolci")
     parser.add_argument("--model", dest="models", nargs="+", default=["HuggingFaceTB/SmolLM2-135M"],

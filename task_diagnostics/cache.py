@@ -56,6 +56,22 @@ def _cache_id(tasks, levels, n, mode, gen_ver, bhashes, task_versions, configs) 
     return hashlib.sha1(key.encode()).hexdigest()[:12]
 
 
+def _hf_cache_id(repo, revision, tasks, levels, n, mode) -> str:
+    key = json.dumps({"repo": repo, "revision": revision, "tasks": sorted(tasks),
+                      "levels": sorted(levels), "n": n, "mode": mode}, sort_keys=True)
+    return hashlib.sha1(key.encode()).hexdigest()[:12]
+
+
+def _metadata_dict(x):
+    md = x.get("metadata", {}) or {}
+    if isinstance(md, str):
+        try:
+            md = json.loads(md)
+        except Exception:
+            md = {}
+    return md
+
+
 def _task_spec(name):
     task = _task_obj(name)
     cfg = getattr(task, "config", None)
@@ -98,6 +114,21 @@ def changed_tasks(tasks=None, levels=(0, 1, 2, 3, 4), n_per_task=64,
     return [t for t in tasks if cached.get(t) != _task_spec(t)]
 
 
+def _write_cache(rows, manifest, out_dir=DEFAULT_OUT, analyze=True):
+    if not rows:
+        raise RuntimeError("no rows produced for cache")
+    out = Path(out_dir) / manifest.cache_id
+    (out / "data").mkdir(parents=True, exist_ok=True)
+    import pandas as pd
+    df = pd.DataFrame([r.to_dict() for r in rows]).drop_duplicates("row_hash")
+    df.to_parquet(out / "data" / "part-00000.parquet", index=False)
+    manifest = CacheManifest(**{**manifest.to_dict(), "n_rows": len(df)})
+    (out / "manifest.json").write_text(json.dumps(manifest.to_dict(), indent=2))
+    if analyze:
+        _write_analysis(df, out)
+    return manifest, out
+
+
 def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
                      out_dir=DEFAULT_OUT, mode="instruct", analyze=True):
     """Generate rows for each (task, level), write Parquet + manifest, and (default) an analysis summary.
@@ -136,29 +167,79 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
                 gtime.setdefault((name, alvl), []).append(dt)
 
     cid = _cache_id(tasks, levels, n_per_task, mode, gen_ver, bhashes, task_versions, configs)
-    out = Path(out_dir) / cid
-    (out / "data").mkdir(parents=True, exist_ok=True)
-    import pandas as pd
-    df = pd.DataFrame([r.to_dict() for r in rows]).drop_duplicates("row_hash")
-    df.to_parquet(out / "data" / "part-00000.parquet", index=False)
     man = CacheManifest(cache_id=cid, source="fresh", tasks=tuple(tasks), levels=tuple(levels),
                         n_per_task=n_per_task, mode=mode, generator_version=gen_ver,
                         behavior_hashes=bhashes, task_versions=task_versions, configs=configs,
-                        tokenizer="HuggingFaceTB/SmolLM2-135M", n_rows=len(df))
-    (out / "manifest.json").write_text(json.dumps(man.to_dict(), indent=2))
-    if analyze:
-        _write_analysis(df, gtime, out)
-    return man, out
+                        tokenizer="HuggingFaceTB/SmolLM2-135M")
+    return _write_cache(rows, man, out_dir, analyze)
 
 
-def _write_analysis(df, gtime, out):
+def import_hf_cache(repo, revision=None, tasks=None, levels=None, n_per_task=64,
+                    out_dir=DEFAULT_OUT, mode="instruct", scan_cap=500_000, analyze=True):
+    """Stream an HF pile into the same local TaskRow Parquet cache used by diagnostics."""
+    from datasets import load_dataset
+    tasks = set(tasks or [])
+    levels = tuple(levels) if levels is not None else ()
+    wanted_levels = {int(x) for x in levels} if levels else None
+    rows, counts, scanned = [], {}, 0
+    for x in load_dataset(repo, revision=revision, split="train", streaming=True):
+        scanned += 1
+        task = (x.get("task") or "").strip()
+        prompt = x.get("prompt") or x.get("question") or ""
+        answer = x.get("answer")
+        if not task or not prompt or answer is None or (tasks and task not in tasks):
+            continue
+        md = _metadata_dict(x)
+        level = x.get("level", md.get("_level", 0))
+        try:
+            level = int(level)
+        except Exception:
+            level = 0
+        if wanted_levels is not None and level not in wanted_levels:
+            continue
+        key = (task, level)
+        if counts.get(key, 0) >= n_per_task:
+            continue
+        metadata = canonical_json(md or x.get("metadata", {}))
+        task_version = str(x.get("task_version", md.get("_task_version", "0")))
+        behavior_hash = x.get("behavior_hash", md.get("_task_behavior_hash", "?"))
+        config = canonical_json(x.get("config", md.get("_config", {})))
+        row_mode = x.get("mode") or mode
+        rows.append(TaskRow(
+            task=task, level=level, prompt=prompt, answer=str(answer), metadata=metadata,
+            mode=row_mode, task_version=task_version, behavior_hash=behavior_hash,
+            config=config,
+            prompt_tokens=int(x.get("prompt_tokens", md.get("_prompt_tokens", _ntok(prompt))) or -1),
+            answer_tokens=int(x.get("answer_tokens", md.get("_answer_tokens", _ntok(str(answer)))) or -1),
+            gen_time_s=float(x.get("gen_time_s", md.get("_time", -1)) or -1),
+            row_hash=x.get("row_hash") or TaskRow.compute_hash(task, level, prompt, str(answer), metadata),
+        ))
+        counts[key] = counts.get(key, 0) + 1
+        if scanned >= scan_cap:
+            break
+    task_names = sorted({r.task for r in rows})
+    bhashes = {t: next((r.behavior_hash for r in rows if r.task == t), "?") for t in task_names}
+    versions = {t: next((r.task_version for r in rows if r.task == t), "0") for t in task_names}
+    configs = {t: next((r.config for r in rows if r.task == t), "{}") for t in task_names}
+    cache_levels = tuple(sorted({r.level for r in rows}))
+    cid = _hf_cache_id(repo, revision, task_names, cache_levels, n_per_task, mode)
+    man = CacheManifest(cache_id=cid, source="hf", tasks=tuple(task_names), levels=cache_levels,
+                        n_per_task=n_per_task, mode=mode, generator_version=str(getattr(rc, "__version__", "0")),
+                        behavior_hashes=bhashes, task_versions=versions, configs=configs,
+                        tokenizer="HuggingFaceTB/SmolLM2-135M", repo=repo, revision=revision)
+    return _write_cache(rows, man, out_dir, analyze)
+
+
+def _write_analysis(df, out):
     import statistics as st
-    total = sum(len(v) for v in gtime.values())
-    lines = [f"# cache {out.name} — {len(df)} rows, {df.task.nunique()} tasks", "",
+    lines = [f"# cache {out.name} — {len(df)} rows, {df.task.nunique() if len(df) else 0} tasks", "",
              "## generation speed per (task, level)  [ms/example]", ""]
-    for (task, lvl), ts in sorted(gtime.items()):
+    timed = df[df.gen_time_s >= 0] if len(df) and "gen_time_s" in df else df.iloc[:0]
+    for (task, lvl), grp in timed.groupby(["task", "level"]):
+        ts = list(grp.gen_time_s)
         lines.append(f"  {task:<28} L{lvl}: {st.mean(ts) * 1000:6.1f}ms  n={len(ts)}")
-    lines.append(f"\ndup rate (row_hash): {1 - len(df) / max(total, 1):.1%}")
+    total = len(df)
+    lines.append(f"\ndup rate (row_hash): {1 - len(df.row_hash.unique()) / max(total, 1):.1%}" if len(df) else "\ndup rate (row_hash): n/a")
     (out / "analysis.md").write_text("\n".join(lines))
     print("\n".join(lines))
 
@@ -210,6 +291,16 @@ if __name__ == "__main__":
     b.add_argument("--n", type=int, default=64, dest="n_per_task")
     b.add_argument("--out", default=DEFAULT_OUT)
     b.add_argument("--no-analyze", action="store_true")
+    hf = sub.add_parser("from-hf")
+    hf.add_argument("--repo", required=True, help="HF dataset repo, e.g. reasoning-core/reasoning-gym.")
+    hf.add_argument("--revision", default=None)
+    hf.add_argument("--tasks", nargs="+", default=None)
+    hf.add_argument("--levels", nargs="+", type=int, default=None)
+    hf.add_argument("--n", type=int, default=64, dest="n_per_task")
+    hf.add_argument("--out", default=DEFAULT_OUT)
+    hf.add_argument("--mode", default="instruct")
+    hf.add_argument("--scan-cap", type=int, default=500_000)
+    hf.add_argument("--no-analyze", action="store_true")
     a = ap.parse_args()
     if a.cmd == "build":
         tasks = rc.list_tasks() if a.all else (a.tasks or changed_tasks(
@@ -219,3 +310,7 @@ if __name__ == "__main__":
             raise SystemExit(0)
         man, out = build_task_cache(tasks, a.levels, a.n_per_task, a.out, analyze=not a.no_analyze)
         print(f"\n✅ cache {man.cache_id}: {man.n_rows} rows → {out}")
+    elif a.cmd == "from-hf":
+        man, out = import_hf_cache(a.repo, a.revision, a.tasks, a.levels, a.n_per_task,
+                                   a.out, a.mode, a.scan_cap, analyze=not a.no_analyze)
+        print(f"\n✅ cache {man.cache_id}: {man.n_rows} rows from {a.repo} → {out}")

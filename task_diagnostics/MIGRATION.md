@@ -43,7 +43,8 @@ python task_diagnostics/task_influence.py --run-influence --taskrow-cache task_d
 Read rows from a pinned HF dataset revision:
 
 ```bash
-python task_diagnostics/zero_shot_eval.py --cache-repo reasoning-core/staging --cache-revision <sha>
+python -m task_diagnostics.cache from-hf --repo reasoning-core/reasoning-gym --revision <sha>
+python -m task_diagnostics.cache from-hf --repo reasoning-core/basic-procedural --revision <sha>
 ```
 
 ## Expected differences

@@ -31,13 +31,18 @@ python -m task_diagnostics.cache build --levels 0 1 2 --n 16
 python -m task_diagnostics.cache build --tasks logic_nli arithmetics --levels 0 1 2 --n 16
 python -m task_diagnostics.cache build --all --levels 0 1 2 --n 16
 
+# materialize public HF piles into the same local cache format
+python -m task_diagnostics.cache from-hf --repo reasoning-core/reasoning-gym --levels 0 1 2 --n 16
+python -m task_diagnostics.cache from-hf --repo reasoning-core/basic-procedural --levels 0 1 2 --n 16
+
 python task_diagnostics/zero_shot_eval.py --cache task_diagnostics/cache/task_rows/<cache_id>
 python task_diagnostics/task_influence.py --run-influence --taskrow-cache task_diagnostics/cache/task_rows/<cache_id>
 ```
 
 Each row preserves prompt, answer, full metadata, level, config, behavior hash, token
-counts, generation time, and `row_hash`. Local generated cache data is ignored by git.
-See `MIGRATION.md` for the short transition notes.
+counts, generation time, and `row_hash`. `reasoning-gym` rows use native scoring where
+available; `basic-procedural` scoring will work once its scorers are registered. Local
+generated cache data is ignored by git. See `MIGRATION.md` for the short transition notes.
 
 ---
 
