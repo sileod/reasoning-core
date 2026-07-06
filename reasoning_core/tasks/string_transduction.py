@@ -24,6 +24,12 @@ class StringTransductionConfig(Config):
         self.alphabet_size = min(8, self.alphabet_size + int(c >= 2))
         self.edit_ops += c
 
+    def apply_difficulty(self, level):
+        self.length += 2 * level
+        self.n_ops += level
+        self.alphabet_size += 0
+        self.edit_ops += level
+
 
 def caesar(s, k):
     return "".join(chr(97 + (ord(c) - 97 + k) % 26) if c.isalpha() else c for c in s)

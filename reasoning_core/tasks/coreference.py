@@ -174,6 +174,12 @@ class CoreferenceConfig(Config):
         self.n_distractors += c
         self.target_hops += c
 
+    def apply_difficulty(self, level):
+        self.n_entities += level
+        self.chain_len += level
+        self.n_distractors += level
+        self.target_hops += level
+
 
 class Coreference(Task):
     def __init__(self, config=CoreferenceConfig()):

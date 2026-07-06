@@ -261,6 +261,11 @@ class WordProblemMathConfig(Config):
         self.max_n += 12 * c
         self.inverse_p = min(.70, self.inverse_p + .08 * c)
 
+    def apply_difficulty(self, level):
+        self.n_rel += 0.9 * level
+        self.max_n += 12 * level
+        self.inverse_p = min(.70, self.inverse_p + .08 * level)
+
 
 def ri(a, b):
     return random.randint(int(a), int(b))

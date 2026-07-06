@@ -248,6 +248,13 @@ class MostProbableEvidenceConfig(Config):
         self.min_margin = max(0.005, self.min_margin * 0.75)
         self.max_margin = max(0.12, self.max_margin * 0.7)
 
+    def apply_difficulty(self, level):
+        self.depth += level
+        self.max_atoms = min(6, self.max_atoms + level)
+        self.min_atoms = min(4, self.min_atoms + level / 2)
+        self.min_margin = max(0.005, self.min_margin * (0.75 ** level))
+        self.max_margin = max(0.12, self.max_margin * (0.7 ** level))
+
 
 class MostProbableEvidence(Task):
     def __init__(self, config=MostProbableEvidenceConfig()):
@@ -294,6 +301,10 @@ class MostProbableOutcomeConfig(Config):
     def update(self, c=1):
         self.max_count += c
         self.depth += c
+
+    def apply_difficulty(self, level):
+        self.max_count += level
+        self.depth += level
 
 
 class MostProbableOutcome(Task):

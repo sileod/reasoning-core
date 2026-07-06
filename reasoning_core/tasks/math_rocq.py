@@ -48,6 +48,13 @@ class RocqConfig(Config):
         self.certify_timeout += c
         self.payload_cap += 400 * c
 
+    def apply_difficulty(self, level):
+        self.n_hyps += level
+        self.expr_depth += 0.5 * level
+        self.list_len += level
+        self.certify_timeout += level
+        self.payload_cap += 400 * level
+
 
 # ============================================================================
 # Rocq proof repair

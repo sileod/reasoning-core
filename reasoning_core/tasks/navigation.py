@@ -25,6 +25,12 @@ class NavigationConfig(Config):
         self.n_steps += 1 * c
         self.n_rel += 1 * c
 
+    def apply_difficulty(self, level):
+        self.n_objects += level
+        self.grid += level
+        self.n_steps += level
+        self.n_rel += level
+
 
 DELTAS = [
     (-2, 0), (-1, 0), (1, 0), (2, 0),

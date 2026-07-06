@@ -38,6 +38,10 @@ class QualitativeCausalConfig(Config):
         self.n_extra += 3 * c
         self.p_edge = min(0.20, self.p_edge + 0.015 * c)
 
+    def apply_difficulty(self, level):
+        self.n_extra += 3 * level
+        self.p_edge = min(0.20, self.p_edge + 0.015 * level)
+
 
 def combine_signs(signs):
     signs = set(signs)

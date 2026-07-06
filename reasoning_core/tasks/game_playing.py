@@ -20,6 +20,11 @@ class GameBestMoveConfig(Config):
         self.max_branch += c / 4
         self.horizon += c / 3
 
+    def apply_difficulty(self, level):
+        self.nodes += level
+        self.max_branch += 0.25 * level
+        self.horizon += level / 3
+
 
 def _name(i):
     return f"n{i}"

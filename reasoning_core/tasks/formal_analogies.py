@@ -325,6 +325,16 @@ class AnalogicalCaseRetrievalConfig(Config):
         self.context_facts += c // 2
         self.reverse_rate = min(0.5, self.reverse_rate + 0.05 * c)
 
+    def apply_difficulty(self, level):
+        self.n_query_objects += level
+        self.n_query_facts += 2 * level
+        if self.n_query_facts_range is not None:
+            lo, hi = self.n_query_facts_range
+            self.n_query_facts_range = (lo + 2 * level, hi + 2 * level)
+        self.n_cases += level
+        self.context_facts += 0
+        self.reverse_rate = min(0.5, self.reverse_rate + 0.05 * level)
+
 
 class AnalogicalCaseRetrieval(Task):
     def __init__(self, config=AnalogicalCaseRetrievalConfig()):

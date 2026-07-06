@@ -298,6 +298,11 @@ class GraphSuccessorsConfig(Config):
         self.num_queries += c // 2
         self.max_hops += c
 
+    def apply_difficulty(self, level):
+        self.num_nodes += level
+        self.num_queries += 0
+        self.max_hops += level
+
 
 class GraphSuccessors(BaseGraphTask, Task):
     """DEPO-style k-th successor queries in a permutation digraph."""
@@ -356,6 +361,10 @@ class GraphDependenciesConfig(Config):
     def update(self, c=1):
         self.num_nodes += c
         self.max_prereqs += c // 2
+
+    def apply_difficulty(self, level):
+        self.num_nodes += level
+        self.max_prereqs += 0
 
 
 class GraphDependencies(BaseGraphTask, Task):

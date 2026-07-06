@@ -101,6 +101,12 @@ class MetamathConfig(Config):
         self.max_premises += c
         self.formula_len_cap += 2 * c
 
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.n_rules += level
+        self.max_premises += level
+        self.formula_len_cap += 2 * level
+
 
 def _metamath_dir():
     return Path(AppDirs("reasoning_core").user_data_dir) / "metamath"

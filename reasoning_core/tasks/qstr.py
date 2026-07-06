@@ -303,6 +303,10 @@ class QualitativeReasoningConfig(Config):
         self.n_entities += c
         self.extra_edges += 0.5 * c
 
+    def apply_difficulty(self, level):
+        self.n_entities += level
+        self.extra_edges += 0.5 * level
+
 class QualitativeReasoning(Task):
     def __init__(self, config=None):
         super().__init__(config=config or QualitativeReasoningConfig())

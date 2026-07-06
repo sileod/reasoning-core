@@ -49,6 +49,21 @@ class ReferenceTrackingConfig(Config):
         self.ask_location_p     = min(0.9,  self.ask_location_p + 0.08 * c)
         self.winograd_singles_p = min(0.9,  self.winograd_singles_p + 0.1 * c)
 
+    def apply_difficulty(self, level):
+        self.n_balls     += 0.6 * level
+        self.n_boxes     += 0.3 * level
+        self.n_steps     += 0.7 * level
+        self.chain_len   += 0.4 * level
+        self.extra_facts += 0.5 * level
+
+        self.bulk_move_p        = min(0.75, self.bulk_move_p + 0.03 * level)
+        self.pronoun_move_p     = min(0.55, self.pronoun_move_p + 0.04 * level)
+        self.prefer_indirect_p  = min(1.0,  self.prefer_indirect_p + 0.2 * level)
+        self.winograd_p         = min(0.85, self.winograd_p + 0.04 * level)
+        self.allow_equalities_p = min(0.9,  self.allow_equalities_p + 0.08 * level)
+        self.ask_location_p     = min(0.9,  self.ask_location_p + 0.08 * level)
+        self.winograd_singles_p = min(0.9,  self.winograd_singles_p + 0.1 * level)
+
 
 class ReferenceTracking(Task):
     """

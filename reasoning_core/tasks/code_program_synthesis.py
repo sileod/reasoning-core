@@ -441,6 +441,12 @@ class ProgramSynthesisCfg(Config):
         self.max_attempts += 10 * c
         self.min_nodes += c / 3
 
+    def apply_difficulty(self, level):
+        self.max_nodes += 0.5 * level
+        self.n_holdout += level
+        self.max_attempts += 10 * level
+        self.min_nodes += level / 3
+
 
 class ProgramSynthesis(Task):
     def __init__(self, config=ProgramSynthesisCfg()):

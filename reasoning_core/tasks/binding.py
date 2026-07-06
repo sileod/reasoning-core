@@ -344,6 +344,12 @@ class LambdaReductionConfig(Config):
         self.n_insertions += c
         self.min_steps += c
 
+    def apply_difficulty(self, level):
+        self.nf_depth += level
+        self.term_depth += level
+        self.n_insertions += level
+        self.min_steps += level
+
 
 class LambdaReduction(Task):
     def __init__(self, config=None):
@@ -873,6 +879,16 @@ class RewriteSystemConfig(Config):
         self.max_chars += 120 * k
         self.atom_keep_prob = max(0.35, self.atom_keep_prob - 0.05 * k)
         self.shortcut_compression = max(8.0, self.shortcut_compression - 2.0 * k)
+
+    def apply_difficulty(self, level):
+        self.depth += level
+        self.n_insertions += level
+        self.max_rules = min(self.max_rules + level, 12)
+        self.min_steps += level
+        self.max_steps += 50 * level
+        self.max_chars += 120 * level
+        self.atom_keep_prob = max(0.35, self.atom_keep_prob - 0.05 * level)
+        self.shortcut_compression = max(8.0, self.shortcut_compression - 2.0 * level)
 
 
 class RewriteSystem(Task):
