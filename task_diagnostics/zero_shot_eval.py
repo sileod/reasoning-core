@@ -283,10 +283,6 @@ def run_pile_levels(args):
     pile_report(preds, active_hashes)
 
 
-def _score_task_row(row, pred):
-    return score_native(row, pred)
-
-
 def _load_cached_task_rows(args):
     try:
         from .cache import load_task_rows
@@ -334,7 +330,7 @@ def run_taskrow_cache(args, rows, pred_rows):
                     "behavior_hash": r.behavior_hash, "task_version": r.task_version,
                     "level": r.level, "mode": r.mode, "phash": _phash(r.prompt),
                     "prompt": r.prompt, "gold": str(r.answer), "output": out, "answer": ans,
-                    "score": _score_task_row(r, ans), "ok": bool(out.strip()),
+                    "score": score_native(r, ans), "ok": bool(out.strip()),
                 }
             save_preds(Path(args.preds), pred_rows)
             okr = [pred_rows[(task_name, model, sig, r.row_hash)] for r in target
