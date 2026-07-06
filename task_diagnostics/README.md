@@ -26,6 +26,7 @@ rows first, then run analyses on those rows:
 ```bash
 # default: build tasks changed or missing for this sampling request
 python -m task_diagnostics.cache build --levels 0 1 2 --n 16
+python -m task_diagnostics.cache build --levels 0 1 2 --n 64 --workers 8
 
 # explicit subset or full rebuild
 python -m task_diagnostics.cache build --tasks logic_nli arithmetics --levels 0 1 2 --n 16
@@ -39,8 +40,10 @@ python task_diagnostics/zero_shot_eval.py --cache task_diagnostics/cache/task_ro
 python task_diagnostics/task_influence.py --run-influence --taskrow-cache task_diagnostics/cache/task_rows/<cache_id>
 ```
 
-Each row preserves prompt, answer, full metadata, level, config, behavior hash, token
-counts, generation time, and `row_hash`. Local manifests also store the generator git
+Local builds use each task's `generate_balanced_batch(..., deduplication=True)`;
+`--workers N` enables its process-pool path for CPU-heavy generators. Each row preserves
+prompt, answer, full metadata, level, config, behavior hash, token counts, generation
+time, and `row_hash`. Local manifests also store the generator git
 commit plus audit-only task source strings and source hashes, so result shifts can be
 diffed without executing cached code. `reasoning-gym` rows use native scoring where
 available; `basic-procedural` scoring will work once its scorers are registered. Local

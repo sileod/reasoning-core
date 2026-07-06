@@ -9,11 +9,11 @@ and consume immutable rows, so nothing silently regenerates or mixes versions. S
     load_task_rows(repo="reasoning-core/procedural-pretraining-pile", revision="<sha>")  # pinned pile
 """
 from __future__ import annotations
+from concurrent.futures.process import BrokenProcessPool
 import hashlib
 import inspect
 import json
 import subprocess
-import time
 from pathlib import Path
 
 import reasoning_core as rc
@@ -66,6 +66,14 @@ def _task_source(t) -> str:
 
 def _source_hash(source: str) -> str:
     return hashlib.sha1(source.encode()).hexdigest()[:16] if source else ""
+
+def _generate_batch(task, n, level, workers):
+    try:
+        return task.generate_balanced_batch(batch_size=n, level=level, deduplication=True,
+                                            workers=workers)
+    except BrokenProcessPool:
+        return task.generate_balanced_batch(batch_size=n, level=level, deduplication=True,
+                                            workers=1)
 
 def _cache_id(tasks, levels, n, mode, gen_ver, bhashes, task_versions, configs) -> str:
     key = json.dumps({"tasks": sorted(tasks), "levels": sorted(levels), "n": n, "mode": mode,
@@ -148,7 +156,7 @@ def _write_cache(rows, manifest, out_dir=DEFAULT_OUT, analyze=True):
 
 
 def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
-                     out_dir=DEFAULT_OUT, mode="instruct", analyze=True):
+                     out_dir=DEFAULT_OUT, mode="instruct", analyze=True, workers=1):
     """Generate rows for each (task, level), write Parquet + manifest, and (default) an analysis summary.
     cache_id keys on behavior_hash + task_version + config + levels + n + mode (Codex/claude review)."""
     tasks, levels = list(tasks), list(levels)
@@ -164,13 +172,7 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
         sources[name] = _task_source(t)
         source_hashes[name] = _source_hash(sources[name])
         for lvl in levels:
-            for _ in range(n_per_task):
-                t0 = time.time()
-                try:
-                    ex = t.generate_example(level=lvl)
-                except Exception:
-                    continue
-                dt = time.time() - t0
+            for ex in _generate_batch(t, n_per_task, lvl, workers):
                 d = ex.to_dict()
                 md = canonical_json(d.get("metadata", "{}"))
                 try:
@@ -178,11 +180,13 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
                 except Exception:
                     alvl = lvl
                 prompt, answer = d.get("prompt", ""), str(d.get("answer", ""))
+                meta = _metadata_dict({"metadata": md})
                 rows.append(TaskRow(
                     task=name, level=alvl, prompt=prompt, answer=answer, metadata=md, mode=mode,
                     task_version=task_versions[name], behavior_hash=bhashes[name], config=configs[name],
-                    prompt_tokens=_ntok(prompt), answer_tokens=_ntok(answer),
-                    gen_time_s=round(dt, 5),
+                    prompt_tokens=int(meta.get("_prompt_tokens", _ntok(prompt))),
+                    answer_tokens=int(meta.get("_answer_tokens", _ntok(answer))),
+                    gen_time_s=round(float(meta.get("_time", -1)), 5),
                     row_hash=TaskRow.compute_hash(name, alvl, prompt, answer, md)))
 
     cid = _cache_id(tasks, levels, n_per_task, mode, gen_ver, bhashes, task_versions, configs)
@@ -314,6 +318,8 @@ if __name__ == "__main__":
     b.add_argument("--all", action="store_true", help="Build all registered tasks.")
     b.add_argument("--levels", nargs="+", type=int, default=[0, 1, 2, 3, 4])
     b.add_argument("--n", type=int, default=64, dest="n_per_task")
+    b.add_argument("--workers", type=int, default=1,
+                   help="Generator worker processes inside generate_balanced_batch.")
     b.add_argument("--out", default=DEFAULT_OUT)
     b.add_argument("--no-analyze", action="store_true")
     hf = sub.add_parser("from-hf")
@@ -333,7 +339,8 @@ if __name__ == "__main__":
         if not tasks:
             print("✅ cache fresh: no changed tasks for this sampling request")
             raise SystemExit(0)
-        man, out = build_task_cache(tasks, a.levels, a.n_per_task, a.out, analyze=not a.no_analyze)
+        man, out = build_task_cache(tasks, a.levels, a.n_per_task, a.out,
+                                    analyze=not a.no_analyze, workers=a.workers)
         print(f"\n✅ cache {man.cache_id}: {man.n_rows} rows → {out}")
     elif a.cmd == "from-hf":
         man, out = import_hf_cache(a.repo, a.revision, a.tasks, a.levels, a.n_per_task,

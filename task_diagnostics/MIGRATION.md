@@ -27,6 +27,7 @@ Build a small local cache:
 ```bash
 # default: changed or missing tasks for this levels/n/mode request
 python -m task_diagnostics.cache build --levels 0 1 2 --n 16
+python -m task_diagnostics.cache build --levels 0 1 2 --n 64 --workers 8
 
 # explicit subset
 python -m task_diagnostics.cache build --tasks logic_nli arithmetics --levels 0 1 2 --n 16
@@ -59,6 +60,8 @@ python -m task_diagnostics.cache from-hf --repo reasoning-core/basic-procedural 
 - GPU aux training, saturation token accuracy, and begin/end `score_answer` reward use
   the same cached TaskRows.
 - Fresh generation is an explicit cache-build step, not an analysis side effect.
+- Fresh local cache builds use `generate_balanced_batch(..., deduplication=True)`;
+  `--workers N` enables multi-process generation.
 - `task_influence.py --run-influence` now requires `--taskrow-cache`.
 - Local generated cache data is ignored by git; commit code and reports, not Parquet
   scratch caches.
