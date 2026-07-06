@@ -49,9 +49,10 @@ def _behavior_hash(t):
     bh = getattr(t, "behavior_hash", "?")
     return bh() if callable(bh) else bh
 
-def _cache_id(tasks, levels, n, mode, gen_ver, bhashes) -> str:
+def _cache_id(tasks, levels, n, mode, gen_ver, bhashes, task_versions, configs) -> str:
     key = json.dumps({"tasks": sorted(tasks), "levels": sorted(levels), "n": n, "mode": mode,
-                      "gen": gen_ver, "bh": bhashes}, sort_keys=True)
+                      "gen": gen_ver, "bh": bhashes, "versions": task_versions,
+                      "configs": configs}, sort_keys=True)
     return hashlib.sha1(key.encode()).hexdigest()[:12]
 
 
@@ -61,12 +62,13 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
     cache_id keys on behavior_hash + task_version + config + levels + n + mode (Codex/claude review)."""
     tasks, levels = list(tasks), list(levels)
     gen_ver = str(getattr(rc, "__version__", "0"))
-    rows, bhashes, gtime = [], {}, {}
+    rows, bhashes, task_versions, configs, gtime = [], {}, {}, {}, {}
     for name in tasks:
         t = _task_obj(name)
         bhashes[name] = _behavior_hash(t)
-        tver = str(getattr(t, "version", "0"))
-        cfg = canonical_json(getattr(getattr(t, "config", None), "__dict__", {}) or {})
+        task_versions[name] = str(getattr(t, "task_version", getattr(t, "version", "0")))
+        configs[name] = canonical_json(t.config.to_dict() if hasattr(t.config, "to_dict")
+                                       else getattr(getattr(t, "config", None), "__dict__", {}) or {})
         for lvl in levels:
             for _ in range(n_per_task):
                 t0 = time.time()
@@ -84,13 +86,13 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
                 prompt, answer = d.get("prompt", ""), str(d.get("answer", ""))
                 rows.append(TaskRow(
                     task=name, level=alvl, prompt=prompt, answer=answer, metadata=md, mode=mode,
-                    task_version=tver, behavior_hash=bhashes[name], config=cfg,
+                    task_version=task_versions[name], behavior_hash=bhashes[name], config=configs[name],
                     prompt_tokens=_ntok(prompt), answer_tokens=_ntok(answer),
                     gen_time_s=round(dt, 5),
                     row_hash=TaskRow.compute_hash(name, alvl, prompt, answer, md)))
                 gtime.setdefault((name, alvl), []).append(dt)
 
-    cid = _cache_id(tasks, levels, n_per_task, mode, gen_ver, bhashes)
+    cid = _cache_id(tasks, levels, n_per_task, mode, gen_ver, bhashes, task_versions, configs)
     out = Path(out_dir) / cid
     (out / "data").mkdir(parents=True, exist_ok=True)
     import pandas as pd
@@ -98,7 +100,8 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
     df.to_parquet(out / "data" / "part-00000.parquet", index=False)
     man = CacheManifest(cache_id=cid, source="fresh", tasks=tuple(tasks), levels=tuple(levels),
                         n_per_task=n_per_task, mode=mode, generator_version=gen_ver,
-                        behavior_hashes=bhashes, tokenizer="HuggingFaceTB/SmolLM2-135M", n_rows=len(df))
+                        behavior_hashes=bhashes, task_versions=task_versions, configs=configs,
+                        tokenizer="HuggingFaceTB/SmolLM2-135M", n_rows=len(df))
     (out / "manifest.json").write_text(json.dumps(man.to_dict(), indent=2))
     if analyze:
         _write_analysis(df, gtime, out)

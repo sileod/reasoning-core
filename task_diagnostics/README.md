@@ -18,6 +18,22 @@ are regenerable and git-ignored.
 
 ---
 
+## TaskRow cache
+
+For agentic audits and repeatable experiments, build immutable HF-compatible Parquet
+rows first, then run analyses on those rows:
+
+```bash
+python -m task_diagnostics.cache build --tasks logic_nli arithmetics --levels 0 1 2 --n 16
+python task_diagnostics/zero_shot_eval.py --cache task_diagnostics/cache/task_rows/<cache_id>
+```
+
+Each row preserves prompt, answer, full metadata, level, config, behavior hash, token
+counts, generation time, and `row_hash`. Local generated cache data is ignored by git.
+See `MIGRATION.md` for the short transition notes.
+
+---
+
 ## task_influence.py — transfer ranking
 
 Builds aux data, trains SmolLM2-135M to measure each task's influence on held-out
@@ -121,13 +137,17 @@ python task_diagnostics/zero_shot_eval.py --models nvidia_nim/meta/llama-3.3-70b
 
 # report the cached table without spending any API calls
 python task_diagnostics/zero_shot_eval.py --dry-run
+
+# evaluate a fixed TaskRow cache instead of generating fresh examples
+python task_diagnostics/zero_shot_eval.py --cache task_diagnostics/cache/task_rows/<cache_id>
 ```
 
 Examples are **non-deterministic by design** (no seeding — diverse generation is the
 point). Predictions are hash-cached in `zero_shot_preds.jsonl` (keyed by the task's
-behavior hash + system + max_tokens) and **accumulate to `--n`**: each run tops up ok
-examples and skips once the target is met, so free-tier rate-limit gaps self-heal. A
-changed generator invalidates old rows; `--refresh` recomputes.
+behavior hash + system + max_tokens for fresh generation, or by `row_hash + model +
+eval signature` for TaskRow caches) and **accumulate to `--n`**: each run tops up ok
+examples and skips once the target is met, so free-tier rate-limit gaps self-heal.
+A changed generator invalidates old fresh rows; changed cached rows get new row hashes.
 
 Storage is kept **separate from the canonical task examples** — `zero_shot_preds.jsonl`
 is the per-(task, model, example) source of truth; `TASK_ZEROSHOT_RESULTS.json` is the

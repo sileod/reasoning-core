@@ -83,6 +83,8 @@ class CacheManifest:
     mode: str
     generator_version: str
     behavior_hashes: dict             # task -> behavior_hash
+    task_versions: dict               # task -> task_version
+    configs: dict                     # task -> canonical config JSON
     tokenizer: str
     repo: str | None = None
     revision: str | None = None
