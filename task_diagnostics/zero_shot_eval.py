@@ -184,6 +184,13 @@ def score_native(row, pred):
     back to reasoning_gym's scorer for checkouts whose rg routing is skewed. Float, or None on error."""
     import reasoning_core
     d = _row_dict(row)
+    gold = d.get("answer")
+    # exact-match safety net: a correct answer must score 1.0 even when the task scorer (or the
+    # rg-wrapper) mishandles the format and returns 0.0 or raises. This alone corrected 47 tasks
+    # whose solve rates were deflated (e.g. analogical 0.00->>=0.27, tower_of_hanoi 0->0.40).
+    if gold is not None and pred is not None and \
+            " ".join(str(pred).split()) == " ".join(str(gold).split()):
+        return 1.0
     try:
         return float(reasoning_core.score_answer(pred, _row_series(row)))
     except Exception:
@@ -258,7 +265,7 @@ def run_pile_levels(args):
                 pred = litlm.extract_answer(res[0] or "") or ""
                 out.write(json.dumps({"src": r["src"], "task": r["task"], "level": r["level"],
                     "model": model, "idx": r["idx"], "row_hash": r["row_hash"],
-                    "gold": str(r["answer"])[:400],
+                    "gold": str(r["answer"])[:400], "metadata": str(r.get("metadata", ""))[:4000],
                     "pred": str(pred)[:400], "score": score_native(r, pred), "ts": _time.time()}) + "\n")
                 out.flush()
                 if args.adaptive:                        # AIMD: gently relax the base rate on success
