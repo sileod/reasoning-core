@@ -67,8 +67,9 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
         t = _task_obj(name)
         bhashes[name] = _behavior_hash(t)
         task_versions[name] = str(getattr(t, "task_version", getattr(t, "version", "0")))
-        configs[name] = canonical_json(t.config.to_dict() if hasattr(t.config, "to_dict")
-                                       else getattr(getattr(t, "config", None), "__dict__", {}) or {})
+        cfg = getattr(t, "config", None)
+        configs[name] = canonical_json(cfg.to_dict() if hasattr(cfg, "to_dict")
+                                       else getattr(cfg, "__dict__", {}) or {})
         for lvl in levels:
             for _ in range(n_per_task):
                 t0 = time.time()

@@ -76,8 +76,16 @@ def _row_sig(args):
     return hashlib.sha1(payload.encode()).hexdigest()[:16]
 
 
+def _stable_json(x):
+    return json.dumps(x, sort_keys=True, default=str, ensure_ascii=False)
+
+
 def _phash(prompt):
     return hashlib.sha1(prompt.encode()).hexdigest()[:12]
+
+
+def _row_hash(*parts):
+    return hashlib.sha1("\0".join(str(p) for p in parts).encode()).hexdigest()[:16]
 
 
 def generate(task, n, workers=1):
@@ -120,12 +128,12 @@ PILE_REPO = {"rc": "reasoning-core/procedural-pretraining-pile",
 _RG_FN = {}
 
 
-def pile_pool(ds, n_per_level, scan_cap, cache_dir):
+def pile_pool(ds, n_per_level, scan_cap, cache_dir, refresh=False):
     """First-n-per-(task,level) FULL rows streamed from the HF pile; cached for stable restarts."""
     from datasets import load_dataset
     pf = cache_dir / f"zs_pool_{ds}.jsonl"
-    if pf.exists():
-        return [json.loads(l) for l in pf.open()]
+    if pf.exists() and not refresh:
+        return [_stamp_pile_row(json.loads(l)) for l in pf.open()]
     counts, rows, scanned = {}, [], 0
     for x in load_dataset(PILE_REPO[ds], split="train", streaming=True):
         scanned += 1
@@ -134,8 +142,10 @@ def pile_pool(ds, n_per_level, scan_cap, cache_dir):
             continue
         k = (t, str(lv))
         if counts.get(k, 0) < n_per_level:
-            rows.append({"src": ds, "task": t, "level": str(lv), "idx": counts.get(k, 0),
-                         "prompt": x["prompt"], "answer": x["answer"], "metadata": x.get("metadata")})
+            rows.append(_stamp_pile_row({
+                "src": ds, "task": t, "level": str(lv), "idx": counts.get(k, 0),
+                "prompt": x["prompt"], "answer": x["answer"], "metadata": x.get("metadata"),
+            }))
             counts[k] = counts.get(k, 0) + 1
         if scanned >= scan_cap:
             break
@@ -147,31 +157,60 @@ def pile_pool(ds, n_per_level, scan_cap, cache_dir):
     return rows
 
 
+def _stamp_pile_row(row):
+    md = row.get("metadata")
+    md = md if isinstance(md, str) else _stable_json(md or {})
+    row["metadata"] = md
+    row["row_hash"] = row.get("row_hash") or _row_hash(
+        row.get("src", ""), row.get("task", ""), row.get("level", ""),
+        row.get("prompt", ""), row.get("answer", ""), md,
+    )
+    return row
+
+
+def _row_dict(row):
+    return row.to_dict() if hasattr(row, "to_dict") else dict(row)
+
+
+def _row_series(row):
+    if hasattr(row, "to_series"):
+        return row.to_series()
+    import pandas as pd
+    return pd.Series(row)
+
+
 def score_native(row, pred):
     """Native reward via reasoning_core.score_answer (needs a pandas Series for attr access); falls
     back to reasoning_gym's scorer for checkouts whose rg routing is skewed. Float, or None on error."""
-    import pandas as pd
     import reasoning_core
+    d = _row_dict(row)
     try:
-        return float(reasoning_core.score_answer(pred, pd.Series(row)))
+        return float(reasoning_core.score_answer(pred, _row_series(row)))
     except Exception:
         try:
+            import pandas as pd
             import reasoning_gym
-            md = row.get("metadata")
+            md = d.get("metadata")
             md = json.loads(md) if isinstance(md, str) else (md or {})
-            fn = _RG_FN.get(row["task"]) or reasoning_gym.get_score_answer_fn(row["task"])
-            _RG_FN[row["task"]] = fn
-            return float(fn(pred, pd.Series({"question": row["prompt"], "answer": row["answer"],
+            fn = _RG_FN.get(d["task"]) or reasoning_gym.get_score_answer_fn(d["task"])
+            _RG_FN[d["task"]] = fn
+            return float(fn(pred, pd.Series({"question": d["prompt"], "answer": d["answer"],
                                              "metadata": md})))
         except Exception:
             return None
 
 
-def pile_report(preds_path):
+def pile_report(preds_path, active_hashes=None):
     """Mean native reward by source × level (higher = easier), + hardest tasks. Safe mid-run."""
     from collections import defaultdict
-    rows = [r for r in (json.loads(l) for l in preds_path.open()) if r.get("score") is not None] \
-        if preds_path.exists() else []
+    rows = []
+    if preds_path.exists():
+        for l in preds_path.open():
+            r = json.loads(l)
+            if active_hashes is not None and r.get("row_hash") not in active_hashes:
+                continue
+            if r.get("score") is not None:
+                rows.append(r)
     if not rows:
         print("[pile] no scored rows yet"); return
     by_sl, by_st = defaultdict(list), defaultdict(list)
@@ -195,14 +234,16 @@ def run_pile_levels(args):
     if preds.exists():
         for l in preds.open():
             try:
-                r = json.loads(l); done.add((r["src"], r["task"], r["level"], r["model"], r["idx"]))
+                r = json.loads(l); done.add((r["src"], r["task"], r["level"], r["model"], r.get("row_hash")))
             except Exception:
                 pass
     work = []
+    active_hashes = set()
     for ds in args.datasets:
-        for r in pile_pool(ds, args.n, args.scan_cap, preds.parent):
+        for r in pile_pool(ds, args.n, args.scan_cap, preds.parent, refresh=args.refresh):
+            active_hashes.add(r["row_hash"])
             for m in args.models:
-                if (ds, r["task"], r["level"], m, r["idx"]) not in done:
+                if (ds, r["task"], r["level"], m, r["row_hash"]) not in done:
                     work.append((m, r))
     work.sort(key=lambda w: (w[1]["idx"], w[0], w[1]["src"], w[1]["task"], w[1]["level"]))
     print(f"[pile] {len(work)} (model,example) to score  models={args.models}  done={len(done)}", flush=True)
@@ -216,7 +257,8 @@ def run_pile_levels(args):
                                      num_retries=args.num_retries, max_concurrency=args.max_concurrency)
                 pred = litlm.extract_answer(res[0] or "") or ""
                 out.write(json.dumps({"src": r["src"], "task": r["task"], "level": r["level"],
-                    "model": model, "idx": r["idx"], "gold": str(r["answer"])[:400],
+                    "model": model, "idx": r["idx"], "row_hash": r["row_hash"],
+                    "gold": str(r["answer"])[:400],
                     "pred": str(pred)[:400], "score": score_native(r, pred), "ts": _time.time()}) + "\n")
                 out.flush()
                 if args.adaptive:                        # AIMD: gently relax the base rate on success
@@ -238,15 +280,11 @@ def run_pile_levels(args):
                   f"delay={delay:.1f}s  429s={n429}  elapsed={el/3600:.2f}h  ETA={eta/3600:.1f}h", flush=True)
         _time.sleep(delay)
     out.close()
-    pile_report(preds)
+    pile_report(preds, active_hashes)
 
 
 def _score_task_row(row, pred):
-    import reasoning_core
-    try:
-        return float(reasoning_core.score_answer(pred, row.to_series()))
-    except Exception:
-        return 0.0
+    return score_native(row, pred)
 
 
 def _load_cached_task_rows(args):
@@ -301,7 +339,8 @@ def run_taskrow_cache(args, rows, pred_rows):
             save_preds(Path(args.preds), pred_rows)
             okr = [pred_rows[(task_name, model, sig, r.row_hash)] for r in target
                    if pred_rows.get((task_name, model, sig, r.row_hash), {}).get("ok")]
-            mean = sum(r["score"] for r in okr) / len(okr) if okr else None
+            scored = [r["score"] for r in okr if r.get("score") is not None]
+            mean = sum(scored) / len(scored) if scored else None
             tag = f"{mean:.3f}" if mean is not None else "n/a"
             print(f"{task_name:<30} {model:<42} reward={tag}  ({len(okr)}/{len(target)} ok)",
                   flush=True)
@@ -351,7 +390,13 @@ def main():
         if args.preds == str(ROOT / "task_diagnostics" / "zero_shot_preds.jsonl"):
             args.preds = str(ROOT / "task_diagnostics" / "zero_shot_levels_preds.jsonl")
         if args.report:
-            return pile_report(Path(args.preds))
+            pred_path = Path(args.preds)
+            active = {
+                r["row_hash"]
+                for ds in args.datasets
+                for r in pile_pool(ds, args.n, args.scan_cap, pred_path.parent, refresh=args.refresh)
+            }
+            return pile_report(pred_path, active)
         return run_pile_levels(args)
 
     preds_path, out_path = Path(args.preds), Path(args.out)
@@ -445,7 +490,8 @@ def _write_aggregate(out_path, rows, args, gen_time, active=None, write=True):
         models = {}
         for m in {r["model"] for r in rs}:
             okr = [r for r in rs if r["model"] == m and r.get("ok")]
-            models[m] = {"reward": (sum(r["score"] for r in okr) / len(okr)) if okr else None,
+            scored = [r["score"] for r in okr if r.get("score") is not None]
+            models[m] = {"reward": (sum(scored) / len(scored)) if scored else None,
                          "n_ok": len(okr), "n": sum(r["model"] == m for r in rs)}
         gt = gen_time.get(t)                             # fall back to prior JSON on cached-only rebuilds
         tasks[t] = {"gen_time": gt if gt is not None else prev.get(t, {}).get("gen_time"),
