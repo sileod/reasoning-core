@@ -440,14 +440,22 @@ def main():
             for e, o in zip(exs, outs):
                 out = str(o)
                 ans = litlm.extract_answer(out)
+                score, serr = None, ""
                 try:
                     score = float(task.score_answer(ans, e))
-                except Exception:
-                    score = 0.0
+                except Exception as exc:
+                    serr = f"{type(exc).__name__}: {exc}"[:120]
+                # a correct answer must score 1.0 even if the scorer raised: exact-match safety net
+                # (prevents score_answer exceptions from silently deflating solve rates to 0.0)
+                if (score is None or score < 1.0) and ans is not None \
+                        and " ".join(str(ans).split()) == " ".join(str(e.answer).split()):
+                    score, serr = 1.0, ""
                 rows[(name, model, sig, _phash(e.prompt))] = {
                     "task": name, "model": model, "sig": sig, "behavior_hash": bh,
                     "phash": _phash(e.prompt), "prompt": e.prompt, "gold": str(e.answer),
-                    "output": out, "answer": ans, "score": score, "ok": bool(out.strip()),
+                    "metadata": str(getattr(e, "metadata", "")),   # enables offline re-scoring
+                    "output": out, "answer": ans, "score": score, "score_err": serr,
+                    "ok": bool(out.strip()) and score is not None,
                 }
             save_preds(preds_path, rows)
             okr = [rows[k] for k in rows if k[:3] == (name, model, sig) and rows[k].get("ok")]
