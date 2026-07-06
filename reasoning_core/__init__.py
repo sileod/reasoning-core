@@ -115,7 +115,8 @@ try:
     def rg_scorer(a, e):
         from .tasks import _reasoning_gym
         return _reasoning_gym.Reasoning_Gym().score_answer(a, e)
-    scorers['Reasoning_Gym'] = lambda a, e: rg_scorer(a, e)
+    scorers['reasoning_gym'] = lambda a, e: rg_scorer(a, e)
+    scorers['Reasoning_Gym'] = scorers['reasoning_gym']
 except ImportError:
     pass
 

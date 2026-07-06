@@ -36,11 +36,16 @@ class Reasoning_Gym(Task):
             self.config.level = 0
 
         entry = t(c)[0]
-        meta = entry['metadata'] | dict(task_name=f"RG.{d}", _question=entry['question'])
+        meta = entry['metadata'] | {
+            "task_name": f"RG.{d}",
+            "_source_collection": "reasoning_gym",
+            "_source_task": d,
+            "_question": entry['question'],
+        }
         return Problem(json.loads(json.dumps(meta, default=str)), str(entry['answer']))
 
     def score_answer(self, answer, entry):
-        sd=entry['metadata']['source_dataset']
+        sd = entry['metadata'].get('_source_task') or entry['metadata']['source_dataset']
         scorer = reasoning_gym.get_score_answer_fn(sd)
         try:
             score = scorer(answer,entry)
