@@ -174,6 +174,11 @@ class SequenceConfig(Config):
         self.min_depth_grammar += 0.5 * c
         self.max_depth_grammar += c
 
+    def apply_difficulty(self, level):
+        self.recurrence_depth += level
+        self.n_visible_terms += 2 * level
+        self.min_depth_grammar += 0.5 * level
+        self.max_depth_grammar += level
 
 class SequentialInduction(Task):
     def __init__(self, config=SequenceConfig()):

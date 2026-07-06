@@ -17,6 +17,9 @@ class GraphReasoningConfig(Config):
     def update(self, c): 
         self.num_nodes *= (1 + c)
 
+    def apply_difficulty(self, level):
+        self.num_nodes *= 2 ** level
+
 _GRAPH_GENERATORS = [
     (nx.fast_gnp_random_graph, {'p': (0.15, 0.4)}),
     (nx.watts_strogatz_graph, {'k': (2, 4), 'p': (0.1, 0.3)}),

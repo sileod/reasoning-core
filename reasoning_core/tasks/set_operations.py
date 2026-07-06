@@ -81,7 +81,12 @@ class SetOpsConfig(Config):
         self.set_size *= 1 + c
         self.domain_size *= 1 + c
         self.n_domains += c
-        
+
+    def apply_difficulty(self, level):
+        self.set_size *= 2 ** level
+        self.domain_size *= 2 ** level
+        self.n_domains += level
+
 @dataclass
 class SetMissingElementConfig(SetOpsConfig):
     set_size: int = 10
@@ -90,6 +95,11 @@ class SetMissingElementConfig(SetOpsConfig):
         self.set_size *= 1 + c
         self.domain_size *= 1 + c
         self.n_domains += c
+
+    def apply_difficulty(self, level):
+        self.set_size *= 2 ** level
+        self.domain_size *= 2 ** level
+        self.n_domains += level
 
 class SetMissingElement(Task):
     def __init__(self, config=SetMissingElementConfig()):
@@ -133,6 +143,11 @@ class CountElementsConfig(Config):
         self.max_count += c
         self.list_size += c
         self.domain_size *= 1 + c
+
+    def apply_difficulty(self, level):
+        self.max_count += level
+        self.list_size += level
+        self.domain_size *= 2 ** level
 
 class CountElements(Task):
     def __init__(self, config=CountElementsConfig()):
@@ -228,6 +243,12 @@ class SetExpressionConfig(Config):
         self.max_depth += c
         self.max_mult += c
 
+    def apply_difficulty(self, level):
+        self.set_size *= 2 ** level
+        self.domain_size *= 2 ** level
+        self.n_domains += level
+        self.max_depth += level
+        self.max_mult += level
 
 class SetExpression(Task):
     def __init__(self, config=SetExpressionConfig()):

@@ -139,6 +139,11 @@ class RegexConfig(Config):
         self.max_depth += c
         self.min_depth += c
 
+    def apply_difficulty(self, level):
+        self.n_ex += level
+        self.max_depth += level
+        self.min_depth += level
+
 @shutup
 def sample_instance(r_str, max_tries=100):
     """Generates a non-empty string that is verified by re.fullmatch()."""
@@ -492,6 +497,12 @@ class RegexRetrievalConfig(Config):
         self.n_chunks += c
         self.max_matches += c
 
+    def apply_difficulty(self, level):
+        self.max_depth += level
+        self.min_depth += level
+        self.n_sentences += level
+        self.n_chunks += level
+        self.max_matches += level
 
 def _find_matches(pattern, text, timeout=0.2):
     try:
@@ -627,7 +638,10 @@ class RegexReasoningConfig(Config):
         self.min_depth += c
         self.n_alpha += 0.5 * c
 
-
+    def apply_difficulty(self, level):
+        self.max_depth += level
+        self.min_depth += level
+        self.n_alpha += 0.5 * level
 
 def _sample_regex(G, depth, min_depth, mode="sequential", max_tries=60):
     for _ in range(max_tries):

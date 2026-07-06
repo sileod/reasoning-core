@@ -71,6 +71,14 @@ class GrammarConfig(Config):
         self.prob_resampling_grammar = max(0.0, self.prob_resampling_grammar - 0.1 * c)
         self.max_tokens += 2*c
 
+    def apply_difficulty(self, level):
+        self.n_types += level
+        self.n_terminals += level
+        self.min_depth += level
+        self.max_depth += level
+        self.prob_resampling_grammar = max(0.0, self.prob_resampling_grammar - 0.1 * level)
+        self.max_tokens += 2 * level
+
 def meta_grammar(config):
     R=init_grammar(['cfg'])
     R('start(grammar)', '0')
@@ -1101,6 +1109,10 @@ class StressContinuationConfig(Config):
         self.depth += c
         self.n_types = min(6, self.n_types + c)
 
+    def apply_difficulty(self, level):
+        self.depth += level
+        self.n_types = min(6, self.n_types + level)
+
 def _typed_dyck(n_types):
     pairs = [("(", ")"), ("[", "]"), ("<", ">"), ("{", "}"),
              ("/", "\\"), (":", ";")][:n_types]
@@ -1349,6 +1361,11 @@ class StressConstrainedContinuationConfig(Config):
         self.depth += c
         self.n_types = min(6, self.n_types + c)
         self.max_cont = min(20, self.max_cont + 2 * c)
+
+    def apply_difficulty(self, level):
+        self.depth += level
+        self.n_types = min(6, self.n_types + level)
+        self.max_cont = min(20, self.max_cont + 2 * level)
 
 class StressConstrainedContinuation(DevTask):
     def __init__(self, config: StressConstrainedContinuationConfig = StressConstrainedContinuationConfig()):

@@ -884,6 +884,12 @@ class EntailConfig(Config):
         self.max_hypotheses += c
         self.max_payload_chars += 500 * c
 
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.perturbation += level
+        self.max_hypotheses += level
+        self.max_payload_chars += 500 * level
+
 class TptpEntailment(Task):
     """
     A task that generates problems to determine if a set of hypotheses
@@ -1128,6 +1134,11 @@ class ConsistencyRepairConfig(Config):
         self.max_axioms += c
         self.max_payload_chars += 500 * c
 
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.perturbation += level
+        self.max_axioms += level
+        self.max_payload_chars += 500 * level
 
 class TPTPConsistencyRepair(Task):
     """Find all singleton deletions that restore satisfiability."""

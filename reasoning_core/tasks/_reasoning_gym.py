@@ -16,6 +16,9 @@ class RGConfig(Config):
     def update(self, c):
         self.rg_level+=c
 
+    def apply_difficulty(self, level):
+        self.rg_level += level
+
 class Reasoning_Gym(Task):
     def __init__(self, config=RGConfig()):
         if reasoning_gym is None:

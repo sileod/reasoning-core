@@ -359,6 +359,11 @@ class LeanConfig(Config):
         self.n_hyps += c
         self.n_candidates += c
 
+    def apply_difficulty(self, level):
+        self.n_vars += level
+        self.expr_depth += level
+        self.n_hyps += level
+        self.n_candidates += level
 
 @dataclass
 class LeanDerivationNode:

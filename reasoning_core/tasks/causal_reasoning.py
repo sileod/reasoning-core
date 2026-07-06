@@ -342,6 +342,11 @@ class Rung12Config(Config):
             self.max_domain_size += .5 * c
             self.cpt_relative_threshold += .5 * c 
 
+    def apply_difficulty(self, level):
+            self.n_round += 0.5 * level
+            self.n_nodes += 0.5 * level
+            self.max_domain_size += 0.5 * level
+            self.cpt_relative_threshold += 0.5 * level 
 
     def set_seed(self, graph_seed = None, conditionning_seed = None):
         """

@@ -21,6 +21,10 @@ class EquationSystemCfg(Config):
         self.num_vars += c
         self.obfuscation_steps += c
 
+    def apply_difficulty(self, level):
+        self.num_vars += level
+        self.obfuscation_steps += level
+
 def randint_nonzero(lo: int, hi: int) -> int:
     if lo > hi: lo, hi = hi, lo
     if lo == 0 and hi == 0: return 1

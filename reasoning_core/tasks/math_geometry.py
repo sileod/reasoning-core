@@ -736,6 +736,14 @@ class PlanarGeometryRelationsConfig(Config):
         self.max_interp_den += 0.8 * c
         self.max_vector_scale += 0.25 * c
 
+    def apply_difficulty(self, level):
+        self.n_base_points += 0.35 * level
+        self.n_constructed_points += 0.9 * level
+        self.coord_abs += 1.5 * level
+        self.max_den += 16 * level
+        self.max_num += 60 * level
+        self.max_interp_den += 0.8 * level
+        self.max_vector_scale += 0.25 * level
 
 class PlanarGeometryRelations(Task):
 

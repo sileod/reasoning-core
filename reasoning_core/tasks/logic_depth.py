@@ -109,6 +109,15 @@ class MultistepNLIConfig(Config):
         self.min_target_depth = min(self.max_depth, 2 + c // 2)
         self.max_target_depth = min(self.max_depth, self.min_target_depth + 1)
 
+    def apply_difficulty(self, level):
+        self.n_rules += level
+        self.n_distractors += 2 * level
+        self.n_unary_preds += level
+        self.n_binary_preds += level
+        self.min_target_support_size = 2
+        self.max_target_support_size = None
+        self.min_target_depth = min(self.max_depth, 2)
+        self.max_target_depth = min(self.max_depth, self.min_target_depth + 1)
 
 @dataclass
 class MultistepAbductionConfig(MultistepNLIConfig):
@@ -123,6 +132,11 @@ class MultistepAbductionConfig(MultistepNLIConfig):
         self.max_abduction_size = min(3, self.max_abduction_size + c / 2)
         self.n_missing_facts = self.max_abduction_size
 
+    def apply_difficulty(self, level):
+        super().apply_difficulty(level)
+        self.n_candidates += 2 * level
+        self.max_abduction_size = min(3, self.max_abduction_size + 0.5 * level)
+        self.n_missing_facts = self.max_abduction_size
 
 @dataclass
 class LogicQAConfig(MultistepNLIConfig):

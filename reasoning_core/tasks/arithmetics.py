@@ -1,4 +1,4 @@
-from reasoning_core.template import Problem, Task, DevTask, edict, Config
+from reasoning_core.template import Problem, Task, DevTask, edict, Config, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 from gramforge import init_grammar
 from dataclasses import dataclass
@@ -97,6 +97,12 @@ class ArithmeticsConfig(Config):
         self.max_depth += c
         self.out_digits += c
         self.out_decimals += c
+
+    def apply_difficulty(self, level):
+        self.min_depth = sround(self.min_depth + level)
+        self.max_depth = sround(self.max_depth + level)
+        self.out_digits = sround(self.out_digits + level)
+        self.out_decimals = sround(self.out_decimals + level)
 
 def _add_trailing_zeros(s, prob=0.2):
     """Add trailing zeros to decimals with exponentially decreasing probability."""

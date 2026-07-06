@@ -485,6 +485,12 @@ class PlanningConfig(Config):
         self.max_na += c
         self.arity_weight += c
 
+    def apply_difficulty(self, level):
+        self.N += level
+        self.min_na += level
+        self.max_na += level
+        self.arity_weight += level
+
 class Planning(Task):
     task_name = "planning" 
 

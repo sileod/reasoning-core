@@ -9,7 +9,7 @@ from babel.dates import format_date
 from babel.numbers import format_decimal
 from tabulate import tabulate
 from dataclasses import dataclass
-from reasoning_core.template import Task, DevTask, Problem, Config, Payload
+from reasoning_core.template import Task, DevTask, Problem, Config, Payload, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 import csv
 import yaml
@@ -30,6 +30,11 @@ class TableQAConfig(Config):
         self.num_columns += c
         self.num_tables = min(self.num_tables+c, 2)
 
+    def apply_difficulty(self, level):
+        self.num_rows = sround(self.num_rows * (2 ** level))
+        self.num_columns = sround(self.num_columns + level)
+        self.num_tables = sround(min(self.num_tables + level, 2))
+
 
 @dataclass
 class TableStatisticsConfig(Config):
@@ -42,6 +47,12 @@ class TableStatisticsConfig(Config):
         self.num_numeric += c
         self.num_categories += c
         self.margin = max(0.08, self.margin * (0.85 ** c))
+
+    def apply_difficulty(self, level):
+        self.num_rows = sround(self.num_rows * (1.5 ** level))
+        self.num_numeric = sround(self.num_numeric + level)
+        self.num_categories = sround(self.num_categories + level)
+        self.margin = max(0.08, self.margin * (0.85 ** level))
 
 
 _faker = Faker()
