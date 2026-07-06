@@ -120,11 +120,14 @@ class MultistepAbductionConfig(MultistepNLIConfig):
     def update(self, c):
         super().update(c)
         self.n_candidates += 2 * c
+        self.max_abduction_size = min(3, self.max_abduction_size + c / 2)
+        self.n_missing_facts = self.max_abduction_size
 
 
 @dataclass
 class LogicQAConfig(MultistepNLIConfig):
     answer_mode: str = "any"
+    zero_answer_rate: float = 0.20
 
 
 NAMES = ("alice", "bruno", "clara", "david", "elena", "farah", "george", "hannah")
@@ -245,6 +248,18 @@ def _sigs(names, arity, typ="person"):
     return {p: PredSig(p, (typ,) * arity, (p.replace("_", " "),)) for p in names}
 
 
+def _signed_converse(p, q):
+    out = []
+    for sign in (True, False):
+        out.append(Rule((Atom(p, ("?x", "?y"), sign),), Atom(q, ("?y", "?x"), sign), "spatial", "converse"))
+        out.append(Rule((Atom(q, ("?x", "?y"), sign),), Atom(p, ("?y", "?x"), sign), "spatial", "converse"))
+    return out
+
+
+def _rule_key(rule):
+    return frozenset(rule.body), rule.head
+
+
 def _domain_pack(name, cfg):
     n = min(max(3, cfg.n_entities), 7)
     if name == "abstract":
@@ -262,19 +277,25 @@ def _domain_pack(name, cfg):
         unary = SP_UNARY[: cfg.n_unary_preds]
         binary = ("left_of", "right_of", "above", "below", "inside", "contains", "disjoint")
         sigs = {**_sigs(unary, 1, "item"), **_sigs(binary[: cfg.n_binary_preds + 4], 2, "item")}
-        bg = [
-            Rule((Atom("left_of", ("?x", "?y")),), Atom("right_of", ("?y", "?x")), "spatial", "converse"),
-            Rule((Atom("above", ("?x", "?y")),), Atom("below", ("?y", "?x")), "spatial", "converse"),
-            Rule((Atom("inside", ("?x", "?y")),), Atom("contains", ("?y", "?x")), "spatial", "converse"),
+        bg = []
+        bg += _signed_converse("left_of", "right_of")
+        bg += _signed_converse("above", "below")
+        bg += _signed_converse("inside", "contains")
+        bg += [
             Rule((Atom("inside", ("?x", "?y")), Atom("inside", ("?y", "?z"))), Atom("inside", ("?x", "?z")), "spatial", "composition"),
             Rule((Atom("left_of", ("?x", "?y")), Atom("left_of", ("?y", "?z"))), Atom("left_of", ("?x", "?z")), "spatial", "composition"),
             Rule((Atom("above", ("?x", "?y")), Atom("above", ("?y", "?z"))), Atom("above", ("?x", "?z")), "spatial", "composition"),
-            Rule((Atom("disjoint", ("?x", "?y")),), Atom("disjoint", ("?y", "?x")), "spatial", "converse"),
         ]
+        for sign in (True, False):
+            bg.append(Rule((Atom("disjoint", ("?x", "?y"), sign),), Atom("disjoint", ("?y", "?x"), sign), "spatial", "converse"))
         irreflexive = ("left_of", "right_of", "above", "below", "inside", "contains", "disjoint")
         asymmetric = ("left_of", "right_of", "above", "below", "inside", "contains")
         denials = [Denial((Atom(p, ("?x", "?x")),)) for p in irreflexive]
         denials += [Denial((Atom(p, ("?x", "?y")), Atom(p, ("?y", "?x")))) for p in asymmetric]
+        denials += [
+            Denial((Atom("inside", ("?x", "?y")), Atom("disjoint", ("?x", "?y")))),
+            Denial((Atom("contains", ("?x", "?y")), Atom("disjoint", ("?x", "?y")))),
+        ]
         return ents, sigs, bg, denials
     ents = {"person": NAMES[:n]}
     if name == "kinship":
@@ -297,6 +318,17 @@ def _domain_pack(name, cfg):
         asymmetric = ("parent", "ancestor")
         denials += [Denial((Atom(p, ("?x", "?x")),)) for p in irreflexive]
         denials += [Denial((Atom(p, ("?x", "?y")), Atom(p, ("?y", "?x")))) for p in asymmetric]
+        kin_conflicts = [
+            ("parent", "sibling"),
+            ("parent", "spouse"),
+            ("ancestor", "sibling"),
+            ("ancestor", "spouse"),
+            ("sibling", "spouse"),
+        ]
+        denials += [
+            Denial((Atom(a, ("?x", "?y")), Atom(b, ("?x", "?y"))))
+            for a, b in kin_conflicts
+        ]
         return ents, sigs, bg, denials
     unary = GEN_UNARY[: cfg.n_unary_preds]
     binary = GEN_BINARY[: cfg.n_binary_preds]
@@ -453,6 +485,7 @@ def _add_near_misses(theory, sigs, entities, backbone, n=4):
     us = tuple(backbone.get("unaries", ()))
     bs = tuple(backbone.get("binaries", ()))
     seen = set(theory.facts)
+    seen_rules = {_rule_key(r) for r in theory.rules}
     def add_fact(a):
         if a in seen or opposite(a) in seen:
             return False
@@ -460,7 +493,9 @@ def _add_near_misses(theory, sigs, entities, backbone, n=4):
         seen.add(a)
         return True
     added = 0
-    while added < n:
+    for _ in range(max(100, 20 * n)):
+        if added >= n:
+            break
         kind = random.choice(["wrong_entity", "wrong_pred", "polarity", "near_rule"])
         if kind == "wrong_entity" and bs and us and len(ents) >= 2:
             x, y = ents[0], ents[1]
@@ -477,9 +512,11 @@ def _add_near_misses(theory, sigs, entities, backbone, n=4):
             b = random.choice([u for u in unaries if u not in us] or unaries)
             c = random.choice([u for u in unaries if u != b] or unaries)
             rule = Rule((Atom(a, ("?x",)), Atom(b, ("?x",))), Atom(c, ("?x",)), "near_miss", "u_and")
-            ok = rule not in theory.rules and not _bad_rule(rule)
+            k = _rule_key(rule)
+            ok = k not in seen_rules and not _bad_rule(rule)
             if ok:
                 theory.rules.append(rule)
+                seen_rules.add(k)
         else:
             continue
         added += int(ok)
@@ -509,13 +546,14 @@ def sample_theory(cfg):
             theory.facts.append(f)
     theory.rules = list(bg) + theory.rules
     if pack in {"abstract", "surface"}:
-        used_rules = set(theory.rules)
+        used_rules = {_rule_key(r) for r in theory.rules}
         for _ in range(cfg.n_rules):
             for _ in range(20):
                 rule = _sample_rule(sigs)
-                if rule not in used_rules and not _bad_rule(rule):
+                k = _rule_key(rule)
+                if k not in used_rules and not _bad_rule(rule):
                     theory.rules.append(rule)
-                    used_rules.add(rule)
+                    used_rules.add(k)
                     break
     return theory
 
@@ -670,7 +708,7 @@ def binary_text(pred, args, sign=True, pack="surface"):
     if pred == "disjoint":
         return f"{x} is {'not ' if not sign else ''}disjoint from {y}"
     p = pred_words(pred)
-    return f"{x} {p} {y}" if sign else f"{x} does not {p} {y}"
+    return f"{x} {p} {y}" if sign else f"{x} does not stand in the {p} relation to {y}"
 
 
 def atom_text(a, pack="surface"):
@@ -762,7 +800,7 @@ def rule_text(rule, rid=None, pack="surface"):
             f"If a {a}{tagged} person is {r} to someone, then that other person is {h}{tagged}." if symbolic else f"When {rel}, that other person is {h}.",
             f"People reached by a {r} relation from a {a}{tagged} person are {h}{tagged}." if symbolic else f"People reached when {rel} are {h}.",
         ]
-    elif len(atoms) == 2 and all(len(a.args) == 2 for a in atoms) and rule.head.args == ("?x", "?z"):
+    elif len(atoms) == 2 and all(len(a.args) == 2 for a in atoms) and rule.head.args == ("?x", "?z") and rule.head.sign:
         r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
         s = rel_word(atoms[1].pred) if symbolic else pred_words(atoms[1].pred)
         h = rel_word(rule.head.pred) if symbolic else pred_words(rule.head.pred)
@@ -774,7 +812,7 @@ def rule_text(rule, rid=None, pack="surface"):
             f"When {b1} and {b2}, {hd}.",
             f"{r.title()} relations followed by {s} relations imply {h} relations.",
         ]
-    elif len(atoms) == 1 and len(atoms[0].args) == 2 and len(rule.head.args) == 2 and rule.head.args == ("?y", "?x"):
+    elif len(atoms) == 1 and len(atoms[0].args) == 2 and len(rule.head.args) == 2 and rule.head.args == ("?y", "?x") and rule.head.sign:
         r = rel_word(atoms[0].pred) if symbolic else pred_words(atoms[0].pred)
         h = rel_word(rule.head.pred) if symbolic else pred_words(rule.head.pred)
         body = _rel_phrase(atoms[0].pred, "one person", "another", pack)
@@ -1035,20 +1073,20 @@ def _query_words(pred, pack):
 
 
 def _binary_query(pred, x, count, pack):
-    label = "How many entities" if count else "Which entities"
+    label = "How many other entities" if count else "Which other entities"
     if pack == "abstract" and pred.startswith("r"):
-        return f"{label} is {x} {rel_word(pred)} to?"
+        return f"{label} can {x} be shown to be {rel_word(pred)} to?"
     if pred in {"parent", "ancestor", "sibling", "spouse", "aunt_or_uncle"}:
         rel = pred_words(pred)
         art = "an" if rel[0] in "aeiou" else "a"
-        return f"{label} is {x} {art} {rel} of?"
+        return f"{label} can {x} be shown to be {art} {rel} of?"
     if pred in {"left_of", "right_of", "above", "below", "inside"}:
-        return f"{label} is {x} {pred_words(pred)}?"
+        return f"{label} can {x} be shown to be {pred_words(pred)}?"
     if pred == "contains":
-        return f"{label} does {x} contain?"
+        return f"{label} can {x} be shown to contain?"
     if pred == "disjoint":
-        return f"{label} is {x} disjoint from?"
-    return f"{label} does {x} {pred_words(pred)}?"
+        return f"{label} can {x} be shown to be disjoint from?"
+    return f"{label} can {x} be shown to stand in the {pred_words(pred)} relation to?"
 
 
 def _join_answer(xs):
@@ -1071,13 +1109,19 @@ def _world_query(theory, res, source, cfg):
             if len(sig.arg_types) == 1:
                 atoms = [Atom(sig.name, (x,)) for x in theory.entities[sig.arg_types[0]]]
                 answer_atoms = [a for a in atoms if _entails(theory, res, a)]
-                hard = _hard_answer_atoms(answer_atoms, res, cfg)
-                if not answer_atoms or len(hard) != len(answer_atoms):
-                    continue
+                if not answer_atoms:
+                    if random.random() > getattr(cfg, "zero_answer_rate", 0.0):
+                        continue
+                    hard = []
+                else:
+                    hard = _hard_answer_atoms(answer_atoms, res, cfg)
+                    if len(hard) != len(answer_atoms):
+                        continue
                 answers = sorted(a.args[0] for a in answer_atoms)
                 pred = _query_words(sig.name, theory.domain_pack)
-                question = f"Which entities are {pred}?" if qmode == "list" else f"How many entities are {pred}?"
-                answer = _join_answer(answers) if qmode == "list" else str(len(answers))
+                question = f"Which entities can be shown to be {pred}?" if qmode == "list" else f"How many entities can be shown to be {pred}?"
+                answer = "none" if qmode == "list" and not answers else _join_answer(answers)
+                answer = "0" if qmode == "count" and not answers else str(len(answers)) if qmode == "count" else answer
                 support = sorted(set().union(*(support_sources(a, res.derivations, source) for a in answer_atoms)))
                 return edict(mode=qmode, question=question, answer=answer, support_indices=support, atoms=answer_atoms, hard_atoms=hard)
 
@@ -1086,12 +1130,18 @@ def _world_query(theory, res, source, cfg):
                 x = random.choice(tuple(xs))
                 atoms = [Atom(sig.name, (x, y)) for y in ys if y != x]
                 answer_atoms = [a for a in atoms if _entails(theory, res, a)]
-                hard = _hard_answer_atoms(answer_atoms, res, cfg)
-                if not answer_atoms or len(hard) != len(answer_atoms):
-                    continue
+                if not answer_atoms:
+                    if random.random() > getattr(cfg, "zero_answer_rate", 0.0):
+                        continue
+                    hard = []
+                else:
+                    hard = _hard_answer_atoms(answer_atoms, res, cfg)
+                    if len(hard) != len(answer_atoms):
+                        continue
                 answers = sorted(a.args[1] for a in answer_atoms)
                 question = _binary_query(sig.name, x, qmode == "count", theory.domain_pack)
-                answer = _join_answer(answers) if qmode == "list" else str(len(answers))
+                answer = "none" if qmode == "list" and not answers else _join_answer(answers)
+                answer = "0" if qmode == "count" and not answers else str(len(answers)) if qmode == "count" else answer
                 support = sorted(set().union(*(support_sources(a, res.derivations, source) for a in answer_atoms)))
                 return edict(mode=qmode, question=question, answer=answer, support_indices=support, atoms=answer_atoms, hard_atoms=hard)
     return None
@@ -1104,7 +1154,10 @@ def make_direct_abduction_case(cfg):
     unaries = [s.name for s in sigs.values() if len(s.arg_types) == 1]
     binaries = [s.name for s in sigs.values() if len(s.arg_types) == 2]
     label = random.choice(["entailment", "contradiction"])
-    shape = random.choice(["unary", "bridge", "conjunctive"])
+    shapes = ["unary", "bridge", "conjunctive"]
+    if cfg.max_abduction_size >= 2:
+        shapes.append("two_missing_conjunctive")
+    shape = random.choice(shapes)
     facts, rules, removed = [], [], []
 
     if shape == "bridge" and binaries and len(unaries) >= 3:
@@ -1121,6 +1174,16 @@ def make_direct_abduction_case(cfg):
         a, b, c, d = random.sample(unaries, 4)
         removed = [Atom(a, (x,))]
         facts = [Atom(b, (x,)), Atom(a, (y,)), Atom(random.choice(unaries), (random.choice(es),))]
+        rules = [
+            Rule((Atom(a, ("?x",)), Atom(b, ("?x",))), Atom(c, ("?x",)), "abduction", "u_and"),
+            Rule((Atom(c, ("?x",)),), Atom(d, ("?x",), label == "entailment"), "abduction", "u_imp"),
+        ]
+        hyp = Atom(d, (x,), True)
+    elif shape == "two_missing_conjunctive" and len(unaries) >= 4:
+        a, b, c, d = random.sample(unaries, 4)
+        removed = [Atom(a, (x,)), Atom(b, (x,))]
+        filler_preds = [p for p in unaries if p not in {a, b, c, d}] or unaries
+        facts = [Atom(a, (y,)), Atom(b, (y,)), Atom(random.choice(filler_preds), (random.choice(es),))]
         rules = [
             Rule((Atom(a, ("?x",)), Atom(b, ("?x",))), Atom(c, ("?x",)), "abduction", "u_and"),
             Rule((Atom(c, ("?x",)),), Atom(d, ("?x",), label == "entailment"), "abduction", "u_imp"),
@@ -1199,12 +1262,12 @@ class MultistepNLI(Task):
     def prompt(self, meta):
         return (
             f"{Payload(meta.payload)}\n\n"
-            "Does the premise entail the hypothesis? "
+            "Is the hypothesis true given the premise? "
             "The answer is Yes, No, or Maybe."
         )
 
     def score_answer(self, answer, entry):
-        return float(str(answer).strip().lower() == str(entry.answer).strip().lower())
+        return float(str(answer).strip().lower().rstrip(".") == str(entry.answer).strip().lower())
 
     def balancing_key(self, problem):
         return problem.answer
@@ -1253,7 +1316,7 @@ class MultistepAbduction(Task):
         self._case_state = {}
 
     def generate(self):
-        for _ in range(100):
+        for _ in range(500):
             abd = make_direct_abduction_case(self.config)
             if not abd:
                 continue
@@ -1277,7 +1340,8 @@ class MultistepAbduction(Task):
         mode = "entail the hypothesis" if meta.label == "entailment" else "contradict the hypothesis"
         return (
             f"{Payload(meta.payload)}\n\n"
-            f"Which candidate facts, if added to the premise, make the premise {mode}?\n"
+            f"Which smallest set of candidate facts, if added to the premise, make the premise {mode}?\n"
+            "Do not include candidate facts that are not needed.\n"
             "Answer with space-separated indexes."
         )
 
@@ -1306,7 +1370,7 @@ class LogicQA(Task):
                 answer_mode=query.mode,
                 domain_pack=theory.domain_pack,
                 support_indices=query.support_indices,
-                max_answer_depth=max(res.derivations[a].depth for a in query.atoms),
+                max_answer_depth=max((res.derivations[a].depth for a in query.atoms), default=0),
                 hard_answer_depths=[res.derivations[a].depth for a in query.hard_atoms],
                 cot="\n\n".join(trace_for(a, res.derivations, source, theory.domain_pack) for a in query.atoms if a in res.derivations),
             )
@@ -1318,7 +1382,7 @@ class LogicQA(Task):
         if meta.answer_mode == "count":
             fmt = "Answer with one integer."
         else:
-            fmt = "Answer with names in alphabetical order, comma-separated."
+            fmt = "Answer with names in alphabetical order, comma-separated, or 'none'."
         return f"{Payload(meta.payload)}\n\n{fmt}"
 
     def score_answer(self, answer, entry):
@@ -1326,20 +1390,28 @@ class LogicQA(Task):
         reference = entry.answer if hasattr(entry, "answer") else entry["answer"]
         if metadata["answer_mode"] == "count":
             try:
-                return float(int(str(answer).strip()) == int(reference))
+                text = str(answer).strip().casefold().rstrip(".")
+                pred = 0 if text in {"", "none", "no one", "nobody", "[]"} else int(text)
+                return float(pred == int(reference))
             except ValueError:
                 return 0.0
         try:
             import ast
             text = str(answer).strip()
-            try:
-                pred = ast.literal_eval(text)
-                if not isinstance(pred, (list, tuple)):
-                    pred = [str(pred)]
-            except Exception:
-                pred = [x.strip() for x in text.split(",") if x.strip()]
-            truth = [x.strip() for x in str(reference).split(",") if x.strip()]
-            return float(sorted(map(str, pred)) == truth)
+            if text.casefold().rstrip(".") in {"", "none", "no one", "nobody", "[]"}:
+                pred = []
+            else:
+                try:
+                    pred = ast.literal_eval(text)
+                    if not isinstance(pred, (list, tuple)):
+                        pred = [str(pred)]
+                except Exception:
+                    pred = [x.strip() for x in text.split(",") if x.strip()]
+                    if len(pred) == 1 and pred[0].casefold().rstrip(".") == "none":
+                        pred = []
+            ref_text = str(reference).strip()
+            truth = [] if ref_text.casefold().rstrip(".") in {"", "none", "[]"} else [x.strip() for x in ref_text.split(",") if x.strip()]
+            return float(sorted(str(x).strip().casefold() for x in pred) == sorted(x.casefold() for x in truth))
         except Exception:
             return 0.0
 

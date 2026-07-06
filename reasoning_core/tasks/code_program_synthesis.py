@@ -1,444 +1,543 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
+import ast
+import hashlib
+import itertools
 import random
 import re
-import cvc5
-from cvc5 import Kind
-from gramforge import init_grammar, generate
-from reasoning_core.template import Task, DevTask, Problem, Config, edict
-import ast
+from dataclasses import dataclass, field
+from functools import lru_cache
+from types import CodeType
+from typing import Iterable
+
+from reasoning_core.template import Config, Problem, Task, edict
 
 
-# --- grammar: python + smt in parallel --------------------------------------
+DSL_NAME = "StringFrag-v1"
+OPS = (
+    "concat",
+    "substr",
+    "replace1",
+    "ite",
+    "len",
+    "find",
+    "add",
+    "sub",
+    "contains",
+    "eq_str",
+    "lt",
+    "not",
+)
+OP_INDEX = {name: i for i, name in enumerate(OPS)}
+COST_DESCRIPTION = "nodes,ops,source_len,source_lex"
+OP_SYNTAX = {
+    "concat": "str + str",
+    "substr": "str[int:(int)+(int)]",
+    "replace1": "str.replace(str, str, 1)",
+    "ite": "(str if bool else str)",
+    "len": "len(str)",
+    "find": "str.find(str)",
+    "add": "int + int",
+    "sub": "int - int",
+    "contains": "str in str",
+    "eq_str": "str == str",
+    "lt": "int < int",
+    "not": "not bool",
+}
+OP_COST_ORDER = ", ".join(OPS)
+SAFE_BUILTINS = {"len": len}
+STR_LITS = ('""', '" "', '"-"', '"_"')
+INT_LITS = ("0", "1", "2", "3")
+SORTS = ("str", "int", "bool")
 
-def _build_grammar():
-    R = init_grammar(['py', 'smt'], preprocess_template=lambda x: x)
+MIN_INT = -16
+MAX_INT = 64
+MAX_STR_LEN = 64
 
-    R('var', 's', 's')
-    for lit in ['""', '" "', '"-"', '"_"']:
-        R('strlit', lit, lit)
-    for n in range(4):
-        R('iconst', str(n), str(n))
-
-    # index-safe integers: provably non-negative
-    R('idx(iconst)',            '{0}',           '{0}')
-    R('idx(sexpr)',             'len({0})',      '(str.len {0})')
-    R('idx(idx,idx)',           '({0} + {1})',   '(+ {0} {1})', weight=0.3)
-
-    # general integers
-    R('iexpr(idx)',             '{0}',           '{0}')
-    R('iexpr(iexpr,iexpr)',     '({0} - {1})',   '(- {0} {1})', weight=0.3)
-    R('iexpr(sexpr,sexpr)',     '{0}.find({1})', '(str.indexof {0} {1} 0)', weight=0.25)
-
-    # booleans — every condition must depend on `s`
-    R('bexpr(sexpr,strlit)',    '({1} in {0})',  '(str.contains {0} {1})', weight=0.5)
-    R('bexpr(strlit,sexpr)',    '({0} == {1})',  '(= {0} {1})', weight=0.3)
-    R('bexpr(idx,iconst)',      '(len({0}) < {1})', '(< (str.len {0}) {1})', weight=0.35)  # len-based
-    R('bexpr(sexpr,sexpr)',     '({0} == {1})',  '(= {0} {1})', weight=0.15)
-    R('bexpr(bexpr)',           '(not {0})',     '(not {0})', weight=0.1)
-    # (skipping 'and' for now: compound conditions muddy branching signal and
-    # are rarely the minimum anyway)
-
-    # string expressions
-    R('sexpr(var)',                 '{0}',                   '{0}')
-    R('sexpr(strlit)',              '{0}',                   '{0}')
-    R('sexpr(sexpr,sexpr)',         '({0} + {1})',           '(str.++ {0} {1})', weight=0.55)
-    R('sexpr(sexpr,idx,idx)',       '{0}[{1}:({1})+({2})]',  '(str.substr {0} {1} {2})', weight=0.35)
-    R('sexpr(sexpr,sexpr,sexpr)',   '{0}.replace({1}, {2}, 1)', '(str.replace {0} {1} {2})', weight=0.2)
-    R('sexpr(bexpr,sexpr,sexpr)',   '({1} if {0} else {2})', '(ite {0} {1} {2})', weight=0.9)
-
-    R('start(sexpr)',               '{0}',                   '{0}')
-    return R
+ADVERSARIAL_INPUTS = (
+    "",
+    " ",
+    "-",
+    "_",
+    "a",
+    "aa",
+    "ab",
+    "a-b",
+    "a_b",
+    "abc",
+    " abc",
+    "abc ",
+    "--",
+    "__",
+    "0",
+)
+GLOBAL_PROBES = ADVERSARIAL_INPUTS + (
+    "b",
+    "ba",
+    "a--b",
+    "a__b",
+    "a b",
+    "c-a",
+    "_a_",
+    "-a-",
+    "abc-def",
+    "abc_def",
+    "cab",
+    "bbb",
+)
+RANDOM_ALPHABET = ("a", "b", "c", " ", "-", "_")
 
 
-# Note on the 'len({0}) < {1}' production: the first slot is an `idx` nonterminal,
-# but we render it by wrapping in len(). This keeps SMT's `(< (str.len s) k)` aligned.
-# A cleaner grammar would introduce a separate 'str_for_len' nonterminal; the shortcut
-# above works because `idx` already admits `len(sexpr)` forms, so `len(len(s))` etc.
-# can appear but is rare and correct.
+@dataclass(frozen=True)
+class Expr:
+    sort: str
+    py: str
+    nodes: int
+    ops: tuple[int, ...]
+    code: CodeType = field(compare=False, repr=False)
+    depends_on_s: bool = False
 
-_GRAMMAR = _build_grammar()
+    @property
+    def cost(self) -> tuple:
+        return (self.nodes, *self.ops, len(self.py), self.py)
+
+    def run(self, s: str):
+        return eval(self.code, {"__builtins__": SAFE_BUILTINS}, {"s": s})
+
+    def signature(self, inputs: tuple[str, ...]) -> tuple | None:
+        vals = []
+        for inp in inputs:
+            try:
+                val = self.run(inp)
+            except Exception:
+                return None
+            if not _valid_value(self.sort, val):
+                return None
+            vals.append(val)
+        return tuple(vals)
 
 
-# --- body -> function wrapper -----------------------------------------------
+def _valid_value(sort: str, val) -> bool:
+    if sort == "str":
+        return isinstance(val, str) and len(val) <= MAX_STR_LEN
+    if sort == "int":
+        return isinstance(val, int) and not isinstance(val, bool) and MIN_INT <= val <= MAX_INT
+    if sort == "bool":
+        return isinstance(val, bool)
+    return False
 
 
+def _compile_expr(py: str) -> CodeType:
+    return compile(py, "<stringfrag-v1>", "eval")
 
-def _expr_to_stmts(expr: str, depth: int) -> list:
-    """Indented Python statements equivalent to `return expr`, with top-level
-    conditionals rewritten as if/else."""
-    pad = "    " * depth
-    expr = expr.strip()
-    if expr.startswith('(') and _matches_outer(expr):
-        expr = expr[1:-1].strip()
-    split = _split_top_level_conditional(expr)
-    if split is None:
-        return [f"{pad}return {expr}"]
-    then_expr, cond, else_expr = split
-    return (
-        [f"{pad}if {cond}:"]
-        + _expr_to_stmts(then_expr, depth + 1)
-        + [f"{pad}else:"]
-        + _expr_to_stmts(else_expr, depth + 1)
+
+def _op_counts(*children: Expr, op: str | None = None) -> tuple[int, ...]:
+    counts = [0] * len(OPS)
+    for child in children:
+        for i, n in enumerate(child.ops):
+            counts[i] += n
+    if op is not None:
+        counts[OP_INDEX[op]] += 1
+    return tuple(counts)
+
+
+def _expr(sort: str, py: str, nodes: int, ops: tuple[int, ...], depends_on_s: bool) -> Expr:
+    return Expr(sort, py, nodes, ops, _compile_expr(py), depends_on_s)
+
+
+def _leaves() -> list[Expr]:
+    zero_ops = (0,) * len(OPS)
+    out = [_expr("str", "s", 1, zero_ops, True)]
+    out.extend(_expr("str", lit, 1, zero_ops, False) for lit in STR_LITS)
+    out.extend(_expr("int", lit, 1, zero_ops, False) for lit in INT_LITS)
+    return out
+
+
+def _valid_on_inputs(e: Expr, inputs: tuple[str, ...]) -> tuple | None:
+    return e.signature(inputs)
+
+
+def _add_expr(
+    e: Expr,
+    inputs: tuple[str, ...],
+    by_size: dict[str, dict[int, dict[tuple, Expr]]],
+    best_for_sig: dict[tuple[str, tuple], Expr],
+):
+    sig = _valid_on_inputs(e, inputs)
+    if sig is None:
+        return
+    key = (e.sort, sig)
+    old = best_for_sig.get(key)
+    if old is not None and old.cost <= e.cost:
+        return
+    best_for_sig[key] = e
+    slot = by_size[e.sort].setdefault(e.nodes, {})
+    same_size = slot.get(sig)
+    if same_size is None or e.cost < same_size.cost:
+        slot[sig] = e
+
+
+def _parts(total: int, arity: int) -> Iterable[tuple[int, ...]]:
+    if arity == 1:
+        if total >= 1:
+            yield (total,)
+        return
+    for first in range(1, total - arity + 2):
+        for rest in _parts(total - first, arity - 1):
+            yield (first, *rest)
+
+
+def _children(by_size, sorts: tuple[str, ...], sizes: tuple[int, ...]):
+    pools = []
+    for sort, size in zip(sorts, sizes):
+        pool = list(by_size[sort].get(size, {}).values())
+        if not pool:
+            return ()
+        pools.append(pool)
+    return itertools.product(*pools)
+
+
+def _make_unary(sort: str, op: str, a: Expr, py: str) -> Expr:
+    return _expr(sort, py, a.nodes + 1, _op_counts(a, op=op), a.depends_on_s)
+
+
+def _make_binary(sort: str, op: str, a: Expr, b: Expr, py: str) -> Expr:
+    return _expr(sort, py, a.nodes + b.nodes + 1, _op_counts(a, b, op=op), a.depends_on_s or b.depends_on_s)
+
+
+def _make_ternary(sort: str, op: str, a: Expr, b: Expr, c: Expr, py: str) -> Expr:
+    return _expr(
+        sort,
+        py,
+        a.nodes + b.nodes + c.nodes + 1,
+        _op_counts(a, b, c, op=op),
+        a.depends_on_s or b.depends_on_s or c.depends_on_s,
     )
 
-def _wrap_as_function(body: str, name: str = "f") -> str:
-    body = body.strip()
-    stmts = _expr_to_stmts(body, depth=1)
-    return f"def {name}(s: str) -> str:\n" + "\n".join(stmts)
 
-def _matches_outer(s: str) -> bool:
-    """Check that s[0]='(' matches s[-1]=')' as the outermost pair."""
-    if not (s.startswith('(') and s.endswith(')')): return False
-    depth, in_str = 0, False
-    for i, ch in enumerate(s):
-        if ch == '"': in_str = not in_str
-        elif not in_str:
-            if ch == '(': depth += 1
-            elif ch == ')':
-                depth -= 1
-                if depth == 0: return i == len(s) - 1
-    return False
+def _enumerate_core(
+    inputs: tuple[str, ...],
+    max_nodes: int,
+    stop_key: tuple[str, tuple] | None = None,
+) -> tuple[dict[tuple[str, tuple], Expr], tuple[Expr, ...], Expr | None]:
+    by_size: dict[str, dict[int, dict[tuple, Expr]]] = {sort: {} for sort in SORTS}
+    best_for_sig: dict[tuple[str, tuple], Expr] = {}
 
+    for leaf in _leaves():
+        _add_expr(leaf, inputs, by_size, best_for_sig)
+    if stop_key is not None and stop_key in best_for_sig:
+        return best_for_sig, tuple(best_for_sig.values()), best_for_sig[stop_key]
 
-def _split_top_level_conditional(s: str):
-    """Find top-level 'X if Y else Z' and return (X, Y, Z) or None."""
-    depth, in_str, if_pos, else_pos = 0, False, -1, -1
-    i = 0
-    while i < len(s):
-        ch = s[i]
-        if ch == '"':
-            in_str = not in_str
-        elif not in_str:
-            if ch == '(': depth += 1
-            elif ch == ')': depth -= 1
-            elif depth == 0:
-                if s[i:i+4] == ' if ' and if_pos < 0:
-                    if_pos = i
-                elif s[i:i+6] == ' else ' and if_pos > 0 and else_pos < 0:
-                    else_pos = i
-                    break
-        i += 1
-    if if_pos < 0 or else_pos < 0: return None
-    return s[:if_pos].strip(), s[if_pos+4:else_pos].strip(), s[else_pos+6:].strip()
+    for nodes in range(2, max_nodes + 1):
+        for (n,) in _parts(nodes - 1, 1):
+            for (s_expr,) in _children(by_size, ("str",), (n,)):
+                _add_expr(_make_unary("int", "len", s_expr, f"len({s_expr.py})"), inputs, by_size, best_for_sig)
+            for (c,) in _children(by_size, ("bool",), (n,)):
+                _add_expr(_make_unary("bool", "not", c, f"(not {c.py})"), inputs, by_size, best_for_sig)
 
+        for sizes in _parts(nodes - 1, 2):
+            for a, b in _children(by_size, ("str", "str"), sizes):
+                _add_expr(_make_binary("str", "concat", a, b, f"({a.py} + {b.py})"), inputs, by_size, best_for_sig)
+                _add_expr(_make_binary("int", "find", a, b, f"{a.py}.find({b.py})"), inputs, by_size, best_for_sig)
+                _add_expr(_make_binary("bool", "contains", a, b, f"({b.py} in {a.py})"), inputs, by_size, best_for_sig)
+                _add_expr(_make_binary("bool", "eq_str", a, b, f"({a.py} == {b.py})"), inputs, by_size, best_for_sig)
+            for a, b in _children(by_size, ("int", "int"), sizes):
+                _add_expr(_make_binary("int", "add", a, b, f"({a.py} + {b.py})"), inputs, by_size, best_for_sig)
+                _add_expr(_make_binary("int", "sub", a, b, f"({a.py} - {b.py})"), inputs, by_size, best_for_sig)
+                _add_expr(_make_binary("bool", "lt", a, b, f"({a.py} < {b.py})"), inputs, by_size, best_for_sig)
 
-def _reindent(block: str, indent: str) -> str:
-    return "\n".join(indent + line if line.strip() else line for line in block.splitlines())
+        for sizes in _parts(nodes - 1, 3):
+            for a, b, c in _children(by_size, ("str", "int", "int"), sizes):
+                _add_expr(_make_ternary("str", "substr", a, b, c, f"{a.py}[{b.py}:({b.py})+({c.py})]"), inputs, by_size, best_for_sig)
+            for a, b, c in _children(by_size, ("str", "str", "str"), sizes):
+                if b.py == '""':
+                    continue
+                _add_expr(_make_ternary("str", "replace1", a, b, c, f"{a.py}.replace({b.py}, {c.py}, 1)"), inputs, by_size, best_for_sig)
+            for c, a, b in _children(by_size, ("bool", "str", "str"), sizes):
+                _add_expr(_make_ternary("str", "ite", c, a, b, f"({a.py} if {c.py} else {b.py})"), inputs, by_size, best_for_sig)
 
+        if stop_key is not None and stop_key in best_for_sig:
+            return best_for_sig, tuple(best_for_sig.values()), best_for_sig[stop_key]
 
-# --- smt -> python ----------------------------------------------------------
-
-def _const_fold(expr):
-    for _ in range(4):
-        new = re.sub(r'\((\d+)\s*\+\s*(\d+)\)',
-                     lambda m: str(int(m.group(1)) + int(m.group(2))), expr)
-        new = re.sub(r'\((\d+)\s*-\s*(\d+)\)',
-                     lambda m: str(int(m.group(1)) - int(m.group(2))), new)
-        if new == expr: break
-        expr = new
-    return expr
-
-def _smt_to_py(smt: str) -> str:
-    s = smt.strip()
-    m = re.match(r'\(define-fun\s+\w+\s+\(\([^)]+\)\)\s+\w+\s+(.*)\)\s*$', s, re.DOTALL)
-    if m: s = m.group(1).strip()
-    m = re.match(r'\(lambda\s+\(\([^)]+\)\)\s+(.*)\)\s*$', s, re.DOTALL)
-    if m: s = m.group(1).strip()
-
-    tokens = re.findall(r'\(|\)|"(?:[^"]|"")*"|[^\s()]+', s)
-    pos = [0]
-    OPS = {
-        'str.++':      lambda a, b:    f'({a} + {b})',
-        'str.substr':  lambda a, b, c: f'{a}[{b}:({b})+({c})]',
-        'str.replace': lambda a, b, c: f'{a}.replace({b}, {c}, 1)',
-        'str.len':     lambda a:       f'len({a})',
-        'str.indexof': lambda a, b, c=None: f'{a}.find({b})',
-        'str.contains':lambda a, b:    f'({b} in {a})',
-        'str.prefixof':lambda a, b:    f'{b}.startswith({a})',
-        'str.suffixof':lambda a, b:    f'{b}.endswith({a})',
-        '+':           lambda a, b:    f'({a} + {b})',
-        '-':           lambda a, b:    f'({a} - {b})',
-        '<':           lambda a, b:    f'({a} < {b})',
-        '=':           lambda a, b:    f'({a} == {b})',
-        'and':         lambda *xs:     '(' + ' and '.join(xs) + ')',
-        'or':          lambda *xs:     '(' + ' or '.join(xs) + ')',
-        'not':         lambda a:       f'(not {a})',
-        'ite':         lambda c, a, b: f'({a} if {c} else {b})',
-    }
-    def parse():
-        t = tokens[pos[0]]; pos[0] += 1
-        if t == '(':
-            head = tokens[pos[0]]; pos[0] += 1
-            args = []
-            while tokens[pos[0]] != ')':
-                args.append(parse())
-            pos[0] += 1
-            if head in OPS: return OPS[head](*args)
-            raise ValueError(f"unknown op: {head}")
-        if t.startswith('"'):
-            return '"' + t[1:-1].replace('""', '\\"') + '"'
-        return t
-    return _const_fold(parse())
+    return best_for_sig, tuple(best_for_sig.values()), None
 
 
-# --- cvc5 SyGuS -------------------------------------------------------------
-
-def _synth_smallest(io_pairs, size_bound, timeout_ms):
-    slv = cvc5.Solver()
-    slv.setOption("sygus", "true")
-    slv.setOption("sygus-abort-size", str(size_bound))
-    slv.setOption("tlimit-per", str(timeout_ms))
-    slv.setLogic("SLIA")
-
-    S, I, B = slv.getStringSort(), slv.getIntegerSort(), slv.getBooleanSort()
-    s = slv.mkVar(S, "s")
-    ntS = slv.mkVar(S, "S")
-    ntIdx = slv.mkVar(I, "Idx")
-    ntI = slv.mkVar(I, "I")
-    ntB = slv.mkVar(B, "B")
-    g = slv.mkGrammar([s], [ntS, ntIdx, ntI, ntB])
-
-    lits = [slv.mkString(x) for x in ("", " ", "-", "_")]
-    g.addRules(ntS, [
-        s, *lits,
-        slv.mkTerm(Kind.STRING_CONCAT, ntS, ntS),
-        slv.mkTerm(Kind.STRING_SUBSTR, ntS, ntIdx, ntIdx),
-        #slv.mkTerm(Kind.STRING_REPLACE, ntS, ntS, ntS),
-        slv.mkTerm(Kind.ITE, ntB, ntS, ntS),
-    ])
-    g.addRules(ntIdx, [
-        slv.mkInteger(0), slv.mkInteger(1), slv.mkInteger(2), slv.mkInteger(3),
-        slv.mkTerm(Kind.STRING_LENGTH, ntS),
-        slv.mkTerm(Kind.ADD, ntIdx, ntIdx),
-    ])
-    g.addRules(ntI, [
-        ntIdx,
-        slv.mkTerm(Kind.SUB, ntI, ntI),
-        slv.mkTerm(Kind.STRING_INDEXOF, ntS, ntS, slv.mkInteger(0)),
-    ])
-    # boolean productions: every condition mentions `s` directly or via len/contains
-    g.addRules(ntB, [
-        slv.mkTerm(Kind.STRING_CONTAINS, ntS, lits[1]),  # " " in S
-        slv.mkTerm(Kind.STRING_CONTAINS, ntS, lits[2]),  # "-" in S
-        slv.mkTerm(Kind.STRING_CONTAINS, ntS, lits[3]),  # "_" in S
-        slv.mkTerm(Kind.EQUAL, ntS, lits[0]),
-        slv.mkTerm(Kind.EQUAL, ntS, lits[1]),
-        slv.mkTerm(Kind.EQUAL, ntS, lits[2]),
-        slv.mkTerm(Kind.EQUAL, ntS, lits[3]),
-        slv.mkTerm(Kind.LT, slv.mkTerm(Kind.STRING_LENGTH, ntS), slv.mkInteger(1)),
-        slv.mkTerm(Kind.LT, slv.mkTerm(Kind.STRING_LENGTH, ntS), slv.mkInteger(2)),
-        slv.mkTerm(Kind.LT, slv.mkTerm(Kind.STRING_LENGTH, ntS), slv.mkInteger(3)),
-        slv.mkTerm(Kind.NOT, ntB),
-    ])
-
-    f = slv.synthFun("f", [s], S, g)
-    for inp, out in io_pairs:
-        slv.addSygusConstraint(slv.mkTerm(
-            Kind.EQUAL,
-            slv.mkTerm(Kind.APPLY_UF, f, slv.mkString(inp)),
-            slv.mkString(out),
-        ))
-    res = slv.checkSynth()
-    return str(slv.getSynthSolution(f)) if res.hasSolution() else None
+@lru_cache(maxsize=128)
+def _enumerate(inputs: tuple[str, ...], max_nodes: int) -> tuple[dict[tuple[str, tuple], Expr], tuple[Expr, ...]]:
+    best_for_sig, exprs, _ = _enumerate_core(inputs, max_nodes)
+    return best_for_sig, exprs
 
 
-# --- filters ----------------------------------------------------------------
-
-_TRIVIAL_BODIES = {'s', '""', '" "', '"-"', '"_"'}
-
-def _is_trivial_behavior(pairs):
-    outs = {o for _, o in pairs}
-    if len(outs) < 2: return True
-    if all(o == i for i, o in pairs): return True
-    if all(o == '' for _, o in pairs): return True
-    return False
-
-def _is_trivial_answer(py_body):
-    return py_body.strip() in _TRIVIAL_BODIES
-
-def _has_meaningful_branching(source_py, inputs):
-    """At least one 'X if cond else Y' condition must split the inputs."""
-    conditions = re.findall(r'\sif\s+(.+?)\s+else\s', source_py)
-    if not conditions: return True  # non-branching source is fine; filter only if ite was used
-    env_builtins = {'__builtins__': {'len': len}}
-    for cond in conditions:
-        results = set()
-        for inp in inputs:
-            try: results.add(bool(eval(cond, env_builtins, {'s': inp})))
-            except Exception: pass
-            if len(results) == 2: return True
-    return False
+def canonical_expr(examples: list[tuple[str, str]] | tuple[tuple[str, str], ...], max_nodes: int = 10) -> Expr | None:
+    inputs = tuple(inp for inp, _ in examples)
+    target = tuple(out for _, out in examples)
+    _, _, found = _enumerate_core(inputs, max_nodes, ("str", target))
+    return found
 
 
-# --- task -------------------------------------------------------------------
-
-_RANDOM_POOL = ['', 'a', 'ab', 'abc', 'hello', 'x-y', 'a_b',
-                ' ', '--', 'foo bar', 'zz', 'A-B-C', 'a-b_c', '__',
-                'ab-cd', 'x_y_z', '-a-', '_ _', 'aa-bb']
-_EDGE_CASES = ['', ' ', 'a', '-', '_']
+def run_expr(expr: Expr | str, s: str):
+    if isinstance(expr, Expr):
+        return expr.run(s)
+    return eval(_compile_expr(expr), {"__builtins__": SAFE_BUILTINS}, {"s": s})
 
 
-def _run(py_body, s):
-    return eval(py_body, {'__builtins__': {'len': len}}, {'s': s})
+def expr_to_function(expr: Expr | str) -> str:
+    py = expr.py if isinstance(expr, Expr) else expr
+    return f"def f(s: str) -> str:\n    return {py}"
+
+
+def _random_input(max_len: int = 12) -> str:
+    return "".join(random.choice(RANDOM_ALPHABET) for _ in range(random.randint(0, max_len)))
+
+
+def _signature_hash(sig: tuple) -> str:
+    body = repr(sig).encode("utf-8")
+    return hashlib.sha256(body).hexdigest()[:16]
+
+
+def _op_dict(e: Expr) -> dict[str, int]:
+    return {op: n for op, n in zip(OPS, e.ops) if n}
+
+
+def _prompt_ops(e: Expr, distractor_rate: float) -> list[str]:
+    used = {op for op, n in zip(OPS, e.ops) if n}
+    chosen = set(used)
+    for op in OPS:
+        if op not in used and random.random() < distractor_rate:
+            chosen.add(op)
+    return [op for op in OPS if op in chosen]
+
+
+def _target_quality(e: Expr, sig: tuple, min_nodes: int) -> bool:
+    if e.sort != "str" or not e.depends_on_s or e.nodes < min_nodes:
+        return False
+    if len(set(sig)) < 2:
+        return False
+    if e.py in {"s", *STR_LITS}:
+        return False
+    if re.search(r'"[^"]*"\s*(?:\.replace|\.find|\[)', e.py):
+        return False
+    if re.search(r'\bs\s+in\s+"[^"]*"', e.py):
+        return False
+    return True
+
+
+@lru_cache(maxsize=16)
+def _target_frontier(max_nodes: int, min_nodes: int) -> tuple[Expr, ...]:
+    frontier_nodes = min(max_nodes, 7)
+    best_for_sig, _ = _enumerate(tuple(GLOBAL_PROBES), frontier_nodes)
+    out = []
+    seen_py = set()
+    for (sort, sig), e in best_for_sig.items():
+        if sort != "str" or e.py in seen_py:
+            continue
+        if _target_quality(e, sig, min_nodes):
+            out.append(e)
+            seen_py.add(e.py)
+    out.sort(key=lambda e: e.cost)
+    return tuple(out)
+
+
+def _counterexample(p: Expr, q: Expr, max_len: int) -> str | None:
+    candidates = list(ADVERSARIAL_INPUTS) + [_random_input(max_len) for _ in range(128)]
+    seen = set()
+    for s in candidates:
+        if s in seen:
+            continue
+        seen.add(s)
+        try:
+            if p.run(s) != q.run(s):
+                return s
+        except Exception:
+            continue
+    return None
+
+
+def _make_examples(target: Expr, max_nodes: int, max_examples: int, max_input_len: int) -> tuple[list[tuple[str, str]], int] | None:
+    seed_pool = list(ADVERSARIAL_INPUTS)
+    random.shuffle(seed_pool)
+    shown_inputs = []
+    for s in seed_pool:
+        if len(shown_inputs) >= 2:
+            break
+        try:
+            if _valid_value("str", target.run(s)):
+                shown_inputs.append(s)
+        except Exception:
+            pass
+    if not shown_inputs:
+        return None
+
+    shown = [(s, target.run(s)) for s in shown_inputs]
+    killed = 0
+    for _ in range(max_examples):
+        q = canonical_expr(shown, max_nodes)
+        if q is None:
+            return None
+        if q.py == target.py:
+            return shown, killed
+        x = _counterexample(target, q, max_input_len)
+        if x is None or len(x) > max_input_len or any(x == old for old, _ in shown):
+            return None
+        shown.append((x, target.run(x)))
+        killed += 1
+        if len(shown) > max_examples:
+            return None
+    return None
+
+
+def _nontrivial_examples(examples: list[tuple[str, str]]) -> bool:
+    if len({out for _, out in examples}) < 2:
+        return False
+    if all(inp == out for inp, out in examples):
+        return False
+    return True
+
+
+def _holdout(target: Expr, shown: list[tuple[str, str]], k: int, max_len: int) -> list[tuple[str, str]]:
+    shown_inputs = {inp for inp, _ in shown}
+    candidates = list(GLOBAL_PROBES) + [_random_input(max_len) for _ in range(128)]
+    out = []
+    seen = set(shown_inputs)
+    for s in candidates:
+        if s in seen:
+            continue
+        seen.add(s)
+        try:
+            y = target.run(s)
+        except Exception:
+            continue
+        if _valid_value("str", y):
+            out.append((s, y))
+        if len(out) >= k:
+            break
+    return out
+
+
+def _validate_problem(examples: list[tuple[str, str]], holdout: list[tuple[str, str]], target: Expr, max_nodes: int) -> bool:
+    expr = canonical_expr(examples, max_nodes)
+    if expr is None or expr.py != target.py:
+        return False
+    if any(expr.run(inp) != out for inp, out in examples):
+        return False
+    if any(expr.run(inp) != target.run(inp) or target.run(inp) != out for inp, out in holdout):
+        return False
+    return True
 
 
 @dataclass
 class ProgramSynthesisCfg(Config):
-    depth: int = 6
-    size_bound: int = 10
-    n_io: int = 6
-    n_holdout: int = 5
-    timeout_ms: int = 3000
+    max_nodes: int = 10
+    n_holdout: int = 12
+    max_examples: int = 8
+    max_input_len: int = 16
     max_attempts: int = 80
+    min_nodes: int = 4
+    prompt_distractor_rate: float = 0.25
 
     def update(self, c=1):
-        self.depth += c
-        self.size_bound += 2 * c
-        self.n_io += c // 2
-        self.timeout_ms += 2000 * c
+        self.max_nodes += c / 2
+        self.n_holdout += c
+        self.max_attempts += 10 * c
+        self.min_nodes += c / 3
 
 
-class ProgramSynthesis(DevTask):
+class ProgramSynthesis(Task):
     def __init__(self, config=ProgramSynthesisCfg()):
         super().__init__(config=config)
 
-    def _sample_inputs(self, k_shown, k_holdout):
-        shown_budget = max(0, k_shown - len(_EDGE_CASES))
-        remaining = [x for x in _RANDOM_POOL if x not in _EDGE_CASES]
-        shown = list(_EDGE_CASES) + random.sample(remaining, min(shown_budget, len(remaining)))
-        shown = shown[:k_shown]
-        holdout = random.sample([x for x in _RANDOM_POOL if x not in shown],
-                                min(k_holdout, len([x for x in _RANDOM_POOL if x not in shown])))
-        return shown, holdout
-
-    def _execute_all(self, py_body, inputs):
-        pairs = []
-        for inp in inputs:
-            try: out = _run(py_body, inp)
-            except Exception: return None
-            if not isinstance(out, str) or len(out) > 32: return None
-            pairs.append((inp, out))
-        return pairs
+    def _sample_target(self) -> Expr:
+        frontier = _target_frontier(self.config.max_nodes, self.config.min_nodes)
+        if not frontier:
+            raise RuntimeError("StringFrag-v1 target frontier is empty")
+        by_nodes: dict[int, list[Expr]] = {}
+        for e in frontier:
+            by_nodes.setdefault(e.nodes, []).append(e)
+        sizes = sorted(by_nodes)
+        weights = [1 + i for i, _ in enumerate(sizes)]
+        size = random.choices(sizes, weights=weights, k=1)[0]
+        return random.choice(by_nodes[size])
 
     def generate(self) -> Problem:
         cfg = self.config
         for _ in range(cfg.max_attempts):
-            tree = generate(_GRAMMAR, depth=cfg.depth, min_depth=max(2, cfg.depth - 1))
-            py_body = tree @ 0
-            shown_in, holdout_in = self._sample_inputs(cfg.n_io, cfg.n_holdout)
-
-            # Fix B: if the source contains conditionals, at least one of them
-            # must actually branch across the shown inputs.
-            if 'if' in py_body and not _has_meaningful_branching(py_body, shown_in):
+            target = self._sample_target()
+            made = _make_examples(target, cfg.max_nodes, cfg.max_examples, cfg.max_input_len)
+            if made is None:
                 continue
-
-            shown = self._execute_all(py_body, shown_in)
-            if shown is None or _is_trivial_behavior(shown): continue
-            holdout = self._execute_all(py_body, holdout_in)
-            if holdout is None: continue
-
-            smt_answer = _synth_smallest(shown, cfg.size_bound, cfg.timeout_ms)
-            if smt_answer is None: continue
-            try: py_expr = _smt_to_py(smt_answer)
-            except Exception as e:
-                print(e)
+            examples, killed = made
+            if not _nontrivial_examples(examples):
                 continue
-            if _is_trivial_answer(py_expr): continue
-
-            try:
-                if not all(_run(py_expr, i) == o for i, o in shown + holdout):
-                    continue
-            except Exception as e:
-                print(e)
+            holdout = _holdout(target, examples, cfg.n_holdout, cfg.max_input_len)
+            if len(holdout) < cfg.n_holdout:
                 continue
-
-            py_function = _wrap_as_function(py_expr, name="f")
-
+            if not _validate_problem(examples, holdout, target, cfg.max_nodes):
+                continue
+            probe_sig = target.signature(tuple(GLOBAL_PROBES))
+            prompt_ops = _prompt_ops(target, cfg.prompt_distractor_rate)
             meta = edict(
-                io_pairs=shown,
+                dsl=DSL_NAME,
+                cost=COST_DESCRIPTION,
+                max_nodes=cfg.max_nodes,
+                io_pairs=examples,
+                examples=examples,
                 holdout=holdout,
-                source_py=py_body,
-                source_smt=tree @ 1,
-                answer_smt=smt_answer,
-                answer_expr=py_expr,
+                solution_expr=target.py,
+                answer_expr=target.py,
+                solution_function=expr_to_function(target),
+                nodes=target.nodes,
+                ops=_op_dict(target),
+                prompt_ops=prompt_ops,
+                target_signature_hash=_signature_hash(probe_sig or ()),
+                difficulty=edict(
+                    num_examples=len(examples),
+                    cegis_rounds=max(0, len(examples) - 2),
+                    cheaper_hypotheses_killed=killed,
+                ),
             )
-            return Problem(metadata=meta, answer=py_function)
-        raise RuntimeError(f"no non-trivial instance after {cfg.max_attempts} attempts")
+            return Problem(metadata=meta, answer=meta.solution_function)
+        raise RuntimeError(f"no StringFrag-v1 instance after {cfg.max_attempts} attempts")
 
     def prompt(self, metadata) -> str:
-        examples = "\n".join(f"  f({i!r}) = {o!r}" for i, o in metadata.io_pairs)
+        examples = "\n".join(f"f({inp!r}) = {out!r}" for inp, out in metadata.io_pairs)
+        op_lines = "\n".join(f"- {op}: {OP_SYNTAX[op]}" for op in metadata.prompt_ops)
         return (
-            "Write a Python function `f(s: str) -> str` consistent with these examples:\n"
-            f"{examples}\n\n"
-            "You may use: the parameter `s`; string literals \"\", \" \", \"-\", \"_\"; "
-            "integer constants 0..3; `+` (string concat or int add); `-` (int subtraction); "
-            "`len(x)`; slicing `x[a:b]`; `x.replace(a, b, 1)` (replace first occurrence); "
-            "`x.find(y)` (first index of y in x, or -1); `y in x`; `if/else` statements or "
-            "conditional expressions; and boolean operators `not`, `==`, `<`.\n\n"
-            "Return a complete function definition starting with `def f(s: str) -> str:`."
+            "Write f(s: str) -> str.\n\n"
+            "Target: return the minimum-cost StringFrag-v1 expression matching the examples.\n\n"
+            "Always allowed: s, string literals \"\", \" \", \"-\", \"_\", and integer literals 0, 1, 2, 3.\n"
+            f"Allowed operators for this problem:\n{op_lines}\n"
+            "Bounds: strings have length <= 64; integers are between -16 and 64. Use Python string semantics.\n"
+            "Cost: AST nodes, then operator-count tuple in this global order "
+            f"({OP_COST_ORDER}), then source length, then lexicographic source order.\n\n"
+            f"Examples:\n{examples}\n\n"
+            "Return only:\n"
+            "def f(s: str) -> str:\n"
+            "    return <expression>"
         )
 
     def score_answer(self, answer, entry) -> float:
-        # Try to extract and run the candidate function.
-        candidate = answer.strip()
-        ns = {'__builtins__': {'len': len, 'str': str, 'int': int, 'range': range}}
-
-        # Grab the `def f(...)` block if present; otherwise treat as an expression body.
-        m = re.search(r'(def\s+\w+\s*\([^)]*\)[^:]*:.*?)(?=\n\S|\Z)', candidate, re.DOTALL)
-        if m:
-            src = m.group(1)
-            func_name = re.match(r'def\s+(\w+)', src).group(1)
-        else:
-            # fallback: maybe just a body expression or 'return EXPR'
-            rm = re.search(r'return\s+(.+?)\s*$', candidate, re.DOTALL)
-            body_expr = rm.group(1).strip() if rm else candidate
-            src = f"def f(s):\n    return {body_expr}"
-            func_name = "f"
-
-        try:
-            exec(src, ns)
-            fn = ns[func_name]
-        except (SyntaxError, NameError, AttributeError, TypeError,
-                ValueError, IndexError, KeyError, ZeroDivisionError,
-                RecursionError, ImportError):
-            return 0.0  # candidate is wrong, silently
-
-        all_pairs = list(entry.metadata.io_pairs) + list(entry.metadata.holdout)
-        hits = 0
-        for inp, expected in all_pairs:
-            try:
-                if fn(inp) == expected: hits += 1
-            except Exception:
-                pass
-        return hits / len(all_pairs)
+        if answer.strip() == entry.answer.strip():
+            return 1.0
+        expr = _extract_return_expr(answer)
+        return 1.0 if expr == entry.metadata.solution_expr else 0.0
 
 
-
-class ProgramExtrapolation(ProgramSynthesis, DevTask):
-    def generate(self) -> Problem:
-        p = super().generate()
-        query_in, query_out = p.metadata.holdout[0]
-        meta = edict(
-            io_pairs=p.metadata.io_pairs,
-            query=query_in,
-            source_py=p.metadata.source_py,
-            answer_expr=p.metadata.answer_expr,
-        )
-        return Problem(metadata=meta, answer=query_out)
-
-    def prompt(self, metadata) -> str:
-        examples = "\n".join(f"  f({i!r}) = {o!r}" for i, o in metadata.io_pairs)
-        return (
-            "A function `f(s: str) -> str` produces these outputs:\n"
-            f"{examples}\n\n"
-            f"What is f({metadata.query!r})?\n"
-            "Answer with the output string as a Python literal "
-            "(e.g. 'abc' or '' for the empty string)."
-        )
-
-    def score_answer(self, answer, entry) -> float:
-        try:
-            if ast.literal_eval(answer.strip()) == entry.answer: return 1.0
-        except Exception:
-            pass
-        return 1.0 if answer == entry.answer or answer.strip() == entry.answer else 0.0
+def _extract_return_expr(answer: str) -> str | None:
+    candidate = answer.strip()
+    if candidate == "":
+        return None
+    match = re.search(r"^\s*return\s+(.+?)\s*$", candidate, re.MULTILINE | re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    try:
+        mod = ast.parse(candidate)
+    except SyntaxError:
+        return candidate
+    if len(mod.body) == 1 and isinstance(mod.body[0], ast.FunctionDef):
+        fn = mod.body[0]
+        if len(fn.body) == 1 and isinstance(fn.body[0], ast.Return):
+            return ast.get_source_segment(candidate, fn.body[0].value).strip()
+    match = re.search(r"return\s+(.+?)\s*$", candidate, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return candidate
