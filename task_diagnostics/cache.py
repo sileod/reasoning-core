@@ -10,7 +10,9 @@ and consume immutable rows, so nothing silently regenerates or mixes versions. S
 """
 from __future__ import annotations
 import hashlib
+import inspect
 import json
+import subprocess
 import time
 from pathlib import Path
 
@@ -48,6 +50,22 @@ def _task_obj(name):
 def _behavior_hash(t):
     bh = getattr(t, "behavior_hash", "?")
     return bh() if callable(bh) else bh
+
+def _generator_commit() -> str:
+    try:
+        root = Path(__file__).resolve().parents[1]
+        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+    except Exception:
+        return ""
+
+def _task_source(t) -> str:
+    try:
+        return inspect.getsource(t if inspect.isclass(t) else t.__class__)
+    except Exception:
+        return ""
+
+def _source_hash(source: str) -> str:
+    return hashlib.sha1(source.encode()).hexdigest()[:16] if source else ""
 
 def _cache_id(tasks, levels, n, mode, gen_ver, bhashes, task_versions, configs) -> str:
     key = json.dumps({"tasks": sorted(tasks), "levels": sorted(levels), "n": n, "mode": mode,
@@ -135,7 +153,7 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
     cache_id keys on behavior_hash + task_version + config + levels + n + mode (Codex/claude review)."""
     tasks, levels = list(tasks), list(levels)
     gen_ver = str(getattr(rc, "__version__", "0"))
-    rows, bhashes, task_versions, configs, gtime = [], {}, {}, {}, {}
+    rows, bhashes, task_versions, configs, sources, source_hashes = [], {}, {}, {}, {}, {}
     for name in tasks:
         t = _task_obj(name)
         bhashes[name] = _behavior_hash(t)
@@ -143,6 +161,8 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
         cfg = getattr(t, "config", None)
         configs[name] = canonical_json(cfg.to_dict() if hasattr(cfg, "to_dict")
                                        else getattr(cfg, "__dict__", {}) or {})
+        sources[name] = _task_source(t)
+        source_hashes[name] = _source_hash(sources[name])
         for lvl in levels:
             for _ in range(n_per_task):
                 t0 = time.time()
@@ -164,13 +184,14 @@ def build_task_cache(tasks, levels=(0, 1, 2, 3, 4), n_per_task=64,
                     prompt_tokens=_ntok(prompt), answer_tokens=_ntok(answer),
                     gen_time_s=round(dt, 5),
                     row_hash=TaskRow.compute_hash(name, alvl, prompt, answer, md)))
-                gtime.setdefault((name, alvl), []).append(dt)
 
     cid = _cache_id(tasks, levels, n_per_task, mode, gen_ver, bhashes, task_versions, configs)
     man = CacheManifest(cache_id=cid, source="fresh", tasks=tuple(tasks), levels=tuple(levels),
                         n_per_task=n_per_task, mode=mode, generator_version=gen_ver,
                         behavior_hashes=bhashes, task_versions=task_versions, configs=configs,
-                        tokenizer="HuggingFaceTB/SmolLM2-135M")
+                        tokenizer="HuggingFaceTB/SmolLM2-135M",
+                        generator_commit=_generator_commit(), sources=sources,
+                        source_hashes=source_hashes)
     return _write_cache(rows, man, out_dir, analyze)
 
 
@@ -181,7 +202,7 @@ def import_hf_cache(repo, revision=None, tasks=None, levels=None, n_per_task=64,
     tasks = set(tasks or [])
     levels = tuple(levels) if levels is not None else ()
     wanted_levels = {int(x) for x in levels} if levels else None
-    rows, counts, scanned = [], {}, 0
+    rows, counts, scanned, generator_commits = [], {}, 0, set()
     for x in load_dataset(repo, revision=revision, split="train", streaming=True):
         scanned += 1
         task = (x.get("task") or "").strip()
@@ -190,6 +211,8 @@ def import_hf_cache(repo, revision=None, tasks=None, levels=None, n_per_task=64,
         if not task or not prompt or answer is None or (tasks and task not in tasks):
             continue
         md = _metadata_dict(x)
+        if md.get("_generator_commit") or x.get("generator_commit"):
+            generator_commits.add(md.get("_generator_commit") or x.get("generator_commit"))
         level = x.get("level", md.get("_level", 0))
         try:
             level = int(level)
@@ -226,7 +249,9 @@ def import_hf_cache(repo, revision=None, tasks=None, levels=None, n_per_task=64,
     man = CacheManifest(cache_id=cid, source="hf", tasks=tuple(task_names), levels=cache_levels,
                         n_per_task=n_per_task, mode=mode, generator_version=str(getattr(rc, "__version__", "0")),
                         behavior_hashes=bhashes, task_versions=versions, configs=configs,
-                        tokenizer="HuggingFaceTB/SmolLM2-135M", repo=repo, revision=revision)
+                        tokenizer="HuggingFaceTB/SmolLM2-135M",
+                        generator_commit=sorted(generator_commits)[0] if generator_commits else "",
+                        sources={}, source_hashes={}, repo=repo, revision=revision)
     return _write_cache(rows, man, out_dir, analyze)
 
 

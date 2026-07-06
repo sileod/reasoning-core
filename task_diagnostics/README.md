@@ -40,7 +40,9 @@ python task_diagnostics/task_influence.py --run-influence --taskrow-cache task_d
 ```
 
 Each row preserves prompt, answer, full metadata, level, config, behavior hash, token
-counts, generation time, and `row_hash`. `reasoning-gym` rows use native scoring where
+counts, generation time, and `row_hash`. Local manifests also store the generator git
+commit plus audit-only task source strings and source hashes, so result shifts can be
+diffed without executing cached code. `reasoning-gym` rows use native scoring where
 available; `basic-procedural` scoring will work once its scorers are registered. Local
 generated cache data is ignored by git. See `MIGRATION.md` for the short transition notes.
 

@@ -16,6 +16,10 @@ Each row preserves `task`, `level`, `prompt`, `answer`, full JSON `metadata`,
 `row_hash`. Analyses should consume these immutable rows instead of regenerating
 examples implicitly.
 
+Local manifests also record `generator_commit`, `sources` (task class source as an
+audit-only string), and `source_hashes`. The hash decides cache freshness; the source
+text and commit make changed-result audits easier.
+
 ## New commands
 
 Build a small local cache:
@@ -52,7 +56,8 @@ python -m task_diagnostics.cache from-hf --repo reasoning-core/basic-procedural 
 - Zero-shot predictions are keyed by `row_hash + model + eval signature`; stale rows
   from older task versions no longer enter current aggregates.
 - Cached rows carry enough metadata for native `reasoning_core.score_answer`.
-- GPU saturation/reward can use the same TaskRows as aux training rows.
+- GPU aux training, saturation token accuracy, and begin/end `score_answer` reward use
+  the same cached TaskRows.
 - Fresh generation is an explicit cache-build step, not an analysis side effect.
 - `task_influence.py --run-influence` now requires `--taskrow-cache`.
 - Local generated cache data is ignored by git; commit code and reports, not Parquet
@@ -68,5 +73,5 @@ The existing scripts and result paths still exist during the migration:
 - `TASK_ZEROSHOT_RESULTS.{json,md}`
 - `TASK_INFLUENCE_RESULTS.{json,md}`
 
-The next migration step is to point influence saturation/reward and reports at the same
-TaskRow cache.
+Legacy pair-format aux building and staging-source influence runs were removed; rebuild
+TaskRow caches instead.

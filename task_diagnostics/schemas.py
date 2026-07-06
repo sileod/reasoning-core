@@ -86,6 +86,9 @@ class CacheManifest:
     task_versions: dict               # task -> task_version
     configs: dict                     # task -> canonical config JSON
     tokenizer: str
+    generator_commit: str = ""         # git sha for full source audit
+    sources: dict | None = None        # task -> inspect.getsource(TaskClass), audit-only string
+    source_hashes: dict | None = None  # task -> sha1(sources[task])
     repo: str | None = None
     revision: str | None = None
     n_rows: int = 0
