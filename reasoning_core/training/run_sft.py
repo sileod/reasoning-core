@@ -37,6 +37,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, TrainerCallback, A
 from trl import SFTConfig
 from tabulate import tabulate
 from reasoning_core.training.controlled_experiment import add_control_args, row_filter, wrap_aux_dataset_for_control
+from reasoning_core.training.intrinsic_rewards import load_intrinsic_eval_split, log_intrinsic_task_rewards
 from reasoning_core.training.local_metrics import LocalMetricsCallback, LocalMetricsSink
 from reasoning_core.training.optimizers import add_optimizer_args, create_optimizer_and_scheduler, trainer_cls_for_optimizer
 from reasoning_core.training.source_signals import SourceDataCollator, add_source, pack_by_source
@@ -393,6 +394,9 @@ eval_splits = load_eval_split(
     args.aux_data, budget=args.eval_aux_budget, skip=args.eval_aux_skip,
     max_groups=200, max_examples_per_group=32, min_examples_per_group=24,
     max_scanned=args.eval_aux_max_scanned)
+intrinsic_eval_splits = load_intrinsic_eval_split(
+    DATA_MAP.get(args.aux_data, args.aux_data), skip=args.eval_aux_skip, max_groups=200,
+    max_examples_per_group=8, max_scanned=args.eval_aux_max_scanned)
 main_evals = {"main": eval_main}
 aux_tl_evals = {f"aux_tl/{k}": v for k, v in eval_splits.items()}
 trainer_evals = main_evals if args.iterable_mode else {**main_evals, **aux_tl_evals}
@@ -781,6 +785,10 @@ if "eval" not in completed:
         trainer.evaluate(metric_key_prefix="final")
         if args.iterable_mode and aux_tl_evals:
             trainer.evaluate(eval_dataset=getattr(trainer, "aux_tl_eval_dataset", aux_tl_evals), metric_key_prefix="final")
+    log_intrinsic_task_rewards(
+        model, tokenizer, intrinsic_eval_splits, local_metrics_sink,
+        global_step=final_step, max_steps=final_max_steps,
+    )
     wandb.finish()
     save_ckpt({"hash": run_hash, "group_id": group_id,
                "args": {k: str(v) for k, v in vars(args).items()},
