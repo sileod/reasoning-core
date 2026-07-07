@@ -22,7 +22,7 @@ from typing import Any
 
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, Entry, Payload, Task, stochastic_rounding as sround
+from reasoning_core.template import Config, DevTask, Entry, Payload, Task, stochastic_rounding as sround
 
 
 Term = Any
@@ -834,7 +834,7 @@ def _parse_rendered_term(text):
     return term
 
 
-class MathScratchEntailment(Task):
+class MathScratchEntailment(DevTask):
     """True/False equivalence by normal form in a terminating rewrite world."""
 
     config_cls = ScratchConfig
@@ -912,7 +912,7 @@ class MathScratchEntailment(Task):
         return float(_extract_bool(answer) == entry.answer)
 
 
-class MathScratchCoreSelect(Task):
+class MathScratchCoreSelect(DevTask):
     """Select a sufficient displayed rule subset for a scratch rewrite proof."""
 
     config_cls = ScratchConfig
@@ -1005,7 +1005,7 @@ class MathScratchCoreSelect(Task):
         return float(_extract_choice(answer) == entry.answer)
 
 
-class MathScratchNormalize(Task):
+class MathScratchNormalize(DevTask):
     """Predict the normal form of one expression under the displayed rewrite rules."""
 
     config_cls = ScratchConfig

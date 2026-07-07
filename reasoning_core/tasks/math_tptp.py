@@ -24,7 +24,7 @@ from ._tptp_finite_interpretation import (
     validate_formula,
 )
 from ._tptp_sat_graph import generate_derivation_graph
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, DevTask, Problem, Config
 from reasoning_core.template import TimeoutException
 from itertools import combinations
 from math import comb
@@ -884,7 +884,7 @@ class EntailConfig(Config):
         self.max_hypotheses += level
         self.max_payload_chars += 500 * level
 
-class TptpEntailment(Task):
+class TptpEntailment(DevTask):
     """
     A task that generates problems to determine if a set of hypotheses
     proves a given conjecture.
