@@ -1,6 +1,6 @@
 import networkx as nx
 import random
-from reasoning_core.template import Task, Problem, Config, Payload
+from reasoning_core.template import Task, Problem, Config, Payload, stochastic_rounding as sround
 from reasoning_core.utils import parse_space_ints
 from dataclasses import dataclass
 
@@ -11,8 +11,11 @@ class GraphReasoningConfig(Config):
     no_solution_prob: float = 0.1
     return_to_start_prob: float = 0.1
     pairs_render_together_prob: float = 0.7
-    def update(self, c): 
-        self.num_nodes *= (1 + c)
+    weighted_prob: float = 0.25
+    weight_min: int = 1
+    weight_max: int = 9
+    def apply_difficulty(self, level):
+        self.num_nodes *= 2 ** level
 
 _GRAPH_GENERATORS = [
     (nx.fast_gnp_random_graph, {'p': (0.15, 0.4)}),
@@ -85,8 +88,22 @@ class BaseGraphTask:
         G = nx.fast_gnp_random_graph(num_nodes, 0.4, directed=True)
         return nx.convert_node_labels_to_integers(G)
 
-    def _render_graph(self, G, seed=None):
+    def _format_edge(self, u, v, data, weighted):
+        if weighted:
+            return f"{u}->{v}({data['weight']})"
+        return f"{u}->{v}"
+
+    def _render_edges(self, G, weighted=False):
+        return ", ".join(
+            self._format_edge(u, v, d, weighted)
+            for u, v, d in sorted(G.edges(data=True))
+        )
+
+    def _render_graph(self, G, seed=None, weighted=False):
         """Randomly selects a method to describe the directed graph in text."""
+        if weighted:
+            return f"Nodes {sorted(list(G.nodes()))}. Directed Edges: {self._render_edges(G, weighted=True)}"
+
         def r_adjacency_list(g):
             return "\n".join(
                 f"Node {n} has directed edges to: {', '.join(map(str, sorted(g.successors(n))))}."
@@ -132,16 +149,35 @@ class BaseGraphTask:
 
 
 class GraphPathfinding(BaseGraphTask, Task):
-    def _lexicographic_shortest_path(self, G, start, end):
-        queue, visited = [(start, [start])], {start}
-        while queue:
-            curr, path = queue.pop(0)
-            if curr == end: return path
-            for n in sorted(G.successors(curr)):
-                if n not in visited:
-                    visited.add(n)
-                    queue.append((n, path + [n]))
-        return None
+    def _add_weights(self, G, weighted):
+        for u, v in G.edges:
+            G.edges[u, v]["weight"] = (
+                random.randint(self.config.weight_min, self.config.weight_max)
+                if weighted else 1
+            )
+        return G
+
+    def _shortest_path(self, G, start, end):
+        import heapq
+
+        heap = [(0, (start,), start)]
+        best = {}
+
+        while heap:
+            cost, path, u = heapq.heappop(heap)
+
+            if u in best and best[u] <= (cost, path):
+                continue
+            best[u] = (cost, path)
+
+            if u == end:
+                return list(path), cost
+
+            for v in sorted(G.successors(u)):
+                w = G.edges[u, v].get("weight", 1)
+                heapq.heappush(heap, (cost + w, path + (v,), v))
+
+        return None, None
 
     def _disconnected_graph(self):
         n = max(2, self.config.num_nodes)
@@ -150,29 +186,15 @@ class GraphPathfinding(BaseGraphTask, Task):
         G2 = nx.fast_gnp_random_graph(n - n1, 0.5, directed=True)
         return nx.disjoint_union(G1, G2)
 
-    def make_cot(self, G, start, end):
-        queue, visited = [(start, [start])], {start}
-        lines = [f"BFS path from {start} to {end}.", f"Queue: [{start}]"]
-        while queue:
-            curr, path = queue.pop(0)
-            lines.append(f"\nPop {curr}. Current Path: {path}")
-            if curr == end:
-                lines.append(f"Target found.")
-                return "\n".join(lines)
-            
-            new_successors = [n for n in sorted(G.successors(curr)) if n not in visited]
-            for n in new_successors:
-                visited.add(n)
-                queue.append((n, path + [n]))
-            
-            if new_successors:
-                lines.extend([f"  -> Found new outgoing neighbors: {new_successors}"])
-            else:
-                lines.append("  -> All outgoing neighbors visited or empty. Backtrack.")
-            lines.append(f"  -> Queue is now: {[n for n, _ in queue]}")
-        return "\n".join(lines + ["Target unreachable."])
+    def make_cot(self, G, start, end, path=None, cost=None):
+        if path is None and cost is None:
+            path, cost = self._shortest_path(G, start, end)
+        if path is None:
+            return f"No directed path from {start} to {end}."
+        return f"Optimal cost: {cost}. Path: {' '.join(map(str, path))}."
 
     def generate(self):
+        weighted = random.random() < self.config.weighted_prob
         G = self._generate_graph()
         
         if random.random() < self.config.no_solution_prob:
@@ -184,7 +206,8 @@ class GraphPathfinding(BaseGraphTask, Task):
                 start, end = random.choice(list(nodes1)), random.choice(list(nodes2))
             else:
                 start, end = random.choice(pairs)
-            path = None
+            G = self._add_weights(G, weighted)
+            path, cost = None, None
         else:
             pairs = [(u, v) for u in G.nodes() for v in G.nodes() if u != v and nx.has_path(G, u, v)]
             if not pairs:
@@ -192,21 +215,27 @@ class GraphPathfinding(BaseGraphTask, Task):
                 start, end = 0, self.config.num_nodes - 1
             else:
                 start, end = random.choice(pairs)
-            path = self._lexicographic_shortest_path(G, start, end)
+            G = self._add_weights(G, weighted)
+            path, cost = self._shortest_path(G, start, end)
 
         return Problem(
             metadata={
-                "graph_description": self._render_graph(G), "start_node": start, "end_node": end,
-                "nodes": list(G.nodes()), "edges": list(G.edges()),
+                "weighted": weighted,
+                "graph_description": self._render_graph(G, weighted=weighted), "start_node": start, "end_node": end,
+                "nodes": list(G.nodes()), "edges": [(u, v, d["weight"]) for u, v, d in G.edges(data=True)],
+                "optimal_cost": cost,
                 "optimal_length": len(path) if path is not None else None,
-                "cot": self.make_cot(G, start, end)
+                "cot": self.make_cot(G, start, end, path, cost)
             },
             answer="None" if path is None else " ".join(map(str, path))
         )
 
     def prompt(self, m):
+        objective = "minimum-cost" if m.get("weighted") else "shortest"
         return (
-            f"Find the lexicographically smallest shortest directed path from node {m['start_node']} to node {m['end_node']}.\n"
+            f"Find the {objective} directed path from node {m['start_node']} "
+            f"to node {m['end_node']}. "
+            "If several paths are tied, return the lexicographically smallest one. "
             "Answer with space-separated nodes, or `None` if no path exists.\n\n"
             f"{Payload(graph=m['graph_description'])}"
         )
@@ -218,8 +247,11 @@ class GraphPathfinding(BaseGraphTask, Task):
             else:
                 pred = parse_space_ints(text)
 
-            meta, opt_len = entry.metadata, entry.metadata.get("optimal_length")
-            if pred is None: return 1.0 if opt_len is None else 0.0
+            meta = entry.metadata
+            opt = meta.get("optimal_cost")
+            legacy_opt_len = meta.get("optimal_length")
+            target = opt if opt is not None else legacy_opt_len
+            if pred is None: return 1.0 if target is None else 0.0
             if not isinstance(pred, list) or not pred: return 0.0
 
             th = lambda x: tuple(x) if isinstance(x, list) else x
@@ -234,13 +266,22 @@ class GraphPathfinding(BaseGraphTask, Task):
             # -----------------------------------
 
             G.add_nodes_from(map(th, meta["nodes"]))
-            G.add_edges_from((th(u), th(v)) for u, v in meta["edges"])
+            for edge in meta["edges"]:
+                if len(edge) == 3:
+                    u, v, w = edge
+                else:
+                    u, v = edge
+                    w = 1
+                G.add_edge(th(u), th(v), weight=w)
 
             pred = list(map(th, pred))
             if pred[0] != th(meta["start_node"]) or pred[-1] != th(meta["end_node"]): return 0.0
-            if not nx.is_path(G, pred) or opt_len is None or len(pred) < opt_len: return 0.0
+            if not nx.is_path(G, pred) or target is None: return 0.0
             
-            return opt_len / len(pred)
+            cost = sum(G.edges[u, v]["weight"] for u, v in zip(pred, pred[1:])) if opt is not None else len(pred)
+            if cost < target:
+                return 0.0
+            return target / cost
 
 
 @dataclass
@@ -249,10 +290,10 @@ class GraphSuccessorsConfig(Config):
     num_queries: int = 1
     max_hops: int = 2
 
-    def update(self, c=1):
-        self.num_nodes += c
-        self.num_queries += c // 2
-        self.max_hops += c
+    def apply_difficulty(self, level):
+        self.num_nodes += level
+        self.num_queries = sround(self.num_queries + 0.5 * level)
+        self.max_hops += level
 
 
 class GraphSuccessors(BaseGraphTask, Task):
@@ -309,9 +350,9 @@ class GraphDependenciesConfig(Config):
     num_nodes: int = 6
     max_prereqs: int = 2
 
-    def update(self, c=1):
-        self.num_nodes += c
-        self.max_prereqs += c // 2
+    def apply_difficulty(self, level):
+        self.num_nodes += level
+        self.max_prereqs = sround(self.max_prereqs + 0.5 * level)
 
 
 class GraphDependencies(BaseGraphTask, Task):

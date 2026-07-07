@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 
 from z3 import Int, Solver, sat
 
-from reasoning_core.template import Task, Problem, Config, Payload, edict
+from reasoning_core.template import Task, Problem, Config, Payload, edict, stochastic_rounding as sround
 
 
 # Symmetric inverse of a size relation, used for deduplication.
@@ -34,20 +34,20 @@ class ReferenceTrackingConfig(Config):
     ask_location_p: float = 0.5
     winograd_singles_p: float = 0.5
 
-    def update(self, c=1):
-        self.n_balls     += 0.6 * c
-        self.n_boxes     += 0.3 * c
-        self.n_steps     += 0.7 * c
-        self.chain_len   += 0.4 * c
-        self.extra_facts += 0.5 * c
+    def apply_difficulty(self, level):
+        self.n_balls     = sround(self.n_balls + 0.6 * level)
+        self.n_boxes     = sround(self.n_boxes + 0.3 * level)
+        self.n_steps     = sround(self.n_steps + 0.7 * level)
+        self.chain_len   = sround(self.chain_len + 0.4 * level)
+        self.extra_facts = sround(self.extra_facts + 0.5 * level)
 
-        self.bulk_move_p        = min(0.75, self.bulk_move_p + 0.03 * c)
-        self.pronoun_move_p     = min(0.55, self.pronoun_move_p + 0.04 * c)
-        self.prefer_indirect_p  = min(1.0,  self.prefer_indirect_p + 0.2 * c)
-        self.winograd_p         = min(0.85, self.winograd_p + 0.04 * c)
-        self.allow_equalities_p = min(0.9,  self.allow_equalities_p + 0.08 * c)
-        self.ask_location_p     = min(0.9,  self.ask_location_p + 0.08 * c)
-        self.winograd_singles_p = min(0.9,  self.winograd_singles_p + 0.1 * c)
+        self.bulk_move_p        = min(0.75, self.bulk_move_p + 0.03 * level)
+        self.pronoun_move_p     = min(0.55, self.pronoun_move_p + 0.04 * level)
+        self.prefer_indirect_p  = min(1.0,  self.prefer_indirect_p + 0.2 * level)
+        self.winograd_p         = min(0.85, self.winograd_p + 0.04 * level)
+        self.allow_equalities_p = min(0.9,  self.allow_equalities_p + 0.08 * level)
+        self.ask_location_p     = min(0.9,  self.ask_location_p + 0.08 * level)
+        self.winograd_singles_p = min(0.9,  self.winograd_singles_p + 0.1 * level)
 
 
 class ReferenceTracking(Task):

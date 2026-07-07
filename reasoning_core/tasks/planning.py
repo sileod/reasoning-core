@@ -479,11 +479,11 @@ class PlanningConfig(Config):
     domain: str = None
     #domains: list = field(default_factory=lambda: ["blocksworld", "mystery", None])
     domains: list = field(default_factory=lambda: [None])
-    def update(self, c):
-        self.N += c
-        self.min_na += c
-        self.max_na += c
-        self.arity_weight += c
+    def apply_difficulty(self, level):
+        self.N += level
+        self.min_na += level
+        self.max_na += level
+        self.arity_weight += level
 
 class Planning(Task):
     task_name = "planning" 

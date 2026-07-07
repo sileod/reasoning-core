@@ -8,7 +8,7 @@ from collections import defaultdict
 from copy import deepcopy as dc
 
 
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Problem, Config, stochastic_rounding as sround
 
 
 # ----cfg for formulas---- 📋
@@ -168,12 +168,11 @@ class SequenceConfig(Config):
     max_terms_len: int = 15
     min_depth_grammar: int = 2
     max_depth_grammar: int = 3
-    def update(self, c):
-        self.recurrence_depth += c
-        self.n_visible_terms += 2 * c
-        self.min_depth_grammar += 0.5 * c
-        self.max_depth_grammar += c
-
+    def apply_difficulty(self, level):
+        self.recurrence_depth = sround(self.recurrence_depth + level)
+        self.n_visible_terms = sround(self.n_visible_terms + 2 * level)
+        self.min_depth_grammar = sround(self.min_depth_grammar + 0.5 * level)
+        self.max_depth_grammar = sround(self.max_depth_grammar + level)
 
 class SequentialInduction(Task):
     def __init__(self, config=SequenceConfig()):

@@ -878,13 +878,13 @@ class EntailConfig(Config):
     max_attempts: int = 80
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.proof_depth += c
-        self.perturbation += c
-        self.max_hypotheses += c
-        self.max_payload_chars += 500 * c
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.perturbation += level
+        self.max_hypotheses += level
+        self.max_payload_chars += 500 * level
 
-class TptpEntailement(Task):
+class TptpEntailment(Task):
     """
     A task that generates problems to determine if a set of hypotheses
     proves a given conjecture.
@@ -1122,12 +1122,11 @@ class ConsistencyRepairConfig(Config):
     answer_style: str = "space"  # "space" or "list"
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.proof_depth += c
-        self.perturbation += c
-        self.max_axioms += c
-        self.max_payload_chars += 500 * c
-
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.perturbation += level
+        self.max_axioms += level
+        self.max_payload_chars += 500 * level
 
 class TPTPConsistencyRepair(Task):
     """Find all singleton deletions that restore satisfiability."""

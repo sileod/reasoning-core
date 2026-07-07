@@ -13,7 +13,7 @@ uv pip install reasoning-core
 
 from reasoning_core import list_tasks, get_task, score_answer
 
-T = get_task('arithmetics')()
+T = get_task('arithmetics')
 x = T.generate_example()
 assert score_answer(x.answer, x)==1
 ```

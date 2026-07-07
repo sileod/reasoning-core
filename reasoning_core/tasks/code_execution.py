@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from itertools import product
 
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Problem, Config, edict, stochastic_rounding as sround
 from gramforge import generate
 from gramforge.grammars import mesopy_grammar
 
@@ -25,13 +25,13 @@ class MesopyCodeCfg(Config):
     trivial_probes: int = 3
     runnable_prob: float = 0.25
 
-    def update(self, c):
-        self.difficulty += c
-        self.min_depth += c / 2
-        self.max_depth += int(c)
-        self.n_functions += c / 2
-        self.magnitude += c / 2
-        self.min_steps += int(2 * c)
+    def apply_difficulty(self, level):
+        self.difficulty += level
+        self.min_depth = sround(self.min_depth + 0.5 * level)
+        self.max_depth = sround(self.max_depth + level)
+        self.n_functions = sround(self.n_functions + 0.5 * level)
+        self.magnitude = sround(self.magnitude + 0.5 * level)
+        self.min_steps = sround(self.min_steps + 2 * level)
 
 
 @dataclass
@@ -342,10 +342,10 @@ class CodeInputDeductionCfg(MesopyCodeCfg):
     alphabet: str = "abc"
     max_attempts: int = 100
 
-    def update(self, c):
-        self.lo -= c
-        self.hi += c
-        self.max_len += c // 2
+    def apply_difficulty(self, level):
+        self.lo = sround(self.lo - level)
+        self.hi = sround(self.hi + level)
+        self.max_len = sround(self.max_len + 0.5 * level)
 
 
 def bounded_strings(alphabet, max_len):

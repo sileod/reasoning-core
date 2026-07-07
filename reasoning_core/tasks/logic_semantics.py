@@ -140,11 +140,11 @@ class LogicConfig(Config):
     n_adjectives: int = 3
     pronouns: list = field(default_factory=lambda: ["she",'he'])
     bloat_skip_rate:float = 0.90
-    def update(self, c):
-        self.n_formulas *= (1 + c)
-        self.n_names += c
-        self.n_adjectives += c
-        
+    def apply_difficulty(self, level):
+        self.n_formulas *= 2 ** level
+        self.n_names += level
+        self.n_adjectives += level
+
 def get_cot(text):
     lines, memo = [], {}
     for line in text.splitlines():

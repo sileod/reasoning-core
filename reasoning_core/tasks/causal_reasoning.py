@@ -8,7 +8,7 @@ from math import log, nan, floor, ceil
 import ast
 from abc import ABC, abstractmethod
 
-from reasoning_core.template import Task, DevTask, Problem, Config
+from reasoning_core.template import Task, DevTask, Problem, Config, stochastic_rounding as sround
 from dataclasses import dataclass
 
 from typing import (
@@ -336,12 +336,11 @@ class Rung12Config(Config):
             self.generate_trivial = True
         return self
 
-    def update(self, c):
-            self.n_round += .5 * c
-            self.n_nodes += .5 * c
-            self.max_domain_size += .5 * c
-            self.cpt_relative_threshold += .5 * c 
-
+    def apply_difficulty(self, level):
+            self.n_round = sround(self.n_round + 0.5 * level)
+            self.n_nodes = sround(self.n_nodes + 0.5 * level)
+            self.max_domain_size = sround(self.max_domain_size + 0.5 * level)
+            self.cpt_relative_threshold += 0.5 * level 
 
     def set_seed(self, graph_seed = None, conditionning_seed = None):
         """

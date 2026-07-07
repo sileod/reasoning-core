@@ -23,6 +23,7 @@ import copy
 import math
 import signal
 from contextlib import contextmanager
+from contextvars import ContextVar
 from inflection import underscore
 import tiktoken
 from appdirs import user_cache_dir
@@ -34,6 +35,8 @@ from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 #template.py
 
 _REGISTRY = dict()
+_ROUNDING_SEED = ContextVar("reasoning_core_rounding_seed", default=None)
+_ROUNDING_SEED_UNSET = object()
 
 
 @functools.lru_cache(maxsize=None)
@@ -131,6 +134,14 @@ def seed():
     np.random.seed()
 
 
+def stochastic_rounding(value, seed=_ROUNDING_SEED_UNSET):
+    """Round a float to a nearby int using the shared Config rounding rule."""
+    if seed is _ROUNDING_SEED_UNSET:
+        seed = _ROUNDING_SEED.get()
+    floor_val = int(value)
+    return floor_val + (1 if random.Random(seed).random() < (value - floor_val) else 0)
+
+
 
 
 class TimeoutException(BaseException): pass
@@ -185,7 +196,7 @@ def timeout_retry(seconds=15, attempts=10):
 
 
 
-class Problem(Mapping):
+class Entry(Mapping):
     def __init__(self, metadata, answer=None, cot=None):
         self.metadata = edict(metadata)
         self.answer = answer
@@ -225,6 +236,9 @@ class Problem(Mapping):
         return self.to_dict().keys()
     def __len__(self):
         return len(self.to_dict())
+
+
+Problem = Entry
         
 def register_dataset(name, dataset_cls):
     _REGISTRY[name] = dataset_cls
@@ -288,14 +302,19 @@ def _load_tokenizer():
     
 
 class Task(ProceduralDataset):
+    config_cls = None
+
     def __init_subclass__(cls):
         cls.task_name = getattr(cls, 'task_name', prepr_task_name(cls.__name__))
         cls.category_name = getattr(cls, 'category_name', cls.__module__.split('.')[-1])
         register_dataset(cls.task_name, cls)
 
 
-    def __init__(self, config=dict(), timeout=10, seed=None, _level=0, *a, **kwa):
+    def __init__(self, config=None, timeout=10, seed=None, _level=0, *a, **kwa):
         self.seed = seed
+        if config is None:
+            config_cls = self.config_cls or Config
+            config = config_cls()
         self.config=copy.deepcopy(config)
         self.timeout = timeout
         self.base_timeout = timeout
@@ -307,14 +326,28 @@ class Task(ProceduralDataset):
         self.tokenizer = _load_tokenizer()
         self._config_level_seen = getattr(self.config, "level", None)
 
-    def generate(self):
-        """To override, return one problem"""
-        #return Problem(metadata=edict(), answer="")
-        raise NotImplementedError 
+    def generate_entry(self):
+        """To override in new tasks, return one Entry."""
+        if type(self).generate is not Task.generate:
+            return self.generate()
+        raise NotImplementedError
 
-        
-    def prompt(self,metadata):
-        """To override, turns a problem metadata into a prompt"""
+    def generate(self):
+        """Legacy alias for generate_entry()."""
+        if type(self).generate_entry is not Task.generate_entry:
+            return self.generate_entry()
+        raise NotImplementedError
+
+    def render_prompt(self, metadata):
+        """To override in new tasks, render entry metadata as a prompt."""
+        if type(self).prompt is not Task.prompt:
+            return self.prompt(metadata)
+        return ""
+
+    def prompt(self, metadata):
+        """Legacy alias for render_prompt(metadata)."""
+        if type(self).render_prompt is not Task.render_prompt:
+            return self.render_prompt(metadata)
         return ""
 
     def score_answer(self, answer, entry):
@@ -348,7 +381,7 @@ class Task(ProceduralDataset):
             else:
                 restored = []
                 for ex in examples[:n_samples + 1]:
-                    problem = Problem.from_dict(ex)
+                    problem = Entry.from_dict(ex)
                     problem.prompt = ex.get("prompt")
                     restored.append(problem)
                 examples = restored
@@ -384,7 +417,7 @@ class Task(ProceduralDataset):
         return ys
 
     def _check_validation_examples(self, x, ys, n_samples):
-        assert isinstance(x, Problem), f"Generated example must be of type Problem, got {type(x)}"
+        assert isinstance(x, Entry), f"Generated example must be of type Entry, got {type(x)}"
         assert self.score_answer(x.answer, x)==1, "The generated answer must be correct"
         assert x.prompt, "Generated example must have a non-empty prompt"
         assert len({y.prompt for y in ys})!=1 or n_samples==1, "Examples should not be identical"
@@ -447,11 +480,11 @@ class Task(ProceduralDataset):
                     self._config_level_seen = self.config.level
             with self._override_config(**kwargs) as generate_kwargs:
                 for _ in range(1_000):
-                    problem = self.generate(**generate_kwargs)
+                    problem = self.generate_entry(**generate_kwargs)
                     if problem is None:
                         continue
                     Payload.maybe_shuffle_metadata(problem.metadata, payload_shuffle_prob)
-                    problem.prompt = self.prompt(problem.metadata)
+                    problem.prompt = self.render_prompt(problem.metadata)
 
                     prompt_tokens = len(self.tokenizer.encode(problem.prompt))
                     answer_tokens = len(self.tokenizer.encode(problem.metadata.get('cot','') + problem.answer))
@@ -538,10 +571,9 @@ class Config:
     Base config providing transparent stochastic rounding.
 
     A subclass only needs to define its attributes with `int` type hints
-    and implement a natural `update()` method (e.g., `self.n_ex += self.c`).
+    and implement `apply_difficulty(level)`.
     The base class handles all rounding logic automatically.
     """
-    c: float = 1.0
     level: int = 0
     seed: int = None
     size: int = None
@@ -585,9 +617,7 @@ class Config:
                 if is_updating:
                     return float_val
                 else:
-                    local_rng = random.Random(object.__getattribute__(self, 'seed'))
-                    floor_val = int(float_val)
-                    return floor_val + (1 if local_rng.random() < (float_val - floor_val) else 0)
+                    return stochastic_rounding(float_val, object.__getattribute__(self, 'seed'))
         except AttributeError:
             pass # Object is still initializing.
             
@@ -609,28 +639,48 @@ class Config:
             
         object.__setattr__(self, name, value)
 
-    def set_level(self, i: int):
-        current_c = self.c
+    def _apply_difficulty_level(self, i: int, apply):
         current_seed = self.seed
         self.__dict__.update(copy.deepcopy(self._base_config_dict))
         self._unrounded = copy.deepcopy(self._base_unrounded)
-        self.c = current_c
         self.seed = current_seed
         # Set the flag to enable deterministic updates.
         object.__setattr__(self, '_is_updating', True)
+        rounding_seed_token = _ROUNDING_SEED.set(current_seed)
         try:
             object.__setattr__(self, 'level', i)             
-            for _ in range(i):
-                self.update(self.c)
+            apply(i)
         finally:
+            _ROUNDING_SEED.reset(rounding_seed_token)
             # Always reset the flag, even if update fails.
             object.__setattr__(self, '_is_updating', False)
         
         object.__setattr__(self, 'level', i) 
         return self
 
+    def set_level(self, i: int):
+        return self._apply_difficulty_level(i, self.apply_difficulty)
+
+    def apply_difficulty(self, level: int):
+        """Apply the target difficulty level from the base config state.
+
+        Subclasses should override this with an explicit non-recursive formula.
+        The default preserves legacy behavior by replaying `update(1)`.
+        """
+        for _ in range(level):
+            self.update(1)
+
     def update(self, c):
         raise NotImplementedError("Config subclasses must implement 'update'")
+
+    def to_unrounded_dict(self):
+        result = {}
+        for f in fields(self):
+            if f.name in self._stochastic_fields:
+                result[f.name] = self.get_true_value(f.name)
+            else:
+                result[f.name] = getattr(self, f.name)
+        return result
 
     def to_dict(self):
         return asdict(self)
@@ -642,6 +692,41 @@ class Config:
             field_strings.append(f"{f.name}={value!r}")
         
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
+
+
+def assert_difficulty_update_equivalence(config, levels=range(6), seed=0):
+    """Assert `apply_difficulty(level)` matches repeated legacy `update(1)`.
+
+    This is intended as a cheap migration test for task configs that add an
+    explicit `apply_difficulty` implementation while keeping `update`.
+    """
+    def equal(a, b):
+        if isinstance(a, float) or isinstance(b, float):
+            return math.isclose(a, b, rel_tol=1e-12, abs_tol=1e-12)
+        return a == b
+
+    for level in levels:
+        via_apply = copy.deepcopy(config)
+        via_update = copy.deepcopy(config)
+        if getattr(via_apply, "seed", None) is None:
+            via_apply.seed = seed
+        if getattr(via_update, "seed", None) is None:
+            via_update.seed = seed
+        via_apply.set_level(level)
+        via_update._apply_difficulty_level(
+            level,
+            lambda target_level, cfg=via_update: Config.apply_difficulty(cfg, target_level),
+        )
+        apply_state = via_apply.to_dict()
+        update_state = via_update.to_dict()
+        if apply_state.keys() != update_state.keys() or any(
+            not equal(apply_state[k], update_state[k]) for k in apply_state
+        ):
+            raise AssertionError(
+                f"{config.__class__.__name__} difficulty migration differs at level {level}: "
+                f"apply_difficulty={apply_state}, repeated_update={update_state}"
+            )
+    return True
 
 class Reward(wrapt.ObjectProxy):
     def __init__(self, wrapped, tag=None, **kwargs):

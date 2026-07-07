@@ -19,11 +19,11 @@ class NavigationConfig(Config):
     n_rel: int = 6
     max_tries: int = 80
 
-    def update(self, c=1):
-        self.n_objects += 1 * c
-        self.grid += 1 * c
-        self.n_steps += 1 * c
-        self.n_rel += 1 * c
+    def apply_difficulty(self, level):
+        self.n_objects += level
+        self.grid += level
+        self.n_steps += level
+        self.n_rel += level
 
 
 DELTAS = [

@@ -3,7 +3,7 @@ import random
 import string
 from dataclasses import dataclass
 
-from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
 
 
 ALPHA = string.ascii_lowercase[:8]
@@ -18,11 +18,11 @@ class StringTransductionConfig(Config):
     edit_ops: int = 3
     edit_rate: float = 0.25
 
-    def update(self, c=1):
-        self.length += 2 * c
-        self.n_ops += c
-        self.alphabet_size = min(8, self.alphabet_size + int(c >= 2))
-        self.edit_ops += c
+    def apply_difficulty(self, level):
+        self.length = sround(self.length + 2 * level)
+        self.n_ops = sround(self.n_ops + level)
+        self.alphabet_size = sround(min(8, self.alphabet_size + level // 2))
+        self.edit_ops = sround(self.edit_ops + level)
 
 
 def caesar(s, k):

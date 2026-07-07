@@ -1,4 +1,4 @@
-from reasoning_core.template import Problem, Task, DevTask, edict, Config
+from reasoning_core.template import Problem, Task, DevTask, edict, Config, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 from gramforge import init_grammar
 from dataclasses import dataclass
@@ -89,12 +89,14 @@ class ArithmeticsConfig(Config):
     trailing_zero_prob: float = 0.2
     trivial_prob = 0.01
     bool_prob = 0.1
+    spaced_digits_prob: float = 0.25
+    reversed_spaced_digits_prob: float = 0.25
 
-    def update(self, c):
-        self.min_depth += c
-        self.max_depth += c
-        self.out_digits += c
-        self.out_decimals += c
+    def apply_difficulty(self, level):
+        self.min_depth = sround(self.min_depth + level)
+        self.max_depth = sround(self.max_depth + level)
+        self.out_digits = sround(self.out_digits + level)
+        self.out_decimals = sround(self.out_decimals + level)
 
 def _add_trailing_zeros(s, prob=0.2):
     """Add trailing zeros to decimals with exponentially decreasing probability."""
@@ -145,9 +147,31 @@ def fill_num(expr, cfg=ArithmeticsConfig()):
             return pat.sub(lambda _: next(it_str), expr), dec
     raise RuntimeError('No assignment found; increase n_trials or widen pool.')
 
+def _space_number(m, reverse=False):
+    s = m.group()
+    chars = list(reversed(s)) if reverse else list(s)
+    return " ".join(chars)
+
+
+def _display_expr(expr, cfg):
+    r = random.random()
+    if r < cfg.spaced_digits_prob:
+        return re.sub(r"\d+(?:\.\d+)?", _space_number, expr), "spaced"
+    if r < cfg.spaced_digits_prob + cfg.reversed_spaced_digits_prob:
+        return re.sub(r"\d+(?:\.\d+)?", lambda m: _space_number(m, True), expr), "reversed_spaced"
+    return expr, "normal"
+
+
+def _format_number(s, mode):
+    if mode == "spaced":
+        return re.sub(r"\d+(?:\.\d+)?", _space_number, s)
+    if mode == "reversed_spaced":
+        return re.sub(r"\d+(?:\.\d+)?", lambda m: _space_number(m, True), s)
+    return s
+
+
 class Arithmetics(Task):
-    def __init__(self, config=ArithmeticsConfig()):
-        super().__init__(config=config)
+    config_cls = ArithmeticsConfig
 
     def generate(self):
         while True:
@@ -157,14 +181,21 @@ class Arithmetics(Task):
         final_expr, value = fill_num(expr, cfg=self.config)
         quantizer = Decimal('1e-' + str(self.config.out_decimals))
         ans_str = f"{value.quantize(quantizer):f}".rstrip('0').rstrip('.')
-        meta = edict(expr=final_expr, height=x.height, cot=self.get_cot(final_expr))
-        return Problem(metadata=meta, answer=ans_str)
+        shown_expr, digit_mode = _display_expr(final_expr, self.config)
+        meta = edict(expr=final_expr, display_expr=shown_expr, digit_mode=digit_mode, height=x.height, cot=self.get_cot(final_expr))
+        return Problem(metadata=meta, answer=_format_number(ans_str, digit_mode))
     
     def prompt(self, metadata):
-        return f"Evaluate {metadata.expr}.\nThe answer is a number."
+        note = {
+            "spaced": " Digits are spaced; answer likewise.",
+            "reversed_spaced": " Digits are reversed and spaced; answer likewise.",
+        }.get(metadata.get("digit_mode"), "")
+        return f"Evaluate {metadata.get('display_expr', metadata.expr)}.{note}\nThe answer is a number."
 
     def score_answer(self, answer, entry):
-        return score_scalar(answer, entry)
+        if entry.metadata.get("digit_mode", "normal") == "normal":
+            return score_scalar(answer, entry)
+        return float(str(answer).strip() == str(entry.answer).strip())
 
     def get_cot(self, expr):
         ops = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, 
@@ -218,10 +249,10 @@ class WordProblemMathConfig(Config):
     inverse_p: float = .30
     relational_p: float = .50
 
-    def update(self, c=1):
-        self.n_rel += .9 * c
-        self.max_n += 12 * c
-        self.inverse_p = min(.70, self.inverse_p + .08 * c)
+    def apply_difficulty(self, level):
+        self.n_rel = sround(self.n_rel + level)
+        self.max_n = sround(self.max_n + 12 * level)
+        self.inverse_p = min(.70, self.inverse_p + .08 * level)
 
 
 def ri(a, b):

@@ -6,7 +6,7 @@ from pyggp import game_description_language as gdl
 from pyggp.engine_primitives import Turn
 from pyggp.interpreters import ClingoInterpreter, Interpreter
 
-from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
 
 
 @dataclass
@@ -15,10 +15,10 @@ class GameBestMoveConfig(Config):
     max_branch: int = 2
     horizon: int = 3
 
-    def update(self, c=1):
-        self.nodes += c
-        self.max_branch += c / 4
-        self.horizon += c / 3
+    def apply_difficulty(self, level):
+        self.nodes = sround(self.nodes + level)
+        self.max_branch = sround(self.max_branch + 0.25 * level)
+        self.horizon = sround(self.horizon + level / 3)
 
 
 def _name(i):

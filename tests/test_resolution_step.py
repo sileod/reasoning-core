@@ -5,9 +5,8 @@ import pytest
 
 from reasoning_core.template import Problem
 from reasoning_core.tasks._tptp_sat_graph import DerivationNode
+from reasoning_core.tasks.deprecated.math_tptp_dev import ResolutionStep, ResolutionStepConfig
 from reasoning_core.tasks.math_tptp import (
-    ResolutionStep,
-    ResolutionStepConfig,
     TPTPTerm,
     canonical,
     parse_clause,

@@ -63,13 +63,13 @@ class GrammarConfig(Config):
     max_blanks: int = 3
     min_options: int = 4
     max_options: int = 25
-    def update(self, c):
-        self.n_types += c
-        self.n_terminals += c
-        self.min_depth += c
-        self.max_depth += c
-        self.prob_resampling_grammar = max(0.0, self.prob_resampling_grammar - 0.1 * c)
-        self.max_tokens += 2*c
+    def apply_difficulty(self, level):
+        self.n_types += level
+        self.n_terminals += level
+        self.min_depth += level
+        self.max_depth += level
+        self.prob_resampling_grammar = max(0.0, self.prob_resampling_grammar - 0.1 * level)
+        self.max_tokens += 2 * level
 
 def meta_grammar(config):
     R=init_grammar(['cfg'])
@@ -1097,9 +1097,9 @@ class StressContinuationConfig(Config):
     n_types: int = 3
     window: int = 4
     max_answer: int = 8
-    def update(self, c):
-        self.depth += c
-        self.n_types = min(6, self.n_types + c)
+    def apply_difficulty(self, level):
+        self.depth += level
+        self.n_types = min(6, self.n_types + level)
 
 def _typed_dyck(n_types):
     pairs = [("(", ")"), ("[", "]"), ("<", ">"), ("{", "}"),
@@ -1345,10 +1345,10 @@ class StressConstrainedContinuationConfig(Config):
     min_cont: int = 2
     max_cont: int = 12
     dyck_weight: float = 0.34   # favor word grammars (agreement/filler_gap) over bracket-heavy dyck
-    def update(self, c):
-        self.depth += c
-        self.n_types = min(6, self.n_types + c)
-        self.max_cont = min(20, self.max_cont + 2 * c)
+    def apply_difficulty(self, level):
+        self.depth += level
+        self.n_types = min(6, self.n_types + level)
+        self.max_cont = min(20, self.max_cont + 2 * level)
 
 class StressConstrainedContinuation(DevTask):
     def __init__(self, config: StressConstrainedContinuationConfig = StressConstrainedContinuationConfig()):
