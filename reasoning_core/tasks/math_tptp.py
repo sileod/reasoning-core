@@ -1128,7 +1128,7 @@ class ConsistencyRepairConfig(Config):
         self.max_axioms += level
         self.max_payload_chars += 500 * level
 
-class TPTPConsistencyRepair(Task):
+class TPTPConsistencyRepair(DevTask):
     """Find all singleton deletions that restore satisfiability."""
     def __init__(self, config=ConsistencyRepairConfig()):
         super().__init__(config, timeout=720)
