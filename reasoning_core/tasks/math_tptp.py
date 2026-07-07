@@ -878,12 +878,6 @@ class EntailConfig(Config):
     max_attempts: int = 80
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.proof_depth += c
-        self.perturbation += c
-        self.max_hypotheses += c
-        self.max_payload_chars += 500 * c
-
     def apply_difficulty(self, level):
         self.proof_depth += level
         self.perturbation += level
@@ -1127,12 +1121,6 @@ class ConsistencyRepairConfig(Config):
     generation_time_budget: float = 600.0
     answer_style: str = "space"  # "space" or "list"
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
-
-    def update(self, c):
-        self.proof_depth += c
-        self.perturbation += c
-        self.max_axioms += c
-        self.max_payload_chars += 500 * c
 
     def apply_difficulty(self, level):
         self.proof_depth += level

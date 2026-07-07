@@ -47,16 +47,10 @@ class ProceduralWarmupConfig(Config):
         "eca110",
     )
 
-    def update(self, c):
-        self.seq_len = max(8, self.seq_len + round(8 * c))
-        self.vocab_size = max(16, self.vocab_size + round(8 * c))
-        self.k = min(16, max(2, self.k + round(c / 2)))
-        self.max_depth = max(4, self.max_depth + round(2 * c))
-
     def apply_difficulty(self, level):
         self.seq_len = sround(max(8, self.seq_len + 8 * level))
         self.vocab_size = sround(max(16, self.vocab_size + 8 * level))
-        self.k = sround(min(16, max(2, self.k + round(1 / 2) * level)))
+        self.k = sround(min(16, max(2, self.k + 0.5 * level)))
         self.max_depth = sround(max(4, self.max_depth + 2 * level))
 
 

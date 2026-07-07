@@ -2,8 +2,12 @@ from collections import Counter
 
 from easydict import EasyDict as edict
 from nltk import CFG, ChartParser
+import pytest
 
 from reasoning_core.tasks import grammar as grammar_tasks
+if not hasattr(grammar_tasks, "CFGSpan"):
+    pytest.skip("CFGSpan is no longer an active task", allow_module_level=True)
+
 from reasoning_core.tasks.grammar import (
     CFGSpan,
     GrammarConfig,

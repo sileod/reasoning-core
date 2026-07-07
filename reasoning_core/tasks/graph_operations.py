@@ -1,6 +1,6 @@
 import networkx as nx
 import random
-from reasoning_core.template import Task, Problem, Config, Payload
+from reasoning_core.template import Task, Problem, Config, Payload, stochastic_rounding as sround
 from reasoning_core.utils import parse_space_ints
 from dataclasses import dataclass
 
@@ -14,9 +14,6 @@ class GraphReasoningConfig(Config):
     weighted_prob: float = 0.25
     weight_min: int = 1
     weight_max: int = 9
-    def update(self, c): 
-        self.num_nodes *= (1 + c)
-
     def apply_difficulty(self, level):
         self.num_nodes *= 2 ** level
 
@@ -293,14 +290,9 @@ class GraphSuccessorsConfig(Config):
     num_queries: int = 1
     max_hops: int = 2
 
-    def update(self, c=1):
-        self.num_nodes += c
-        self.num_queries += c // 2
-        self.max_hops += c
-
     def apply_difficulty(self, level):
         self.num_nodes += level
-        self.num_queries += 0
+        self.num_queries = sround(self.num_queries + 0.5 * level)
         self.max_hops += level
 
 
@@ -358,13 +350,9 @@ class GraphDependenciesConfig(Config):
     num_nodes: int = 6
     max_prereqs: int = 2
 
-    def update(self, c=1):
-        self.num_nodes += c
-        self.max_prereqs += c // 2
-
     def apply_difficulty(self, level):
         self.num_nodes += level
-        self.max_prereqs += 0
+        self.max_prereqs = sround(self.max_prereqs + 0.5 * level)
 
 
 class GraphDependencies(BaseGraphTask, Task):

@@ -338,12 +338,6 @@ class LambdaReductionConfig(Config):
     min_shadowing: int = 1
     anti_reduction_prob: float = 0.6
 
-    def update(self, c=1):
-        self.nf_depth += c
-        self.term_depth += c
-        self.n_insertions += c
-        self.min_steps += c
-
     def apply_difficulty(self, level):
         self.nf_depth += level
         self.term_depth += level
@@ -868,17 +862,6 @@ class RewriteSystemConfig(Config):
     max_chars: int = 520
     atom_keep_prob: float = 0.65
     shortcut_compression: float = 16.0
-
-    def update(self, c=1):
-        k = max(1, int(round(c)))
-        self.depth += k
-        self.n_insertions += k
-        self.max_rules = min(self.max_rules + k, 12)
-        self.min_steps += k
-        self.max_steps += 50 * k
-        self.max_chars += 120 * k
-        self.atom_keep_prob = max(0.35, self.atom_keep_prob - 0.05 * k)
-        self.shortcut_compression = max(8.0, self.shortcut_compression - 2.0 * k)
 
     def apply_difficulty(self, level):
         self.depth += level

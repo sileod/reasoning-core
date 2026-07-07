@@ -92,12 +92,6 @@ class ArithmeticsConfig(Config):
     spaced_digits_prob: float = 0.25
     reversed_spaced_digits_prob: float = 0.25
 
-    def update(self, c):
-        self.min_depth += c
-        self.max_depth += c
-        self.out_digits += c
-        self.out_decimals += c
-
     def apply_difficulty(self, level):
         self.min_depth = sround(self.min_depth + level)
         self.max_depth = sround(self.max_depth + level)
@@ -177,8 +171,7 @@ def _format_number(s, mode):
 
 
 class Arithmetics(Task):
-    def __init__(self, config=ArithmeticsConfig()):
-        super().__init__(config=config)
+    config_cls = ArithmeticsConfig
 
     def generate(self):
         while True:
@@ -256,14 +249,9 @@ class WordProblemMathConfig(Config):
     inverse_p: float = .30
     relational_p: float = .50
 
-    def update(self, c=1):
-        self.n_rel += .9 * c
-        self.max_n += 12 * c
-        self.inverse_p = min(.70, self.inverse_p + .08 * c)
-
     def apply_difficulty(self, level):
-        self.n_rel += 0.9 * level
-        self.max_n += 12 * level
+        self.n_rel = sround(self.n_rel + level)
+        self.max_n = sround(self.max_n + 12 * level)
         self.inverse_p = min(.70, self.inverse_p + .08 * level)
 
 

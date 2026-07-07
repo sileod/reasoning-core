@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 import sympy as sp
 from sympy.geometry import Point, Line, Segment
 
-from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
 
 
 LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -727,23 +727,14 @@ class PlanarGeometryRelationsConfig(Config):
     constructed_operand_prob: float = 0.65
     query_types: list = field(default_factory=lambda: list(QUERIES))
 
-    def update(self, c):
-        self.n_base_points += 0.35 * c
-        self.n_constructed_points += 0.9 * c
-        self.coord_abs += 1.5 * c
-        self.max_den += 16 * c
-        self.max_num += 60 * c
-        self.max_interp_den += 0.8 * c
-        self.max_vector_scale += 0.25 * c
-
     def apply_difficulty(self, level):
-        self.n_base_points += 0.35 * level
-        self.n_constructed_points += 0.9 * level
-        self.coord_abs += 1.5 * level
-        self.max_den += 16 * level
-        self.max_num += 60 * level
-        self.max_interp_den += 0.8 * level
-        self.max_vector_scale += 0.25 * level
+        self.n_base_points = sround(self.n_base_points + 0.35 * level)
+        self.n_constructed_points = sround(self.n_constructed_points + 0.9 * level)
+        self.coord_abs = sround(self.coord_abs + 1.5 * level)
+        self.max_den = sround(self.max_den + 16 * level)
+        self.max_num = sround(self.max_num + 60 * level)
+        self.max_interp_den = sround(self.max_interp_den + 0.8 * level)
+        self.max_vector_scale = sround(self.max_vector_scale + 0.25 * level)
 
 class PlanarGeometryRelations(Task):
 

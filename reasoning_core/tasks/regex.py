@@ -6,7 +6,7 @@ import exrex
 import regex
 from dataclasses import dataclass
 from gramforge import init_grammar, generate
-from reasoning_core.template import Task, DevTask, Problem, register_dataset, Reward, Config
+from reasoning_core.template import Task, DevTask, Problem, register_dataset, Reward, Config, stochastic_rounding as sround
 from easydict import EasyDict as edict
 from faker import Faker
 import sys, os
@@ -134,11 +134,6 @@ class RegexConfig(Config):
     max_synth_nodes: int = 200_000
     require_unique: bool = True
     gramforge_algorithm = "sequential"
-    def update(self, c):
-        self.n_ex += c
-        self.max_depth += c
-        self.min_depth += c
-
     def apply_difficulty(self, level):
         self.n_ex += level
         self.max_depth += level
@@ -490,13 +485,6 @@ class RegexRetrievalConfig(Config):
     structured_rate: float = 0.2
     gramforge_algorithm = "sequential"
 
-    def update(self, c):
-        self.max_depth += c
-        self.min_depth += c
-        self.n_sentences += c
-        self.n_chunks += c
-        self.max_matches += c
-
     def apply_difficulty(self, level):
         self.max_depth += level
         self.min_depth += level
@@ -633,15 +621,10 @@ class RegexReasoningConfig(Config):
     n_alpha: int = 3
     gramforge_algorithm: str = "sequential"
 
-    def update(self, c):
-        self.max_depth += c
-        self.min_depth += c
-        self.n_alpha += 0.5 * c
-
     def apply_difficulty(self, level):
         self.max_depth += level
         self.min_depth += level
-        self.n_alpha += 0.5 * level
+        self.n_alpha = sround(self.n_alpha + 0.5 * level)
 
 def _sample_regex(G, depth, min_depth, mode="sequential", max_tries=60):
     for _ in range(max_tries):

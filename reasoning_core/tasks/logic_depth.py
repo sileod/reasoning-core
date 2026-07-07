@@ -7,7 +7,7 @@ from typing import Optional
 
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, Payload, Problem, Task
+from reasoning_core.template import Config, Payload, Problem, Task, stochastic_rounding as sround
 from reasoning_core.utils import parse_space_ints, score_space_ints
 
 
@@ -98,25 +98,16 @@ class MultistepNLIConfig(Config):
     min_target_support_size: int = 2
     max_target_support_size: Optional[int] = 3
     
-    def update(self, c):
-        self.max_depth += c // 2
-        self.n_rules += c
-        self.n_distractors += 2 * c
-        self.n_unary_preds += c
-        self.n_binary_preds += c
-        self.min_target_support_size = min(5, 2 + c // 2)
-        self.max_target_support_size = None
-        self.min_target_depth = min(self.max_depth, 2 + c // 2)
-        self.max_target_depth = min(self.max_depth, self.min_target_depth + 1)
-
     def apply_difficulty(self, level):
+        self.max_depth = sround(self.max_depth + 0.5 * level)
         self.n_rules += level
         self.n_distractors += 2 * level
         self.n_unary_preds += level
         self.n_binary_preds += level
-        self.min_target_support_size = 2
-        self.max_target_support_size = None
-        self.min_target_depth = min(self.max_depth, 2)
+        self.min_target_support_size = sround(min(5, 2 + 0.5 * level))
+        if level > 0:
+            self.max_target_support_size = None
+        self.min_target_depth = sround(min(self.max_depth, 2 + 0.5 * level))
         self.max_target_depth = min(self.max_depth, self.min_target_depth + 1)
 
 @dataclass
@@ -126,16 +117,10 @@ class MultistepAbductionConfig(MultistepNLIConfig):
     max_abduction_size: int = 1
     require_unique: bool = True
 
-    def update(self, c):
-        super().update(c)
-        self.n_candidates += 2 * c
-        self.max_abduction_size = min(3, self.max_abduction_size + c / 2)
-        self.n_missing_facts = self.max_abduction_size
-
     def apply_difficulty(self, level):
         super().apply_difficulty(level)
         self.n_candidates += 2 * level
-        self.max_abduction_size = min(3, self.max_abduction_size + 0.5 * level)
+        self.max_abduction_size = sround(min(3, self.max_abduction_size + 0.5 * level))
         self.n_missing_facts = self.max_abduction_size
 
 @dataclass

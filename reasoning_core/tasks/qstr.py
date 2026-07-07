@@ -4,7 +4,7 @@ from itertools import product
 from collections import defaultdict, deque
 from z3 import Distinct, Int, Solver, sat
 
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Problem, Config, edict, stochastic_rounding as sround
 
 # ---- Core types ---------------------------------------------------------
 
@@ -299,13 +299,9 @@ class QualitativeReasoningConfig(Config):
     extra_edges: int = 0
     ordinal_prob: float = 0.35
 
-    def update(self, c=1):
-        self.n_entities += c
-        self.extra_edges += 0.5 * c
-
     def apply_difficulty(self, level):
-        self.n_entities += level
-        self.extra_edges += 0.5 * level
+        self.n_entities = sround(self.n_entities + level)
+        self.extra_edges = sround(self.extra_edges + 0.5 * level)
 
 class QualitativeReasoning(Task):
     def __init__(self, config=None):

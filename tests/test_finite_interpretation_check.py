@@ -12,7 +12,7 @@ from reasoning_core.tasks._tptp_finite_interpretation import (
     universally_quantify,
     write_signed_fmb_problem,
 )
-from reasoning_core.tasks.math_tptp import FiniteInterpretationCheck
+from reasoning_core.tasks.deprecated.math_tptp_dev import FiniteInterpretationCheck
 
 
 VAMPIRE_MODEL = """
@@ -136,7 +136,7 @@ def test_negative_model_is_generated_by_sign_flip(monkeypatch):
         return model
 
     monkeypatch.setattr(
-        "reasoning_core.tasks.math_tptp.run_vampire_fmb_signed",
+        "reasoning_core.tasks.deprecated.math_tptp_dev.run_vampire_fmb_signed",
         fake_fmb,
     )
     task = object.__new__(FiniteInterpretationCheck)

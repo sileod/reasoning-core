@@ -77,11 +77,6 @@ class SetOpsConfig(Config):
     domain_size: int = 1000
     set_size: int = 8
     n_domains : int = 2
-    def update(self, c):
-        self.set_size *= 1 + c
-        self.domain_size *= 1 + c
-        self.n_domains += c
-
     def apply_difficulty(self, level):
         self.set_size *= 2 ** level
         self.domain_size *= 2 ** level
@@ -91,11 +86,6 @@ class SetOpsConfig(Config):
 class SetMissingElementConfig(SetOpsConfig):
     set_size: int = 10
     prob_no_missing: float = 0.1
-    def update(self, c):
-        self.set_size *= 1 + c
-        self.domain_size *= 1 + c
-        self.n_domains += c
-
     def apply_difficulty(self, level):
         self.set_size *= 2 ** level
         self.domain_size *= 2 ** level
@@ -139,11 +129,6 @@ class CountElementsConfig(Config):
     max_count: int = 3
     list_size: int = 10
     domain_size: int = 20
-    def update(self, c):
-        self.max_count += c
-        self.list_size += c
-        self.domain_size *= 1 + c
-
     def apply_difficulty(self, level):
         self.max_count += level
         self.list_size += level
@@ -235,13 +220,6 @@ class SetExpressionConfig(Config):
     diff_like_prob: float = 0.15
     multiset_prob: float = 0.35
     max_mult: int = 3
-
-    def update(self, c):
-        self.set_size *= 1 + c
-        self.domain_size *= 1 + c
-        self.n_domains += c
-        self.max_depth += c
-        self.max_mult += c
 
     def apply_difficulty(self, level):
         self.set_size *= 2 ** level

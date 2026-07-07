@@ -10,7 +10,7 @@ from functools import lru_cache
 from types import CodeType
 from typing import Iterable
 
-from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
 
 
 DSL_NAME = "StringFrag-v1"
@@ -435,17 +435,11 @@ class ProgramSynthesisCfg(Config):
     min_nodes: int = 4
     prompt_distractor_rate: float = 0.25
 
-    def update(self, c=1):
-        self.max_nodes += c / 2
-        self.n_holdout += c
-        self.max_attempts += 10 * c
-        self.min_nodes += c / 3
-
     def apply_difficulty(self, level):
-        self.max_nodes += 0.5 * level
-        self.n_holdout += level
-        self.max_attempts += 10 * level
-        self.min_nodes += level / 3
+        self.max_nodes = sround(self.max_nodes + 0.5 * level)
+        self.n_holdout = sround(self.n_holdout + level)
+        self.max_attempts = sround(self.max_attempts + 10 * level)
+        self.min_nodes = sround(self.min_nodes + level / 3)
 
 
 class ProgramSynthesis(Task):

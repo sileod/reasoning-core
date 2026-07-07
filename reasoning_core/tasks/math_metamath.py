@@ -95,12 +95,6 @@ class MetamathConfig(Config):
     max_premises: int = 6
     formula_len_cap: int = 18
 
-    def update(self, c=1):
-        self.proof_depth += c
-        self.n_rules += c
-        self.max_premises += c
-        self.formula_len_cap += 2 * c
-
     def apply_difficulty(self, level):
         self.proof_depth += level
         self.n_rules += level
@@ -786,12 +780,15 @@ class MetamathEntailment(Task):
         for k, v in kwargs.items():
             setattr(config, k, v)
         super().__init__(config=config, timeout=120)
-        self._want_positive = True
 
     def generate(self):
         for _ in range(50):
             inst = _sample_instance(self.config)
-            positive = self._want_positive
+            # Polarity must be chosen per-call (stateless): the old instance-state
+            # toggle (self._want_positive) degenerates under generate_balanced_batch(workers>1),
+            # where each pool.submit re-pickles a fresh `self` from the parent so the toggle
+            # never advances -> every worker emits the same polarity -> balancing cap livelock.
+            positive = random.random() < 0.5
             target = inst.tree.target
             if not positive:
                 target = _negative_target(inst, self.config)
@@ -805,7 +802,6 @@ class MetamathEntailment(Task):
             env = _display_env(display_exprs)
             rule_rows = _rule_rows(inst.rules, env)
             premises = [f"{i + 1}. {_fmt(p, env)}" for i, p in enumerate(inst.premises)]
-            self._want_positive = not self._want_positive
             meta = edict(
                 premises=[_fmt(p, env) for p in inst.premises],
                 raw_premises=[list(p) for p in inst.premises],

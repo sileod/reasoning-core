@@ -8,6 +8,9 @@
 
 ## [arithmetics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
 
+- hash: `598d63b9e4e18438`
+- modified: 1782205256
+
 **Prompt:**
 ```
 Evaluate 0 - 6.
@@ -23,6 +26,9 @@ The answer is a number.
 
 ## [math_word_problem](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
 
+- hash: `598d63b9e4e18438`
+- modified: 1782205256
+
 **Prompt:**
 ```
 A jar holds 3 beads. 10 more beads added; then 10 beads removed; then tripled. How many beads are in the jar now? Answer with a number.
@@ -36,6 +42,9 @@ A jar holds 3 beads. 10 more beads added; then 10 beads removed; then tripled. H
 ---
 
 ## [equation_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/equation_system.py)
+
+- hash: `78d5fb6a6a43144b`
+- modified: 1781597560
 
 **Prompt:**
 ```
@@ -56,6 +65,9 @@ No solution
 ---
 
 ## [lean_missing_proof_line_selection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+
+- hash: `58e7849f9da75921`
+- modified: 1782137662
 
 **Prompt:**
 ```
@@ -85,6 +97,9 @@ LINES:
 
 ## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
 
+- hash: `58e7849f9da75921`
+- modified: 1782137662
+
 **Prompt:**
 ```
 Does this Lean 4 tactic body close the theorem?
@@ -107,60 +122,65 @@ False
 
 ## [tptp_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
 
+- hash: `fec294d568b6b0db`
+- modified: 1782825144
+
 **Prompt:**
 ```
 Decide if the premises entail the conjecture.
 
-TPTP source: LCL002-1.ax
+TPTP source: SET001-2.ax
 
 Background axioms:
-- (implies(implies(not(X1),not(X2)),implies(X2,X1))=truth)
-- (not(truth)=falsehood)
-- (or(X1,X2)=or(X2,X1))
-- (or(X1,X2)=implies(not(X1),X2))
-- (implies(implies(X1,X2),X2)=implies(implies(X2,X1),X1))
-- (or(or(X1,X2),X3)=or(X1,or(X2,X3)))
+- (member(X4,X3)|~intersection(X1,X2,X3)|~member(X4,X2)|~member(X4,X1))
 
 Premises:
-- (implies(implies(X1,X2),implies(implies(X2,X3),implies(X1,X3)))=truth)
+- (subset(X1,X2)|~member(member_of_1_not_of_2(X1,X2),X2))
+- (subset(X1,X2)|member(member_of_1_not_of_2(X1,X2),X1))
+- (member(X4,X1)|~intersection(X1,X2,X3)|~member(X4,X3))
 
-Conjecture: `(implies(not(X1),not(implies(X2,not(X3))))=implies(implies(X3,not(X2)),X1))`
+Conjecture: `(subset(X1,X2)|~intersection(X2,X3,X4)|~intersection(X1,X1,X4))`
 
 The answer is `True` (provable) or `False` (not provable).
 ```
 
 **Answer:**
 ```
-False
+True
 ```
 
 ---
 
 ## [tptp_consistency_repair](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_tptp.py)
 
+- hash: `fec294d568b6b0db`
+- modified: 1782825144
+
 **Prompt:**
 ```
 Which local single-clause deletions make the fixed axioms satisfiable with the negated theorem?
 Answer with ordered, space-separated clause numbers.
 Background axioms:
-- (product(X1,X2,X3)|~product(X2,X1,X3))
-- (product(X1,X2,X3)|~product(X1,X4,X5)|~product(X4,X6,X2)|~product(X5,X6,X3))
-- (product(multiplicative_identity,X1,X1)|~defined(X1))
-Negated theorem: `(~product(multiplicative_identity,multiplicative_identity,multiplicative_identity))`
+- (member(empty_set,infinity))
+Negated theorem: `(~little_set(empty_set))`
 Clauses:
-1. (defined(multiplicative_identity))
-2. (product(multiplicative_inverse(X1),X1,multiplicative_identity)|sum(additive_identity,X1,additive_identity)|~defined(X1))
-3. (product(X1,X2,multiply(X1,X2))|~defined(X1)|~defined(X2))
+1. (little_set(infinity))
+2. (X1=empty_set|member(f26(X1),X1)|~little_set(X1))
+3. (~member(X1,empty_set))
+4. (little_set(X1)|~member(X1,X2))
 ```
 
 **Answer:**
 ```
-1
+4
 ```
 
 ---
 
 ## [planar_geometry_relations](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_geometry.py)
+
+- hash: `f8127b77dad7e9a5`
+- modified: 1782201844
 
 **Prompt:**
 ```
@@ -178,6 +198,9 @@ no
 ---
 
 ## [metamath_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_metamath.py)
+
+- hash: `3ceb928c8bf291be`
+- modified: 1782388471
 
 **Prompt:**
 ```
@@ -206,6 +229,9 @@ True
 ---
 
 ## [metamath_core_select](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_metamath.py)
+
+- hash: `3ceb928c8bf291be`
+- modified: 1782388471
 
 **Prompt:**
 ```
@@ -245,24 +271,30 @@ C
 
 ## [lambda_reduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
 
+- hash: `da074542ea9f5644`
+- modified: 1782724716
+
 **Prompt:**
 ```
 Reduce the following untyped λ-term to β-normal form.
 Syntax: `\x.body` is λx.body; juxtaposition is left-associative application; free identifiers are constants.
 
-Term: ((\_5.(\v0.(_5 (\v1.(b (\v2.((\_1.(\v1.((\_4._1) c))) ((\_2.(_2 a)) (\_0.v0))))))))) (\_3._3))
+Term: ((\v0.((((\v0.v0) v0) (\v1.(\v2.c))) ((\v1.(v0 v1)) (\v1.c)))) (\v0.(((v0 d) (v0 v0)) v0)))
 
 The answer is the β-normal form (compared up to α-equivalence).
 ```
 
 **Answer:**
 ```
-(\v0.(\v1.(b (\v2.(\v1.v0)))))
+((c (\v1.(\v2.c))) ((c c) (\v1.c)))
 ```
 
 ---
 
 ## [rewrite_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
+
+- hash: `da074542ea9f5644`
+- modified: 1782724716
 
 **Prompt:**
 ```
@@ -290,6 +322,9 @@ if(and(if(true,b,true),b),c,eq(b,and(false,b)))
 
 ## [most_probable_evidence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
 
+- hash: `5cbfb535441c3474`
+- modified: 1782216487
+
 **Prompt:**
 ```
 Factor f is independently true with probability 0.6.
@@ -316,6 +351,9 @@ Choose one value for each hidden factor. Answer with space-separated indexes.
 
 ## [most_probable_outcome](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
 
+- hash: `5cbfb535441c3474`
+- modified: 1782216487
+
 **Prompt:**
 ```
 A deck contains 2 red cards and 4 blue cards.
@@ -335,6 +373,9 @@ B
 ---
 
 ## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
+
+- hash: `12f4bc7c02e5a38a`
+- modified: 1782732731
 
 **Prompt:**
 ```
@@ -361,6 +402,9 @@ maybe
 
 ## [evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
 
+- hash: `12f4bc7c02e5a38a`
+- modified: 1782732731
+
 **Prompt:**
 ```
 Premise:
@@ -386,121 +430,134 @@ Answer with space-separated indexes.
 
 ## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
+- hash: `3cd7ee827f337ad5`
+- modified: 1782726858
+
 **Prompt:**
 ```
 Premise:
-bruno is a parent of alice.
-alice is a parent of david.
-clara is a sibling of bruno.
-alice helps bruno.
-bruno is careful.
-clara is patient.
-Whenever x is a parent of y, x is an ancestor of y.
-Whenever x is a parent of y and y is an ancestor of z, x is an ancestor of z.
-For all p, x, y, if p is a parent of x and p is a parent of y and x is different from y, then x is a sibling of y.
-From x is a sibling of y, it follows that y is a sibling of x.
-Whenever x is a spouse of y, y is a spouse of x.
-For all x, y, z, if x is a parent of y and x is a sibling of z, then z is an aunt or uncle of y.
+bruno is trained.
+bruno is trusted.
+david does not advises alice.
+clara advises bruno.
+david is verified.
+bruno does not helps alice.
+Anyone who is trained and trusted is approved.
+Being approved implies being verified.
+From x is trusted and x is careful, it follows that x is approved.
+From x trusts y and y advises z, it follows that x helps z.
+For all x, y, if x advises y and y is active, then x is approved.
+From x trusts y, it follows that y helps x.
+From x helps y, it follows that y advises x.
 
 Hypothesis:
-clara is an aunt or uncle of alice.
+clara is active.
 
 Does the premise entail the hypothesis? The answer is yes, no, or maybe.
 ```
 
 **Answer:**
 ```
-yes
+maybe
 ```
 
 ---
 
 ## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
+- hash: `3cd7ee827f337ad5`
+- modified: 1782726858
+
 **Prompt:**
 ```
 Premise:
-[0] map is inside box.
-[1] box is inside lamp.
-[2] key is blocked.
-[3] lamp is fixed.
-[4] key is visible.
-[5] lamp is left of box.
-[6] From x is left of y, it follows that y is right of x.
-[7] Whenever x is above y, y is below x.
-[8] For all x, y, if x is inside y, then y contains x.
-[9] From x is inside y and y is inside z, it follows that x is inside z.
-[10] Whenever x is left of y and y is left of z, x is left of z.
-[11] When one person is above a second person and the second is above a third person, the first is above the third.
-[12] For all x, y, if x is disjoint from y, then y is disjoint from x.
+[0] alice advises david.
+[1] david helps clara.
+[2] alice is not careful.
+[3] david is not verified.
+[4] bruno is not trusted.
+[5] david is trained.
+[6] Whenever x advises y and y helps z, x trusts z.
+[7] From x trusts z, it follows that x is active.
+[8] If a person is active and trusted, then that person is trained.
+[9] If a person is active and careful, then that person is not trusted.
+[10] Every active entity is verified.
+[11] Anyone who is careful and trained is approved.
+[12] When a person helps a verified person, that person is active.
 
 Hypothesis:
-lamp does not contain map.
+alice is verified.
 
-Which premise statements are necessary to contradict the hypothesis, meaning removing any one of them breaks that result?
+Which premise statements are necessary to entail the hypothesis, meaning removing any one of them breaks that result?
 Answer with space-separated indexes.
 ```
 
 **Answer:**
 ```
-0 1 8 9
+0 1 6 7 10
 ```
 
 ---
 
 ## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
+- hash: `3cd7ee827f337ad5`
+- modified: 1782726858
+
 **Prompt:**
 ```
 Premise:
-[0] clara is careful.
-[1] alice is verified.
-[2] Every careful entity is trained.
-[3] Every trained entity is active.
+[0] clara is trained.
+[1] david is active.
+[2] Being trained implies being trusted.
+[3] Whenever x is trusted, x is not careful.
 
 Hypothesis:
-bruno is active.
+david is careful.
 
 Candidate Facts:
-[0] bruno is not careful.
-[1] alice helps clara.
-[2] david trusts clara.
-[3] alice is active.
+[0] david is not trained.
+[1] bruno is trained.
+[2] david is trained.
+[3] clara helps bruno.
 [4] david is careful.
-[5] bruno is careful.
+[5] clara advises alice.
 
-Which candidate facts, if added to the premise, make the premise entail the hypothesis?
+Which candidate facts, if added to the premise, make the premise contradict the hypothesis?
 Answer with space-separated indexes.
 ```
 
 **Answer:**
 ```
-5
+2
 ```
 
 ---
 
 ## [logic_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
+- hash: `3cd7ee827f337ad5`
+- modified: 1782726858
+
 **Prompt:**
 ```
 Premise:
-clara trusts david.
 david advises alice.
-clara helps david.
-clara is not verified.
-bruno is verified.
+alice trusts bruno.
+david trusts alice.
+alice is trusted.
+clara is careful.
+clara does not advises bruno.
 clara is active.
-alice is active.
-For all x, y, z, if x trusts y and y advises z, then x helps z.
-For all x, z, if x helps z, then x is trained.
-Whenever x is approved, x is trained.
-Whenever x trusts y, y does not advises x.
-For all x, y, if x helps y and y is active, then x is approved.
-For all x, y, z, if x helps y and y trusts z, then x advises z.
+For all x, y, z, if x advises y and y trusts z, then x helps z.
+From x helps z, it follows that x is verified.
+Whenever x helps y, y trusts x.
+Whenever x helps y and y advises z, x trusts z.
+When one person trusts a second person and the second advises a third person, the first helps the third.
+Every approved entity that is also trained is trusted.
 
 Question:
-How many entities are approved?
+How many entities does bruno helps?
 
 Answer with one integer.
 ```
@@ -513,6 +570,9 @@ Answer with one integer.
 ---
 
 ## [planning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/planning.py)
+
+- hash: `605ba8997eee08d6`
+- modified: 1781623594
 
 **Prompt:**
 ```
@@ -549,6 +609,9 @@ action_0(object_1)
 
 ## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
 
+- hash: `657c1f4a98174d26`
+- modified: 1782727190
+
 **Prompt:**
 ```
 Set_A: {876, 871, 875, 874, 879, 878, 880}
@@ -563,6 +626,9 @@ The answer is the missing elements from Set_A as a Python set.
 ---
 
 ## [count_elements](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+- hash: `657c1f4a98174d26`
+- modified: 1782727190
 
 **Prompt:**
 ```
@@ -579,21 +645,27 @@ How many times does 1 appear? The answer is a number.
 
 ## [set_expression](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
 
+- hash: `657c1f4a98174d26`
+- modified: 1782727190
+
 **Prompt:**
 ```
-A: {11, 6, 3, 17, 19, 32, 16, 29}
-C: {1, 23, 20, 17, 11, 15, 2, 29}
-Evaluate (A^C).
+A: {31, 32, 10, 30, 13, 28, 9, 3}
+C: {31, 32, 10, 29, 13, 28, 24, 3}
+Evaluate (C-A).
 ```
 
 **Answer:**
 ```
-{1, 15, 16, 19, 2, 20, 23, 3, 32, 6}
+{24, 29}
 ```
 
 ---
 
 ## [sequential_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/sequential_induction.py)
+
+- hash: `a679ad1ed8e7af35`
+- modified: 1782139541
 
 **Prompt:**
 ```
@@ -612,6 +684,9 @@ The answer is the RHS only.
 ---
 
 ## [qualitative_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qstr.py)
+
+- hash: `dfb4735cbfb91ec8`
+- modified: 1781531927
 
 **Prompt:**
 ```
@@ -635,6 +710,9 @@ E1
 ---
 
 ## [navigation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/navigation.py)
+
+- hash: `0dc49fa006513b1c`
+- modified: 1782206321
 
 **Prompt:**
 ```
@@ -662,6 +740,9 @@ What is the final coordinate of A? The answer is (x, y).
 ---
 
 ## [reference_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/tracking.py)
+
+- hash: `a9e1b0e524cba840`
+- modified: 1782226060
 
 **Prompt:**
 ```
@@ -694,6 +775,9 @@ x1
 
 ## [coreference](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/coreference.py)
 
+- hash: `0041bfe25ab3f138`
+- modified: 1781614559
+
 **Prompt:**
 ```
 (1) A kind quiet lawyer named Mark avoided a loud tall writer named Mary.
@@ -715,6 +799,9 @@ Ben
 ---
 
 ## [constraint_satisfaction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/constraint_satisfaction.py)
+
+- hash: `c7a3b3f988a39f91`
+- modified: 1782121546
 
 **Prompt:**
 ```
@@ -738,6 +825,9 @@ Answer with one number.
 
 ## [graph_pathfinding](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
 
+- hash: `9b2bff9ec2756810`
+- modified: 1782206211
+
 **Prompt:**
 ```
 Find the lexicographically smallest shortest directed path from node 5 to node 0.
@@ -755,6 +845,9 @@ None
 ---
 
 ## [graph_successors](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
+
+- hash: `9b2bff9ec2756810`
+- modified: 1782206211
 
 **Prompt:**
 ```
@@ -777,6 +870,9 @@ Queries:
 
 ## [graph_dependencies](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
 
+- hash: `9b2bff9ec2756810`
+- modified: 1782206211
+
 **Prompt:**
 ```
 List all ancestors of node 2.
@@ -796,6 +892,9 @@ Graph:
 
 ## [regex_following](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
 
+- hash: `62304483baa971f1`
+- modified: 1782721155
+
 **Prompt:**
 ```
 The answer is a 5-character string that fully matches the regular expression: \d|[WVS]+
@@ -809,6 +908,9 @@ SWVVW
 ---
 
 ## [regex_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
+
+- hash: `62304483baa971f1`
+- modified: 1782721155
 
 **Prompt:**
 ```
@@ -825,6 +927,9 @@ b+
 ---
 
 ## [regex_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
+
+- hash: `62304483baa971f1`
+- modified: 1782721155
 
 **Prompt:**
 ```
@@ -843,59 +948,65 @@ No
 
 ## [analogical_case_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/formal_analogies.py)
 
+- hash: `4b703eedcda1b4ca`
+- modified: 1782725645
+
 **Prompt:**
 ```
 Cases show facts that imply one new fact.
 Object names and link names may be consistently renamed, and each link name may also have its direction consistently reversed.
 
 M0
+a is alpha-linked to c.
 a is alpha-linked to d.
-b is alpha-linked to e.
-e is alpha-linked to c.
-e is gamma-linked to c.
-Implies: c is gamma-linked to e.
-
-M1
-e is alpha-linked to d.
 c is beta-linked to a.
 d is beta-linked to b.
-a is gamma-linked to d.
-Implies: d is beta-linked to a.
+Implies: a is gamma-linked to b.
+
+M1
+c is alpha-linked to a.
+d is alpha-linked to a.
+d is alpha-linked to b.
+c is beta-linked to d.
+Implies: a is beta-linked to d.
 
 M2
-a is alpha-linked to b.
-c is alpha-linked to a.
-d is alpha-linked to b.
-b is beta-linked to a.
-Implies: d is beta-linked to a.
+a is alpha-linked to c.
+b is alpha-linked to c.
+c is alpha-linked to b.
+a is beta-linked to b.
+Implies: c is beta-linked to b.
 
 M3
 c is alpha-linked to b.
-d is beta-linked to b.
-e is beta-linked to b.
-a is gamma-linked to d.
-Implies: d is alpha-linked to b.
+a is beta-linked to c.
+b is beta-linked to a.
+c is beta-linked to a.
+Implies: c is alpha-linked to a.
 
 Query
-u is delta-linked to x.
-z is epsilon-linked to v.
-v is gamma-linked to z.
-x is gamma-linked to v.
-y is gamma-linked to v.
-y is gamma-linked to x.
-z is gamma-linked to v.
-z is gamma-linked to y.
+v is delta-linked to u.
+z is delta-linked to v.
+v is epsilon-linked to x.
+v is gamma-linked to x.
+v is gamma-linked to y.
+x is gamma-linked to u.
+x is gamma-linked to y.
+z is gamma-linked to u.
 Implies:
 ```
 
 **Answer:**
 ```
-x is epsilon-linked to v.
+y is epsilon-linked to x.
 ```
 
 ---
 
 ## [parsing_derivation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+
+- hash: `efadf8019399e2dc`
+- modified: 1782808254
 
 **Prompt:**
 ```
@@ -923,6 +1034,9 @@ R0 R2 R3 R2 R5 R1 R2 R4 R1 R1 R2 R3 R1 R2 R5 R1 R2 R4 R1 R1
 
 ## [locate_error](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
 
+- hash: `efadf8019399e2dc`
+- modified: 1782808254
+
 **Prompt:**
 ```
 (GRAMMAR)
@@ -949,6 +1063,9 @@ international >>direction<<
 ---
 
 ## [constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+
+- hash: `efadf8019399e2dc`
+- modified: 1782808254
 
 **Prompt:**
 ```
@@ -979,32 +1096,44 @@ when when when
 
 ## [table_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
 
+- hash: `830dbc7a45a4813d`
+- modified: 1782811519
+
 **Prompt:**
 ```
 Execute this SQL query on the table named dataframe:
 
 Table 1:
-product|revenue
-Draw|509,32
-Poor|998,28
-Glass|226,93
-Range|115,46
-General|469,89
+- qty: '320.00'
+  price: 316,32
+- qty: '769.00'
+  price: 156,18
+- qty: '464.00'
+  price: 27,43
+- qty: '619.00'
+  price: 102,76
+- qty: '398.00'
+  price: 420,4
 
 
-SQL: SELECT COUNT(*) FROM dataframe WHERE revenue > 501.43399999999997
+SQL: SELECT * FROM dataframe ORDER BY qty DESC LIMIT 3
 
-The answer is the result as single value.
+The answer is the result as CSV format (rows separated by newlines, values by commas). Do not include column headers..
 ```
 
 **Answer:**
 ```
-2
+769.00,"156,18"
+619.00,"102,76"
+464.00,"27,43"
 ```
 
 ---
 
 ## [table_equivalence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
+
+- hash: `830dbc7a45a4813d`
+- modified: 1782811519
 
 **Prompt:**
 ```
@@ -1012,25 +1141,21 @@ Do these tables contain the same data?
 Ignore row order, column order, and table syntax. Match values by column name.
 
 Table A:
-customer	company
-Dylan Thompson	Adams and Sons
-Katie Taylor	Burch and Sons
-Veronica Sawyer	Green Group
-Mikayla Lee	Mcneil, Rivera and Pugh
-Robert Mann DDS	Wolf, Carter and Martinez
+revenue,city
+"30,41",Mariachester
+"917,62",East Nathan
+"30,19",New Annbury
+"813,74",Wilsonport
+"900,59",West Tiffanyton
 
 
 Table B:
-- customer: Mikayla Lee
-  company: Mcneil, Rivera and Pugh
-- customer: Robert Mann DDS
-  company: Wolf, Carter and Martinez
-- customer: Veronica Sawyer
-  company: Green Group
-- customer: Dylan Thompson
-  company: Adams and Sons
-- customer: Katie Taylor
-  company: Burch and Sons
+revenue	city
+813,74	Wilsonport
+917,62	East Nathan
+30,41	Mariachester
+30,19	New Annbury
+900,59	West Tiffanyton
 
 
 Answer yes or no.
@@ -1045,21 +1170,23 @@ yes
 
 ## [table_statistics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
 
+- hash: `830dbc7a45a4813d`
+- modified: 1782811519
+
 **Prompt:**
 ```
 Table:
-x0: 0.561; x1: 0.601; x2: 0.026; x3: 1.547; x4: -1.444
-x0: -1.539; x1: -1.575; x2: -1.508; x3: -0.376; x4: -0.025
-x0: 1.098; x1: 1.235; x2: 0.84; x3: 1.045; x4: 0.802
-x0: -0.019; x1: -0.069; x2: -0.775; x3: 1.434; x4: 0.976
-x0: 0.577; x1: 0.709; x2: 1.154; x3: 0.069; x4: 0.89
-x0: 1.452; x1: 1.456; x2: -0.222; x3: 1.067; x4: 0.243
-x0: -0.49; x1: -0.654; x2: 0.84; x3: -0.001; x4: 0.813
-x0: -0.601; x1: -0.659; x2: 1.142; x3: 0.235; x4: -1.041
-x0: 0.952; x1: 0.943; x2: 1.401; x3: -0.026; x4: 1.195
-x0: 0.546; x1: 0.47; x2: 0.483; x3: -0.854; x4: 2.048
-x0: 0.552; x1: 0.396; x2: 1.181; x3: 0.017; x4: -1.634
-x0: -0.91; x1: -0.92; x2: 0.807; x3: -0.841; x4: -1.97
+x0,x1,x2,x3
+-0.76,-0.77,0.42,-0.77
+-1.46,-1.5,-0.93,0.34
+-1.1,-1.18,0.31,-0.48
+-0.96,-0.92,-1.18,-2.57
+-0.14,-0.14,-0.15,-1.23
+1.33,1.46,0.39,1.53
+-0.85,-0.93,1.24,0.04
+-0.94,-0.87,1.23,1.22
+-1.26,-1.25,-3.54,-0.37
+
 
 Find:
 column name most associated with column x0
@@ -1079,6 +1206,9 @@ x1
 
 ## [string_transduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/string_transduction.py)
 
+- hash: `5dcd3d204957fbfe`
+- modified: 1782201607
+
 **Prompt:**
 ```
 String: amber quiet delta vector
@@ -1096,6 +1226,9 @@ Answer with the final string.
 ---
 
 ## [code_runnability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
+
+- hash: `83ade9ed89f0b7ee`
+- modified: 1782290178
 
 **Prompt:**
 ````
@@ -1127,6 +1260,9 @@ OK
 
 ## [code_execution](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
 
+- hash: `83ade9ed89f0b7ee`
+- modified: 1782290178
+
 **Prompt:**
 ````
 Predict the value returned by this Python call.
@@ -1154,6 +1290,9 @@ The answer is the exact Python `repr` of the returned value.
 ---
 
 ## [code_input_deduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
+
+- hash: `83ade9ed89f0b7ee`
+- modified: 1782290178
 
 **Prompt:**
 ````
@@ -1183,29 +1322,35 @@ Target: 0
 
 ## [game_best_move](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
 
+- hash: `ebd1ce65f6b44ed5`
+- modified: 1782745346
+
 **Prompt:**
 ```
 In this graph game, choose player's best move. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score.
 
-Start: n0. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:80; n5:90; n6:40. Edges: n0->n1,n4; n1->n6; n2->n3; n3->n5,n6.
-Legal player moves now: n1, n4.
+Start: n0. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:60; n5:0; n6:0. Edges: n0->n1,n2; n1->n4; n2->n5; n3->n4,n5.
+Legal player moves now: n1, n2.
 The answer is the destination node of the best move.
 ```
 
 **Answer:**
 ```
-n4
+n1
 ```
 
 ---
 
 ## [game_forced_win](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
 
+- hash: `ebd1ce65f6b44ed5`
+- modified: 1782745346
+
 **Prompt:**
 ```
 In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
 
-Start: n0. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n5:40; n6:0. Edges: n0->n1,n5; n1->n2,n4; n2->n6; n3->n6; n4->n6.
+Start: n0. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:20; n5:100; n6:10. Edges: n0->n1,n6; n1->n3; n2->n5; n3->n4,n6.
 The answer is yes or no.
 ```
 

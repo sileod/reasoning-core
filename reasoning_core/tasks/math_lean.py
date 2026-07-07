@@ -353,12 +353,6 @@ class LeanConfig(Config):
     n_candidates: int = 6
     use_mathlib: bool = True
 
-    def update(self, c):
-        self.n_vars += c
-        self.expr_depth += c
-        self.n_hyps += c
-        self.n_candidates += c
-
     def apply_difficulty(self, level):
         self.n_vars += level
         self.expr_depth += level

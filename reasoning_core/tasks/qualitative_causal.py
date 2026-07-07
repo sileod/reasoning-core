@@ -34,10 +34,6 @@ class QualitativeCausalConfig(Config):
     n_extra: int = 8
     p_edge: float = 0.10
 
-    def update(self, c=1):
-        self.n_extra += 3 * c
-        self.p_edge = min(0.20, self.p_edge + 0.015 * c)
-
     def apply_difficulty(self, level):
         self.n_extra += 3 * level
         self.p_edge = min(0.20, self.p_edge + 0.015 * level)

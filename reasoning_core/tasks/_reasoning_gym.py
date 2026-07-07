@@ -13,9 +13,6 @@ class RGConfig(Config):
     rg_task: str = ""
     rg_level: int = 1
 
-    def update(self, c):
-        self.rg_level+=c
-
     def apply_difficulty(self, level):
         self.rg_level += level
 
@@ -41,14 +38,15 @@ class Reasoning_Gym(Task):
         entry = t(c)[0]
         meta = entry['metadata'] | {
             "task_name": f"RG.{d}",
-            "_source_collection": "reasoning_gym",
-            "_source_task": d,
+            "source_collection": "reasoning_gym",
+            "source_task": d,
             "_question": entry['question'],
         }
         return Problem(json.loads(json.dumps(meta, default=str)), str(entry['answer']))
 
     def score_answer(self, answer, entry):
-        sd = entry['metadata'].get('_source_task') or entry['metadata']['source_dataset']
+        sd = (entry['metadata'].get('source_task') or entry['metadata'].get('_source_task')
+              or entry['metadata'].get('source_dataset'))
         scorer = reasoning_gym.get_score_answer_fn(sd)
         try:
             score = scorer(answer,entry)

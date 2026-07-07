@@ -2,7 +2,7 @@ import random
 import re
 from dataclasses import dataclass
 
-from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.template import Config, DevTask, Problem, Task, edict, stochastic_rounding as sround
 from reasoning_core.tasks._rocq_common import ROCQ_IMAGE, check_rocq, eval_rocq
 
 
@@ -41,19 +41,12 @@ class RocqConfig(Config):
     certify_timeout: int = 20
     payload_cap: int = 5000
 
-    def update(self, c):
-        self.n_hyps += c
-        self.expr_depth += c / 2
-        self.list_len += c
-        self.certify_timeout += c
-        self.payload_cap += 400 * c
-
     def apply_difficulty(self, level):
-        self.n_hyps += level
-        self.expr_depth += 0.5 * level
-        self.list_len += level
-        self.certify_timeout += level
-        self.payload_cap += 400 * level
+        self.n_hyps = sround(self.n_hyps + level)
+        self.expr_depth = sround(self.expr_depth + 0.5 * level)
+        self.list_len = sround(self.list_len + level)
+        self.certify_timeout = sround(self.certify_timeout + level)
+        self.payload_cap = sround(self.payload_cap + 400 * level)
 
 
 # ============================================================================
@@ -141,7 +134,7 @@ def _proof_ring(config):
         "Open Scope Z_scope.\n\n"
         f"Theorem target {decl} : {lhs} = {rhs}."
     )
-    distractors = ["reflexivity.", "lia.", "tauto.", f"replace ({lhs}) with ({rhs}) by lia; reflexivity."]
+    distractors = ["reflexivity.", "assumption.", "tauto.", "easy."]
     return edict(kind="ring", header=header, primary="ring.", distractors=distractors)
 
 
@@ -157,7 +150,7 @@ def _proof_tauto(config):
     goal, specific = random.choice(cases)
     decl = " ".join(f"({a} : Prop)" for a in atoms)
     header = f"From Stdlib Require Import Logic.\n\nTheorem target {decl} : {goal}."
-    distractors = ["exact I.", "reflexivity.", "lia.", "firstorder.", "intuition.", specific]
+    distractors = ["exact I.", "reflexivity.", "assumption.", "firstorder.", "intuition.", specific]
     return edict(kind="tauto", header=header, primary="tauto.", distractors=distractors)
 
 
@@ -176,7 +169,7 @@ def _proof_list(config):
         ),
         (
             "map (fun x => x + 0) xs = xs",
-            "induction xs as [|x xs IH]; simpl; [reflexivity|rewrite IH; lia]",
+            "induction xs as [|x xs IH]; simpl; [reflexivity|rewrite IH; f_equal; lia]",
             ["reflexivity", "simpl; reflexivity", "rewrite map_length; reflexivity", "lia"],
         ),
     ]
@@ -192,7 +185,7 @@ def _proof_list(config):
 _PROOF_BUILDERS = (_proof_lia_chain, _proof_ring, _proof_tauto, _proof_list)
 
 
-class RocqProofRepair(Task):
+class RocqProofRepair(DevTask):
     """Choose the unique Rocq proof body that compiles."""
 
     def __init__(self, config=RocqConfig(), **kwargs):
@@ -370,7 +363,7 @@ def _mcq_sum_shift(config):
 _MCQ_BUILDERS = (_mcq_all_nonneg, _mcq_even_filter, _mcq_reverse, _mcq_sum_shift)
 
 
-class RocqInvariantMCQ(Task):
+class RocqInvariantMCQ(DevTask):
     """Choose the unique same-typed candidate satisfying a Rocq boolean invariant."""
 
     def __init__(self, config=RocqConfig(), **kwargs):

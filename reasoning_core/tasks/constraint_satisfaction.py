@@ -34,13 +34,6 @@ class ConstraintSatisfactionConfig(Config):
     grid_width: Optional[int] = None
     model_mode: str = "any"  # "linear" | "attribute" | "grid" | "any"
 
-    def update(self, c=1):
-        self.n_vars += 0.6 * c
-        self.max_domain += 0.4 * c
-        self.n_constraints += 1.1 * c
-        self.coef_bound += 0.3 * c
-        self.max_arity = min(4, self.max_arity + int(c >= 3))
-
     def apply_difficulty(self, level):
         self.n_vars = sround(self.n_vars + 0.6 * level)
         self.max_domain = sround(self.max_domain + 0.4 * level)
