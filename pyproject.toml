@@ -14,6 +14,7 @@ readme = "README.md"
 description = "Procedural data generators for symbolic pre-training, also including RL environments"
 
 dependencies = [
+    "typing-extensions",
     "gramforge",
     "faker",
     "inflection",

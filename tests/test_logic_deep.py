@@ -1,15 +1,20 @@
 from reasoning_core import get_task, list_tasks, score_answer
+import pytest
+
 from reasoning_core.tasks.logic_depth import (
     Atom,
     Denial,
+    Not,
     PredSig,
     Rule,
     Theory,
     _binary_query,
     chase,
     close_with,
+    naf_chase,
     render,
     rule_text,
+    stratify_rules,
     support_sources,
 )
 
@@ -29,6 +34,21 @@ def test_multistep_nli_registers_and_generates():
         assert score_answer(ex.answer, ex) == 1
         assert task.score_answer(ex.answer + ".", ex) == 1
         assert task.score_answer("not a label", ex) == 0
+    assert len(seen) >= 2
+
+
+def test_stratified_naf_tasks_register_and_generate():
+    tasks = ("stratified_naf_nli", "naf_removal_flip", "naf_addition_flip")
+    for name in tasks:
+        assert name in list_tasks()
+        task = get_task(name)
+        ex = task.generate_example(max_tokens=0)
+        assert ex.answer
+        assert ex.metadata.naf_rule_count >= 1
+        assert task.score_answer(ex.answer, ex) == 1
+    nli = get_task("stratified_naf_nli")
+    seen = {nli.generate_example(max_tokens=0).answer for _ in range(12)}
+    assert seen <= {"Yes", "No", "Maybe"}
     assert len(seen) >= 2
 
 
@@ -100,6 +120,114 @@ def test_chase_keeps_minimal_depth_derivation():
     assert res.derivations[Atom("c", ("alice",))].depth == 1
 
 
+def test_existing_chase_semantics_unchanged_for_classical_negation():
+    sigs = {p: PredSig(p, ("person",)) for p in ("a", "b")}
+    theory = Theory(
+        facts=[Atom("a", ("alice",)), Atom("a", ("bruno",), False)],
+        rules=[Rule((Atom("a", ("?x",)),), Atom("b", ("?x",)), shape="u_imp")],
+        denials=[],
+        pred_sigs=sigs,
+        entities={"person": ("alice", "bruno")},
+    )
+    res = chase(theory, max_depth=None)
+    assert res.closure == {
+        Atom("a", ("alice",)),
+        Atom("a", ("bruno",), False),
+        Atom("b", ("alice",)),
+    }
+
+
+def test_naf_rejects_unbound_negative_variables():
+    sigs = {p: PredSig(p, ("person",)) for p in ("flagged", "trusted")}
+    theory = Theory(
+        facts=[Atom("flagged", ("alice",), False)],
+        rules=[Rule((Not(Atom("flagged", ("?x",))),), Atom("trusted", ("?x",)))],
+        denials=[],
+        pred_sigs=sigs,
+        entities={"person": ("alice",)},
+    )
+    with pytest.raises(ValueError, match="unsafe NAF rule"):
+        naf_chase(theory, max_depth=None)
+
+
+def test_naf_distinct_from_classical_negative_atom_when_safely_bound():
+    sigs = {p: PredSig(p, ("person",)) for p in ("person", "flagged", "trusted")}
+    theory = Theory(
+        facts=[Atom("person", ("alice",)), Atom("flagged", ("alice",), False)],
+        rules=[Rule((Atom("person", ("?x",)), Not(Atom("flagged", ("?x",)))), Atom("trusted", ("?x",)))],
+        denials=[],
+        pred_sigs=sigs,
+        entities={"person": ("alice",)},
+    )
+    res = naf_chase(theory, max_depth=None)
+    assert Atom("trusted", ("alice",)) in res.closure
+
+
+def test_exception_blocks_default_to_maybe():
+    sigs = {p: PredSig(p, ("person",)) for p in ("trained", "flagged", "trusted")}
+    theory = Theory(
+        facts=[Atom("trained", ("alice",)), Atom("flagged", ("alice",))],
+        rules=[Rule((Atom("trained", ("?x",)), Not(Atom("flagged", ("?x",)))), Atom("trusted", ("?x",)))],
+        denials=[],
+        pred_sigs=sigs,
+        entities={"person": ("alice",)},
+    )
+    res = naf_chase(theory, max_depth=None)
+    assert Atom("trusted", ("alice",)) not in res.closure
+    assert Atom("trusted", ("alice",), False) not in res.closure
+
+
+def test_explicit_negative_gives_no_under_naf():
+    sigs = {p: PredSig(p, ("person",)) for p in ("trained", "flagged", "trusted")}
+    theory = Theory(
+        facts=[Atom("trained", ("alice",)), Atom("flagged", ("alice",))],
+        rules=[
+            Rule((Atom("trained", ("?x",)), Not(Atom("flagged", ("?x",)))), Atom("trusted", ("?x",))),
+            Rule((Atom("flagged", ("?x",)),), Atom("trusted", ("?x",), False)),
+        ],
+        denials=[],
+        pred_sigs=sigs,
+        entities={"person": ("alice",)},
+    )
+    res = naf_chase(theory, max_depth=None)
+    assert Atom("trusted", ("alice",)) not in res.closure
+    assert Atom("trusted", ("alice",), False) in res.closure
+
+
+def test_naf_stratification_rejects_negative_cycle():
+    rules = [
+        Rule((Atom("dom", ("?x",)), Not(Atom("q", ("?x",)))), Atom("p", ("?x",))),
+        Rule((Atom("dom", ("?x",)), Not(Atom("p", ("?x",)))), Atom("q", ("?x",))),
+    ]
+    assert stratify_rules(rules) is None
+
+
+def test_naf_stratification_allows_positive_recursion():
+    rules = [
+        Rule((Atom("parent", ("?x", "?y")),), Atom("ancestor", ("?x", "?y"))),
+        Rule((Atom("parent", ("?x", "?y")), Atom("ancestor", ("?y", "?z"))), Atom("ancestor", ("?x", "?z"))),
+    ]
+    assert stratify_rules(rules) is not None
+
+
+def test_naf_lower_stratum_exception_allowed_and_blocks():
+    sigs = {p: PredSig(p, ("person",)) for p in ("bird", "penguin", "ab_bird", "flies")}
+    theory = Theory(
+        facts=[Atom("penguin", ("tweety",)), Atom("bird", ("tweety",))],
+        rules=[
+            Rule((Atom("bird", ("?x",)), Not(Atom("ab_bird", ("?x",)))), Atom("flies", ("?x",))),
+            Rule((Atom("penguin", ("?x",)),), Atom("ab_bird", ("?x",))),
+        ],
+        denials=[],
+        pred_sigs=sigs,
+        entities={"person": ("tweety",)},
+    )
+    assert stratify_rules(theory.rules) is not None
+    res = naf_chase(theory, max_depth=None)
+    assert Atom("ab_bird", ("tweety",)) in res.closure
+    assert Atom("flies", ("tweety",)) not in res.closure
+
+
 def test_chase_saturates_when_depth_is_none():
     sigs = {p: PredSig(p, ("person",)) for p in ("a", "b", "c", "d")}
     rules = [
@@ -142,6 +270,16 @@ def test_negative_converse_head_uses_generic_signed_rule_text():
     text, _ = rule_text(rule, rid=0)
     assert "y does not stand in the trusts relation to x" in text
     assert "the second trusts the first" not in text
+
+
+def test_naf_rule_text_distinguishes_not_derivable_from_classical_not():
+    rule = Rule(
+        (Atom("trained", ("?x",)), Not(Atom("trusted", ("?x",), False))),
+        Atom("approved", ("?x",)),
+    )
+    text, _ = rule_text(rule, rid=0)
+    assert "it cannot be shown that x is not trusted" in text
+    assert "not trusted" in text
 
 
 def test_spatial_left_of_cycle_is_inconsistent_via_derived_self_loop():

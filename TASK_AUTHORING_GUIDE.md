@@ -139,4 +139,5 @@ class MyTask(Task):
 - Gallery generation uses cached validation examples by default and builds missing cache entries.
 - Use `--refresh-cache` to regenerate cached examples for the current task behavior hash/config.
 - Use `--no-cache` to use balanced batch generation instead.
+- Use `--taskrow-cache task_diagnostics/cache/task_rows/<cache_id>` to reuse diagnostics TaskRow examples before generating missing entries.
 - The cache is keyed per task and level, and keeps only the latest record for each key.

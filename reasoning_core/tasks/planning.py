@@ -30,7 +30,7 @@ from reasoning_core.template import Task, Problem, Reward, Config
 import logging
 logging.getLogger().setLevel(logging.WARNING)
 from unified_planning.shortcuts import SequentialSimulator
-from unified_planning.plans import ActionInstance
+from unified_planning.plans import ActionInstance, SequentialPlan
 
 Range = namedtuple('Range', 'low high type')
 
@@ -81,6 +81,49 @@ def goal_satisfied(goal, state):
     if goal.is_not():
         return state.get_value(goal.arg(0)).is_false()
     return state.get_value(goal).is_true()
+
+def fact_key(fact):
+    return str(fact)
+
+def literal_key(expr):
+    if expr.is_not():
+        return (fact_key(expr.arg(0)), False)
+    return (fact_key(expr), True)
+
+def state_fact_nodes(problem, state):
+    facts = {}
+    for atom in ground_fluent_expressions(problem):
+        if state.get_value(atom).is_true():
+            facts[fact_key(atom)] = atom
+    return facts
+
+def format_plan(plan):
+    return "\n".join(str(a) for a in plan.actions)
+
+def rebind_plan(problem, plan):
+    em = problem.environment.expression_manager
+    actions = []
+    for action_instance in plan.actions:
+        action = problem.action(action_instance.action.name)
+        params = []
+        for p in action_instance.actual_parameters:
+            if p.is_object_exp():
+                params.append(em.ObjectExp(problem.object(p.object().name)))
+            else:
+                params.append(em.ObjectExp(problem.object(str(p))))
+        actions.append(ActionInstance(action, tuple(params)))
+    return SequentialPlan(actions)
+
+def simulate_plan_valid(problem, plan):
+    simulator = SequentialSimulator(problem)
+    state = simulator.get_initial_state()
+    for action_instance in plan.actions:
+        if not simulator.is_applicable(state, action_instance):
+            return False
+        state = simulator.apply(state, action_instance)
+        if state is None:
+            return False
+    return all(goal_satisfied(goal, state) for goal in problem.goals)
 
 def make_cot(problem, plan):
     simulator = SequentialSimulator(problem)
@@ -240,27 +283,50 @@ def generate_domain(N=5, seed=None, fluent_max_arity=2):
 
     # Generate ~N actions 🔨
     for ai in rr(N):
-        arity = random.randint(1, 2)
-        types = random.choice([
-            [rtype() for j in range(arity)],
-            [rtype()]*arity])
+        for _ in range(12):
+            arity = random.randint(1, 2)
+            types = random.choice([
+                [rtype() for j in range(arity)],
+                [rtype()]*arity])
 
-        action = InstantaneousAction(f"action_{ai}", **{f"action_{ai}_parameter{j}_{types[j].name}": types[j] for j in range(arity)})
-        for _,exp in zip(rr(N), valid_expressions(action)):
+            action = InstantaneousAction(f"action_{ai}", **{f"action_{ai}_parameter{j}_{types[j].name}": types[j] for j in range(arity)})
+            expressions = valid_expressions(action)
+            if expressions:
+                break
+        else:
+            continue
 
-            bit=random.choice([0,1])
-            if random.random()<0.8: #allow 20% effect-only
-                action.add_precondition([Not(exp),exp][bit])
-            if random.random()<0.1:
-                bit=choice([0,1]) # noise
-            action.add_effect(exp, [True, False][bit])
+        n_pre = random.randint(0, min(len(expressions), max(1, N // 2)))
+        pre_exps = random.sample(expressions, k=n_pre)
+        pre_literals = {}
+        for exp in pre_exps:
+            pre_literals[fact_key(exp)] = random.choice([True, False])
+            action.add_precondition(exp if pre_literals[fact_key(exp)] else Not(exp))
+
+        effect_pool = expressions[:]
+        random.shuffle(effect_pool)
+        n_eff = random.randint(1, min(len(effect_pool), max(1, N // 2)))
+        effects = {}
+        for exp in effect_pool:
+            key = fact_key(exp)
+            if key in effects:
+                continue
+            value = random.choice([True, False])
+            if pre_literals.get(key) == value and len(effect_pool) > 1:
+                value = not value
+            effects[key] = (exp, value)
+            if len(effects) >= n_eff:
+                break
+
+        for exp, value in effects.values():
+            action.add_effect(exp, value)
 
         problem.add_action(action)
 
     problem.domain_reuses=0
     return problem
 
-def generate_problem(N=5, domain=None):
+def generate_problem(N=5, domain=None, add_random_goals=True):
     rr = lambda n: range(random.randint(1, n))
 
     if not domain:
@@ -305,22 +371,251 @@ def generate_problem(N=5, domain=None):
 
 
     # Set goal state 🏁
-    rr = lambda n: range(random.randint(1, n))
-    used_goals = set()  
+    if add_random_goals:
+        rr = lambda n: range(random.randint(1, n))
+        used_goals = set()
 
-    for _ in rr(max(1,N//2)):
-        fluent = random.choice(problem.fluents)
-        objects = [random.choice(list(problem.objects(fluent.signature[i].type))) for i in range(fluent.arity)]
-        objects = tuple(objects)
-        if (fluent, objects) in used_goals:
-            continue
-        used_goals.add((fluent, objects))
+        for _ in rr(max(1,N//2)):
+            fluent = random.choice(problem.fluents)
+            objects = [random.choice(list(problem.objects(fluent.signature[i].type))) for i in range(fluent.arity)]
+            objects = tuple(objects)
+            if (fluent, objects) in used_goals:
+                continue
+            used_goals.add((fluent, objects))
 
-        expr = fluent(*objects)
-        expr = random.choice([Not(expr)]+5*[expr])
-        problem.add_goal(expr)
+            expr = fluent(*objects)
+            expr = random.choice([Not(expr)]+5*[expr])
+            problem.add_goal(expr)
     problem.domain=domain
     return problem
+
+def ground_action(problem, simulator, action, params):
+    em = problem.environment.expression_manager
+    fnode_params = tuple(p if hasattr(p, "is_object_exp") else em.ObjectExp(p) for p in params)
+    return simulator._ground_action(action, fnode_params)
+
+def ground_effect_literals(problem, simulator, action, params):
+    grounded = ground_action(problem, simulator, action, params)
+    effects = []
+    for effect in grounded.effects:
+        if effect.is_conditional() or effect.is_forall():
+            continue
+        effects.append((fact_key(effect.fluent), effect.fluent, effect.value.is_true()))
+    return effects
+
+def positive_achiever_counts(problem):
+    simulator = SequentialSimulator(problem)
+    counts = Counter()
+    for action in problem.actions:
+        obj_lists = [list(problem.objects(param.type)) for param in action.parameters]
+        for params in itertools.product(*obj_lists) if obj_lists else [()]:
+            try:
+                for key, _, value in ground_effect_literals(problem, simulator, action, params):
+                    if value:
+                        counts[key] += 1
+            except Exception:
+                continue
+    return counts
+
+def sample_weighted(items, scores, temperature=2.0):
+    m = max(scores)
+    weights = [math.exp((s - m) / temperature) for s in scores]
+    total = sum(weights)
+    pick = random.random() * total
+    acc = 0
+    for item, weight in zip(items, weights):
+        acc += weight
+        if acc >= pick:
+            return item
+    return items[-1]
+
+def applicable_action_instance(applicable):
+    if isinstance(applicable, ActionInstance):
+        return applicable
+    action, params = applicable
+    return ActionInstance(action, tuple(params))
+
+def novelty_walk(problem, length, temperature=2.0):
+    simulator = SequentialSimulator(problem)
+    state = simulator.get_initial_state()
+    states = [state]
+    plan = []
+    current_true = set(state_fact_nodes(problem, state))
+    seen_states = {frozenset(current_true)}
+    prev_added = set()
+    prev_deleted = set()
+
+    for _ in range(length):
+        scored = []
+        for applicable in simulator.get_applicable_actions(state):
+            ai = applicable_action_instance(applicable)
+            try:
+                effects = ground_effect_literals(problem, simulator, ai.action, ai.actual_parameters)
+            except Exception:
+                continue
+            adds = {key for key, _, value in effects if value and key not in current_true}
+            deletes = {key for key, _, value in effects if not value and key in current_true}
+            next_true = (current_true | adds) - deletes
+            score = 3 * len(adds) + len(deletes)
+            if frozenset(next_true) in seen_states:
+                score -= 4
+            if adds & prev_deleted or deletes & prev_added:
+                score -= 3
+            if not adds and not deletes:
+                score -= 2
+            scored.append(((ai, adds, deletes), score))
+
+        if not scored:
+            break
+
+        instance, added, deleted = sample_weighted(
+            [x for x, _ in scored],
+            [s for _, s in scored],
+            temperature=temperature,
+        )
+        next_state = simulator.apply(state, instance)
+        if next_state is None:
+            break
+        plan.append(instance)
+        state = next_state
+        states.append(state)
+        current_true = set(state_fact_nodes(problem, state))
+        seen_states.add(frozenset(current_true))
+        prev_added = added
+        prev_deleted = deleted
+
+    return SequentialPlan(plan), states
+
+def choose_late_goals(problem, states, max_goals=1, achievers=None):
+    if len(states) < 2:
+        return []
+    init_true = set(state_fact_nodes(problem, states[0]))
+    final_nodes = state_fact_nodes(problem, states[-1])
+    final_true = set(final_nodes)
+    changed = final_true - init_true
+    if not changed:
+        return []
+
+    first_seen = {}
+    for i, state in enumerate(states[1:], start=1):
+        for key in set(state_fact_nodes(problem, state)) - init_true:
+            first_seen.setdefault(key, i)
+
+    if achievers is None:
+        achievers = positive_achiever_counts(problem)
+    candidates = [key for key in changed if first_seen.get(key, 0) >= max(1, len(states) // 2)]
+    for upper in (2, 4, 10**9):
+        filtered = [key for key in candidates if 1 <= achievers.get(key, 0) <= upper]
+        if filtered:
+            candidates = filtered
+            break
+    if not candidates:
+        candidates = list(changed)
+
+    candidates.sort(key=lambda key: (first_seen.get(key, 0), -achievers.get(key, 0)), reverse=True)
+    top = candidates[:max(4, max_goals * 3)]
+    random.shuffle(top)
+    return [final_nodes[key] for key in top[:max_goals]]
+
+def prune_plan_to_goals(problem, raw_plan, goals):
+    simulator = SequentialSimulator(problem)
+    required = {literal_key(goal) for goal in goals}
+    kept = []
+
+    for action_instance in reversed(raw_plan.actions):
+        params = tuple(action_instance.actual_parameters)
+        effects = ground_effect_literals(problem, simulator, action_instance.action, params)
+        effect_literals = {(key, value) for key, _, value in effects}
+        if not (required & effect_literals):
+            continue
+
+        kept.append(action_instance)
+        for key, _, value in effects:
+            required.discard((key, value))
+        grounded = ground_action(problem, simulator, action_instance.action, params)
+        for precondition in grounded.preconditions:
+            if precondition.is_not():
+                required.add((fact_key(precondition.arg(0)), False))
+            else:
+                required.add((fact_key(precondition), True))
+
+    kept.reverse()
+    return SequentialPlan(kept)
+
+def visible_fact_keys(problem, plan):
+    simulator = SequentialSimulator(problem)
+    keys = {fact_key(goal.arg(0) if goal.is_not() else goal) for goal in problem.goals}
+    for action_instance in plan.actions:
+        grounded = ground_action(problem, simulator, action_instance.action, tuple(action_instance.actual_parameters))
+        for precondition in grounded.preconditions:
+            keys.add(fact_key(precondition.arg(0) if precondition.is_not() else precondition))
+        for effect in grounded.effects:
+            keys.add(fact_key(effect.fluent))
+    return keys
+
+def trim_problem(problem, plan, level=0):
+    modes = ["plan_cone", "medium", "full"]
+    weights_by_level = [
+        [0.70, 0.25, 0.05],
+        [0.45, 0.40, 0.15],
+        [0.25, 0.50, 0.25],
+        [0.10, 0.55, 0.35],
+    ]
+    weights = weights_by_level[min(level, len(weights_by_level) - 1)]
+    mode = random.choices(modes, weights=weights, k=1)[0]
+    trimmed = problem.clone()
+    if mode == "full":
+        return trimmed, mode
+
+    plan_action_names = {a.action.name for a in plan.actions}
+    selected = [a for a in trimmed.actions if a.name in plan_action_names]
+    distractor_rate = 0.20 + 0.12 * min(level, 5)
+    if mode == "medium":
+        for action in trimmed.actions:
+            if action.name not in plan_action_names and random.random() < distractor_rate:
+                selected.append(action)
+
+    trimmed.clear_actions()
+    for action in selected:
+        trimmed.add_action(action.clone())
+
+    keep_facts = visible_fact_keys(problem, plan)
+    if mode == "medium":
+        for fact in list(problem.initial_values):
+            if fact_key(fact) not in keep_facts and random.random() < distractor_rate:
+                keep_facts.add(fact_key(fact))
+
+    for fact, value in list(trimmed.initial_values.items()):
+        if value.is_true() and fact_key(fact) not in keep_facts:
+            trimmed.set_initial_value(fact, False)
+    return trimmed, mode
+
+def generate_planted_problem(N, domain, target_len, level=0, max_attempts=80):
+    for _ in range(max_attempts):
+        problem = generate_problem(N, domain=domain, add_random_goals=False)
+        walk_len = random.randint(target_len + 1, target_len + 5 + max(0, level))
+        raw_plan, states = novelty_walk(problem, walk_len)
+        if len(raw_plan.actions) < target_len:
+            continue
+        achievers = positive_achiever_counts(problem)
+        goal_cap = 1 + int(level >= 1) + int(target_len >= 4) + max(0, level // 2)
+        goal_count = random.randint(1, min(5, goal_cap))
+        goals = choose_late_goals(problem, states, max_goals=goal_count, achievers=achievers)
+        if not goals:
+            continue
+        problem.clear_goals()
+        for goal in goals:
+            problem.add_goal(goal)
+        plan = prune_plan_to_goals(problem, raw_plan, goals)
+        if len(plan.actions) < target_len:
+            continue
+        if not simulate_plan_valid(problem, plan):
+            continue
+        trimmed, trim_mode = trim_problem(problem, plan, level=level)
+        trimmed_plan = rebind_plan(trimmed, plan)
+        if simulate_plan_valid(trimmed, trimmed_plan):
+            return trimmed, trimmed_plan, trim_mode
+    raise RuntimeError("Could not generate a planted planning problem")
 
 
 def compile(problem):
@@ -471,12 +766,15 @@ class PlanningConfig(Config):
     min_na: int = 1
     max_na: int = 3
     max_domain_seed: int = 500
-    arity_weight = 0.5
-    hint_proba = 0.5
+    arity_weight: float = 0.5
+    hint_proba: float = 0.5
+    pure_random_proba: float = 0.12
+    optimal_relabel: bool = True
+    audit_proba: float = 0.0
     #planner:str="fast-downward-opt"
-    planner:str="pyperplan-opt"
+    planner: str = "pyperplan-opt"
     language: str = "en"
-    domain: str = None
+    domain: object = None
     #domains: list = field(default_factory=lambda: ["blocksworld", "mystery", None])
     domains: list = field(default_factory=lambda: [None])
     def apply_difficulty(self, level):
@@ -496,49 +794,92 @@ class Planning(Task):
         meta=edict()
         config = self.config
         config.domain = random.choice(config.domains)
+        level = getattr(config, "level", 0)
         N = random.randint(4, config.N)
+        target_na = random.choice(list(range(config.min_na, config.max_na + 1)))
 
-        while True:
+        for _ in range(250):
     
             meta.domain_seed = f"{N}-{random.randint(0,config.max_domain_seed)}"
             meta.fluent_arity = fma = random.choices([1, 2], weights=[1, config.arity_weight], k=1)[0]
 
             domain = generate_domain(N, meta.domain_seed, fluent_max_arity=fma) if not config.domain else fetch_domain(config.domain)
             random.seed(None)
-            problem = generate_problem(N, domain=domain)
             try:
-                solution = solve(problem, planner=config.planner)
+                if random.random() < config.pure_random_proba:
+                    problem = generate_problem(N, domain=domain)
+                    solution = solve(problem, planner=config.planner)
+                    if not solution.plan:
+                        continue
+                    reference_plan = solution.plan
+                    trim_mode = "full"
+                    generator_mode = "random_solve"
+                else:
+                    problem, reference_plan, trim_mode = generate_planted_problem(
+                        N,
+                        domain,
+                        target_na,
+                        level=level,
+                    )
+                    generator_mode = "planted_walk"
             except Exception as e:
+                if isinstance(e, RuntimeError):
+                    continue
                 print(f"ERR: {e}")
                 continue
-            plan = "\n".join(
-                line.strip()
-                for line in str(solution.plan).replace('SequentialPlan:\n', '').splitlines()
-                if line.strip()
-            )
 
-            meta.na = na = plan.count('(')
+            planted_na = len(reference_plan.actions)
+            if generator_mode == "planted_walk" and config.optimal_relabel:
+                try:
+                    solution = solve(problem, planner=config.planner)
+                except Exception:
+                    continue
+                if not solution.plan or len(solution.plan.actions) < config.min_na:
+                    continue
+                reference_plan = solution.plan
+                generator_mode = "planted_walk_optimal"
+            elif len(reference_plan.actions) < target_na:
+                continue
 
-            if na < random.choice(list(range(config.min_na, config.max_na + 1))):
-                continue # ensure plan is long enough
+            if generator_mode == "planted_walk" and random.random() < config.audit_proba:
+                try:
+                    solution = solve(problem, planner=config.planner)
+                    if solution.plan and 0 < len(solution.plan.actions) >= config.min_na:
+                        reference_plan = solution.plan
+                        generator_mode = "planted_walk_audited"
+                except Exception:
+                    pass
+
+            plan = format_plan(reference_plan)
+            meta.na = len(reference_plan.actions)
+            meta.planted_na = planted_na
+            meta.optimality_gap = planted_na - meta.na
+            meta.target_na = target_na
+            meta.generator_mode = generator_mode
+            meta.trim_mode = trim_mode
 
             meta.problem_english = translate(problem)
             writer = PDDLWriter(problem)
             meta.problem_pddl = writer.get_problem()
             meta.domain_pddl = writer.get_domain()
-            meta.verif_cot = make_cot(problem, solution.plan) #deprecated cot
+            meta.verif_cot = make_cot(problem, reference_plan) #deprecated cot
             if self.score_answer(plan, {'metadata': meta})<1:
                 continue
             return Problem(meta, plan)
+        raise RuntimeError("Could not generate a planning problem")
 
 
     def prompt(self, meta):
         txt = meta.problem_english.strip()       
         if random.random() < self.config.hint_proba:
-            txt += f"\nHint: Reference solution has {meta.na} actions (but it may not be optimal)."
+            if meta.get("generator_mode") == "planted_walk_optimal":
+                txt += f"\nHint: A shortest reference solution has {meta.na} actions."
+            else:
+                txt += f"\nHint: Reference solution has {meta.na} actions (but it may not be optimal)."
+        answer_kind = "shortest valid" if meta.get("generator_mode") in {"planted_walk_optimal", "planted_walk_audited", "random_solve"} else "valid"
         txt += (
             "\n\nAction format example: action_0(object1 object2)."
-            "\nThe answer is the plan, one action per line."
+            f"\nThe answer is a {answer_kind} plan, one action per line."
         )
         return txt
 

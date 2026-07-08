@@ -19,6 +19,11 @@ class Atom:
 
 
 @dataclass(frozen=True)
+class Not:
+    atom: Atom
+
+
+@dataclass(frozen=True)
 class PredSig:
     name: str
     arg_types: tuple
@@ -167,6 +172,18 @@ def _subst(atom, env):
     return Atom(atom.pred, tuple(env.get(x, x) for x in atom.args), atom.sign)
 
 
+def body_atoms(body):
+    return [b for b in body if isinstance(b, Atom)]
+
+
+def body_not_atoms(body):
+    return [b.atom for b in body if isinstance(b, Not)]
+
+
+def body_checks(body):
+    return [b for b in body if not isinstance(b, (Atom, Not))]
+
+
 def _match(pattern, fact, env):
     if pattern.pred != fact.pred or pattern.sign != fact.sign or len(pattern.args) != len(fact.args):
         return None
@@ -208,6 +225,130 @@ def _rule_instances(rule, closure):
     yield from rec(0, {}, ())
 
 
+def _vars_in_atom(atom):
+    return {a for a in atom.args if is_var(a)}
+
+
+def _check_naf_safety(rule):
+    bound = set().union(*(_vars_in_atom(a) for a in body_atoms(rule.body))) if body_atoms(rule.body) else set()
+    needed = set(_vars_in_atom(rule.head))
+    if body_not_atoms(rule.body):
+        needed |= set().union(*(_vars_in_atom(a) for a in body_not_atoms(rule.body)))
+    for chk in body_checks(rule.body):
+        if chk[0] == "!=":
+            needed |= {x for x in chk[1:] if is_var(x)}
+    if needed - bound:
+        raise ValueError("unsafe NAF rule")
+
+
+def _rule_instances_naf(rule, closure):
+    _check_naf_safety(rule)
+    index = defaultdict(list)
+    for fact in closure:
+        index[(fact.pred, fact.sign)].append(fact)
+
+    atoms = body_atoms(rule.body)
+    not_atoms = body_not_atoms(rule.body)
+    checks = body_checks(rule.body)
+
+    def rec(i, env, parents):
+        if i == len(atoms):
+            for chk in checks:
+                if chk[0] == "!=" and env.get(chk[1]) == env.get(chk[2]):
+                    return
+            for atom in not_atoms:
+                inst = _subst(atom, env)
+                if any(is_var(a) for a in inst.args) or inst in closure:
+                    return
+            head = _subst(rule.head, env)
+            if any(is_var(a) for a in head.args):
+                return
+            yield head, parents
+            return
+        pat = atoms[i]
+        for fact in index.get((pat.pred, pat.sign), ()):
+            env2 = _match(pat, fact, env)
+            if env2 is not None:
+                yield from rec(i + 1, env2, parents + (fact,))
+
+    yield from rec(0, {}, ())
+
+
+def pred_key(atom):
+    return atom.pred, len(atom.args), atom.sign
+
+
+def _rule_predicates(rule):
+    preds = {pred_key(rule.head)}
+    preds.update(pred_key(a) for a in body_atoms(rule.body))
+    preds.update(pred_key(a) for a in body_not_atoms(rule.body))
+    return preds
+
+
+def _has_negative_scc(preds, edges):
+    graph = defaultdict(list)
+    for src, dst, negative in edges:
+        graph[src].append((dst, negative))
+
+    index = 0
+    stack, on_stack, indices, low, comps = [], set(), {}, {}, []
+
+    def strong(v):
+        nonlocal index
+        indices[v] = low[v] = index
+        index += 1
+        stack.append(v)
+        on_stack.add(v)
+        for w, _ in graph.get(v, ()):
+            if w not in indices:
+                strong(w)
+                low[v] = min(low[v], low[w])
+            elif w in on_stack:
+                low[v] = min(low[v], indices[w])
+        if low[v] == indices[v]:
+            comp = set()
+            while True:
+                w = stack.pop()
+                on_stack.remove(w)
+                comp.add(w)
+                if w == v:
+                    break
+            comps.append(comp)
+
+    for p in preds:
+        if p not in indices:
+            strong(p)
+    return any(negative and src in comp and dst in comp for comp in comps for src, dst, negative in edges)
+
+
+def stratify_rules(rules):
+    preds, edges = set(), []
+    for rule in rules:
+        _check_naf_safety(rule)
+        head = pred_key(rule.head)
+        preds.update(_rule_predicates(rule))
+        for atom in body_atoms(rule.body):
+            edges.append((pred_key(atom), head, False))
+        for atom in body_not_atoms(rule.body):
+            edges.append((pred_key(atom), head, True))
+    strata = {p: 0 for p in preds}
+    if _has_negative_scc(preds, edges):
+        return None
+    for _ in range(max(1, len(preds))):
+        changed = False
+        for src, dst, negative in edges:
+            need = strata[src] + (1 if negative else 0)
+            if strata[dst] < need:
+                strata[dst] = need
+                changed = True
+        if not changed:
+            return strata
+    for src, dst, negative in edges:
+        if strata[dst] < strata[src] + (1 if negative else 0):
+            return None
+    return strata
+
+
 def chase(theory, max_depth=None):
     closure = set(theory.facts)
     deriv = {a: Derivation(a, 0, None, ()) for a in closure}
@@ -240,6 +381,51 @@ def chase(theory, max_depth=None):
                     changed = True
         if denial_hit():
             return ChaseResult(closure, deriv, True)
+    return ChaseResult(closure, deriv, False)
+
+
+def naf_chase(theory, max_depth=None):
+    if max_depth is not None:
+        raise ValueError("naf_chase requires max_depth=None")
+    strata = stratify_rules(theory.rules)
+    if strata is None:
+        raise ValueError("unstratified NAF program")
+    closure = set(theory.facts)
+    deriv = {a: Derivation(a, 0, None, ()) for a in closure}
+
+    def denial_hit():
+        for p in list(closure):
+            if opposite(p) in closure:
+                return True
+        for d in theory.denials:
+            dummy = Rule(d.body, Atom("__false__", ()))
+            if next(_rule_instances_naf(dummy, closure), None):
+                return True
+        return False
+
+    if denial_hit():
+        return ChaseResult(closure, deriv, True)
+
+    by_stratum = defaultdict(list)
+    for rule in theory.rules:
+        by_stratum[strata.get(pred_key(rule.head), 0)].append(rule)
+
+    for s in range(max(by_stratum.keys(), default=-1) + 1):
+        changed = True
+        while changed:
+            changed = False
+            for rule in by_stratum.get(s, ()):
+                for head, parents in _rule_instances_naf(rule, closure):
+                    depth = 1 + max(deriv[p].depth for p in parents) if parents else 1
+                    if max_depth is not None and depth > max_depth:
+                        continue
+                    old = deriv.get(head)
+                    if old is None or depth < old.depth:
+                        closure.add(head)
+                        deriv[head] = Derivation(head, depth, rule, parents)
+                        changed = True
+            if denial_hit():
+                return ChaseResult(closure, deriv, True)
     return ChaseResult(closure, deriv, False)
 
 
@@ -557,6 +743,88 @@ def sample_theory(cfg):
     return theory
 
 
+@dataclass
+class StratifiedNAFNLIConfig(MultistepNLIConfig):
+    domain_packs: tuple = ("surface", "abstract")
+    naf_rule_rate: float = 0.5
+    exception_rate: float = 0.35
+    min_naf_rules_in_proof: int = 1
+
+
+def _naf_roles(pack):
+    if pack == "abstract":
+        return {
+            "trained": "p0", "flagged": "p1", "trusted": "p2", "blocked": "p3",
+            "approved": "p4", "bird": "p5", "penguin": "p6", "ab_bird": "p7",
+            "careful": "p8", "helps": "r0",
+        }
+    return {
+        "trained": "trained", "flagged": "flagged", "trusted": "trusted",
+        "blocked": "blocked", "approved": "approved", "bird": "bird",
+        "penguin": "penguin", "ab_bird": "ab_bird", "careful": "careful",
+        "helps": "helps",
+    }
+
+
+def sample_naf_theory(cfg):
+    pack = random.choice(tuple(cfg.domain_packs))
+    typ = "entity" if pack == "abstract" else "person"
+    n = min(max(3, cfg.n_entities), 7)
+    ents = {typ: tuple(x.title() for x in NAMES[:n])} if pack == "abstract" else {typ: NAMES[:n]}
+    roles = _naf_roles(pack)
+    sigs = {
+        roles[k]: PredSig(roles[k], (typ,), ())
+        for k in ("trained", "flagged", "trusted", "blocked", "approved", "bird", "penguin", "ab_bird", "careful")
+    }
+    sigs[roles["helps"]] = PredSig(roles["helps"], (typ, typ), ())
+    people = list(ents[typ])
+    x, y, z = random.sample(people, 3)
+    trust_exc = roles["flagged"] if random.random() < 0.7 else roles["blocked"]
+    approve_exc = roles["blocked"] if trust_exc == roles["flagged"] else roles["flagged"]
+    rules = [
+        Rule((Atom(roles["trained"], ("?x",)), Not(Atom(trust_exc, ("?x",)))), Atom(roles["trusted"], ("?x",)), "naf", "default_trusted"),
+        Rule((Atom(roles["trusted"], ("?x",)), Not(Atom(approve_exc, ("?x",)))), Atom(roles["approved"], ("?x",)), "naf", "default_approved"),
+        Rule((Atom(trust_exc, ("?x",)),), Atom(roles["trusted"], ("?x",), False), "naf", "exception_negative"),
+        Rule((Atom(roles["trusted"], ("?x",), False), Not(Atom(approve_exc, ("?x",)))), Atom(roles["approved"], ("?x",), False), "naf", "default_reject"),
+    ]
+    optional = [
+        Rule((Atom(roles["penguin"], ("?x",)),), Atom(roles["ab_bird"], ("?x",)), "naf", "abnormality"),
+        Rule((Atom(roles["bird"], ("?x",)), Not(Atom(roles["ab_bird"], ("?x",)))), Atom(roles["approved"], ("?x",)), "naf", "bird_default"),
+        Rule((Atom(roles["helps"], ("?x", "?y")), Atom(roles["careful"], ("?y",)), Not(Atom(trust_exc, ("?y",)))), Atom(roles["trusted"], ("?x",)), "naf", "bridge_default"),
+        Rule((Atom(roles["trained"], ("?x",)), Not(Atom(approve_exc, ("?x",)))), Atom(roles["careful"], ("?x",)), "naf", "careful_default"),
+        Rule((Atom(roles["helps"], ("?x", "?y")), Atom(roles["trusted"], ("?y",)), Not(Atom(approve_exc, ("?x",)))), Atom(roles["approved"], ("?x",)), "naf", "helped_by_trusted"),
+    ]
+    random.shuffle(optional)
+    for rule in optional:
+        if len(rules) >= cfg.n_rules + 3:
+            break
+        if random.random() < cfg.naf_rule_rate or len(rules) < 6:
+            rules.append(rule)
+    facts = [
+        Atom(roles["trained"], (x,)),
+        Atom(roles["trained"], (y,)),
+        Atom(trust_exc, (y,)),
+        Atom(roles["bird"], (x,)),
+        Atom(roles["bird"], (y,)),
+        Atom(roles["penguin"], (y,)),
+        Atom(roles["helps"], (x, y)),
+        Atom(roles["careful"], (y,)),
+    ]
+    if random.random() < cfg.exception_rate:
+        facts.append(Atom(approve_exc, (z,)))
+    if random.random() < cfg.exception_rate:
+        facts.append(Atom(roles["penguin"], (z,)))
+    used = set(facts)
+    for _ in range(max(0, cfg.n_facts - 2)):
+        fact = _fresh_fact(Theory(facts, rules, [], sigs, ents, pack), used)
+        if fact:
+            facts.append(fact)
+    theory = Theory(facts, rules[: max(2, min(len(rules), cfg.n_rules + 3))], [], sigs, ents, pack)
+    if stratify_rules(theory.rules) is None:
+        raise RuntimeError("sampled unstratified NAF theory")
+    return theory
+
+
 def support_atoms(atom, deriv):
     d = deriv[atom]
     if d.rule is None:
@@ -673,6 +941,61 @@ def choose_example(theory, res, cfg, label_signs=None, label_depths=None):
     return None
 
 
+def _label_for_atom(res, hyp):
+    if hyp in res.closure:
+        return "entailment"
+    if opposite(hyp) in res.closure:
+        return "contradiction"
+    return "neutral"
+
+
+def _naf_rules_in_derivation(atom, deriv):
+    return sum(1 for r in derivation_rules(atom, deriv) if any(isinstance(b, Not) for b in r.body))
+
+
+def _naf_support_ok(target, deriv, cfg):
+    if target is None:
+        return False
+    d = deriv[target]
+    return (
+        cfg.min_target_depth <= d.depth <= min(cfg.max_target_depth, cfg.max_depth)
+        and _naf_rules_in_derivation(target, deriv) >= cfg.min_naf_rules_in_proof
+    )
+
+
+def choose_naf_example(theory, res, cfg, label_counts=None):
+    label_counts = label_counts or Counter()
+    labels = ("entailment", "contradiction", "neutral")
+    min_count = min(label_counts[x] for x in labels)
+    preferred = [x for x in labels if label_counts[x] == min_count]
+    random.shuffle(preferred)
+    order = preferred + [x for x in labels if x not in preferred]
+
+    derived = [a for a in res.closure if a not in theory.facts and res.derivations[a].depth > 0]
+    for label in order:
+        if label == "entailment":
+            pool = [a for a in derived if _naf_support_ok(a, res.derivations, cfg)]
+            if pool:
+                hyp = random.choice(pool)
+                return label, hyp, res.derivations[hyp], support_atoms(hyp, res.derivations)
+        elif label == "contradiction":
+            pool = [opposite(a) for a in derived if _naf_support_ok(a, res.derivations, cfg) and not a.sign]
+            if pool:
+                hyp = random.choice(pool)
+                target = opposite(hyp)
+                return label, hyp, res.derivations[target], support_atoms(target, res.derivations)
+        else:
+            live = {pred_key(r.head) for r in participating_rules(res.derivations)}
+            pool = [
+                a for a in _all_ground_atoms(theory)
+                if a not in res.closure and opposite(a) not in res.closure and pred_key(a) in live
+            ]
+            if pool:
+                hyp = random.choice(pool)
+                return label, hyp, None, set()
+    return None
+
+
 def pred_words(pred):
     return pred.replace("_", " ")
 
@@ -734,26 +1057,45 @@ def _lit_schema(a, names=None, pack="surface"):
     return binary_text(a.pred, args, a.sign, pack)
 
 
+def _not_lit_schema(n, names=None, pack="surface"):
+    return "it cannot be shown that " + _lit_schema(n.atom, names, pack)
+
+
 def _rel_phrase(pred, subj, obj, pack="surface"):
     return _lit_schema(Atom(pred, (subj, obj)), pack=pack)
 
 
 def rule_text(rule, rid=None, pack="surface"):
-    atoms = [b for b in rule.body if isinstance(b, Atom)]
-    checks = [b for b in rule.body if not isinstance(b, Atom)]
+    atoms = body_atoms(rule.body)
+    nots = [b for b in rule.body if isinstance(b, Not)]
+    checks = body_checks(rule.body)
     names = {"?x": "x", "?y": "y", "?z": "z", "?p": "p"}
     symbolic = pack == "abstract"
     parts = [_lit_schema(a, names, pack) for a in atoms]
+    parts += [_not_lit_schema(n, names, pack) for n in nots]
     parts += [f"{c[1][1:]} is different from {c[2][1:]}" for c in checks if c[0] == "!="]
     body = " and ".join(parts)
     head = _lit_schema(rule.head, names, pack)
-    vars_ = sorted({v[1:] for a in atoms + [rule.head] for v in a.args if is_var(v)} | {v[1:] for c in checks for v in c[1:] if is_var(v)})
+    vars_ = sorted(
+        {v[1:] for a in atoms + body_not_atoms(rule.body) + [rule.head] for v in a.args if is_var(v)}
+        | {v[1:] for c in checks for v in c[1:] if is_var(v)}
+    )
     q = ", ".join(vars_)
     templates = [
         f"For all {q}, if {body}, then {head}.",
         f"Whenever {body}, {head}.",
         f"From {body}, it follows that {head}.",
     ]
+    if nots:
+        pos_body = " and ".join(_lit_schema(a, names, pack) for a in atoms) or "the condition holds"
+        exc_body = " and ".join(_lit_schema(n.atom, names, pack) for n in nots)
+        templates += [
+            f"By default, if {pos_body}, then {head}, unless it can be shown that {exc_body}.",
+            f"If {pos_body}, and it cannot be shown that {exc_body}, then {head}.",
+        ]
+        if rid is None:
+            rid = random.randrange(len(templates))
+        return templates[rid % len(templates)], (rule.shape, rid % len(templates), "naf", "default")
     if len(atoms) == 1 and len(atoms[0].args) == 1 and len(rule.head.args) == 1:
         if symbolic:
             a = ("not " if not atoms[0].sign else "") + tag_word(atoms[0].pred)
@@ -918,6 +1260,15 @@ def case_metadata(case, key=None):
     )
 
 
+def naf_case_metadata(case, key=None):
+    meta = case_metadata(case, key)
+    target = case.target
+    meta.naf_rule_count = sum(1 for r in case.theory.rules if any(isinstance(b, Not) for b in r.body))
+    meta.naf_rules_in_proof = 0 if target is None else _naf_rules_in_derivation(target, case.res.derivations)
+    meta.strata = {repr(k): v for k, v in (stratify_rules(case.theory.rules) or {}).items()}
+    return meta
+
+
 def shallow_closure(theory, keep_shapes):
     rules = [r for r in theory.rules if r.shape in keep_shapes]
     return chase(Theory(
@@ -991,6 +1342,141 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         surface.update(surf)
         return case, key
     return None, None
+
+
+def generate_naf_case(cfg, allowed_labels=("entailment", "contradiction", "neutral"), state=None):
+    state = state or {}
+    label_counts = state.setdefault("label_counts", Counter())
+    allowed_labels = set(allowed_labels)
+    for _ in range(500):
+        theory = sample_naf_theory(cfg)
+        try:
+            res = naf_chase(theory, max_depth=None)
+        except ValueError:
+            continue
+        if res.inconsistent:
+            continue
+        choice = choose_naf_example(theory, res, cfg, label_counts)
+        if not choice:
+            continue
+        label, hyp, derivation, support = choice
+        if label not in allowed_labels:
+            continue
+        lines, source, surf = render(theory)
+        target = target_for(label, hyp)
+        used_rules = derivation_rules(target, res.derivations) if target is not None else set()
+        live_rule_rate = len(participating_rules(res.derivations)) / max(1, len(theory.rules))
+        proof_rule_rate = len(used_rules) / max(1, len(theory.rules))
+        key = bin_key(label, hyp, derivation, support, theory, target, res.derivations)
+        label_counts[label] += 1
+        return MultistepCase(theory, res, label, hyp, target, derivation, support, lines, source, surf, live_rule_rate, proof_rule_rate), key
+    return None, None
+
+
+def _without_source(theory, source, idx):
+    return Theory(
+        [a for a in theory.facts if source.get(a) != idx],
+        [r for r in theory.rules if source.get(r) != idx],
+        theory.denials,
+        theory.pred_sigs,
+        theory.entities,
+        theory.domain_pack,
+    )
+
+
+def _with_extra_fact(theory, fact):
+    return Theory(
+        list(theory.facts) + [fact],
+        theory.rules,
+        theory.denials,
+        theory.pred_sigs,
+        theory.entities,
+        theory.domain_pack,
+    )
+
+
+def _naf_label_after(theory, hyp):
+    res = naf_chase(theory, max_depth=None)
+    if res.inconsistent:
+        return None
+    return _label_for_atom(res, hyp)
+
+
+def make_naf_removal_flip_case(cfg):
+    targets = ("entailment", "contradiction", "neutral")
+    for _ in range(500):
+        case, key = generate_naf_case(cfg)
+        if not case:
+            continue
+        lines, source = case.lines, case.source
+        current = case.label
+        target_label = random.choice([x for x in targets if x != current])
+        sols = []
+        exception_sols = []
+        for idx in range(len(lines)):
+            try:
+                label = _naf_label_after(_without_source(case.theory, source, idx), case.hyp)
+            except ValueError:
+                continue
+            if label == target_label:
+                sols.append((idx,))
+                obj = next((x for x, j in source.items() if j == idx), None)
+                if isinstance(obj, Atom) and obj.pred in {"flagged", "p1", "blocked", "p3", "penguin", "p6"}:
+                    exception_sols.append((idx,))
+        chosen = exception_sols or sols
+        if chosen:
+            return edict(
+                case=case,
+                key=key,
+                target_label=target_label,
+                answer=chosen[0],
+                valid_supports=[list(x) for x in chosen],
+            )
+    return None
+
+
+def make_naf_addition_flip_case(cfg):
+    targets = ("entailment", "contradiction", "neutral")
+    for _ in range(500):
+        case, key = generate_naf_case(cfg)
+        if not case:
+            continue
+        current = case.label
+        target_label = random.choice([x for x in targets if x != current])
+        candidates = []
+        for a in _all_ground_atoms(case.theory):
+            if a in case.theory.facts or opposite(a) in case.theory.facts:
+                continue
+            try:
+                label = _naf_label_after(_with_extra_fact(case.theory, a), case.hyp)
+            except ValueError:
+                continue
+            if label == target_label:
+                candidates.insert(0, a)
+            elif len(candidates) < cfg.n_distractors + 3:
+                candidates.append(a)
+            if len(candidates) >= max(4, cfg.n_distractors + 3) and any(
+                _naf_label_after(_with_extra_fact(case.theory, c), case.hyp) == target_label for c in candidates[:3]
+            ):
+                break
+        good = []
+        for i, cand in enumerate(candidates):
+            if _naf_label_after(_with_extra_fact(case.theory, cand), case.hyp) == target_label:
+                good.append(i)
+        if good:
+            order = list(range(len(candidates[: max(4, cfg.n_distractors + 3)])))
+            random.shuffle(order)
+            cands = [candidates[i] for i in order]
+            good = [i for i, old in enumerate(order) if _naf_label_after(_with_extra_fact(case.theory, candidates[old]), case.hyp) == target_label]
+            return edict(
+                case=case,
+                key=key,
+                candidates=cands,
+                target_label=target_label,
+                answer=(good[0],),
+                valid_supports=[[i] for i in good],
+            )
+    return None
 
 
 def near_miss_abducibles(theory, removed, n):
@@ -1270,6 +1756,110 @@ class MultistepNLI(Task):
 
     def balancing_key(self, problem):
         return problem.answer
+
+
+class StratifiedNAFNLI(Task):
+    task_name = "stratified_naf_nli"
+
+    def __init__(self, config=StratifiedNAFNLIConfig()):
+        super().__init__(config=config)
+        self.balancing_key_ratio = 1 / 3
+        self._case_state = {}
+
+    def generate(self):
+        case, key = generate_naf_case(self.config, state=self._case_state)
+        if case:
+            meta = naf_case_metadata(case, key)
+            meta.payload = Payload(premise="\n".join(meta.premise), hypothesis=meta.hypothesis)
+            mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
+            return Problem(meta, mapping[case.label])
+        raise RuntimeError("could not generate a stratified_naf_nli example")
+
+    def prompt(self, meta):
+        return (
+            f"{Payload(meta.payload)}\n\n"
+            "Some rules use phrases like 'unless X can be shown'. This means the rule applies only when "
+            "that exception is not derivable from the premise. This is different from a classical "
+            "'is not' fact.\n"
+            "Is the hypothesis true given the premise? The answer is Yes, No, or Maybe."
+        )
+
+    def score_answer(self, answer, entry):
+        return float(str(answer).strip().lower().rstrip(".") == str(entry.answer).strip().lower())
+
+    def balancing_key(self, problem):
+        return problem.answer
+
+
+class NAFRemovalFlip(Task):
+    task_name = "naf_removal_flip"
+
+    def __init__(self, config=StratifiedNAFNLIConfig()):
+        super().__init__(config=config)
+
+    def generate(self):
+        flip = make_naf_removal_flip_case(self.config)
+        if flip:
+            case = flip.case
+            meta = naf_case_metadata(case, flip.key)
+            meta.initial_label = case.label
+            meta.target_label = flip.target_label
+            meta.payload = Payload(premise=indexed_premise(case.lines), hypothesis=meta.hypothesis)
+            meta.valid_supports = flip.valid_supports
+            answer = " ".join(str(i) for i in flip.answer)
+            return Problem(meta, answer)
+        raise RuntimeError("could not generate a naf_removal_flip example")
+
+    def prompt(self, meta):
+        words = {"entailment": "true", "contradiction": "false", "neutral": "unknown"}
+        return (
+            f"{Payload(meta.payload)}\n\n"
+            f"Which smallest set of indexed premise statements, if removed, would make the hypothesis become {words[meta.target_label]}?\n"
+            "MVP cases have one removed statement. Answer with space-separated indexes."
+        )
+
+    def score_answer(self, answer, entry):
+        pred = parse_indices(answer)
+        valid = [set(x) for x in entry.metadata.get("valid_supports", [])]
+        return float(any(pred == x for x in valid))
+
+
+class NAFAdditionFlip(Task):
+    task_name = "naf_addition_flip"
+
+    def __init__(self, config=StratifiedNAFNLIConfig()):
+        super().__init__(config=config)
+
+    def generate(self):
+        flip = make_naf_addition_flip_case(self.config)
+        if flip:
+            case = flip.case
+            meta = naf_case_metadata(case, flip.key)
+            meta.initial_label = case.label
+            meta.target_label = flip.target_label
+            meta.candidates = [atom_text(a, case.theory.domain_pack) + "." for a in flip.candidates]
+            meta.payload = Payload(
+                premise=indexed_premise(case.lines),
+                hypothesis=meta.hypothesis,
+                candidate_facts=indexed_premise(meta.candidates),
+            )
+            meta.valid_supports = flip.valid_supports
+            answer = " ".join(str(i) for i in flip.answer)
+            return Problem(meta, answer)
+        raise RuntimeError("could not generate a naf_addition_flip example")
+
+    def prompt(self, meta):
+        words = {"entailment": "true", "contradiction": "false", "neutral": "unknown"}
+        return (
+            f"{Payload(meta.payload)}\n\n"
+            f"Which candidate fact, if added to the premise, would make the hypothesis become {words[meta.target_label]}?\n"
+            "Answer with one candidate index."
+        )
+
+    def score_answer(self, answer, entry):
+        pred = parse_indices(answer)
+        valid = [set(x) for x in entry.metadata.get("valid_supports", [])]
+        return float(any(pred == x for x in valid))
 
 
 class MultistepEvidenceRetrieval(Task):

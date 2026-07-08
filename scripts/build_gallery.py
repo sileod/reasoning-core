@@ -6,7 +6,9 @@ import hashlib
 import inspect
 import re
 from collections import OrderedDict
+from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 from tqdm.auto import tqdm
 
@@ -74,6 +76,10 @@ def source_behavior_hash(path):
     return _source_behavior_hash(str(Path(path)))
 
 
+def source_modified_date(path):
+    return datetime.fromtimestamp(Path(path).stat().st_mtime).strftime("%Y.%m.%d")
+
+
 def category_rank_name(name):
     try:
         return CATEGORY_ORDER.index(task_module(name))
@@ -98,6 +104,27 @@ def pick_example(task, batch_size, cache=False, refresh_cache=False):
     else:
         batch = task.generate_balanced_batch(batch_size=batch_size)
     return sorted(batch, key=lambda x: len(x.prompt) - len(str(x.answer)))[0]
+
+
+def load_taskrow_examples(task_names, cache_path):
+    if not cache_path:
+        return OrderedDict()
+    from task_diagnostics.cache import load_task_rows
+
+    wanted = set(task_names)
+    candidates = {}
+    for row in load_task_rows(path=cache_path, tasks=wanted):
+        if row.task not in wanted:
+            continue
+        example = SimpleNamespace(prompt=row.prompt, answer=row.answer)
+        rank = (row.level, len(row.prompt) - len(str(row.answer)), len(row.prompt))
+        if row.task not in candidates or rank < candidates[row.task][0]:
+            candidates[row.task] = (rank, example)
+    return OrderedDict(
+        (name, candidates[name][1])
+        for name in task_names
+        if name in candidates
+    )
 
 
 def source_link(task):
@@ -131,10 +158,21 @@ def section_text(name, example):
     source = Path(inspect.getfile(task.__class__)).resolve()
     return (
         f"## [{name}]({source_link(task)})\n\n"
-        f"- hash: `{task.behavior_hash()}`\n"
-        f"- modified: {source.stat().st_mtime:.0f}\n\n"
+        f"- last modified: {source_modified_date(source)}\n\n"
         f"**Prompt:**\n{fence(example.prompt)}\n\n"
         f"**Answer:**\n{fence(example.answer)}"
+    )
+
+
+def normalize_section(name, section):
+    section = re.sub(r"\n- hash: `[^`]*`\n", "\n", section)
+    section = re.sub(r"\n- modified: [^\n]*\n", "\n", section)
+    section = re.sub(r"\n- last modified: [^\n]*\n", "\n", section)
+    return re.sub(
+        r"^(## [^\n]+\n)",
+        rf"\1\n- last modified: {source_modified_date(task_source(name))}\n",
+        section,
+        count=1,
     )
 
 
@@ -144,7 +182,9 @@ def changed_tasks(task_names, existing_sections, refresh=False):
     changed = []
     for name in task_names:
         section = existing_sections.get(name, "")
-        if f"- hash: `{source_behavior_hash(task_source(name))}`" not in section:
+        date_marker = f"- last modified: {source_modified_date(task_source(name))}"
+        legacy_hash_marker = f"- hash: `{source_behavior_hash(task_source(name))}`"
+        if date_marker not in section and legacy_hash_marker not in section:
             changed.append(name)
     return changed
 
@@ -176,7 +216,7 @@ def write_gallery(task_names, examples, out_path, existing_sections=None):
             if name in examples:
                 section = section_text(name, examples[name])
             else:
-                section = existing_sections[name]
+                section = normalize_section(name, existing_sections[name])
             f.write(f"{section}\n\n---\n\n")
 
 
@@ -207,6 +247,10 @@ def parse_args():
     parser.add_argument("--no-cache", action="store_true",
                         help="Use generate_balanced_batch instead of cached validation examples.")
     parser.add_argument("--refresh-cache", action="store_true")
+    parser.add_argument("--taskrow-cache", default=None,
+                        help=("Read examples from a diagnostics TaskRow cache "
+                              "(task_diagnostics/cache/task_rows/<cache_id>) "
+                              "before generating missing examples."))
     parser.add_argument("--allow-missing", action="store_true")
     parser.add_argument("--tasks", nargs="*", default=None)
     return parser.parse_args()
@@ -218,13 +262,23 @@ def main():
     task_names = sort_task_names(names)
     existing_sections = read_sections(args.out)
     tasks_to_build = changed_tasks(task_names, existing_sections, args.refresh_cache)
-    examples = build_examples((get_task(name) for name in tasks_to_build),
-                              cache=not args.no_cache,
-                              refresh_cache=args.refresh_cache,
-                              allow_missing=args.allow_missing)
+    examples = load_taskrow_examples(tasks_to_build, args.taskrow_cache)
+    missing_from_taskrow_cache = [
+        name for name in tasks_to_build if name not in examples
+    ]
+    generated = build_examples(
+        (get_task(name) for name in missing_from_taskrow_cache),
+        cache=not args.no_cache,
+        refresh_cache=args.refresh_cache,
+        allow_missing=args.allow_missing,
+    )
+    examples.update(generated)
     missing = [name for name in task_names if name not in examples and name not in existing_sections]
     if missing:
-        raise RuntimeError(f"no generated or existing gallery section for: {', '.join(missing)}")
+        if args.allow_missing:
+            task_names = [name for name in task_names if name not in missing]
+        else:
+            raise RuntimeError(f"no generated or existing gallery section for: {', '.join(missing)}")
     write_gallery(task_names, examples, args.out, existing_sections)
     update_readme = args.update_readme == "always" or (
         args.update_readme == "auto" and args.tasks is None and

@@ -974,3 +974,589 @@ class RewriteSystem(Task):
             return float(got == target)
         except Exception:
             return float(ans.replace(' ', '') == entry.metadata['normal_form'].replace(' ', ''))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# First-order MGU implication
+# ─────────────────────────────────────────────────────────────────────────────
+# term ::= variable "xN" | constant "a" | function tuple ("f", arg, ...)
+
+_MGU_ARITIES = {'f': 1, 'g': 1, 'h': 2, 'p': 2, 'q': 3, 'r': 3}
+_MGU_CONSTS = ('a', 'b', 'c')
+
+
+def _mgu_is_var(t):
+    return isinstance(t, str) and len(t) > 1 and t[0] == 'x' and t[1:].isdigit()
+
+
+def _mgu_show(t):
+    if isinstance(t, tuple):
+        return f"{t[0]}({', '.join(_mgu_show(x) for x in t[1:])})"
+    return str(t)
+
+
+def _mgu_vars(t):
+    if _mgu_is_var(t):
+        return {t}
+    if isinstance(t, tuple):
+        return set().union(*(_mgu_vars(x) for x in t[1:])) if len(t) > 1 else set()
+    return set()
+
+
+def _mgu_symbols(t):
+    funcs, consts = set(), set()
+    if isinstance(t, tuple):
+        funcs.add(t[0])
+        for x in t[1:]:
+            f, c = _mgu_symbols(x)
+            funcs |= f
+            consts |= c
+    elif not _mgu_is_var(t):
+        consts.add(t)
+    return funcs, consts
+
+
+def _mgu_depth(t):
+    if not isinstance(t, tuple):
+        return 0
+    return 1 + max((_mgu_depth(x) for x in t[1:]), default=0)
+
+
+def _mgu_positions(t, path=()):
+    yield path, t
+    if isinstance(t, tuple):
+        for i, x in enumerate(t[1:], 1):
+            yield from _mgu_positions(x, path + (i,))
+
+
+def _mgu_replace(t, path, new):
+    if not path:
+        return new
+    args = list(t[1:])
+    args[path[0] - 1] = _mgu_replace(args[path[0] - 1], path[1:], new)
+    return (t[0], *args)
+
+
+def _mgu_apply(subst, t):
+    if _mgu_is_var(t):
+        seen = set()
+        while _mgu_is_var(t) and t in subst and t not in seen:
+            seen.add(t)
+            t = subst[t]
+        return _mgu_apply(subst, t) if isinstance(t, tuple) else t
+    if isinstance(t, tuple):
+        return (t[0], *[_mgu_apply(subst, x) for x in t[1:]])
+    return t
+
+
+def _mgu_occurs(v, t, subst):
+    t = _mgu_apply(subst, t)
+    if t == v:
+        return True
+    return isinstance(t, tuple) and any(_mgu_occurs(v, x, subst) for x in t[1:])
+
+
+def _mgu_bind(subst, v, t, stats):
+    t = _mgu_apply(subst, t)
+    if t == v:
+        return subst
+    if _mgu_occurs(v, t, subst):
+        raise ValueError("occurs check failed")
+    subst = {k: _mgu_apply({v: t}, val) for k, val in subst.items()}
+    subst[v] = t
+    stats['bindings'] += 1
+    if _mgu_is_var(t):
+        stats['alias_bindings'] += 1
+    return subst
+
+
+def _mgu_unify(equations):
+    subst, stats = {}, Counter()
+    stack = list(equations)
+    while stack:
+        a, b = stack.pop()
+        a, b = _mgu_apply(subst, a), _mgu_apply(subst, b)
+        if a == b:
+            continue
+        if _mgu_is_var(a):
+            subst = _mgu_bind(subst, a, b, stats)
+        elif _mgu_is_var(b):
+            subst = _mgu_bind(subst, b, a, stats)
+        elif (isinstance(a, tuple) and isinstance(b, tuple) and
+              a[0] == b[0] and len(a) == len(b)):
+            stats['decompositions'] += 1
+            stack.extend(zip(a[1:], b[1:]))
+        else:
+            raise ValueError("not unifiable")
+    return {k: _mgu_apply(subst, v) for k, v in subst.items()}, stats
+
+
+def _mgu_candidate_answer(equations, candidate):
+    sol, stats = _mgu_unify(equations)
+    left = _mgu_apply(sol, candidate[0])
+    right = _mgu_apply(sol, candidate[1])
+    return ("yes" if left == right else "no"), sol, stats
+
+
+def _mgu_sample_ground(depth, rng, force_func=False):
+    if depth <= 0 or (not force_func and rng.random() < 0.30):
+        return rng.choice(_MGU_CONSTS)
+    funcs = [('f', 1), ('g', 1), ('h', 2), ('p', 2)]
+    if depth >= 2:
+        funcs += [('q', 3), ('r', 3)]
+    f, arity = rng.choice(funcs)
+    return (f, *[_mgu_sample_ground(depth - 1, rng) for _ in range(arity)])
+
+
+def _mgu_new_var(state):
+    v = f"x{state['next_var']}"
+    state['next_var'] += 1
+    return v
+
+
+def _mgu_mask(t, rng, state, mask_prob, share_prob, root=False):
+    if not root and rng.random() < mask_prob:
+        old = state['by_term'].get(t, [])
+        if old and rng.random() < share_prob:
+            return rng.choice(old)
+        v = _mgu_new_var(state)
+        state['by_term'].setdefault(t, []).append(v)
+        return v
+    if isinstance(t, tuple):
+        return (t[0], *[_mgu_mask(x, rng, state, mask_prob, share_prob) for x in t[1:]])
+    return t
+
+
+def _mgu_common_instance_equation(cfg, rng, state):
+    for _ in range(80):
+        local = {'next_var': state['next_var'], 'by_term': {}}
+        root = rng.choice(['p', 'h'] if cfg.decomposition_depth <= 2 else ['p', 'h', 'q', 'r'])
+        latent = (root, *[_mgu_sample_ground(max(0, cfg.rhs_depth - 1), rng)
+                         for _ in range(_MGU_ARITIES[root])])
+        share = min(0.85, 0.20 + 0.12 * cfg.sharing_count)
+        left = _mgu_mask(latent, rng, local, 0.58, share, root=True)
+        right = _mgu_mask(latent, rng, local, 0.62, share, root=True)
+        if _mgu_vars(left) and _mgu_vars(right) and left != right:
+            state['next_var'] = local['next_var']
+            return left, right
+    raise RuntimeError("could not mask common instance")
+
+
+def _mgu_equation_vars(eq):
+    return _mgu_vars(eq[0]) | _mgu_vars(eq[1])
+
+
+def _mgu_connected_instance_equation(cfg, rng, state, equations, core_vars):
+    _, sol, _ = _mgu_candidate_answer(equations, ('x0', 'x0'))
+    solved = [(v, _mgu_apply(sol, v)) for v in sorted(core_vars)
+              if v in sol and _mgu_apply(sol, v) != v]
+    if not solved:
+        raise RuntimeError("no connected variable")
+
+    for _ in range(80):
+        v, t = rng.choice(solved)
+        local = {'next_var': state['next_var'], 'by_term': {}}
+        root = rng.choice(['p', 'h'] if cfg.decomposition_depth <= 2 else ['p', 'h', 'q', 'r'])
+        arity = _MGU_ARITIES[root]
+        pos = rng.randrange(arity)
+        args = [_mgu_sample_ground(max(0, cfg.rhs_depth - 1), rng) for _ in range(arity)]
+        args[pos] = t
+        latent = (root, *args)
+        share = min(0.85, 0.20 + 0.12 * cfg.sharing_count)
+        left = list(_mgu_mask(latent, rng, local, 0.58, share, root=True)[1:])
+        right = list(_mgu_mask(latent, rng, local, 0.62, share, root=True)[1:])
+        if rng.random() < 0.5:
+            left[pos] = v
+        else:
+            right[pos] = v
+        eq = (root, *left), (root, *right)
+        if _mgu_equation_vars(eq) - core_vars:
+            state['next_var'] = local['next_var']
+            return eq
+    raise RuntimeError("could not build connected equation")
+
+
+def _mgu_context_pair(a, b, rng, funcs, consts):
+    funcs = list(funcs) or list(_MGU_ARITIES)
+    consts = list(consts) or list(_MGU_CONSTS)
+    f = rng.choice(funcs)
+    arity = _MGU_ARITIES[f]
+    if arity == 1:
+        return (f, a), (f, b)
+    args = [rng.choice(consts) for _ in range(arity)]
+    pos = rng.randrange(arity)
+    left, right = list(args), list(args)
+    left[pos], right[pos] = a, b
+    return (f, *left), (f, *right)
+
+
+def _mgu_mutate(t, rng, funcs, consts, distance=1):
+    out = t
+    for _ in range(max(1, distance)):
+        positions = list(_mgu_positions(out))
+        rng.shuffle(positions)
+        changed = False
+        for path, sub in positions:
+            if not isinstance(sub, tuple) and not _mgu_is_var(sub):
+                choices = [c for c in consts if c != sub]
+                if choices:
+                    out = _mgu_replace(out, path, rng.choice(choices))
+                    changed = True
+                    break
+            if isinstance(sub, tuple):
+                choices = [f for f in funcs if f != sub[0] and _MGU_ARITIES[f] == len(sub) - 1]
+                if choices:
+                    out = _mgu_replace(out, path, (rng.choice(choices), *sub[1:]))
+                    changed = True
+                    break
+        if not changed:
+            unary = [f for f in funcs if _MGU_ARITIES[f] == 1]
+            if unary:
+                path, sub = rng.choice(positions)
+                out = _mgu_replace(out, path, (rng.choice(unary), sub))
+            else:
+                return None
+    return out
+
+
+def _mgu_mutate_close(t, rng, funcs, consts):
+    funcs = set(funcs)
+    consts = set(consts)
+    positions = list(_mgu_positions(t))
+    leaf_positions = [(p, x) for p, x in positions
+                      if p and not isinstance(x, tuple) and not _mgu_is_var(x)]
+    rng.shuffle(leaf_positions)
+    for path, sub in leaf_positions:
+        choices = [c for c in consts if c != sub]
+        if choices:
+            return _mgu_replace(t, path, rng.choice(choices))
+
+    inner_funcs = [(p, x) for p, x in positions if p and isinstance(x, tuple)]
+    rng.shuffle(inner_funcs)
+    for path, sub in inner_funcs:
+        choices = [f for f in funcs if f != sub[0] and _MGU_ARITIES[f] == len(sub) - 1]
+        if choices:
+            return _mgu_replace(t, path, (rng.choice(choices), *sub[1:]))
+    return None
+
+
+def _mgu_one_step_pairs(equations):
+    out = set(equations) | {(b, a) for a, b in equations}
+    for a, b in equations:
+        if isinstance(a, tuple) and isinstance(b, tuple) and a[0] == b[0] and len(a) == len(b):
+            out.update(zip(a[1:], b[1:]))
+            out.update((y, x) for x, y in zip(a[1:], b[1:]))
+    return out
+
+
+def _mgu_surface_decides(candidate):
+    a, b = candidate
+    if a == b:
+        return True
+    if not _mgu_vars(a) and not _mgu_vars(b):
+        return True
+    if isinstance(a, tuple) and isinstance(b, tuple):
+        return a[0] != b[0] or len(a) != len(b)
+    return False
+
+
+def _mgu_all_symbols(equations):
+    funcs, consts = set(), set()
+    for a, b in equations:
+        for t in (a, b):
+            f, c = _mgu_symbols(t)
+            funcs |= f
+            consts |= c
+    return funcs, consts
+
+
+def _mgu_rename_term(t, vmap, fmap, cmap):
+    if _mgu_is_var(t):
+        return vmap.get(t, t)
+    if isinstance(t, tuple):
+        return (fmap.get(t[0], t[0]), *[_mgu_rename_term(x, vmap, fmap, cmap) for x in t[1:]])
+    return cmap.get(t, t)
+
+
+def _mgu_rename(equations, candidate, rng):
+    vars_ = sorted(set().union(*(_mgu_vars(t) for eq in equations for t in eq), *(_mgu_vars(t) for t in candidate)))
+    new_vars = [f"x{i}" for i in range(len(vars_))]
+    rng.shuffle(new_vars)
+    vmap = dict(zip(vars_, new_vars))
+
+    funcs, consts = _mgu_all_symbols(equations + [candidate])
+    cmap_vals = list(_MGU_CONSTS)
+    rng.shuffle(cmap_vals)
+    cmap = dict(zip(sorted(consts), cmap_vals))
+    fmap = {}
+    for arity in {1, 2, 3}:
+        old = sorted(f for f in funcs if _MGU_ARITIES[f] == arity)
+        new = [f for f, a in _MGU_ARITIES.items() if a == arity]
+        rng.shuffle(new)
+        fmap.update(dict(zip(old, new)))
+
+    req = [(_mgu_rename_term(a, vmap, fmap, cmap), _mgu_rename_term(b, vmap, fmap, cmap))
+           for a, b in equations]
+    rcand = (_mgu_rename_term(candidate[0], vmap, fmap, cmap),
+             _mgu_rename_term(candidate[1], vmap, fmap, cmap))
+    return req, rcand
+
+
+def _mgu_tree_diff(a, b):
+    if a == b:
+        return 0
+    if isinstance(a, tuple) and isinstance(b, tuple) and a[0] == b[0] and len(a) == len(b):
+        return sum(_mgu_tree_diff(x, y) for x, y in zip(a[1:], b[1:]))
+    return 1
+
+
+def _mgu_close_negative(sol, candidate):
+    a = _mgu_apply(sol, candidate[0])
+    b = _mgu_apply(sol, candidate[1])
+    if a == b:
+        return False
+    if isinstance(a, tuple) and isinstance(b, tuple) and a[0] == b[0] and len(a) == len(b):
+        return abs(_mgu_depth(a) - _mgu_depth(b)) <= 1 and _mgu_tree_diff(a, b) <= 2
+    return False
+
+
+def _mgu_positive_candidate(cfg, rng, equations, sol, allowed_vars, allow_same=True):
+    funcs, consts = _mgu_all_symbols(equations)
+    solved = [(v, _mgu_apply(sol, v)) for v in sorted(sol)
+              if v in allowed_vars and _mgu_apply(sol, v) != v]
+    groups = {}
+    for v, t in solved:
+        groups.setdefault(repr(t), []).append((v, t))
+    same_pairs = [(xs[0][0], xs[1][0], xs[0][1]) for xs in groups.values() if len(xs) >= 2]
+    if not solved:
+        raise RuntimeError("no solved variables")
+
+    for _ in range(80):
+        kinds = ['image', 'wrapped', 'masked']
+        if allow_same:
+            kinds.append('same_var')
+        kind = rng.choice(kinds)
+        if kind == 'same_var' and same_pairs:
+            v, w, _ = rng.choice(same_pairs)
+            cand = (v, w)
+        else:
+            v, t = rng.choice(solved)
+            if kind in ('wrapped', 'masked'):
+                other = rng.choice([w for w, u in solved if u == t] or [t])
+                cand = _mgu_context_pair(v, other, rng, funcs, consts)
+            else:
+                cand = (v, t)
+        if not _mgu_surface_decides(cand):
+            return cand
+    raise RuntimeError("could not build positive candidate")
+
+
+def _mgu_candidate(cfg, rng, equations, sol, want_positive, allowed_vars):
+    funcs, consts = _mgu_all_symbols(equations)
+    solved = [(v, _mgu_apply(sol, v)) for v in sorted(sol)
+              if v in allowed_vars and _mgu_apply(sol, v) != v]
+    for _ in range(80):
+        if want_positive:
+            return _mgu_positive_candidate(cfg, rng, equations, sol, allowed_vars)
+
+        pos = _mgu_positive_candidate(cfg, rng, equations, sol, allowed_vars, allow_same=False)
+        bad = _mgu_mutate_close(_mgu_apply(sol, pos[1]), rng, funcs, consts)
+        if bad is not None:
+            cand = (pos[0], bad)
+            if not _mgu_surface_decides(cand) and (cfg.level < 2 or _mgu_close_negative(sol, cand)):
+                return cand
+
+        if cfg.level < 2 and solved:
+            v, t = rng.choice(solved)
+            bad = _mgu_mutate(t, rng, funcs, consts, cfg.candidate_distance)
+            if bad is not None:
+                cand = (v, bad)
+                if not _mgu_surface_decides(cand):
+                    return cand
+    raise RuntimeError("could not build candidate")
+
+
+def _mgu_core_size(equations, candidate, answer):
+    core = 0
+    for i in range(len(equations)):
+        try:
+            ans, _, _ = _mgu_candidate_answer(equations[:i] + equations[i + 1:], candidate)
+        except ValueError:
+            core += 1
+            continue
+        core += int(ans != answer)
+    return core
+
+
+def _mgu_validate(cfg, equations, candidate, answer, sol, stats):
+    funcs, consts = _mgu_all_symbols(equations)
+    cfuncs, cconsts = _mgu_all_symbols([candidate])
+    if not cfuncs <= funcs or not cconsts <= consts:
+        return False
+    if not (_mgu_vars(candidate[0]) | _mgu_vars(candidate[1])) <= set().union(*(_mgu_vars(t) for eq in equations for t in eq)):
+        return False
+    if _mgu_surface_decides(candidate):
+        return False
+    if cfg.level >= 2 and candidate in _mgu_one_step_pairs(equations):
+        return False
+    meaningful = sum(_mgu_apply(sol, v) != v for v in sol)
+    if cfg.level >= 2 and meaningful < 2:
+        return False
+    if stats['bindings'] + stats['decompositions'] < cfg.min_trace_steps:
+        return False
+    if answer == 'yes' and cfg.level >= 2 and _mgu_core_size(equations, candidate, answer) == 0:
+        return False
+    if answer == 'no' and cfg.level >= 2 and not _mgu_close_negative(sol, candidate):
+        return False
+    return True
+
+
+@dataclass
+class MguImpliedEqualityConfig(Config):
+    n_bindings: int = 1
+    rhs_depth: int = 1
+    alias_chain_len: int = 0
+    sharing_count: int = 0
+    decomposition_depth: int = 1
+    num_redundant_equations: int = 0
+    num_distractor_equations: int = 0
+    candidate_distance: int = 1
+    min_trace_steps: int = 2
+    max_equations: int = 6
+
+    def apply_difficulty(self, level):
+        self.n_bindings += level
+        self.rhs_depth += level // 2
+        self.alias_chain_len += level // 2
+        self.sharing_count += level
+        self.decomposition_depth += level
+        self.num_redundant_equations += (level + 1) // 2
+        self.num_distractor_equations += level // 3
+        self.candidate_distance += level // 3
+        self.min_trace_steps += level
+        self.max_equations += level
+
+
+class MguImpliedEquality(Task):
+    config_cls = MguImpliedEqualityConfig
+
+    def __init__(self, config=None, *args, **kwargs):
+        super().__init__(config=config or MguImpliedEqualityConfig(), *args, **kwargs)
+
+    def _build_equations(self, rng):
+        cfg = self.config
+        state = {'next_var': 0, 'by_term': {}}
+        equations, tags, core_vars = [], [], set()
+
+        def add(eq, tag):
+            if len(equations) < cfg.max_equations:
+                equations.append(eq)
+                tags.append(tag)
+                if tag != 'distractor':
+                    core_vars.update(_mgu_equation_vars(eq))
+
+        if cfg.level <= 1 and rng.random() < 0.35:
+            v = _mgu_new_var(state)
+            add((('f', v), ('f', rng.choice(_MGU_CONSTS))), 'core')
+        else:
+            add(_mgu_common_instance_equation(cfg, rng, state), 'core')
+            for _ in range(max(0, min(cfg.n_bindings, 2 + cfg.level // 2) - 1)):
+                add(_mgu_connected_instance_equation(cfg, rng, state, equations, core_vars), 'core')
+
+        for _ in range(cfg.alias_chain_len):
+            if not core_vars:
+                break
+            v = rng.choice(sorted(core_vars))
+            w = _mgu_new_var(state)
+            add((w, v), 'alias')
+
+        for _ in range(min(cfg.sharing_count, 2)):
+            ans, sol, _ = _mgu_candidate_answer(equations, ('x0', 'x0'))
+            solved = [(v, _mgu_apply(sol, v)) for v in sol
+                      if v in core_vars and _mgu_apply(sol, v) != v]
+            if not solved:
+                continue
+            v, t = rng.choice(solved)
+            y = _mgu_new_var(state)
+            add((('p', v, v), ('p', t, y)), 'sharing')
+
+        for _ in range(cfg.num_redundant_equations):
+            _, sol, _ = _mgu_candidate_answer(equations, ('x0', 'x0'))
+            solved = [(v, _mgu_apply(sol, v)) for v in sol
+                      if v in core_vars and _mgu_apply(sol, v) != v]
+            if not solved:
+                continue
+            v, t = rng.choice(solved)
+            funcs, consts = _mgu_all_symbols(equations)
+            add(_mgu_context_pair(v, t, rng, funcs, consts), 'redundant')
+
+        for _ in range(cfg.num_distractor_equations):
+            add(_mgu_common_instance_equation(cfg, rng, state), 'distractor')
+
+        return equations, Counter(tags), set(core_vars)
+
+    def generate(self):
+        rng = random.Random()
+        cfg = self.config
+        target = 'yes' if rng.random() < 0.5 else 'no'
+        for _ in range(6000):
+            try:
+                equations, eq_tags, core_vars = self._build_equations(rng)
+                _, sol, stats = _mgu_candidate_answer(equations, ('x0', 'x0'))
+                candidate = _mgu_candidate(cfg, rng, equations, sol, target == 'yes', core_vars)
+                equations, candidate = _mgu_rename(equations, candidate, rng)
+                answer, sol, stats = _mgu_candidate_answer(equations, candidate)
+            except (RuntimeError, ValueError):
+                continue
+            if answer != target:
+                continue
+            if not _mgu_validate(cfg, equations, candidate, answer, sol, stats):
+                continue
+
+            eq_s = [f"{_mgu_show(a)} = {_mgu_show(b)}" for a, b in equations]
+            cand_s = f"{_mgu_show(candidate[0])} = {_mgu_show(candidate[1])}"
+            all_terms = [t for eq in equations for t in eq] + [candidate[0], candidate[1]]
+            funcs, consts = _mgu_all_symbols(equations)
+            core = _mgu_core_size(equations, candidate, answer) if answer == 'yes' else 0
+            meaningful = sum(_mgu_apply(sol, v) != v for v in sol)
+            meta = edict(
+                answer=answer,
+                equations=eq_s,
+                candidate=cand_s,
+                num_equations=len(equations),
+                num_variables=len(set().union(*(_mgu_vars(t) for t in all_terms))),
+                num_bindings_in_mgu=meaningful,
+                max_term_depth=max(_mgu_depth(t) for t in all_terms),
+                candidate_depth=max(_mgu_depth(candidate[0]), _mgu_depth(candidate[1])),
+                trace_steps=stats['bindings'] + stats['decompositions'],
+                num_decompositions=stats['decompositions'],
+                num_alias_bindings=stats['alias_bindings'],
+                num_sharing_constraints=eq_tags['sharing'],
+                num_redundant_equations=eq_tags['redundant'],
+                difficulty_level=cfg.level,
+                positive_or_negative='positive' if answer == 'yes' else 'negative',
+                generation_mode='common_instance_masking',
+                minimal_core_size_estimate=core,
+                num_constants=len(consts),
+                num_function_symbols=len(funcs),
+            )
+            return Problem(metadata=meta, answer=answer)
+        raise RuntimeError("could not sample an MGU implied-equality instance")
+
+    def prompt(self, metadata):
+        equations = '\n'.join(f"- {e}" for e in metadata['equations'])
+        return (
+            "Do the equations force the candidate equality under their most general unifier?\n"
+            "The equations are guaranteed to be unifiable.\n"
+            "Answer yes or no.\n\n"
+            "Equations:\n"
+            f"{equations}\n\n"
+            "Candidate:\n"
+            f"{metadata['candidate']}"
+        )
+
+    def score_answer(self, answer, entry):
+        if answer is None:
+            return 0.0
+        ans = str(answer).strip().lower().rstrip('.')
+        return float(ans == entry.answer)

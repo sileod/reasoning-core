@@ -1,6 +1,12 @@
 import random
+import typing
 from dataclasses import dataclass
 from functools import lru_cache
+
+from typing_extensions import Self as _TypingSelf
+
+if not hasattr(typing, "Self"):
+    typing.Self = _TypingSelf
 
 from pyggp import game_description_language as gdl
 from pyggp.engine_primitives import Turn
