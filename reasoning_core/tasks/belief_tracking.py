@@ -27,7 +27,7 @@ CONTAINER_NAMES = [
 
 
 @dataclass
-class TheoryOfMindConfig(Config):
+class BeliefTrackingConfig(Config):
     n_agents: int = 3
     n_objects: int = 2
     n_rooms: int = 2
@@ -177,9 +177,9 @@ def _question_text(chain, obj):
     return f"Where does {s}?"
 
 
-class TheoryOfMind(Task):
+class BeliefTracking(Task):
     summary = "Track agent beliefs, locations, and actions for Theory of Mind scenarios."
-    config_cls = TheoryOfMindConfig
+    config_cls = BeliefTrackingConfig
 
     def _sample_world(self):
         n_agents = max(1, self.config.n_agents)
@@ -388,7 +388,7 @@ class TheoryOfMind(Task):
             )
             return Entry(metadata=metadata, answer=question["answer"])
 
-        raise RuntimeError("failed to generate a valid theory_of_mind example")
+        raise RuntimeError("failed to generate a valid belief_tracking example")
 
     def _rules_text(self):
         return (

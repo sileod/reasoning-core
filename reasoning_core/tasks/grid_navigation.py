@@ -11,7 +11,7 @@ from reasoning_core.template import Task, Payload, Problem, Config, edict
 
 
 @dataclass
-class NavigationConfig(Config):
+class GridNavigationConfig(Config):
     n_objects: int = 3
     grid: int = 4
     n_steps: int = 1
@@ -262,10 +262,10 @@ def pick_query(rng, solver, gv, names, final, query_names=None):
 
 
 
-class Navigation(Task):
+class GridNavigation(Task):
     summary = "Infer object grid coordinates from spatial relations and step actions."
 
-    def __init__(self, config=NavigationConfig()):
+    def __init__(self, config=GridNavigationConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
 

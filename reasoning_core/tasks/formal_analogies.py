@@ -302,7 +302,7 @@ def _crisp_with_memory_distractors(case, n, rng, q_before, allowed, attempts=64)
 
 
 @dataclass
-class AnalogicalCaseRetrievalConfig(Config):
+class AnalogicalCaseMatchingConfig(Config):
     n_query_objects: int = 5
     n_query_links: int = 3
     n_query_facts: int = 6
@@ -327,9 +327,9 @@ class AnalogicalCaseRetrievalConfig(Config):
         self.reverse_rate = min(0.5, self.reverse_rate + 0.05 * level)
 
 
-class AnalogicalCaseRetrieval(Task):
+class AnalogicalCaseMatching(Task):
     summary = "Retrieve analogical cases matching query objects, links, and logical facts."
-    def __init__(self, config=AnalogicalCaseRetrievalConfig()):
+    def __init__(self, config=AnalogicalCaseMatchingConfig()):
         super().__init__(config=config)
 
     def _choose_answer_format(self, rng):

@@ -1432,7 +1432,7 @@ def gen_forward_order_graph(config):
 # Tasks
 # ============================================================================
 
-class LeanMissingProofLineSelection(Task):
+class LeanMissingLine(Task):
     """Choose the unique available proof line that fills a Lean proof hole."""
     summary = "Select the correct proof line to fill a hole in a compilation-checked Lean proof."
 
