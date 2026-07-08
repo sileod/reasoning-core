@@ -30,7 +30,7 @@ class Instance:
 
 
 @dataclass
-class QualitativeCausalConfig(Config):
+class QualitativeCausalReasoningConfig(Config):
     n_extra: int = 8
     p_edge: float = 0.10
 
@@ -340,9 +340,9 @@ def render_table(G):
 RENDERERS = [render_edge_list, render_compact, render_table]
 
 
-class QualitativeCausal(Task):
+class QualitativeCausalReasoning(Task):
     summary = "Perform qualitative causal reasoning (increase, decrease, ambiguous) on graphs."
-    def __init__(self, config=QualitativeCausalConfig()):
+    def __init__(self, config=QualitativeCausalReasoningConfig()):
         super().__init__(config=config)
 
     def generate(self):

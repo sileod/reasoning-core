@@ -1414,7 +1414,7 @@ def _mgu_validate(cfg, equations, candidate, answer, sol, stats):
 
 
 @dataclass
-class MguImpliedEqualityConfig(Config):
+class UnificationEntailmentConfig(Config):
     n_bindings: int = 1
     rhs_depth: int = 1
     alias_chain_len: int = 0
@@ -1439,12 +1439,12 @@ class MguImpliedEqualityConfig(Config):
         self.max_equations += level
 
 
-class MguImpliedEquality(Task):
+class UnificationEntailment(Task):
     summary = "Decide if an equality is implied by the most general unifier of equations."
-    config_cls = MguImpliedEqualityConfig
+    config_cls = UnificationEntailmentConfig
 
     def __init__(self, config=None, *args, **kwargs):
-        super().__init__(config=config or MguImpliedEqualityConfig(), *args, **kwargs)
+        super().__init__(config=config or UnificationEntailmentConfig(), *args, **kwargs)
 
     def _build_equations(self, rng):
         cfg = self.config

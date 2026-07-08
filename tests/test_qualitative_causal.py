@@ -1,10 +1,10 @@
 import networkx as nx
 import numpy as np
 
-from reasoning_core.tasks.qualitative_causal import (
+from reasoning_core.tasks.qualitative_causal_reasoning import (
     KERNELS,
     LABELS,
-    QualitativeCausal,
+    QualitativeCausalReasoning,
     Query,
     add_edge,
     kernel_blocked_mediator,
@@ -93,7 +93,7 @@ def test_sample_instance_is_deterministic_and_verified():
 
 
 def test_task_generate_example_scores_and_prompts():
-    task = QualitativeCausal()
+    task = QualitativeCausalReasoning()
     problem = task.generate_example(max_tokens=0)
 
     assert problem.answer in {"increase", "decrease", "no_effect", "ambiguous"}

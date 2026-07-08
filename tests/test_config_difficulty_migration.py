@@ -47,7 +47,7 @@ MIGRATED_CONFIGS = [
     ("reasoning_core.tasks.probabilistic_reasoning", "MostProbableEvidenceConfig"),
     ("reasoning_core.tasks.probabilistic_reasoning", "MostProbableOutcomeConfig"),
     ("reasoning_core.tasks.qstr", "QualitativeReasoningConfig"),
-    ("reasoning_core.tasks.qualitative_causal", "QualitativeCausalConfig"),
+    ("reasoning_core.tasks.qualitative_causal_reasoning", "QualitativeCausalReasoningConfig"),
     ("reasoning_core.tasks.regex", "RegexConfig"),
     ("reasoning_core.tasks.regex", "RegexRetrievalConfig"),
     ("reasoning_core.tasks.regex", "RegexReasoningConfig"),

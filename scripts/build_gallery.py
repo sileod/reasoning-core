@@ -23,10 +23,11 @@ CATEGORY_ORDER = [
     "math_geometry", "math_metamath", "binding",
     "probabilistic_reasoning", "causal_reasoning", "logic_semantics",
     "logic_depth", "planning", "set_operations", "sequential_induction",
-    "qstr", "navigation", "tracking", "coreference",
+    "qstr", "grid_navigation", "tracking", "belief_tracking", "coreference",
     "constraint_satisfaction", "graph_operations", "regex",
     "formal_analogies", "grammar", "knowledge", "table_qa",
-    "string_transduction", "code_execution", "game_playing",
+    "string_transduction", "game_playing", "qualitative_causal_reasoning",
+    "code_analysis", "code_execution", "code_program_synthesis",
 ]
 
 SINGLE_EXAMPLE_TASKS = {

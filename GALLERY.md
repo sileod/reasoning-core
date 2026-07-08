@@ -2,7 +2,7 @@
 
 50 tasks
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_line`](#lean_missing_line) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`mgu_implied_equality`](#mgu_implied_equality) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`logic_formalization`](#logic_formalization) · [`multistep_nli`](#multistep_nli) · [`defeasible_nli`](#defeasible_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`grid_navigation`](#grid_navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_matching`](#analogical_case_matching) · [`parsing_derivation`](#parsing_derivation) · [`syntax_error_location`](#syntax_error_location) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_equivalence`](#table_equivalence) · [`table_statistics`](#table_statistics) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win) · [`belief_tracking`](#belief_tracking) · [`code_analysis`](#code_analysis) · [`qualitative_causal`](#qualitative_causal) · [`program_synthesis`](#program_synthesis)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_line`](#lean_missing_line) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`unification_entailment`](#unification_entailment) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`logic_formalization`](#logic_formalization) · [`multistep_nli`](#multistep_nli) · [`defeasible_nli`](#defeasible_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`grid_navigation`](#grid_navigation) · [`reference_tracking`](#reference_tracking) · [`belief_tracking`](#belief_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_matching`](#analogical_case_matching) · [`parsing_derivation`](#parsing_derivation) · [`syntax_error_location`](#syntax_error_location) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_equivalence`](#table_equivalence) · [`table_statistics`](#table_statistics) · [`string_transduction`](#string_transduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win) · [`qualitative_causal_reasoning`](#qualitative_causal_reasoning) · [`code_analysis`](#code_analysis) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`program_synthesis`](#program_synthesis)
 
 ---
 
@@ -246,7 +246,7 @@ norm(base(norm(c)))
 
 ---
 
-## [mgu_implied_equality](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
+## [unification_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
 
 Decide if an equality is implied by the most general unifier of equations.
 
@@ -722,6 +722,30 @@ x1
 
 ---
 
+## [belief_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/belief_tracking.py)
+
+Track agent beliefs, locations, and actions for Theory of Mind scenarios.
+
+**Prompt:**
+```
+Rules: People see what happens in their room. For walking, people in the old or new room see it. When someone is told a location, the listener believes it. People keep old beliefs about events they did not see.
+
+Start: Alice is in the study. Bob is in the study. Carol is in the study. The drawer and box are in the kitchen. The tin and bag are in the study. The key is in the bag. The coin is in the box.
+
+Story: Bob puts the key in the tin. Alice puts the key in the bag. Carol puts the key in the tin. Bob walks to the kitchen. Bob puts the coin in the drawer. Carol puts the key in the bag.
+
+Question: Where does Bob think the key is?
+
+Answer with one container name.
+```
+
+**Answer:**
+```
+tin
+```
+
+---
+
 ## [coreference](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/coreference.py)
 
 Resolve multi-hop entity coreference chains and pronouns in natural text.
@@ -1128,6 +1152,113 @@ ffhffddd
 
 ---
 
+## [game_best_move](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
+
+Determine the minimax-optimal move for a player in a finite graph-based game.
+
+**Prompt:**
+```
+In this graph game, choose player's best move. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score.
+
+Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:0; n5:0; n6:20. Edges: n0->n3,n5; n1->n2,n4; n2->n4,n6; n3->n4,n6.
+Legal player moves now: n4, n6.
+The answer is the destination node of the best move.
+```
+
+**Answer:**
+```
+n6
+```
+
+---
+
+## [game_forced_win](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
+
+Decide if a player can force a win from a given state in a graph-based game.
+
+**Prompt:**
+```
+In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
+
+Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:50; n5:40; n6:70. Edges: n0->n1; n1->n4; n2->n4,n6; n3->n4,n6.
+The answer is yes or no.
+```
+
+**Answer:**
+```
+yes
+```
+
+---
+
+## [qualitative_causal_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qualitative_causal_reasoning.py)
+
+Perform qualitative causal reasoning (increase, decrease, ambiguous) on graphs.
+
+**Prompt:**
+```
+cause | effect | sign
+X4 | X8 | decrease
+X6 | X8 | increase
+X7 | X4 | increase
+X7 | X5 | increase
+X9 | X5 | increase
+
+If we intervene to increase X9, what happens to X5?
+Answer with one of: increase, decrease, no_effect, ambiguous.
+```
+
+**Answer:**
+```
+increase
+```
+
+---
+
+## [code_analysis](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_analysis.py)
+
+Analyze toy finite-state Python-like programs with CTL temporal formulas.
+
+**Prompt:**
+````
+Program:
+```python
+import random
+
+phase, x = 'idle', 0
+
+def step():
+    global phase, x
+    if phase == 'idle':
+        phase = 'wait'
+    elif phase == 'wait':
+        x = min(x + 1, 1)
+    else:
+        phase = 'idle'
+```
+
+Reachable states:
+s0=(phase=idle, x=0); s2=(phase=wait, x=0); s3=(phase=wait, x=1)
+
+Predicates:
+p0 := x == 0
+p1 := phase == 'wait'
+p2 := phase == 'idle'
+
+Property:
+some next step can reach a state where p0
+
+Question: Considering all possible random choices, does the property hold from the initial state?
+Answer with exactly Yes or No.
+````
+
+**Answer:**
+```
+Yes
+```
+
+---
+
 ## [code_runnability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
 
 Predict if a given Python code snippet runs successfully or raises an exception.
@@ -1189,137 +1320,6 @@ The answer is the exact Python `repr` of the returned value.
 
 ---
 
-## [game_best_move](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
-
-Determine the minimax-optimal move for a player in a finite graph-based game.
-
-**Prompt:**
-```
-In this graph game, choose player's best move. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score.
-
-Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:0; n5:0; n6:20. Edges: n0->n3,n5; n1->n2,n4; n2->n4,n6; n3->n4,n6.
-Legal player moves now: n4, n6.
-The answer is the destination node of the best move.
-```
-
-**Answer:**
-```
-n6
-```
-
----
-
-## [game_forced_win](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
-
-Decide if a player can force a win from a given state in a graph-based game.
-
-**Prompt:**
-```
-In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
-
-Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:50; n5:40; n6:70. Edges: n0->n1; n1->n4; n2->n4,n6; n3->n4,n6.
-The answer is yes or no.
-```
-
-**Answer:**
-```
-yes
-```
-
----
-
-## [belief_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/belief_tracking.py)
-
-Track agent beliefs, locations, and actions for Theory of Mind scenarios.
-
-**Prompt:**
-```
-Rules: People see what happens in their room. For walking, people in the old or new room see it. When someone is told a location, the listener believes it. People keep old beliefs about events they did not see.
-
-Start: Alice is in the study. Bob is in the study. Carol is in the study. The drawer and box are in the kitchen. The tin and bag are in the study. The key is in the bag. The coin is in the box.
-
-Story: Bob puts the key in the tin. Alice puts the key in the bag. Carol puts the key in the tin. Bob walks to the kitchen. Bob puts the coin in the drawer. Carol puts the key in the bag.
-
-Question: Where does Bob think the key is?
-
-Answer with one container name.
-```
-
-**Answer:**
-```
-tin
-```
-
----
-
-## [code_analysis](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_analysis.py)
-
-Analyze toy finite-state Python-like programs with CTL temporal formulas.
-
-**Prompt:**
-````
-Program:
-```python
-import random
-
-phase, x = 'idle', 0
-
-def step():
-    global phase, x
-    if phase == 'idle':
-        phase = 'wait'
-    elif phase == 'wait':
-        x = min(x + 1, 1)
-    else:
-        phase = 'idle'
-```
-
-Reachable states:
-s0=(phase=idle, x=0); s2=(phase=wait, x=0); s3=(phase=wait, x=1)
-
-Predicates:
-p0 := x == 0
-p1 := phase == 'wait'
-p2 := phase == 'idle'
-
-Property:
-some next step can reach a state where p0
-
-Question: Considering all possible random choices, does the property hold from the initial state?
-Answer with exactly Yes or No.
-````
-
-**Answer:**
-```
-Yes
-```
-
----
-
-## [qualitative_causal](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qualitative_causal.py)
-
-Perform qualitative causal reasoning (increase, decrease, ambiguous) on graphs.
-
-**Prompt:**
-```
-cause | effect | sign
-X4 | X8 | decrease
-X6 | X8 | increase
-X7 | X4 | increase
-X7 | X5 | increase
-X9 | X5 | increase
-
-If we intervene to increase X9, what happens to X5?
-Answer with one of: increase, decrease, no_effect, ambiguous.
-```
-
-**Answer:**
-```
-increase
-```
-
----
-
 ## [program_synthesis](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_program_synthesis.py)
 
 **Prompt:**
@@ -1353,3 +1353,4 @@ def f(s: str) -> str:
 ```
 
 ---
+
