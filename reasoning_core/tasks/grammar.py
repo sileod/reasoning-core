@@ -729,7 +729,7 @@ def _norm_marked(s):
     s = re.sub(r'\s+<<', '<<', s)
     return re.sub(r'\s+', ' ', s)
 
-class SyntaxErrorLocation(Task):
+class SyntaxErrorDetection(Task):
     summary = "Locate syntax errors or grammatical perturbations in generated sentences."
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.perturbation_rate = 0.0
