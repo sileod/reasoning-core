@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 
 from tqdm import tqdm
 
@@ -22,31 +22,50 @@ TASKS = {
     "Consolidation": Consolidation,
 }
 
+# Normalize class names to task_name strings used in run_sft.py's --aux_task filter
+# (must match _value(row, "task") in controlled_experiment.py)
+TASK_NAME_MAP = {
+    "CodeRunnability": "code_runnability",
+    "CodeExecution": "code_execution",
+    "CodeInputDeduction": "code_input_deduction",
+    "Consolidation": "code_consolidation",
+}
 
-def _make_task(task_name):
-    """Instantiate a task, using tighter config for Consolidation during bulk generation."""
+# 80% of samples at level 0, 10% at level 1, 10% at level 2.
+# Supervisor said this is the right balance for a NeurIPS-level ablation:
+# majority of training signal is easy/medium (level 0), with a tail of
+# harder examples to avoid ceiling effects.
+LEVEL_WEIGHTS = {0: 0.80, 1: 0.10, 2: 0.10}
+
+
+def _make_task(task_name, level=0):
     if task_name == "Consolidation":
-        cfg = ConsolidationConfig(
-            timeout=1.0,       # was 3.0 — cuts per-attempt waste by 3x
-            max_attempts=300,  # was 1000 — fail faster when nothing generates
-            n_programs=3,
-        )
-        return Consolidation(config=cfg)
-    return TASKS[task_name]()
+        cfg = ConsolidationConfig(timeout=1.0, max_attempts=300, n_programs=3)
+        task = Consolidation(config=cfg)
+    else:
+        task = TASKS[task_name]()
+    task.config.set_level(level)
+    return task
 
 
-def _generate_one_sample(task_name):
-    """Top-level worker function (must be picklable — no lambdas or closures)."""
+def _generate_one_sample(args):
+    """Top-level worker — must be picklable."""
+    task_name, level = args
     try:
-        task_instance = _make_task(task_name)
+        task_instance = _make_task(task_name, level)
         problem = task_instance.generate()
         prompt = task_instance.prompt(problem.metadata)
         return {
+            # prompt/answer format matches run_sft.py's get_formatter("rc") expectation
+            "prompt": prompt,
+            "answer": str(problem.answer),
+            "task": TASK_NAME_MAP.get(task_name, task_name.lower()),
+            "level": str(level),
+            # also keep messages format for evaluate.py compatibility
             "messages": [
                 {"role": "user", "content": prompt},
                 {"role": "assistant", "content": str(problem.answer)},
             ],
-            "task": task_name,
         }
     except Exception:
         return None
@@ -54,65 +73,77 @@ def _generate_one_sample(task_name):
 
 def generate_data(task_name, num_samples, output_file, workers=None):
     if workers is None:
-        # Conservative default: Consolidation already forks internally,
-        # so 2 outer workers = up to ~8 subprocesses at once on the laptop.
-        # Other tasks are lighter so we give them more workers.
         workers = 2 if task_name == "Consolidation" else min(4, os.cpu_count() or 4)
 
-    print(f"Generating {num_samples} samples for {task_name} ({workers} workers)...")
+    # Compute per-level sample counts from weights (ensure they sum to num_samples)
+    level_counts = {}
+    remaining = num_samples
+    levels = sorted(LEVEL_WEIGHTS.keys())
+    for i, level in enumerate(levels):
+        if i == len(levels) - 1:
+            level_counts[level] = remaining
+        else:
+            count = int(num_samples * LEVEL_WEIGHTS[level])
+            level_counts[level] = count
+            remaining -= count
+
+    print(f"Generating {num_samples} samples for {task_name} "
+          f"({workers} workers): " +
+          ", ".join(f"level {l}={c}" for l, c in level_counts.items()))
+
     dataset = []
-    max_attempts = num_samples * 15
-    attempts_submitted = 0
-    pbar = tqdm(total=num_samples, desc=task_name, unit="sample")
 
-    with ProcessPoolExecutor(max_workers=workers) as executor:
-        # Keep a rolling window of futures so workers stay busy
-        pending = set()
-        max_pending = workers * 3
+    for level, needed in level_counts.items():
+        collected = 0
+        max_attempts = needed * 15
+        submitted = 0
+        pbar = tqdm(total=needed, desc=f"{task_name} level={level}", unit="sample")
 
-        def _submit_more():
-            nonlocal attempts_submitted
-            while len(pending) < max_pending and attempts_submitted < max_attempts:
-                pending.add(executor.submit(_generate_one_sample, task_name))
-                attempts_submitted += 1
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            pending = set()
+            max_pending = workers * 3
 
-        _submit_more()
+            def submit_more():
+                nonlocal submitted
+                while len(pending) < max_pending and submitted < max_attempts:
+                    pending.add(executor.submit(_generate_one_sample, (task_name, level)))
+                    submitted += 1
 
-        while pending and len(dataset) < num_samples:
-            # Wait for at least one future to finish
-            from concurrent.futures import wait, FIRST_COMPLETED
-            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+            submit_more()
 
-            for future in done:
-                pending.discard(future)
-                if len(dataset) >= num_samples:
-                    continue
-                try:
-                    result = future.result()
-                    if result is not None:
-                        dataset.append(result)
-                        pbar.update(1)
-                        pbar.set_postfix(submitted=attempts_submitted, workers=workers)
-                except Exception:
-                    pass
+            while pending and collected < needed:
+                done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                for future in done:
+                    pending.discard(future)
+                    if collected >= needed:
+                        continue
+                    try:
+                        result = future.result()
+                        if result is not None:
+                            dataset.append(result)
+                            collected += 1
+                            pbar.update(1)
+                            pbar.set_postfix(submitted=submitted)
+                    except Exception:
+                        pass
+                submit_more()
 
-            _submit_more()
-
-    pbar.close()
+        pbar.close()
 
     with open(output_file, "w") as f:
         for item in dataset:
             f.write(json.dumps(item) + "\n")
-    print(f"Saved {len(dataset)} samples to {output_file}")
+    print(f"Saved {len(dataset)} samples to {output_file} "
+          f"(task names: {set(TASK_NAME_MAP.values())})")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate synthetic code execution data")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--task", type=str, choices=list(TASKS.keys()) + ["all"], required=True)
-    parser.add_argument("--samples", type=int, default=10000)
+    parser.add_argument("--samples", type=int, default=10000,
+                        help="Total samples — split 80/10/10 across difficulty levels 0/1/2")
     parser.add_argument("--out", type=str, required=True)
-    parser.add_argument("--workers", type=int, default=None,
-                        help="Parallel workers. Default: 2 for Consolidation, 4 for others.")
+    parser.add_argument("--workers", type=int, default=None)
     args = parser.parse_args()
 
     if args.task == "all":

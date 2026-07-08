@@ -82,6 +82,8 @@ parser.add_argument("--eval_aux_budget", type=int, default=1_500_000)
 parser.add_argument("--eval_aux_skip", type=int, default=100_000)
 parser.add_argument("--eval_aux_max_scanned", type=int, default=50_000)
 add_optimizer_args(parser)
+parser.add_argument("--aux_data_path", type=str, default="",
+    help="Local JSONL from data_generation.py. Overrides --aux_data.")
 
 DATA_MAP = {
     "fw": "HuggingFaceFW/fineweb-edu",
@@ -402,7 +404,10 @@ aux_budget = int(args.token_budget * args.aux_ratio)
 
 if args.iterable_mode:
     s1_main_ds = load_exact_tokens_iterable(args.main_data, args.token_budget, max_len=args.max_length)
-    s1_aux_ds = load_exact_tokens_iterable(args.aux_data, aux_budget, max_len=args.max_length, cycle=True)
+    if args.aux_data_path.strip():
+        s1_aux_ds = load_local_aux(args.aux_data_path, max_len=args.max_length)
+    else:
+        s1_aux_ds = load_exact_tokens_iterable(args.aux_data, aux_budget, max_len=args.max_length, cycle=True)
     s1_aux_ds, control_spec = wrap_aux_dataset_for_control(s1_aux_ds, args)
     if args.aux_task or args.aux_mode or args.aux_level:
         print(f"🧪 CONTROL = {control_spec}")
