@@ -750,6 +750,18 @@ class DefeasibleNLIConfig(MultistepNLIConfig):
     exception_rate: float = 0.35
     min_naf_rules_in_proof: int = 1
 
+    def apply_difficulty(self, level):
+        self.n_entities = min(7, self.n_entities + level)
+        self.n_facts += level
+        self.n_rules += level
+        self.n_distractors += 2 * level
+        self.max_depth = 3
+        self.min_target_depth = 2
+        self.max_target_depth = 3
+        if level >= 2:
+            self.naf_rule_rate = min(0.85, self.naf_rule_rate + 0.15)
+            self.exception_rate = min(0.50, self.exception_rate + 0.05)
+
 
 def _naf_roles(pack):
     if pack == "abstract":
@@ -1760,8 +1772,7 @@ class MultistepNLI(Task):
 
 
 class DefeasibleNLI(Task):
-    summary = "Natural language inference using defeasible logic rules and negation as failure."
-    task_name = "stratified_naf_nli"
+    summary = "NLI using defeasible logic rules and negation as failure."
 
     def __init__(self, config=DefeasibleNLIConfig()):
         super().__init__(config=config)

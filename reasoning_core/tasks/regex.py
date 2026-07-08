@@ -357,7 +357,7 @@ def synthesize_shortest_regex(
     return None
 
 
-class RegexInduction(Task):
+class RegexInduction(DevTask):
     summary = "Induce a regular expression that separates positive and negative string sets."
     def __init__(self, config=RegexConfig()):
         super().__init__(config=config)

@@ -1,14 +1,14 @@
 # 📖 Task Gallery
 
-54 tasks
+50 tasks
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`mgu_implied_equality`](#mgu_implied_equality) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`evidence_retrieval`](#evidence_retrieval) · [`logic_formalization`](#logic_formalization) · [`multistep_nli`](#multistep_nli) · [`stratified_naf_nli`](#stratified_naf_nli) · [`naf_removal_flip`](#naf_removal_flip) · [`naf_addition_flip`](#naf_addition_flip) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_induction`](#regex_induction) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_equivalence`](#table_equivalence) · [`table_statistics`](#table_statistics) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`code_input_deduction`](#code_input_deduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win) · [`theory_of_mind`](#theory_of_mind) · [`qualitative_causal`](#qualitative_causal) · [`program_synthesis`](#program_synthesis)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`lean_missing_proof_line_selection`](#lean_missing_proof_line_selection) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`mgu_implied_equality`](#mgu_implied_equality) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`logic_nli`](#logic_nli) · [`logic_formalization`](#logic_formalization) · [`multistep_nli`](#multistep_nli) · [`defeasible_nli`](#defeasible_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`navigation`](#navigation) · [`reference_tracking`](#reference_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`graph_dependencies`](#graph_dependencies) · [`regex_following`](#regex_following) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_retrieval`](#analogical_case_retrieval) · [`parsing_derivation`](#parsing_derivation) · [`locate_error`](#locate_error) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_equivalence`](#table_equivalence) · [`table_statistics`](#table_statistics) · [`string_transduction`](#string_transduction) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win) · [`theory_of_mind`](#theory_of_mind) · [`code_analysis`](#code_analysis) · [`qualitative_causal`](#qualitative_causal) · [`program_synthesis`](#program_synthesis)
 
 ---
 
 ## [arithmetics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
 
-Compositional arithmetics with int/bool, varied operators, number theory.
+Compositional arithmetics with float/int/bool, varied operators, number theory.
 
 **Prompt:**
 ```
@@ -25,6 +25,8 @@ The answer is a number.
 
 ## [math_word_problem](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
 
+Solve relational and process math word problems involving objects and values.
+
 **Prompt:**
 ```
 Wei has 8 fewer apples than Iris. Ravi has a quarter as many apples as Iris. Iris has 12 apples. How many apples does Wei have? Answer with s a number.
@@ -38,6 +40,8 @@ Wei has 8 fewer apples than Iris. Ravi has a quarter as many apples as Iris. Iri
 ---
 
 ## [equation_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/equation_system.py)
+
+Solve systems of linear equations or detect inconsistent/underdetermined systems.
 
 **Prompt:**
 ```
@@ -57,6 +61,8 @@ Multiple solutions
 ---
 
 ## [lean_missing_proof_line_selection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
+
+Select the correct proof line to fill a hole in a compilation-checked Lean proof.
 
 **Prompt:**
 ```
@@ -85,6 +91,8 @@ LINES:
 
 ## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
 
+Determine if a candidate proof body successfully closes a theorem in Lean.
+
 **Prompt:**
 ```
 Does this Lean 4 tactic body close the theorem?
@@ -106,6 +114,8 @@ False
 ---
 
 ## [planar_geometry_relations](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_geometry.py)
+
+Answer geometry queries about point intersections, angles, and distances.
 
 **Prompt:**
 ```
@@ -188,6 +198,8 @@ A
 
 ## [lambda_reduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
 
+Reduce lambda calculus terms to normal form with renaming and shadowing.
+
 **Prompt:**
 ```
 Reduce the following untyped λ-term to β-normal form.
@@ -206,6 +218,8 @@ The answer is the β-normal form (compared up to α-equivalence).
 ---
 
 ## [rewrite_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
+
+Normalize term rewrite systems under boolean, list, logic, or path rules.
 
 **Prompt:**
 ```
@@ -234,6 +248,8 @@ norm(base(norm(c)))
 
 ## [mgu_implied_equality](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
 
+Decide if an equality is implied by the most general unifier of equations.
+
 **Prompt:**
 ```
 Do the equations force the candidate equality under their most general unifier?
@@ -255,6 +271,8 @@ no
 ---
 
 ## [most_probable_evidence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
+
+Find the most probable configuration of hidden variables given evidence.
 
 **Prompt:**
 ```
@@ -282,6 +300,8 @@ Choose one value for each hidden factor. Answer with space-separated indexes.
 
 ## [most_probable_outcome](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
 
+Predict the most probable outcome or select hidden factor values in ProbLog.
+
 **Prompt:**
 ```
 A tray contains 7 white tiles and 7 black tiles.
@@ -301,6 +321,8 @@ equal
 ---
 
 ## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
+
+First-order logic natural language inference via automated theorem proving.
 
 **Prompt:**
 ```
@@ -325,32 +347,9 @@ Maybe
 
 ---
 
-## [evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
-
-**Prompt:**
-```
-Premise:
-[0] Mary is the only person in the room.
-[1] everyone in the room is an old quiet person
-[2] Ashley who is kilo tagged is golf tagged
-[3] not everyone in the room who is yankee tagged is golf tagged
-[4] Ashley is tango tagged
-[5] if someone is not quiet then she is kilo tagged
-Hypothesis:
-Mary is not golf tagged
-
-Which statements in the premise entail the hypothesis?
-Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-0 3
-```
-
----
-
 ## [logic_formalization](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
+
+Translate natural language premises into formal first-order logic formulas.
 
 **Prompt:**
 ```
@@ -373,6 +372,8 @@ False
 ---
 
 ## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+Multi-hop natural language inference over chained logic facts and rules.
 
 **Prompt:**
 ```
@@ -405,125 +406,49 @@ No
 
 ---
 
-## [stratified_naf_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+## [defeasible_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+NLI using defeasible logic rules and negation as failure.
 
 **Prompt:**
 ```
 Premise:
+david is trained.
 clara is trained.
-bruno is trained.
-bruno is blocked.
-clara is bird.
-bruno is bird.
-bruno is penguin.
-clara helps bruno.
-bruno is careful.
-alice is blocked.
 clara is blocked.
-By default, if x is trained, then x is trusted, unless x is blocked can be shown.
-Whenever x is trusted and it cannot be shown that x is flagged, x is approved.
-Whenever x is blocked, x is not trusted.
-From x is not trusted and it cannot be shown that x is flagged, it follows that x is not approved.
-From x helps y and y is careful and it cannot be shown that y is blocked, it follows that x is trusted.
-By default, if x helps y and y is trusted, then x is approved, unless x is flagged can be shown.
+david is bird.
+clara is bird.
+clara is penguin.
+david helps clara.
+clara is careful.
+bruno is flagged.
+alice is ab bird.
+bruno is trained.
+From x is trained and it cannot be shown that x is blocked, it follows that x is trusted.
+For all x, if x is trusted and it cannot be shown that x is flagged, then x is approved.
+From x is blocked, it follows that x is not trusted.
+If x is not trusted, and it cannot be shown that x is flagged, then x is not approved.
 For all x, if x is trained and it cannot be shown that x is flagged, then x is careful.
+For all x, if x is penguin, then x is ab bird.
+For all x, if x is bird and it cannot be shown that x is ab bird, then x is approved.
 
 Hypothesis:
-david is careful.
+clara is not approved.
 
-Some rules use 'unless it can be shown that ...'. This means the rule applies only when that exception is not derivable from the premise. This is different from a classical 'is not' fact.
+Some rules use phrases like 'unless X can be shown'. This means the rule applies only when that exception is not derivable from the premise. This is different from a classical 'is not' fact.
 Is the hypothesis true given the premise? The answer is Yes, No, or Maybe.
 ```
 
 **Answer:**
 ```
-Maybe
-```
-
----
-
-## [naf_removal_flip](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-[0] david is trained.
-[1] alice is trained.
-[2] alice is flagged.
-[3] david is bird.
-[4] alice is bird.
-[5] alice is penguin.
-[6] david helps alice.
-[7] alice is careful.
-[8] bruno is trusted.
-[9] clara is bird.
-[10] If x is trained, and x is flagged cannot be shown, then x is trusted.
-[11] By default, if x is trusted, then x is approved, unless x is blocked can be shown.
-[12] All things that are flagged are not trusted.
-[13] By default, if x is not trusted, then x is not approved, unless x is blocked can be shown.
-[14] By default, if x helps y and y is trusted, then x is approved, unless x is blocked can be shown.
-[15] Every penguin entity is ab bird.
-[16] For all x, if x is bird and it cannot be shown that x is ab bird, then x is approved.
-
-Hypothesis:
-alice is not approved.
-
-Which smallest set of indexed premise statements, if removed, would make the hypothesis become false?
-MVP cases have one removed statement. Answer with space-separated indexes.
-```
-
-**Answer:**
-```
-2
-```
-
----
-
-## [naf_addition_flip](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-**Prompt:**
-```
-Premise:
-[0] Clara is alpha tagged.
-[1] Bruno is alpha tagged.
-[2] Bruno is bravo tagged.
-[3] Clara is foxtrot tagged.
-[4] Bruno is foxtrot tagged.
-[5] Bruno is gamma tagged.
-[6] Clara is alpha-linked to Bruno.
-[7] Bruno is lambda tagged.
-[8] Alice is delta tagged.
-[9] Bruno is alpha-linked to Alice.
-[10] Alice is echo tagged.
-[11] If x is alpha tagged, and x is bravo tagged cannot be shown, then x is charlie tagged.
-[12] Whenever x is charlie tagged and it cannot be shown that x is delta tagged, x is echo tagged.
-[13] From x is bravo tagged, it follows that x is not charlie tagged.
-[14] If x is not charlie tagged, and x is delta tagged cannot be shown, then x is not echo tagged.
-[15] Whenever x is foxtrot tagged and it cannot be shown that x is kappa tagged, x is echo tagged.
-[16] For all x, if x is gamma tagged, then x is kappa tagged.
-[17] From x is alpha tagged and it cannot be shown that x is delta tagged, it follows that x is lambda tagged.
-
-Hypothesis:
-Bruno is echo tagged.
-
-Candidate Facts:
-[0] David is alpha tagged.
-[1] Alice is alpha tagged.
-[2] Bruno is delta tagged.
-[3] Alice is not alpha tagged.
-
-Which candidate fact, if added to the premise, would make the hypothesis become unknown?
-Answer with one candidate index.
-```
-
-**Answer:**
-```
-2
+Yes
 ```
 
 ---
 
 ## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
+
+Retrieve the specific premise indexes required to prove a logical hypothesis.
 
 **Prompt:**
 ```
@@ -558,6 +483,8 @@ Answer with space-separated indexes.
 
 ## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
+Find the missing facts from candidates to satisfy a target hypothesis.
+
 **Prompt:**
 ```
 Premise:
@@ -591,6 +518,8 @@ Answer with space-separated indexes.
 
 ## [logic_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
+Answer multi-step logical reasoning queries over rule-based theories.
+
 **Prompt:**
 ```
 Premise:
@@ -623,6 +552,8 @@ none
 
 ## [planning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/planning.py)
 
+Generate action plans to achieve goals in domains like Blocksworld.
+
 **Prompt:**
 ```
 Objects:
@@ -651,6 +582,8 @@ action_1(object_5)
 
 ## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
 
+Identify missing elements from a shuffled sequence defined by set intension.
+
 **Prompt:**
 ```
 Set_A: {98, 100, 97, 94, 101, 92, 93}
@@ -665,6 +598,8 @@ The answer is the missing elements from Set_A as a Python set.
 ---
 
 ## [set_expression](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
+
+Evaluate complex set expressions involving union, intersection, and nested lists.
 
 **Prompt:**
 ```
@@ -681,6 +616,8 @@ Evaluate (C - (C & A)).
 ---
 
 ## [sequential_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/sequential_induction.py)
+
+Induce recurrence relations from visible terms of a numeric sequence.
 
 **Prompt:**
 ```
@@ -699,6 +636,8 @@ The answer is the RHS only.
 ---
 
 ## [qualitative_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qstr.py)
+
+Solve qualitative spatial and temporal reasoning problems over algebras.
 
 **Prompt:**
 ```
@@ -722,6 +661,8 @@ E1
 ---
 
 ## [navigation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/navigation.py)
+
+Infer object grid coordinates from spatial relations and step actions.
 
 **Prompt:**
 ```
@@ -749,6 +690,8 @@ What is the final coordinate of C? The answer is (x, y).
 ---
 
 ## [reference_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/tracking.py)
+
+Track locations of balls in boxes across moves, swaps, and coreferences.
 
 **Prompt:**
 ```
@@ -781,6 +724,8 @@ x1
 
 ## [coreference](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/coreference.py)
 
+Resolve multi-hop entity coreference chains and pronouns in natural text.
+
 **Prompt:**
 ```
 (1) A quiet stern engineer named Sam watched a kind loud teacher named Noah.
@@ -804,6 +749,8 @@ Mary
 
 ## [constraint_satisfaction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/constraint_satisfaction.py)
 
+Solve constraint satisfaction problems (grids, attributes, linear) using Z3.
+
 **Prompt:**
 ```
 4x4 grid. Each row and column contains 1..4 once.
@@ -826,6 +773,8 @@ Answer with one number.
 
 ## [graph_pathfinding](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
 
+Find the shortest path or cost in weighted and unweighted directed graphs.
+
 **Prompt:**
 ```
 Find the shortest directed path from node 0 to node 2. If several paths are tied, return the lexicographically smallest one. Answer with space-separated nodes, or `None` if no path exists.
@@ -842,6 +791,8 @@ Directed Edges: 0->2, 0->5, 1->5, 2->4, 3->0
 ---
 
 ## [graph_successors](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
+
+Determine the k-th successor of a node in a permutation digraph topology.
 
 **Prompt:**
 ```
@@ -864,6 +815,8 @@ Queries:
 
 ## [graph_dependencies](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
 
+Resolve recursive node prerequisites in directed acyclic graphs (DAGs).
+
 **Prompt:**
 ```
 List all ancestors of node 4.
@@ -883,6 +836,8 @@ digraph { 0->4; 2->0; 2->1; 2->4; 2->5; 3->4; 5->0; 5->3 }
 
 ## [regex_following](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
 
+Produce a string that matches a specified regular expression pattern.
+
 **Prompt:**
 ```
 The answer is a 1-character string that fully matches the regular expression: [^Yfw]*
@@ -895,23 +850,9 @@ o
 
 ---
 
-## [regex_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
-
-**Prompt:**
-```
-Positive: 'aa', 'ada'
-Negative: 'a', 'aac', 'ac', 'bbad', 'bdc', 'bddb', 'cacbb', 'dcaca'
-The answer is the shortest regex matching all positives and no negatives. Use only literals from Σ={abcd}, concatenation, |, parentheses, and postfix *, +, ?. Break ties lexicographically.
-```
-
-**Answer:**
-```
-ad*a
-```
-
----
-
 ## [regex_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
+
+Reason about regular expression equivalence, containment, and witnesses.
 
 **Prompt:**
 ```
@@ -929,6 +870,8 @@ No
 ---
 
 ## [analogical_case_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/formal_analogies.py)
+
+Retrieve analogical cases matching query objects, links, and logical facts.
 
 **Prompt:**
 ```
@@ -978,6 +921,8 @@ M1
 
 ## [parsing_derivation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
 
+Determine the derivation production rule sequence parsing a given string.
+
 **Prompt:**
 ```
 (GRAMMAR)
@@ -1003,6 +948,8 @@ R0 R2 R4 R2 R4 R1 R1 R2 R4 R2 R3 R1 R1 R2 R5 R1 R2 R4 R1 R1
 ---
 
 ## [locate_error](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+
+Locate syntax errors or grammatical perturbations in generated sentences.
 
 **Prompt:**
 ```
@@ -1030,6 +977,8 @@ ability >>open<<
 ---
 
 ## [constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
+
+Fill in blank tokens within a grammar-constrained sentence with prefix/suffix context.
 
 **Prompt:**
 ```
@@ -1060,6 +1009,8 @@ small small small small small
 
 ## [table_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
 
+Answer queries on tabular data by executing SQL queries over dataframes.
+
 **Prompt:**
 ```
 Execute this SQL query on the table named dataframe:
@@ -1086,6 +1037,8 @@ The answer is the result as single value.
 ---
 
 ## [table_equivalence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
+
+Decide if two rendered tables are semantically equivalent under mutations.
 
 **Prompt:**
 ```
@@ -1122,6 +1075,8 @@ yes
 
 ## [table_statistics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
 
+Compute statistical metrics (Pearson correlation, eta2, NMI) on tables.
+
 **Prompt:**
 ```
 Table:
@@ -1155,6 +1110,8 @@ x1
 
 ## [string_transduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/string_transduction.py)
 
+Apply string transduction operations including Caesar cipher and rotation.
+
 **Prompt:**
 ```
 String: cceccaaa
@@ -1172,6 +1129,8 @@ ffhffddd
 ---
 
 ## [code_runnability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
+
+Predict if a given Python code snippet runs successfully or raises an exception.
 
 **Prompt:**
 ````
@@ -1202,6 +1161,8 @@ OK
 
 ## [code_execution](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
 
+Predict the return value or stdout of executing generated Python code blocks.
+
 **Prompt:**
 ````
 Predict the value returned by this Python call.
@@ -1228,35 +1189,9 @@ The answer is the exact Python `repr` of the returned value.
 
 ---
 
-## [code_input_deduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
-
-**Prompt:**
-````
-Find the smallest integer x in [-6, 9] such that `endpoint(x) == target`.
-Answer with the integer.
-
-```python
-def f0(a: int) -> int:
-    a *= 4
-    return a
-
-
-def endpoint(x):
-    return f0(x) % 5
-
-```
-
-Target: 4
-````
-
-**Answer:**
-```
--4
-```
-
----
-
 ## [game_best_move](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
+
+Determine the minimax-optimal move for a player in a finite graph-based game.
 
 **Prompt:**
 ```
@@ -1276,6 +1211,8 @@ n6
 
 ## [game_forced_win](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
 
+Decide if a player can force a win from a given state in a graph-based game.
+
 **Prompt:**
 ```
 In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
@@ -1292,6 +1229,8 @@ yes
 ---
 
 ## [theory_of_mind](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/theory_of_mind.py)
+
+Track agent beliefs, locations, and actions for Theory of Mind scenarios.
 
 **Prompt:**
 ```
@@ -1313,7 +1252,53 @@ tin
 
 ---
 
+## [code_analysis](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_analysis.py)
+
+Analyze toy finite-state Python-like programs with CTL temporal formulas.
+
+**Prompt:**
+````
+Program:
+```python
+import random
+
+phase, x = 'idle', 0
+
+def step():
+    global phase, x
+    if phase == 'idle':
+        phase = 'wait'
+    elif phase == 'wait':
+        x = min(x + 1, 1)
+    else:
+        phase = 'idle'
+```
+
+Reachable states:
+s0=(phase=idle, x=0); s2=(phase=wait, x=0); s3=(phase=wait, x=1)
+
+Predicates:
+p0 := x == 0
+p1 := phase == 'wait'
+p2 := phase == 'idle'
+
+Property:
+some next step can reach a state where p0
+
+Question: Considering all possible random choices, does the property hold from the initial state?
+Answer with exactly Yes or No.
+````
+
+**Answer:**
+```
+Yes
+```
+
+---
+
 ## [qualitative_causal](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qualitative_causal.py)
+
+Perform qualitative causal reasoning (increase, decrease, ambiguous) on graphs.
 
 **Prompt:**
 ```

@@ -272,7 +272,7 @@ class LogicNLI(Task):
 class EvidenceRetrievalConfig(LogicConfig):
     bloat_skip_rate: float= 0.2
 
-class EvidenceRetrieval(Task):
+class EvidenceRetrieval(DevTask):
     summary = "Identify minimal necessary premises from logic theories to prove a hypothesis."
     def __init__(self, config=EvidenceRetrievalConfig()):
         super().__init__(config=config)

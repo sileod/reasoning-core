@@ -3,6 +3,8 @@ import pytest
 
 from reasoning_core.tasks.logic_depth import (
     Atom,
+    DefeasibleNLI,
+    DefeasibleNLIConfig,
     Denial,
     Not,
     PredSig,
@@ -37,19 +39,33 @@ def test_multistep_nli_registers_and_generates():
     assert len(seen) >= 2
 
 
-def test_stratified_naf_tasks_register_and_generate():
-    tasks = ("stratified_naf_nli", "naf_removal_flip", "naf_addition_flip")
-    for name in tasks:
-        assert name in list_tasks()
-        task = get_task(name)
-        ex = task.generate_example(max_tokens=0)
-        assert ex.answer
-        assert ex.metadata.naf_rule_count >= 1
-        assert task.score_answer(ex.answer, ex) == 1
-    nli = get_task("stratified_naf_nli")
+def test_defeasible_nli_registers_and_generates():
+    assert "defeasible_nli" in list_tasks()
+    task = get_task("defeasible_nli")
+    ex = task.generate_example(max_tokens=0)
+    assert ex.answer
+    assert ex.metadata.naf_rule_count >= 1
+    assert task.score_answer(ex.answer, ex) == 1
+    nli = get_task("defeasible_nli")
     seen = {nli.generate_example(max_tokens=0).answer for _ in range(12)}
     assert seen <= {"Yes", "No", "Maybe"}
     assert len(seen) >= 2
+
+
+def test_defeasible_nli_level2_is_not_all_maybe():
+    cfg = DefeasibleNLIConfig()
+    cfg.set_level(2)
+    task = DefeasibleNLI(config=cfg)
+    seen = {task.generate().answer for _ in range(40)}
+    assert seen <= {"Yes", "No", "Maybe"}
+    assert seen != {"Maybe"}
+
+
+def test_defeasible_nli_level2_balanced_batch_completes():
+    task = get_task("defeasible_nli")
+    batch = task.generate_balanced_batch(batch_size=12, level=2, max_tokens=0)
+    assert len(batch) == 12
+    assert {ex.answer for ex in batch} == {"Yes", "No", "Maybe"}
 
 
 def test_multistep_evidence_retrieval_generates():
