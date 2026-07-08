@@ -1434,6 +1434,7 @@ def gen_forward_order_graph(config):
 
 class LeanMissingProofLineSelection(Task):
     """Choose the unique available proof line that fills a Lean proof hole."""
+    summary = "Select the correct proof line to fill a hole in a compilation-checked Lean proof."
 
     def __init__(self, config=None, **kwargs):
         if config is None:
@@ -1495,6 +1496,7 @@ class LeanMissingProofLineSelection(Task):
 
 class LeanCandidateCompilation(Task):
     """True/False on whether a single candidate proof body closes the theorem."""
+    summary = "Determine if a candidate proof body successfully closes a theorem in Lean."
 
     def __init__(self, config=None, **kwargs):
         if config is None:

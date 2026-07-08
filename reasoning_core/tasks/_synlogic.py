@@ -167,6 +167,7 @@ class SynlogicConfig(Config):
 
 
 class Synlogic(Task):
+    summary = "Execute reasoning games and tasks integrated from the SynLogic framework."
     task_name = "synlogic"
 
     def __init__(self, config=None, *args, **kwargs):

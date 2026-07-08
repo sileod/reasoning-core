@@ -59,6 +59,7 @@ class ReferenceTracking(Task):
                          using Z3-verified size-chain facts, then look up
                          the referent's current box (forcing both skills).
     """
+    summary = "Track locations of balls in boxes across moves, swaps, and coreferences."
 
     def __init__(self, config=ReferenceTrackingConfig()):
         super().__init__(config=config)

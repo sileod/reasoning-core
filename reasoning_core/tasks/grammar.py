@@ -466,6 +466,7 @@ def labeled_rules(meta):
 
 
 class ParsingDerivation(Task):
+    summary = "Determine the derivation production rule sequence parsing a given string."
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.perturbation_rate = 0.0
         super().__init__(config=config)
@@ -729,6 +730,7 @@ def _norm_marked(s):
     return re.sub(r'\s+', ' ', s)
 
 class LocateError(Task):
+    summary = "Locate syntax errors or grammatical perturbations in generated sentences."
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.perturbation_rate = 0.0
         super().__init__(config=config)
@@ -965,6 +967,7 @@ class ConstrainedContinuation(Task):
     (possibly empty); the model fills blanks so PREFIX + filled-TEMPLATE + SUFFIX
     is grammatical. When the suffix is empty the task is a continuation
     (Dyck-friendly); when non-empty it is a cloze (works on linear grammars too)."""
+    summary = "Fill in blank tokens within a grammar-constrained sentence with prefix/suffix context."
 
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.prob_resampling_grammar = 0.0  # needed for speed

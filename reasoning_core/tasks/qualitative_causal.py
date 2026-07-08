@@ -341,6 +341,7 @@ RENDERERS = [render_edge_list, render_compact, render_table]
 
 
 class QualitativeCausal(Task):
+    summary = "Perform qualitative causal reasoning (increase, decrease, ambiguous) on graphs."
     def __init__(self, config=QualitativeCausalConfig()):
         super().__init__(config=config)
 

@@ -278,6 +278,7 @@ def sample_problem(cfg, want_error, failure_rate):
 
 
 class CodeRunnability(Task):
+    summary = "Predict if a given Python code snippet runs successfully or raises an exception."
     def __init__(self, config=None):
         super().__init__(config=config or MesopyCodeCfg())
         self.balancing_key_ratio = 1 / 5
@@ -308,6 +309,7 @@ class CodeRunnability(Task):
 
 
 class CodeExecution(Task):
+    summary = "Predict the return value or stdout of executing generated Python code blocks."
     def __init__(self, config=None):
         super().__init__(config=config or MesopyCodeCfg())
 
@@ -357,6 +359,7 @@ def bounded_strings(alphabet, max_len):
 
 
 class CodeInputDeduction(Task):
+    summary = "Deduce the Python function input that yields a target output value or condition."
     def __init__(self, config=None):
         super().__init__(config=config or CodeInputDeductionCfg())
         self._mode_i = 0

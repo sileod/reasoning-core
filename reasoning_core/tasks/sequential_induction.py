@@ -175,6 +175,7 @@ class SequenceConfig(Config):
         self.max_depth_grammar = sround(self.max_depth_grammar + level)
 
 class SequentialInduction(Task):
+    summary = "Induce recurrence relations from visible terms of a numeric sequence."
     def __init__(self, config=SequenceConfig()):
         super().__init__(config=config)
         # Now, self.filters will contain references to picklable instance methods

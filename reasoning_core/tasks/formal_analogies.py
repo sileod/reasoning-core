@@ -328,6 +328,7 @@ class AnalogicalCaseRetrievalConfig(Config):
 
 
 class AnalogicalCaseRetrieval(Task):
+    summary = "Retrieve analogical cases matching query objects, links, and logical facts."
     def __init__(self, config=AnalogicalCaseRetrievalConfig()):
         super().__init__(config=config)
 

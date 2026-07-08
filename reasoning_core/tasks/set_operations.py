@@ -92,6 +92,7 @@ class SetMissingElementConfig(SetOpsConfig):
         self.n_domains += level
 
 class SetMissingElement(Task):
+    summary = "Identify missing elements from a shuffled sequence defined by set intension."
     def __init__(self, config=SetMissingElementConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
@@ -135,6 +136,7 @@ class CountElementsConfig(Config):
         self.domain_size *= 2 ** level
 
 class CountElements(Task):
+    summary = "Count occurrences of a target element within a randomly generated list."
     def __init__(self, config=CountElementsConfig()):
         super().__init__(config=config)
         self.domains = make_domains(self.config.domain_size)
@@ -499,6 +501,7 @@ class SetExpressionConfig(Config):
 
 
 class SetExpression(Task):
+    summary = "Evaluate complex set expressions involving union, intersection, and nested lists."
     def __init__(self, config=SetExpressionConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25

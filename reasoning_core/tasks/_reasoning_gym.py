@@ -17,6 +17,7 @@ class RGConfig(Config):
         self.rg_level += level
 
 class Reasoning_Gym(Task):
+    summary = "Interface with diverse reasoning datasets generated via reasoning-gym."
     def __init__(self, config=RGConfig()):
         if reasoning_gym is None:
             raise ImportError("reasoning_gym is not installed.")

@@ -149,6 +149,7 @@ class BaseGraphTask:
 
 
 class GraphPathfinding(BaseGraphTask, Task):
+    summary = "Find the shortest path or cost in weighted and unweighted directed graphs."
     def _add_weights(self, G, weighted):
         for u, v in G.edges:
             G.edges[u, v]["weight"] = (
@@ -298,6 +299,7 @@ class GraphSuccessorsConfig(Config):
 
 class GraphSuccessors(BaseGraphTask, Task):
     """DEPO-style k-th successor queries in a permutation digraph."""
+    summary = "Determine the k-th successor of a node in a permutation digraph topology."
     def __init__(self, config=GraphSuccessorsConfig()):
         super().__init__(config=config)
 
@@ -357,6 +359,7 @@ class GraphDependenciesConfig(Config):
 
 class GraphDependencies(BaseGraphTask, Task):
     """BREVO-style recursive dependency resolution implemented via DAG topologies."""
+    summary = "Resolve recursive node prerequisites in directed acyclic graphs (DAGs)."
     def __init__(self, config=GraphDependenciesConfig()):
         super().__init__(config=config)
 

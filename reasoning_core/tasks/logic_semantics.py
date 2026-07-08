@@ -184,6 +184,7 @@ def is_bloat(meta, label):
     return rules in bloat_signatures
 
 class LogicNLI(Task):
+    summary = "First-order logic natural language inference via automated theorem proving."
 
     def __init__(self, config=LogicConfig()):
         super().__init__(config=config)
@@ -272,6 +273,7 @@ class EvidenceRetrievalConfig(LogicConfig):
     bloat_skip_rate: float= 0.2
 
 class EvidenceRetrieval(Task):
+    summary = "Identify minimal necessary premises from logic theories to prove a hypothesis."
     def __init__(self, config=EvidenceRetrievalConfig()):
         super().__init__(config=config)
         self.nli = LogicNLI(config=config)
@@ -372,6 +374,7 @@ def _alter_formula(f):
     return ops[0][0], ops[0][1](f)
 
 class LogicFormalization(Task):
+    summary = "Translate natural language premises into formal first-order logic formulas."
     def __init__(self, config=LogicFormalizationConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.5

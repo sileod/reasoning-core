@@ -1730,6 +1730,7 @@ def make_direct_abduction_case(cfg):
 
 
 class MultistepNLI(Task):
+    summary = "Multi-hop natural language inference over chained logic facts and rules."
     def __init__(self, config=MultistepNLIConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 1 / 3
@@ -1759,6 +1760,7 @@ class MultistepNLI(Task):
 
 
 class DefeasibleNLI(Task):
+    summary = "Natural language inference using defeasible logic rules and negation as failure."
     task_name = "stratified_naf_nli"
 
     def __init__(self, config=DefeasibleNLIConfig()):
@@ -1791,6 +1793,7 @@ class DefeasibleNLI(Task):
         return problem.answer
 
 class MultistepEvidenceRetrieval(Task):
+    summary = "Retrieve the specific premise indexes required to prove a logical hypothesis."
     def __init__(self, config=MultistepNLIConfig()):
         super().__init__(config=config)
         self._case_state = {}
@@ -1828,6 +1831,7 @@ class MultistepEvidenceRetrieval(Task):
 
 
 class MultistepAbduction(Task):
+    summary = "Find the missing facts from candidates to satisfy a target hypothesis."
     def __init__(self, config=MultistepAbductionConfig()):
         super().__init__(config=config)
         self._case_state = {}
@@ -1867,6 +1871,7 @@ class MultistepAbduction(Task):
 
 
 class LogicQA(Task):
+    summary = "Answer multi-step logical reasoning queries over rule-based theories."
     def __init__(self, config=LogicQAConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 1 / 3

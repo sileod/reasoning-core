@@ -434,6 +434,7 @@ def gen_relational(config):
 
 
 class MathWordProblem(Task):
+    summary = "Solve relational and process math word problems involving objects and values."
     def __init__(self, config=WordProblemMathConfig()):
         super().__init__(config=config)
 

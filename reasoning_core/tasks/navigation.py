@@ -263,6 +263,7 @@ def pick_query(rng, solver, gv, names, final, query_names=None):
 
 
 class Navigation(Task):
+    summary = "Infer object grid coordinates from spatial relations and step actions."
 
     def __init__(self, config=NavigationConfig()):
         super().__init__(config=config)

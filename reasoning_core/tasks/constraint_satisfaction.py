@@ -45,6 +45,7 @@ CSPConfig = ConstraintSatisfactionConfig
 
 
 class ConstraintSatisfaction(Task):
+    summary = "Solve constraint satisfaction problems (grids, attributes, linear) using Z3."
 
     def __init__(self, config=None):
         super().__init__(config=config or CSPConfig())

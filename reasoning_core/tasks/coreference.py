@@ -176,6 +176,7 @@ class CoreferenceConfig(Config):
 
 
 class Coreference(Task):
+    summary = "Resolve multi-hop entity coreference chains and pronouns in natural text."
     def __init__(self, config=CoreferenceConfig()):
         super().__init__(config=config)
 

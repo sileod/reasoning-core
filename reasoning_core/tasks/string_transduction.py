@@ -58,6 +58,7 @@ def apply_edits(s, edits):
 
 
 class StringTransduction(Task):
+    summary = "Apply string transduction operations including Caesar cipher and rotation."
     def __init__(self, config=StringTransductionConfig()):
         super().__init__(config=config)
 

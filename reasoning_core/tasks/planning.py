@@ -784,6 +784,7 @@ class PlanningConfig(Config):
         self.arity_weight += level
 
 class Planning(Task):
+    summary = "Generate action plans to achieve goals in domains like Blocksworld."
     task_name = "planning" 
 
     def __init__(self, config=PlanningConfig()):

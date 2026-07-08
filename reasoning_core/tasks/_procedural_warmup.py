@@ -311,6 +311,7 @@ def _make_prompt(task, seq, k=None, n=None):
 
 
 class ProceduralWarmup(Task):
+    summary = "Sequence tasks including reverse, sort, stack operations, and ECA rule 110."
     def __init__(self, config=None):
         super().__init__(config=config or ProceduralWarmupConfig())
         self.balancing_key_ratio = 0.2

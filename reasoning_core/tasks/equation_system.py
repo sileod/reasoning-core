@@ -53,6 +53,7 @@ def _verify_system(equations: List[sp.Eq], variables: List[sp.Symbol]) -> Dict[s
         return {'kind': 'error'}
 
 class EquationSystem(Task):
+    summary = "Solve systems of linear equations or detect inconsistent/underdetermined systems."
     def __init__(self, config=EquationSystemCfg()):
         super().__init__(config=config)
 

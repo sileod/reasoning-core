@@ -304,6 +304,7 @@ class QualitativeReasoningConfig(Config):
         self.extra_edges = sround(self.extra_edges + 0.5 * level)
 
 class QualitativeReasoning(Task):
+    summary = "Solve qualitative spatial and temporal reasoning problems over algebras."
     def __init__(self, config=None):
         super().__init__(config=config or QualitativeReasoningConfig())
 

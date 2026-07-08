@@ -157,6 +157,7 @@ def sample_instance(r_str, max_tries=100):
     raise ValueError(f"Could not generate a verified string for regex: {r_str}")
 
 class RegexFollowing(Task):
+    summary = "Produce a string that matches a specified regular expression pattern."
     def __init__(self, config=RegexConfig()):
         super().__init__(config=config)
 
@@ -357,6 +358,7 @@ def synthesize_shortest_regex(
 
 
 class RegexInduction(Task):
+    summary = "Induce a regular expression that separates positive and negative string sets."
     def __init__(self, config=RegexConfig()):
         super().__init__(config=config)
 
@@ -641,6 +643,7 @@ def _sample_regex(G, depth, min_depth, mode="sequential", max_tries=60):
     return None, None
 
 class RegexReasoning(Task):
+    summary = "Reason about regular expression equivalence, containment, and witnesses."
     def __init__(self, config=RegexReasoningConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25

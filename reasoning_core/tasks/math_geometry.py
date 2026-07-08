@@ -357,14 +357,14 @@ def query_orientation(scene, cfg):
 
 
 def query_collinear(scene, cfg):
-    want = random.choice(["yes", "no"])
+    want = random.choice(["Yes", "No"])
     for _ in range(cfg.max_tries):
         additions = []
-        ids = sample_ids(scene, 2 if want == "yes" else 3, cfg)
+        ids = sample_ids(scene, 2 if want == "Yes" else 3, cfg)
         if not ids:
             return None
 
-        if want == "yes":
+        if want == "Yes":
             a, b = ids
             A, B = scene["points"][a], scene["points"][b]
             if A == B:
@@ -378,7 +378,7 @@ def query_collinear(scene, cfg):
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         if len({key(pts[a]), key(pts[b]), key(pts[c])}) < 3:
             continue
-        ans = "yes" if cross(pts[a], pts[b], pts[c]) == 0 else "no"
+        ans = "Yes" if cross(pts[a], pts[b], pts[c]) == 0 else "No"
         if ans == want:
             return edict(
                 type="collinear",
@@ -386,7 +386,7 @@ def query_collinear(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Are points {a}, {b}, and {c} collinear?",
-                instruction="Answer is either yes or no.",
+                instruction="Answer is either Yes or No.",
                 balance=f"collinear:{ans}",
             )
     return None
@@ -474,11 +474,11 @@ def query_line_intersection(scene, cfg):
 
 
 def query_segment_intersection(scene, cfg):
-    want = random.choice(["yes", "no"])
+    want = random.choice(["Yes", "No"])
     for _ in range(cfg.max_tries):
         additions = []
 
-        if want == "yes":
+        if want == "Yes":
             O = rand_point(cfg.coord_abs)
             u = Point(rand_nonzero(-cfg.coord_abs - 1, cfg.coord_abs + 1), random.randint(-cfg.coord_abs, cfg.coord_abs))
             v = Point(random.randint(-cfg.coord_abs, cfg.coord_abs), rand_nonzero(-cfg.coord_abs - 1, cfg.coord_abs + 1))
@@ -503,7 +503,7 @@ def query_segment_intersection(scene, cfg):
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         if pts[a] == pts[b] or pts[c] == pts[d]:
             continue
-        ans = "yes" if Segment(pts[a], pts[b]).intersection(Segment(pts[c], pts[d])) else "no"
+        ans = "Yes" if Segment(pts[a], pts[b]).intersection(Segment(pts[c], pts[d])) else "No"
         if ans == want:
             return edict(
                 type="segment_intersection",
@@ -511,21 +511,21 @@ def query_segment_intersection(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Do segments {a}{b} and {c}{d} intersect?",
-                instruction="Answer is either yes or no.",
+                instruction="Answer is either Yes or No.",
                 balance=f"segment_intersection:{ans}",
             )
     return None
 
 
 def query_between(scene, cfg):
-    want = random.choice(["yes", "no"])
+    want = random.choice(["Yes", "No"])
     for _ in range(cfg.max_tries):
         additions = []
-        ids = sample_ids(scene, 2 if want == "yes" else 3, cfg)
+        ids = sample_ids(scene, 2 if want == "Yes" else 3, cfg)
         if not ids:
             return None
 
-        if want == "yes":
+        if want == "Yes":
             a, b = ids
             A, B = scene["points"][a], scene["points"][b]
             if A == B:
@@ -539,7 +539,7 @@ def query_between(scene, cfg):
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         if pts[a] == pts[b]:
             continue
-        ans = "yes" if on_segment(pts[a], pts[b], pts[p]) else "no"
+        ans = "Yes" if on_segment(pts[a], pts[b], pts[p]) else "No"
         if ans == want:
             return edict(
                 type="between",
@@ -547,7 +547,7 @@ def query_between(scene, cfg):
                 answer=ans,
                 additions=additions,
                 question=f"Is point {p} on segment {a}{b}?",
-                instruction="Answer is either yes or no.",
+                instruction="Answer is either Yes or No.",
                 balance=f"between:{ans}",
             )
     return None
@@ -737,6 +737,7 @@ class PlanarGeometryRelationsConfig(Config):
         self.max_vector_scale = sround(self.max_vector_scale + 0.25 * level)
 
 class PlanarGeometryRelations(Task):
+    summary = "Answer geometry queries about point intersections, angles, and distances."
 
     def __init__(self, config=None, **kwargs):
         super().__init__(config=config or PlanarGeometryRelationsConfig(), **kwargs)

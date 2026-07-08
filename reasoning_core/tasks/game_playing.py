@@ -224,6 +224,7 @@ class _SmallGraphGame:
 
 
 class GameBestMove(_SmallGraphGame, Task):
+    summary = "Determine the minimax-optimal move for a player in a finite graph-based game."
     def __init__(self, config=GameBestMoveConfig()):
         super().__init__(config=config)
 
@@ -251,6 +252,7 @@ class GameBestMove(_SmallGraphGame, Task):
 
 
 class GameForcedWin(_SmallGraphGame, Task):
+    summary = "Decide if a player can force a win from a given state in a graph-based game."
     def __init__(self, config=GameBestMoveConfig()):
         super().__init__(config=config)
 

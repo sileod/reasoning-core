@@ -346,6 +346,7 @@ class LambdaReductionConfig(Config):
 
 
 class LambdaReduction(Task):
+    summary = "Reduce lambda calculus terms to normal form with renaming and shadowing."
     def __init__(self, config=None):
         super().__init__(config=config or LambdaReductionConfig())
 
@@ -875,6 +876,7 @@ class RewriteSystemConfig(Config):
 
 
 class RewriteSystem(Task):
+    summary = "Normalize term rewrite systems under boolean, list, logic, or path rules."
     def __init__(self, config=None):
         super().__init__(config=config or RewriteSystemConfig())
 
@@ -1438,6 +1440,7 @@ class MguImpliedEqualityConfig(Config):
 
 
 class MguImpliedEquality(Task):
+    summary = "Decide if an equality is implied by the most general unifier of equations."
     config_cls = MguImpliedEqualityConfig
 
     def __init__(self, config=None, *args, **kwargs):

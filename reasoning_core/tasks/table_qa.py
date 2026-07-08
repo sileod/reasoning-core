@@ -202,6 +202,7 @@ def split_table(dataframe, n):
 
 
 class TableQA(Task):
+    summary = "Answer queries on tabular data by executing SQL queries over dataframes."
     def __init__(self, config=TableQAConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
@@ -451,6 +452,7 @@ def corrupt_table(dataframe):
 
 
 class TableEquivalence(Task):
+    summary = "Decide if two rendered tables are semantically equivalent under mutations."
     def __init__(self, config=TableQAConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.5
@@ -614,6 +616,7 @@ def gen_categorical_nmi(config):
 
 
 class TableStatistics(Task):
+    summary = "Compute statistical metrics (Pearson correlation, eta2, NMI) on tables."
     def __init__(self, config=TableStatisticsConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.5

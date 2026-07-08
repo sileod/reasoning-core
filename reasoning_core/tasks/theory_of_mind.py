@@ -178,6 +178,7 @@ def _question_text(chain, obj):
 
 
 class TheoryOfMind(Task):
+    summary = "Track agent beliefs, locations, and actions for Theory of Mind scenarios."
     config_cls = TheoryOfMindConfig
 
     def _sample_world(self):
