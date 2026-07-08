@@ -132,6 +132,19 @@ def source_link(task):
     return f"{GITHUB_BASE}{rel_path}"
 
 
+def task_summary(task):
+    return str(getattr(task, "summary", "") or "").strip()
+
+
+def task_metadata_block(name, task=None, include_summaries=True):
+    if task is None:
+        task = get_task(name)
+    if not include_summaries:
+        return ""
+    summary = task_summary(task)
+    return f"{summary}\n\n" if summary else ""
+
+
 def build_examples(tasks, cache=False, refresh_cache=False, allow_missing=False):
     examples = OrderedDict()
     failures = []
@@ -153,26 +166,29 @@ def build_examples(tasks, cache=False, refresh_cache=False, allow_missing=False)
     return examples
 
 
-def section_text(name, example):
+def section_text(name, example, include_summaries=True):
     task = get_task(name)
-    source = Path(inspect.getfile(task.__class__)).resolve()
     return (
         f"## [{name}]({source_link(task)})\n\n"
-        f"- last modified: {source_modified_date(source)}\n\n"
+        f"{task_metadata_block(name, task, include_summaries)}"
         f"**Prompt:**\n{fence(example.prompt)}\n\n"
         f"**Answer:**\n{fence(example.answer)}"
     )
 
 
-def normalize_section(name, section):
+def normalize_section(name, section, include_summaries=True):
     section = re.sub(r"\n- hash: `[^`]*`\n", "\n", section)
     section = re.sub(r"\n- modified: [^\n]*\n", "\n", section)
     section = re.sub(r"\n- last modified: [^\n]*\n", "\n", section)
-    return re.sub(
-        r"^(## [^\n]+\n)",
-        rf"\1\n- last modified: {source_modified_date(task_source(name))}\n",
-        section,
-        count=1,
+    section = re.sub(r"\n<!-- behavior-hash: [^>]* -->\n", "\n", section)
+    header_match = re.match(r"^(## [^\n]+)", section)
+    prompt_start = section.find("**Prompt:**")
+    if not header_match or prompt_start == -1:
+        return section.strip()
+    return (
+        f"{header_match.group(1)}\n\n"
+        f"{task_metadata_block(name, include_summaries=include_summaries)}"
+        f"{section[prompt_start:].strip()}"
     )
 
 
@@ -184,8 +200,19 @@ def changed_tasks(task_names, existing_sections, refresh=False):
         section = existing_sections.get(name, "")
         date_marker = f"- last modified: {source_modified_date(task_source(name))}"
         legacy_hash_marker = f"- hash: `{source_behavior_hash(task_source(name))}`"
-        if date_marker not in section and legacy_hash_marker not in section:
+        if not section:
             changed.append(name)
+            continue
+        if "<!-- behavior-hash:" in section:
+            continue
+        if "- hash:" in section:
+            if legacy_hash_marker not in section:
+                changed.append(name)
+            continue
+        if "- last modified:" in section or "- modified:" in section:
+            if date_marker not in section:
+                changed.append(name)
+            continue
     return changed
 
 
@@ -206,7 +233,8 @@ def read_sections(path):
     return sections
 
 
-def write_gallery(task_names, examples, out_path, existing_sections=None):
+def write_gallery(task_names, examples, out_path, existing_sections=None,
+                  include_summaries=True):
     out_path = Path(out_path)
     existing_sections = existing_sections or {}
     with out_path.open("w", encoding="utf-8") as f:
@@ -214,9 +242,11 @@ def write_gallery(task_names, examples, out_path, existing_sections=None):
         f.write(f"# 📖 Task Gallery\n\n{len(task_names)} tasks\n\n{menu}\n\n---\n\n")
         for name in task_names:
             if name in examples:
-                section = section_text(name, examples[name])
+                section = section_text(name, examples[name], include_summaries)
             else:
-                section = normalize_section(name, existing_sections[name])
+                section = normalize_section(
+                    name, existing_sections[name], include_summaries
+                )
             f.write(f"{section}\n\n---\n\n")
 
 
@@ -247,6 +277,8 @@ def parse_args():
     parser.add_argument("--no-cache", action="store_true",
                         help="Use generate_balanced_batch instead of cached validation examples.")
     parser.add_argument("--refresh-cache", action="store_true")
+    parser.add_argument("--no-summaries", action="store_true",
+                        help="Omit task summary text from gallery sections.")
     parser.add_argument("--taskrow-cache", default=None,
                         help=("Read examples from a diagnostics TaskRow cache "
                               "(task_diagnostics/cache/task_rows/<cache_id>) "
@@ -279,7 +311,13 @@ def main():
             task_names = [name for name in task_names if name not in missing]
         else:
             raise RuntimeError(f"no generated or existing gallery section for: {', '.join(missing)}")
-    write_gallery(task_names, examples, args.out, existing_sections)
+    write_gallery(
+        task_names,
+        examples,
+        args.out,
+        existing_sections,
+        include_summaries=not args.no_summaries,
+    )
     update_readme = args.update_readme == "always" or (
         args.update_readme == "auto" and args.tasks is None and
         Path(args.out).name == "GALLERY.md"
