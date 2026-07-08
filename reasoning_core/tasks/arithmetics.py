@@ -172,6 +172,7 @@ def _format_number(s, mode):
 
 class Arithmetics(Task):
     config_cls = ArithmeticsConfig
+    summary = "Compositional arithmetics with int/bool, varied operators, number theory."
 
     def generate(self):
         while True:

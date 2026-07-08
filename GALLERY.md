@@ -8,40 +8,36 @@
 
 ## [arithmetics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
 
-- last modified: 2026.07.07
+Compositional arithmetics with int/bool, varied operators, number theory.
 
 **Prompt:**
 ```
-Evaluate -6.7 + 3.
+Evaluate (-4.1) + 1 + (bit_count(44)).
 The answer is a number.
 ```
 
 **Answer:**
 ```
--3.7
+-0.1
 ```
 
 ---
 
 ## [math_word_problem](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/arithmetics.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
-A jar holds 5 apples. 8 more apples added; then 4 more apples added. How many apples are in the jar now? Answer with a number.
+Wei has 8 fewer apples than Iris. Ravi has a quarter as many apples as Iris. Iris has 12 apples. How many apples does Wei have? Answer with s a number.
 ```
 
 **Answer:**
 ```
-17
+4
 ```
 
 ---
 
 ## [equation_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/equation_system.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -61,8 +57,6 @@ Multiple solutions
 ---
 
 ## [lean_missing_proof_line_selection](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -91,8 +85,6 @@ LINES:
 
 ## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 Does this Lean 4 tactic body close the theorem?
@@ -115,8 +107,6 @@ False
 
 ## [planar_geometry_relations](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_geometry.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 Given points: C=(-1, -4); D=(1, 1); H=(3, 1); K=(-192/25, -69/25); P=(-4, 0); T=(1, 0); U=(-67/25, -44/25).
@@ -133,8 +123,6 @@ no
 ---
 
 ## [metamath_entailment](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_metamath.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -163,8 +151,6 @@ False
 ---
 
 ## [metamath_core_select](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_metamath.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -202,8 +188,6 @@ A
 
 ## [lambda_reduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
 
-- last modified: 2026.07.08
-
 **Prompt:**
 ```
 Reduce the following untyped λ-term to β-normal form.
@@ -222,8 +206,6 @@ The answer is the β-normal form (compared up to α-equivalence).
 ---
 
 ## [rewrite_system](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
-
-- last modified: 2026.07.08
 
 **Prompt:**
 ```
@@ -252,8 +234,6 @@ norm(base(norm(c)))
 
 ## [mgu_implied_equality](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/binding.py)
 
-- last modified: 2026.07.08
-
 **Prompt:**
 ```
 Do the equations force the candidate equality under their most general unifier?
@@ -275,8 +255,6 @@ no
 ---
 
 ## [most_probable_evidence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -304,8 +282,6 @@ Choose one value for each hidden factor. Answer with space-separated indexes.
 
 ## [most_probable_outcome](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/probabilistic_reasoning.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 A tray contains 7 white tiles and 7 black tiles.
@@ -325,8 +301,6 @@ equal
 ---
 
 ## [logic_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -353,8 +327,6 @@ Maybe
 
 ## [evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 Premise:
@@ -380,8 +352,6 @@ Answer with space-separated indexes.
 
 ## [logic_formalization](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_semantics.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 English:
@@ -403,8 +373,6 @@ False
 ---
 
 ## [multistep_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-- last modified: 2026.07.08
 
 **Prompt:**
 ```
@@ -438,8 +406,6 @@ No
 ---
 
 ## [stratified_naf_nli](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-- last modified: 2026.07.08
 
 **Prompt:**
 ```
@@ -478,8 +444,6 @@ Maybe
 
 ## [naf_removal_flip](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
-- last modified: 2026.07.08
-
 **Prompt:**
 ```
 Premise:
@@ -516,8 +480,6 @@ MVP cases have one removed statement. Answer with space-separated indexes.
 ---
 
 ## [naf_addition_flip](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-- last modified: 2026.07.08
 
 **Prompt:**
 ```
@@ -563,8 +525,6 @@ Answer with one candidate index.
 
 ## [multistep_evidence_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
-- last modified: 2026.07.08
-
 **Prompt:**
 ```
 Premise:
@@ -597,8 +557,6 @@ Answer with space-separated indexes.
 ---
 
 ## [multistep_abduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
-
-- last modified: 2026.07.08
 
 **Prompt:**
 ```
@@ -633,8 +591,6 @@ Answer with space-separated indexes.
 
 ## [logic_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/logic_depth.py)
 
-- last modified: 2026.07.08
-
 **Prompt:**
 ```
 Premise:
@@ -667,8 +623,6 @@ none
 
 ## [planning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/planning.py)
 
-- last modified: 2026.07.08
-
 **Prompt:**
 ```
 Objects:
@@ -697,8 +651,6 @@ action_1(object_5)
 
 ## [set_missing_element](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 Set_A: {98, 100, 97, 94, 101, 92, 93}
@@ -713,8 +665,6 @@ The answer is the missing elements from Set_A as a Python set.
 ---
 
 ## [set_expression](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/set_operations.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -731,8 +681,6 @@ Evaluate (C - (C & A)).
 ---
 
 ## [sequential_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/sequential_induction.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -751,8 +699,6 @@ The answer is the RHS only.
 ---
 
 ## [qualitative_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qstr.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -776,8 +722,6 @@ E1
 ---
 
 ## [navigation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/navigation.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -805,8 +749,6 @@ What is the final coordinate of C? The answer is (x, y).
 ---
 
 ## [reference_tracking](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/tracking.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -839,8 +781,6 @@ x1
 
 ## [coreference](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/coreference.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 (1) A quiet stern engineer named Sam watched a kind loud teacher named Noah.
@@ -864,8 +804,6 @@ Mary
 
 ## [constraint_satisfaction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/constraint_satisfaction.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 4x4 grid. Each row and column contains 1..4 once.
@@ -888,8 +826,6 @@ Answer with one number.
 
 ## [graph_pathfinding](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 Find the shortest directed path from node 0 to node 2. If several paths are tied, return the lexicographically smallest one. Answer with space-separated nodes, or `None` if no path exists.
@@ -906,8 +842,6 @@ Directed Edges: 0->2, 0->5, 1->5, 2->4, 3->0
 ---
 
 ## [graph_successors](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -930,8 +864,6 @@ Queries:
 
 ## [graph_dependencies](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/graph_operations.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 List all ancestors of node 4.
@@ -951,8 +883,6 @@ digraph { 0->4; 2->0; 2->1; 2->4; 2->5; 3->4; 5->0; 5->3 }
 
 ## [regex_following](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 The answer is a 1-character string that fully matches the regular expression: [^Yfw]*
@@ -966,8 +896,6 @@ o
 ---
 
 ## [regex_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -985,8 +913,6 @@ ad*a
 
 ## [regex_reasoning](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/regex.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 A = c|a+
@@ -1003,8 +929,6 @@ No
 ---
 
 ## [analogical_case_retrieval](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/formal_analogies.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -1054,8 +978,6 @@ M1
 
 ## [parsing_derivation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 (GRAMMAR)
@@ -1081,8 +1003,6 @@ R0 R2 R4 R2 R4 R1 R1 R2 R4 R2 R3 R1 R1 R2 R5 R1 R2 R4 R1 R1
 ---
 
 ## [locate_error](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -1110,8 +1030,6 @@ ability >>open<<
 ---
 
 ## [constrained_continuation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/grammar.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -1142,8 +1060,6 @@ small small small small small
 
 ## [table_qa](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 Execute this SQL query on the table named dataframe:
@@ -1170,8 +1086,6 @@ The answer is the result as single value.
 ---
 
 ## [table_equivalence](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
@@ -1208,8 +1122,6 @@ yes
 
 ## [table_statistics](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/table_qa.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 Table:
@@ -1243,8 +1155,6 @@ x1
 
 ## [string_transduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/string_transduction.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 String: cceccaaa
@@ -1262,8 +1172,6 @@ ffhffddd
 ---
 
 ## [code_runnability](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ````
@@ -1294,8 +1202,6 @@ OK
 
 ## [code_execution](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ````
 Predict the value returned by this Python call.
@@ -1323,8 +1229,6 @@ The answer is the exact Python `repr` of the returned value.
 ---
 
 ## [code_input_deduction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ````
@@ -1354,46 +1258,40 @@ Target: 4
 
 ## [game_best_move](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 In this graph game, choose player's best move. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score.
 
-Start: n1. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:20; n5:60; n6:0. Edges: n0->n5; n1->n2,n3; n2->n3; n3->n4,n5.
-Legal player moves now: n2, n3.
+Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:0; n5:0; n6:20. Edges: n0->n3,n5; n1->n2,n4; n2->n4,n6; n3->n4,n6.
+Legal player moves now: n4, n6.
 The answer is the destination node of the best move.
 ```
 
 **Answer:**
 ```
-n2
+n6
 ```
 
 ---
 
 ## [game_forced_win](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/game_playing.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 In this graph game, decide whether player can force a win. Player chooses on player turns; opponent chooses on opponent turns. Opponent minimizes player score. A win means final player score is greater than 50.
 
-Start: n1. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:70; n5:20; n6:0. Edges: n0->n5; n1->n5,n6; n2->n5; n3->n4,n5.
+Start: n2. Turns alternate player, opponent. Move along one edge per turn, for at most 3 moves. Terminal player scores: n4:50; n5:40; n6:70. Edges: n0->n1; n1->n4; n2->n4,n6; n3->n4,n6.
 The answer is yes or no.
 ```
 
 **Answer:**
 ```
-no
+yes
 ```
 
 ---
 
 ## [theory_of_mind](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/theory_of_mind.py)
-
-- last modified: 2026.07.08
 
 **Prompt:**
 ```
@@ -1417,8 +1315,6 @@ tin
 
 ## [qualitative_causal](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/qualitative_causal.py)
 
-- last modified: 2026.07.07
-
 **Prompt:**
 ```
 cause | effect | sign
@@ -1440,8 +1336,6 @@ increase
 ---
 
 ## [program_synthesis](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_program_synthesis.py)
-
-- last modified: 2026.07.07
 
 **Prompt:**
 ```
