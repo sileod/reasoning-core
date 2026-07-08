@@ -744,7 +744,7 @@ def sample_theory(cfg):
 
 
 @dataclass
-class StratifiedNAFNLIConfig(MultistepNLIConfig):
+class DefeasibleNLIConfig(MultistepNLIConfig):
     domain_packs: tuple = ("surface", "abstract")
     naf_rule_rate: float = 0.5
     exception_rate: float = 0.35
@@ -1758,10 +1758,10 @@ class MultistepNLI(Task):
         return problem.answer
 
 
-class StratifiedNAFNLI(Task):
+class DefeasibleNLI(Task):
     task_name = "stratified_naf_nli"
 
-    def __init__(self, config=StratifiedNAFNLIConfig()):
+    def __init__(self, config=DefeasibleNLIConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 1 / 3
         self._case_state = {}
@@ -1789,78 +1789,6 @@ class StratifiedNAFNLI(Task):
 
     def balancing_key(self, problem):
         return problem.answer
-
-
-class NAFRemovalFlip(Task):
-    task_name = "naf_removal_flip"
-
-    def __init__(self, config=StratifiedNAFNLIConfig()):
-        super().__init__(config=config)
-
-    def generate(self):
-        flip = make_naf_removal_flip_case(self.config)
-        if flip:
-            case = flip.case
-            meta = naf_case_metadata(case, flip.key)
-            meta.initial_label = case.label
-            meta.target_label = flip.target_label
-            meta.payload = Payload(premise=indexed_premise(case.lines), hypothesis=meta.hypothesis)
-            meta.valid_supports = flip.valid_supports
-            answer = " ".join(str(i) for i in flip.answer)
-            return Problem(meta, answer)
-        raise RuntimeError("could not generate a naf_removal_flip example")
-
-    def prompt(self, meta):
-        words = {"entailment": "true", "contradiction": "false", "neutral": "unknown"}
-        return (
-            f"{Payload(meta.payload)}\n\n"
-            f"Which smallest set of indexed premise statements, if removed, would make the hypothesis become {words[meta.target_label]}?\n"
-            "MVP cases have one removed statement. Answer with space-separated indexes."
-        )
-
-    def score_answer(self, answer, entry):
-        pred = parse_indices(answer)
-        valid = [set(x) for x in entry.metadata.get("valid_supports", [])]
-        return float(any(pred == x for x in valid))
-
-
-class NAFAdditionFlip(Task):
-    task_name = "naf_addition_flip"
-
-    def __init__(self, config=StratifiedNAFNLIConfig()):
-        super().__init__(config=config)
-
-    def generate(self):
-        flip = make_naf_addition_flip_case(self.config)
-        if flip:
-            case = flip.case
-            meta = naf_case_metadata(case, flip.key)
-            meta.initial_label = case.label
-            meta.target_label = flip.target_label
-            meta.candidates = [atom_text(a, case.theory.domain_pack) + "." for a in flip.candidates]
-            meta.payload = Payload(
-                premise=indexed_premise(case.lines),
-                hypothesis=meta.hypothesis,
-                candidate_facts=indexed_premise(meta.candidates),
-            )
-            meta.valid_supports = flip.valid_supports
-            answer = " ".join(str(i) for i in flip.answer)
-            return Problem(meta, answer)
-        raise RuntimeError("could not generate a naf_addition_flip example")
-
-    def prompt(self, meta):
-        words = {"entailment": "true", "contradiction": "false", "neutral": "unknown"}
-        return (
-            f"{Payload(meta.payload)}\n\n"
-            f"Which candidate fact, if added to the premise, would make the hypothesis become {words[meta.target_label]}?\n"
-            "Answer with one candidate index."
-        )
-
-    def score_answer(self, answer, entry):
-        pred = parse_indices(answer)
-        valid = [set(x) for x in entry.metadata.get("valid_supports", [])]
-        return float(any(pred == x for x in valid))
-
 
 class MultistepEvidenceRetrieval(Task):
     def __init__(self, config=MultistepNLIConfig()):
