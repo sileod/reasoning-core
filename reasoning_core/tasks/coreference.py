@@ -168,14 +168,15 @@ class CoreferenceConfig(Config):
     p_shortcut: float = 0.05   # prob. of using a shorter chain for diversity
     target_hops: int = 2
 
-    def update(self, c=1):
-        self.n_entities += c
-        self.chain_len += c
-        self.n_distractors += c
-        self.target_hops += c
+    def apply_difficulty(self, level):
+        self.n_entities += level
+        self.chain_len += level
+        self.n_distractors += level
+        self.target_hops += level
 
 
 class Coreference(Task):
+    summary = "Resolve multi-hop entity coreference chains and pronouns in natural text."
     def __init__(self, config=CoreferenceConfig()):
         super().__init__(config=config)
 

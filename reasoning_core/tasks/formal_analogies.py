@@ -1,7 +1,7 @@
 import re, random, itertools as it
 from dataclasses import dataclass
 from collections import defaultdict
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Problem, Config, edict, stochastic_rounding as sround
 
 
 LINKS = [
@@ -302,33 +302,43 @@ def _crisp_with_memory_distractors(case, n, rng, q_before, allowed, attempts=64)
 
 
 @dataclass
-class AnalogicalCaseRetrievalConfig(Config):
+class AnalogicalCaseMatchingConfig(Config):
     n_query_objects: int = 5
     n_query_links: int = 3
-    n_query_facts: int = 8
+    n_query_facts: int = 6
     n_query_facts_range: tuple | None = None
-    n_cases: int = 4
+    n_cases: int = 3
     n_gold_cases: int = 1
     context_facts: int = 4
     memory_distractors: int = 0
     memory_distractors_range: tuple | None = None
+    index_answer_rate: float = 1.00
     reverse_rate: float = 0.15
     max_attempts: int = 800
 
-    def update(self, c=1):
-        self.n_query_objects += c
-        self.n_query_facts += 2 * c
+    def apply_difficulty(self, level):
+        self.n_query_objects = sround(self.n_query_objects + level)
+        self.n_query_facts = sround(self.n_query_facts + 2 * level)
         if self.n_query_facts_range is not None:
             lo, hi = self.n_query_facts_range
-            self.n_query_facts_range = (lo + 2 * c, hi + 2 * c)
-        self.n_cases += c
-        self.context_facts += c // 2
-        self.reverse_rate = min(0.5, self.reverse_rate + 0.05 * c)
+            self.n_query_facts_range = (sround(lo + 2 * level), sround(hi + 2 * level))
+        self.n_cases = sround(self.n_cases + level)
+        self.context_facts = sround(self.context_facts + 0.5 * level)
+        self.reverse_rate = min(0.5, self.reverse_rate + 0.05 * level)
 
 
-class AnalogicalCaseRetrieval(Task):
-    def __init__(self, config=AnalogicalCaseRetrievalConfig()):
+class AnalogicalCaseMatching(Task):
+    summary = "Retrieve analogical cases matching query objects, links, and logical facts."
+    def __init__(self, config=AnalogicalCaseMatchingConfig()):
         super().__init__(config=config)
+
+    def _choose_answer_format(self, rng):
+        return "index" if rng.random() < self.config.index_answer_rate else "fact"
+
+    def _format_answer(self, q_answer, gold_ids, answer_format):
+        if answer_format == "index":
+            return " ".join(gold_ids)
+        return _sent(q_answer)
 
     def generate(self):
         k = self.config
@@ -404,7 +414,8 @@ class AnalogicalCaseRetrieval(Task):
                 continue
 
             gold_ids = sorted(hits[q_answer], key=lambda x: int(x[1:]))
-            answer = _sent(q_answer)
+            answer_format = self._choose_answer_format(rng)
+            answer = self._format_answer(q_answer, gold_ids, answer_format)
 
             md = edict(
                 cases=[
@@ -419,6 +430,7 @@ class AnalogicalCaseRetrieval(Task):
                 query_context=sorted(q_before),
                 answer_atom=q_answer,
                 matching_case_ids=gold_ids,
+                answer_format=answer_format,
                 answer=answer,
                 params=dict(
                     n_query_objects=n_obj,
@@ -428,6 +440,7 @@ class AnalogicalCaseRetrieval(Task):
                     n_gold_cases=n_gold,
                     context_facts=n_ctx,
                     memory_distractors=n_mem_noise,
+                    index_answer_rate=k.index_answer_rate,
                     reverse_rate=k.reverse_rate,
                 ),
             )
@@ -435,28 +448,44 @@ class AnalogicalCaseRetrieval(Task):
 
         raise RuntimeError("generation budget exhausted")
 
-    def prompt(self, metadata):
+    def _render_case(self, case):
         lines = [
-            "Cases show facts that imply one new fact.",
-            "Object names and link names may be consistently renamed, and each link name may also have its direction consistently reversed.",
-            "",
+            case["id"],
+            "Facts:",
         ]
+        lines.extend(_sent(atom) for atom in sorted(case["context"]))
+        lines.append(f"Conclusion: {_sent(case['consequence'])}")
+        return lines
 
+    def render_prompt(self, metadata):
+        answer_format = metadata.get("answer_format", "fact")
+        lines = [
+            "Memory cases list facts and a conclusion.",
+            "A case may match after consistent renaming of objects and links; each link may also be consistently reversed.",
+        ]
+        if answer_format == "index":
+            lines.append("Which memory case matches the query? Answer with only its index.")
+        else:
+            lines.append("Infer the query conclusion.")
+
+        lines.append("")
         for case in metadata["cases"]:
-            lines.append(case["id"])
-            for atom in sorted(case["context"]):
-                lines.append(_sent(atom))
-            lines.append(f"Implies: {_sent(case['consequence'])}")
+            lines.extend(self._render_case(case))
             lines.append("")
 
-        lines.append("Query")
+        lines.append("Query facts:")
         for atom in sorted(metadata["query_context"]):
             lines.append(_sent(atom))
-        lines.append("Implies:")
+        if answer_format != "index":
+            lines.append("Conclusion:")
 
         return "\n".join(lines)
 
     def score_answer(self, answer, entry):
+        if entry.metadata.get("answer_format") == "index":
+            pred_ids = re.findall(r"\bM\d+\b", str(answer))
+            return 1.0 if pred_ids == list(entry.metadata["matching_case_ids"]) else 0.0
+
         gold = tuple(entry.metadata["answer_atom"])  # edict stores answer_atom as a list; parse yields a tuple
         pred = _parse_sent(answer)
         return 1.0 if pred is not None and tuple(pred) == gold else 0.0

@@ -1,12 +1,18 @@
 import random
+import typing
 from dataclasses import dataclass
 from functools import lru_cache
+
+from typing_extensions import Self as _TypingSelf
+
+if not hasattr(typing, "Self"):
+    typing.Self = _TypingSelf
 
 from pyggp import game_description_language as gdl
 from pyggp.engine_primitives import Turn
 from pyggp.interpreters import ClingoInterpreter, Interpreter
 
-from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
 
 
 @dataclass
@@ -15,10 +21,10 @@ class GameBestMoveConfig(Config):
     max_branch: int = 2
     horizon: int = 3
 
-    def update(self, c=1):
-        self.nodes += c
-        self.max_branch += c / 4
-        self.horizon += c / 3
+    def apply_difficulty(self, level):
+        self.nodes = sround(self.nodes + level)
+        self.max_branch = sround(self.max_branch + 0.25 * level)
+        self.horizon = sround(self.horizon + level / 3)
 
 
 def _name(i):
@@ -218,6 +224,7 @@ class _SmallGraphGame:
 
 
 class GameBestMove(_SmallGraphGame, Task):
+    summary = "Determine the minimax-optimal move for a player in a finite graph-based game."
     def __init__(self, config=GameBestMoveConfig()):
         super().__init__(config=config)
 
@@ -245,6 +252,7 @@ class GameBestMove(_SmallGraphGame, Task):
 
 
 class GameForcedWin(_SmallGraphGame, Task):
+    summary = "Decide if a player can force a win from a given state in a graph-based game."
     def __init__(self, config=GameBestMoveConfig()):
         super().__init__(config=config)
 

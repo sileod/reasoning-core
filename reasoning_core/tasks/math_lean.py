@@ -315,13 +315,12 @@ class LeanRunner:
             result = self._send_raw(payload)
         except Exception as e:
             self._start()
-            out = (False, str(e))
-        else:
-            msgs = result.get("messages") or []
-            has_error = any(m.get("severity") == "error" for m in msgs)
-            has_sorry = bool(result.get("sorries"))
-            diag = "\n".join(str(m.get("data", m)) for m in msgs)
-            out = (not has_error and not has_sorry, diag)
+            return False, str(e)
+        msgs = result.get("messages") or []
+        has_error = any(m.get("severity") == "error" for m in msgs)
+        has_sorry = bool(result.get("sorries"))
+        diag = "\n".join(str(m.get("data", m)) for m in msgs)
+        out = (not has_error and not has_sorry, diag)
         self.cache[code] = out
         return out
 
@@ -354,12 +353,11 @@ class LeanConfig(Config):
     n_candidates: int = 6
     use_mathlib: bool = True
 
-    def update(self, c):
-        self.n_vars += c
-        self.expr_depth += c
-        self.n_hyps += c
-        self.n_candidates += c
-
+    def apply_difficulty(self, level):
+        self.n_vars += level
+        self.expr_depth += level
+        self.n_hyps += level
+        self.n_candidates += level
 
 @dataclass
 class LeanDerivationNode:
@@ -372,6 +370,18 @@ class LeanDerivationNode:
     full_cnf_clause: str = ""
     proof: str = ""
     depth: int = 0
+
+
+@dataclass(frozen=True)
+class LeanSchema:
+    kind: str
+    decl: str
+    hyps: tuple[str, ...]
+    goal: str
+    proof: str
+    slots: tuple[str, ...] = ()
+    slot_type: str = "Int"
+    tactic_fallbacks: tuple[str, ...] = ("aesop", "simp_all", "omega", "tauto")
 
 
 VAR_NAMES = tuple("abcdefghijkmn")
@@ -587,11 +597,11 @@ def gen_finset_identity(config):
     names = list("stuvwxyz")[: max(2, min(6, int(config.n_vars) + 1))]
     a, b, c = random.sample(names, 3)
     templates = (
-        (f"{a} ∩ ({b} ∪ {c}) = ({a} ∩ {b}) ∪ ({a} ∩ {c})", "ext x; simp [and_or_left]"),
-        (f"({a} ∪ {b}) ∩ {c} = ({a} ∩ {c}) ∪ ({b} ∩ {c})", "ext x; simp [or_and_right]"),
-        (f"{a} ∪ ({b} ∩ {c}) = ({a} ∪ {b}) ∩ ({a} ∪ {c})", "ext x; simp [or_and_left]"),
-        (f"{a} ∩ ({b} ∩ {c}) = ({a} ∩ {b}) ∩ {c}", "ext x; simp [and_assoc]"),
-        (f"{a} ∪ ({b} ∪ {c}) = ({a} ∪ {b}) ∪ {c}", "ext x; simp [or_assoc]"),
+        (f"{a} ∩ ({b} ∪ {c}) = ({a} ∩ {b}) ∪ ({a} ∩ {c})", f"simpa using inf_sup_left {a} {b} {c}"),
+        (f"({a} ∪ {b}) ∩ {c} = ({a} ∩ {c}) ∪ ({b} ∩ {c})", f"simpa using inf_sup_right {a} {b} {c}"),
+        (f"{a} ∪ ({b} ∩ {c}) = ({a} ∪ {b}) ∩ ({a} ∪ {c})", f"simpa using sup_inf_left {a} {b} {c}"),
+        (f"{a} ∩ ({b} ∩ {c}) = ({a} ∩ {b}) ∩ {c}", f"simpa using inf_assoc {a} {b} {c}"),
+        (f"{a} ∪ ({b} ∪ {c}) = ({a} ∪ {b}) ∪ {c}", f"simpa using sup_assoc {a} {b} {c}"),
     )
     goal, proof = random.choice(templates)
     return edict(
@@ -604,10 +614,10 @@ def gen_set_monotone(config):
     names = list("stuvwxyz")[: max(3, min(6, int(config.n_vars) + 1))]
     s, t, u = random.sample(names, 3)
     cases = (
-        ([(f"h0", f"{s} ⊆ {t}")], f"{s} ∩ {u} ⊆ {t} ∩ {u}", "intro x hx; exact ⟨h0 hx.1, hx.2⟩"),
-        ([(f"h0", f"{s} ⊆ {t}")], f"{u} ∩ {s} ⊆ {u} ∩ {t}", "intro x hx; exact ⟨hx.1, h0 hx.2⟩"),
-        ([(f"h0", f"{s} ⊆ {t}")], f"{s} ∪ {u} ⊆ {t} ∪ {u}", "intro x hx; rcases hx with hx | hx; exact Or.inl (h0 hx); exact Or.inr hx"),
-        ([(f"h0", f"{s} ⊆ {t}")], f"{u} ∪ {s} ⊆ {u} ∪ {t}", "intro x hx; rcases hx with hx | hx; exact Or.inl hx; exact Or.inr (h0 hx)"),
+        ([(f"h0", f"{s} ⊆ {t}")], f"{s} ∩ {u} ⊆ {t} ∩ {u}", "exact Set.inter_subset_inter h0 subset_rfl"),
+        ([(f"h0", f"{s} ⊆ {t}")], f"{u} ∩ {s} ⊆ {u} ∩ {t}", "exact Set.inter_subset_inter subset_rfl h0"),
+        ([(f"h0", f"{s} ⊆ {t}")], f"{s} ∪ {u} ⊆ {t} ∪ {u}", "exact Set.union_subset_union h0 subset_rfl"),
+        ([(f"h0", f"{s} ⊆ {t}")], f"{u} ∪ {s} ⊆ {u} ∪ {t}", "exact Set.union_subset_union subset_rfl h0"),
     )
     hyps, goal, proof = random.choice(cases)
     return edict(
@@ -704,43 +714,168 @@ def gen_core_list(config):
 # Strategy 2: Mathlib lemma schemas + gramforge slot instantiation
 # ============================================================================
 
-# (lemma, hyp_templates, goal_template, type, slot_names, proof_template)
 _LEMMA_SCHEMAS = (
-    # order
-    ("le_trans",         ("{a} ≤ {b}", "{b} ≤ {c}"), "{a} ≤ {c}",                  "Int", ("a","b","c"), "exact le_trans h0 h1"),
-    ("lt_trans",         ("{a} < {b}", "{b} < {c}"), "{a} < {c}",                  "Int", ("a","b","c"), "exact lt_trans h0 h1"),
-    ("lt_of_lt_of_le",   ("{a} < {b}", "{b} ≤ {c}"), "{a} < {c}",                  "Int", ("a","b","c"), "exact lt_of_lt_of_le h0 h1"),
-    ("lt_of_le_of_lt",   ("{a} ≤ {b}", "{b} < {c}"), "{a} < {c}",                  "Int", ("a","b","c"), "exact lt_of_le_of_lt h0 h1"),
-    # additive monotonicity
-    ("add_le_add",       ("{a} ≤ {b}", "{c} ≤ {d}"), "{a} + {c} ≤ {b} + {d}",       "Int", ("a","b","c","d"), "exact add_le_add h0 h1"),
-    ("add_lt_add",       ("{a} < {b}", "{c} < {d}"), "{a} + {c} < {b} + {d}",       "Int", ("a","b","c","d"), "exact add_lt_add h0 h1"),
-    ("add_le_add_left",  ("{a} ≤ {b}",),             "{c} + {a} ≤ {c} + {b}",       "Int", ("a","b","c"), "exact add_le_add_left h0 {c}"),
-    ("add_le_add_right", ("{a} ≤ {b}",),             "{a} + {c} ≤ {b} + {c}",       "Int", ("a","b","c"), "exact add_le_add_right h0 {c}"),
-    # divisibility
-    ("dvd_add",          ("{k} ∣ {a}", "{k} ∣ {b}"), "{k} ∣ ({a} + {b})",          "Int", ("k","a","b"), "exact dvd_add h0 h1"),
-    ("dvd_sub",          ("{k} ∣ {a}", "{k} ∣ {b}"), "{k} ∣ ({a} - {b})",          "Int", ("k","a","b"), "exact dvd_sub h0 h1"),
-    ("dvd_mul_of_dvd_left",  ("{a} ∣ {b}",),         "{a} ∣ ({b} * {c})",          "Int", ("a","b","c"), "exact dvd_mul_of_dvd_left h0 {c}"),
-    ("dvd_mul_of_dvd_right", ("{a} ∣ {b}",),         "{a} ∣ ({c} * {b})",          "Int", ("a","b","c"), "exact dvd_mul_of_dvd_right h0 {c}"),
-    ("dvd_trans",        ("{a} ∣ {b}", "{b} ∣ {c}"), "{a} ∣ {c}",                  "Int", ("a","b","c"), "exact dvd_trans h0 h1"),
-    # absolute value / squares
-    ("abs_nonneg",       (),                          "0 ≤ |{a}|",                  "Int", ("a",), "exact abs_nonneg {a}"),
-    ("abs_add_le",       (),                          "|{a} + {b}| ≤ |{a}| + |{b}|", "Int", ("a","b"), "exact abs_add_le {a} {b}"),
-    ("sq_nonneg",        (),                          "0 ≤ {a} ^ 2",                "Int", ("a",), "exact sq_nonneg {a}"),
-    ("mul_self_nonneg",  (),                          "0 ≤ {a} * {a}",              "Int", ("a",), "exact mul_self_nonneg {a}"),
+    LeanSchema(
+        kind="le_trans",
+        decl="(α : Type*) [Preorder α] (a b c : α)",
+        hyps=("a ≤ b", "b ≤ c"),
+        goal="a ≤ c",
+        proof="exact le_trans h0 h1",
+    ),
+    LeanSchema(
+        kind="lt_trans",
+        decl="(α : Type*) [Preorder α] (a b c : α)",
+        hyps=("a < b", "b < c"),
+        goal="a < c",
+        proof="exact lt_trans h0 h1",
+    ),
+    LeanSchema(
+        kind="lt_of_lt_of_le",
+        decl="(α : Type*) [Preorder α] (a b c : α)",
+        hyps=("a < b", "b ≤ c"),
+        goal="a < c",
+        proof="exact lt_of_lt_of_le h0 h1",
+    ),
+    LeanSchema(
+        kind="lt_of_le_of_lt",
+        decl="(α : Type*) [Preorder α] (a b c : α)",
+        hyps=("a ≤ b", "b < c"),
+        goal="a < c",
+        proof="exact lt_of_le_of_lt h0 h1",
+    ),
+    LeanSchema(
+        kind="add_le_add",
+        decl="",
+        hyps=("{a} ≤ {b}", "{c} ≤ {d}"),
+        goal="{a} + {c} ≤ {b} + {d}",
+        proof="exact add_le_add h0 h1",
+        slots=("a", "b", "c", "d"),
+    ),
+    LeanSchema(
+        kind="add_lt_add",
+        decl="",
+        hyps=("{a} < {b}", "{c} < {d}"),
+        goal="{a} + {c} < {b} + {d}",
+        proof="exact add_lt_add h0 h1",
+        slots=("a", "b", "c", "d"),
+    ),
+    LeanSchema(
+        kind="add_le_add_left",
+        decl="",
+        hyps=("{a} ≤ {b}",),
+        goal="{c} + {a} ≤ {c} + {b}",
+        proof="exact add_le_add_right h0 {c}",
+        slots=("a", "b", "c"),
+    ),
+    LeanSchema(
+        kind="add_le_add_right",
+        decl="",
+        hyps=("{a} ≤ {b}",),
+        goal="{a} + {c} ≤ {b} + {c}",
+        proof="exact add_le_add_left h0 {c}",
+        slots=("a", "b", "c"),
+    ),
+    LeanSchema(
+        kind="dvd_add",
+        decl="",
+        hyps=("{k} ∣ {a}", "{k} ∣ {b}"),
+        goal="{k} ∣ ({a} + {b})",
+        proof="exact dvd_add h0 h1",
+        slots=("k", "a", "b"),
+    ),
+    LeanSchema(
+        kind="dvd_sub",
+        decl="",
+        hyps=("{k} ∣ {a}", "{k} ∣ {b}"),
+        goal="{k} ∣ ({a} - {b})",
+        proof="exact dvd_sub h0 h1",
+        slots=("k", "a", "b"),
+    ),
+    LeanSchema(
+        kind="dvd_mul_of_dvd_left",
+        decl="",
+        hyps=("{a} ∣ {b}",),
+        goal="{a} ∣ ({b} * {c})",
+        proof="exact dvd_mul_of_dvd_left h0 {c}",
+        slots=("a", "b", "c"),
+    ),
+    LeanSchema(
+        kind="dvd_mul_of_dvd_right",
+        decl="",
+        hyps=("{a} ∣ {b}",),
+        goal="{a} ∣ ({c} * {b})",
+        proof="exact dvd_mul_of_dvd_right h0 {c}",
+        slots=("a", "b", "c"),
+    ),
+    LeanSchema(
+        kind="dvd_trans",
+        decl="",
+        hyps=("{a} ∣ {b}", "{b} ∣ {c}"),
+        goal="{a} ∣ {c}",
+        proof="exact dvd_trans h0 h1",
+        slots=("a", "b", "c"),
+    ),
+    LeanSchema(
+        kind="abs_nonneg",
+        decl="",
+        hyps=(),
+        goal="0 ≤ |{a}|",
+        proof="exact abs_nonneg {a}",
+        slots=("a",),
+    ),
+    LeanSchema(
+        kind="abs_add_le",
+        decl="",
+        hyps=(),
+        goal="|{a} + {b}| ≤ |{a}| + |{b}|",
+        proof="exact abs_add_le {a} {b}",
+        slots=("a", "b"),
+    ),
+    LeanSchema(
+        kind="sq_nonneg",
+        decl="",
+        hyps=(),
+        goal="0 ≤ {a} ^ 2",
+        proof="exact sq_nonneg {a}",
+        slots=("a",),
+    ),
+    LeanSchema(
+        kind="mul_self_nonneg",
+        decl="",
+        hyps=(),
+        goal="0 ≤ {a} * {a}",
+        proof="exact mul_self_nonneg {a}",
+        slots=("a",),
+    ),
 )
 
 
 def gen_lemma(config):
-    name, hyp_tmpls, goal_tmpl, ty, slots, proof_tmpl = random.choice(_LEMMA_SCHEMAS)
-    g = _int_lin_grammar(_vars(int(config.n_vars)), max_coef=3)
-    bindings = {s: _sample(g, max(1, int(config.expr_depth) - 1)) for s in slots}
-    proof_bindings = {k: f"({v})" for k, v in bindings.items()}
-    hyps = [(f"h{i}", t.format(**bindings)) for i, t in enumerate(hyp_tmpls)]
-    goal = goal_tmpl.format(**bindings)
-    used = _used_int_vars(*bindings.values())
-    decl = f"({' '.join(used)} : {ty})" if used else ""
-    proof = proof_tmpl.format(**proof_bindings)
-    return edict(decl=decl, hyps=hyps, goal=goal, primary=proof, kind=f"lemma:{name}")
+    schema = random.choice(_LEMMA_SCHEMAS)
+    bindings = {}
+    if schema.slots:
+        g = _int_lin_grammar(_vars(int(config.n_vars)), max_coef=3)
+        bindings = {
+            s: _sample(g, max(1, int(config.expr_depth) - 1))
+            for s in schema.slots
+        }
+    proof_bindings = {
+        k: f"({v} : {schema.slot_type})" if schema.slots else f"({v})"
+        for k, v in bindings.items()
+    }
+    expr_bindings = proof_bindings if schema.slots else bindings
+    hyps = [(f"h{i}", t.format(**expr_bindings)) for i, t in enumerate(schema.hyps)]
+    goal = schema.goal.format(**expr_bindings)
+    decl = schema.decl
+    if schema.slots:
+        used = _used_int_vars(*bindings.values())
+        decl = f"({' '.join(used)} : {schema.slot_type})" if used else ""
+    proof = schema.proof.format(**proof_bindings)
+    return edict(
+        decl=decl, hyps=hyps, goal=goal, primary=proof,
+        tactic_fallbacks=schema.tactic_fallbacks,
+        kind=f"lemma:{schema.kind}",
+    )
 
 
 STRATEGIES = (
@@ -760,25 +895,28 @@ CORE_STRATEGIES = (
 # Instance assembly
 # ============================================================================
 
-# Per-kind candidate table. These are only candidate proof bodies: Lean is the
-# oracle for all labels because general tactics often overlap in strength.
-_KIND_DISTRACTORS = {
-    "lin_ineq":   ("rfl", "decide", "simp"),
-    "order_chain":("rfl", "decide", "simp"),
-    "div":        ("rfl", "decide", "simp"),
-    "concrete":   ("rfl", "omega", "simp", "ring"),
-    "poly_eq":    ("rfl", "decide", "omega"),
-    "taut":       ("rfl", "decide", "omega"),
-    "list_length":("rfl", "decide", "omega"),
-    "finset_identity": ("rfl", "decide", "omega"),
-    "set_monotone":    ("rfl", "decide", "omega", "simp"),
-    "core_prop_chain": ("rfl", "decide", "simp", "intro h; assumption"),
-    "core_and":        ("rfl", "decide", "simp", "exact True.intro"),
-    "core_or":         ("rfl", "decide", "simp", "exact True.intro"),
-    "core_nat_decide": ("rfl", "simp", "exact True.intro"),
-    "core_list":       ("rfl", "decide", "exact True.intro"),
-}
-_LEMMA_DISTRACTORS = ("rfl", "decide", "omega", "simp")
+TACTIC_POOL = (
+    "aesop",
+    "simp",
+    "simp_all",
+    "omega",
+    "tauto",
+    "ring",
+    "ring_nf",
+    "norm_num",
+    "linarith",
+)
+
+WEAK_PROOF_POOL = (
+    "rfl",
+    "decide",
+    "constructor",
+    "intro h",
+    "cases h",
+    "assumption",
+    "exact True.intro",
+    "exact False.elim h",
+)
 
 
 def _render(inst, name="ex"):
@@ -791,29 +929,39 @@ def _render(inst, name="ex"):
 def _candidate_pool(inst, n_candidates, header):
     """Build candidate proofs and label them by compiling with Lean."""
     use_mathlib = not str(inst.kind).startswith("core_")
-    base = _KIND_DISTRACTORS.get(inst.kind)
-    if base is None and inst.kind.startswith("lemma:"):
-        base = _LEMMA_DISTRACTORS
-    if base is None:
-        base = ("rfl", "decide", "simp")
-    candidates = []
+    n_candidates = max(2, int(n_candidates))
+    pool = []
     hnames = [h for h, _ in inst.hyps]
-    extras = (
+    local_candidates = (
         *(f"exact {h}" for h in hnames),
-        "assumption", "simp_all", "aesop", "tauto", "linarith", "norm_num",
-        "ring_nf", "constructor", "intro h", "cases h", "exact False.elim h",
+        *getattr(inst, "tactic_fallbacks", ()),
+        *TACTIC_POOL,
+        *WEAK_PROOF_POOL,
     )
-    for cand in (inst.primary, *base, *extras):
-        if cand not in candidates:
-            candidates.append(cand)
-        if len(candidates) >= int(n_candidates):
-            break
+    for cand in (inst.primary, *local_candidates):
+        if cand not in pool:
+            pool.append(cand)
     runner = get_runner(use_mathlib=use_mathlib)
-    labels = [
-        bool(_safe(cand) and runner.check(header + "  " + cand + "\n")[0])
-        for cand in candidates
+    labeled = [
+        (cand, bool(_safe(cand) and runner.check(header + "  " + cand + "\n")[0]))
+        for cand in pool
     ]
-    pairs = list(zip(candidates, labels))
+    primary_label = next(ok for cand, ok in labeled if cand == inst.primary)
+    same = [(cand, ok) for cand, ok in labeled if cand != inst.primary and ok == primary_label]
+    opposite = [(cand, ok) for cand, ok in labeled if cand != inst.primary and ok != primary_label]
+    random.shuffle(same)
+    random.shuffle(opposite)
+    pairs = [(inst.primary, primary_label)]
+    if opposite:
+        pairs.append(opposite.pop())
+    alternates = [opposite, same] if random.random() < 0.5 else [same, opposite]
+    while len(pairs) < n_candidates and any(bucket for bucket in alternates):
+        for bucket in alternates:
+            if bucket and len(pairs) < n_candidates:
+                pairs.append(bucket.pop())
+    if len(pairs) < n_candidates:
+        pairs.extend((cand, ok) for cand, ok in labeled if (cand, ok) not in pairs)
+        pairs = pairs[:n_candidates]
     random.shuffle(pairs)
     return [c for c, _ in pairs], [l for _, l in pairs]
 
@@ -873,23 +1021,19 @@ def _script_code(header, lines):
 
 
 def _line_options(lines, answer, max_options=6):
-    options = []
-    for line in lines:
-        if line not in options:
-            options.append(line)
-    for line in (
+    fillers = (
         "rfl", "simp", "intro h", "intro x hx",
         "exact h0", "exact h1", "assumption",
-    ):
-        if line not in options:
-            options.append(line)
-        if len(options) >= max_options:
-            break
-    if answer not in options:
-        options.append(answer)
-    random.shuffle(options)
+    )
     max_options = max(2, int(max_options))
-    return options[:max_options] if answer in options[:max_options] else options[:max_options - 1] + [answer]
+    options = []
+    for line in (*lines, *fillers):
+        if line != answer and line not in options:
+            options.append(line)
+    random.shuffle(options)
+    options = options[:max_options - 1]
+    options.insert(random.randrange(len(options) + 1), answer)
+    return options
 
 
 def _proof_script_set_union(config):
@@ -897,20 +1041,10 @@ def _proof_script_set_union(config):
     s, t, u = random.sample(names, 3)
     if random.random() < 0.5:
         goal = f"{s} ∪ {u} ⊆ {t} ∪ {u}"
-        lines = [
-            "intro x hx",
-            "rcases hx with hx | hx",
-            "exact Or.inl (h0 hx)",
-            "exact Or.inr hx",
-        ]
+        lines = ["exact Set.union_subset_union h0 subset_rfl"]
     else:
         goal = f"{u} ∪ {s} ⊆ {u} ∪ {t}"
-        lines = [
-            "intro x hx",
-            "rcases hx with hx | hx",
-            "exact Or.inl hx",
-            "exact Or.inr (h0 hx)",
-        ]
+        lines = ["exact Set.union_subset_union subset_rfl h0"]
     return edict(
         kind="proof_script:set_union",
         header=_render(edict(decl=f"({' '.join(names)} : Set Int)",
@@ -924,15 +1058,15 @@ def _proof_script_set_inter(config):
     s, t, u = random.sample(names, 3)
     if random.random() < 0.5:
         goal = f"{s} ∩ {u} ⊆ {t} ∩ {u}"
-        last = "exact ⟨h0 hx.1, hx.2⟩"
+        line = "exact Set.inter_subset_inter h0 subset_rfl"
     else:
         goal = f"{u} ∩ {s} ⊆ {u} ∩ {t}"
-        last = "exact ⟨hx.1, h0 hx.2⟩"
+        line = "exact Set.inter_subset_inter subset_rfl h0"
     return edict(
         kind="proof_script:set_inter",
         header=_render(edict(decl=f"({' '.join(names)} : Set Int)",
                              hyps=[("h0", f"{s} ⊆ {t}")], goal=goal)),
-        lines=["intro x hx", last],
+        lines=[line],
     )
 
 
@@ -941,13 +1075,10 @@ def _proof_script_order(config):
     names = _vars(n_hyps + 1)
     hyps = [(f"h{i}", f"{names[i]} ≤ {names[i + 1]}") for i in range(n_hyps)]
     goal = f"{names[0]} ≤ {names[-1]}"
-    lines = []
-    current = "h0"
-    for i in range(1, n_hyps - 1):
-        have = f"h{n_hyps + i}"
-        lines.append(f"have {have} : {names[0]} ≤ {names[i + 1]} := le_trans {current} h{i}")
-        current = have
-    lines.append(f"exact le_trans {current} h{n_hyps - 1}")
+    proof = f"h{n_hyps - 1}"
+    for i in reversed(range(n_hyps - 1)):
+        proof = f"(le_trans h{i} {proof})"
+    lines = [f"exact {proof}"]
     return edict(
         kind="proof_script:order",
         header=_render(edict(decl=f"({' '.join(names)} : Int)", hyps=hyps, goal=goal)),
@@ -961,24 +1092,17 @@ def _proof_script_prop(config):
         n_hyps = max(2, min(6, int(config.n_hyps)))
         props = [f"p{i}" for i in range(n_hyps + 1)]
         hyps = [(f"h{i}", f"{props[i]} → {props[i + 1]}") for i in range(n_hyps)]
-        lines = ["intro hp"]
-        current = "hp"
-        for i in range(n_hyps - 1):
-            have = f"hp{i + 1}"
-            lines.append(f"have {have} : {props[i + 1]} := h{i} {current}")
-            current = have
-        lines.append(f"exact h{n_hyps - 1} {current}")
         return edict(
             kind="proof_script:prop_chain",
             header=_render(edict(decl=f"({' '.join(props)} : Prop)",
                                  hyps=hyps, goal=f"{props[0]} → {props[-1]}")),
-            lines=lines,
+            lines=["tauto"],
         )
     return edict(
         kind="proof_script:prop_and",
         header=_render(edict(decl="(p q r : Prop)", hyps=[("h0", "p → q")],
                              goal="p ∧ r → q ∧ r")),
-        lines=["intro h", "exact ⟨h0 h.1, h.2⟩"],
+        lines=["tauto"],
     )
 
 
@@ -986,15 +1110,15 @@ def _proof_script_finset(config):
     names = list("stuvwxyz")[: max(3, min(6, int(config.n_vars) + 1))]
     a, b, c = random.sample(names, 3)
     templates = (
-        (f"{a} ∩ ({b} ∪ {c}) = ({a} ∩ {b}) ∪ ({a} ∩ {c})", "simp [and_or_left]"),
-        (f"({a} ∪ {b}) ∩ {c} = ({a} ∩ {c}) ∪ ({b} ∩ {c})", "simp [or_and_right]"),
-        (f"{a} ∪ ({b} ∩ {c}) = ({a} ∪ {b}) ∩ ({a} ∪ {c})", "simp [or_and_left]"),
+        (f"{a} ∩ ({b} ∪ {c}) = ({a} ∩ {b}) ∪ ({a} ∩ {c})", f"simpa using inf_sup_left {a} {b} {c}"),
+        (f"({a} ∪ {b}) ∩ {c} = ({a} ∩ {c}) ∪ ({b} ∩ {c})", f"simpa using inf_sup_right {a} {b} {c}"),
+        (f"{a} ∪ ({b} ∩ {c}) = ({a} ∪ {b}) ∩ ({a} ∪ {c})", f"simpa using sup_inf_left {a} {b} {c}"),
     )
-    goal, simp_line = random.choice(templates)
+    goal, proof = random.choice(templates)
     return edict(
         kind="proof_script:finset",
         header=_render(edict(decl=f"({' '.join(names)} : Finset Nat)", hyps=[], goal=goal)),
-        lines=["ext x", simp_line],
+        lines=[proof],
     )
 
 
@@ -1052,28 +1176,6 @@ def make_proof_script(config):
     raise RuntimeError("failed to produce a Lean proof script")
 
 
-def _normalize_line(text):
-    return str(text).strip().strip("`").strip()
-
-
-def _normalize_body(text):
-    s = str(text).strip()
-    m = re.fullmatch(r"```(?:lean)?\s*\n?(.*?)\n?```", s, re.S | re.I)
-    if m:
-        s = m.group(1)
-    lines = [line.strip() for line in s.strip().strip("`").splitlines() if line.strip()]
-    if lines:
-        lines[0] = re.sub(r"^(?:[-*]\s*|\d+[.)]\s*)", "", lines[0]).strip()
-    return "\n".join(lines)
-
-
-def _score_proof_template(answer, entry):
-    if not answer or not _safe(answer):
-        return 0.0
-    code = _mget(entry.metadata, "template").replace("__ANSWER__", str(answer).strip())
-    return float(get_runner(use_mathlib=_mget(entry.metadata, "use_mathlib")).check(code)[0])
-
-
 # ============================================================================
 # Lean-verified forward derivation graphs
 # ============================================================================
@@ -1110,19 +1212,6 @@ def _leaf_nodes(G):
 def _leaf_ancestor_nodes(G, target_node):
     ancestors = nx.ancestors(G, target_node)
     return [n for n in _leaf_nodes(G) if n in ancestors]
-
-
-def _closed_graph_rows(G, axiom_indices=None):
-    axiom_indices = axiom_indices or {}
-    rows = []
-    for n in nx.topological_sort(G):
-        data = _node_data(G, n)
-        parents = ", ".join(data.parents) if data.parents else "none"
-        if G.in_degree(n) == 0:
-            rows.append(f"{n}: {data.clause_formula} [axiom {axiom_indices[n]}; parents: {parents}]")
-        else:
-            rows.append(f"{n}: {data.clause_formula} [rule: {data.inference}; parents: {parents}]")
-    return rows
 
 
 def _add_lean_node(G, node):
@@ -1343,178 +1432,9 @@ def gen_forward_order_graph(config):
 # Tasks
 # ============================================================================
 
-class LeanForwardProof(DevTask):
-    """Recover a Lean have-chain proof from a verified forward derivation graph."""
-
-    def __init__(self, config=None, **kwargs):
-        if config is None:
-            config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
-
-    def generate(self):
-        for _ in range(20):
-            inst = gen_forward_order_graph(self.config)
-            if inst is None:
-                continue
-            template = _render_forward_theorem(inst.decl, inst.leaf_hyps, inst.goal, "__ANSWER__")
-            graph_rows = []
-            for n in nx.topological_sort(inst.G.subgraph(nx.ancestors(inst.G, inst.target_node) | {inst.target_node})):
-                data = _node_data(inst.G, n)
-                parents = ", ".join(data.parents) if data.parents else "axiom"
-                graph_rows.append(f"{n}: {data.clause_formula} [{data.inference}; parents: {parents}]")
-            return Problem(
-                edict(
-                    kind="lean_forward_order_graph",
-                    template=template,
-                    theorem=inst.theorem,
-                    goal=inst.goal,
-                    proof=inst.proof,
-                    graph=graph_rows,
-                    proof_depth=inst.stats.proof_depth,
-                    useful_premises=inst.stats.useful_premises,
-                    cheap_solvers=inst.cheap_solvers,
-                    stats=inst.stats,
-                    use_mathlib=getattr(self.config, "use_mathlib", True),
-                ),
-                inst.proof,
-            )
-        raise RuntimeError("failed to generate a Lean forward proof task")
-
-    def prompt(self, metadata):
-        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
-        return (
-            "Fill `__ANSWER__` with a Lean 4 proof body that reconstructs the derivation. "
-            f"{imports} The answer is only the replacement proof body, without code fences.\n\n"
-            f"THEOREM:\n{_mget(metadata, 'template')}"
-        )
-
-    def score_answer(self, answer, entry):
-        if not answer or not _safe(answer):
-            return 0.0
-        body = "\n".join(f"  {line.strip()}" for line in str(answer).splitlines() if line.strip())
-        code = _mget(entry.metadata, "template").replace("  __ANSWER__", body)
-        return float(get_runner(use_mathlib=_mget(entry.metadata, "use_mathlib")).check(code)[0])
-
-
-class LeanDerivationPremiseSelection(DevTask):
-    """Track axiom reachability in a displayed Lean derivation DAG."""
-
-    def __init__(self, config=None, **kwargs):
-        if config is None:
-            config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
-
-    def generate(self):
-        for _ in range(20):
-            inst = gen_forward_order_graph(self.config)
-            if inst is None:
-                continue
-            leaf_nodes = _leaf_nodes(inst.G)
-            useful_leaf_nodes = set(_leaf_ancestor_nodes(inst.G, inst.target_node))
-            answer = [i + 1 for i, n in enumerate(leaf_nodes) if n in useful_leaf_nodes]
-            if (
-                len(answer) < 2
-                or len(answer) >= len(leaf_nodes)
-                or inst.stats.proof_depth < 3
-                or len(leaf_nodes) - len(answer) < 2
-            ):
-                continue
-            return Problem(
-                edict(
-                    kind="lean_derivation_premise_selection",
-                    axiom_nodes=[
-                        edict(index=i + 1, node=n, formula=_node_data(inst.G, n).clause_formula)
-                        for i, n in enumerate(leaf_nodes)
-                    ],
-                    graph_rows=_closed_graph_rows(
-                        inst.G, {n: i + 1 for i, n in enumerate(leaf_nodes)}
-                    ),
-                    target_node=inst.target_node,
-                    target_formula=inst.goal,
-                    stats=inst.stats,
-                    use_mathlib=getattr(self.config, "use_mathlib", True),
-                ),
-                str(answer),
-            )
-        raise RuntimeError("failed to generate a Lean forward premise-selection task")
-
-    def prompt(self, metadata):
-        graph_text = "\n".join(_mget(metadata, "graph_rows"))
-        return (
-            "Track reachability in this Lean derivation DAG. Return the indices of original "
-            "axiom nodes that reach the target.\n\n"
-            f"GRAPH:\n{graph_text}\n\n"
-            f"TARGET: {_mget(metadata, 'target_node')}: {_mget(metadata, 'target_formula')}\n\n"
-            "Answer as a sorted Python list, for example `[1, 3, 4]`."
-        )
-
-    def score_answer(self, answer, entry):
-        truth = set(ast.literal_eval(entry.answer))
-        pred = set(map(int, re.findall(r"\d+", str(answer))))
-        if not truth and not pred:
-            return 1.0
-        return len(truth & pred) / len(truth | pred) if (truth | pred) else 0.0
-
-
-class LeanMissingProofLine(DevTask):
-    """Recover one missing line from a short proof using a constrained inventory."""
-
-    def __init__(self, config=None, **kwargs):
-        if config is None:
-            config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
-
-    def generate(self):
-        use_mathlib = getattr(self.config, "use_mathlib", True)
-        runner = get_runner(use_mathlib=use_mathlib)
-        for _ in range(30):
-            script = make_proof_script(self.config)
-            idx = random.randrange(len(script.lines))
-            answer = script.lines[idx]
-            body = []
-            for i, line in enumerate(script.lines):
-                body.append("  __ANSWER__\n" if i == idx else f"  {line}\n")
-            template = script.header + "".join(body)
-            available = _line_options(script.lines, answer, self.config.n_candidates)
-            compiling = [
-                line for line in available
-                if _safe(line) and runner.check(template.replace("__ANSWER__", line))[0]
-            ]
-            if compiling != [answer]:
-                continue
-            return Problem(
-                edict(kind=script.kind, template=template,
-                      available_lines=available,
-                      compiling_lines=compiling,
-                      missing_line=idx + 1,
-                      use_mathlib=use_mathlib),
-                answer,
-            )
-        raise RuntimeError("failed to generate a unique Lean missing-line task")
-
-    def prompt(self, metadata):
-        opts = "\n".join(f"- {line}" for line in _mget(metadata, "available_lines"))
-        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
-        return (
-            f"Fill `__ANSWER__` with the missing Lean proof line. {imports}\n"
-            "Copy exactly one line from AVAILABLE LINES; do not invent a different "
-            "proof and do not include bullets or backticks.\n\n"
-            f"THEOREM:\n{_mget(metadata, 'template')}\n"
-            f"AVAILABLE LINES:\n{opts}"
-        )
-
-    def score_answer(self, answer, entry):
-        return float(_normalize_line(answer) == entry.answer)
-
-
-class LeanMissingProofLineSelection(Task):
+class LeanMissingLine(Task):
     """Choose the unique available proof line that fills a Lean proof hole."""
+    summary = "Select the correct proof line to fill a hole in a compilation-checked Lean proof."
 
     def __init__(self, config=None, **kwargs):
         if config is None:
@@ -1570,12 +1490,13 @@ class LeanMissingProofLineSelection(Task):
         )
 
     def score_answer(self, answer, entry):
-        nums = re.findall(r"\d+", str(answer))
-        return float(bool(nums) and int(nums[-1]) == int(entry.answer))
+        s = str(answer).strip().strip("`")
+        return float(bool(re.fullmatch(r"\d+", s)) and int(s) == int(entry.answer))
 
 
 class LeanCandidateCompilation(Task):
     """True/False on whether a single candidate proof body closes the theorem."""
+    summary = "Determine if a candidate proof body successfully closes a theorem in Lean."
 
     def __init__(self, config=None, **kwargs):
         if config is None:
@@ -1583,15 +1504,19 @@ class LeanCandidateCompilation(Task):
         for k, v in kwargs.items():
             setattr(config, k, v)
         super().__init__(config=config, timeout=120)
-        self._want_positive = True
 
     def generate(self):
-        inst = make_instance(self.config)
-        pool = [i for i, ok in enumerate(inst.labels) if ok == self._want_positive]
+        for _ in range(50):
+            inst = make_instance(self.config)
+            if _has_discriminative_candidate(inst.candidates, inst.labels):
+                break
+        else:
+            inst = make_instance(self.config)
+        want_positive = random.random() < 0.5
+        pool = [i for i, ok in enumerate(inst.labels) if ok == want_positive]
         if not pool:
             pool = list(range(len(inst.candidates)))
         idx = random.choice(pool)
-        self._want_positive = not self._want_positive
         return Problem(
             edict(kind=inst.kind,
                   theorem=inst.header + "  ?\n",
@@ -1611,93 +1536,3 @@ class LeanCandidateCompilation(Task):
 
     def score_answer(self, answer, entry):
         return float(str(answer).strip().strip("`").lower() == entry.answer.lower())
-
-
-class LeanProofRepair(DevTask):
-    """Choose a replacement proof body that compiles."""
-
-    def __init__(self, config=None, **kwargs):
-        if config is None:
-            config = LeanConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
-
-    def generate(self):
-        for _ in range(20):
-            inst = make_instance(self.config)
-            bad = [c for c, ok in zip(inst.candidates, inst.labels) if not ok]
-            if not bad:
-                continue
-            shown_bad = random.choice(bad)
-            distractors = [c for c in bad if c != shown_bad] or bad
-            k = max(1, int(self.config.n_candidates) - 1)
-            replacements = [inst.elegant] + random.sample(distractors, min(k, len(distractors)))
-            random.shuffle(replacements)
-            return Problem(
-                edict(kind=inst.kind,
-                      broken=inst.header + "  " + shown_bad + "\n",
-                      replacements=replacements,
-                      use_mathlib=inst.use_mathlib),
-                inst.elegant,
-            )
-        raise RuntimeError("failed to generate a Lean proof-repair task")
-
-    def prompt(self, metadata):
-        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
-        options = "\n".join(f"{i}. {body}" for i, body in enumerate(_mget(metadata, "replacements"), 1))
-        return (
-            f"Fix the broken Lean 4 proof below. {imports} "
-            "Choose one candidate replacement. The answer is exactly one candidate body.\n\n"
-            f"BROKEN PROOF:\n{_mget(metadata, 'broken')}\n"
-            f"CANDIDATE REPLACEMENTS:\n{options}"
-        )
-
-    def score_answer(self, answer, entry):
-        got = _normalize_body(answer)
-        if got not in {_normalize_body(x) for x in _mget(entry.metadata, "replacements")}:
-            return 0.0
-        return float(got == _normalize_body(entry.answer))
-
-
-class LeanCompileSelectionIndices(DevTask):
-    """Select numbered candidate proof bodies that compile."""
-
-    def __init__(self, config=None, **kwargs):
-        if config is None:
-            config = LeanConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
-
-    def generate(self):
-        for _ in range(50):
-            inst = make_instance(self.config)
-            if not _has_discriminative_candidate(inst.candidates, inst.labels):
-                continue
-            answer = [i + 1 for i, ok in enumerate(inst.labels) if ok]
-            return Problem(
-                edict(kind=inst.kind,
-                      theorem=inst.header + "  ?\n",
-                      candidates=inst.candidates,
-                      labels=inst.labels,
-                      use_mathlib=inst.use_mathlib),
-                str(answer),
-            )
-        raise RuntimeError("failed to generate discriminative compile-selection task")
-
-    def prompt(self, metadata):
-        opts = "\n".join(f"{i}. {c}" for i, c in enumerate(_mget(metadata, "candidates"), 1))
-        imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
-        return (
-            "Which numbered Lean 4 candidate proof bodies close the theorem? "
-            f"{imports} Do not copy proof bodies.\n\n"
-            f"THEOREM WITH HOLE:\n{_mget(metadata, 'theorem')}\n"
-            f"CANDIDATES:\n{opts}\n\n"
-            "Answer with a sorted Python list of 1-based candidate indices, for example `[2, 5]`."
-        )
-
-    def score_answer(self, answer, entry):
-        truth = list(ast.literal_eval(entry.answer))
-        pred = [int(x) for x in re.findall(r"\d+", str(answer))]
-        return float(pred == truth)

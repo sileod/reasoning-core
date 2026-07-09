@@ -115,7 +115,8 @@ try:
     def rg_scorer(a, e):
         from .tasks import _reasoning_gym
         return _reasoning_gym.Reasoning_Gym().score_answer(a, e)
-    scorers['Reasoning_Gym'] = lambda a, e: rg_scorer(a, e)
+    scorers['reasoning_gym'] = lambda a, e: rg_scorer(a, e)
+    scorers['Reasoning_Gym'] = scorers['reasoning_gym']
 except ImportError:
     pass
 
@@ -141,7 +142,8 @@ def get_task(k, *args, **kwargs):
     return cls(*args, **kwargs)
 
 DEPRECATED = ['symbolic_arithmetics', 'graph_node_centrality']
-ignored = DEPRECATED + ['reasonining_gym']
+# count_elements absorbed into set_expression's multiset Count(x, S) mode (toyish standalone; zero-shot 1.0)
+ignored = DEPRECATED + ['reasonining_gym', 'count_elements']
 
 def list_tasks():
     return [k for k in DATASETS.keys() if k not in ignored]

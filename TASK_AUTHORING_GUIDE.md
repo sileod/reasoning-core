@@ -17,13 +17,15 @@ Implement tasks that are:
 
 ## Core Contract (from `reasoning_core/template.py`)
 Every task should provide:
-- `Config` subclass with `update(self, c)`.
+- `Config` subclass with `apply_difficulty(self, level)`.
 - `Task` subclass implementing:
-  - `generate(self) -> Problem`
-  - `prompt(self, metadata) -> str`
+  - `generate_entry(self) -> Entry`
+  - `render_prompt(self, metadata) -> str`
   - `score_answer(self, answer, entry) -> float | Reward` (or rely on default exact match)
 
-`Problem` must include:
+Legacy `generate()` / `prompt()` and `Problem` remain supported aliases, but new or cleaned-up tasks should use `generate_entry()` / `render_prompt()` and `Entry`.
+
+`Entry` must include:
 - `metadata` (dict/easydict),
 - `answer` (ground-truth string),
 
@@ -34,19 +36,24 @@ Every task should provide:
 
 ## Config and Difficulty Scaling
 Base `Config` protected fields:
-- `c`: difficulty step size,
 - `level`: current level,
 - `seed`: RNG seed (do not use it. do not seed anything explictly unless it is requested.)
 - `size`: optional dataset size.
 
 Important behavior:
 - Int-typed fields (except `level/size/seed`) are tracked internally as floats and stochastically rounded on read.
+- `set_level(level)` resets to the base config and applies difficulty from that base state.
+- `apply_difficulty(level)` is the preferred explicit difficulty knob.
+- Deprecated/legacy configs may still rely on `update(c)` through the base compatibility fallback; do not add `update(c)` to active task configs.
 
-Design rules for `update(c)`:
+Design rules for `apply_difficulty(level)`:
 - monotonic difficulty increase,
-- no mutation of `c`,
+- no mutation of `level`,
 - keep generation solvable and diverse
 - update should change knobs (problem sizes or reasoning depth, etc), not hardcode different subtasks (do not use "if level ... then ...")
+- use direct formulas instead of recursively calling legacy update logic.
+
+Use `Config_difficulty_knob_migration.md` and `assert_difficulty_update_equivalence(...)` when migrating existing configs.
 
 Rough reference:
 Level 0 should be as simple as possible while ensuring diversity (for example in a task where we generate graphs for shortest path prediction, 3 nodes are not enough because the combinatorics run out quickly)
@@ -73,7 +80,7 @@ Level 5 should be tough even for large LLMs.
 ## Minimal Task Skeleton
 ```python
 from dataclasses import dataclass
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Entry, Config, edict, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 
 @dataclass
@@ -81,28 +88,25 @@ class MyTaskConfig(Config):
     n_vars: int = 2
     depth: int = 3
 
-    def update(self, c=1):
-        # Used to scale difficulty
-        # Values will be postprocessed, no need to cast as int explicitly
-        self.n_vars += c
-        self.depth += c
+    def apply_difficulty(self, level):
+        # Use shared stochastic rounding for int-typed difficulty fields.
+        self.n_vars = sround(self.n_vars + level)
+        self.depth = sround(self.depth + level)
 
 class MyTask(Task):
     # Do not put "Task" in the task name
-    def __init__(self, config=MyTaskConfig()):
-        # Constructor dunder method
-        super().__init__(config=config)
+    config_cls = MyTaskConfig
 
-    def generate(self):
+    def generate_entry(self):
         # Build instance using external libs when possible.
         metadata = edict({"equation": "...", "cot": "...optional..."})
         answer = "..."
-        return Problem(metadata=metadata, answer=answer)
+        return Entry(metadata=metadata, answer=answer)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         # Specify the answer format clearly, refer to it as "the answer" or "answer".
         # Do not use answer as a verb, do not use "return".
-        # The "wording logic" should be in the .prompt() method and not buried elsewhere in the code.
+        # The wording logic should live here and not be buried in generation.
         return f"Solve for x: {metadata['equation']}\n Answer is a scalar."
 
     def score_answer(self, answer, entry):
@@ -120,7 +124,7 @@ class MyTask(Task):
 - Wrong/random answers do not all score `1`.
 - `task.validate()` passes.
 - `task.validate(cache=True)` may be used for local cached validation examples.
-- `config.set_level(1)` changes difficulty, not `c`.
+- `config.set_level(1)` changes difficulty.
 - Prompt is unambiguous about output format.
 - Prompt is as concise as possible while allowing meaningful zero-shot solvability.
 - Metadata is ideally sufficient for offline debugging (instance params, optional `cot` entry).
@@ -135,4 +139,5 @@ class MyTask(Task):
 - Gallery generation uses cached validation examples by default and builds missing cache entries.
 - Use `--refresh-cache` to regenerate cached examples for the current task behavior hash/config.
 - Use `--no-cache` to use balanced batch generation instead.
+- Use `--taskrow-cache task_diagnostics/cache/task_rows/<cache_id>` to reuse diagnostics TaskRow examples before generating missing entries.
 - The cache is keyed per task and level, and keeps only the latest record for each key.

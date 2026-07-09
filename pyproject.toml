@@ -14,6 +14,7 @@ readme = "README.md"
 description = "Procedural data generators for symbolic pre-training, also including RL environments"
 
 dependencies = [
+    "typing-extensions",
     "gramforge",
     "faker",
     "inflection",
@@ -92,4 +93,27 @@ include = [
     "/pyproject.toml",
     "/reasoning_core",
     "/tests",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [
+    ".git",
+    ".hypothesis",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".test",
+    ".venv",
+    "__pycache__",
+    "checkpoints",
+    "data-gym-cache",
+    "per_task_results",
+    "per_task_results_rgym",
+    "reasoning_core/openenv",
+    "reasoning_core/.mountpoints",
+    "reasoning_core/generated_data",
+    "reasoning_core/index",
+    "reasoning_core/score_cache",
 ]

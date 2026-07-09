@@ -6,7 +6,7 @@ import exrex
 import regex
 from dataclasses import dataclass
 from gramforge import init_grammar, generate
-from reasoning_core.template import Task, DevTask, Problem, register_dataset, Reward, Config
+from reasoning_core.template import Task, DevTask, Problem, register_dataset, Reward, Config, stochastic_rounding as sround
 from easydict import EasyDict as edict
 from faker import Faker
 import sys, os
@@ -134,10 +134,10 @@ class RegexConfig(Config):
     max_synth_nodes: int = 200_000
     require_unique: bool = True
     gramforge_algorithm = "sequential"
-    def update(self, c):
-        self.n_ex += c
-        self.max_depth += c
-        self.min_depth += c
+    def apply_difficulty(self, level):
+        self.n_ex += level
+        self.max_depth += level
+        self.min_depth += level
 
 @shutup
 def sample_instance(r_str, max_tries=100):
@@ -157,6 +157,7 @@ def sample_instance(r_str, max_tries=100):
     raise ValueError(f"Could not generate a verified string for regex: {r_str}")
 
 class RegexFollowing(Task):
+    summary = "Produce a string that matches a specified regular expression pattern."
     def __init__(self, config=RegexConfig()):
         super().__init__(config=config)
 
@@ -356,7 +357,8 @@ def synthesize_shortest_regex(
     return None
 
 
-class RegexInduction(Task):
+class RegexInduction(DevTask):
+    summary = "Induce a regular expression that separates positive and negative string sets."
     def __init__(self, config=RegexConfig()):
         super().__init__(config=config)
 
@@ -485,13 +487,12 @@ class RegexRetrievalConfig(Config):
     structured_rate: float = 0.2
     gramforge_algorithm = "sequential"
 
-    def update(self, c):
-        self.max_depth += c
-        self.min_depth += c
-        self.n_sentences += c
-        self.n_chunks += c
-        self.max_matches += c
-
+    def apply_difficulty(self, level):
+        self.max_depth += level
+        self.min_depth += level
+        self.n_sentences += level
+        self.n_chunks += level
+        self.max_matches += level
 
 def _find_matches(pattern, text, timeout=0.2):
     try:
@@ -622,12 +623,10 @@ class RegexReasoningConfig(Config):
     n_alpha: int = 3
     gramforge_algorithm: str = "sequential"
 
-    def update(self, c):
-        self.max_depth += c
-        self.min_depth += c
-        self.n_alpha += 0.5 * c
-
-
+    def apply_difficulty(self, level):
+        self.max_depth += level
+        self.min_depth += level
+        self.n_alpha = sround(self.n_alpha + 0.5 * level)
 
 def _sample_regex(G, depth, min_depth, mode="sequential", max_tries=60):
     for _ in range(max_tries):
@@ -644,6 +643,7 @@ def _sample_regex(G, depth, min_depth, mode="sequential", max_tries=60):
     return None, None
 
 class RegexReasoning(Task):
+    summary = "Reason about regular expression equivalence, containment, and witnesses."
     def __init__(self, config=RegexReasoningConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25

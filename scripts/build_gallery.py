@@ -1,28 +1,37 @@
 #!/usr/bin/env python
 import argparse
+import ast
+import functools
+import hashlib
 import inspect
 import re
 from collections import OrderedDict
+from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 from tqdm.auto import tqdm
 
-from reasoning_core import get_task, list_tasks
+from reasoning_core import _task_to_module_map, get_task, list_tasks
+from reasoning_core.template import _strip_docstrings
 
 
+ROOT = Path(__file__).resolve().parents[1]
+TASKS_DIR = ROOT / "reasoning_core" / "tasks"
 CATEGORY_ORDER = [
     "arithmetics", "equation_system", "math_lean", "math_tptp",
     "math_geometry", "math_metamath", "binding",
     "probabilistic_reasoning", "causal_reasoning", "logic_semantics",
     "logic_depth", "planning", "set_operations", "sequential_induction",
-    "qstr", "navigation", "tracking", "coreference",
+    "qstr", "grid_navigation", "tracking", "belief_tracking", "coreference",
     "constraint_satisfaction", "graph_operations", "regex",
     "formal_analogies", "grammar", "knowledge", "table_qa",
-    "string_transduction", "code_execution", "game_playing",
+    "string_transduction", "game_playing", "qualitative_causal_reasoning",
+    "code_analysis", "code_execution", "code_program_synthesis",
 ]
 
 SINGLE_EXAMPLE_TASKS = {
-    "tptp_entailement",
+    "tptp_entailment",
     "theorem_premise_selection",
     "proof_reconstruction",
     "parsing",
@@ -47,22 +56,49 @@ def slug(name):
     return re.sub(r"[^\w\s-]", "", name.lower()).replace(" ", "-")
 
 
-def category_rank(task):
+def task_module(name):
+    return _task_to_module_map[name][0]
+
+
+def task_source(name):
+    return TASKS_DIR / f"{task_module(name)}.py"
+
+
+@functools.lru_cache(maxsize=None)
+def _source_behavior_hash(path_str):
+    tree = ast.parse(Path(path_str).read_text(encoding="utf-8"), filename=path_str)
+    canonical = ast.dump(_strip_docstrings(tree), include_attributes=False)
+    return hashlib.sha1(canonical.encode()).hexdigest()[:16]
+
+
+def source_behavior_hash(path):
+    # Many tasks share one module file; memoize per file so the changed-task
+    # scan parses each module once, not once per task.
+    return _source_behavior_hash(str(Path(path)))
+
+
+def source_modified_date(path):
+    return datetime.fromtimestamp(Path(path).stat().st_mtime).strftime("%Y.%m.%d")
+
+
+def category_rank_name(name):
     try:
-        return CATEGORY_ORDER.index(task.category_name)
+        return CATEGORY_ORDER.index(task_module(name))
     except ValueError:
         return len(CATEGORY_ORDER)
 
 
-def sort_tasks(names):
+def sort_task_names(names):
     registry_rank = {name: i for i, name in enumerate(list_tasks())}
     return sorted(
-        (get_task(name) for name in names),
-        key=lambda task: (category_rank(task), registry_rank.get(task.task_name, 10**9)),
+        names,
+        key=lambda name: (category_rank_name(name), registry_rank.get(name, 10**9)),
     )
 
 
 def pick_example(task, batch_size, cache=False, refresh_cache=False):
+    if batch_size <= 1:
+        return task.generate_example()
     if cache:
         batch = task.validate(n_samples=batch_size, cache=True,
                               refresh=refresh_cache)
@@ -71,9 +107,43 @@ def pick_example(task, batch_size, cache=False, refresh_cache=False):
     return sorted(batch, key=lambda x: len(x.prompt) - len(str(x.answer)))[0]
 
 
+def load_taskrow_examples(task_names, cache_path):
+    if not cache_path:
+        return OrderedDict()
+    from task_diagnostics.cache import load_task_rows
+
+    wanted = set(task_names)
+    candidates = {}
+    for row in load_task_rows(path=cache_path, tasks=wanted):
+        if row.task not in wanted:
+            continue
+        example = SimpleNamespace(prompt=row.prompt, answer=row.answer)
+        rank = (row.level, len(row.prompt) - len(str(row.answer)), len(row.prompt))
+        if row.task not in candidates or rank < candidates[row.task][0]:
+            candidates[row.task] = (rank, example)
+    return OrderedDict(
+        (name, candidates[name][1])
+        for name in task_names
+        if name in candidates
+    )
+
+
 def source_link(task):
     rel_path = inspect.getfile(task.__class__).split("/tasks")[-1]
     return f"{GITHUB_BASE}{rel_path}"
+
+
+def task_summary(task):
+    return str(getattr(task, "summary", "") or "").strip()
+
+
+def task_metadata_block(name, task=None, include_summaries=True):
+    if task is None:
+        task = get_task(name)
+    if not include_summaries:
+        return ""
+    summary = task_summary(task)
+    return f"{summary}\n\n" if summary else ""
 
 
 def build_examples(tasks, cache=False, refresh_cache=False, allow_missing=False):
@@ -97,13 +167,54 @@ def build_examples(tasks, cache=False, refresh_cache=False, allow_missing=False)
     return examples
 
 
-def section_text(name, example):
+def section_text(name, example, include_summaries=True):
     task = get_task(name)
     return (
         f"## [{name}]({source_link(task)})\n\n"
+        f"{task_metadata_block(name, task, include_summaries)}"
         f"**Prompt:**\n{fence(example.prompt)}\n\n"
         f"**Answer:**\n{fence(example.answer)}"
     )
+
+
+def normalize_section(name, section, include_summaries=True):
+    section = re.sub(r"\n- hash: `[^`]*`\n", "\n", section)
+    section = re.sub(r"\n- modified: [^\n]*\n", "\n", section)
+    section = re.sub(r"\n- last modified: [^\n]*\n", "\n", section)
+    section = re.sub(r"\n<!-- behavior-hash: [^>]* -->\n", "\n", section)
+    header_match = re.match(r"^(## [^\n]+)", section)
+    prompt_start = section.find("**Prompt:**")
+    if not header_match or prompt_start == -1:
+        return section.strip()
+    return (
+        f"{header_match.group(1)}\n\n"
+        f"{task_metadata_block(name, include_summaries=include_summaries)}"
+        f"{section[prompt_start:].strip()}"
+    )
+
+
+def changed_tasks(task_names, existing_sections, refresh=False):
+    if refresh:
+        return task_names
+    changed = []
+    for name in task_names:
+        section = existing_sections.get(name, "")
+        date_marker = f"- last modified: {source_modified_date(task_source(name))}"
+        legacy_hash_marker = f"- hash: `{source_behavior_hash(task_source(name))}`"
+        if not section:
+            changed.append(name)
+            continue
+        if "<!-- behavior-hash:" in section:
+            continue
+        if "- hash:" in section:
+            if legacy_hash_marker not in section:
+                changed.append(name)
+            continue
+        if "- last modified:" in section or "- modified:" in section:
+            if date_marker not in section:
+                changed.append(name)
+            continue
+    return changed
 
 
 def read_sections(path):
@@ -123,7 +234,8 @@ def read_sections(path):
     return sections
 
 
-def write_gallery(task_names, examples, out_path, existing_sections=None):
+def write_gallery(task_names, examples, out_path, existing_sections=None,
+                  include_summaries=True):
     out_path = Path(out_path)
     existing_sections = existing_sections or {}
     with out_path.open("w", encoding="utf-8") as f:
@@ -131,9 +243,11 @@ def write_gallery(task_names, examples, out_path, existing_sections=None):
         f.write(f"# 📖 Task Gallery\n\n{len(task_names)} tasks\n\n{menu}\n\n---\n\n")
         for name in task_names:
             if name in examples:
-                section = section_text(name, examples[name])
+                section = section_text(name, examples[name], include_summaries)
             else:
-                section = existing_sections[name]
+                section = normalize_section(
+                    name, existing_sections[name], include_summaries
+                )
             f.write(f"{section}\n\n---\n\n")
 
 
@@ -164,6 +278,12 @@ def parse_args():
     parser.add_argument("--no-cache", action="store_true",
                         help="Use generate_balanced_batch instead of cached validation examples.")
     parser.add_argument("--refresh-cache", action="store_true")
+    parser.add_argument("--no-summaries", action="store_true",
+                        help="Omit task summary text from gallery sections.")
+    parser.add_argument("--taskrow-cache", default=None,
+                        help=("Read examples from a diagnostics TaskRow cache "
+                              "(task_diagnostics/cache/task_rows/<cache_id>) "
+                              "before generating missing examples."))
     parser.add_argument("--allow-missing", action="store_true")
     parser.add_argument("--tasks", nargs="*", default=None)
     return parser.parse_args()
@@ -172,16 +292,33 @@ def parse_args():
 def main():
     args = parse_args()
     names = args.tasks or list_tasks()
-    tasks = sort_tasks(names)
-    examples = build_examples(tasks, cache=not args.no_cache,
-                              refresh_cache=args.refresh_cache,
-                              allow_missing=args.allow_missing)
-    task_names = [task.task_name for task in tasks]
+    task_names = sort_task_names(names)
     existing_sections = read_sections(args.out)
+    tasks_to_build = changed_tasks(task_names, existing_sections, args.refresh_cache)
+    examples = load_taskrow_examples(tasks_to_build, args.taskrow_cache)
+    missing_from_taskrow_cache = [
+        name for name in tasks_to_build if name not in examples
+    ]
+    generated = build_examples(
+        (get_task(name) for name in missing_from_taskrow_cache),
+        cache=not args.no_cache,
+        refresh_cache=args.refresh_cache,
+        allow_missing=args.allow_missing,
+    )
+    examples.update(generated)
     missing = [name for name in task_names if name not in examples and name not in existing_sections]
     if missing:
-        raise RuntimeError(f"no generated or existing gallery section for: {', '.join(missing)}")
-    write_gallery(task_names, examples, args.out, existing_sections)
+        if args.allow_missing:
+            task_names = [name for name in task_names if name not in missing]
+        else:
+            raise RuntimeError(f"no generated or existing gallery section for: {', '.join(missing)}")
+    write_gallery(
+        task_names,
+        examples,
+        args.out,
+        existing_sections,
+        include_summaries=not args.no_summaries,
+    )
     update_readme = args.update_readme == "always" or (
         args.update_readme == "auto" and args.tasks is None and
         Path(args.out).name == "GALLERY.md"

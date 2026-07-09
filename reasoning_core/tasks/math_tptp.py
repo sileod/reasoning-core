@@ -24,7 +24,7 @@ from ._tptp_finite_interpretation import (
     validate_formula,
 )
 from ._tptp_sat_graph import generate_derivation_graph
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, DevTask, Problem, Config
 from reasoning_core.template import TimeoutException
 from itertools import combinations
 from math import comb
@@ -878,13 +878,13 @@ class EntailConfig(Config):
     max_attempts: int = 80
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.proof_depth += c
-        self.perturbation += c
-        self.max_hypotheses += c
-        self.max_payload_chars += 500 * c
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.perturbation += level
+        self.max_hypotheses += level
+        self.max_payload_chars += 500 * level
 
-class TptpEntailement(Task):
+class TptpEntailment(DevTask):
     """
     A task that generates problems to determine if a set of hypotheses
     proves a given conjecture.
@@ -1122,14 +1122,13 @@ class ConsistencyRepairConfig(Config):
     answer_style: str = "space"  # "space" or "list"
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.proof_depth += c
-        self.perturbation += c
-        self.max_axioms += c
-        self.max_payload_chars += 500 * c
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.perturbation += level
+        self.max_axioms += level
+        self.max_payload_chars += 500 * level
 
-
-class TPTPConsistencyRepair(Task):
+class TPTPConsistencyRepair(DevTask):
     """Find all singleton deletions that restore satisfiability."""
     def __init__(self, config=ConsistencyRepairConfig()):
         super().__init__(config, timeout=720)

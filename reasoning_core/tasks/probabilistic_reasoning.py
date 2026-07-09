@@ -6,7 +6,7 @@ from itertools import product
 from gramforge import generate, init_grammar
 from problog import get_evaluatable
 from problog.program import PrologString
-from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
 from reasoning_core.utils import score_space_ints
 
 
@@ -241,15 +241,16 @@ class MostProbableEvidenceConfig(Config):
     min_margin: float = 0.03
     max_margin: float = 1.01
 
-    def update(self, c=1):
-        self.depth += c
-        self.max_atoms = min(6, self.max_atoms + c)
-        self.min_atoms = min(4, self.min_atoms + c / 2)
-        self.min_margin = max(0.005, self.min_margin * 0.75)
-        self.max_margin = max(0.12, self.max_margin * 0.7)
+    def apply_difficulty(self, level):
+        self.depth = sround(self.depth + level)
+        self.max_atoms = sround(min(6, self.max_atoms + level))
+        self.min_atoms = sround(min(4, self.min_atoms + level / 2))
+        self.min_margin = max(0.005, self.min_margin * (0.75 ** level))
+        self.max_margin = max(0.12, self.max_margin * (0.7 ** level))
 
 
 class MostProbableEvidence(Task):
+    summary = "Find the most probable configuration of hidden variables given evidence."
     def __init__(self, config=MostProbableEvidenceConfig()):
         super().__init__(config=config)
 
@@ -291,12 +292,13 @@ class MostProbableOutcomeConfig(Config):
     max_count: int = 8
     depth: int = 5
 
-    def update(self, c=1):
-        self.max_count += c
-        self.depth += c
+    def apply_difficulty(self, level):
+        self.max_count += level
+        self.depth += level
 
 
 class MostProbableOutcome(Task):
+    summary = "Predict the most probable outcome or select hidden factor values in ProbLog."
     def __init__(self, config=MostProbableOutcomeConfig()):
         super().__init__(config=config)
         self._target_i = 0

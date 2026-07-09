@@ -17,9 +17,9 @@ class EquationSystemCfg(Config):
     p_underdetermined: float = 0.10
     p_shortcut: float = 0.10
 
-    def update(self, c):
-        self.num_vars += c
-        self.obfuscation_steps += c
+    def apply_difficulty(self, level):
+        self.num_vars += level
+        self.obfuscation_steps += level
 
 def randint_nonzero(lo: int, hi: int) -> int:
     if lo > hi: lo, hi = hi, lo
@@ -53,6 +53,7 @@ def _verify_system(equations: List[sp.Eq], variables: List[sp.Symbol]) -> Dict[s
         return {'kind': 'error'}
 
 class EquationSystem(Task):
+    summary = "Solve systems of linear equations or detect inconsistent/underdetermined systems."
     def __init__(self, config=EquationSystemCfg()):
         super().__init__(config=config)
 

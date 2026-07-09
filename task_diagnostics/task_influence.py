@@ -1,19 +1,25 @@
 #!/usr/bin/env python
-"""Analyze RC task influence signals from local generation and SFT result JSONs.
+"""Run and summarize RC task influence measurements.
 
-The script is intentionally read-only with respect to tasks. It caches local
-task smoke metrics by task behavior hash, then rewrites a compact Markdown
-report every run.
+Influence runs consume a canonical TaskRow Parquet cache built by task_diagnostics.cache.
+The runner trains the raw per-task influence kernel and rewrites a compact Markdown
+ranking table (+ JSON sidecar). Gallery rendering lives in build_gallery.py.
+
+Build changed/missing task rows:    python -m task_diagnostics.cache build --levels 0 1 2 --n 64
+Run influence from those rows:      python task_diagnostics/task_influence.py --run-influence --taskrow-cache <cache_dir>
+Rebuild the table from cache only:  python task_diagnostics/task_influence.py --no-local
 """
 
 import argparse
-import csv
 import hashlib
 import inspect
 import json
 import math
+import os
 import re
+import shlex
 import statistics as stats
+import subprocess
 import sys
 import time
 from collections import defaultdict
@@ -27,7 +33,6 @@ if str(ROOT) not in sys.path:
 from reasoning_core import get_task, list_tasks  # noqa: E402
 
 SCRIPT_VERSION = 2
-GITHUB_TASKS_BASE = "https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks"
 WEIGHT_PROFILES = {
     "dolci": {
         "dolci": 1.0,
@@ -169,182 +174,6 @@ def local_task_metrics(name, samples, refresh, cache):
     return out
 
 
-def markdown_fence(text):
-    text = str(text)
-    ticks = "```"
-    if ticks in text:
-        ticks = "````"
-    return f"{ticks}\n{text}\n{ticks}"
-
-
-def write_gallery(path, task_names, refresh, samples):
-    """Write a compact gallery, rebuilding examples only when validation cache misses."""
-    def clean_section(text):
-        lines = text.rstrip().splitlines()
-        while lines and not lines[-1].strip():
-            lines.pop()
-        if lines and lines[-1].strip() == "---":
-            lines.pop()
-        return "\n".join(lines).rstrip() + "\n"
-
-    path = Path(path)
-    existing_sections = {}
-    if path.exists() and not refresh:
-        current_name = None
-        current_lines = []
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if line.startswith("## "):
-                if current_name and current_lines:
-                    existing_sections[current_name] = clean_section("\n".join(current_lines))
-                current_lines = [line]
-                title = line[3:].strip()
-                title = re.sub(r"^\[([^\]]+)\].*$", r"\1", title)
-                current_name = title
-            elif current_name:
-                current_lines.append(line)
-        if current_name and current_lines:
-            existing_sections[current_name] = clean_section("\n".join(current_lines))
-
-    lines = ["# Task Gallery", ""]
-    failures = []
-    reused = 0
-    generated = 0
-    for name in task_names:
-        try:
-            task = get_task(name)
-            old = existing_sections.get(name)
-            if old and f"- hash: `{task.behavior_hash()}`" in old:
-                lines.append(old.rstrip())
-                lines.extend(["", "---", ""])
-                reused += 1
-                continue
-
-            examples = task.validate(n_samples=max(1, samples), cache=True, refresh=refresh)
-            generated += 1
-            example = sorted(examples, key=lambda ex: len(ex.prompt) - len(str(ex.answer)))[0]
-            source = Path(inspect.getfile(task.__class__)).resolve()
-            rel = source.relative_to(ROOT) if source.is_relative_to(ROOT) else source
-            github_rel = str(rel).split("reasoning_core/tasks/")[-1]
-            link = f"{GITHUB_TASKS_BASE}/{github_rel}" if "reasoning_core/tasks/" in str(rel) else str(rel)
-            lines.extend([
-                f"## [{name}]({link})",
-                "",
-                f"- hash: `{task.behavior_hash()}`",
-                f"- modified: {iso_time(source.stat().st_mtime)}",
-                "",
-                "**Prompt:**",
-                markdown_fence(example.prompt),
-                "",
-                "**Answer:**",
-                markdown_fence(example.answer),
-                "",
-                "",
-            ])
-        except Exception as exc:
-            failures.append((name, repr(exc)))
-            lines.extend([f"## {name}", "", f"Failed: `{repr(exc)}`", ""])
-        lines.extend(["---", ""])
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines) + "\n")
-    return {"failures": failures, "reused": reused, "generated": generated}
-
-
-def _verification_rows(task, examples, limit):
-    pool = [str(ex.answer) for ex in examples]
-    rows, yes, no = [], 0, 0
-    for i, ex in enumerate(examples):
-        prompt, answer = ex.prompt, str(ex.answer)
-        want_yes = yes <= no
-        if want_yes:
-            candidate, label = answer, "Yes"
-        else:
-            order = sorted(
-                range(len(pool)),
-                key=lambda j: hashlib.sha1(f"{prompt}\0{j}".encode()).hexdigest(),
-            )
-            candidate = None
-            for j in order:
-                cand = pool[j]
-                if cand == answer:
-                    continue
-                try:
-                    if float(task.score_answer(cand, ex)) != 1.0:
-                        candidate = cand
-                        break
-                except Exception:
-                    if cand != answer:
-                        candidate = cand
-                        break
-            if candidate is None:
-                continue
-            label = "No"
-        rows.append([f"{prompt}\nAnswer:\n{candidate}\nCorrect? (Yes/No)", label])
-        yes += label == "Yes"
-        no += label == "No"
-        if len(rows) >= limit:
-            break
-    return rows
-
-
-def build_aux_data(path, task_names, examples_per_task, levels, max_tokens, refresh, aux_mode):
-    """Build LOCAL_AUX JSON keyed as task -> [[prompt, completion], ...]."""
-    path = Path(path)
-    data = {}
-    manifest = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "script_version": SCRIPT_VERSION,
-        "examples_per_task": examples_per_task,
-        "levels": levels,
-        "max_tokens": max_tokens,
-        "aux_mode": aux_mode,
-        "tasks": {},
-    }
-    for name in task_names:
-        print(f"aux {name}", flush=True)
-        task = get_task(name)
-        source = Path(inspect.getfile(task.__class__)).resolve()
-        rel = source.relative_to(ROOT) if source.is_relative_to(ROOT) else source
-        examples_all = []
-        per_level = max(1, math.ceil(examples_per_task / max(1, len(levels))))
-        for level in levels:
-            if refresh:
-                examples = task.generate_balanced_batch(
-                    batch_size=per_level,
-                    max_tokens=max_tokens,
-                    level=level,
-                )
-            else:
-                task.config.set_level(level)
-                examples = task.validate(n_samples=per_level, cache=True)
-            for ex in examples:
-                if len(examples_all) >= examples_per_task * (2 if aux_mode == "contrastive" else 1):
-                    break
-                if max_tokens:
-                    pt = ex.metadata.get("_prompt_tokens", 0) or 0
-                    at = ex.metadata.get("_answer_tokens", 0) or 0
-                    if pt + at > max_tokens:
-                        continue
-                examples_all.append(ex)
-            if len(examples_all) >= examples_per_task * (2 if aux_mode == "contrastive" else 1):
-                break
-        if aux_mode == "contrastive":
-            rows = _verification_rows(task, examples_all, examples_per_task)
-        else:
-            rows = [[ex.prompt, str(ex.answer)] for ex in examples_all[:examples_per_task]]
-        data[name] = rows
-        manifest["tasks"][name] = {
-            "n": len(rows),
-            "behavior_hash": task.behavior_hash(),
-            "source_file": str(rel),
-            "source_modified": iso_time(source.stat().st_mtime),
-        }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
-    manifest_path = path.with_suffix(path.suffix + ".manifest.json")
-    write_json(manifest_path, manifest)
-    return manifest_path
-
-
 def parse_result_tag(path, prefix):
     stem = Path(path).stem
     tag = stem[len(prefix):] if stem.startswith(prefix) else stem
@@ -462,6 +291,32 @@ def aggregate_scores(task_names, influence, sat, weights):
     return rows
 
 
+def estimate_global_sigma(influence, weights, runs):
+    """Global seed-noise sigma on influence_score: pooled cross-seed std of per-task scores.
+    Only pools TRUE replicates — same config (model/main/steps/init), differing seed — so
+    mixing configs or same-seed reruns doesn't fake a tiny sigma. Needs >=2 distinct seeds
+    for a task at one config; None otherwise. z = score / sigma = effect in noise-sigmas."""
+    meta = {r["tag"]: r for r in runs}
+    def cfg(tag):
+        m = meta.get(tag, {})
+        return (m.get("model"), m.get("main"), m.get("train_steps"), m.get("init"))
+    groups = defaultdict(lambda: defaultdict(dict))        # (task, config) -> seed -> {target: delta}
+    for task, tdata in influence.items():
+        for target, items in tdata.items():
+            for it in items:
+                groups[(task, cfg(it["run"]))][meta.get(it["run"], {}).get("seed")][target] = it["value"]
+    variances = []
+    for seeds in groups.values():
+        scores = []
+        for deltas in seeds.values():                     # one score per distinct seed
+            terms = [(target_weight(weights, t), -d) for t, d in deltas.items() if target_weight(weights, t)]
+            if terms:
+                scores.append(sum(w * v for w, v in terms) / sum(w for w, _ in terms))
+        if len(scores) >= 2:                              # >=2 distinct seeds at this config
+            variances.append(stdev(scores) ** 2)
+    return (sum(variances) / len(variances)) ** 0.5 if variances else None
+
+
 def contrastive_scores(task_names, influence):
     rows = aggregate_scores(task_names, influence, {}, CONTRAST_WEIGHTS)
     return {name: rows[name]["influence_score"] for name in rows}
@@ -485,7 +340,7 @@ def markdown_table(rows, columns):
     return "\n".join(out)
 
 
-def write_machine_outputs(json_path, csv_path, records, influence_runs, sat_runs, contrast_runs, args):
+def write_machine_outputs(json_path, records, influence_runs, sat_runs, contrast_runs, args):
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "script_version": SCRIPT_VERSION,
@@ -498,25 +353,8 @@ def write_machine_outputs(json_path, csv_path, records, influence_runs, sat_runs
     }
     write_json(json_path, payload)
 
-    if not csv_path:
-        return
 
-    fieldnames = [
-        "rank", "task", "category", "influence_score", "n_runs",
-        "contrastive_score",
-        "flan_delta", "fw_delta", "bbh_delta", "dolci_delta",
-        "acc_start", "acc_end", "prompt_tokens_mean", "answer_tokens_mean",
-        "behavior_hash", "source_file", "source_modified", "ok", "issue",
-    ]
-    with Path(csv_path).open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        for rec in records:
-            row = {k: rec.get(k, "") for k in fieldnames}
-            writer.writerow(row)
-
-
-def build_records(local, inventory, scores, contrastive_scores=None):
+def build_records(local, inventory, scores, contrastive_scores=None, global_sigma=None):
     contrastive_scores = contrastive_scores or {}
     local_by_task = {r["task"]: r for r in local}
     ranked = sorted(
@@ -536,6 +374,8 @@ def build_records(local, inventory, scores, contrastive_scores=None):
             "task": row["task"],
             "category": loc.get("category") or inv.get("category", ""),
             "influence_score": row["influence_score"],
+            "z": (row["influence_score"] / global_sigma
+                  if global_sigma and math.isfinite(row["influence_score"]) else None),
             "n_runs": row["n_runs"],
             "contrastive_score": contrastive_scores.get(row["task"]),
             "behavior_hash": loc.get("behavior_hash") or inv.get("behavior_hash", ""),
@@ -560,7 +400,6 @@ def build_records(local, inventory, scores, contrastive_scores=None):
 
 def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args):
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    targets = sorted({t for r in records for t in r.get("targets", {})})
 
     lines = [
         "# Task Influence",
@@ -582,103 +421,204 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
         "",
     ]
 
+    # Compact ranking: real tasks only (skip mixture/experiment artifacts), the three
+    # scored deltas + merged tok/acc diagnostics. flan + full detail live in the JSON sidecar.
+    # Allow into the table: all registered tasks, anything explicitly named via --tasks
+    # (naming a DevTask is enough — no --include-dev needed), and the --include-dev allowlist
+    # (for sweeps where DevTasks arrive via the influence files rather than --tasks).
+    registered = (set(list_tasks())
+                  | set(getattr(args, "tasks", None) or [])
+                  | set(getattr(args, "include_dev", []) or []))
+
+    def _pair(a, b, digits, sep):
+        sa, sb = fmt(a, digits), fmt(b, digits)
+        return f"{sa}{sep}{sb}" if (sa or sb) else ""
+
     rows = []
     for row in records:
+        if row["task"] not in registered:
+            continue
         rows.append([
-            str(row["rank"]),
+            str(len(rows) + 1),
             row["task"],
-            fmt(row["influence_score"], 3, signed=True),
-            fmt(row.get("contrastive_score"), 3, signed=True),
-            fmt(row.get("flan_delta"), 4, signed=True),
-            fmt(row.get("bbh_delta"), 4, signed=True),
+            fmt(row["influence_score"], 2, signed=True),
+            fmt(row.get("z"), 1, signed=True),
+            fmt(row.get("dolci_delta"), 4, signed=True),
+            fmt(row.get("bbh_delta"), 3, signed=True),
             fmt(row.get("fw_delta"), 4, signed=True),
-            fmt(row.get("acc_start"), 3),
-            fmt(row.get("acc_end"), 3),
-            fmt(row.get("prompt_tokens_mean"), 1),
-            fmt(row.get("answer_tokens_mean"), 1),
-            row.get("source_modified", ""),
-            row.get("behavior_hash", "") or "",
-            "" if row.get("ok") or row.get("ok") is None else str(row.get("issue", ""))[:80],
+            _pair(row.get("prompt_tokens_mean"), row.get("answer_tokens_mean"), 0, "/"),
+            _pair(row.get("acc_start"), row.get("acc_end"), 2, "→"),
+            (row.get("behavior_hash", "") or "")[:7],
         ])
 
     lines.append("## Ranking")
     lines.append("")
+    sigma = getattr(args, "global_sigma", None)
+    zline = (f" `z` = score / global seed-noise σ={sigma:.3f} (|z|≳2 ⇒ effect exceeds seed noise);"
+             if sigma else " `z` needs ≥2 seeds (run more --seed replicates) — blank until then;")
+    lines.append("Arrows mark the good direction: `score ↑` (higher = better helper); the deltas "
+                 "`↓` (lower = reduced held-out loss = helped)." + zline + " `tok` = prompt/answer "
+                 "tokens, `acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.")
+    lines.append("")
     lines.append(markdown_table(rows, [
-        "#", "task", "influence_score", "contrastive_score", "flan_delta", "bbh_delta", "fw_delta",
-        "acc_start", "acc_end", "prompt_tok", "answer_tok", "modified", "hash", "issue",
+        "#", "task", "score ↑", "z ↑", "dolci ↓", "bbh ↓", "fw ↓", "tok", "acc", "hash",
     ]))
     lines.append("")
 
-    if targets:
-        lines.append("## Target Deltas")
+    issues = [(r["task"], str(r.get("issue", ""))[:120]) for r in records
+              if not (r.get("ok") or r.get("ok") is None) and r.get("issue")]
+    if issues:
+        lines.append("## Issues")
         lines.append("")
-        detail_rows = []
-        for row in records:
-            detail_rows.append([
-                row["task"],
-                *[
-                    fmt(row["targets"].get(t, {}).get("mean"), 4, signed=True)
-                    for t in targets
-                ],
-            ])
-        lines.append(markdown_table(detail_rows, ["task", *[f"{t}_delta" for t in targets]]))
+        for task, issue in issues:
+            lines.append(f"- `{task}`: {issue}")
         lines.append("")
 
-    lines.append("## Inputs")
+    lines.append(f"_Inputs: {len(influence_runs)} influence + {len(sat_runs)} saturation"
+                 + (f" + {len(contrast_runs)} contrastive" if contrast_runs else "")
+                 + " result file(s). Full per-target detail and diagnostics in the JSON sidecar._")
     lines.append("")
-    lines.append("Influence runs:")
-    for run in influence_runs[:80]:
-        lines.append(f"- `{Path(run['file']).name}`")
-    if len(influence_runs) > 80:
-        lines.append(f"- ... {len(influence_runs) - 80} more")
-    lines.append("")
-    lines.append("Saturation runs:")
-    for run in sat_runs[:80]:
-        lines.append(f"- `{Path(run['file']).name}`")
-    if len(sat_runs) > 80:
-        lines.append(f"- ... {len(sat_runs) - 80} more")
-    lines.append("")
-    if contrast_runs:
-        lines.append("Contrastive influence runs:")
-        for run in contrast_runs[:80]:
-            lines.append(f"- `{Path(run['file']).name}`")
-        lines.append("")
 
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Path(path).write_text("\n".join(lines) + "\n")
+    md = "\n".join(lines) + "\n"
+    if path is not None:                     # path=None (dry-run): return text, write nothing
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(path).write_text(md)
+    return md
 
 
 def default_results_dirs():
-    candidates = [
-        ROOT / "per_task_results",
-        Path("~/sandboxes/rc_grad/per_task_results").expanduser(),
-    ]
-    return [p for p in candidates if p.exists()] or [ROOT / "per_task_results"]
+    return [ROOT / "per_task_results"]
+
+
+def clean_run_tag(tag):
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", str(tag).strip().lstrip("_"))
+
+
+def run_hash(task_names, args):
+    inventory = task_inventory(task_names)
+    payload = {
+        "tasks": task_names,
+        "hashes": {name: inventory.get(name, {}).get("behavior_hash", "") for name in task_names},
+        "model": args.model,                 # distinct tag per model (else runs collide across models)
+        "main_data": args.main_data,
+        "seed": args.seed,
+        "train_steps": args.train_steps,
+        "mix_aux": args.mix_aux,
+        "taskrow_cache": taskrow_cache_sig(args.taskrow_cache),
+    }
+    return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:10]
+
+
+def taskrow_cache_sig(path):
+    if not path:
+        return ""
+    p = Path(path).expanduser()
+    manifest = load_json(p / "manifest.json")
+    if isinstance(manifest, dict):
+        return manifest.get("cache_id") or hashlib.sha1(json.dumps(manifest, sort_keys=True).encode()).hexdigest()[:12]
+    return str(p)
+
+
+def run_init_tag(args):
+    return "scratch" if args.from_scratch_bool else "pretrained"
+
+
+def runner_results_dir(args):
+    base = Path(args.run_workdir).expanduser() if args.run_workdir else ROOT
+    subdir = "per_task_results_rgym" if args.aux_dataset == "rgym" else "per_task_results"
+    return base / subdir
+
+
+def run_result_paths(args):
+    mix = int(args.mix_aux * 100)
+    suffix = (
+        f"_{args.run_tag}_S{args.seed}_T{args.train_steps}_M{mix}_"
+        f"{args.main_data}_{run_init_tag(args)}.json"
+    )
+    root = runner_results_dir(args)
+    return root / f"influence{suffix}", root / f"sat{suffix}"
+
+
+def completed_result(path, task_names):
+    data = load_json(path)
+    if not isinstance(data, dict) or not isinstance(data.get("tasks"), dict):
+        return False
+    return all(name in data["tasks"] for name in task_names)
+
+
+def launch_influence_run(args, task_names):
+    runner = Path(args.runner).expanduser()
+    if not runner.exists():
+        raise SystemExit(f"--runner does not exist: {runner}")
+    workdir = Path(args.run_workdir).expanduser() if args.run_workdir else ROOT
+    if not workdir.exists():
+        raise SystemExit(f"--run-workdir does not exist: {workdir}")
+    if not args.taskrow_cache:
+        raise SystemExit("--run-influence requires --taskrow-cache. Build one with `python -m task_diagnostics.cache build`.")
+
+    args.run_tag = clean_run_tag(args.run_tag or f"LOCAL_{run_hash(task_names, args)}")
+    cache_path = Path(args.taskrow_cache).expanduser()
+    if not cache_path.exists():
+        raise SystemExit(f"--taskrow-cache does not exist: {cache_path}")
+    print(f"TaskRow cache: {cache_path}")
+
+    influence_path, sat_path = run_result_paths(args)
+    if completed_result(influence_path, task_names) and not args.force_run:
+        print(f"influence cache fresh: {influence_path}")
+        return {"launched": False, "influence": influence_path, "sat": sat_path}
+
+    log_path = Path(args.run_log).expanduser() if args.run_log else ROOT / "task_influence_work" / f"{args.run_tag}.log"
+    script_path = ROOT / "task_influence_work" / f"run_{args.run_tag}.sh"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    script_path.parent.mkdir(parents=True, exist_ok=True)
+    env = {
+        "RUN_TAG": args.run_tag,
+        "TASKROW_CACHE": str(cache_path),
+        "OUT_DIR": str(runner_results_dir(args)),
+        "AUX_DATASET": args.aux_dataset,
+        "MODEL": args.model,
+        "BATCH": str(args.batch),
+        "GRAD_ACCUM": str(args.grad_accum),
+        "MAIN_DATA": args.main_data,
+        "FROM_SCRATCH": "1" if args.from_scratch_bool else "0",
+        "SEED": str(args.seed),
+        "TRAIN_STEPS": str(args.train_steps),
+        "MIX_AUX": str(args.mix_aux),
+        "COMPLETION_ONLY": "1" if args.completion_only else "0",
+        "EVAL_FLAN": "0" if args.no_eval_flan else "1",
+        "LOG_SAT": "1",
+        "SAT_EVERY": str(args.sat_every),
+        "TASKS": ",".join(task_names),
+    }
+    exports = " ".join(f"{k}={shlex.quote(v)}" for k, v in env.items())
+    script_path.write_text(
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        f"cd {shlex.quote(str(workdir))}\n"
+        f"{exports} python {shlex.quote(str(runner))} 2>&1 | tee {shlex.quote(str(log_path))}\n",
+        encoding="utf-8",
+    )
+    script_path.chmod(0o755)
+
+    if args.foreground:
+        subprocess.run(["bash", str(script_path)], check=True)
+    else:
+        session = clean_run_tag(args.tmux_session or f"rc_influence_{args.run_tag.lower()}")[:80]
+        subprocess.run(["tmux", "new-session", "-d", "-s", session, "bash", str(script_path)], check=True)
+        print(f"launched tmux: {session}")
+        print(f"log: {log_path}")
+        print(f"expected: {influence_path}")
+    return {"launched": not args.foreground, "influence": influence_path, "sat": sat_path}
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", default="scripts/TASK_INFLUENCE.md")
+    parser.add_argument("--out", default="task_diagnostics/TASK_INFLUENCE_RESULTS.md")
     parser.add_argument("--cache", default=".task_influence_cache.json")
     parser.add_argument("--json-out", default=None,
                         help="Machine-readable JSON output. Default: --out with .json suffix.")
-    parser.add_argument("--csv-out", default=None,
-                        help="Optional CSV output. By default only Markdown and JSON are written.")
-    parser.add_argument("--gallery-out", default=None,
-                        help="Optionally rebuild a human-readable task gallery.")
-    parser.add_argument("--gallery-refresh", action="store_true",
-                        help="Refresh all gallery cached examples instead of only changed hashes.")
-    parser.add_argument("--build-aux", default=None,
-                        help=("Write LOCAL_AUX generator data JSON keyed by task. "
-                              "Use an ignored path such as task_influence_work/aux.json."))
-    parser.add_argument("--aux-examples", type=int, default=256,
-                        help="Examples per task for --build-aux.")
-    parser.add_argument("--aux-levels", nargs="+", type=int, default=[0, 1, 2],
-                        help="Difficulty levels sampled for --build-aux.")
-    parser.add_argument("--aux-max-tokens", type=int, default=5000,
-                        help="Drop generated aux examples above this prompt+answer token budget.")
-    parser.add_argument("--aux-mode", choices=("instruct", "contrastive"), default="instruct",
-                        help="LOCAL_AUX format: original prompt/answer or verification yes/no.")
+    parser.add_argument("--taskrow-cache", default=None,
+                        help="Use a canonical TaskRow Parquet cache for aux, saturation, and reward rows.")
     parser.add_argument("--results-dir", action="append", default=None,
                         help="Directory with influence_*.json and sat_*.json. Can repeat.")
     parser.add_argument("--include", action="append", default=[],
@@ -688,24 +628,83 @@ def parse_args():
     parser.add_argument("--exclude", action="append", default=[],
                         help="Skip result files whose filename contains this string. Can repeat.")
     parser.add_argument("--tasks", nargs="*", default=None)
+    parser.add_argument("--include-dev", nargs="*", default=[],
+                        help="DevTask names to allow into the ranking table (they are excluded by "
+                             "default since list_tasks() omits DevTasks). e.g. rocq_compute_nf.")
     parser.add_argument("--samples", type=int, default=4,
                         help="Validation samples per task for local generator metrics.")
     parser.add_argument("--refresh", action="store_true",
                         help="Recompute local metrics even when task behavior hashes match.")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Render the table to stdout without writing the .md/.json (report-only).")
     parser.add_argument("--no-local", action="store_true",
                         help="Skip local task generation/validation and only aggregate result JSONs.")
     parser.add_argument("--weight", action="append", default=[],
                         help="Override target score weight, e.g. --weight flan=3 --weight fw=0.5")
     parser.add_argument("--profile", choices=sorted(WEIGHT_PROFILES), default="dolci",
                         help="Named scoring profile. --weight overrides individual values.")
+    parser.add_argument("--run-influence", action="store_true",
+                        help="Build/reuse aux data and launch the raw per-task influence trainer.")
+    parser.add_argument("--runner", default=str(ROOT / "task_diagnostics" / "per_task_influence.py"),
+                        help="Path to the vendored per_task_influence.py trainer.")
+    parser.add_argument("--run-workdir", default=None,
+                        help="Working directory for --runner. Default: repo root.")
+    parser.add_argument("--run-tag", default=None,
+                        help="RUN_TAG for raw result files. Default: LOCAL_<task/config hash>.")
+    parser.add_argument("--run-log", default=None,
+                        help="Log path for --run-influence. Default: task_influence_work/<tag>.log.")
+    parser.add_argument("--tmux-session", default=None,
+                        help="tmux session name for background --run-influence.")
+    parser.add_argument("--foreground", action="store_true",
+                        help="Run influence trainer in the current process instead of tmux.")
+    parser.add_argument("--force-run", action="store_true",
+                        help="Rerun raw influence even if the expected result file is complete.")
+    parser.add_argument("--aux-dataset", choices=("rc", "rgym", "basic"), default="rc")
+    parser.add_argument("--main-data", choices=("dolci", "flan", "fw", "fw_recent", "tasksource",
+                                                "fwdolci", "fwtasksource", "codealpaca", "fwdolcicode"), default="dolci")
+    parser.add_argument("--model", dest="models", nargs="+", default=["HuggingFaceTB/SmolLM2-135M"],
+                        help="One or more decoder models; each runs separately with a distinct "
+                             "model-specific tag/file (compare models from their per-model JSON).")
+    parser.add_argument("--seed", type=int, default=43)
+    parser.add_argument("--train-steps", type=int, default=300)
+    parser.add_argument("--mix-aux", type=float, default=0.2)
+    parser.add_argument("--batch", type=int, default=8)
+    parser.add_argument("--grad-accum", type=int, default=1)
+    parser.add_argument("--from-scratch", choices=("0", "1"), default="0")
+    parser.add_argument("--completion-only", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--no-eval-flan", action="store_true")
+    parser.add_argument("--sat-every", type=int, default=50)
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     args.weights = parse_weights(args.profile, args.weight)
+    args.from_scratch_bool = args.from_scratch == "1"
     task_names = args.tasks or list_tasks()
     results_dirs = [Path(p).expanduser() for p in (args.results_dir or default_results_dirs())]
+
+    run_info = None
+    if args.run_influence:
+        run_tags, launched = [], False
+        for m in args.models:                     # one influence run per model (distinct tag/file)
+            args.model = m
+            run_info = launch_influence_run(args, task_names)
+            run_tags.append(args.run_tag)
+            run_dir = runner_results_dir(args)
+            if run_dir not in results_dirs:
+                results_dirs.insert(0, run_dir)
+            launched = launched or (run_info.get("launched") and not args.foreground)
+        if launched:
+            print("raw influence run(s) in progress; rerun this command after they complete to refresh the report")
+            return
+        if len(args.models) > 1:                  # combined table would conflate models -> report per-model files
+            print("multi-model run complete; refresh a per-model table with --no-local and one --include tag:")
+            for t in run_tags:
+                print(f"  --include {t}")
+            return
+        if not args.include:
+            args.include = run_tags
 
     cache = load_json(args.cache) if Path(args.cache).exists() else {}
     if not isinstance(cache, dict):
@@ -720,28 +719,6 @@ def main():
             print(f"local {name}", flush=True)
             local.append(local_task_metrics(name, args.samples, args.refresh, cache))
         write_json(args.cache, cache)
-
-    if args.gallery_out:
-        gallery = write_gallery(args.gallery_out, task_names, args.gallery_refresh or args.refresh, args.samples)
-        print(
-            f"wrote {args.gallery_out} "
-            f"(generated={gallery['generated']} reused={gallery['reused']})"
-        )
-        if gallery["failures"]:
-            print(f"gallery failures: {len(gallery['failures'])}", file=sys.stderr)
-
-    if args.build_aux:
-        manifest_path = build_aux_data(
-            args.build_aux,
-            task_names,
-            args.aux_examples,
-            args.aux_levels,
-            args.aux_max_tokens,
-            args.refresh,
-            args.aux_mode,
-        )
-        print(f"wrote {args.build_aux}")
-        print(f"wrote {manifest_path}")
 
     contrast_paths = result_files(results_dirs, "influence", args.contrastive_include, args.exclude)
     contrast_names = {p.name for p in contrast_paths}
@@ -758,16 +735,18 @@ def main():
     inventory = task_inventory(all_names)
     scores = aggregate_scores(all_names, influence, saturation, args.weights)
     c_scores = contrastive_scores(all_names, contrastive)
-    records = build_records(local, inventory, scores, c_scores)
+    args.global_sigma = estimate_global_sigma(influence, args.weights, influence_runs)   # seed noise from replicates
+    records = build_records(local, inventory, scores, c_scores, args.global_sigma)
     json_out = args.json_out or str(Path(args.out).with_suffix(".json"))
-    csv_out = args.csv_out
+    if args.dry_run:                          # render + print, touch no files
+        print(write_markdown(None, records, influence_runs, sat_runs, contrast_runs, args))
+        print(f"[dry-run] would write {args.out} and {json_out}")
+        return
     write_markdown(args.out, records, influence_runs, sat_runs, contrast_runs, args)
-    write_machine_outputs(json_out, csv_out, records, influence_runs, sat_runs, contrast_runs, args)
+    write_machine_outputs(json_out, records, influence_runs, sat_runs, contrast_runs, args)
 
     print(f"wrote {args.out}")
     print(f"wrote {json_out}")
-    if csv_out:
-        print(f"wrote {csv_out}")
     for row in records[:12]:
         print(
             f"{row['task']:<32} influence={fmt(row['influence_score'], 3, True):>8} "

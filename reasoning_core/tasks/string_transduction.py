@@ -3,7 +3,7 @@ import random
 import string
 from dataclasses import dataclass
 
-from reasoning_core.template import Config, Problem, Task, edict
+from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
 
 
 ALPHA = string.ascii_lowercase[:8]
@@ -18,11 +18,11 @@ class StringTransductionConfig(Config):
     edit_ops: int = 3
     edit_rate: float = 0.25
 
-    def update(self, c=1):
-        self.length += 2 * c
-        self.n_ops += c
-        self.alphabet_size = min(8, self.alphabet_size + int(c >= 2))
-        self.edit_ops += c
+    def apply_difficulty(self, level):
+        self.length = sround(self.length + 2 * level)
+        self.n_ops = sround(self.n_ops + level)
+        self.alphabet_size = sround(min(8, self.alphabet_size + level // 2))
+        self.edit_ops = sround(self.edit_ops + level)
 
 
 def caesar(s, k):
@@ -58,6 +58,7 @@ def apply_edits(s, edits):
 
 
 class StringTransduction(Task):
+    summary = "Apply string transduction operations including Caesar cipher and rotation."
     def __init__(self, config=StringTransductionConfig()):
         super().__init__(config=config)
 
@@ -110,7 +111,8 @@ class StringTransduction(Task):
                 for _, f in program:
                     target = f(target)
                 meta = edict(mode=mode, source=source, ops=[name for name, _ in program])
-            if target:
+            target = target.strip()  # word-source ops (e.g. sort) push the join spaces to an
+            if target:                # end; drop that leading/trailing whitespace (scorer strips too)
                 return Problem(meta, target)
         raise RuntimeError("failed to generate nonempty string transduction")
 

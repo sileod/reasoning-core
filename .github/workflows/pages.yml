@@ -1,0 +1,49 @@
+# Build & deploy the GitHub Pages site via Actions (replaces the legacy "Deploy from a branch"
+# builder). The legacy builder force-inits git submodules and fails cloning the PRIVATE
+# `experiments` submodule; actions/checkout does not fetch submodules, so the site builds cleanly.
+# Same output as before: default Jekyll build from the repo root (no _config.yml).
+name: Deploy Jekyll site to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress production deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (no submodules — the private experiments submodule is not needed for the site)
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

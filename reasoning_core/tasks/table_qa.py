@@ -9,7 +9,7 @@ from babel.dates import format_date
 from babel.numbers import format_decimal
 from tabulate import tabulate
 from dataclasses import dataclass
-from reasoning_core.template import Task, DevTask, Problem, Config, Payload
+from reasoning_core.template import Task, DevTask, Problem, Config, Payload, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 import csv
 import yaml
@@ -25,10 +25,10 @@ class TableQAConfig(Config):
     num_rows: int = 5
     num_columns: int = 2
     num_tables: int = 1
-    def update(self, c):
-        self.num_rows = int(self.num_rows * (1+c))
-        self.num_columns += c
-        self.num_tables = min(self.num_tables+c, 2)
+    def apply_difficulty(self, level):
+        self.num_rows = sround(self.num_rows * (2 ** level))
+        self.num_columns = sround(self.num_columns + level)
+        self.num_tables = sround(min(self.num_tables + level, 2))
 
 
 @dataclass
@@ -37,11 +37,11 @@ class TableStatisticsConfig(Config):
     num_numeric: int = 4
     num_categories: int = 3
     margin: float = 0.45
-    def update(self, c):
-        self.num_rows = int(self.num_rows * (1 + c / 2))
-        self.num_numeric += c
-        self.num_categories += c
-        self.margin = max(0.08, self.margin * (0.85 ** c))
+    def apply_difficulty(self, level):
+        self.num_rows = sround(self.num_rows * (1.5 ** level))
+        self.num_numeric = sround(self.num_numeric + level)
+        self.num_categories = sround(self.num_categories + level)
+        self.margin = max(0.08, self.margin * (0.85 ** level))
 
 
 _faker = Faker()
@@ -202,6 +202,7 @@ def split_table(dataframe, n):
 
 
 class TableQA(Task):
+    summary = "Answer queries on tabular data by executing SQL queries over dataframes."
     def __init__(self, config=TableQAConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
@@ -451,6 +452,7 @@ def corrupt_table(dataframe):
 
 
 class TableEquivalence(Task):
+    summary = "Decide if two rendered tables are semantically equivalent under mutations."
     def __init__(self, config=TableQAConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.5
@@ -614,6 +616,7 @@ def gen_categorical_nmi(config):
 
 
 class TableStatistics(Task):
+    summary = "Compute statistical metrics (Pearson correlation, eta2, NMI) on tables."
     def __init__(self, config=TableStatisticsConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.5

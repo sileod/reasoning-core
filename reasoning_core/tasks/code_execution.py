@@ -1,5 +1,4 @@
-import io, re, sys, os, time, random, signal, inspect, contextlib, multiprocessing as mp
-import ast
+import ast, io, re, sys, os, time, random, signal, inspect, contextlib, multiprocessing as mp
 import copy
 import threading
 from typing import Optional
@@ -7,7 +6,7 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from itertools import product
 
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, DevTask, Problem, Config, edict, stochastic_rounding as sround
 from gramforge import generate
 from gramforge.grammars import mesopy_grammar
 
@@ -28,14 +27,16 @@ class MesopyCodeCfg(Config):
     trivial_accept_prob: float = 0.05
     trivial_probes: int = 3
     runnable_prob: float = 0.25
+    syntax_error_prob: float = 0.25
+    runtime_mutation_prob: float = 0.60
 
-    def update(self, c):
-        self.difficulty += c
-        self.min_depth += c / 2
-        self.max_depth += int(c)
-        self.n_functions += c / 2
-        self.magnitude += c / 2
-        self.min_steps += int(2 * c)
+    def apply_difficulty(self, level):
+        self.difficulty += level
+        self.min_depth = sround(self.min_depth + 0.5 * level)
+        self.max_depth = sround(self.max_depth + level)
+        self.n_functions = sround(self.n_functions + 0.5 * level)
+        self.magnitude = sround(self.magnitude + 0.5 * level)
+        self.min_steps = sround(self.min_steps + 2 * level)
 
 
 @dataclass
@@ -204,7 +205,8 @@ def run_code(code, cfg=None, timeout=None, recursionlimit=80, call_args=None, ba
         recv.close()
 
 
-def make_code(cfg, failure_rate):
+def make_code(cfg, failure_rate, profile="full"):
+    fast = profile == "runnability"
     g = mesopy_grammar(
         mode="function",
         n_functions=max(1, int(cfg.n_functions)),
@@ -216,8 +218,149 @@ def make_code(cfg, failure_rate):
         emit_result=False,
         failure_rate=failure_rate,
         triviality_rate=max(0.05, 0.5 - 0.05 * cfg.difficulty),
+        allow_recursion=not fast,
+        include_loops=not fast,
+        include_try_except=not fast,
+        include_comprehensions=not fast,
+        include_fstrings=not fast,
+        include_break_continue=not fast,
+        min_body_stmts=2 if fast else 1,
     )
     return generate(g, depth=cfg.max_depth, min_depth=cfg.min_depth) @ "py"
+
+
+def source_endpoint_args(code, cfg):
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return None
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == "endpoint":
+            args = []
+            for arg in node.args.args:
+                name = getattr(arg.annotation, "id", None)
+                args.append(fake({"int": int, "str": str, "list": list}.get(name), cfg.magnitude))
+            return args
+    return None
+
+
+def subtle_syntax_error(code):
+    lines = code.splitlines()
+    edits = []
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("def ") and "," in line:
+            edits.append((i, line.replace(",", "", 1)))
+        if stripped.startswith("def ") and re.search(r"\w+: \w+", line):
+            edits.append((i, re.sub(r"(\w+): (\w+)", r"\1 \2", line, count=1)))
+        if re.search(r"\w+\([^()\n]*,\s*[^()\n]*\)", line):
+            edits.append((i, line.replace(",", "", 1)))
+        if stripped.endswith(":") and stripped.split(None, 1)[0] in {"def", "if", "elif", "else", "for", "while", "try", "except"}:
+            edits.append((i, line[:-1]))
+    random.shuffle(edits)
+    for i, replacement in edits:
+        candidate = lines[:]
+        candidate[i] = replacement
+        candidate = "\n".join(candidate) + "\n"
+        try:
+            compile(candidate, "<mesopy>", "exec")
+        except SyntaxError:
+            return candidate
+    return None
+
+
+def sample_syntax_error_problem(cfg):
+    for _ in range(max(1, cfg.max_attempts // 3)):
+        code = make_code(cfg, failure_rate=0.0, profile="runnability")
+        args = source_endpoint_args(code, cfg)
+        if args is None:
+            continue
+        broken = subtle_syntax_error(code)
+        if broken is not None:
+            return broken, RunReport(False, None, "SyntaxError", args)
+    raise RuntimeError("Failed to generate syntax error task")
+
+
+def function_arities(code):
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return {}
+    return {
+        node.name: len(node.args.args)
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef)
+    }
+
+
+def function_name_scopes(code):
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return []
+    scopes = []
+    for node in tree.body:
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        names = {arg.arg for arg in node.args.args}
+        names.update(
+            child.id
+            for child in ast.walk(node)
+            if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store)
+        )
+        scopes.append((node.name, node.lineno, getattr(node, "end_lineno", node.lineno), names))
+    return scopes
+
+
+def runtime_error_mutations(code):
+    lines = code.splitlines()
+    edits = []
+    arities = function_arities(code)
+    scopes = function_name_scopes(code)
+    all_names = set().union(*(names for _, _, _, names in scopes)) if scopes else set()
+    call_re = re.compile(r"\b(f\d+|endpoint)\(([^()\n]*)\)")
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("def "):
+            continue
+        for m in call_re.finditer(line):
+            args = [a.strip() for a in m.group(2).split(",") if a.strip()]
+            if len(args) == arities.get(m.group(1), 0) and len(args) >= 2:
+                repl = f"{m.group(1)}({', '.join(args[:-1])})"
+                edits.append((i, line[: m.start()] + repl + line[m.end() :]))
+        scope = next((s for s in scopes if s[1] <= i + 1 <= s[2]), None)
+        if scope and scope[0] != "endpoint" and any(stripped.startswith(prefix) for prefix in ("return ", "if ", "elif ", "print(")):
+            local_names = scope[3]
+            foreign_names = sorted(all_names - local_names)
+            ids = [
+                name for name in re.findall(r"\b[a-z]\w*\b", line)
+                if name not in {"if", "elif", "else", "return", "print", "len", "True", "False"}
+                and not re.fullmatch(r"f\d+", name)
+                and name in local_names
+            ]
+            if ids and foreign_names:
+                name = random.choice(ids)
+                replacement = random.choice(foreign_names)
+                edits.append((i, re.sub(rf"\b{re.escape(name)}\b", replacement, line, count=1)))
+        if re.search(r"(%|//|/)\s*[1-9]\d*", line):
+            edits.append((i, re.sub(r"(%|//|/)\s*[1-9]\d*", lambda m: m.group(1) + " 0", line, count=1)))
+    random.shuffle(edits)
+    for i, replacement in edits:
+        candidate = lines[:]
+        candidate[i] = replacement
+        yield "\n".join(candidate) + "\n"
+
+
+def sample_mutated_runtime_error_problem(cfg):
+    for _ in range(max(1, cfg.max_attempts // 3)):
+        code = make_code(cfg, failure_rate=0.0, profile="runnability")
+        if source_endpoint_args(code, cfg) is None:
+            continue
+        for candidate in runtime_error_mutations(code):
+            r = run_code(candidate, cfg)
+            if r.error and r.args is not None and r.error != "TimeoutError":
+                return candidate, r
+    raise RuntimeError("Failed to generate mutated runtime error task")
 
 
 def meta(code, r):
@@ -233,9 +376,22 @@ def meta(code, r):
     )
 
 
-def sample_problem(cfg, want_error, failure_rate):
+def sample_problem(cfg, want_error, failure_rate, profile="full", syntax_errors=False):
+    if want_error and syntax_errors:
+        roll = random.random()
+        if roll < cfg.syntax_error_prob:
+            try:
+                return sample_syntax_error_problem(cfg)
+            except RuntimeError:
+                pass
+        elif roll < cfg.syntax_error_prob + cfg.runtime_mutation_prob:
+            try:
+                return sample_mutated_runtime_error_problem(cfg)
+            except RuntimeError:
+                pass
+
     for _ in range(cfg.max_attempts):
-        code = make_code(cfg, failure_rate)
+        code = make_code(cfg, failure_rate, profile)
         if "def endpoint" not in code:
             continue
         r = run_code(code, cfg)
@@ -243,22 +399,35 @@ def sample_problem(cfg, want_error, failure_rate):
             if r.error and r.args is not None and r.error != "TimeoutError":
                 return code, r
         elif r.ok and r.value is not None and len(r.value) <= cfg.max_answer_len:
-            probes = [r] + [run_code(code, cfg) for _ in range(cfg.trivial_probes - 1)]
-            triviality = function_triviality(probes)
-            if accept_steps(r.steps, cfg) and (not triviality or random.random() < cfg.trivial_accept_prob):
+            if profile == "runnability":
+                triviality = None
+            else:
+                probes = [r] + [run_code(code, cfg) for _ in range(cfg.trivial_probes - 1)]
+                triviality = function_triviality(probes)
+            if (
+                accept_steps(r.steps, cfg)
+                and (not triviality or random.random() < cfg.trivial_accept_prob)
+            ):
                 r.triviality = triviality
                 return code, r
     raise RuntimeError(f"Failed to generate valid task. Config: {cfg}")
 
 
 class CodeRunnability(Task):
+    summary = "Predict if a given Python code snippet runs successfully or raises an exception."
     def __init__(self, config=None):
         super().__init__(config=config or MesopyCodeCfg())
         self.balancing_key_ratio = 1 / 5
 
     def generate(self):
         want_error = random.random() >= self.config.runnable_prob
-        code, r = sample_problem(self.config, want_error=want_error, failure_rate=0.65 if want_error else 0.05)
+        code, r = sample_problem(
+            self.config,
+            want_error=want_error,
+            failure_rate=0.65 if want_error else 0.05,
+            profile="runnability",
+            syntax_errors=True,
+        )
         return Problem(metadata=meta(code, r), answer=r.error or "OK")
 
     def prompt(self, metadata):
@@ -278,6 +447,7 @@ class CodeRunnability(Task):
 
 
 class CodeExecution(Task):
+    summary = "Predict the return value or stdout of executing generated Python code blocks."
     def __init__(self, config=None):
         super().__init__(config=config or MesopyCodeCfg())
 
@@ -312,10 +482,10 @@ class CodeInputDeductionCfg(MesopyCodeCfg):
     alphabet: str = "abc"
     max_attempts: int = 100
 
-    def update(self, c):
-        self.lo -= c
-        self.hi += c
-        self.max_len += c // 2
+    def apply_difficulty(self, level):
+        self.lo = sround(self.lo - level)
+        self.hi = sround(self.hi + level)
+        self.max_len = sround(self.max_len + 0.5 * level)
 
 
 def bounded_strings(alphabet, max_len):
@@ -326,7 +496,8 @@ def bounded_strings(alphabet, max_len):
     ]
 
 
-class CodeInputDeduction(Task):
+class CodeInputDeduction(DevTask):
+    summary = "Deduce the Python function input that yields a target output value or condition."
     def __init__(self, config=None):
         super().__init__(config=config or CodeInputDeductionCfg())
         self._mode_i = 0

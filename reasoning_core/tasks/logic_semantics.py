@@ -140,11 +140,11 @@ class LogicConfig(Config):
     n_adjectives: int = 3
     pronouns: list = field(default_factory=lambda: ["she",'he'])
     bloat_skip_rate:float = 0.90
-    def update(self, c):
-        self.n_formulas *= (1 + c)
-        self.n_names += c
-        self.n_adjectives += c
-        
+    def apply_difficulty(self, level):
+        self.n_formulas *= 2 ** level
+        self.n_names += level
+        self.n_adjectives += level
+
 def get_cot(text):
     lines, memo = [], {}
     for line in text.splitlines():
@@ -184,6 +184,7 @@ def is_bloat(meta, label):
     return rules in bloat_signatures
 
 class LogicNLI(Task):
+    summary = "First-order logic natural language inference via automated theorem proving."
 
     def __init__(self, config=LogicConfig()):
         super().__init__(config=config)
@@ -235,7 +236,7 @@ class LogicNLI(Task):
             if label=="paradox":
                 continue
             if label=="other":
-                print("WARNING","\n".join(proofs))
+                print("WARNING", "\n".join(str(p) for p in proofs))
                 continue
 
             if is_bloat(meta, label):
@@ -245,18 +246,21 @@ class LogicNLI(Task):
             meta.prem, meta.hyp = x.dict(), hyp.dict()
             meta.label = label
             meta.payload = Payload(premise=meta.prem.eng, hypothesis=meta.hyp.eng)
-            mapping = {"entailment": "yes", "contradiction": "no", "neutral": "maybe"}
+            mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
             return Problem(meta, mapping[label])
 
     def prompt(self, meta):
         P = (
             f"{Payload(meta.payload)}\n\n"
-            "Does the premise entail the hypothesis? "
-            "The answer is yes, no, or maybe."
+            "Is the hypothesis true given the premise? "
+            "The answer is Yes, No, or Maybe."
         )
 
         P=verbalize_predicates(P, seed=meta.verbalize_seed)
         return P
+
+    def score_answer(self, answer, entry):
+        return float(str(answer).strip().lower() == str(entry.answer).strip().lower())
 
     def balancing_key(self, problem):
         return problem.answer
@@ -268,7 +272,8 @@ class LogicNLI(Task):
 class EvidenceRetrievalConfig(LogicConfig):
     bloat_skip_rate: float= 0.2
 
-class EvidenceRetrieval(Task):
+class EvidenceRetrieval(DevTask):
+    summary = "Identify minimal necessary premises from logic theories to prove a hypothesis."
     def __init__(self, config=EvidenceRetrievalConfig()):
         super().__init__(config=config)
         self.nli = LogicNLI(config=config)
@@ -292,7 +297,7 @@ class EvidenceRetrieval(Task):
             self.nli.config = self.config
             x = self.nli.generate()
             label = x.metadata.get('label', x.answer)
-            label = {'yes': 'entailment', 'no': 'contradiction', 'maybe': 'neutral'}.get(label, label)
+            label = {'yes': 'entailment', 'no': 'contradiction', 'maybe': 'neutral'}.get(str(label).lower(), label)
             proof = x.metadata.get('proof')
             answer = [i for i in proof.indices if i != 'hyp'] if proof else []
             if label in ('entailment', 'contradiction') and answer and self.compute_necessity(x):
@@ -368,7 +373,8 @@ def _alter_formula(f):
     random.shuffle(ops)
     return ops[0][0], ops[0][1](f)
 
-class LogicFormalization(DevTask):
+class LogicFormalization(Task):
+    summary = "Translate natural language premises into formal first-order logic formulas."
     def __init__(self, config=LogicFormalizationConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.5

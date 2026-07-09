@@ -63,13 +63,13 @@ class GrammarConfig(Config):
     max_blanks: int = 3
     min_options: int = 4
     max_options: int = 25
-    def update(self, c):
-        self.n_types += c
-        self.n_terminals += c
-        self.min_depth += c
-        self.max_depth += c
-        self.prob_resampling_grammar = max(0.0, self.prob_resampling_grammar - 0.1 * c)
-        self.max_tokens += 2*c
+    def apply_difficulty(self, level):
+        self.n_types += level
+        self.n_terminals += level
+        self.min_depth += level
+        self.max_depth += level
+        self.prob_resampling_grammar = max(0.0, self.prob_resampling_grammar - 0.1 * level)
+        self.max_tokens += 2 * level
 
 def meta_grammar(config):
     R=init_grammar(['cfg'])
@@ -466,6 +466,7 @@ def labeled_rules(meta):
 
 
 class ParsingDerivation(Task):
+    summary = "Determine the derivation production rule sequence parsing a given string."
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.perturbation_rate = 0.0
         super().__init__(config=config)
@@ -728,7 +729,8 @@ def _norm_marked(s):
     s = re.sub(r'\s+<<', '<<', s)
     return re.sub(r'\s+', ' ', s)
 
-class LocateError(Task):
+class SyntaxErrorDetection(Task):
+    summary = "Locate syntax errors or grammatical perturbations in generated sentences."
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.perturbation_rate = 0.0
         super().__init__(config=config)
@@ -965,6 +967,7 @@ class ConstrainedContinuation(Task):
     (possibly empty); the model fills blanks so PREFIX + filled-TEMPLATE + SUFFIX
     is grammatical. When the suffix is empty the task is a continuation
     (Dyck-friendly); when non-empty it is a cloze (works on linear grammars too)."""
+    summary = "Fill in blank tokens within a grammar-constrained sentence with prefix/suffix context."
 
     def __init__(self, config: GrammarConfig = GrammarConfig()):
         config.prob_resampling_grammar = 0.0  # needed for speed
@@ -1097,9 +1100,9 @@ class StressContinuationConfig(Config):
     n_types: int = 3
     window: int = 4
     max_answer: int = 8
-    def update(self, c):
-        self.depth += c
-        self.n_types = min(6, self.n_types + c)
+    def apply_difficulty(self, level):
+        self.depth += level
+        self.n_types = min(6, self.n_types + level)
 
 def _typed_dyck(n_types):
     pairs = [("(", ")"), ("[", "]"), ("<", ">"), ("{", "}"),
@@ -1345,10 +1348,10 @@ class StressConstrainedContinuationConfig(Config):
     min_cont: int = 2
     max_cont: int = 12
     dyck_weight: float = 0.34   # favor word grammars (agreement/filler_gap) over bracket-heavy dyck
-    def update(self, c):
-        self.depth += c
-        self.n_types = min(6, self.n_types + c)
-        self.max_cont = min(20, self.max_cont + 2 * c)
+    def apply_difficulty(self, level):
+        self.depth += level
+        self.n_types = min(6, self.n_types + level)
+        self.max_cont = min(20, self.max_cont + 2 * level)
 
 class StressConstrainedContinuation(DevTask):
     def __init__(self, config: StressConstrainedContinuationConfig = StressConstrainedContinuationConfig()):

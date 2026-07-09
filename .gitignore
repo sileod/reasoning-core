@@ -46,6 +46,7 @@ mypy_primer_deps/
 
 # pytest
 .pytest_cache/
+.hypothesis/
 
 # Sphinx documentation
 docs/_build/
@@ -74,6 +75,9 @@ upload_state/
 per_task_results/*.json
 per_task_results/*.jsonl
 per_task_results/*.log
+per_task_results/**/*.json
+per_task_results/**/*.jsonl
+per_task_results/**/*.log
 per_task_results_rgym/*.json
 per_task_results_rgym/*.jsonl
 per_task_results_rgym/*.log
@@ -107,3 +111,6 @@ reasoning_core/tasks/code_additional.py
 reasoning_core/tasks/code_additional.py.backup
 reasoning_core/tasks/part_1.py
 test_code_execution.py
+
+# task_diagnostics: keep the RESULTS markdown in git, not the regenerable raw json
+task_diagnostics/*.json

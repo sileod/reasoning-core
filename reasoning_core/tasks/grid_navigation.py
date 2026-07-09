@@ -11,7 +11,7 @@ from reasoning_core.template import Task, Payload, Problem, Config, edict
 
 
 @dataclass
-class NavigationConfig(Config):
+class GridNavigationConfig(Config):
     n_objects: int = 3
     grid: int = 4
     n_steps: int = 1
@@ -19,11 +19,11 @@ class NavigationConfig(Config):
     n_rel: int = 6
     max_tries: int = 80
 
-    def update(self, c=1):
-        self.n_objects += 1 * c
-        self.grid += 1 * c
-        self.n_steps += 1 * c
-        self.n_rel += 1 * c
+    def apply_difficulty(self, level):
+        self.n_objects += level
+        self.grid += level
+        self.n_steps += level
+        self.n_rel += level
 
 
 DELTAS = [
@@ -262,9 +262,10 @@ def pick_query(rng, solver, gv, names, final, query_names=None):
 
 
 
-class Navigation(Task):
+class GridNavigation(Task):
+    summary = "Infer object grid coordinates from spatial relations and step actions."
 
-    def __init__(self, config=NavigationConfig()):
+    def __init__(self, config=GridNavigationConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
 
