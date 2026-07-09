@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 import inflect
 from dataclasses import dataclass
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Problem, Config, stochastic_rounding as sround
 import itertools
 import string
 from ast import literal_eval
@@ -87,8 +87,11 @@ class SetMissingElementConfig(SetOpsConfig):
     set_size: int = 10
     prob_no_missing: float = 0.1
     def apply_difficulty(self, level):
-        self.set_size *= 2 ** level
-        self.domain_size *= 2 ** level
+        # 2**level exploded set_size to 160 / domain to huge at L4 (~1080 tok): prompt-length tax made this a
+        # net-hurter (global -0.29) despite a real bbh gain. Moderate 1.5**level ramp cuts the tax and flips it
+        # to a helper (global +0.34, reward 0.63 non-trivial). Validated 2026-07-09 (RESCALE_AB_OLMO1B).
+        self.set_size = sround(6 * 1.5 ** level)
+        self.domain_size = sround(200 * 1.5 ** level)
         self.n_domains += level
 
 class SetMissingElement(Task):
@@ -494,8 +497,11 @@ class SetExpressionConfig(Config):
     list_dup_prob: float = 0.35
 
     def apply_difficulty(self, level):
-        self.set_size *= 2 ** level
-        self.domain_size *= 2 ** level
+        # 2**level exploded set_size to 128 at L4 (~1170 tok) — length tax trimmed the transfer. Moderate
+        # 1.5**level ramp on set_size/domain (KEEP max_depth+level, the real nesting-difficulty lever) cuts the
+        # tax: global +2.06 -> +2.35, bbh +8.7, reward 0.68 non-trivial. Validated 2026-07-09 (RESCALE_AB_OLMO1B).
+        self.set_size = sround(6 * 1.5 ** level)
+        self.domain_size = sround(32 * 1.5 ** level)
         self.n_domains += level
         self.max_depth += level
 

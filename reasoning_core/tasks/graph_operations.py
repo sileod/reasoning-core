@@ -15,7 +15,11 @@ class GraphReasoningConfig(Config):
     weight_min: int = 1
     weight_max: int = 9
     def apply_difficulty(self, level):
-        self.num_nodes *= 2 ** level
+        # 2**level exploded to 96 nodes at L4 (~1200 tok) making graph_pathfinding a net-hurter via prompt-
+        # length tax under answer-only training (global -0.52, mbpp -1.68). A moderate 1.5**level ramp (->30
+        # nodes) cuts the tax and flips it to a helper (global +0.95, bbh gain +3.5 preserved, reward 0.86
+        # non-trivial). Validated 2026-07-09 (RESCALE_AB_OLMO1B).
+        self.num_nodes = sround(6 * 1.5 ** level)
 
 _GRAPH_GENERATORS = [
     (nx.fast_gnp_random_graph, {'p': (0.15, 0.4)}),

@@ -26,9 +26,14 @@ class TableQAConfig(Config):
     num_columns: int = 2
     num_tables: int = 1
     def apply_difficulty(self, level):
-        self.num_rows = sround(self.num_rows * (2 ** level))
-        self.num_columns = sround(self.num_columns + level)
-        self.num_tables = sround(min(self.num_tables + level, 2))
+        # Keep the TABLE small. The old ramp (rows*2**level, +level cols, up to 2 shards) exploded the prompt
+        # to ~5k tok at L4 and made this a net-hurter via prompt-length tax under answer-only training
+        # (global -1.98 / bbh -3.01). Shrinking the table to ~600 tok at L4 flips influence to neutral
+        # (global -0.20 / bbh +0.80), confirming prompt length was the driver. Validated 2026-07-09
+        # (REEVAL_TQSHRINK_OLMO1B). Query complexity is the length-safe lever to add difficulty later.
+        self.num_rows = 4 + 2 * level              # 4, 6, 8, 10, 12
+        self.num_columns = min(3 + level, 6)       # 3, 4, 5, 6, 6
+        self.num_tables = 1                        # never shard
 
 
 @dataclass
