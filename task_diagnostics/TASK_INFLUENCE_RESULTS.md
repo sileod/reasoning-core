@@ -1,72 +1,64 @@
 # Task Influence
 
-Updated: 2026-07-01 10:57 UTC
+Updated: 2026-07-09 10:22 UTC
 
-Lower delta means the task reduced held-out loss versus the baseline. `influence_score` is the weighted mean of `-delta`, so positive means the task helped on the weighted targets. Default target weights: bbh=1, dolci=1, flan=0, fw=1
+Per-task influence on **SmolLM2-135M** (base). Each auxiliary task is mixed at 20% into an 80% FineWeb-Edu + dolci training run (300 steps, answer-only loss, seed 43) and we measure the change in held-out NLL on six target legs versus a task-free baseline.
 
-Profile: `dolci`.
+Each leg value is the **% NLL reduction** on that leg — **positive means the task helped** (lowered held-out loss). `global` is the mean over the six legs. mmlu legs use the cloze (no-letter) format for format-fairness. `acc` is the diagnostic free-generation reward (start→end), not part of the score.
 
-Influence files: 2. Saturation files: 2. Contrastive influence files: 0. Local task checks: 0/51 ok.
+Source: reasoning-core/staging @8aa8748 · 50 tasks · answer-only · S43 T300 M20.
 
-Saturation accuracy is diagnostic and is not part of the score.
+## Ranking (higher `global` = more useful auxiliary task)
 
-## Ranking
-
-Arrows mark the good direction: `score ↑` (higher = better helper); the deltas `↓` (lower = reduced held-out loss = helped). `tok` = prompt/answer tokens, `acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.
-
-| # | task | score ↑ | dolci ↓ | bbh ↓ | fw ↓ | tok | acc | hash |
-|---|---|---|---|---|---|---|---|---|
-| 1 | game_forced_win | +0.15 | -0.0017 | -0.460 | -0.0019 |  | 0.00→0.78 | ebd1ce6 |
-| 2 | planar_geometry_relations | +0.14 | -0.0028 | -0.422 | -0.0003 |  | 0.29→0.71 | f8127b7 |
-| 3 | multistep_nli | +0.14 | -0.0032 | -0.410 | +0.0016 |  | 0.00→0.70 | 3cd7ee8 |
-| 4 | logic_nli | +0.13 | -0.0005 | -0.401 | +0.0023 |  | 0.00→0.56 | 4b77c86 |
-| 5 | metamath_core_select | +0.13 | -0.0002 | -0.389 | -0.0021 |  | 0.00→0.64 | 3ceb928 |
-| 6 | tptp_consistency_repair | +0.12 | -0.0004 | -0.355 | +0.0002 |  | 0.06→0.62 | fec294d |
-| 7 | qualitative_reasoning | +0.11 | -0.0026 | -0.340 | +0.0009 |  | 0.20→0.69 | dfb4735 |
-| 8 | regex_reasoning | +0.11 | -0.0006 | -0.323 | +0.0012 |  | 0.01→0.21 | 6230448 |
-| 9 | game_best_move | +0.11 | -0.0025 | -0.313 | +0.0002 |  | 0.01→0.86 | ebd1ce6 |
-| 10 | count_elements | +0.10 | -0.0018 | -0.314 | +0.0029 |  | 0.00→0.59 | 657c1f4 |
-| 11 | math_word_problem | +0.10 | -0.0015 | -0.310 | +0.0009 |  | 0.02→0.27 | 598d63b |
-| 12 | tptp_entailment | +0.10 | -0.0027 | -0.302 | +0.0022 |  | 0.00→0.66 | fec294d |
-| 13 | multistep_abduction | +0.10 | -0.0035 | -0.297 | +0.0010 |  | 0.00→0.55 | 3cd7ee8 |
-| 14 | coreference | +0.10 | -0.0022 | -0.300 | +0.0027 |  | 0.21→0.73 | 0041bfe |
-| 15 | reference_tracking | +0.10 | -0.0013 | -0.290 | -0.0023 |  | 0.11→0.78 | a9e1b0e |
-| 16 | logic_formalization | +0.10 | +0.0030 | -0.296 | +0.0002 |  | 0.00→0.75 | 4b77c86 |
-| 17 | navigation | +0.09 | -0.0014 | -0.284 | +0.0018 |  | 0.30→0.78 | 0dc49fa |
-| 18 | metamath_entailment | +0.09 | -0.0014 | -0.275 | +0.0007 |  | 0.00→0.80 | 3ceb928 |
-| 19 | logic_qa | +0.09 | -0.0020 | -0.274 | +0.0014 |  | 0.28→0.81 | 3cd7ee8 |
-| 20 | graph_successors | +0.09 | -0.0004 | -0.270 | -0.0008 |  | 0.00→0.59 | 9b2bff9 |
-| 21 | constrained_continuation | +0.09 | -0.0014 | -0.264 | -0.0010 |  | 0.21→0.47 | efadf80 |
-| 22 | most_probable_outcome | +0.09 | -0.0002 | -0.260 | -0.0015 |  | 0.00→0.20 | 5cbfb53 |
-| 23 | constraint_satisfaction | +0.09 | -0.0015 | -0.260 | +0.0027 |  | 0.42→0.59 | c7a3b3f |
-| 24 | evidence_retrieval | +0.08 | -0.0006 | -0.255 | +0.0012 |  | 0.06→0.54 | 4b77c86 |
-| 25 | most_probable_evidence | +0.08 | +0.0001 | -0.253 | -0.0007 |  | 0.17→0.75 | 5cbfb53 |
-| 26 | equation_system | +0.08 | -0.0016 | -0.250 | -0.0002 |  | 0.14→0.50 | 78d5fb6 |
-| 27 | lean_candidate_compilation | +0.08 | +0.0005 | -0.248 | +0.0025 |  | 0.00→0.78 | 58e7849 |
-| 28 | graph_dependencies | +0.08 | -0.0001 | -0.245 | +0.0003 |  | 0.25→0.45 | 9b2bff9 |
-| 29 | rocq_compute_nf | +0.08 | -0.0011 | -0.239 | +0.0004 |  | 0.33→0.66 | c31cf78 |
-| 30 | lean_missing_proof_line_selection | +0.08 | -0.0017 | -0.227 | -0.0006 |  | 0.00→0.54 | 58e7849 |
-| 31 | rewrite_system | +0.08 | -0.0035 | -0.226 | +0.0005 |  | 0.59→0.76 | da07454 |
-| 32 | regex_induction | +0.07 | -0.0014 | -0.216 | -0.0022 |  | 0.07→0.46 | 6230448 |
-| 33 | regex_following | +0.07 | -0.0004 | -0.219 | +0.0013 |  | 0.03→0.05 | 6230448 |
-| 34 | table_equivalence | +0.07 | +0.0050 | -0.222 | -0.0011 |  | 0.00→0.72 | 830dbc7 |
-| 35 | locate_error | +0.07 | -0.0032 | -0.213 | +0.0028 |  | 0.09→0.44 | efadf80 |
-| 36 | parsing_derivation | +0.07 | +0.0002 | -0.212 | +0.0008 |  | 0.51→0.66 | efadf80 |
-| 37 | code_runnability | +0.07 | -0.0010 | -0.208 | +0.0009 |  | 0.10→0.72 | 83ade9e |
-| 38 | analogical_case_retrieval | +0.07 | +0.0056 | -0.207 | -0.0032 |  | 0.63→0.78 | 7b5d425 |
-| 39 | arithmetics | +0.07 | -0.0013 | -0.202 | +0.0015 |  | 0.15→0.32 | 598d63b |
-| 40 | graph_pathfinding | +0.07 | +0.0021 | -0.203 | -0.0001 |  | 0.22→0.68 | 9b2bff9 |
-| 41 | lambda_reduction | +0.06 | -0.0007 | -0.194 | +0.0022 |  | 0.51→0.63 | da07454 |
-| 42 | code_execution | +0.06 | -0.0013 | -0.182 | -0.0009 |  | 0.19→0.56 | 83ade9e |
-| 43 | set_expression | +0.06 | +0.0022 | -0.184 | -0.0008 |  | 0.63→0.74 | 657c1f4 |
-| 44 | table_qa | +0.06 | +0.0009 | -0.183 | +0.0003 |  | 0.42→0.65 | 830dbc7 |
-| 45 | string_transduction | +0.05 | -0.0002 | -0.160 | +0.0002 |  | 0.09→0.19 | 5dcd3d2 |
-| 46 | sequential_induction | +0.05 | -0.0014 | -0.149 | -0.0019 |  | 0.42→0.65 | a679ad1 |
-| 47 | table_statistics | +0.05 | +0.0058 | -0.153 | -0.0043 |  | 0.20→0.41 | 830dbc7 |
-| 48 | planning | +0.05 | -0.0005 | -0.149 | -0.0014 |  | 0.61→0.83 | 605ba89 |
-| 49 | set_missing_element | +0.05 | +0.0007 | -0.148 | -0.0016 |  | 0.58→0.77 | 657c1f4 |
-| 50 | multistep_evidence_retrieval | +0.04 | -0.0005 | -0.132 | -0.0020 |  | 0.42→0.88 | 3cd7ee8 |
-| 51 | code_input_deduction | +0.02 | +0.0005 | -0.075 | +0.0003 |  | 0.00→0.71 | 83ade9e |
-
-_Inputs: 2 influence + 2 saturation result file(s). Full per-target detail and diagnostics in the JSON sidecar._
-
+| # | task | global | bbh | mmlu_math | mmlu_logic | mbpp | fw | dolci | acc | hash |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | planar_geometry_relations | **+4.30** | +9.37 | +11.34 | +4.45 | +0.57 | -0.00 | +0.05 | 0.00→0.20 | 55aa7d4 |
+| 2 | logic_qa | **+4.21** | +7.86 | +12.79 | +4.01 | +0.59 | -0.03 | +0.07 | 0.00→0.80 | 8da17d7 |
+| 3 | math_word_problem | **+4.05** | +7.65 | +13.80 | +2.25 | +0.60 | -0.04 | +0.03 | 0.00→0.00 | 3be023e |
+| 4 | constraint_satisfaction | **+3.99** | +6.78 | +12.70 | +3.91 | +0.48 | -0.02 | +0.08 | 0.00→0.00 | cdf0128 |
+| 5 | qualitative_reasoning | **+3.71** | +7.42 | +9.93 | +4.17 | +0.65 | -0.00 | +0.08 | 0.00→0.04 | d35670f |
+| 6 | equation_system | **+3.61** | +5.72 | +12.60 | +2.70 | +0.63 | +0.00 | +0.01 | 0.00→0.00 | a057bca |
+| 7 | defeasible_nli | **+3.60** | +11.49 | +5.39 | +4.25 | +0.49 | -0.01 | +0.00 | 0.00→0.40 | 8da17d7 |
+| 8 | qualitative_causal_reasoning | **+3.48** | +8.51 | +7.82 | +3.52 | +0.99 | -0.02 | +0.06 | 0.00→0.48 | eac479f |
+| 9 | arithmetics | **+3.47** | +5.46 | +12.27 | +2.31 | +0.67 | -0.00 | +0.09 | 0.00→0.00 | 3be023e |
+| 10 | unification_entailment | **+3.40** | +8.42 | +8.01 | +3.60 | +0.41 | -0.00 | -0.05 | 0.00→0.04 | fc54d11 |
+| 11 | graph_dependencies | **+3.32** | +5.71 | +10.61 | +3.11 | +0.48 | -0.01 | +0.02 | 0.00→0.00 | 5f312b5 |
+| 12 | game_forced_win | **+3.28** | +10.03 | +6.29 | +2.30 | +0.93 | -0.01 | +0.13 | 0.00→0.48 | 5bd8bd3 |
+| 13 | multistep_abduction | **+3.22** | +5.25 | +11.10 | +2.71 | +0.31 | +0.01 | -0.08 | 0.00→0.00 | 8da17d7 |
+| 14 | regex_reasoning | **+3.21** | +8.69 | +7.14 | +2.72 | +0.72 | -0.02 | +0.00 | 0.00→0.20 | d0ed155 |
+| 15 | multistep_nli | **+3.15** | +9.52 | +5.78 | +3.49 | +0.20 | +0.01 | -0.08 | 0.00→0.44 | 8da17d7 |
+| 16 | grid_navigation | **+3.03** | +6.46 | +8.37 | +2.89 | +0.43 | -0.01 | +0.07 | 0.00→0.24 | f099346 |
+| 17 | coreference | **+2.97** | +6.12 | +7.27 | +3.99 | +0.43 | -0.03 | +0.03 | 0.00→0.08 | ff39281 |
+| 18 | most_probable_evidence | **+2.94** | +6.04 | +8.87 | +2.38 | +0.39 | +0.01 | -0.08 | 0.00→0.20 | 11dc547 |
+| 19 | game_best_move | **+2.93** | +6.52 | +7.14 | +2.85 | +1.02 | -0.02 | +0.09 | 0.00→0.52 | 5bd8bd3 |
+| 20 | sequential_induction | **+2.93** | +3.72 | +9.73 | +3.18 | +0.81 | -0.02 | +0.15 | 0.00→0.00 | 1d6aa9f |
+| 21 | belief_tracking | **+2.91** | +6.80 | +6.67 | +3.05 | +0.97 | -0.01 | -0.03 | 0.00→0.28 | 884048f |
+| 22 | most_probable_outcome | **+2.88** | +7.81 | +6.28 | +2.54 | +0.58 | -0.01 | +0.05 | 0.00→0.08 | 11dc547 |
+| 23 | graph_successors | **+2.81** | +4.79 | +9.00 | +2.57 | +0.45 | +0.02 | +0.00 | 0.00→0.06 | 5f312b5 |
+| 24 | code_analysis | **+2.77** | +6.38 | +6.56 | +2.87 | +0.74 | +0.00 | +0.06 | 0.00→0.20 | a68fffe |
+| 25 | analogical_case_matching | **+2.76** | +7.03 | +6.80 | +3.44 | -0.27 | -0.04 | -0.41 | 0.00→0.25 | 6c704be |
+| 26 | lean_candidate_compilation | **+2.60** | +6.20 | +5.81 | +3.25 | +0.37 | -0.02 | +0.02 | 0.00→0.60 | 0461311 |
+| 27 | logic_nli | **+2.60** | +7.99 | +4.81 | +2.80 | +0.19 | -0.00 | -0.19 | 0.00→0.33 | 93312bc |
+| 28 | reference_tracking | **+2.58** | +6.30 | +6.30 | +2.32 | +0.61 | -0.02 | -0.01 | 0.28→0.36 | f6ca7cb |
+| 29 | rewrite_system | **+2.58** | +4.55 | +6.17 | +3.42 | +1.32 | -0.00 | +0.02 | 0.00→0.04 | fc54d11 |
+| 30 | multistep_evidence_retrieval | **+2.56** | +4.19 | +9.11 | +2.17 | +0.05 | -0.03 | -0.14 | 0.00→0.00 | 8da17d7 |
+| 31 | constrained_continuation | **+2.52** | +5.85 | +4.82 | +3.44 | +0.94 | -0.03 | +0.12 | 0.00→0.00 | eb549a8 |
+| 32 | metamath_core_select | **+2.49** | +8.83 | +4.09 | +1.97 | +0.14 | +0.00 | -0.11 | 0.04→0.17 | 2e016be |
+| 33 | string_transduction | **+2.46** | +4.35 | +6.97 | +2.75 | +0.73 | -0.02 | +0.00 | 0.00→0.00 | 799e762 |
+| 34 | parsing_derivation | **+2.38** | +5.10 | +5.35 | +3.19 | +0.68 | -0.02 | -0.01 | 0.00→0.00 | eb549a8 |
+| 35 | metamath_entailment | **+2.23** | +5.64 | +4.80 | +2.87 | +0.21 | -0.01 | -0.11 | 0.00→0.62 | 2e016be |
+| 36 | code_execution | **+2.21** | +3.95 | +6.98 | +1.89 | +0.47 | +0.01 | -0.06 | 0.01→0.03 | 6ab47de |
+| 37 | lambda_reduction | **+2.19** | +3.95 | +5.05 | +3.35 | +0.83 | -0.01 | -0.05 | 0.00→0.00 | fc54d11 |
+| 38 | lean_missing_line | **+2.04** | +5.34 | +5.05 | +1.65 | +0.23 | +0.01 | -0.03 | 0.00→0.00 | 0461311 |
+| 39 | graph_pathfinding | **+1.81** | +3.50 | +6.26 | +1.62 | -0.09 | -0.02 | -0.38 | 0.12→0.12 | 5f312b5 |
+| 40 | logic_formalization | **+1.80** | +5.49 | +3.36 | +2.00 | +0.28 | -0.02 | -0.29 | 0.00→0.08 | 93312bc |
+| 41 | regex_following | **+1.79** | +4.48 | +4.14 | +1.58 | +0.59 | -0.02 | -0.01 | 0.01→0.02 | d0ed155 |
+| 42 | code_runnability | **+1.65** | +4.12 | +2.94 | +2.21 | +0.69 | -0.00 | -0.06 | 0.00→0.00 | 6ab47de |
+| 43 | syntax_error_detection | **+1.61** | +4.39 | +2.40 | +2.12 | +0.68 | -0.02 | +0.08 | 0.00→0.00 | eb549a8 |
+| 44 | set_missing_element | **+1.33** | +2.59 | +3.79 | +1.46 | +0.36 | -0.02 | -0.22 | 0.00→0.00 | 9c19246 |
+| 45 | planning | **+1.12** | +2.97 | +1.77 | +1.19 | +0.86 | +0.00 | -0.04 | 0.00→0.10 | 8d57074 |
+| 46 | table_qa | **+1.09** | +1.85 | +4.51 | +0.74 | -0.08 | -0.04 | -0.44 | 0.00→0.00 | 37e73b5 |
+| 47 | set_expression | **+1.00** | +2.04 | +3.62 | +0.90 | -0.12 | -0.02 | -0.41 | 0.00→0.00 | 9c19246 |
+| 48 | program_synthesis | **+0.85** | +0.74 | +0.86 | +0.82 | +2.84 | +0.02 | -0.16 |  | 95c16a3 |
+| 49 | table_statistics | **+0.60** | +1.13 | +2.60 | +0.75 | -0.32 | -0.04 | -0.52 | 0.00→0.00 | 37e73b5 |
+| 50 | table_equivalence | **+0.41** | +2.31 | +0.55 | +0.44 | -0.22 | -0.04 | -0.58 | 0.00→0.00 | 37e73b5 |
