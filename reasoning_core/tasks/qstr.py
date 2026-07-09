@@ -4,7 +4,7 @@ from itertools import product
 from collections import defaultdict, deque
 from z3 import Distinct, Int, Solver, sat
 
-from reasoning_core.template import Task, Problem, Config, edict, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, edict, stochastic_rounding as sround
 
 # ---- Core types ---------------------------------------------------------
 
@@ -308,7 +308,7 @@ class QualitativeReasoning(Task):
     def __init__(self, config=None):
         super().__init__(config=config or QualitativeReasoningConfig())
 
-    def generate(self):
+    def generate_entry(self):
         if random.random() < self.config.ordinal_prob:
             return self._ordinal_problem()
         for _ in range(80):
@@ -388,7 +388,7 @@ class QualitativeReasoning(Task):
 
         from_oldest = random.random() < 0.5
         k = n - query_rank if from_oldest else query_rank + 1
-        return Problem(
+        return Entry(
             metadata=edict(
                 family="ordinal", n_entities=n, entities=entities,
                 clues=clues, clue_text=[_rank_text(c) for c in clues],
@@ -463,9 +463,9 @@ class QualitativeReasoning(Task):
             question=f"What is {phrasing.format(i=qi, j=qj)}?",
             answer_instruction=f"The answer is exactly one of: {', '.join(vocab)}.",
         )
-        return Problem(metadata=metadata, answer=label(gt[qi, qj]))
+        return Entry(metadata=metadata, answer=label(gt[qi, qj]))
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         facts = "\n".join(f"- {x}" for x in metadata.facts)
         return (
             f"{metadata.intro}\n"

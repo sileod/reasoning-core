@@ -12,7 +12,7 @@ from pyggp import game_description_language as gdl
 from pyggp.engine_primitives import Turn
 from pyggp.interpreters import ClingoInterpreter, Interpreter
 
-from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
 @dataclass
@@ -228,16 +228,16 @@ class GameBestMove(_SmallGraphGame, Task):
     def __init__(self, config=GameBestMoveConfig()):
         super().__init__(config=config)
 
-    def generate(self):
+    def generate_entry(self):
         for position in self._sample_position():
             if len(set(position.move_scores.values())) < 2:
                 continue
             if list(position.move_scores.values()).count(position.score) > 1:
                 continue
-            return Problem(metadata=self._metadata(position), answer=position.answer)
+            return Entry(metadata=self._metadata(position), answer=position.answer)
         raise RuntimeError("Could not sample a non-degenerate game position")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "In this graph game, choose player's best move. "
             "Player chooses on player turns; opponent chooses on opponent turns. "
@@ -256,7 +256,7 @@ class GameForcedWin(_SmallGraphGame, Task):
     def __init__(self, config=GameBestMoveConfig()):
         super().__init__(config=config)
 
-    def generate(self):
+    def generate_entry(self):
         desired = random.choice((True, False))
         fallback = None
         for position in self._sample_position():
@@ -264,15 +264,15 @@ class GameForcedWin(_SmallGraphGame, Task):
                 continue
             answer = "yes" if position.score > 50 else "no"
             if (answer == "yes") == desired:
-                return Problem(metadata=self._metadata(position), answer=answer)
+                return Entry(metadata=self._metadata(position), answer=answer)
             if fallback is None:
                 fallback = (position, answer)
         if fallback is not None:
             position, answer = fallback
-            return Problem(metadata=self._metadata(position), answer=answer)
+            return Entry(metadata=self._metadata(position), answer=answer)
         raise RuntimeError("Could not sample a non-degenerate forced-win position")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "In this graph game, decide whether player can force a win. "
             "Player chooses on player turns; opponent chooses on opponent turns. "

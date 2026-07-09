@@ -8,7 +8,7 @@ from collections import defaultdict
 from copy import deepcopy as dc
 
 
-from reasoning_core.template import Task, Problem, Config, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, stochastic_rounding as sround
 
 
 # ----cfg for formulas---- 📋
@@ -201,7 +201,7 @@ class SequentialInduction(Task):
         return convert_to_sympy(prod, self.config.recurrence_depth)
 
     
-    def generate(self) -> Problem:
+    def generate_entry(self) -> Entry:
         formula = self.one_shot_sympy_generate()
         S = Sequence(formula)
         while not all([ self.filters[i](S) for i in range(len(self.filters)) ]): #keep generating until the sequence fulfill all requirements (filters)
@@ -209,7 +209,7 @@ class SequentialInduction(Task):
             S = Sequence(formula)
         data = {"first elements" : S.n_first_elem(self.config.n_visible_terms), "degree of recursion" : S.degree, "initial terms" : S.first_elem}
         answer = format_additive_normal_form(formula)
-        return Problem(metadata = data, answer = answer)
+        return Entry(metadata = data, answer = answer)
 
     def verify(self, y_pred, y_truth, initial_element = None) -> bool:
         """ Check if the guessed formula match with the true one (for the n_visible term)"""
@@ -266,7 +266,7 @@ class SequentialInduction(Task):
         return final_score
 
         
-    def prompt(self, metadata) -> str:
+    def render_prompt(self, metadata) -> str:
         """Build a concise prompt for inferring a recurrence from first terms."""
         d = metadata["degree of recursion"]
         ops = "+, -, *, **"

@@ -7,7 +7,7 @@ from nltk.parse.generate import generate as nltk_generate
 from nltk import CFG, ChartParser
 from nltk.parse.earleychart import EarleyChartParser
 import sys
-from reasoning_core.template import Task, DevTask, Problem, Config
+from reasoning_core.template import Task, DevTask, Entry, Config
 import random
 from pathlib import Path
 from nltk.data import path as nltk_path
@@ -389,12 +389,12 @@ class Parsability(DevTask):
         super().__init__(config=config)
         self.balancing_key_ratio=1/3
 
-    def generate(self):
+    def generate_entry(self):
         meta = generate_parse(self.config)
         del meta['parses'] #can blow up_
-        return Problem(meta, meta.label)
+        return Entry(meta, meta.label)
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         g, tokens = meta.g, meta.tokens
         return (
             f"(GRAMMAR)\n{g}\n\n"
@@ -409,7 +409,7 @@ class Parsing(DevTask):
         config.perturbation_rate = 0.0
         super().__init__(config=config)
 
-    def generate(self):
+    def generate_entry(self):
         while True:
             meta = generate_parse(self.config)
             if meta.label != 'unambiguous': continue
@@ -427,13 +427,13 @@ class Parsing(DevTask):
                     pos = t[idx[:-1]].label() # Parent label
                     depth = len(idx)          # Distance from root
                     leaves.append(f"{token}<{pos}:{depth}>")
-                return Problem(meta, " ".join(leaves))
+                return Entry(meta, " ".join(leaves))
             else:
                 meta.mode = 'parsing'
                 tree_str = " ".join(str(t).split())
-                return Problem(meta, tree_str)
+                return Entry(meta, tree_str)
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         g, tokens = meta.g, meta.tokens
         head = f"(GRAMMAR)\n{g}\n\n(STRING)\n{' '.join(tokens)}\n\n(QUESTION)\n"
         
@@ -471,7 +471,7 @@ class ParsingDerivation(Task):
         config.perturbation_rate = 0.0
         super().__init__(config=config)
 
-    def generate(self):
+    def generate_entry(self):
         while True:
             meta = generate_parse(self.config)
             if meta.label != "unambiguous" or len(meta.parses) != 1:
@@ -483,9 +483,9 @@ class ParsingDerivation(Task):
                 continue
             meta.pop("parses", None)
             meta.pop("cot", None)
-            return Problem(meta, answer)
+            return Entry(meta, answer)
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         g, _ = labeled_rules(meta)
         return (
             f"(GRAMMAR)\n{g}\n\n"
@@ -495,8 +495,11 @@ class ParsingDerivation(Task):
         )
 
     def score_answer(self, answer, entry):
-        labels = re.findall(r"\bR\d+\b", str(answer))
-        return float(" ".join(labels) == entry["answer"])
+        pred = re.findall(r"\bR\d+\b", str(answer))
+        gold = entry["answer"].split()
+        # token-level edit-distance similarity (each R# is one token): partial credit
+        # for near-correct derivations instead of all-or-nothing exact match.
+        return Levenshtein.normalized_similarity(pred, gold)
 
 
 
@@ -571,7 +574,7 @@ class Continuation(DevTask):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.1
         
-    def generate(self):
+    def generate_entry(self):
         for _ in range(100):
             with resampled_grammar(self.config, productive_only=True) as g:
                 try:
@@ -626,14 +629,14 @@ class Continuation(DevTask):
                 
                 cot = _build_cot(tokens, can_stop, justifications)
                 
-                return Problem(
+                return Entry(
                     edict(g="\n".join(str(p) for p in g.productions()), 
                           prefix=prefix, depth=len(prefix), cot=cot),
                     answer
                 )
         raise ValueError("Failed to generate continuation after 100 attempts")
     
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         pfx = ' '.join(meta.prefix) if meta.prefix else '<empty>'
         return (f"List valid next tokens for this prefix. "
                 f"The answer is the valid tokens sorted alphabetically and separated by |, with STOP at the end if the prefix forms a complete string.\n"
@@ -735,7 +738,7 @@ class SyntaxErrorDetection(Task):
         config.perturbation_rate = 0.0
         super().__init__(config=config)
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(100):
             with resampled_grammar(self.config, productive_only=True) as g:
                 if len(grammar_terminals(g)) < 2:
@@ -769,14 +772,14 @@ class SyntaxErrorDetection(Task):
                     except ValueError:
                         continue
 
-                return Problem(
+                return Entry(
                     edict(g="\n".join(str(p) for p in g.productions()),
                           tokens=out, error_index=idx, cot=cot),
                     ans
                 )
         raise ValueError("Failed to generate locate-error task")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         return (
             f"(GRAMMAR)\n{meta.g}\n\n"
             f"(STRING)\n{' '.join(meta.tokens)}\n\n"
@@ -975,7 +978,7 @@ class ConstrainedContinuation(Task):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(200):
             with resampled_grammar(self.config, productive_only=True) as g:
                 try:
@@ -1016,7 +1019,7 @@ class ConstrainedContinuation(Task):
                     target, hints = result
                     blanks = sorted(set(range(k)) - set(hints.keys()))
 
-                    return Problem(
+                    return Entry(
                         edict(
                             g="\n".join(str(p) for p in g.productions()),
                             k=k,
@@ -1034,7 +1037,7 @@ class ConstrainedContinuation(Task):
 
         raise ValueError("Failed to generate constrained continuation after 200 attempts")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         pfx = " ".join(meta.prefix) if meta.prefix else "<empty>"
         sfx = " ".join(meta.suffix) if meta.get("suffix") else "<empty>"
         nb = meta.n_blanks
@@ -1289,7 +1292,7 @@ class StressContinuation(DevTask):
         self._analysis = {name: _analyze(g) for name, g in self._sources.items()}
         self.bank = defaultdict(list)
 
-    def generate(self):
+    def generate_entry(self):
         names = list(self._sources)
         k = self.config.window
         for _ in range(200):
@@ -1308,10 +1311,10 @@ class StressContinuation(DevTask):
                          depth=depth, lhs=m["lhs"], feature=m["R"],
                          answer_size=len(answer), window=" ".join(prefix[-k:]),
                          suffix_flip=True)
-            return Problem(meta, "|".join(sorted(answer)))
+            return Entry(meta, "|".join(sorted(answer)))
         raise ValueError("Failed to generate StressContinuation case after 200 attempts")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         pfx = " ".join(meta.prefix) if meta.prefix else "<empty>"
         return (
             "Given this projected CFG and prefix, list every terminal that may legally come next.\n"
@@ -1360,7 +1363,7 @@ class StressConstrainedContinuation(DevTask):
         self._analysis = {name: _analyze(g) for name, g in self._sources.items()}
         self.balancing_key_ratio = 0.34
 
-    def generate(self):
+    def generate_entry(self):
         names = list(self._sources)
         weights = [self.config.dyck_weight if n == "dyck" else 1.0 for n in names]
         for _ in range(300):
@@ -1394,10 +1397,10 @@ class StressConstrainedContinuation(DevTask):
             meta = edict(g=_render_rules(g), source=name, prefix=prefix,
                          depth=depth, full_len=len(full), cont_len=len(cont),
                          lhs=str(start), feature=str(R))
-            return Problem(meta, " ".join(cont))
+            return Entry(meta, " ".join(cont))
         raise ValueError("Failed to generate StressConstrainedContinuation after 300 attempts")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         pfx = " ".join(meta.prefix) if meta.prefix else "<empty>"
         return (
             "Given this CFG and a prefix from a deep derivation, continue it: provide terminals that, "

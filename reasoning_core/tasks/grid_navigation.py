@@ -7,7 +7,7 @@ from itertools import combinations
 
 from z3 import Int, Solver, Distinct, And, Abs, Not, sat, unsat
 
-from reasoning_core.template import Task, Payload, Problem, Config, edict
+from reasoning_core.template import Task, Entry, Config, edict, render_payload
 
 
 @dataclass
@@ -269,7 +269,7 @@ class GridNavigation(Task):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
 
-    def generate(self):
+    def generate_entry(self):
         rng = random.Random(self.config.seed)
         cfg = self.config
 
@@ -312,7 +312,11 @@ class GridNavigation(Task):
                 "initial_state": state0,
                 "final_state": final,
             })
-            return Problem(metadata=metadata, answer=query["answer"])
+            metadata.payload = {
+                "initial_facts": "\n".join(f"- {fact_text(f)}" for f in facts),
+                "steps": "\n".join(f"{i+1}. {step_text(st)}" for i, st in enumerate(steps)) if steps else "None.",
+            }
+            return Entry(metadata=metadata, answer=query["answer"])
 
         # fallback: reveal all initial coordinates
         states, steps = sample_world(rng, names, G, cfg.n_steps)
@@ -331,18 +335,17 @@ class GridNavigation(Task):
             "initial_state": state0,
             "final_state": final,
         })
-        return Problem(metadata=metadata, answer=f"({x}, {y})")
+        metadata.payload = {
+            "initial_facts": "\n".join(f"- {fact_text(f)}" for f in facts),
+            "steps": "\n".join(f"{i+1}. {step_text(st)}" for i, st in enumerate(steps)) if steps else "None.",
+        }
+        return Entry(metadata=metadata, answer=f"({x}, {y})")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         G = metadata["grid"]
-        facts = metadata["facts"]
-        steps = metadata["steps"]
         a = metadata["query_a"]
         b = metadata.get("query_b")
         kind = metadata["answer_type"]
-
-        facts_txt = "\n".join(f"- {fact_text(f)}" for f in facts)
-        steps_txt = "\n".join(f"{i+1}. {step_text(st)}" for i, st in enumerate(steps)) if steps else "None."
 
         if kind == "coord":
             question = f"What is the final coordinate of {a}? The answer is (x, y)."
@@ -357,7 +360,7 @@ class GridNavigation(Task):
 
         return (
             f"Grid [0,{G}]x[0,{G}], N=+y, E=+x.\n"
-            f"{Payload(initial_facts=facts_txt, steps=steps_txt)}\n\n"
+            f"{render_payload(metadata.payload)}\n\n"
             f"{question}"
         )
 

@@ -4,7 +4,7 @@ import random
 import networkx as nx
 import numpy as np
 
-from reasoning_core.template import Config, Problem, Task
+from reasoning_core.template import Config, Entry, Task
 
 
 SIGNS = {"+": 1, "-": -1}
@@ -345,7 +345,7 @@ class QualitativeCausalReasoning(Task):
     def __init__(self, config=QualitativeCausalReasoningConfig()):
         super().__init__(config=config)
 
-    def generate(self):
+    def generate_entry(self):
         instance = sample_instance(
             n_extra=self.config.n_extra,
             p_edge=self.config.p_edge,
@@ -370,9 +370,9 @@ class QualitativeCausalReasoning(Task):
             "association_convention": "opened_colliders_flip_sign",
             "render_style": random.choice(["edge_list", "compact", "table"]),
         }
-        return Problem(metadata=metadata, answer=instance.answer)
+        return Entry(metadata=metadata, answer=instance.answer)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         G = nx.DiGraph()
         for u, v, sign in metadata.edges:
             G.add_edge(u, v, sign=SIGNS[sign])

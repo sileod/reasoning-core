@@ -1,7 +1,7 @@
 import re, random, itertools as it
 from dataclasses import dataclass
 from collections import defaultdict
-from reasoning_core.template import Task, Problem, Config, edict, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, edict, stochastic_rounding as sround
 
 
 LINKS = [
@@ -313,6 +313,8 @@ class AnalogicalCaseMatchingConfig(Config):
     memory_distractors: int = 0
     memory_distractors_range: tuple | None = None
     index_answer_rate: float = 1.00
+    no_match_prompt_rate: float = 0.10
+    no_match_answer_rate: float = 0.50
     reverse_rate: float = 0.15
     max_attempts: int = 800
 
@@ -340,7 +342,7 @@ class AnalogicalCaseMatching(Task):
             return " ".join(gold_ids)
         return _sent(q_answer)
 
-    def generate(self):
+    def generate_entry(self):
         k = self.config
         rng = random
 
@@ -349,7 +351,9 @@ class AnalogicalCaseMatching(Task):
         n_facts = _sample_param(k.n_query_facts, k.n_query_facts_range, rng)
         n_mem_noise = _sample_param(k.memory_distractors, k.memory_distractors_range, rng)
         n_cases = int(k.n_cases)
-        n_gold = int(k.n_gold_cases)
+        allow_no_match = rng.random() < k.no_match_prompt_rate
+        no_match = allow_no_match and rng.random() < k.no_match_answer_rate
+        n_gold = 0 if no_match else int(k.n_gold_cases)
         n_ctx = int(k.context_facts)
 
         qnodes = _query_names(n_obj)
@@ -410,12 +414,13 @@ class AnalogicalCaseMatching(Task):
                 case.id = f"M{i}"
 
             hits = _all_consequences(cases, q_before)
-            if set(hits) != {q_answer}:
+            expected = set() if no_match else {q_answer}
+            if set(hits) != expected:
                 continue
 
-            gold_ids = sorted(hits[q_answer], key=lambda x: int(x[1:]))
+            gold_ids = [] if no_match else sorted(hits[q_answer], key=lambda x: int(x[1:]))
             answer_format = self._choose_answer_format(rng)
-            answer = self._format_answer(q_answer, gold_ids, answer_format)
+            answer = "None" if no_match else self._format_answer(q_answer, gold_ids, answer_format)
 
             md = edict(
                 cases=[
@@ -430,6 +435,8 @@ class AnalogicalCaseMatching(Task):
                 query_context=sorted(q_before),
                 answer_atom=q_answer,
                 matching_case_ids=gold_ids,
+                allow_no_match=allow_no_match,
+                no_match=no_match,
                 answer_format=answer_format,
                 answer=answer,
                 params=dict(
@@ -441,10 +448,12 @@ class AnalogicalCaseMatching(Task):
                     context_facts=n_ctx,
                     memory_distractors=n_mem_noise,
                     index_answer_rate=k.index_answer_rate,
+                    no_match_prompt_rate=k.no_match_prompt_rate,
+                    no_match_answer_rate=k.no_match_answer_rate,
                     reverse_rate=k.reverse_rate,
                 ),
             )
-            return Problem(metadata=md, answer=answer)
+            return Entry(metadata=md, answer=answer)
 
         raise RuntimeError("generation budget exhausted")
 
@@ -464,9 +473,15 @@ class AnalogicalCaseMatching(Task):
             "A case may match after consistent renaming of objects and links; each link may also be consistently reversed.",
         ]
         if answer_format == "index":
-            lines.append("Which memory case matches the query? Answer with only its index.")
+            if metadata.get("allow_no_match"):
+                lines.append("Which memory case matches the query? Answer with only its index, or None if no memory case matches.")
+            else:
+                lines.append("Which memory case matches the query? Answer with only its index.")
         else:
-            lines.append("Infer the query conclusion.")
+            if metadata.get("allow_no_match"):
+                lines.append("Infer the query conclusion, or answer None if no memory case matches.")
+            else:
+                lines.append("Infer the query conclusion.")
 
         lines.append("")
         for case in metadata["cases"]:
@@ -482,6 +497,10 @@ class AnalogicalCaseMatching(Task):
         return "\n".join(lines)
 
     def score_answer(self, answer, entry):
+        text = str(answer).strip().casefold().rstrip(".")
+        if entry.metadata.get("no_match"):
+            return 1.0 if text == "none" else 0.0
+
         if entry.metadata.get("answer_format") == "index":
             pred_ids = re.findall(r"\bM\d+\b", str(answer))
             return 1.0 if pred_ids == list(entry.metadata["matching_case_ids"]) else 0.0

@@ -248,8 +248,27 @@ def prepr_task_name(name):
     return underscore(name)
 
 
+def render_payload(payload):
+    """Render a JSON-friendly prompt payload mapping as labeled blocks."""
+    return "\n\n".join(
+        f"{key.replace('_', ' ').title()}:\n{value}"
+        for key, value in payload.items()
+    )
+
+
+def _shuffle_payload(payload, p=0.0, seed=None):
+    if not p or not isinstance(payload, Mapping) or len(payload) < 2:
+        return payload
+    rng = random.Random(seed)
+    if rng.random() >= p:
+        return payload
+    keys = list(payload.keys())
+    rng.shuffle(keys)
+    return {key: payload[key] for key in keys}
+
+
 class Payload(dict):
-    """Ordered prompt payload with a compact labeled-block string view."""
+    """Backward-compatible wrapper for rendering prompt payload mappings."""
 
     def __init__(self, *args, randomizable=True, **kwargs):
         super().__init__(*args, **kwargs)
@@ -258,10 +277,7 @@ class Payload(dict):
         self.order = list(self.original_order)
 
     def __str__(self):
-        return "\n\n".join(
-            f"{key.replace('_', ' ').title()}:\n{self[key]}"
-            for key in self.order
-        )
+        return render_payload({key: self[key] for key in self.order})
 
     def maybe_shuffle(self, p=0.2, seed=None):
         rng = random.Random(seed)
@@ -274,9 +290,7 @@ class Payload(dict):
 
     @classmethod
     def maybe_shuffle_mapping(cls, payload, p=0.0):
-        if not p or not isinstance(payload, Mapping) or len(payload) < 2:
-            return payload
-        return cls(payload).maybe_shuffle(p=p, seed=random.randrange(1 << 32))
+        return _shuffle_payload(payload, p=p, seed=random.randrange(1 << 32))
 
     @classmethod
     def maybe_shuffle_metadata(cls, metadata, p=0.0):
@@ -483,7 +497,12 @@ class Task(ProceduralDataset):
                     problem = self.generate_entry(**generate_kwargs)
                     if problem is None:
                         continue
-                    Payload.maybe_shuffle_metadata(problem.metadata, payload_shuffle_prob)
+                    if payload_shuffle_prob and "payload" in problem.metadata:
+                        problem.metadata.payload = _shuffle_payload(
+                            problem.metadata.payload,
+                            p=payload_shuffle_prob,
+                            seed=random.randrange(1 << 32),
+                        )
                     problem.prompt = self.render_prompt(problem.metadata)
 
                     prompt_tokens = len(self.tokenizer.encode(problem.prompt))

@@ -19,7 +19,7 @@ from urllib.request import urlretrieve
 from appdirs import AppDirs
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, Payload, Problem, Task
+from reasoning_core.template import Config, Entry, Task, render_payload
 
 
 _SET_MM_URL = "https://raw.githubusercontent.com/metamath/set.mm/develop/set.mm"
@@ -781,7 +781,7 @@ class MetamathEntailment(Task):
             setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(50):
             inst = _sample_instance(self.config)
             # Polarity must be chosen per-call (stateless): the old instance-state
@@ -822,24 +822,24 @@ class MetamathEntailment(Task):
                 proof=list(inst.proof) if positive else [],
                 source="set.mm",
             )
-            meta.payload = Payload(
-                premises="\n".join(premises),
-                allowed_rules=_rule_text(rule_rows),
-                conjecture=meta.conjecture,
-            )
-            return Problem(
+            meta.payload = {
+                "premises": "\n".join(premises),
+                "allowed_rules": _rule_text(rule_rows),
+                "conjecture": meta.conjecture,
+            }
+            return Entry(
                 meta,
                 "True" if positive else "False",
             )
         raise RuntimeError("failed to generate Metamath entailment task")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Using only these premises and rules, does the conjecture follow?\n"
             "Use only the listed premises and rules. No hidden background facts.\n"
             "Rules may only rename variables, not substitute compound terms.\n"
             "The answer is True or False.\n\n"
-            f"{Payload(metadata.payload)}"
+            f"{render_payload(metadata.payload)}"
         )
 
 
@@ -852,7 +852,7 @@ class MetamathCoreSelect(Task):
             setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
-    def generate(self):
+    def generate_entry(self):
         labels = [r.label for r in _math_rule_catalog(int(self.config.formula_len_cap))]
         for _ in range(80):
             inst = _sample_instance(self.config)
@@ -951,25 +951,25 @@ class MetamathCoreSelect(Task):
                 proof=list(inst.proof),
                 source="set.mm",
             )
-            meta.payload = Payload(
-                premises="\n".join(premises),
-                rule_catalog=_rule_text(rule_rows, bullet=True),
-                conjecture=meta.conjecture,
-                options=option_text,
-            )
-            return Problem(
+            meta.payload = {
+                "premises": "\n".join(premises),
+                "rule_catalog": _rule_text(rule_rows, bullet=True),
+                "conjecture": meta.conjecture,
+                "options": option_text,
+            }
+            return Entry(
                 meta,
                 answer,
             )
         raise RuntimeError("failed to generate Metamath core-selection task")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Which option is sufficient to derive the conjecture?\n"
             "Use only the listed premises and rules. No hidden background facts.\n"
             "Rules may only rename variables, not substitute compound terms.\n"
             "The answer is A, B, C, or D.\n\n"
-            f"{Payload(metadata.payload)}"
+            f"{render_payload(metadata.payload)}"
         )
 
     def score_answer(self, answer, entry):

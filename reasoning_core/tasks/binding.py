@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from collections import Counter
 import ast, hashlib, random, re
 
-from reasoning_core.template import Task, Problem, Config, Payload, edict
+from reasoning_core.template import Task, Entry, Config, render_payload, edict
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -350,7 +350,7 @@ class LambdaReduction(Task):
     def __init__(self, config=None):
         super().__init__(config=config or LambdaReductionConfig())
 
-    def generate(self):
+    def generate_entry(self):
         rng = random.Random()
         cfg = self.config
         source = 'anti_reduction' if rng.random() < cfg.anti_reduction_prob else 'arbitrary'
@@ -383,7 +383,7 @@ class LambdaReduction(Task):
             if target == 'alpha-renaming' and trace_bucket_counts.get('alpha-renaming', 0) < cfg.min_alpha_renaming: continue
             if target != 'arbitrary' and target not in buckets: continue
 
-            return Problem(
+            return Entry(
                 metadata=edict(
                     term=term,
                     normal_form=normal,
@@ -406,7 +406,7 @@ class LambdaReduction(Task):
             )
         raise RuntimeError("could not sample a valid λ-term")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Reduce the following untyped λ-term to β-normal form.\n"
             "Syntax: `\\x.body` is λx.body; juxtaposition is left-associative application; free identifiers are constants.\n\n"
@@ -891,7 +891,7 @@ class RewriteSystem(Task):
         lines.append(f"normal_form: {_rw_show(terms[-1])}")
         return '\n'.join(lines)
 
-    def generate(self):
+    def generate_entry(self):
         rng = random.Random()
         cfg = self.config
 
@@ -943,17 +943,17 @@ class RewriteSystem(Task):
                 used=used,
                 cot=cot,
             )
-            meta.payload = Payload(rules=rules_s, term=term_s)
-            return Problem(metadata=meta, answer=nf_s)
+            meta.payload = {"rules": rules_s, "term": term_s}
+            return Entry(metadata=meta, answer=nf_s)
 
         raise RuntimeError("could not sample a rewrite-system instance")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Normalize by the ordered rewrite rules. At each step, use the first "
             "applicable rule in the listed order, searching outermost-first and "
             "left-to-right.\n\n"
-            f"{Payload(metadata['payload'])}\n\n"
+            f"{render_payload(metadata['payload'])}\n\n"
             "The answer is the normal form."
         )
 
@@ -1498,7 +1498,7 @@ class UnificationEntailment(Task):
 
         return equations, Counter(tags), set(core_vars)
 
-    def generate(self):
+    def generate_entry(self):
         rng = random.Random()
         cfg = self.config
         target = 'yes' if rng.random() < 0.5 else 'no'
@@ -1543,10 +1543,10 @@ class UnificationEntailment(Task):
                 num_constants=len(consts),
                 num_function_symbols=len(funcs),
             )
-            return Problem(metadata=meta, answer=answer)
+            return Entry(metadata=meta, answer=answer)
         raise RuntimeError("could not sample an MGU implied-equality instance")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         equations = '\n'.join(f"- {e}" for e in metadata['equations'])
         return (
             "Do the equations force the candidate equality under their most general unifier?\n"

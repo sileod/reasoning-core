@@ -3,7 +3,7 @@ import sympy as sp
 from dataclasses import dataclass
 from typing import List, Dict, Any, Tuple
 
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Entry, Config
 from reasoning_core.utils import score_scalar
 
 @dataclass
@@ -84,7 +84,7 @@ class EquationSystem(Task):
         mixed_exprs = [sp.expand(sum(C[i][j] * base_exprs[j] for j in range(n))) for i in range(n)]
         return [sp.Eq(expr, 0) for expr in mixed_exprs], variables, sol_map
 
-    def generate(self) -> Problem:
+    def generate_entry(self) -> Entry:
         for _ in range(self.config.max_generation_attempts):
             eqs, variables, sol_map = self._generate_base_system()
             if not eqs: continue
@@ -133,11 +133,11 @@ class EquationSystem(Task):
             a = str(answer)
             if "." in a:
                 a = a.rstrip("0").rstrip(".")
-            return Problem(metadata=metadata, answer=a)
+            return Entry(metadata=metadata, answer=a)
 
         raise RuntimeError(f"Failed to generate a valid problem. Config: {self.config}")
 
-    def prompt(self, metadata: dict) -> str:
+    def render_prompt(self, metadata: dict) -> str:
         eq_block = "\n".join([f"  {eq_str}" for eq_str in metadata['equations']])
         return (f"Solve the following system of equations for the variable '{metadata['query_variable']}'.\n\n"
                 f"System:\n{eq_block}\n\n"

@@ -3,7 +3,7 @@ import random
 import string
 from dataclasses import dataclass
 
-from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
 ALPHA = string.ascii_lowercase[:8]
@@ -91,7 +91,7 @@ class StringTransduction(Task):
             xs = list(apply_edits("".join(xs), [edits[-1]]))
         return edits
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(20):
             alphabet = ALPHA[: self.config.alphabet_size]
             mode = "edit" if random.random() < self.config.edit_rate else "program"
@@ -113,10 +113,10 @@ class StringTransduction(Task):
                 meta = edict(mode=mode, source=source, ops=[name for name, _ in program])
             target = target.strip()  # word-source ops (e.g. sort) push the join spaces to an
             if target:                # end; drop that leading/trailing whitespace (scorer strips too)
-                return Problem(meta, target)
+                return Entry(meta, target)
         raise RuntimeError("failed to generate nonempty string transduction")
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         if m.mode == "edit":
             lines = []
             for op, i, x in m.edits:

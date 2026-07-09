@@ -9,7 +9,7 @@ from babel.dates import format_date
 from babel.numbers import format_decimal
 from tabulate import tabulate
 from dataclasses import dataclass
-from reasoning_core.template import Task, DevTask, Problem, Config, Payload, stochastic_rounding as sround
+from reasoning_core.template import Task, DevTask, Entry, Config, render_payload, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 import csv
 import yaml
@@ -22,15 +22,19 @@ except Exception:
 
 @dataclass
 class TableQAConfig(Config):
-    num_rows: int = 5
-    num_columns: int = 2
+    num_rows: int = 8
+    num_columns: int = 6
     num_tables: int = 1
+    complexity: int = 1
     def apply_difficulty(self, level):
-        # Keep the TABLE small. The old ramp (rows*2**level, +level cols, up to 2 shards) exploded the prompt
-        # to ~5k tok at L4 and made this a net-hurter via prompt-length tax under answer-only training
-        # (global -1.98 / bbh -3.01). Shrinking the table to ~600 tok at L4 flips influence to neutral
-        # (global -0.20 / bbh +0.80), confirming prompt length was the driver. Validated 2026-07-09
-        # (REEVAL_TQSHRINK_OLMO1B). Query complexity is the length-safe lever to add difficulty later.
+        # Keep the TABLE small. The old ramp (rows*1.7**level, +level cols, up to 3 shards)
+        # exploded the prompt to ~5k tok at L4 and made this a net-hurter via prompt-length
+        # tax under answer-only training (global -1.98 / bbh -3.01). Shrinking the table to
+        # ~600 tok at L4 flips influence to neutral (global -0.20 / bbh +0.80), confirming
+        # prompt length was the driver. Validated 2026-07-09 (REEVAL_TQSHRINK_OLMO1B); the
+        # neutral run held complexity flat, so leave it at its default rather than adding an
+        # unvalidated length source. Query complexity is the length-safe lever to reintroduce
+        # difficulty later (re-measure length before ramping it).
         self.num_rows = 4 + 2 * level              # 4, 6, 8, 10, 12
         self.num_columns = min(3 + level, 6)       # 3, 4, 5, 6, 6
         self.num_tables = 1                        # never shard
@@ -54,6 +58,13 @@ _faker = Faker()
 LOCALES = ["en_US", "fr_FR"]
 DATE_FORMATS = ["yyyy-MM-dd", "d MMM yyyy", "MMM d, yyyy", "yyyy/MM/dd"]
 NUMBER_FORMATS = ["#,##0.##", "#,##0.00", "#,##0.##", "#,##0.00", "0.###E0"]
+TABLEQA_NUMBER_FORMATS = ["0.##", "0.00", "0.###"]
+TABLEQA_CORE = [
+    "row_id", "country", "category", "status", "date", "qty", "unit_price",
+]
+TABLEQA_EXTRA = [
+    "customer", "segment", "discount", "gross", "net", "is_refund",
+]
 BOOL_FORMATS = [
     {True: "true", False: "false"},
     {True: "yes", False: "no"},
@@ -76,6 +87,45 @@ def generate_random_table(config):
     cols = random.sample(pool, min(config.num_columns, len(pool)))
     return pd.DataFrame({n: [g() for _ in range(config.num_rows)] for n, g in cols})
 
+
+def generate_tableqa_dataframe(config):
+    n = config.num_rows
+    countries = ["France", "Germany", "Spain", "Italy", "Netherlands"]
+    segments = ["consumer", "corporate", "education"]
+    categories = ["Books", "Electronics", "Clothing", "Food", "Office"]
+    statuses = ["paid", "refunded", "pending", "cancelled"]
+
+    df = pd.DataFrame({
+        "row_id": [f"R{i:04d}" for i in range(n)],
+        "customer": [f"C{random.randint(1, max(3, n // 3)):03d}" for _ in range(n)],
+        "country": np.random.choice(countries, n),
+        "segment": np.random.choice(segments, n),
+        "category": np.random.choice(categories, n),
+        "status": np.random.choice(statuses, n, p=[0.62, 0.12, 0.16, 0.10]),
+        "date": [_faker.date_between("-18M", "today") for _ in range(n)],
+        "qty": np.random.randint(1, 12, n),
+        "unit_price": np.round(np.random.lognormal(3.1, 0.65, n), 2),
+        "discount": np.random.choice([0, 0.05, 0.1, 0.2, 0.3], n),
+    })
+    df["gross"] = np.round(df["qty"] * df["unit_price"], 2)
+    df["net"] = np.round(df["gross"] * (1 - df["discount"]), 2)
+    df["is_refund"] = df["status"].eq("refunded")
+    df = apply_tableqa_noise(df, config)
+
+    k = max(len(TABLEQA_CORE), config.num_columns)
+    extras = random.sample(TABLEQA_EXTRA, min(len(TABLEQA_EXTRA), k - len(TABLEQA_CORE)))
+    cols = TABLEQA_CORE + extras
+    random.shuffle(cols)
+    return df[cols]
+
+
+def apply_tableqa_noise(df, config):
+    rate = min(0.18, 0.02 * config.complexity)
+    for c in ["discount", "segment"]:
+        if c in df.columns:
+            df.loc[np.random.rand(len(df)) < rate, c] = np.nan
+    return df
+
 def is_date_series(s):
     xs = s.dropna()
     return len(xs) and xs.map(lambda x: hasattr(x, "strftime")).all()
@@ -91,15 +141,16 @@ def render_date_series(s):
     return out, {"kind": "date", "format": fmt, "locale": locale}
 
 
-def render_number_series(s):
-    locale, fmt = random.choice(LOCALES), random.choice(NUMBER_FORMATS)
+def render_number_series(s, number_formats=NUMBER_FORMATS, number_locales=LOCALES):
+    locale, fmt = random.choice(number_locales), random.choice(number_formats)
     out = s.map(lambda x: format_decimal(x, format=fmt, locale=locale) if pd.notna(x) else x)
     return out, {"kind": "number", "format": fmt, "locale": locale}
 
 
 def render_bool_series(s):
     mapping = random.choice(BOOL_FORMATS)
-    return s.map(lambda x: mapping.get(x, x)), {"kind": "bool", "mapping": mapping}
+    meta_mapping = {str(k): v for k, v in mapping.items()}
+    return s.map(lambda x: mapping.get(x, x)), {"kind": "bool", "mapping": meta_mapping}
 
 
 def render_nulls(s):
@@ -107,7 +158,7 @@ def render_nulls(s):
     return s.map(lambda x: token if pd.isna(x) else x), {"null": token}
 
 
-def make_display_dataframe(dataframe):
+def make_display_dataframe(dataframe, number_formats=NUMBER_FORMATS, number_locales=LOCALES):
     df, meta = dataframe.copy(), {}
     for c in df.columns:
         s = df[c]
@@ -116,7 +167,11 @@ def make_display_dataframe(dataframe):
         elif pd.api.types.is_bool_dtype(s):
             df[c], meta[c] = render_bool_series(s)
         elif pd.api.types.is_numeric_dtype(s):
-            df[c], meta[c] = render_number_series(s)
+            df[c], meta[c] = render_number_series(
+                s,
+                number_formats=number_formats,
+                number_locales=number_locales,
+            )
         if df[c].isna().any():
             df[c], null_meta = render_nulls(df[c])
             meta.setdefault(c, {}).update(null_meta)
@@ -137,7 +192,7 @@ def apply_display_formats(dataframe, display_meta):
         elif spec.get("kind") == "number":
             df[c] = df[c].map(lambda x: format_decimal(x, format=spec["format"], locale=spec["locale"]) if pd.notna(x) else x)
         elif spec.get("kind") == "bool":
-            df[c] = df[c].map(lambda x: spec["mapping"].get(x, x))
+            df[c] = df[c].map(lambda x: spec["mapping"].get(str(x), x))
         if "null" in spec:
             df[c] = df[c].map(lambda x: spec["null"] if pd.isna(x) else x)
     return df.astype(object)
@@ -206,6 +261,190 @@ def split_table(dataframe, n):
     return out
 
 
+AGGS = ["SUM", "AVG", "MIN", "MAX"]
+OPS = ["+", "-", "*"]
+
+
+def sample_complexity(config):
+    c = config.complexity
+    return {
+        "expr_depth": random.randint(0, c),
+        "n_predicates": random.randint(0, c),
+        "n_group_keys": min(random.randint(0, c), random.randint(0, 2)),
+    }
+
+
+def ident(c):
+    return f'"{c}"'
+
+
+def column_roles(df):
+    dates = date_columns(df)
+    return {
+        "id": [c for c in ["row_id", "customer"] if c in df.columns],
+        "num": [c for c in ["qty", "unit_price", "discount", "gross", "net"] if c in df.columns],
+        "group": [c for c in ["country", "segment", "category", "status"] if c in df.columns],
+        "date": [c for c in dates],
+        "bool": [c for c in ["is_refund"] if c in df.columns],
+    }
+
+
+def num_expr(nums, depth):
+    expr = ident(random.choice(nums))
+    for _ in range(depth):
+        expr = f"({expr} {random.choice(OPS)} {ident(random.choice(nums))})"
+    return expr
+
+
+def literal(x):
+    if pd.isna(x):
+        return "NULL"
+    if hasattr(x, "isoformat"):
+        return f"DATE '{x.isoformat()}'"
+    if isinstance(x, str):
+        return "'" + x.replace("'", "''") + "'"
+    if isinstance(x, (float, np.floating)):
+        return str(float(x))
+    return str(x)
+
+
+def predicate(df, roles):
+    choices = []
+    if roles["num"]:
+        c = random.choice(roles["num"])
+        q = df[c].quantile(random.choice([0.25, 0.5, 0.75]))
+        if pd.notna(q):
+            choices.append(f"{ident(c)} {random.choice(['>', '<', '>=', '<='])} {literal(q)}")
+    if roles["group"]:
+        c = random.choice(roles["group"])
+        values = df[c].dropna().drop_duplicates()
+        if len(values):
+            vals = values.sample(min(2, len(values))).tolist()
+            choices.append(f"{ident(c)} IN ({', '.join(literal(v) for v in vals)})")
+    if roles["date"]:
+        c = random.choice(roles["date"])
+        values = df[c].dropna()
+        if len(values):
+            choices.append(f"{ident(c)} > {literal(values.sample(1).iloc[0])}")
+    if roles["bool"]:
+        c = random.choice(roles["bool"])
+        choices.append(f"{ident(c)} = {random.choice(['TRUE', 'FALSE'])}")
+    nullables = [c for c in ["segment", "discount"] if c in df.columns]
+    if nullables:
+        c = random.choice(nullables)
+        choices.append(f"{ident(c)} IS {random.choice(['', 'NOT '])}NULL")
+    return random.choice(choices) if choices else "TRUE"
+
+
+def group_key_candidates(roles):
+    out = [(ident(c), ident(c), ident(c)) for c in roles["group"]]
+    for c in roles["date"]:
+        expr = f"CAST(DATE_TRUNC('month', {ident(c)}) AS DATE)"
+        alias = ident(f"{c}_month")
+        out.append((f"{expr} AS {alias}", expr, alias))
+    return out
+
+
+def tie_breaker(df):
+    if "row_id" in df.columns:
+        return ident("row_id")
+    return ident(df.columns[0])
+
+
+def synthesize_query(df, spec):
+    roles = column_roles(df)
+    nums = roles["num"]
+    if not nums and not roles["group"] and not roles["date"] and not roles["bool"]:
+        return "SELECT COUNT(*) FROM dataframe"
+
+    predicates = []
+    for _ in range(spec["n_predicates"]):
+        p = predicate(df, roles)
+        if p not in predicates:
+            predicates.append(p)
+    where_sql = " AND ".join(predicates) if predicates else "TRUE"
+    candidates = group_key_candidates(roles)
+    group_keys = random.sample(candidates, min(spec["n_group_keys"], len(candidates)))
+
+    if nums:
+        value = num_expr(nums, spec["expr_depth"])
+        agg = random.choice(AGGS)
+    else:
+        value = None
+        agg = "COUNT"
+
+    if group_keys:
+        select_key, group_sql, order_key = group_keys[0]
+        order_value = "COUNT(*)" if agg == "COUNT" else f"{agg}({value})"
+        return f"""
+        SELECT {select_key}
+        FROM dataframe
+        WHERE {where_sql}
+        GROUP BY {group_sql}
+        ORDER BY {order_value} {random.choice(["ASC", "DESC"])}, {order_key} ASC
+        LIMIT 1
+        """.strip()
+
+    if nums and random.random() < 0.35:
+        c = random.choice(nums)
+        threshold = df[c].quantile(random.choice([0.25, 0.5, 0.75]))
+        return f"""
+        SELECT {agg}({value}) {random.choice([">", "<", ">=", "<="])} {literal(threshold)}
+        FROM dataframe
+        WHERE {where_sql}
+        """.strip()
+
+    if random.random() < 0.45:
+        return f"""
+        SELECT COUNT(*)
+        FROM dataframe
+        WHERE {where_sql}
+        """.strip()
+
+    if random.random() < 0.55:
+        return f"""
+        SELECT COUNT(*) > 0
+        FROM dataframe
+        WHERE {where_sql}
+        """.strip()
+
+    allowed = roles["id"] + roles["group"] + roles["date"] + roles["bool"]
+    orderable = roles["num"] + roles["date"] + roles["group"] + roles["bool"]
+    col = random.choice(allowed)
+    order = random.choice(orderable)
+    return f"""
+    SELECT {ident(col)}
+    FROM dataframe
+    WHERE {where_sql}
+    ORDER BY {ident(order)} {random.choice(["ASC", "DESC"])}, {tie_breaker(df)} ASC
+    LIMIT 1
+    """.strip()
+
+
+def interesting_result(result):
+    if result.empty:
+        return False
+    if result.shape != (1, 1):
+        return False
+    if result.shape == (1, 1):
+        x = str(result.iloc[0, 0])
+        return x not in {"0", "0.0", "1", "1.0", "nan", "None"}
+    return False
+
+
+def sample_query(df, conn, config, max_tries=80):
+    for _ in range(max_tries):
+        spec = sample_complexity(config)
+        q = synthesize_query(df, spec)
+        try:
+            result = conn.execute(q).df()
+        except Exception:
+            continue
+        if interesting_result(result):
+            return q, result, spec
+    raise RuntimeError("Could not synthesize interesting table QA query")
+
+
 class TableQA(Task):
     summary = "Answer queries on tabular data by executing SQL queries over dataframes."
     def __init__(self, config=TableQAConfig()):
@@ -214,18 +453,11 @@ class TableQA(Task):
 
     def _query_family(self, query):
         q = " ".join(str(query).upper().split())
-        rules = [
-            ("count_distinct", "COUNT(DISTINCT" in q),
-            ("count_like", "COUNT(*)" in q and "LIKE" in q),
-            ("count_where", "COUNT(*)" in q and "WHERE" in q),
-            ("aggregate", q.startswith("SELECT ROUND(")),
-            ("group_limit", "GROUP BY" in q),
-            ("order_limit", "ORDER BY" in q and "LIMIT" in q),
-        ]
-        for name, ok in rules:
-            if ok:
-                return name
-        return "other"
+        return "+".join([
+            "group" if " GROUP BY " in q else "nogroup",
+            "limit" if " LIMIT " in q else "nolimit",
+            "scalar" if "ROUND(" in q and " GROUP BY " not in q else "table",
+        ])
 
     def _result_bucket(self, result):
         if result.shape != (1, 1):
@@ -236,64 +468,17 @@ class TableQA(Task):
         except Exception:
             return "text"
     
-    def _query(self, dataframe):
-        if len(dataframe) == 0: return "SELECT COUNT(*) FROM dataframe"
+    def generate_entry(self):
+        semantic_df = generate_tableqa_dataframe(self.config)
+        display_df, display_meta = make_display_dataframe(
+            semantic_df,
+            number_formats=TABLEQA_NUMBER_FORMATS,
+            number_locales=["en_US"],
+        )
 
-        dates = date_columns(dataframe)
-        num = dataframe.select_dtypes('number').columns.tolist()
-        cat = [c for c in dataframe.select_dtypes(exclude='number').columns if c not in dates]
-        order = random.choice(['ASC', 'DESC'])
-        esc = lambda s: str(s).replace("'", "''")
-        
-        queries = []
-        if num:
-            c = random.choice(num)
-            queries += [
-                f"SELECT ROUND({random.choice(['SUM', 'AVG', 'MAX', 'MIN'])}({c}), 2) FROM dataframe",
-                f"SELECT COUNT(*) FROM dataframe WHERE {c} > {dataframe[c].quantile(random.choice([0.3, 0.5, 0.7]))}",
-                f"SELECT * FROM dataframe ORDER BY {c} {order} LIMIT {random.randint(1, 3)}"
-            ]
-            if len(num) >= 2:
-                n1, n2 = random.sample(num, 2)
-                queries.append(f"SELECT ROUND(AVG({n1} * {n2}), 2) FROM dataframe")
-
-        if dates:
-            c = random.choice(dates)
-            cutoff = dataframe[c].sample(1).iloc[0].isoformat()
-            queries += [
-                f"SELECT * FROM dataframe ORDER BY {c} {order} LIMIT {random.randint(1, 3)}",
-                f"SELECT COUNT(DISTINCT {c}) FROM dataframe",
-                f"SELECT COUNT(*) FROM dataframe WHERE {c} > DATE '{cutoff}'",
-            ]
-
-        if num and cat:
-            n, c = random.choice(num), random.choice(cat)
-            val = esc(dataframe[c].iloc[0])
-            queries += [
-                f"SELECT {c}, SUM({n}) as v FROM dataframe GROUP BY {c} ORDER BY v {order} LIMIT {random.randint(1, 3)}",
-                f"SELECT COUNT(*) FROM dataframe WHERE {c} = '{val}' AND {n} > {dataframe[n].mean()}",
-            ]
-
-        if cat:
-            c = random.choice(cat)
-            val = esc(dataframe[c].iloc[random.randint(0, len(dataframe)-1)])
-            queries += [
-                f"SELECT COUNT(DISTINCT {c}) FROM dataframe",
-                f"SELECT COUNT(*) FROM dataframe WHERE {c} = '{val}'",
-            ]
-            if len(val) > 1:
-                queries.append(f"SELECT COUNT(*) FROM dataframe WHERE CAST({c} AS VARCHAR) LIKE '%{val[1:]}%'")
-
-        return random.choice(queries) if queries else "SELECT COUNT(*) FROM dataframe"
-    
-    def generate(self):
-        semantic_df = generate_random_table(self.config)
-        display_df, display_meta = make_display_dataframe(semantic_df)
-
-        q = self._query(semantic_df)
         conn = duckdb.connect()
         conn.register("dataframe", semantic_df)
-        result = conn.execute(q).df()
+        q, result, query_spec = sample_query(semantic_df, conn, self.config)
         renderers = get_renderers(display_df)
         fmt_name = random.choice(list(renderers))
         render_func = renderers[fmt_name]
@@ -301,17 +486,18 @@ class TableQA(Task):
         answer_df = result if is_scalar else apply_display_formats(result, display_meta)
         
         tables = [render_func(index=False)]
-        if self.config.level > 0 and self.config.num_tables > 1:
+        if self.config.num_tables > 1:
             tables = [
                 get_renderers(part)[fmt_name](index=False)
                 for part in split_table(display_df, self.config.num_tables)
             ]
 
-        return Problem(
+        return Entry(
             metadata={
                 "table": tables[0],
                 "tables": tables,
                 "query": q,
+                "query_spec": query_spec,
                 "query_family": self._query_family(q),
                 "result_bucket": self._result_bucket(result),
                 "is_scalar": is_scalar,
@@ -321,7 +507,7 @@ class TableQA(Task):
             answer=answer_df.to_csv(index=False, header=False).strip()
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         fmt = "single value" if m['is_scalar'] else "CSV format (rows separated by newlines, values by commas). Do not include column headers."
         tables = m.get('tables') or [m['table']]
         if len(tables) == 1:
@@ -375,7 +561,12 @@ class TableQA(Task):
 
     def balancing_key(self, problem):
         m = problem.metadata
-        return f"{m.query_family}:scalar={int(m.is_scalar)}:bucket={m.result_bucket}"
+        s = m.query_spec
+        return (
+            f"depth={s['expr_depth']}:pred={s['n_predicates']}:"
+            f"group={s['n_group_keys']}:scalar={int(m.is_scalar)}:"
+            f"bucket={m.result_bucket}"
+        )
 
 EQUIV_RENDERERS = [
     "to_csv", "to_tsv", "to_markdown", "to_grid", "to_html", "to_latex",
@@ -463,7 +654,7 @@ class TableEquivalence(Task):
         self.balancing_key_ratio = 0.5
         self._same_next = False
 
-    def generate(self):
+    def generate_entry(self):
         semantic_df = generate_random_table(self.config)
         display_df, display_meta = make_display_dataframe(semantic_df)
         self._same_next = not self._same_next
@@ -479,7 +670,7 @@ class TableEquivalence(Task):
             answer = "no"
 
         fmt_a, fmt_b = random.sample(EQUIV_RENDERERS, 2)
-        return Problem(
+        return Entry(
             metadata={
                 "table_a": get_renderers(display_df)[fmt_a](index=False),
                 "table_b": get_renderers(other_df)[fmt_b](index=False),
@@ -491,7 +682,7 @@ class TableEquivalence(Task):
             answer=answer,
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return (
             "Do these tables contain the same data?\n"
             "Ignore row order, column order, and table syntax. Match values by column name.\n\n"
@@ -626,7 +817,7 @@ class TableStatistics(Task):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.5
 
-    def generate(self):
+    def generate_entry(self):
         generators = [gen_column_pearson, gen_row_pearson, gen_label_eta2]
         if normalized_mutual_info_score is not None:
             generators.append(gen_categorical_nmi)
@@ -635,12 +826,12 @@ class TableStatistics(Task):
         fmt = random.choice(STAT_RENDERERS)
         table = get_renderers(display_df)[fmt](index=False)
 
-        return Problem(
+        return Entry(
             metadata={
                 "table": table,
                 "find": spec["find"],
                 "metric": spec["metric"],
-                "payload": Payload(table=table, find=spec["find"], metric=spec["metric"]),
+                "payload": {"table": table, "find": spec["find"], "metric": spec["metric"]},
                 "family": spec["family"],
                 "margin": spec["margin"],
                 "table_format": fmt,
@@ -649,9 +840,9 @@ class TableStatistics(Task):
             answer=spec["answer"],
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return (
-            f"{Payload(m.payload)}\n\n"
+            f"{render_payload(m.payload)}\n\n"
             "Answer with only the identifier."
         )
 

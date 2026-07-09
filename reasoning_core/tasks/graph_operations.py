@@ -1,6 +1,6 @@
 import networkx as nx
 import random
-from reasoning_core.template import Task, Problem, Config, Payload, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, render_payload, stochastic_rounding as sround
 from reasoning_core.utils import parse_space_ints
 from dataclasses import dataclass
 
@@ -198,7 +198,7 @@ class GraphPathfinding(BaseGraphTask, Task):
             return f"No directed path from {start} to {end}."
         return f"Optimal cost: {cost}. Path: {' '.join(map(str, path))}."
 
-    def generate(self):
+    def generate_entry(self):
         weighted = random.random() < self.config.weighted_prob
         G = self._generate_graph()
         
@@ -223,10 +223,12 @@ class GraphPathfinding(BaseGraphTask, Task):
             G = self._add_weights(G, weighted)
             path, cost = self._shortest_path(G, start, end)
 
-        return Problem(
+        graph_description = self._render_graph(G, weighted=weighted)
+        return Entry(
             metadata={
                 "weighted": weighted,
-                "graph_description": self._render_graph(G, weighted=weighted), "start_node": start, "end_node": end,
+                "graph_description": graph_description, "start_node": start, "end_node": end,
+                "payload": {"graph": graph_description},
                 "nodes": list(G.nodes()), "edges": [(u, v, d["weight"]) for u, v, d in G.edges(data=True)],
                 "optimal_cost": cost,
                 "optimal_length": len(path) if path is not None else None,
@@ -235,14 +237,14 @@ class GraphPathfinding(BaseGraphTask, Task):
             answer="None" if path is None else " ".join(map(str, path))
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         objective = "minimum-cost" if m.get("weighted") else "shortest"
         return (
             f"Find the {objective} directed path from node {m['start_node']} "
             f"to node {m['end_node']}. "
             "If several paths are tied, return the lexicographically smallest one. "
             "Answer with space-separated nodes, or `None` if no path exists.\n\n"
-            f"{Payload(graph=m['graph_description'])}"
+            f"{render_payload(m['payload'])}"
         )
 
     def score_answer(self, answer, entry):
@@ -312,7 +314,7 @@ class GraphSuccessors(BaseGraphTask, Task):
             x = succ[x]
         return x
 
-    def generate(self):
+    def generate_entry(self):
         nodes = list(range(self.config.num_nodes))
         succ = dict(zip(nodes, random.sample(nodes, len(nodes))))  # Ensure exact out-degree 1 per node
 
@@ -326,21 +328,23 @@ class GraphSuccessors(BaseGraphTask, Task):
         ]
         answer = [self._jump(succ, x, k) for x, k in queries]
 
-        return Problem(
+        graph_description = self._render_graph(G)
+        return Entry(
             metadata={
-                "graph_description": self._render_graph(G),
+                "graph_description": graph_description,
                 "queries": queries,
+                "payload": {"graph": graph_description, "queries": str(queries)},
                 "nodes": nodes,
                 "edges": list(G.edges()),
             },
             answer=" ".join(map(str, answer)),
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return (
             "For each query (x, k), give the k-th successor of x by following directed edges k times.\n"
             "Answer with space-separated integers in query order.\n\n"
-            f"{Payload(graph=m['graph_description'], queries=m['queries'])}"
+            f"{render_payload(m['payload'])}"
         )
 
     def score_answer(self, answer, entry):
@@ -382,7 +386,7 @@ class GraphDependencies(BaseGraphTask, Task):
         G.add_edges_from([(i, i+1) for i in range(self.config.num_nodes - 1)])
         return G
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(100):
             G = self._make_dag()
             # Find candidate that has at least two prerequisites to trace
@@ -396,23 +400,25 @@ class GraphDependencies(BaseGraphTask, Task):
             # Standard topological sort places ancestors (prerequisites) first
             answer = list(nx.lexicographical_topological_sort(G.subgraph(need)))
 
-            return Problem(
+            graph_description = self._render_graph(G)
+            return Entry(
                 metadata={
-                    "graph_description": self._render_graph(G),
+                    "graph_description": graph_description,
                     "query": q,
+                    "payload": {"graph": graph_description},
                     "nodes": list(G.nodes()),
                     "edges": list(G.edges()),
                 },
                 answer=" ".join(map(str, answer)),
             )
-        return self.generate()
+        return self.generate_entry()
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return (
             f"List all ancestors of node {m['query']}.\n"
             "Order them so predecessors come before successors, with lexicographic tie-breaks.\n"
             "Answer with space-separated indexes.\n\n"
-            f"{Payload(graph=m['graph_description'])}"
+            f"{render_payload(m['payload'])}"
         )
 
     def score_answer(self, answer, entry):

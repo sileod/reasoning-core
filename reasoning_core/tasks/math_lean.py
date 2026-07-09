@@ -24,7 +24,7 @@ import networkx as nx
 from appdirs import AppDirs
 from easydict import EasyDict as edict
 from gramforge import generate, init_grammar
-from reasoning_core.template import Config, Problem, Task, DevTask
+from reasoning_core.template import Config, Entry, Task, DevTask
 
 
 # ============================================================================
@@ -354,9 +354,11 @@ class LeanConfig(Config):
     use_mathlib: bool = True
 
     def apply_difficulty(self, level):
+        level = int(level)
+        self.level = level
         self.n_vars += level
         self.expr_depth += level
-        self.n_hyps += level
+        self.n_hyps += 2 * level + max(0, level - 2)
         self.n_candidates += level
 
 @dataclass
@@ -1020,20 +1022,160 @@ def _script_code(header, lines):
     return header + "".join(f"  {line}\n" for line in lines)
 
 
-def _line_options(lines, answer, max_options=6):
+EASY_MISSING_LINES = frozenset({
+    "aesop", "assumption", "decide", "linarith", "norm_num", "omega",
+    "rfl", "ring", "ring_nf", "simp", "simp_all", "tauto",
+})
+
+
+def _is_easy_missing_line(line):
+    s = str(line).strip()
+    return s in EASY_MISSING_LINES or bool(re.fullmatch(r"[A-Za-z_][\w.']*", s))
+
+
+_MUTATION_PAIRS = (
+    ("le_trans", "lt_trans"),
+    ("lt_of_lt_of_le", "lt_of_le_of_lt"),
+    ("Int.le_trans", "Int.lt_trans"),
+    ("Int.lt_of_lt_of_le", "Int.lt_of_le_of_lt"),
+    ("add_le_add", "add_lt_add"),
+    ("add_le_add_left", "add_le_add_right"),
+    ("dvd_add", "dvd_sub"),
+    ("dvd_mul_of_dvd_left", "dvd_mul_of_dvd_right"),
+    ("abs_nonneg", "sq_nonneg"),
+    ("sq_nonneg", "mul_self_nonneg"),
+    ("inf_sup_left", "inf_sup_right"),
+    ("sup_inf_left", "sup_inf_right"),
+    ("inf_assoc", "sup_assoc"),
+    ("Set.inter_subset_inter", "Set.union_subset_union"),
+    ("Or.inl", "Or.inr"),
+)
+
+
+def _swap_token(line, a, b):
+    pattern = re.compile(rf"(?<![\w.])({re.escape(a)}|{re.escape(b)})(?![\w.])")
+    return pattern.sub(lambda m: b if m.group(1) == a else a, line)
+
+
+def _swap_projections(line):
+    return re.sub(r"\.(1|2)(?!\d)", lambda m: ".2" if m.group(1) == "1" else ".1", line)
+
+
+def _argument_mutations(line):
+    proof_head = r"[A-Za-z_][\w.']*(?:\.[A-Za-z_][\w.']*)*"
+    patterns = (
+        rf"^((?:.*?\b)?(?:exact|using)\s+{proof_head})\s+(.+)$",
+        rf"^(.+?:=\s*{proof_head})\s+(.+)$",
+    )
+    for pattern in patterns:
+        m = re.match(pattern, line)
+        if not m:
+            continue
+        prefix, arg_text = m.group(1), m.group(2)
+        args = arg_text.split()
+        if len(args) < 2 or any(not re.fullmatch(r"[A-Za-z_][\w.']*", arg) for arg in args):
+            return []
+        variants = []
+        swaps = [(len(args) - 2, len(args) - 1)]
+        if len(args) > 2:
+            swaps.extend([(0, 1), (0, len(args) - 1)])
+        for i, j in swaps:
+            mutated = list(args)
+            mutated[i], mutated[j] = mutated[j], mutated[i]
+            variants.append(f"{prefix} {' '.join(mutated)}")
+        if len(args) == 3:
+            variants.append(f"{prefix} {' '.join((args[1], args[2], args[0]))}")
+        return variants
+    return []
+
+
+def _numbered_name_mutations(line):
+    m = re.match(r"^(have\s+\w+\s*:\s*.+?:=\s*)(.+)$", line)
+    if not m:
+        return []
+    prefix, rhs = m.groups()
+    variants = []
+    for tok in re.finditer(r"\b(hp|h)(\d+)\b", rhs):
+        stem, n_text = tok.group(1), tok.group(2)
+        n = int(n_text)
+        for delta in (-1, 1):
+            if n + delta < 0:
+                continue
+            mutated = rhs[:tok.start()] + f"{stem}{n + delta}" + rhs[tok.end():]
+            variants.append(prefix + mutated)
+    return variants
+
+
+def _mutations(line):
+    seen = set()
+
+    def add(candidate):
+        if candidate != line and candidate not in seen:
+            seen.add(candidate)
+            yield candidate
+
+    for a, b in _MUTATION_PAIRS:
+        swapped = _swap_token(line, a, b)
+        yield from add(swapped)
+    projected = _swap_projections(line)
+    yield from add(projected)
+    for candidate in _argument_mutations(line):
+        yield from add(candidate)
+    for candidate in _numbered_name_mutations(line):
+        yield from add(candidate)
+
+
+def _line_options(lines, answer, max_options=6, template=None, runner=None):
     fillers = (
         "rfl", "simp", "intro h", "intro x hx",
         "exact h0", "exact h1", "assumption",
     )
     max_options = max(2, int(max_options))
+
+    def usable(line):
+        if line == answer or not _safe(line):
+            return False
+        if template is not None and runner is not None:
+            ok, _ = runner.check(template.replace("__ANSWER__", line))
+            return not ok
+        return True
+
     options = []
-    for line in (*lines, *fillers):
-        if line != answer and line not in options:
+
+    hard_negatives = [line for line in _mutations(answer) if usable(line)]
+    random.shuffle(hard_negatives)
+    for line in hard_negatives:
+        if line not in options:
             options.append(line)
+        if len(options) >= max_options - 1:
+            break
+
+    for line in (*lines, *fillers):
+        if len(options) >= max_options - 1:
+            break
+        if line not in options and usable(line):
+            options.append(line)
+
     random.shuffle(options)
     options = options[:max_options - 1]
     options.insert(random.randrange(len(options) + 1), answer)
     return options
+
+
+def _valid_missing_indices(lines, level=0):
+    candidates = [
+        i for i, line in enumerate(lines)
+        if not (level >= 2 and i == len(lines) - 1)
+        and not _is_easy_missing_line(line)
+    ]
+    if not candidates:
+        return []
+    primary_prefixes = ("have ", "rcases ", "cases ", "exact ")
+    preferred = [i for i in candidates if lines[i].startswith(primary_prefixes)]
+    if preferred:
+        return preferred
+    intro = [i for i in candidates if lines[i].startswith("intro ")]
+    return intro or candidates
 
 
 def _proof_script_set_union(config):
@@ -1071,14 +1213,23 @@ def _proof_script_set_inter(config):
 
 
 def _proof_script_order(config):
-    n_hyps = max(3, min(6, int(config.n_hyps) + 1))
+    n_hyps = max(3, min(10, int(config.n_hyps) + 1))
     names = _vars(n_hyps + 1)
     hyps = [(f"h{i}", f"{names[i]} ≤ {names[i + 1]}") for i in range(n_hyps)]
     goal = f"{names[0]} ≤ {names[-1]}"
-    proof = f"h{n_hyps - 1}"
-    for i in reversed(range(n_hyps - 1)):
-        proof = f"(le_trans h{i} {proof})"
-    lines = [f"exact {proof}"]
+    if n_hyps <= 3 and random.random() < 0.4:
+        proof = f"h{n_hyps - 1}"
+        for i in reversed(range(n_hyps - 1)):
+            proof = f"(le_trans h{i} {proof})"
+        lines = [f"exact {proof}"]
+    else:
+        lines = []
+        prev = "h0"
+        for i in range(1, n_hyps):
+            name = f"h{n_hyps + i - 1}"
+            lines.append(f"have {name} : {names[0]} ≤ {names[i + 1]} := le_trans {prev} h{i}")
+            prev = name
+        lines.append(f"exact {prev}")
     return edict(
         kind="proof_script:order",
         header=_render(edict(decl=f"({' '.join(names)} : Int)", hyps=hyps, goal=goal)),
@@ -1087,22 +1238,21 @@ def _proof_script_order(config):
 
 
 def _proof_script_prop(config):
-    chain_prob = 0.5 + 0.1 * min(4, int(getattr(config, "level", 0)))
-    if random.random() < chain_prob:
-        n_hyps = max(2, min(6, int(config.n_hyps)))
-        props = [f"p{i}" for i in range(n_hyps + 1)]
-        hyps = [(f"h{i}", f"{props[i]} → {props[i + 1]}") for i in range(n_hyps)]
-        return edict(
-            kind="proof_script:prop_chain",
-            header=_render(edict(decl=f"({' '.join(props)} : Prop)",
-                                 hyps=hyps, goal=f"{props[0]} → {props[-1]}")),
-            lines=["tauto"],
-        )
+    n_hyps = max(2, min(10, int(config.n_hyps)))
+    props = [f"p{i}" for i in range(n_hyps + 1)]
+    hyps = [(f"h{i}", f"{props[i]} → {props[i + 1]}") for i in range(n_hyps)]
+    lines = ["intro hp"]
+    prev = "hp"
+    for i in range(n_hyps):
+        name = f"hp{i + 1}"
+        lines.append(f"have {name} : {props[i + 1]} := h{i} {prev}")
+        prev = name
+    lines.append(f"exact {prev}")
     return edict(
-        kind="proof_script:prop_and",
-        header=_render(edict(decl="(p q r : Prop)", hyps=[("h0", "p → q")],
-                             goal="p ∧ r → q ∧ r")),
-        lines=["tauto"],
+        kind="proof_script:prop_chain",
+        header=_render(edict(decl=f"({' '.join(props)} : Prop)",
+                             hyps=hyps, goal=f"{props[0]} → {props[-1]}")),
+        lines=lines,
     )
 
 
@@ -1123,18 +1273,35 @@ def _proof_script_finset(config):
 
 
 def _proof_script_core(config):
-    if random.random() < 0.5:
-        return edict(
-            kind="core_script:prop_chain",
-            header=_render(edict(decl="(p q r : Prop)",
-                                 hyps=[("h0", "p → q"), ("h1", "q → r")],
-                                 goal="p → r")),
-            lines=["intro hp", "exact h1 (h0 hp)"],
-        )
+    n_hyps = max(2, min(6, int(getattr(config, "n_hyps", 2))))
+    props = [f"p{i}" for i in range(n_hyps + 1)]
+    hyps = [(f"h{i}", f"{props[i]} → {props[i + 1]}") for i in range(n_hyps)]
+    lines = ["intro hp"]
+    prev = "hp"
+    for i in range(n_hyps):
+        name = f"hp{i + 1}"
+        lines.append(f"have {name} : {props[i + 1]} := h{i} {prev}")
+        prev = name
+    lines.append(f"exact {prev}")
     return edict(
-        kind="core_script:and_comm",
-        header=_render(edict(decl="(p q : Prop)", hyps=[], goal="p ∧ q → q ∧ p")),
-        lines=["intro h", "exact And.intro h.2 h.1"],
+        kind="core_script:prop_chain",
+        header=_render(edict(decl=f"({' '.join(props)} : Prop)",
+                             hyps=hyps, goal=f"{props[0]} → {props[-1]}")),
+        lines=lines,
+    )
+
+
+def _proof_script_forward_order(config):
+    try:
+        fg = gen_forward_order_graph(config)
+    except RuntimeError:
+        return None
+    if fg is None:
+        return None
+    return edict(
+        kind="proof_script:forward_order",
+        header=_render(edict(decl=fg.decl, hyps=fg.leaf_hyps, goal=fg.goal)),
+        lines=fg.proof.splitlines(),
     )
 
 
@@ -1155,22 +1322,21 @@ def make_proof_script(config):
             if get_runner(use_mathlib=False).check(_script_code(script.header, script.lines))[0]:
                 return script
         raise RuntimeError("failed to produce a Lean proof script")
-    builders = _PROOF_SCRIPT_BUILDERS
-    if level >= 2:
-        builders = (
-            _proof_script_order, _proof_script_prop,
-            _proof_script_order, _proof_script_prop,
-            _proof_script_finset, _proof_script_set_union, _proof_script_set_inter,
-        )
-    if level >= 3:
-        builders = (
-            _proof_script_order, _proof_script_prop,
-            _proof_script_order, _proof_script_prop,
-            _proof_script_order, _proof_script_prop,
-            _proof_script_finset, _proof_script_set_union,
-        )
+    weighted_builders = [
+        (_proof_script_set_union, 1),
+        (_proof_script_set_inter, 1),
+        (_proof_script_finset, 1),
+        (_proof_script_order, 1 + level),
+        (_proof_script_prop, 1 + level),
+    ]
+    forward_weight = max(0, 6 * (level - 1))
+    if forward_weight:
+        weighted_builders.append((_proof_script_forward_order, forward_weight))
+    builders, weights = zip(*weighted_builders)
     for _ in range(50):
-        script = random.choice(builders)(config)
+        script = random.choices(builders, weights=weights, k=1)[0](config)
+        if script is None:
+            continue
         if all(_safe(line) for line in script.lines) and get_runner().check(_script_code(script.header, script.lines))[0]:
             return script
     raise RuntimeError("failed to produce a Lean proof script")
@@ -1387,8 +1553,8 @@ def gen_forward_order_graph(config):
             or len(all_leaf_nodes) - len(useful_leaf_nodes) < 2
         ):
             continue
-        leaf_names = _hypothesis_names(G.subgraph(nx.ancestors(G, target) | {target}).copy())
-        leaf_hyps = [(leaf_names[n], _node_data(G, n).clause_formula) for n in leaf_names]
+        leaf_names = _hypothesis_names(G)
+        leaf_hyps = [(leaf_names[n], _node_data(G, n).clause_formula) for n in all_leaf_nodes]
         goal = _node_data(G, target).clause_formula
         if goal in [h for _, h in leaf_hyps]:
             continue
@@ -1443,18 +1609,31 @@ class LeanMissingLine(Task):
             setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
-    def generate(self):
+    def generate_entry(self):
         use_mathlib = getattr(self.config, "use_mathlib", True)
         runner = get_runner(use_mathlib=use_mathlib)
+        level = int(getattr(self.config, "level", 0))
         for _ in range(30):
             script = make_proof_script(self.config)
-            idx = random.randrange(len(script.lines))
+            if level >= 1 and len(script.lines) < 2:
+                continue
+            if level >= 2 and len(script.lines) < 4:
+                continue
+            valid_indices = _valid_missing_indices(script.lines, level)
+            if not valid_indices:
+                continue
+            idx = random.choice(valid_indices)
             correct_line = script.lines[idx]
+            if _is_easy_missing_line(correct_line):
+                continue
             template = script.header + "".join(
                 "  __ANSWER__\n" if i == idx else f"  {line}\n"
                 for i, line in enumerate(script.lines)
             )
-            available = _line_options(script.lines, correct_line, self.config.n_candidates)
+            available = _line_options(
+                script.lines, correct_line, self.config.n_candidates,
+                template=template, runner=runner,
+            )
             compiling = [
                 j for j, line in enumerate(available, 1)
                 if _safe(line) and runner.check(template.replace("__ANSWER__", line))[0]
@@ -1462,7 +1641,7 @@ class LeanMissingLine(Task):
             correct_index = available.index(correct_line) + 1
             if compiling != [correct_index]:
                 continue
-            return Problem(
+            return Entry(
                 edict(
                     kind=script.kind,
                     template=template,
@@ -1472,12 +1651,13 @@ class LeanMissingLine(Task):
                     correct_index=correct_index,
                     missing_line=idx + 1,
                     use_mathlib=use_mathlib,
+                    used_mathlib=use_mathlib,
                 ),
                 str(correct_index),
             )
         raise RuntimeError("failed to generate a unique Lean missing-line-selection task")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         opts = "\n".join(
             f"{i + 1}. {line}" for i, line in enumerate(_mget(metadata, "available_lines"))
         )
@@ -1505,7 +1685,7 @@ class LeanCandidateCompilation(Task):
             setattr(config, k, v)
         super().__init__(config=config, timeout=120)
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(50):
             inst = make_instance(self.config)
             if _has_discriminative_candidate(inst.candidates, inst.labels):
@@ -1517,7 +1697,7 @@ class LeanCandidateCompilation(Task):
         if not pool:
             pool = list(range(len(inst.candidates)))
         idx = random.choice(pool)
-        return Problem(
+        return Entry(
             edict(kind=inst.kind,
                   theorem=inst.header + "  ?\n",
                   candidate=inst.candidates[idx],
@@ -1526,7 +1706,7 @@ class LeanCandidateCompilation(Task):
             "True" if inst.labels[idx] else "False",
         )
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Does this Lean 4 tactic body close the theorem?\n"
             "The answer is True or False.\n\n"

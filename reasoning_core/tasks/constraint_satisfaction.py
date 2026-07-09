@@ -5,7 +5,7 @@ import math
 import random
 from typing import Optional
 
-from reasoning_core.template import Task, Problem, Config, edict, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, edict, stochastic_rounding as sround
 from z3 import Distinct, Int, Optimize, Or, Solver, Sum, sat
 
 
@@ -185,7 +185,7 @@ class ConstraintSatisfaction(Task):
             solver.add(Or(*[x != v for x, v in zip(xs, sol)]))
         return sorted(solutions) if solutions else None, False
 
-    def generate(self):
+    def generate_entry(self):
         mode = self.config.model_mode
         if mode == "any":
             mode = random.choices(["attribute", "grid", "linear"], weights=[3, 3, 2])[0]
@@ -237,7 +237,7 @@ class ConstraintSatisfaction(Task):
                             "\n".join(f"- 0 <= x{i} <= {ub}" for i, ub in enumerate(domains)) + \
                             "\n\nConstraints:\n" + "\n".join(f"{j+1}. {self._constraint_text(c)}" for j, c in enumerate(constraints))
             })
-            return Problem(metadata=metadata, answer="UNSAT" if solution is None else json.dumps(solution))
+            return Entry(metadata=metadata, answer="UNSAT" if solution is None else json.dumps(solution))
             
         raise RuntimeError("Failed to generate a CSP instance.")
 
@@ -284,7 +284,7 @@ class ConstraintSatisfaction(Task):
                 "Clues:\n" + "\n".join(f"- {c}" for c in clues) +
                 f"\n\nWho has the {qval} {qcat}?\nAnswer with one name."
             )
-            return Problem(edict(model_mode="attribute", prompt=prompt, clues=clues, query=(qcat, qval), solution=answer), answer)
+            return Entry(edict(model_mode="attribute", prompt=prompt, clues=clues, query=(qcat, qval), solution=answer), answer)
         raise RuntimeError("Failed to generate an attribute CSP instance.")
 
     def _generate_grid(self):
@@ -333,10 +333,10 @@ class ConstraintSatisfaction(Task):
                 "Clues:\n" + "\n".join(f"- {c}" for c in clues) +
                 f"\n\nWhat is r{qr+1}c{qc+1}?\nAnswer with one number."
             )
-            return Problem(edict(model_mode="grid", prompt=prompt, clues=clues, query=(qr + 1, qc + 1), solution=ans), str(ans))
+            return Entry(edict(model_mode="grid", prompt=prompt, clues=clues, query=(qr + 1, qc + 1), solution=ans), str(ans))
         raise RuntimeError("Failed to generate a grid CSP instance.")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         if "prompt" in metadata:
             return metadata.prompt
         order = ", ".join(f"x{i}" for i in range(len(metadata['domains'])))
@@ -386,10 +386,10 @@ if __name__ == "__main__":
             seed=random.randint(0, 1000)
         )
         task = ConstraintSatisfaction(config=cfg)
-        prob = task.generate()
+        prob = task.generate_entry()
         
         print(f"\n--- Structure chosen: {prob.metadata.structure_mode} ---")
-        print(task.prompt(prob.metadata))
+        print(task.render_prompt(prob.metadata))
         
         sol = json.loads(prob.answer) if prob.answer != "UNSAT" else "UNSAT"
         count = len(sol) if isinstance(sol, list) and sol and isinstance(sol[0], list) else (0 if sol == "UNSAT" else 1)

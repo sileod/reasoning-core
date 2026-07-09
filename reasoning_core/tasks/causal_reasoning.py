@@ -8,7 +8,7 @@ from math import log, nan, floor, ceil
 import ast
 from abc import ABC, abstractmethod
 
-from reasoning_core.template import Task, DevTask, Problem, Config, stochastic_rounding as sround
+from reasoning_core.template import Task, DevTask, Entry, Config, stochastic_rounding as sround
 from dataclasses import dataclass
 
 from typing import (
@@ -387,7 +387,7 @@ class Rung(ABC):
     def _construct_scenario(self):
         pass
 
-    def generate(self):
+    def generate_entry(self):
         n_round = self.config.n_round #stochastic rounding value, that we will use for all subfunction to be coherent within the example    
         self._generate_network(n=self.config.n_nodes,
             method=self.config.graph_generation_mode,
@@ -428,9 +428,9 @@ class Rung(ABC):
         }
         metadata.update(specific_metadata)
         
-        return Problem(metadata=metadata, answer=answer)
+        return Entry(metadata=metadata, answer=answer)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         bif_data = metadata["bif_description"]
         model = ReasoningGraph(CanonicalBIFReader(string=bif_data).get_model())
         n_round = metadata['n_round']

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 import sympy as sp
 from sympy.geometry import Point, Line, Segment
 
-from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
 LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -743,7 +743,7 @@ class PlanarGeometryRelations(Task):
         super().__init__(config=config or PlanarGeometryRelationsConfig(), **kwargs)
         self.balancing_key_ratio = 0.18
 
-    def generate(self):
+    def generate_entry(self):
         query_types = [q for q in self.config.query_types if q in QUERIES] or list(QUERIES)
 
         for _ in range(self.config.max_tries):
@@ -764,11 +764,11 @@ class PlanarGeometryRelations(Task):
                     balance=rendered.balance,
                     internal_query=rendered.internal_query,
                 )
-                return Problem(metadata=metadata, answer=rendered.answer)
+                return Entry(metadata=metadata, answer=rendered.answer)
 
         return None
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         points = "; ".join(f"{a}={metadata.points[a]}" for a in sorted(metadata.points))
         lines = [f"Given points: {points}."]
 

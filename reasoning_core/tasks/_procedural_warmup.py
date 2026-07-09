@@ -21,7 +21,7 @@ from collections import Counter
 from dataclasses import dataclass
 
 from easydict import EasyDict as edict
-from reasoning_core.template import Config, Problem, Task, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
 
 
 @dataclass
@@ -322,7 +322,7 @@ class ProceduralWarmup(Task):
             return task
         return random.choice(self.config.tasks)
 
-    def generate(self):
+    def generate_entry(self):
         task = _canon_task(self._choose_task())
         c = self.config
         n = c.seq_len
@@ -389,9 +389,9 @@ class ProceduralWarmup(Task):
             "n": length,
             "vocab_size": c.vocab_size,
         }
-        return Problem(json.loads(json.dumps(meta, default=str)), answer)
+        return Entry(json.loads(json.dumps(meta, default=str)), answer)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         question = _meta_get(metadata, "_question")
         if question is not None:
             return question

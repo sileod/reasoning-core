@@ -1,4 +1,4 @@
-from reasoning_core.template import Problem, Task, DevTask, edict, Config, stochastic_rounding as sround
+from reasoning_core.template import Entry, Task, DevTask, edict, Config, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 from gramforge import init_grammar
 from dataclasses import dataclass
@@ -174,7 +174,7 @@ class Arithmetics(Task):
     config_cls = ArithmeticsConfig
     summary = "Compositional arithmetics with float/int/bool, varied operators, number theory."
 
-    def generate(self):
+    def generate_entry(self):
         while True:
             x = gramforge.generate(g, depth=self.config.max_depth, min_depth=self.config.min_depth, mode=self.config.gramforge_algorithm)
             expr = x@'py'
@@ -184,9 +184,9 @@ class Arithmetics(Task):
         ans_str = f"{value.quantize(quantizer):f}".rstrip('0').rstrip('.')
         shown_expr, digit_mode = _display_expr(final_expr, self.config)
         meta = edict(expr=final_expr, display_expr=shown_expr, digit_mode=digit_mode, height=x.height, cot=self.get_cot(final_expr))
-        return Problem(metadata=meta, answer=_format_number(ans_str, digit_mode))
+        return Entry(metadata=meta, answer=_format_number(ans_str, digit_mode))
     
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         note = {
             "spaced": " Digits are spaced; answer likewise.",
             "reversed_spaced": " Digits are reversed and spaced; answer likewise.",
@@ -231,7 +231,7 @@ class Arithmetics(Task):
 
 import random, sympy as sp
 from dataclasses import dataclass
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Entry, Config, edict
 from reasoning_core.utils import score_scalar
 
 
@@ -349,7 +349,7 @@ def gen_process(config):
         equation=str(sp.Eq(expr, observed)),
         cot=f"Solve {sp.Eq(expr, observed)} for x; x = {base}.",
     )
-    return Problem(metadata=metadata, answer=str(answer))
+    return Entry(metadata=metadata, answer=str(answer))
 
 
 def gen_relational(config):
@@ -430,7 +430,7 @@ def gen_relational(config):
         equation=str(sp.Eq(val[given], nums[given])),
         cot=f"Solve {sp.Eq(val[given], nums[given])}; then compute {asked} = {nums[asked]}.",
     )
-    return Problem(metadata=metadata, answer=str(nums[asked]))
+    return Entry(metadata=metadata, answer=str(nums[asked]))
 
 
 class MathWordProblem(Task):
@@ -438,7 +438,7 @@ class MathWordProblem(Task):
     def __init__(self, config=WordProblemMathConfig()):
         super().__init__(config=config)
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(100):
             gen = gen_relational if random.random() < self.config.relational_p else gen_process
             problem = gen(self.config)
@@ -446,7 +446,7 @@ class MathWordProblem(Task):
                 return problem
         return None
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         if m.family == "process":
             chain = "; then ".join(process_step_text(s, m.unit) for s in m.steps)
             if m.inverse:

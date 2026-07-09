@@ -26,7 +26,7 @@ from unified_planning.interop import convert_problem_to_tarski
 from unified_planning.interop import convert_problem_from_tarski
 from dataclasses import dataclass, field
 from collections import Counter, namedtuple
-from reasoning_core.template import Task, Problem, Reward, Config
+from reasoning_core.template import Task, Entry, Reward, Config
 import logging
 logging.getLogger().setLevel(logging.WARNING)
 from unified_planning.shortcuts import SequentialSimulator
@@ -652,7 +652,7 @@ def to_pddl(s):
     actions = [a.strip('[]').strip().replace(',','').replace('(',' ') for a in s.split(')')]
     return "\n".join([f'({a})' for a in actions if a]).replace('))',')')
 
-def translate(problem: Problem, write_default=0.5) -> str:
+def translate(problem, write_default=0.5) -> str:
     desc = []
     
     # 1. Analyze Types
@@ -791,7 +791,7 @@ class Planning(Task):
         super().__init__(config=config)
         shutup()
 
-    def generate(self):
+    def generate_entry(self):
         meta=edict()
         config = self.config
         config.domain = random.choice(config.domains)
@@ -866,11 +866,11 @@ class Planning(Task):
             meta.verif_cot = make_cot(problem, reference_plan) #deprecated cot
             if self.score_answer(plan, {'metadata': meta})<1:
                 continue
-            return Problem(meta, plan)
+            return Entry(meta, plan)
         raise RuntimeError("Could not generate a planning problem")
 
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         txt = meta.problem_english.strip()       
         if random.random() < self.config.hint_proba:
             if meta.get("generator_mode") == "planted_walk_optimal":

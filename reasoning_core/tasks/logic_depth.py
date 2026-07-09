@@ -7,7 +7,7 @@ from typing import Optional
 
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, Payload, Problem, Task, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, render_payload, stochastic_rounding as sround
 from reasoning_core.utils import parse_space_ints, score_space_ints
 
 
@@ -1748,18 +1748,18 @@ class MultistepNLI(Task):
         self.balancing_key_ratio = 1 / 3
         self._case_state = {}
 
-    def generate(self):
+    def generate_entry(self):
         case, key = generate_case(self.config, state=self._case_state)
         if case:
             meta = case_metadata(case, key)
-            meta.payload = Payload(premise="\n".join(meta.premise), hypothesis=meta.hypothesis)
+            meta.payload = {"premise": "\n".join(meta.premise), "hypothesis": meta.hypothesis}
             mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
-            return Problem(meta, mapping[case.label])
+            return Entry(meta, mapping[case.label])
         raise RuntimeError("could not generate a consistent multistep_nli example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         return (
-            f"{Payload(meta.payload)}\n\n"
+            f"{render_payload(meta.payload)}\n\n"
             "Is the hypothesis true given the premise? "
             "The answer is Yes, No, or Maybe."
         )
@@ -1779,18 +1779,18 @@ class DefeasibleNLI(Task):
         self.balancing_key_ratio = 1 / 3
         self._case_state = {}
 
-    def generate(self):
+    def generate_entry(self):
         case, key = generate_naf_case(self.config, state=self._case_state)
         if case:
             meta = naf_case_metadata(case, key)
-            meta.payload = Payload(premise="\n".join(meta.premise), hypothesis=meta.hypothesis)
+            meta.payload = {"premise": "\n".join(meta.premise), "hypothesis": meta.hypothesis}
             mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
-            return Problem(meta, mapping[case.label])
+            return Entry(meta, mapping[case.label])
         raise RuntimeError("could not generate a stratified_naf_nli example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         return (
-            f"{Payload(meta.payload)}\n\n"
+            f"{render_payload(meta.payload)}\n\n"
             "Some rules use phrases like 'unless X can be shown'. This means the rule applies only when "
             "that exception is not derivable from the premise. This is different from a classical "
             "'is not' fact.\n"
@@ -1809,7 +1809,7 @@ class MultistepEvidenceRetrieval(Task):
         super().__init__(config=config)
         self._case_state = {}
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(200):
             case, key = generate_case(self.config, ("entailment", "contradiction"), self._case_state)
             if not case:
@@ -1821,15 +1821,15 @@ class MultistepEvidenceRetrieval(Task):
             meta.necessary_indices = nec
             meta.valid_supports = [nec]
             meta.support_indices = nec
-            meta.payload = Payload(premise=indexed_premise(meta.premise), hypothesis=meta.hypothesis)
+            meta.payload = {"premise": indexed_premise(meta.premise), "hypothesis": meta.hypothesis}
             answer = " ".join(str(i) for i in nec)
-            return Problem(meta, answer)
+            return Entry(meta, answer)
         raise RuntimeError("could not generate a unique-support multistep_evidence_retrieval example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         verb = "entail" if meta.label == "entailment" else "contradict"
         return (
-            f"{Payload(meta.payload)}\n\n"
+            f"{render_payload(meta.payload)}\n\n"
             f"Which premise statements are necessary to {verb} the hypothesis, "
             "meaning removing any one of them breaks that result?\n"
             "Answer with space-separated indexes."
@@ -1847,7 +1847,7 @@ class MultistepAbduction(Task):
         super().__init__(config=config)
         self._case_state = {}
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(500):
             abd = make_direct_abduction_case(self.config)
             if not abd:
@@ -1859,19 +1859,19 @@ class MultistepAbduction(Task):
                 label=abd.label,
                 domain_pack=abd.domain_pack,
             )
-            meta.payload = Payload(
-                premise=indexed_premise(meta.premise),
-                hypothesis=meta.hypothesis,
-                candidate_facts=indexed_premise(meta.candidates),
-            )
+            meta.payload = {
+                "premise": indexed_premise(meta.premise),
+                "hypothesis": meta.hypothesis,
+                "candidate_facts": indexed_premise(meta.candidates),
+            }
             answer = " ".join(str(i) for i in abd.answer)
-            return Problem(meta, answer)
+            return Entry(meta, answer)
         raise RuntimeError("could not generate a consistent multistep_abduction example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         mode = "entail the hypothesis" if meta.label == "entailment" else "contradict the hypothesis"
         return (
-            f"{Payload(meta.payload)}\n\n"
+            f"{render_payload(meta.payload)}\n\n"
             f"Which smallest set of candidate facts, if added to the premise, make the premise {mode}?\n"
             "Do not include candidate facts that are not needed.\n"
             "Answer with space-separated indexes."
@@ -1887,7 +1887,7 @@ class LogicQA(Task):
         super().__init__(config=config)
         self.balancing_key_ratio = 1 / 3
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(300):
             theory = sample_theory(self.config)
             res = chase(theory, max_depth=None)
@@ -1907,16 +1907,16 @@ class LogicQA(Task):
                 hard_answer_depths=[res.derivations[a].depth for a in query.hard_atoms],
                 cot="\n\n".join(trace_for(a, res.derivations, source, theory.domain_pack) for a in query.atoms if a in res.derivations),
             )
-            meta.payload = Payload(premise="\n".join(lines), question=query.question)
-            return Problem(meta, query.answer)
+            meta.payload = {"premise": "\n".join(lines), "question": query.question}
+            return Entry(meta, query.answer)
         raise RuntimeError("could not generate a logic_qa example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         if meta.answer_mode == "count":
             fmt = "Answer with one integer."
         else:
             fmt = "Answer with names in alphabetical order, comma-separated, or 'none'."
-        return f"{Payload(meta.payload)}\n\n{fmt}"
+        return f"{render_payload(meta.payload)}\n\n{fmt}"
 
     def score_answer(self, answer, entry):
         metadata = entry.metadata if hasattr(entry, "metadata") else entry["metadata"]

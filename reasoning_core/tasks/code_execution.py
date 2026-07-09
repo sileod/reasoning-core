@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from itertools import product
 
-from reasoning_core.template import Task, DevTask, Problem, Config, edict, stochastic_rounding as sround
+from reasoning_core.template import Task, DevTask, Entry, Config, edict, stochastic_rounding as sround
 from gramforge import generate
 from gramforge.grammars import mesopy_grammar
 
@@ -443,7 +443,7 @@ class CodeRunnability(Task):
         super().__init__(config=config or MesopyCodeCfg())
         self.balancing_key_ratio = 1 / 5
 
-    def generate(self):
+    def generate_entry(self):
         want_error = random.random() >= self.config.runnable_prob
         code, r = sample_problem(
             self.config,
@@ -452,9 +452,9 @@ class CodeRunnability(Task):
             profile="runnability",
             syntax_errors=True,
         )
-        return Problem(metadata=meta(code, r), answer=r.error or "OK")
+        return Entry(metadata=meta(code, r), answer=r.error or "OK")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Predict whether this Python call runs successfully or raises an exception.\n"
             f"```python\n{metadata.code}\n```\n"
@@ -475,11 +475,11 @@ class CodeExecution(Task):
     def __init__(self, config=None):
         super().__init__(config=config or MesopyCodeCfg())
 
-    def generate(self):
+    def generate_entry(self):
         code, r = sample_problem(self.config, want_error=False, failure_rate=0.05)
-        return Problem(metadata=meta(code, r), answer=r.value)
+        return Entry(metadata=meta(code, r), answer=r.value)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Predict the value returned by this Python call.\n"
             f"```python\n{metadata.code}\n```\n"
@@ -527,7 +527,7 @@ class CodeInputDeduction(DevTask):
         self._mode_i = 0
         self._recent_answers = []
 
-    def generate(self):
+    def generate_entry(self):
         cfg = self.config
         modes = ("int", "tuple", "str")
         start = self._mode_i % len(modes)
@@ -593,13 +593,13 @@ class CodeInputDeduction(DevTask):
                     else:
                         answer = str(answer)
                     self._recent_answers = (self._recent_answers + [answer])[-8:]
-                    return Problem(
+                    return Entry(
                         edict(code=code, mode=mode, goal=goal, call_text=call_text, answer_hint=answer_hint, target=target),
                         answer,
                     )
         raise RuntimeError("failed to generate code input deduction task")
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return (
             f"Find the {m.goal} such that `{m.call_text} == target`.\n"
             f"{m.answer_hint}\n\n"

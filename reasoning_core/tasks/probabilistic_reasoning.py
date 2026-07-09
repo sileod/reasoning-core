@@ -6,7 +6,7 @@ from itertools import product
 from gramforge import generate, init_grammar
 from problog import get_evaluatable
 from problog.program import PrologString
-from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 from reasoning_core.utils import score_space_ints
 
 
@@ -254,7 +254,7 @@ class MostProbableEvidence(Task):
     def __init__(self, config=MostProbableEvidenceConfig()):
         super().__init__(config=config)
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(self.config.max_attempts):
             node = generate(evidence_grammar(), depth=self.config.depth, min_depth=4)
             instance = evidence_instance(node, self.config)
@@ -273,10 +273,10 @@ class MostProbableEvidence(Task):
             opts = lit_options(src)
             lits = sorted_lits(map(str, json.loads(answer)))
             answer = " ".join(str(opts.index(x)) for x in lits)
-            return Problem(edict(problog=src, english=english, options=opts, n_atoms=len(hidden_atoms(src)), margin=margin), answer)
+            return Entry(edict(problog=src, english=english, options=opts, n_atoms=len(hidden_atoms(src)), margin=margin), answer)
         raise RuntimeError("Failed to generate probabilistic evidence task")
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         opts = "\n".join(f"{i}. {x}" for i, x in enumerate(m.options))
         return (
             f"{m.english}\n\nHidden fact values:\n{opts}\n\n"
@@ -303,18 +303,18 @@ class MostProbableOutcome(Task):
         super().__init__(config=config)
         self._target_i = 0
 
-    def generate(self):
+    def generate_entry(self):
         target = ["A", "B", "equal"][self._target_i % 3]
         self._target_i += 1
 
         node = generate(outcome_grammar(self.config.max_count, target=target), depth=self.config.depth)
         src = node @ problog
-        return Problem(
+        return Entry(
             metadata=edict(problog=src, english=node @ eng),
             answer=mpo_answer(src),
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return f"{m.english}\n\nThe answer is exactly one of: A, B, equal."
 
     def score_answer(self, answer, entry):

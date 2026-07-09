@@ -1,4 +1,4 @@
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Entry, Config
 from dataclasses import dataclass
 try:
     import reasoning_gym
@@ -24,7 +24,7 @@ class Reasoning_Gym(Task):
         self.datasets = [d for d in reasoning_gym.factory.DATASETS.keys() if d != 'composite']
         super().__init__(config)
 
-    def generate(self):
+    def generate_entry(self):
         d = self.config.rg_task or random.choice(self.datasets)
         t, c_cls = reasoning_gym.factory.DATASETS[d]
 
@@ -43,7 +43,7 @@ class Reasoning_Gym(Task):
             "source_task": d,
             "_question": entry['question'],
         }
-        return Problem(json.loads(json.dumps(meta, default=str)), str(entry['answer']))
+        return Entry(json.loads(json.dumps(meta, default=str)), str(entry['answer']))
 
     def score_answer(self, answer, entry):
         sd = (entry['metadata'].get('source_task') or entry['metadata'].get('_source_task')
@@ -56,5 +56,5 @@ class Reasoning_Gym(Task):
             score = 0
         return score
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return metadata._question

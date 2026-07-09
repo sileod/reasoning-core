@@ -80,7 +80,7 @@ Level 5 should be tough even for large LLMs.
 ## Minimal Task Skeleton
 ```python
 from dataclasses import dataclass
-from reasoning_core.template import Task, Entry, Config, edict, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, edict, render_payload, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 
 @dataclass
@@ -100,6 +100,7 @@ class MyTask(Task):
     def generate_entry(self):
         # Build instance using external libs when possible.
         metadata = edict({"equation": "...", "cot": "...optional..."})
+        metadata.payload = {"equation": metadata.equation}
         answer = "..."
         return Entry(metadata=metadata, answer=answer)
 
@@ -107,7 +108,7 @@ class MyTask(Task):
         # Specify the answer format clearly, refer to it as "the answer" or "answer".
         # Do not use answer as a verb, do not use "return".
         # The wording logic should live here and not be buried in generation.
-        return f"Solve for x: {metadata['equation']}\n Answer is a scalar."
+        return f"{render_payload(metadata.payload)}\n\nThe answer is a scalar."
 
     def score_answer(self, answer, entry):
         # Answer is the answer to score (e.g. LLM prediction)
@@ -128,6 +129,9 @@ class MyTask(Task):
 - Prompt is unambiguous about output format.
 - Prompt is as concise as possible while allowing meaningful zero-shot solvability.
 - Metadata is ideally sufficient for offline debugging (instance params, optional `cot` entry).
+- If a task uses labeled prompt blocks, store them as a plain JSON-serializable
+  `metadata.payload` mapping and render them with `render_payload(metadata.payload)`.
+  Do not store renderer/helper objects in metadata.
 - Metadata is not too large (should not blow up memory).
 
 ## Registration and Discovery

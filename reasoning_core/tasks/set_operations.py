@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 import inflect
 from dataclasses import dataclass
-from reasoning_core.template import Task, Problem, Config, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, stochastic_rounding as sround
 import itertools
 import string
 from ast import literal_eval
@@ -101,7 +101,7 @@ class SetMissingElement(Task):
         self.balancing_key_ratio = 0.25
         self.domains = make_domains(self.config.domain_size, ordered=True)
         
-    def generate(self):
+    def generate_entry(self):
         chosen_domain = random.choice(self.domains[:self.config.n_domains])
         intention = create_intension(chosen_domain, self.config.set_size)
         n_missing = 0 if random.random() < self.config.prob_no_missing else random.randint(1, 3)
@@ -109,9 +109,9 @@ class SetMissingElement(Task):
         missing = sorted(random.sample(removable, min(n_missing, len(removable))), key=str)
         for e in missing: intention.remove(e)
         answer = "{" + ", ".join(map(repr, missing)) + "}"
-        return Problem(metadata={'element_list': return_shuffle(intention), 'missing_count': len(missing)}, answer=answer)
+        return Entry(metadata={'element_list': return_shuffle(intention), 'missing_count': len(missing)}, answer=answer)
 
-    def prompt(self, metadata) -> str:
+    def render_prompt(self, metadata) -> str:
         return (
             f"Set_A: {metadata['element_list']}\n"
             "The answer is the missing elements from Set_A as a Python set."
@@ -144,7 +144,7 @@ class CountElements(Task):
         super().__init__(config=config)
         self.domains = make_domains(self.config.domain_size)
 
-    def generate(self):
+    def generate_entry(self):
         count = random.randint(0, self.config.max_count)
         domain = random.choice(self.domains)
         target = random.choice(domain)
@@ -152,9 +152,9 @@ class CountElements(Task):
         n_others = self.config.list_size - count
         elements = [target] * count + random.choices(others, k=n_others)
         random.shuffle(elements)
-        return Problem(metadata={'elements': elements, 'target': target}, answer=str(count))
+        return Entry(metadata={'elements': elements, 'target': target}, answer=str(count))
 
-    def prompt(self, metadata) -> str:
+    def render_prompt(self, metadata) -> str:
         return f"List: {metadata['elements']}\nHow many times does {metadata['target']!r} appear? The answer is a number."
 
     def score_answer(self, answer, entry):
@@ -545,7 +545,7 @@ class SetExpression(Task):
 
         return env, None
 
-    def generate(self):
+    def generate_entry(self):
         domain = random.choice(self.domains[:self.config.n_domains])
         list_mode = random.random() < self.config.list_prob
         env, shown = self.make_env(domain, list_mode=list_mode)
@@ -567,9 +567,9 @@ class SetExpression(Task):
             else:
                 meta[x] = shown[x] if shown else return_shuffle(env[x])
 
-        return Problem(metadata=meta, answer=repr_answer(e.value))
+        return Entry(metadata=meta, answer=repr_answer(e.value))
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         lines = []
 
         for x in "ABC":
