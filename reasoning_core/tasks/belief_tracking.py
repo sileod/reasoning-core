@@ -73,7 +73,7 @@ def apply_event(event, state, viewer=None):
         if viewer == agent:
             state[("loc", obj)] = true_container
     elif event.kind == "tell":
-        _speaker, listeners, obj, claim = event.args
+        _speaker, listeners, obj, claim, _private = event.args
         if viewer in set(listeners):
             state[("loc", obj)] = claim
     else:
@@ -97,12 +97,21 @@ def profile(trace, init, chain, fact):
 
 
 def salient(trace, init, chain, fact):
-    answer = replay(trace, init, chain)[fact]
+    state = dict(init)
+    viewer = chain[-1] if chain else None
+    required_observers = set(chain)
     causes = []
-    for i in range(len(trace)):
-        deleted = trace[:i] + trace[i + 1 :]
-        if replay(deleted, init, chain)[fact] != answer:
+
+    for i, event in enumerate(trace):
+        if not required_observers <= event.obs:
+            continue
+
+        before = state[fact]
+        apply_event(event, state, viewer)
+
+        if state[fact] != before:
             causes.append(i)
+
     return causes
 
 
@@ -258,15 +267,14 @@ class BeliefTracking(Task):
                 claim = true_container
 
             if random.random() < self.config.p_private_tell:
-                listener = random.choice(others)
-                listeners = (listener,)
-                obs = {speaker, listener}
+                listeners = (random.choice(others),)
+                private = True
+                obs = {speaker, *listeners}
             else:
-                random.shuffle(others)
-                n_listeners = random.randint(1, len(others))
-                listeners = tuple(sorted(others[:n_listeners], key=agents.index))
+                listeners = tuple(sorted(others, key=agents.index))
+                private = False
                 obs = self._people_in_room(state, agents, room)
-            return Event("tell", (speaker, listeners, obj, claim), frozenset(obs))
+            return Event("tell", (speaker, listeners, obj, claim, private), frozenset(obs))
         return None
 
     def _make_trace(self, init, agents, objects, rooms, containers, room_of):
@@ -279,8 +287,6 @@ class BeliefTracking(Task):
             "tell": self.config.p_tell,
         }
         kinds = list(weights)
-        kind_weights = [weights[k] for k in kinds]
-
         makers = {
             "walk": lambda: self._make_walk(state, agents, rooms),
             "move": lambda: self._make_move(state, agents, objects, room_of),
@@ -289,14 +295,24 @@ class BeliefTracking(Task):
         }
 
         for _ in range(self.config.length):
-            event = None
-            for kind in random.choices(kinds, weights=kind_weights, k=8) + ["walk"]:
+            candidates = []
+            for kind in kinds:
                 event = makers[kind]()
-                if event is not None and (not trace or event != trace[-1]):
-                    break
-                event = None
-            if event is None:
+                if event is None:
+                    continue
+                if trace and event == trace[-1]:
+                    continue
+                candidates.append((kind, event))
+
+            if not candidates:
                 break
+
+            _kind, event = random.choices(
+                candidates,
+                weights=[weights[kind] for kind, _event in candidates],
+                k=1,
+            )[0]
+
             trace.append(event)
             apply_event(event, state, None)
 
@@ -314,7 +330,7 @@ class BeliefTracking(Task):
                 if peek_obj == obj:
                     last = true_container
             elif event.kind == "tell":
-                _speaker, _listeners, told_obj, claim = event.args
+                _speaker, _listeners, told_obj, claim, _private = event.args
                 if told_obj == obj:
                     last = claim
         return last
@@ -334,12 +350,6 @@ class BeliefTracking(Task):
             for obj in shuffled_objects:
                 fact = ("loc", obj)
                 prof = profile(trace, init, chain, fact)
-                hard_causes = salient(trace, init, chain, fact)
-                # Events assign absolute locations, so only the last applicable
-                # assignment to the queried fact can be individually deletion-salient.
-                effective_min_salient = min(self.config.min_salient, 1)
-                if len(hard_causes) < effective_min_salient:
-                    continue
 
                 if depth >= 2:
                     if prof[-1] == prof[-2]:
@@ -350,6 +360,10 @@ class BeliefTracking(Task):
                     continue
 
                 if prof[-1] == self._last_mentioned_container(trace, obj) and random.random() >= 0.20:
+                    continue
+
+                hard_causes = salient(trace, init, chain, fact)
+                if len(hard_causes) < self.config.min_salient:
                     continue
 
                 return {
@@ -393,9 +407,11 @@ class BeliefTracking(Task):
     def _rules_text(self):
         return (
             "Rules: People see what happens in their room. For walking, people in the old or new "
-            "room see it. When someone hears a location sentence, the listener believes that "
-            "sentence, even if it is wrong. People keep old beliefs about events they did not see. "
-            "For nested beliefs, use only events seen by every person in the belief chain."
+            "room see it. A private statement is heard only by its named listeners. A public "
+            "statement is heard by everyone else in the room. When someone hears a location "
+            "statement, they believe it, even if it is wrong. People keep old beliefs about events "
+            "they did not observe. For nested beliefs, use only events observed by every person in "
+            "the belief chain."
         )
 
     def _start_text(self, metadata):
@@ -424,8 +440,9 @@ class BeliefTracking(Task):
             agent, obj, true_container = event.args
             return f"Alone, {agent} checks the {obj} and sees it in the {true_container}."
         if event.kind == "tell":
-            speaker, listeners, obj, claim = event.args
-            return f"{speaker} says to {_join(listeners)}, \"The {obj} is in the {claim}.\""
+            speaker, listeners, obj, claim, private = event.args
+            verb = "privately tells" if private else "publicly tells"
+            return f"{speaker} {verb} {_join(listeners)}, \"The {obj} is in the {claim}.\""
         raise ValueError(f"unknown event kind: {event.kind}")
 
     def _story_text(self, metadata):
@@ -459,10 +476,6 @@ class BeliefTracking(Task):
         assert profile(trace, init, chain, fact) == list(metadata.profile)
         assert salient(trace, init, chain, fact) == list(metadata.salient)
 
-        for i in metadata.salient:
-            deleted = trace[:i] + trace[i + 1 :]
-            assert replay(deleted, init, chain)[fact] != entry.answer
-
         seen = [event for event in trace if set(chain) <= event.obs]
         assert replay(trace, init, chain) == replay(seen, init, chain)
 
@@ -484,10 +497,73 @@ class BeliefTracking(Task):
         for agent in agents:
             assert replay(trace, init, (agent,)) == actual
 
+    def _assert_private_tell_case(self):
+        agents = ("Alice", "Bob", "Carol")
+        init = {
+            ("at", "Alice"): "kitchen",
+            ("at", "Bob"): "kitchen",
+            ("at", "Carol"): "kitchen",
+            ("loc", "key"): "box",
+        }
+
+        trace = [
+            Event(
+                "tell",
+                ("Alice", ("Bob",), "key", "drawer", True),
+                frozenset({"Alice", "Bob"}),
+            )
+        ]
+
+        assert replay(trace, init, ("Bob",))[("loc", "key")] == "drawer"
+        assert replay(trace, init, ("Carol",))[("loc", "key")] == "box"
+        assert replay(trace, init, ())[("loc", "key")] == "box"
+
+    def _assert_public_tell_case(self):
+        agents = ("Alice", "Bob", "Carol")
+        init = {
+            ("at", "Alice"): "kitchen",
+            ("at", "Bob"): "kitchen",
+            ("at", "Carol"): "kitchen",
+            ("loc", "key"): "box",
+        }
+
+        observers = frozenset(agents)
+        trace = [
+            Event(
+                "tell",
+                ("Alice", ("Bob", "Carol"), "key", "drawer", False),
+                observers,
+            )
+        ]
+
+        assert replay(trace, init, ("Bob",))[("loc", "key")] == "drawer"
+        assert replay(trace, init, ("Carol",))[("loc", "key")] == "drawer"
+        assert replay(trace, init, ())[("loc", "key")] == "box"
+
+    def _assert_multiple_salient_case(self):
+        init = {
+            ("at", "Alice"): "kitchen",
+            ("loc", "key"): "box",
+        }
+
+        trace = [
+            Event("move", ("Alice", "key", "drawer"), frozenset({"Alice"})),
+            Event("move", ("Alice", "key", "tin"), frozenset({"Alice"})),
+            Event("move", ("Alice", "key", "basket"), frozenset({"Alice"})),
+        ]
+
+        fact = ("loc", "key")
+
+        assert salient(trace, init, ("Alice",), fact) == [0, 1, 2]
+        assert replay(trace, init, ("Alice",))[fact] == "basket"
+
     def validate(self, n_samples=10, cache=False, refresh=False):
         examples = super().validate(n_samples=n_samples, cache=cache, refresh=refresh)
         self._assert_entry_invariants(self.generate_example())
         for entry in examples[: min(3, len(examples))]:
             self._assert_entry_invariants(entry)
         self._assert_all_seen_case()
+        self._assert_private_tell_case()
+        self._assert_public_tell_case()
+        self._assert_multiple_salient_case()
         return examples

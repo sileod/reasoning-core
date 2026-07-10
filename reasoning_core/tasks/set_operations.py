@@ -95,8 +95,12 @@ class SetMissingElementConfig(SetOpsConfig):
         self.n_domains += level
 
 class SetMissingElement(Task):
+    """
+    This is a perception task, goal is to probe attention sharpness. Domains are easy to guess.
+    But LLMs tend to repeat elements from the input.
+    https://aclanthology.org/2025.findings-ijcnlp.44.pdf
+    """
     summary = "Identify missing elements from a shuffled sequence defined by set intension."
-    #Note: this is a perception task, goal is to probe attention sharpness. Domains are easy to guess.
     def __init__(self, config=SetMissingElementConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25
@@ -113,10 +117,9 @@ class SetMissingElement(Task):
         return Entry(metadata={'element_list': return_shuffle(intention), 'missing_count': len(missing)}, answer=answer)
 
     def render_prompt(self, metadata) -> str:
-        return (
-            f"Set_A: {metadata['element_list']}\n"
-            "The answer is the missing elements from Set_A as a Python set."
-        )
+        S = metadata["element_list"]
+        return f"Answer with the missing elements in the ordered span of {S} as a Python set."
+
 
     def score_answer(self, answer, entry):
         try:
