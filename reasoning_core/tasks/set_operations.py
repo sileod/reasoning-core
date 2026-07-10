@@ -96,6 +96,7 @@ class SetMissingElementConfig(SetOpsConfig):
 
 class SetMissingElement(Task):
     summary = "Identify missing elements from a shuffled sequence defined by set intension."
+    #Note: this is a perception task, goal is to probe attention sharpness. Domains are easy to guess.
     def __init__(self, config=SetMissingElementConfig()):
         super().__init__(config=config)
         self.balancing_key_ratio = 0.25

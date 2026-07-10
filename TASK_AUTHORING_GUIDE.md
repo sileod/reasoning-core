@@ -11,6 +11,7 @@ Implement tasks that are:
 - concise in code, easy to audit
 - preferaby solver-backed (use strong external libraries instead of re-implementing),
 - distributionally broad (high structural variety),
+- focused on interesting cases without being templatic,
 - not mostly solvable with shortcuts (some are good for robustness but they should be rare),
 - verifiable, formal and robustly scorable (`task.score_answer(entry.answer, entry) == 1`).
 - favour answer uniqueness if possible (e.g. specify lexicographic order) to ease next token prediction training.
@@ -36,7 +37,6 @@ Every task should provide:
 Base `Config` protected fields:
 - `level`: current level,
 - `seed`: RNG seed (do not use it. do not seed anything explictly unless it is requested.)
-- `size`: optional dataset size.
 
 Important behavior:
 - Int-typed fields (except `level/size/seed`) are tracked internally as floats and stochastically rounded on read.
@@ -128,11 +128,13 @@ class MyTask(Task):
 - `config.set_level(1)` changes difficulty.
 - Prompt is unambiguous about output format.
 - Prompt is as concise as possible while allowing meaningful zero-shot solvability.
+- Answers should be short and canonical, valid SFT targets.
 - Metadata is ideally sufficient for offline debugging (instance params, optional `cot` entry).
 - If a task uses labeled prompt blocks, store them as a plain JSON-serializable
   `metadata.payload` mapping and render them with `render_payload(metadata.payload)`.
   Do not store renderer/helper objects in metadata.
 - Metadata is not too large (should not blow up memory).
+
 
 ## Registration and Discovery
 - Any `Task` subclass in `reasoning_core/tasks/*.py` is auto-discovered by AST and lazy-loaded through `reasoning_core.__init__.py`.

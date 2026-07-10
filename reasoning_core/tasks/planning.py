@@ -239,6 +239,7 @@ def rolling(n_times):
 
 #@rolling(10)
 def generate_domain(N=5, seed=None, fluent_max_arity=2):
+    state = random.getstate()
     random.seed(seed)
     problem = unified_planning.model.Problem(f"omniplan--N{N}-seed{seed}")
 
@@ -324,6 +325,7 @@ def generate_domain(N=5, seed=None, fluent_max_arity=2):
         problem.add_action(action)
 
     problem.domain_reuses=0
+    random.setstate(state)
     return problem
 
 def generate_problem(N=5, domain=None, add_random_goals=True):
