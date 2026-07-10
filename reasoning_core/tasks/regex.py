@@ -771,6 +771,22 @@ def _shortest_witness(fsm):
     return None
 
 
+def _distinct_equivalent_rendering(regex, fsm):
+    candidate = str(gparse(regex).reduce())
+    if candidate == regex:
+        return None
+    candidate_fsm = gparse(candidate).to_fsm()
+    return candidate if fsm.equivalent(candidate_fsm) else None
+
+
+def _reduced_union_superset(regex_a, fsm_a, regex_other):
+    candidate = str(gparse(f"({regex_a})|({regex_other})").reduce())
+    candidate_fsm = gparse(candidate).to_fsm()
+    if regex_a in candidate or fsm_a.equivalent(candidate_fsm):
+        return None
+    return candidate if fsm_a.issubset(candidate_fsm) else None
+
+
 @dataclass
 class RegexReasoningConfig(Config):
     max_depth: int = 4
@@ -817,21 +833,34 @@ class RegexReasoning(Task):
         qtype = random.choice(["equivalence", "containment", "distinguishing"])
 
         if qtype == "equivalence":
-            # ~40% "Yes" (reuse same regex string), ~60% "No" (use the pair)
+            # ~40% "Yes" with distinct, solver-certified representations.
             if random.random() < 0.4:
-                meta = edict(qtype="equivalence", regex_a=r1, regex_b=r1)
-                return Entry(meta, "Yes")
+                candidates = [(r1, f1), (r2, f2)]
+                for _ in range(20):
+                    r, f = _sample_regex(G, cfg.max_depth, cfg.min_depth, cfg.gramforge_algorithm)
+                    if f is not None:
+                        candidates.append((r, f))
+                for r, f in candidates:
+                    if r_equiv := _distinct_equivalent_rendering(r, f):
+                        meta = edict(qtype="equivalence", regex_a=r, regex_b=r_equiv)
+                        return Entry(meta, "Yes")
+                raise RuntimeError("Could not generate distinct equivalent regex renderings")
             meta = edict(qtype="equivalence", regex_a=r1, regex_b=r2)
             return Entry(meta, "No")
 
         if qtype == "containment":
-            # Force ~50% Yes by building a superset via union
+            # Force ~50% Yes without exposing A as a literal union arm of B.
             if random.random() < 0.5:
-                sup = gparse(f"({r1})|({r2})")
-                r_sup = str(sup)
-                # A=r1 ⊆ B=r1|r2 is always true
-                meta = edict(qtype="containment", regex_a=r1, regex_b=r_sup)
-                return Entry(meta, "Yes")
+                candidates = [(r1, f1, r2), (r2, f2, r1)]
+                for _ in range(20):
+                    r_other, f_other = _sample_regex(G, cfg.max_depth, cfg.min_depth, cfg.gramforge_algorithm)
+                    if f_other is not None:
+                        candidates.append((r1, f1, r_other))
+                for r, f, r_other in candidates:
+                    if r_sup := _reduced_union_superset(r, f, r_other):
+                        meta = edict(qtype="containment", regex_a=r, regex_b=r_sup)
+                        return Entry(meta, "Yes")
+                raise RuntimeError("Could not generate a non-revealing containment pair")
             else:
                 is_sub = f1.issubset(f2)
                 if random.random() < 0.5:

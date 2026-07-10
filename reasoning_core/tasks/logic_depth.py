@@ -975,8 +975,9 @@ def _naf_support_ok(target, deriv, cfg):
     )
 
 
-def choose_naf_example(theory, res, cfg, label_counts=None):
-    label_counts = label_counts or Counter()
+def choose_naf_example(theory, res, cfg, label_counts=None, label_signs=None):
+    label_counts = Counter() if label_counts is None else label_counts
+    label_signs = Counter() if label_signs is None else label_signs
     labels = ("entailment", "contradiction", "neutral")
     min_count = min(label_counts[x] for x in labels)
     preferred = [x for x in labels if label_counts[x] == min_count]
@@ -984,14 +985,20 @@ def choose_naf_example(theory, res, cfg, label_counts=None):
     order = preferred + [x for x in labels if x not in preferred]
 
     derived = [a for a in res.closure if a not in theory.facts and res.derivations[a].depth > 0]
+
+    def balanced(label, pool):
+        want = label_signs[(label, True)] <= label_signs[(label, False)]
+        same = [hyp for hyp in pool if hyp.sign == want]
+        return same or pool
+
     for label in order:
         if label == "entailment":
-            pool = [a for a in derived if _naf_support_ok(a, res.derivations, cfg)]
+            pool = balanced(label, [a for a in derived if _naf_support_ok(a, res.derivations, cfg)])
             if pool:
                 hyp = random.choice(pool)
                 return label, hyp, res.derivations[hyp], support_atoms(hyp, res.derivations)
         elif label == "contradiction":
-            pool = [opposite(a) for a in derived if _naf_support_ok(a, res.derivations, cfg) and not a.sign]
+            pool = balanced(label, [opposite(a) for a in derived if _naf_support_ok(a, res.derivations, cfg)])
             if pool:
                 hyp = random.choice(pool)
                 target = opposite(hyp)
@@ -1003,7 +1010,7 @@ def choose_naf_example(theory, res, cfg, label_counts=None):
                 if a not in res.closure and opposite(a) not in res.closure and pred_key(a) in live
             ]
             if pool:
-                hyp = random.choice(pool)
+                hyp = random.choice(balanced(label, pool))
                 return label, hyp, None, set()
     return None
 
@@ -1300,7 +1307,8 @@ def reject_shortcut(case):
 
 
 def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral"), state=None):
-    state = state or {}
+    if state is None:
+        state = {}
     bins = state.setdefault("bins", Counter())
     label_counts = state.setdefault("label_counts", Counter())
     label_signs = state.setdefault("label_signs", Counter())
@@ -1357,8 +1365,10 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
 
 
 def generate_naf_case(cfg, allowed_labels=("entailment", "contradiction", "neutral"), state=None):
-    state = state or {}
+    if state is None:
+        state = {}
     label_counts = state.setdefault("label_counts", Counter())
+    label_signs = state.setdefault("label_signs", Counter())
     allowed_labels = set(allowed_labels)
     for _ in range(500):
         theory = sample_naf_theory(cfg)
@@ -1368,7 +1378,7 @@ def generate_naf_case(cfg, allowed_labels=("entailment", "contradiction", "neutr
             continue
         if res.inconsistent:
             continue
-        choice = choose_naf_example(theory, res, cfg, label_counts)
+        choice = choose_naf_example(theory, res, cfg, label_counts, label_signs)
         if not choice:
             continue
         label, hyp, derivation, support = choice
@@ -1381,6 +1391,7 @@ def generate_naf_case(cfg, allowed_labels=("entailment", "contradiction", "neutr
         proof_rule_rate = len(used_rules) / max(1, len(theory.rules))
         key = bin_key(label, hyp, derivation, support, theory, target, res.derivations)
         label_counts[label] += 1
+        label_signs[(label, hyp.sign)] += 1
         return MultistepCase(theory, res, label, hyp, target, derivation, support, lines, source, surf, live_rule_rate, proof_rule_rate), key
     return None, None
 

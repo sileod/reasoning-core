@@ -1,8 +1,9 @@
 import random
 from dataclasses import dataclass
+from functools import lru_cache
 from itertools import product
 from collections import defaultdict, deque
-from z3 import Distinct, Int, Solver, sat
+from z3 import And, Distinct, Int, Not, Or, Real, Solver, sat
 
 from reasoning_core.template import Task, Entry, Config, edict, stochastic_rounding as sround
 
@@ -105,19 +106,6 @@ def allen(a, b):
 def hdir(a, b): return allen((a[0], a[1]), (b[0], b[1]))
 def vdir(a, b): return allen((a[2], a[3]), (b[2], b[3]))
 
-def rcc8_iv(a, b):
-    """RCC8 on 1D intervals — used for derivation. The composition table is
-    dimension-independent, so this table holds for 2D boxes at runtime."""
-    a0, a1 = a; b0, b1 = b
-    if a1 <  b0 or b1 <  a0:                              return 'DC'
-    if a1 == b0 or b1 == a0:                              return 'EC'
-    if a == b:                                            return 'EQ'
-    if b0 < a0 and a1 < b1:                               return 'NTPP'
-    if a0 < b0 and b1 < a1:                               return 'NTPPi'
-    if (a0 == b0 and a1 < b1) or (b0 < a0 and a1 == b1): return 'TPP'
-    if (a0 == b0 and b1 < a1) or (a0 < b0 and a1 == b1): return 'TPPi'
-    return 'PO'
-
 def rcc8_box(a, b):
     """RCC8 on 2D axis-aligned boxes — runtime ground truth."""
     ax0, ax1, ay0, ay1 = a
@@ -133,6 +121,82 @@ def rcc8_box(a, b):
     if a_in: return 'TPP'  if tan else 'NTPP'
     if b_in: return 'TPPi' if tan else 'NTPPi'
     return 'PO'
+
+RCC8_BASE = ('DC', 'EC', 'PO', 'EQ', 'TPP', 'NTPP', 'TPPi', 'NTPPi')
+RCC8_CONVERSE = {
+    'DC': 'DC', 'EC': 'EC', 'PO': 'PO', 'EQ': 'EQ',
+    'TPP': 'TPPi', 'TPPi': 'TPP',
+    'NTPP': 'NTPPi', 'NTPPi': 'NTPP',
+}
+
+def _z3_box(name):
+    return tuple(Real(f"{name}_{axis}") for axis in ('x0', 'x1', 'y0', 'y1'))
+
+def _z3_valid_box(a):
+    return And(a[0] < a[1], a[2] < a[3])
+
+def _z3_rcc8(a, b, relation):
+    ax0, ax1, ay0, ay1 = a
+    bx0, bx1, by0, by1 = b
+    closed_x = And(ax0 <= bx1, bx0 <= ax1)
+    closed_y = And(ay0 <= by1, by0 <= ay1)
+    interior = And(ax0 < bx1, bx0 < ax1, ay0 < by1, by0 < ay1)
+    touch = Or(ax1 == bx0, bx1 == ax0, ay1 == by0, by1 == ay0)
+    equal = And(ax0 == bx0, ax1 == bx1, ay0 == by0, ay1 == by1)
+    a_in_b = And(bx0 <= ax0, ax1 <= bx1, by0 <= ay0, ay1 <= by1)
+    b_in_a = And(ax0 <= bx0, bx1 <= ax1, ay0 <= by0, by1 <= ay1)
+    a_strict = And(bx0 < ax0, ax1 < bx1, by0 < ay0, ay1 < by1)
+    b_strict = And(ax0 < bx0, bx1 < ax1, ay0 < by0, by1 < ay1)
+    return {
+        'DC': Or(ax1 < bx0, bx1 < ax0, ay1 < by0, by1 < ay0),
+        'EC': And(closed_x, closed_y, touch),
+        'PO': And(interior, Not(a_in_b), Not(b_in_a)),
+        'EQ': equal,
+        'TPP': And(a_in_b, Not(equal), Not(a_strict)),
+        'NTPP': a_strict,
+        'TPPi': And(b_in_a, Not(equal), Not(b_strict)),
+        'NTPPi': b_strict,
+    }[relation]
+
+@lru_cache(maxsize=1)
+def derive_rcc8_boxes():
+    """Exact weak composition for non-degenerate axis-aligned boxes."""
+    a, b, c = (_z3_box(f"compose_{name}") for name in ('a', 'b', 'c'))
+    solver = Solver()
+    solver.add(_z3_valid_box(a), _z3_valid_box(b), _z3_valid_box(c))
+    compose = {}
+    for r1, r2 in product(RCC8_BASE, repeat=2):
+        solver.push()
+        solver.add(_z3_rcc8(a, b, r1), _z3_rcc8(b, c, r2))
+        out = set()
+        for r3 in RCC8_BASE:
+            solver.push()
+            solver.add(_z3_rcc8(a, c, r3))
+            if solver.check() == sat:
+                out.add(r3)
+            solver.pop()
+        solver.pop()
+        compose[r1, r2] = frozenset(out)
+    return Calculus('rcc8-box', frozenset(RCC8_BASE), RCC8_CONVERSE, compose)
+
+def rcc8_query_relations(n, revealed, query):
+    """All query relations possible under the revealed box constraints."""
+    boxes = [_z3_box(f"query_{i}") for i in range(n)]
+    solver = Solver()
+    solver.add(*(_z3_valid_box(box) for box in boxes))
+    solver.add(*(
+        _z3_rcc8(boxes[i], boxes[j], relation)
+        for i, j, relation in revealed
+    ))
+    qi, qj = query
+    candidates = set()
+    for relation in RCC8_BASE:
+        solver.push()
+        solver.add(_z3_rcc8(boxes[qi], boxes[qj], relation))
+        if solver.check() == sat:
+            candidates.add(relation)
+        solver.pop()
+    return frozenset(candidates)
 
 def coarse_iv(a, b):
     if a[1] <  b[0]: return 'before'
@@ -179,15 +243,13 @@ RCC8_NAMES = {
 
 _id = lambda r: r
 
-# ---- Build calculi (all under a second of module load) -----------------
+# ---- Build calculi ------------------------------------------------------
 
 ALLEN_CALC    = derive('allen',  all_intervals, allen,     N=4)
-RCC8_CALC     = derive('rcc8',   all_intervals, rcc8_iv,   N=3)
 COARSE_CALC   = derive('coarse', all_intervals, coarse_iv, N=3)
 CARDINAL_CALC = derive_product('cardinal', COARSE_CALC)
 
 assert len(ALLEN_CALC.base)    == 13
-assert len(RCC8_CALC.base)     == 8
 assert len(COARSE_CALC.base)   == 3
 assert len(CARDINAL_CALC.base) == 9
 
@@ -209,7 +271,7 @@ REGISTRY = {
                        label=ALLEN_NAMES.__getitem__,
                        topic='vertical extents of 2D boxes',
                        phrasing='the relation of the vertical extent of box {i} to that of box {j}'),
-    'rcc8': dict(calc=RCC8_CALC, pool=_BOX_POOL, rel=rcc8_box,
+    'rcc8': dict(calc=None, pool=_BOX_POOL, rel=rcc8_box,
                  label=RCC8_NAMES.__getitem__,
                  topic='2D regions (axis-aligned boxes)',
                  phrasing='the spatial relation of region {i} to region {j}'),
@@ -307,6 +369,8 @@ class QualitativeReasoning(Task):
     summary = "Solve qualitative spatial and temporal reasoning problems over algebras."
     def __init__(self, config=None):
         super().__init__(config=config or QualitativeReasoningConfig())
+        self.registry = {key: dict(spec) for key, spec in REGISTRY.items()}
+        self.registry['rcc8']['calc'] = derive_rcc8_boxes()
 
     def generate_entry(self):
         if random.random() < self.config.ordinal_prob:
@@ -407,8 +471,8 @@ class QualitativeReasoning(Task):
 
     def _try(self):
         cfg = self.config
-        key = random.choice(list(REGISTRY))
-        spec = REGISTRY[key]
+        key = random.choice(list(self.registry))
+        spec = self.registry[key]
         calc, pool, rel = spec['calc'], spec['pool'], spec['rel']
         label, topic, phrasing = spec['label'], spec['topic'], spec['phrasing']
         n = max(3, int(cfg.n_entities))
@@ -442,11 +506,20 @@ class QualitativeReasoning(Task):
             revealed.append(e)
             R = closure(calc, n, hard)
 
-        if R is None or len(R[qi, qj]) != 1:
+        if R is None:
             return None
-        truth = next(iter(R[qi, qj]))
+        candidates = R[qi, qj]
+        if key == 'rcc8':
+            candidates = rcc8_query_relations(
+                n,
+                [(i, j, gt[i, j]) for i, j in revealed],
+                (qi, qj),
+            )
+        if len(candidates) != 1:
+            return None
+        truth = next(iter(candidates))
         if truth != gt[qi, qj]:
-            return None  # impossible if PC is sound; defensive
+            return None
 
         vocab = sorted({label(r) for r in calc.base})
         metadata = edict(
@@ -456,14 +529,16 @@ class QualitativeReasoning(Task):
             revealed=[(i, j, label(gt[i, j])) for (i, j) in revealed],
             query=(qi, qj), vocabulary=vocab,
             intro=(
-                f"There are {n} entities labeled 0 through {n - 1}.\n"
+                f"There are {n} "
+                f"{'axis-aligned boxes' if key == 'rcc8' else 'entities'} "
+                f"labeled 0 through {n - 1}.\n"
                 "Read 'i rel j' as 'entity i is rel to entity j'."
             ),
             facts=[f"{i} {label(gt[i, j])} {j}" for i, j in revealed],
             question=f"What is {phrasing.format(i=qi, j=qj)}?",
             answer_instruction=f"The answer is exactly one of: {', '.join(vocab)}.",
         )
-        return Entry(metadata=metadata, answer=label(gt[qi, qj]))
+        return Entry(metadata=metadata, answer=label(truth))
 
     def render_prompt(self, metadata):
         facts = "\n".join(f"- {x}" for x in metadata.facts)

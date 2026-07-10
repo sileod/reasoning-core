@@ -194,6 +194,7 @@ class ConstraintSatisfaction(Task):
     def _generate_linear(self):
         rng = self._rng()
         n, max_dom, n_cons = max(2, self.config.n_vars), max(2, self.config.max_domain), max(1, self.config.n_constraints)
+        desired_unsat = rng.random() < self.config.unsat_prob
 
         for _ in range(self.config.max_tries):
             # Dynamic structure fallback for pure randomness per instance
@@ -206,20 +207,15 @@ class ConstraintSatisfaction(Task):
             while len(constraints) < n_cons and attempts < max(16, 12 * n_cons):
                 attempts += 1
                 idx = self._sample_scope(rng, neighbors, n, mode)
-                if c := self._sample_constraint(rng, idx, witness, self.config.coef_bound):
+                constraint_witness = (
+                    [rng.randint(0, ub) for ub in domains]
+                    if desired_unsat else witness
+                )
+                if c := self._sample_constraint(rng, idx, constraint_witness, self.config.coef_bound):
                     if (key := json.dumps(c, sort_keys=True)) not in seen:
                         seen.add(key); constraints.append(c)
 
-            if len(constraints) < max(1, n_cons // 2): continue
-
-            if rng.random() < self.config.unsat_prob:
-                i = rng.randrange(n)
-                a = rng.randint(0, domains[i])
-                b = rng.choice([x for x in range(domains[i] + 1) if x != a] or [a])
-                constraints += [
-                    {"type": "lin", "idx": [i], "coeffs": [1], "op": "==", "rhs": a},
-                    {"type": "lin", "idx": [i], "coeffs": [1], "op": "==", "rhs": b},
-                ]
+            if len(constraints) < n_cons: continue
 
             solve_mode = self.config.solve_mode.lower()
             if solve_mode in ("all", "lex_all"):
@@ -229,6 +225,8 @@ class ConstraintSatisfaction(Task):
                     solve_mode, solution = "min", self._solve_min(domains, constraints)
             else:
                 solution = self._solve_min(domains, constraints)
+            if desired_unsat != (solution is None):
+                continue
 
             metadata = edict({
                 "domains": domains, "constraints": constraints, "solution": solution,

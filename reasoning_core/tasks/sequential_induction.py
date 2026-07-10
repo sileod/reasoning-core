@@ -1,5 +1,6 @@
 import random
 import sympy as sp
+from sympy.printing.str import StrPrinter
 from gramforge import init_grammar, generate
 import re
 import numpy as np
@@ -112,7 +113,8 @@ class Sequence:
         relu = lambda x : max(0,x)  # define those functions for the eval
         Mod = lambda k,n : k%n 
         sign = lambda n : 1 if n > 0 else -1 if n < 0 else 0
-        return eval(formula_instance.replace('/', '//')) # in order to use integer division
+        formula_instance = re.sub(r'(?<!/)/(?!/)', '//', formula_instance)
+        return eval(formula_instance)
 
     def n_first_elem(self, n: int, max_terms_len: int = 12) -> list:
         """
@@ -272,7 +274,7 @@ class SequentialInduction(Task):
         ops = "+, -, *, **"
 
         if self.config.mode == "full":
-            ops += ", / (Euclidean division), Mod(a,b), relu(x), sign(x)"
+            ops += ", // (floor division), Mod(a,b), relu(x), sign(x)"
         refs = "n" if d == 0 else ("U[n - 1] and n" if d == 1 else f"U[n - 1] ... U[n - {d}] and n")
 
         return "\n".join([
@@ -344,10 +346,9 @@ def parse_recursive_formula(formula):
 
 # --- Simplification Module --- ♻️
 
-# Define symbolic function objects for sign, relu, and division.
+# Define symbolic function objects for sign and relu.
 sign_sym = sp.Function('sign')
 relu_sym = sp.Function('relu')
-div_sym = sp.Function('/')
 
 def Sign(x):
     x = sp.sympify(x)
@@ -373,13 +374,6 @@ def Relu(x):
     if x.is_negative:
         return sp.S.Zero
     return relu_sym(x)
-
-def safe_div(x, y):
-    x = sp.sympify(x)
-    y = sp.sympify(y)
-    if x.is_number and y.is_number:
-        return x // y
-    return div_sym(x, y)
 
 def Mod(x, y):
     x = sp.sympify(x)
@@ -409,18 +403,27 @@ def format_additive_normal_form(expr):
     if not terms:
         return "0"
 
-    rendered = str(terms[0])
+    printer = SequencePrinter()
+    rendered = printer.doprint(terms[0])
     for term in terms[1:]:
         if term.could_extract_minus_sign():
-            rendered += " - " + str(-term)
+            rendered += " - " + printer.doprint(-term)
         else:
-            rendered += " + " + str(term)
+            rendered += " + " + printer.doprint(term)
     return rendered
+
+
+class SequencePrinter(StrPrinter):
+    def _print_floor(self, expr):
+        numerator, denominator = sp.fraction(sp.together(expr.args[0]))
+        if denominator != 1:
+            return f"(({self._print(numerator)}) // ({self._print(denominator)}))"
+        return super()._print_floor(expr)
 
 def convert_to_sympy(tokens, recurrence_depth = 3):
     """Convert a list of tokens to a SymPy expression with special handling"""
 
-    expr_str = ''.join(tokens)
+    expr_str = re.sub(r'(?<!/)/(?!/)', '//', ''.join(tokens))
     n = sp.symbols('n', integer=True, nonnegative=True)
     U = sp.IndexedBase('U')   
     
@@ -432,7 +435,6 @@ def convert_to_sympy(tokens, recurrence_depth = 3):
             "relu": Relu,  
             "mod": Mod,
             "sign": Sign,
-            '/': safe_div,
                     }
     local_dict.update(U_vars)
     expr = sp.sympify(expr_str, locals=local_dict)

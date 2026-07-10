@@ -652,7 +652,7 @@ def to_pddl(s):
     actions = [a.strip('[]').strip().replace(',','').replace('(',' ') for a in s.split(')')]
     return "\n".join([f'({a})' for a in actions if a]).replace('))',')')
 
-def translate(problem, write_default=0.5) -> str:
+def translate(problem) -> str:
     desc = []
     
     # 1. Analyze Types
@@ -713,18 +713,11 @@ def translate(problem, write_default=0.5) -> str:
 
     # --- [STATE] ---
     desc.append("\nInitial state:")
-    
-    # Handle Default Value logic
-    if random.random() < write_default:
-        # Calculate majority value in initial state (True or False)
-        vals = [v.is_true() for v in problem.initial_values.values()]
-        # If vals is empty, default to False
-        default_val = Counter(vals).most_common(1)[0][0] if vals else False
-        desc.append(f"Default value: {default_val}")
 
     # Init (Standard PDDL assumption: list only True facts)
     init = [str(f) for f, v in problem.initial_values.items() if v.is_true()]
     desc.append(f"True values: {', '.join(init) if init else 'None'}")
+    desc.append("All facts not listed under True values are false.")
 
     desc.append('\nGoal:')
     goals = [str(g) for g in problem.goals]

@@ -1,3 +1,5 @@
+from collections import Counter
+
 from reasoning_core import get_task, list_tasks, score_answer
 import pytest
 
@@ -12,6 +14,7 @@ from reasoning_core.tasks.logic_depth import (
     Theory,
     _binary_query,
     chase,
+    choose_naf_example,
     close_with,
     naf_chase,
     render,
@@ -37,6 +40,7 @@ def test_multistep_nli_registers_and_generates():
         assert task.score_answer(ex.answer + ".", ex) == 1
         assert task.score_answer("not a label", ex) == 0
     assert len(seen) >= 2
+    assert sum(task._case_state["label_counts"].values()) == 12
 
 
 def test_defeasible_nli_registers_and_generates():
@@ -50,6 +54,46 @@ def test_defeasible_nli_registers_and_generates():
     seen = {nli.generate_example(max_tokens=0).answer for _ in range(12)}
     assert seen <= {"Yes", "No", "Maybe"}
     assert len(seen) >= 2
+    assert sum(nli._case_state["label_counts"].values()) == 12
+    assert sum(nli._case_state["label_signs"].values()) == 12
+
+
+@pytest.mark.parametrize(
+    ("sign_counts", "expected_sign"),
+    [
+        (Counter({("contradiction", True): 1}), False),
+        (Counter({("contradiction", False): 1}), True),
+    ],
+)
+def test_defeasible_contradiction_balances_both_hypothesis_signs(sign_counts, expected_sign):
+    sigs = {p: PredSig(p, ("person",)) for p in ("known", "exception", "p", "q")}
+    theory = Theory(
+        facts=[Atom("known", ("alice",))],
+        rules=[
+            Rule(
+                (Atom("known", ("?x",)), Not(Atom("exception", ("?x",)))),
+                Atom("p", ("?x",)),
+            ),
+            Rule(
+                (Atom("known", ("?x",)), Not(Atom("exception", ("?x",)))),
+                Atom("q", ("?x",), False),
+            ),
+        ],
+        denials=[],
+        pred_sigs=sigs,
+        entities={"person": ("alice",)},
+    )
+    res = naf_chase(theory)
+    cfg = DefeasibleNLIConfig(min_target_depth=1, max_target_depth=1, min_naf_rules_in_proof=1)
+    choice = choose_naf_example(
+        theory,
+        res,
+        cfg,
+        Counter({"entailment": 1, "neutral": 1}),
+        sign_counts,
+    )
+    assert choice[0] == "contradiction"
+    assert choice[1].sign is expected_sign
 
 
 def test_defeasible_nli_level2_is_not_all_maybe():

@@ -14,6 +14,7 @@ from reasoning_core.utils import score_scalar
 import csv
 import yaml
 import io
+import re
 
 try:
     from sklearn.metrics import normalized_mutual_info_score
@@ -727,6 +728,27 @@ def winner_with_margin(scores, need):
     return (ordered[0][0], margin) if margin >= need else (None, margin)
 
 
+def permute_statistics_identifiers(df, spec):
+    df, spec = df.copy(), spec.copy()
+    if spec["family"] == "row_pearson":
+        identifiers = list(df["row_id"])
+        mapping = dict(zip(identifiers, random.sample(identifiers, len(identifiers))))
+        df["row_id"] = df["row_id"].map(mapping)
+    else:
+        identifiers = [c for c in df.columns if c != "label"]
+        mapping = dict(zip(identifiers, random.sample(identifiers, len(identifiers))))
+        df = df.rename(columns=mapping)
+
+    identifiers_pattern = "|".join(re.escape(identifier) for identifier in mapping)
+    spec["find"] = re.sub(
+        rf"\b(?:{identifiers_pattern})\b",
+        lambda match: mapping[match.group()],
+        spec["find"],
+    )
+    spec["answer"] = mapping[spec["answer"]]
+    return df, spec
+
+
 def gen_column_pearson(config):
     n, p = max(8, config.num_rows), max(4, config.num_numeric)
     for _ in range(100):
@@ -822,6 +844,7 @@ class TableStatistics(Task):
         if normalized_mutual_info_score is not None:
             generators.append(gen_categorical_nmi)
         semantic_df, spec = random.choice(generators)(self.config)
+        semantic_df, spec = permute_statistics_identifiers(semantic_df, spec)
         display_df, display_meta = make_statistics_display_dataframe(semantic_df)
         fmt = random.choice(STAT_RENDERERS)
         table = get_renderers(display_df)[fmt](index=False)

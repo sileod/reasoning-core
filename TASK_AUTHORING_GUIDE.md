@@ -12,7 +12,7 @@ Implement tasks that are:
 - preferaby solver-backed (use strong external libraries instead of re-implementing),
 - distributionally broad (high structural variety),
 - not mostly solvable with shortcuts (some are good for robustness but they should be rare),
-- verifiable, formal and robustly scorable (`score_answer(generate().answer) == 1`).
+- verifiable, formal and robustly scorable (`task.score_answer(entry.answer, entry) == 1`).
 - favour answer uniqueness if possible (e.g. specify lexicographic order) to ease next token prediction training.
 
 ## Core Contract (from `reasoning_core/template.py`)
@@ -22,8 +22,6 @@ Every task should provide:
   - `generate_entry(self) -> Entry`
   - `render_prompt(self, metadata) -> str`
   - `score_answer(self, answer, entry) -> float | Reward` (or rely on default exact match)
-
-Legacy `generate()` / `prompt()` and `Problem` remain supported aliases, but new or cleaned-up tasks should use `generate_entry()` / `render_prompt()` and `Entry`.
 
 `Entry` must include:
 - `metadata` (dict/easydict),
@@ -50,7 +48,8 @@ Design rules for `apply_difficulty(level)`:
 - monotonic difficulty increase,
 - no mutation of `level`,
 - keep generation solvable and diverse
-- update should change knobs (problem sizes or reasoning depth, etc), not hardcode different subtasks (do not use "if level ... then ...")
+- update should change knobs (problem sizes or reasoning depth, etc)
+- do not hardcode different subtasks (do not use "if level ... then ...")
 - use direct formulas instead of recursively calling legacy update logic.
 
 Use `Config_difficulty_knob_migration.md` and `assert_difficulty_update_equivalence(...)` when migrating existing configs.
@@ -74,7 +73,8 @@ Level 5 should be tough even for large LLMs.
 - Prefer configurable families of instances over one fixed style.
 
 4. Reward quality over strict formatting:
-- Reward semantic correctness first, with optional light format penalties.
+- Reward semantic correctness first but prefer soft scoring.
+- Blatantly inccorect answer should be reward 0.0, correct answer should have reward 1.0.
 - Use `Reward(...)` tags when useful for diagnostics.
 
 ## Minimal Task Skeleton
@@ -139,7 +139,7 @@ class MyTask(Task):
 - `task_name` defaults to snake_case class name.
 
 ## Gallery
-- Refresh examples with `python scripts/build_gallery.py`.
+- If requested, refresh examples with `python scripts/build_gallery.py`.
 - Gallery generation uses cached validation examples by default and builds missing cache entries.
 - Use `--refresh-cache` to regenerate cached examples for the current task behavior hash/config.
 - Use `--no-cache` to use balanced batch generation instead.

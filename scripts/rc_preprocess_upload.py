@@ -7,21 +7,23 @@ Full run:
   python rc_preprocess_upload.py
 """
 
-import os, json, random, argparse, signal, time, html, sys, traceback, shutil, multiprocessing as mp, threading, contextlib, glob, re
+import os, json, random, argparse, signal, time, html, sys, traceback, shutil, multiprocessing as mp, threading, contextlib, glob, re, gc, heapq
+from array import array
 
 base = os.environ["HOME"]
-os.environ |= {"HF_DATASETS_CACHE": f"{base}/.cache/huggingface",
-               "TMPDIR": f"{base}/tmp", "TEMP": f"{base}/tmp", "TMP": f"{base}/tmp"}
-os.makedirs(f"{base}/tmp", exist_ok=True)
-import tempfile; tempfile.tempdir = f"{base}/tmp"
+tmp_root = os.environ.get("TMPDIR", f"{base}/tmp")
+for name in ("TMPDIR", "TEMP", "TMP"):
+    os.environ.setdefault(name, tmp_root)
+os.makedirs(tmp_root, exist_ok=True)
+import tempfile; tempfile.tempdir = tmp_root
 
 import numpy as np, polars as pl, pyarrow as pa
+import pyarrow.compute as pc
 import datasets
 from datasets import load_dataset, Dataset, DatasetDict, concatenate_datasets, disable_caching, Features, Value
 from tqdm import tqdm
 from reasoning_core import list_tasks, score_answer
 from easydict import EasyDict as edict
-from reasoning_core.utils import prettyorder, deduplicate_dataset
 from distractor_retrieval import VerificationDistractorRetriever
 disable_caching()
 
@@ -67,6 +69,31 @@ TARGET_FEATURES = {
 # ── timing ───────────────────────────────────────────────────────────────────
 
 _timings = {}
+_RUN_DIR = None
+_KEEP_WORK_DIR = False
+_SCORE_DEVNULL = None
+
+
+def _cleanup_work_dir():
+    global _RUN_DIR, _SCORE_DEVNULL
+    if _SCORE_DEVNULL is not None:
+        try:
+            _SCORE_DEVNULL.close()
+        except Exception:
+            pass
+        _SCORE_DEVNULL = None
+    if _RUN_DIR and _KEEP_WORK_DIR:
+        print(f"kept work dir: {_RUN_DIR}", flush=True)
+    elif _RUN_DIR:
+        path = _RUN_DIR
+        gc.collect()
+        try:
+            shutil.rmtree(path)
+        except OSError as exc:
+            print(f"WARN failed to clean work dir {path}: {exc}", flush=True)
+        else:
+            print(f"cleaned work dir: {path}", flush=True)
+        _RUN_DIR = None
 
 class _step:
     def __init__(self, name):
@@ -101,19 +128,111 @@ def _heartbeat(label, every=30):
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-def _logical_column_table(ds, key):
-    table = ds.data.table.select([key])
+def _logical_batches(ds, cols, batch_size=100_000):
+    cols = [cols] if isinstance(cols, str) else list(cols)
+    table = ds.data.table.select(cols)
     idx = getattr(ds, "_indices", None)
-    if idx is not None:
-        indices = pa.array(idx.column(0).to_numpy(zero_copy_only=False))
-        table = table.take(indices)
-    return table
+    if idx is None:
+        yield from table.to_batches(max_chunksize=batch_size)
+        return
+
+    idx_col = idx.column(0)
+    for start in range(0, len(ds), batch_size):
+        n = min(batch_size, len(ds) - start)
+        physical = pa.array(idx_col.slice(start, n).to_numpy(zero_copy_only=False))
+        yield from table.take(physical).to_batches(max_chunksize=batch_size)
+
+
+def deduplicate_by_column(ds, column="prompt", batch_size=100_000):
+    """Deduplicate without Hugging Face Dataset.filter's per-row Python overhead."""
+    import xxhash
+
+    seen = set()
+    keep = array("Q")
+    n0 = ds.num_rows
+    row_i = 0
+
+    for rb in tqdm(_logical_batches(ds, column, batch_size), desc="deduplicating"):
+        for value in rb.column(column).to_pylist():
+            h = xxhash.xxh64_intdigest(str(value).encode())
+            if h not in seen:
+                seen.add(h)
+                keep.append(row_i)
+            row_i += 1
+
+    removed = n0 - len(keep)
+    report = {
+        "before": n0,
+        "after": len(keep),
+        "removed": removed,
+        "removed_pct": round(100 * removed / max(n0, 1), 2),
+    }
+    if removed:
+        indices = np.frombuffer(keep, dtype=np.uint64).astype(np.int64, copy=False)
+        ds = ds.select(indices)
+    del keep, seen
+    gc.collect()
+    return ds, report
+
+
+def filter_by_string_length(ds, column="prompt", max_chars=50_000, batch_size=100_000):
+    keep = array("Q")
+    row_i = 0
+    for rb in tqdm(_logical_batches(ds, column, batch_size), desc=f"filter {column} length"):
+        lengths = pc.fill_null(pc.utf8_length(rb.column(column)), max_chars)
+        valid = np.asarray(pc.less(lengths, max_chars).to_numpy(zero_copy_only=False), dtype=bool)
+        keep.extend((row_i + np.flatnonzero(valid)).tolist())
+        row_i += len(valid)
+
+    if len(keep) == len(ds):
+        return ds
+    indices = np.frombuffer(keep, dtype=np.uint64).astype(np.int64, copy=False)
+    out = ds.select(indices)
+    del keep, indices
+    gc.collect()
+    return out
+
+
+def prettyorder_low_memory(ds, cols="task", n_pretty=3, seed=42, batch_size=100_000):
+    cols = [cols] if isinstance(cols, str) else list(cols)
+    print("building groups...", flush=True)
+    groups = {}
+    row_i = 0
+    for rb in tqdm(_logical_batches(ds, cols, batch_size), desc="grouping"):
+        columns = [rb.column(col).to_pylist() for col in cols]
+        for values in zip(*columns):
+            key = values[0] if len(values) == 1 else tuple(values)
+            groups.setdefault(key, array("Q")).append(row_i)
+            row_i += 1
+
+    sorted_keys = sorted(groups)
+    prefix_n = sum(min(n_pretty, len(groups[key])) for key in sorted_keys)
+    indices = np.empty(row_i, dtype=np.int64)
+    pos = 0
+    for cycle in range(n_pretty):
+        for key in sorted_keys:
+            rows = groups[key]
+            if cycle < len(rows):
+                indices[pos] = rows[cycle]
+                pos += 1
+    for key in sorted_keys:
+        tail = np.frombuffer(groups[key], dtype=np.uint64)[n_pretty:]
+        indices[pos:pos + len(tail)] = tail
+        pos += len(tail)
+
+    np.random.default_rng(seed).shuffle(indices[prefix_n:])
+    print(f"prettyorder: {prefix_n:,} interleaved rows "
+          f"({n_pretty}x{len(sorted_keys):,} groups) + "
+          f"{len(indices) - prefix_n:,} shuffled")
+    out = ds.select(indices)
+    del groups, indices
+    gc.collect()
+    return out
 
 
 def count_by_column(ds, key="task", batch_size=100_000):
     counts = {}
-    table = _logical_column_table(ds, key)
-    for rb in table.to_batches(max_chunksize=batch_size):
+    for rb in _logical_batches(ds, key, batch_size):
         for value in rb.column(key).to_pylist():
             counts[value] = counts.get(value, 0) + 1
     return counts
@@ -129,11 +248,10 @@ def subsample(ds, top_k, key="task", seed=42):
     limit = int(sorted_counts[top_k][1])
     rng = random.Random(seed)
     seen = {task: 0 for task in counts}
-    reservoirs = {task: [] for task in counts}
+    reservoirs = {task: array("Q") for task in counts}
 
-    table = _logical_column_table(ds, key)
     row_i = 0
-    for rb in table.to_batches(max_chunksize=100_000):
+    for rb in _logical_batches(ds, key, 100_000):
         for task in rb.column(key).to_pylist():
             seen[task] += 1
             reservoir = reservoirs[task]
@@ -145,9 +263,14 @@ def subsample(ds, top_k, key="task", seed=42):
                     reservoir[j] = row_i
             row_i += 1
 
-    indices = [i for reservoir in reservoirs.values() for i in reservoir]
-    rng.shuffle(indices)
-    return ds.select(np.asarray(indices, dtype=np.int64))
+    n_indices = sum(map(len, reservoirs.values()))
+    indices = np.fromiter(
+        (i for reservoir in reservoirs.values() for i in reservoir),
+        dtype=np.int64,
+        count=n_indices,
+    )
+    indices.sort()
+    return ds.select(indices)
 
 
 class _Timeout(Exception): pass
@@ -318,16 +441,17 @@ def format_split_for_target(split, dataset_name):
 
 
 def load_source_dataset(source, smoke_n=0, work_dir=None):
+    cache_dir = os.path.join(work_dir, "hf_cache") if work_dir else None
     if source == "staging":
         if smoke_n:
-            stream = load_dataset("reasoning-core/staging", split="train", streaming=True)
+            stream = load_dataset("reasoning-core/staging", split="train", streaming=True, cache_dir=cache_dir)
             return Dataset.from_list(list(tqdm(
                 stream.take(smoke_n),
                 total=smoke_n,
                 desc="loading staging",
             )))
         with _heartbeat("loading staging"):
-            return load_dataset("reasoning-core/staging", split="train")
+            return load_dataset("reasoning-core/staging", split="train", cache_dir=cache_dir)
 
     path = resolve_local_source(source)
     files = local_jsonl_files(path)
@@ -336,7 +460,7 @@ def load_source_dataset(source, smoke_n=0, work_dir=None):
     if smoke_n:
         files = files[:max(1, min(len(files), smoke_n))]
         print(f"  smoke files: {len(files):,}", flush=True)
-        stream = load_dataset("json", data_files=files, split="train", streaming=True)
+        stream = load_dataset("json", data_files=files, split="train", streaming=True, cache_dir=cache_dir)
         ds = Dataset.from_list(list(tqdm(
             stream.take(smoke_n),
             total=smoke_n,
@@ -348,18 +472,17 @@ def load_source_dataset(source, smoke_n=0, work_dir=None):
     return normalize_columns(ds)
 
 def _safe_score(cand, row, timeout=2):
+    global _SCORE_DEVNULL
+
     def _handler(signum, frame):
         raise _Timeout()
+    if _SCORE_DEVNULL is None or _SCORE_DEVNULL.closed:
+        _SCORE_DEVNULL = open(os.devnull, "w")
     old = signal.signal(signal.SIGALRM, _handler)
     signal.setitimer(signal.ITIMER_REAL, timeout)
     try:
-        # SIGALRM can interrupt library cleanup and produce noisy ignored
-        # destructor tracebacks; scorer failures are intentionally treated as
-        # unusable negatives here.
-        with open(os.devnull, "w") as devnull, contextlib.redirect_stderr(devnull):
+        with contextlib.redirect_stderr(_SCORE_DEVNULL):
             return score_answer(cand, edict(row))
-    except _Timeout:
-        return None
     except Exception:
         return None
     finally:
@@ -389,7 +512,7 @@ def build_verification(
                     if negative_strategy == "same_task":
                         chosen, label = cand, "No"; break
                     score = _safe_score(cand, row, timeout=score_timeout)
-                    if score is None or score != 1:
+                    if score is not None and score != 1:
                         chosen, label = cand, "No"; break
             if label == "Yes" and negative_strategy == "same_task" and len(pool) >= 2:
                 for cand in random.sample(pool, min(max_tries, len(pool))):
@@ -399,7 +522,7 @@ def build_verification(
                 for cand in random.sample(pool, min(max_tries, len(pool))):
                     if cand == ans: continue
                     score = _safe_score(cand, row, timeout=score_timeout)
-                    if score is None or score != 1:
+                    if score is not None and score != 1:
                         chosen, label = cand, "No"; break
         prompts.append(f"{prompt}\nAnswer:\n{chosen}\nCorrect? (Yes/No)")
         answers.append(label); modes.append("verification")
@@ -440,7 +563,7 @@ def _build_verification_one(row):
                 if _WORKER_NEGATIVE_STRATEGY == "same_task":
                     chosen, label = cand, "No"; break
                 score = _safe_score(cand, score_row, timeout=_WORKER_SCORE_TIMEOUT)
-                if score is None or score != 1:
+                if score is not None and score != 1:
                     chosen, label = cand, "No"; break
         if label == "Yes" and _WORKER_NEGATIVE_STRATEGY == "same_task":
             for cand in random.sample(pool, min(_WORKER_MAX_TRIES, len(pool))):
@@ -451,7 +574,7 @@ def _build_verification_one(row):
                 if cand == ans:
                     continue
                 score = _safe_score(cand, score_row, timeout=_WORKER_SCORE_TIMEOUT)
-                if score is None or score != 1:
+                if score is not None and score != 1:
                     chosen, label = cand, "No"; break
     return f"{prompt}\nAnswer:\n{chosen}\nCorrect? (Yes/No)", label, "verification"
 
@@ -500,28 +623,36 @@ def build_verification_parallel(
 
 
 def build_answer_pools(ds, max_per_task=8192, seed=42):
-    rng = random.Random(seed)
-    pools = {}
-    seen = {}
-    table = ds.data.table.select(["task", "answer"])
+    import xxhash
 
-    for rb in table.to_batches(max_chunksize=100_000):
+    if max_per_task <= 0:
+        unique = {}
+        for rb in _logical_batches(ds, ["task", "answer"]):
+            for task, answer in zip(rb.column("task").to_pylist(), rb.column("answer").to_pylist()):
+                unique.setdefault(task, {}).setdefault(answer, None)
+        return {task: list(answers) for task, answers in unique.items()}
+
+    heaps = {}
+    selected = {}
+    for rb in _logical_batches(ds, ["task", "answer"]):
         tasks = rb.column("task").to_pylist()
         answers = rb.column("answer").to_pylist()
         for task, answer in zip(tasks, answers):
-            pool = pools.setdefault(task, [])
-            task_seen = seen.setdefault(task, set())
-            if answer in task_seen:
+            chosen = selected.setdefault(task, set())
+            if answer in chosen:
                 continue
-            task_seen.add(answer)
-            if max_per_task <= 0 or len(pool) < max_per_task:
-                pool.append(answer)
-            else:
-                # Reservoir sample unique answers without retaining every candidate.
-                j = rng.randrange(len(task_seen))
-                if j < max_per_task:
-                    pool[j] = answer
-    return pools
+            h = xxhash.xxh64(str(answer).encode(), seed=seed).intdigest()
+            heap = heaps.setdefault(task, [])
+            item = (-h, answer)
+            if len(heap) < max_per_task:
+                heapq.heappush(heap, item)
+                chosen.add(answer)
+            elif h < -heap[0][0]:
+                _, dropped = heapq.heapreplace(heap, item)
+                chosen.remove(dropped)
+                chosen.add(answer)
+
+    return {task: [answer for _, answer in heap] for task, heap in heaps.items()}
 
 
 def build_verification_split_sharded(
@@ -598,14 +729,16 @@ def inject_cot(ds, ratio=0.0):
         return ds
 
     def get_cot(x):
-        if x["mode"] == "verification": return None
-        return _metadata_obj(x["metadata"]).get("cot")
+        if x["mode"] == "verification":
+            return None
+        cot = x.get("cot") or _metadata_obj(x["metadata"]).get("cot")
+        return str(cot) if cot is not None and str(cot).strip() else None
 
     elig = ds.filter(lambda x: get_cot(x) is not None).shuffle(seed=42)
     k = int(len(elig) * ratio)
     cotted = elig.select(range(k)).map(lambda x: {
         "prompt": f"/trace {x['prompt']}",
-        "answer": f"<trace>\n{_metadata_obj(x['metadata'])['cot']}\n</trace>\n{x['answer']}",
+        "answer": f"<trace>\n{get_cot(x)}\n</trace>\n{x['answer']}",
         "mode": "cot"
     })
     return concatenate_datasets([
@@ -684,16 +817,12 @@ def notify(subject, body=""):
 
 
 def print_yes_rate_warnings(ds_verif, tasks):
-    counts = (
-        pl.from_arrow(ds_verif.data.table)
-        .select(["task", "answer"])
-        .group_by("task")
-        .agg([
-            pl.len().alias("n"),
-            (pl.col("answer") == "Yes").sum().alias("yes"),
-        ])
-    )
-    rates = {task: yes / n for task, n, yes in counts.iter_rows() if n}
+    stats = {}
+    for rb in _logical_batches(ds_verif, ["task", "answer"]):
+        for task, answer in zip(rb.column("task").to_pylist(), rb.column("answer").to_pylist()):
+            n, yes = stats.get(task, (0, 0))
+            stats[task] = (n + 1, yes + (answer == "Yes"))
+    rates = {task: yes / n for task, (n, yes) in stats.items() if n}
     for task in sorted(tasks):
         yr = rates.get(task)
         if yr is not None and abs(yr - 0.5) >= 0.15:
@@ -715,8 +844,8 @@ def main():
     ap.add_argument("--answer_pool_max_per_task", type=int, default=8192,
                     help="Max unique candidate answers kept per task for verification; <=0 keeps all")
     ap.add_argument("--verif_batch_size", type=int, default=512)
-    ap.add_argument("--verif_shard_rows", type=int, default=100_000)
-    ap.add_argument("--verif_workers", type=int, default=int(os.environ.get("RC_VERIF_WORKERS", "12")),
+    ap.add_argument("--verif_shard_rows", type=int, default=25_000)
+    ap.add_argument("--verif_workers", type=int, default=int(os.environ.get("RC_VERIF_WORKERS", "6")),
                     help="Process workers for scored verification negatives")
     ap.add_argument("--verif_chunksize", type=int, default=32,
                     help="Rows per multiprocessing dispatch chunk")
@@ -739,10 +868,18 @@ def main():
                     help="Max prompt chars used as a lexical retrieval key; <=0 uses full prompt")
     ap.add_argument("--disable_distractor_retrieval", action="store_true",
                     help="Keep the original random same-task distractor sampling path")
-    ap.add_argument("--work_dir", default=f"{base}/tmp/rc_preprocess_upload",
-                    help="Directory for temporary on-disk shards")
+    ap.add_argument("--work_dir", default=f"{tmp_root}/rc_preprocess_upload",
+                    help="Parent directory for temporary on-disk shards")
+    ap.add_argument("--keep_work_dir", action="store_true",
+                    help="Keep this run's temporary shards for debugging")
     args = ap.parse_args()
     args.dataset_name = args.dataset_name or infer_dataset_name(args.source)
+
+    global _RUN_DIR, _KEEP_WORK_DIR
+    os.makedirs(args.work_dir, exist_ok=True)
+    _RUN_DIR = tempfile.mkdtemp(prefix="run-", dir=args.work_dir)
+    _KEEP_WORK_DIR = args.keep_work_dir
+    args.work_dir = _RUN_DIR
 
     smoke = args.smoke_test > 0
     if smoke:
@@ -751,6 +888,7 @@ def main():
     print(f"source: {args.source}", flush=True)
     print(f"name: {os.path.basename(args.source.rstrip('/'))} -> {args.dataset_name}", flush=True)
     print(f"output: reasoning-core/{args.dataset_name}", flush=True)
+    print(f"work dir: {args.work_dir}", flush=True)
 
     with _step(f"loading {args.source}"):
         ds = load_source_dataset(args.source, smoke_n=args.smoke_test if smoke else 0, work_dir=args.work_dir)
@@ -759,7 +897,7 @@ def main():
             raise RuntimeError(f"{args.source} returned 0 rows")
 
     with _step("deduplicating"):
-        ds, rep = deduplicate_dataset(ds)
+        ds, rep = deduplicate_by_column(ds)
         print(f"  {rep}")
 
     task_counts = count_by_column(ds, key="task")
@@ -776,7 +914,7 @@ def main():
     print(f"  ~{n_tok:.2f}B tokens | {len(ds):,} rows")
 
     with _step("filter long prompts"):
-        ds = ds.filter(lambda x: len(x["prompt"]) < 50_000)
+        ds = filter_by_string_length(ds, "prompt", 50_000)
         print(f"  {len(ds):,} rows")
         if len(ds) < 2:
             raise RuntimeError("fewer than 2 rows remain after filtering")
@@ -827,7 +965,7 @@ def main():
     print_yes_rate_warnings(ds_verif, raw_pools)
 
     with _step("concat + subsample"):
-        ds = concatenate_datasets([ds_std, ds_verif]).shuffle(seed=42)
+        ds = concatenate_datasets([ds_std, ds_verif])
         if args.dataset_name == "reasoning-gym":
             print("  skipping final task balancing for reasoning-gym")
         else:
@@ -842,7 +980,7 @@ def main():
     with _step("final split + prettyorder"):
         test_size = max(1, int(len(ds) * 0.01)) if len(ds) > 1 else 0
         split = ds.train_test_split(test_size=test_size, seed=42) if test_size else DatasetDict({"train": ds})
-        split = DatasetDict({k: prettyorder(v, ["task", "mode"]) for k, v in split.items()})
+        split = DatasetDict({k: prettyorder_low_memory(v, ["task", "mode"]) for k, v in split.items()})
         split = format_split_for_target(split, args.dataset_name)
         print(split)
 
@@ -876,3 +1014,5 @@ if __name__ == "__main__":
         print(tb, file=sys.stderr, flush=True)
         notify(f"❌ RC preprocess failed: {type(e).__name__}", tb[-8000:])
         raise
+    finally:
+        _cleanup_work_dir()

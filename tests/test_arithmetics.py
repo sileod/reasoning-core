@@ -15,3 +15,7 @@ def test_arithmetics_number_theory_ops():
         op in problem.metadata.cot
         for op in ("gcd", "lcm", "bit_count", "is_prime", "prime_count", "num_divisors")
     )
+
+
+def test_floor_division_cot_formats_integer_result():
+    assert Arithmetics().get_cot("5 // 2") == "5 // 2 = 2"

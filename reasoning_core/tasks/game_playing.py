@@ -145,14 +145,13 @@ class _SmallGraphGame:
         for i, outs in sorted(edges.items()):
             if outs:
                 edge_parts.append(f"{_name(i)}->{','.join(_name(j) for j in sorted(outs))}")
-        terminal_parts = []
-        for i, outs in sorted(edges.items()):
-            if not outs:
-                terminal_parts.append(f"{_name(i)}:{payoffs[i]}")
+        payoff_parts = [f"{_name(i)}:{payoffs[i]}" for i in sorted(edges)]
         return (
             f"Start: {_name(start)}. Turns alternate player, opponent. "
             f"Move along one edge per turn, for at most {self.config.horizon} moves. "
-            f"Terminal player scores: {'; '.join(terminal_parts)}. "
+            "Play ends upon reaching a leaf or the move horizon; in either case, "
+            "player's score is the current node's payoff. "
+            f"Node payoffs: {'; '.join(payoff_parts)}. "
             f"Edges: {'; '.join(edge_parts)}."
         )
 

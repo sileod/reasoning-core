@@ -119,7 +119,7 @@ Answer geometry queries about point intersections, angles, and distances.
 
 **Prompt:**
 ```
-Given points: C=(-1, -4); D=(1, 1); H=(3, 1); K=(-192/25, -69/25); P=(-4, 0); T=(1, 0); U=(-67/25, -44/25).
+Given points: C=(-1, -4); D=(1, 1); H=(3, 1); P=(-4, 0); T=(1, 0).
 Definitions: U is the projection of D onto line CP. K is the translation of P by vector DU.
 Question: Is point H on segment KT?
 Answer is either yes or no.

@@ -7,7 +7,11 @@ import random, re, exrex
 import itertools
 from gramforge.solver_utils.tptp import split_clauses, run as _run, to_tptp, extract_inferences_and_formulas
 
+
+
 AXIOMS = "fof(anywhere_ax, axiom, ![X]:anywhere(X))."
+# in the grammar anywhere is treated as a location, we quantify "anyone anywhere or anyone in the room. 
+# This axiom is necessary to say that people match being anywhere" 
 
 def run(expr, **kw):
     return _run(AXIOMS + "\n" + expr, **kw)

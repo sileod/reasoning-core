@@ -1,5 +1,6 @@
 import random
 import re
+from copy import copy
 from dataclasses import dataclass, field
 
 import sympy as sp
@@ -173,7 +174,7 @@ def render_text(s, labels):
     return ID_RE.sub(lambda m: labels[m.group(0)], s)
 
 
-def render(scene, query):
+def render(scene, query, construction_execution=False):
     points = dict(scene["points"])
     definitions = dict(scene["definitions"])
 
@@ -185,8 +186,12 @@ def render(scene, query):
     ids = list(points)
     labels = dict(zip(ids, random.sample(LABELS, len(ids))))
 
-    shown = edict({labels[i]: pstr(points[i]) for i in sorted(ids, key=lambda x: labels[x])})
-    defs = [f"{labels[i]} is {render_text(definitions[i], labels)}." for i in definitions]
+    shown_ids = [i for i in ids if not construction_execution or i not in definitions]
+    shown = edict({labels[i]: pstr(points[i]) for i in sorted(shown_ids, key=lambda x: labels[x])})
+    defs = (
+        [f"{labels[i]} is {render_text(definitions[i], labels)}." for i in definitions]
+        if construction_execution else []
+    )
 
     if query.kind in {"label", "label_or_tie"}:
         answer = query.answer if query.answer == "tie" else labels[query.answer]
@@ -725,6 +730,7 @@ class PlanarGeometryRelationsConfig(Config):
     max_vector_scale: int = 4
     constructed_operand_weight: float = 3.0
     constructed_operand_prob: float = 0.65
+    construction_execution: float = 0.5
     query_types: list = field(default_factory=lambda: list(QUERIES))
 
     def apply_difficulty(self, level):
@@ -748,12 +754,23 @@ class PlanarGeometryRelations(Task):
 
         for _ in range(self.config.max_tries):
             scene = make_scene(self.config)
+            construction_execution = (
+                bool(scene["definitions"])
+                and random.random() < self.config.construction_execution
+            )
+            query_config = copy(self.config)
+            if construction_execution:
+                query_config.constructed_operand_prob = 1.0
+
             for name in random.sample(query_types, len(query_types)):
-                query = QUERIES[name](scene, self.config)
+                query = QUERIES[name](scene, query_config)
                 if query is None:
                     continue
+                referenced = set(ID_RE.findall(query.question))
+                if construction_execution and not referenced.intersection(scene["definitions"]):
+                    continue
 
-                rendered = render(scene, query)
+                rendered = render(scene, query, construction_execution=construction_execution)
                 metadata = edict(
                     points=rendered.points,
                     definitions=rendered.definitions,
@@ -763,6 +780,7 @@ class PlanarGeometryRelations(Task):
                     answer_kind=rendered.answer_kind,
                     balance=rendered.balance,
                     internal_query=rendered.internal_query,
+                    construction_execution=construction_execution,
                 )
                 return Entry(metadata=metadata, answer=rendered.answer)
 

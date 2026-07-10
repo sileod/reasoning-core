@@ -89,8 +89,8 @@ class ArithmeticsConfig(Config):
     trailing_zero_prob: float = 0.2
     trivial_prob = 0.01
     bool_prob = 0.1
-    spaced_digits_prob: float = 0.25
-    reversed_spaced_digits_prob: float = 0.25
+    spaced_digits_prob: float = 0.1
+    reversed_spaced_digits_prob: float = 0.2
 
     def apply_difficulty(self, level):
         self.min_depth = sround(self.min_depth + level)
@@ -205,6 +205,7 @@ class Arithmetics(Task):
         steps = []
         
         def fmt(n):
+            n = Fraction(n)
             d = n.denominator
             while d % 2 == 0: d //= 2
             while d % 5 == 0: d //= 5
@@ -463,7 +464,7 @@ class MathWordProblem(Task):
         lines = ". ".join(relation_text(r, m.unit) for r in m.relations)
         return (
             f"{lines}. {m.given} has {m.given_value} {m.unit}. "
-            f"How many {m.unit} does {m.asked} have? Answer with s a number."
+            f"How many {m.unit} does {m.asked} have? Answer with a number."
         )
 
     def score_answer(self, answer, entry):
