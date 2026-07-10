@@ -418,6 +418,17 @@ def _surface_salience_name_pred(q, mentions, pronoun_window=3):
 
 
 def _query_candidates(mentions, pool, target_hops=2, cfg=None, challenge=None):
+    pronoun_window = cfg.pronoun_window if cfg else 3
+    require_same_gender_distractor = cfg.require_same_gender_distractor if cfg else False
+    require_opaque_link = cfg.require_opaque_link_for_multihop if cfg else False
+    use_global = bool(cfg and (
+        cfg.n_ambiguous_mentions
+        or cfg.n_constraints
+        or cfg.n_rules
+        or cfg.n_identity_links
+        or cfg.n_state_changes
+    ))
+
     counts = {}
     for m in mentions:
         counts[m['entity']] = counts.get(m['entity'], 0) + 1
@@ -430,20 +441,15 @@ def _query_candidates(mentions, pool, target_hops=2, cfg=None, challenge=None):
     for m in mentions:
         if m['mode'] not in (PRONOUN, DESC, DESC_EVENT):
             continue
-        use_global = cfg and any([
-            cfg.n_ambiguous_mentions, cfg.n_constraints, cfg.n_rules,
-            cfg.n_identity_links, cfg.n_state_changes,
-        ])
         if use_global and not m.get('ambiguous'):
             continue
-        if not use_global and not surface_identifiable(m, mentions,
-                                                       cfg.pronoun_window if cfg else 3):
+        if not use_global and not surface_identifiable(m, mentions, pronoun_window):
             continue
         if use_global and not globally_pins_query(
                 m, mentions, pool,
                 (challenge or {}).get('constraints'),
                 (challenge or {}).get('rules'),
-                cfg.pronoun_window):
+                pronoun_window):
             continue
         direct_constraint = use_global and _constraint_lookup_pred(m, mentions, challenge or {}) == m['entity']
         hops = _get_hops(m, mentions)
@@ -458,12 +464,12 @@ def _query_candidates(mentions, pool, target_hops=2, cfg=None, challenge=None):
         elif m['mode'] == DESC_EVENT:
             if len(event_matches_for_mention(m, mentions)) != 1:
                 continue
-        elif cfg and cfg.require_same_gender_distractor:
+        elif require_same_gender_distractor:
             if not _has_same_gender_distractor(m['entity'], mentions, m['sent'],
-                                               cfg.pronoun_window):
+                                               pronoun_window):
                 continue
             ant = mentions[m['antecedent']]
-            if not (1 < m['sent'] - ant['sent'] <= cfg.pronoun_window):
+            if not (1 < m['sent'] - ant['sent'] <= pronoun_window):
                 continue
 
         if target_hops >= 2:
@@ -473,10 +479,9 @@ def _query_candidates(mentions, pool, target_hops=2, cfg=None, challenge=None):
             path = antecedent_path(m, mentions)
             if len(path) <= 2:
                 continue
-            if _surface_salience_name_pred(m, mentions,
-                                           cfg.pronoun_window if cfg else 3) == m['entity']:
+            if _surface_salience_name_pred(m, mentions, pronoun_window) == m['entity']:
                 continue
-            if (cfg and cfg.require_opaque_link_for_multihop and
+            if (require_opaque_link and
                     (not any(p['mode'] in (DESC, DESC_EVENT) for p in path[:-1]) or
                      not any(p['mode'] == PRONOUN for p in path[:-1]))):
                 continue
@@ -892,7 +897,7 @@ class CoreferenceConfig(Config):
     single_gender_pool: bool = True
     balanced_generation: bool = True
     oversample: int = 4
-    balance_batch_size: int = 256
+    balance_batch_size: int = 64
     shortcut_eps: float = 0.08
     shortcut_min_n: int = 20
     pronoun_window: int = 8
@@ -921,21 +926,33 @@ class Coreference(Task):
 
     def generate_raw_candidate(self):
         cfg = self.config
-        if cfg.n_entities < 2:
+        n_entities = cfg.n_entities
+        if n_entities < 2:
             raise ValueError("Coreference requires at least 2 entities")
+        chain_len = cfg.chain_len
+        single_gender_pool = cfg.single_gender_pool
+        n_distractors = cfg.n_distractors
+        p_pronoun = cfg.p_pronoun
+        p_desc = cfg.p_desc
+        p_desc_event = cfg.p_desc_event
+        p_shortcut = cfg.p_shortcut
+        pronoun_window = cfg.pronoun_window
+        n_ambiguous_mentions = cfg.n_ambiguous_mentions
+        target_hops = cfg.target_hops
+        p_compositional_query = cfg.p_compositional_query
         for _ in range(1000):
-            clen = cfg.chain_len
-            if clen > 2 and random.random() < cfg.p_shortcut:
+            clen = chain_len
+            if clen > 2 and random.random() < p_shortcut:
                 clen = random.randint(2, clen - 1)
-            pool = _pool(cfg.n_entities, cfg.single_gender_pool)
-            plan = _plan(pool, clen, cfg.n_distractors)
-            lines, mentions = _emit(plan, pool, cfg.p_pronoun, cfg.p_desc,
-                                    cfg.p_desc_event,
-                                    cfg.pronoun_window,
-                                    cfg.n_ambiguous_mentions)
+            pool = _pool(n_entities, single_gender_pool)
+            plan = _plan(pool, clen, n_distractors)
+            lines, mentions = _emit(plan, pool, p_pronoun, p_desc,
+                                    p_desc_event,
+                                    pronoun_window,
+                                    n_ambiguous_mentions)
             challenge = _add_global_challenge(lines, mentions, pool, cfg)
 
-            cands = _query_candidates(mentions, pool, target_hops=cfg.target_hops,
+            cands = _query_candidates(mentions, pool, target_hops=target_hops,
                                       cfg=cfg, challenge=challenge)
             if not cands:
                 continue
@@ -957,7 +974,7 @@ class Coreference(Task):
                 'challenge': challenge,
                 'hops': hops,
                 'mode': q['mode'],
-                'target_hops': cfg.target_hops,
+                'target_hops': target_hops,
             })
         raise RuntimeError("Could not generate a valid coreference problem")
 
