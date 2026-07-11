@@ -1,12 +1,19 @@
-from dataclasses import dataclass
+"""Query-aware finite-domain CSPs over a shared semantic representation."""
+
+from __future__ import annotations
+
 import ast
 import json
-import math
 import random
+from dataclasses import dataclass, replace
 from typing import Optional
 
-from reasoning_core.template import Task, Entry, Config, edict, stochastic_rounding as sround
-from z3 import Distinct, Int, Optimize, Or, Solver, Sum, sat
+from reasoning_core.csp.families import ALIASES, FAMILIES
+from reasoning_core.csp.generator import generate_instance, render_instance
+from reasoning_core.csp.ir import Eq, Ne, operator_name
+from reasoning_core.csp.metrics import analyze, split_key
+from reasoning_core.csp.solver import CSPSolver
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
 @dataclass
@@ -18,377 +25,172 @@ class ConstraintSatisfactionConfig(Config):
     unsat_prob: float = 0.15
     max_tries: int = 64
 
-    # Structure: "random" | "graph" | "grid" | "clustered" | "any"
-    structure_mode: str = "any"
-    max_arity: int = 3
-
-    # Solve mode: "all" (enumerate all) or "min" (lex-smallest). 
-    # If "all" overflows `max_solutions`, it automatically falls back to "min".
-    solve_mode: str = "all"
+    # Compatibility aliases: attribute -> assignment, linear -> numeric.
+    model_mode: str = "any"
+    solve_mode: str = "query"  # query | all | min; lex_all aliases all
     max_solutions: Optional[int] = 256
 
+    # Semantic selection controls.
+    minimization_orders: int = 6
+    counterfactual_prob: float = 0.15
+
+    # Retained compatibility knobs. Numeric structure is now expressed by the IR.
+    structure_mode: str = "any"
+    max_arity: int = 3
     edge_prob: float = 0.25
     n_clusters: int = 3
     p_in: float = 0.6
     p_out: float = 0.1
     grid_width: Optional[int] = None
-    model_mode: str = "any"  # "linear" | "attribute" | "grid" | "any"
 
     def apply_difficulty(self, level):
         self.n_vars = sround(self.n_vars + 0.6 * level)
         self.max_domain = sround(self.max_domain + 0.4 * level)
         self.n_constraints = sround(self.n_constraints + 1.1 * level)
         self.coef_bound = sround(self.coef_bound + 0.3 * level)
+        self.minimization_orders = sround(self.minimization_orders + 0.5 * level)
 
 
 CSPConfig = ConstraintSatisfactionConfig
 
 
 class ConstraintSatisfaction(Task):
-    summary = "Solve constraint satisfaction problems (grids, attributes, linear) using Z3."
+    summary = "Solve query-aware assignment, graph, scheduling, grid, set, and numeric CSPs."
+    config_cls = ConstraintSatisfactionConfig
 
     def __init__(self, config=None):
-        super().__init__(config=config or CSPConfig())
-
-    def _rng(self):
-        return random.Random(self.config.seed)
-
-    def _possible_values(self, solver, var, values):
-        out = []
-        for v in values:
-            solver.push()
-            solver.add(var == v)
-            if solver.check() == sat:
-                out.append(v)
-            solver.pop()
-        return out
-
-    def _unique_value(self, solver, var, values):
-        vals = self._possible_values(solver, var, values)
-        return vals[0] if len(vals) == 1 else None
-
-    def _build_neighbors(self, rng, n, mode):
-        nbrs = [set() for _ in range(n)]
-
-        def link(i, j):
-            if i != j:
-                nbrs[i].add(j); nbrs[j].add(i)
-
-        if mode == "random":
-            for i in range(n): nbrs[i] = set(range(n)) - {i}
-        elif mode == "graph":
-            for i in range(n):
-                for j in range(i + 1, n):
-                    if rng.random() < self.config.edge_prob: link(i, j)
-        elif mode == "grid":
-            w = self.config.grid_width or max(1, round(math.sqrt(n)))
-            h = (n + w - 1) // w
-            for r in range(h):
-                for c in range(w):
-                    i = r * w + c
-                    if i < n:
-                        for dr, dc in ((1, 0), (0, 1)):
-                            j = (r + dr) * w + (c + dc)
-                            if r + dr < h and c + dc < w and j < n: link(i, j)
-        elif mode == "clustered":
-            g = max(1, min(self.config.n_clusters, n))
-            cluster_of = [rng.randrange(g) for _ in range(n)]
-            for i in range(n):
-                for j in range(i + 1, n):
-                    p = self.config.p_in if cluster_of[i] == cluster_of[j] else self.config.p_out
-                    if rng.random() < p: link(i, j)
-
-        for i in range(n):
-            if not nbrs[i]: link(i, rng.choice([x for x in range(n) if x != i]))
-        return nbrs
-
-    def _sample_scope(self, rng, neighbors, n, mode):
-        k = rng.randint(1, max(1, min(self.config.max_arity, n)))
-        if mode == "random" or k == 1:
-            return sorted(rng.sample(range(n), k))
-
-        seed = rng.randrange(n)
-        scope, frontier = {seed}, set(neighbors[seed])
-        while len(scope) < k and frontier:
-            j = rng.choice(tuple(frontier))
-            scope.add(j)
-            frontier.update(neighbors[j])
-            frontier.difference_update(scope)
-
-        if len(scope) < k:
-            rest = [j for j in range(n) if j not in scope]
-            if rest: scope.update(rng.sample(rest, min(k - len(scope), len(rest))))
-        return sorted(scope)
-
-    def _sample_constraint(self, rng, idx, witness, coef_bound):
-        kind = rng.choices(["lin", "mod", "alldiff"], weights=[6, 2, 2] if len(idx) >= 2 else [7, 3, 0])[0]
-
-        if kind == "lin":
-            coeffs = [rng.choice([x for x in range(-coef_bound, coef_bound + 1) if x != 0]) for _ in idx]
-            val = sum(a * witness[i] for a, i in zip(coeffs, idx))
-            op = rng.choices(["==", "!=", "<=", ">="], weights=[3, 2, 3, 3])[0]
-            if op == "==": rhs = val
-            elif op == "!=": rhs = val + rng.choice([x for x in range(-(coef_bound + 2), coef_bound + 3) if x != 0])
-            elif op == "<=": rhs = val + rng.randint(0, coef_bound + 1)
-            else: rhs = val - rng.randint(0, coef_bound + 1)
-            return {"type": "lin", "idx": idx, "coeffs": coeffs, "op": op, "rhs": rhs}
-
-        if kind == "mod":
-            coeffs = [rng.randint(1, coef_bound) for _ in idx]
-            mod = rng.randint(2, max(2, coef_bound + 2))
-            rem = sum(a * witness[i] for a, i in zip(coeffs, idx)) % mod
-            return {"type": "mod", "idx": idx, "coeffs": coeffs, "mod": mod, "rem": rem}
-
-        if len(set(witness[i] for i in idx)) != len(idx): return None
-        return {"type": "alldiff", "idx": idx}
-
-    def _constraint_text(self, c):
-        if c["type"] in ("lin", "mod"):
-            parts = [(f"x{i}" if a == 1 else f"-x{i}" if a == -1 else f"{a}*x{i}") for a, i in zip(c['coeffs'], c['idx'])]
-            expr = " + ".join(parts).replace("+ -", "- ")
-            if c["type"] == "lin": return f"{expr} {c['op']} {c['rhs']}"
-            return f"({expr}) % {c['mod']} == {c['rem']}"
-        return f"AllDifferent({', '.join(f'x{i}' for i in c['idx'])})"
-
-    def _add_base(self, solver, xs, domains, constraints):
-        for x, ub in zip(xs, domains): solver.add(x >= 0, x <= ub)
-        for c in constraints:
-            if c["type"] == "lin":
-                expr = Sum([a * xs[i] for a, i in zip(c["coeffs"], c["idx"])])
-                if c["op"] == "==": solver.add(expr == c["rhs"])
-                elif c["op"] == "!=": solver.add(expr != c["rhs"])
-                elif c["op"] == "<=": solver.add(expr <= c["rhs"])
-                else: solver.add(expr >= c["rhs"])
-            elif c["type"] == "mod":
-                solver.add(Sum([a * xs[i] for a, i in zip(c["coeffs"], c["idx"])]) % c["mod"] == c["rem"])
-            elif c["type"] == "alldiff":
-                solver.add(Distinct(*[xs[i] for i in c["idx"]]))
-
-    def _solve_min(self, domains, constraints):
-        xs = [Int(f"x{i}") for i in range(len(domains))]
-        opt = Optimize()
-        opt.set(priority="lex")
-        self._add_base(opt, xs, domains, constraints)
-        for x in xs: opt.minimize(x)
-        if opt.check() != sat: return None
-        return [opt.model().eval(x, model_completion=True).as_long() for x in xs]
-
-    def _solve_all(self, domains, constraints):
-        xs = [Int(f"x{i}") for i in range(len(domains))]
-        solver = Solver()
-        self._add_base(solver, xs, domains, constraints)
-        solutions, cap = [], self.config.max_solutions
-        while solver.check() == sat:
-            sol = [solver.model().eval(x, model_completion=True).as_long() for x in xs]
-            solutions.append(sol)
-            if cap and len(solutions) > cap: return None, True
-            solver.add(Or(*[x != v for x, v in zip(xs, sol)]))
-        return sorted(solutions) if solutions else None, False
+        super().__init__(config=config or self.config_cls())
+        c = self.config
+        if c.solve_mode.lower() == "lex_all": c.solve_mode = "all"
+        modes = set(FAMILIES) | set(ALIASES) | {"any"}
+        if c.model_mode.lower() not in modes: raise ValueError(f"Unknown model_mode: {c.model_mode!r}")
+        if c.solve_mode.lower() not in {"query", "all", "min"}: raise ValueError(f"Unknown solve_mode: {c.solve_mode!r}")
+        if c.structure_mode.lower() not in {"complete", "random", "graph", "grid", "clustered", "any"}:
+            raise ValueError(f"Unknown structure_mode: {c.structure_mode!r}")
+        if min(c.coef_bound, c.max_tries, c.max_arity, c.minimization_orders) <= 0:
+            raise ValueError("coef_bound, max_tries, max_arity, and minimization_orders must be positive")
+        if c.max_solutions is not None and c.max_solutions <= 0: raise ValueError("max_solutions must be positive or None")
+        if c.grid_width is not None and c.grid_width <= 0: raise ValueError("grid_width must be positive or None")
+        for field in ("unsat_prob", "counterfactual_prob", "edge_prob", "p_in", "p_out"):
+            if not 0 <= getattr(c, field) <= 1: raise ValueError(f"{field} must be between 0 and 1")
 
     def generate_entry(self):
-        mode = self.config.model_mode
-        if mode == "any":
-            mode = random.choices(["attribute", "grid", "linear"], weights=[3, 3, 2])[0]
-        return {"attribute": self._generate_attribute, "grid": self._generate_grid}.get(mode, self._generate_linear)()
+        c, rng = self.config, random
+        requested = c.model_mode.lower()
+        family = rng.choices(list(FAMILIES), weights=[3, 2, 3, 2, 2, 3])[0] if requested == "any" else ALIASES.get(requested, requested)
+        instance = generate_instance(
+            family, rng, max(3, int(c.n_vars) + (2 if family != "numeric" else 0)),
+            max_tries=int(c.max_tries), n_orders=int(c.minimization_orders),
+            max_domain=max(2, int(c.max_domain)), coef_bound=int(c.coef_bound),
+        )
+        clues, answer, solve_mode = list(instance.clues), instance.answer, c.solve_mode.lower()
+        query, query_type = instance.query, instance.query.kind
 
-    def _generate_linear(self):
-        rng = self._rng()
-        n, max_dom, n_cons = max(2, self.config.n_vars), max(2, self.config.max_domain), max(1, self.config.n_constraints)
-        desired_unsat = rng.random() < self.config.unsat_prob
+        if instance.counterfactual_pair and rng.random() < c.counterfactual_prob:
+            index, mutation, changed_value, changed_answer = instance.counterfactual_pair
+            clues[index], answer, query_type = mutation, changed_answer, "counterfactual"
+            query = replace(query, answer=changed_value)
 
-        for _ in range(self.config.max_tries):
-            # Dynamic structure fallback for pure randomness per instance
-            mode = rng.choice(["random", "graph", "grid", "clustered"]) if self.config.structure_mode == "any" else self.config.structure_mode
-            neighbors = self._build_neighbors(rng, n, mode)
-            domains = [rng.randint(1, max_dom) for _ in range(n)]
-            witness = [rng.randint(0, ub) for ub in domains]
+        if family == "numeric" and rng.random() < c.unsat_prob:
+            q, value = instance.query.var, instance.query.answer
+            base_solver = CSPSolver(instance.world.variables, instance.base)
+            target = max(2, int(c.n_constraints)); contradiction = None
+            mutations = list(instance.counterfactuals); rng.shuffle(mutations)
+            for mutation in mutations:
+                trial = clues + [mutation]
+                if len(trial) <= target and not base_solver.is_sat(trial):
+                    contradiction = trial; break
+            if contradiction is None: contradiction = [Eq(q, value), Ne(q, value)]
+            fillers = [c for c in clues if c not in contradiction]
+            fillers += [Ne(v, x) for v in instance.world.variables for x in v.domain
+                        if x != instance.world.witness[v]]
+            clues = (contradiction + fillers)[:target]
+            answer, query_type = "UNSAT", "consistency"
 
-            constraints, seen, attempts = [], set(), 0
-            while len(constraints) < n_cons and attempts < max(16, 12 * n_cons):
-                attempts += 1
-                idx = self._sample_scope(rng, neighbors, n, mode)
-                constraint_witness = (
-                    [rng.randint(0, ub) for ub in domains]
-                    if desired_unsat else witness
-                )
-                if c := self._sample_constraint(rng, idx, constraint_witness, self.config.coef_bound):
-                    if (key := json.dumps(c, sort_keys=True)) not in seen:
-                        seen.add(key); constraints.append(c)
+        # Full-assignment modes remain available for backwards compatibility, but
+        # query mode is the SFT-oriented default.
+        if family == "numeric" and solve_mode in {"all", "min"}:
+            active_solver = CSPSolver(instance.world.variables, instance.base, clues)
+            solutions, overflow = active_solver.solutions(limit=c.max_solutions) if solve_mode == "all" else (None, False)
+            if overflow:
+                clues += [Eq(v, instance.world.witness[v]) for v in instance.world.variables]
+                solutions, overflow = CSPSolver(instance.world.variables, instance.base, clues).solutions(limit=c.max_solutions)
+            if overflow: raise RuntimeError("Numeric CSP exceeded max_solutions after bounded completion")
+            if solve_mode == "min":
+                solution = active_solver.lex_solution()
+                answer = "UNSAT" if solution is None else json.dumps(list(solution))
+            elif not solutions: answer = "UNSAT"
+            else: answer = json.dumps([list(x) for x in solutions])
+            query_type = "all_solutions" if solve_mode == "all" else "lexicographic_solution"
 
-            if len(constraints) < n_cons: continue
+        rendered = [formula.render(instance.renderer) for formula in clues]
+        prompt = render_instance(instance)
+        if clues != instance.clues:
+            family_adapter = FAMILIES[family]
+            preamble = "\n".join(x for x in (family_adapter.domains_text(instance.world), family_adapter.invariant(instance.world)) if x)
+            prompt = f"{preamble}\n\nConstraints:\n" + "\n".join(f"{i}. {x}" for i,x in enumerate(rendered,1))
+        if query_type == "all_solutions":
+            prompt += "\n\nQuestion: Enumerate all satisfying assignments in variable order [" + ", ".join(v.name for v in instance.world.variables) + "]?\nThe answer is a lexicographically sorted JSON list of lists, or UNSAT."
+        elif query_type == "lexicographic_solution":
+            prompt += "\n\nQuestion: What is the lexicographically smallest satisfying assignment in variable order [" + ", ".join(v.name for v in instance.world.variables) + "]?\nThe answer is a JSON list of integers, or UNSAT."
+        elif query_type == "consistency":
+            prompt += "\n\nQuestion: Are these constraints consistent?\nAnswer with SAT or UNSAT."
+        elif query_type == "counterfactual":
+            prompt += f"\n\nQuestion: {instance.query.text}\nAnswer with one name or integer."
 
-            solve_mode = self.config.solve_mode.lower()
-            if solve_mode in ("all", "lex_all"):
-                solution, overflow = self._solve_all(domains, constraints)
-                # Fallback to Min if "all" hits bounds
-                if overflow:
-                    solve_mode, solution = "min", self._solve_min(domains, constraints)
-            else:
-                solution = self._solve_min(domains, constraints)
-            if desired_unsat != (solution is None):
-                continue
-
-            metadata = edict({
-                "domains": domains, "constraints": constraints, "solution": solution,
-                "solve_mode": solve_mode, "structure_mode": mode, "model_mode": "linear",
-                "instance": "Variables/domains:\n" + \
-                            "\n".join(f"- 0 <= x{i} <= {ub}" for i, ub in enumerate(domains)) + \
-                            "\n\nConstraints:\n" + "\n".join(f"{j+1}. {self._constraint_text(c)}" for j, c in enumerate(constraints))
+        metrics = (analyze(CSPSolver(instance.world.variables, instance.base), clues, query)
+                   if query_type == "counterfactual" else dict(instance.metrics))
+        if answer == "UNSAT":
+            active = list(clues); consistency_solver = CSPSolver(instance.world.variables, instance.base)
+            for clue in list(active):
+                trial = active.copy(); trial.remove(clue)
+                if not consistency_solver.is_sat(trial): active = trial
+            metrics.update({
+                "consistency_core_size": len(active),
+                "displayed_clue_essentiality": round(len(active) / len(clues), 4),
+                "operator_histogram": {name: sum(operator_name(c) == name for c in clues)
+                                       for name in sorted({operator_name(c) for c in clues})},
             })
-            return Entry(metadata=metadata, answer="UNSAT" if solution is None else json.dumps(solution))
-            
-        raise RuntimeError("Failed to generate a CSP instance.")
-
-    def _generate_attribute(self):
-        rng = self._rng()
-        people = "Alice Bruno Clara David Elena".split()[:max(3, min(5, int(self.config.n_vars) + 2))]
-        cats = {
-            "color": "red blue green yellow white".split()[:len(people)],
-            "pet": "cat dog bird fish horse".split()[:len(people)],
-            "drink": "tea milk juice water coffee".split()[:len(people)],
-            "snack": "apple bread cake dates eggs".split()[:len(people)],
-            "hobby": "chess music art dance tennis".split()[:len(people)],
-        }
-        sol = {cat: dict(zip(vals, rng.sample(range(len(people)), len(people)))) for cat, vals in cats.items()}
-        var = {(cat, val): Int(f"{cat}_{val}") for cat, vals in cats.items() for val in vals}
-        base = Solver()
-        for cat, vals in cats.items():
-            base.add(Distinct(*[var[cat, v] for v in vals]))
-            for v in vals: base.add(var[cat, v] >= 0, var[cat, v] < len(people))
-
-        qcat = rng.choice(list(cats))
-        qval = rng.choice(cats[qcat])
-        answer_idx = sol[qcat][qval]
-        k = min(len(cats) - 1, len(people) - 1, max(2, int(self.config.n_constraints) // 2))
-        link_cats = rng.sample([c for c in cats if c != qcat], k)
-        decoys = rng.sample([i for i in range(len(people)) if i != answer_idx], k)
-        clues = []
-        for cat in link_cats:
-            val = next(v for v in cats[cat] if sol[cat][v] == answer_idx)
-            base.add(var[qcat, qval] == var[cat, val])
-            clues.append(f"{qval} {qcat} and {val} {cat} belong to the same person.")
-        for cat, decoy in zip(link_cats, decoys):
-            keep = {answer_idx, decoy}
-            for val in cats[cat]:
-                if sol[cat][val] not in keep:
-                    base.add(var[cat, val] == sol[cat][val])
-                    clues.append(f"{val} {cat} belongs to {people[sol[cat][val]]}.")
-        ans = self._unique_value(base, var[qcat, qval], range(len(people)))
-        if ans is not None:
-            answer = people[ans]
-            prompt = (
-                f"People: {', '.join(people)}.\n"
-                f"Each {', '.join(cats)} is used once.\n"
-                "Clues:\n" + "\n".join(f"- {c}" for c in clues) +
-                f"\n\nWho has the {qval} {qcat}?\nAnswer with one name."
-            )
-            return Entry(edict(model_mode="attribute", prompt=prompt, clues=clues, query=(qcat, qval), solution=answer), answer)
-        raise RuntimeError("Failed to generate an attribute CSP instance.")
-
-    def _generate_grid(self):
-        rng = self._rng()
-        n = max(3, min(5, int(self.config.n_vars) + 2))
-        nums = rng.sample(range(1, n + 1), n)
-        sol = [[nums[(r + c) % n] for c in range(n)] for r in range(n)]
-        rng.shuffle(sol)
-        var = [[Int(f"r{r+1}c{c+1}") for c in range(n)] for r in range(n)]
-        base = Solver()
-        for row in var:
-            base.add(Distinct(*row), *[x >= 1 for x in row], *[x <= n for x in row])
-        for c in range(n):
-            base.add(Distinct(*[var[r][c] for r in range(n)]))
-        qr, qc = rng.randrange(n), rng.randrange(n)
-        candidates = []
-        for r in range(n):
-            for c in range(n):
-                if (r, c) != (qr, qc):
-                    candidates.append((f"r{r+1}c{c+1} = {sol[r][c]}", var[r][c] == sol[r][c]))
-                for dr, dc in ((1, 0), (0, 1)):
-                    rr, cc = r + dr, c + dc
-                    if rr < n and cc < n:
-                        op = "<" if sol[r][c] < sol[rr][cc] else ">"
-                        z = var[r][c] < var[rr][cc] if op == "<" else var[r][c] > var[rr][cc]
-                        candidates.append((f"r{r+1}c{c+1} {op} r{rr+1}c{cc+1}", z))
-        k = min((n + 1) // 2, max(2, int(self.config.n_constraints) // 2))
-        ans = sol[qr][qc]
-        vals = [v for v in range(1, n + 1) if v != ans]
-        row_vals = set(rng.sample(vals, k - 1))
-        col_vals = set(rng.sample([v for v in vals if v not in row_vals], k - 1))
-        row_hide = {qc} | {c for c in range(n) if sol[qr][c] in row_vals}
-        col_hide = {qr} | {r for r in range(n) if sol[r][qc] in col_vals}
-        clues = []
-        for c in rng.sample([c for c in range(n) if c not in row_hide], n - k):
-            base.add(var[qr][c] == sol[qr][c])
-            clues.append(f"r{qr+1}c{c+1} = {sol[qr][c]}")
-        for r in rng.sample([r for r in range(n) if r not in col_hide], n - k):
-            base.add(var[r][qc] == sol[r][qc])
-            clues.append(f"r{r+1}c{qc+1} = {sol[r][qc]}")
-        rng.shuffle(clues)
-        ans = self._unique_value(base, var[qr][qc], range(1, n + 1))
-        if ans is not None:
-            prompt = (
-                f"{n}x{n} grid. Each row and column contains 1..{n} once.\n"
-                "Clues:\n" + "\n".join(f"- {c}" for c in clues) +
-                f"\n\nWhat is r{qr+1}c{qc+1}?\nAnswer with one number."
-            )
-            return Entry(edict(model_mode="grid", prompt=prompt, clues=clues, query=(qr + 1, qc + 1), solution=ans), str(ans))
-        raise RuntimeError("Failed to generate a grid CSP instance.")
+        metadata = edict({
+            "model_mode": requested if requested != "any" else family,
+            "family": family, "solve_mode": solve_mode, "query_type": query_type,
+            "query": ((int(instance.query.var.name.split('c')[0][1:]), int(instance.query.var.name.split('c')[1]))
+                      if family == "grid" else instance.query.var.name),
+            "query_var": instance.query.var.name, "clues": rendered, "constraints": rendered,
+            "canonical_clues": [repr(x.canonical()) for x in clues],
+            "base_constraints": [repr(x.canonical()) for x in instance.base],
+            "counterfactual_candidates": [repr(x.canonical()) for x in instance.counterfactuals],
+            "counterfactual_applied": query_type == "counterfactual",
+            "metrics": metrics, "split_key": split_key(family, instance.base, clues, query_type),
+            "solution": None if answer == "UNSAT" else answer,
+            "prompt": prompt, "payload": {"instance": prompt.rsplit("\n\nQuestion:", 1)[0]},
+            "render_seed": 0,
+        })
+        if family == "grid":
+            metadata.relational_clues_required = any(" < " in x or " > " in x for x in rendered)
+        return Entry(metadata=metadata, answer=str(answer))
 
     def render_prompt(self, metadata):
-        if "prompt" in metadata:
-            return metadata.prompt
-        order = ", ".join(f"x{i}" for i in range(len(metadata['domains'])))
-        if metadata.get("solve_mode", "min") == "all":
-            return f"{metadata['instance']}\nEnumerate ALL satisfying assignments in variable order [{order}].\nThe answer is a lexicographically sorted Python list of int lists, or UNSAT.\n"
-        return f"{metadata['instance']}\nFind the lexicographically smallest satisfying assignment in variable order [{order}].\nThe answer is a Python list of ints, or UNSAT."
+        return metadata.prompt
 
     def score_answer(self, answer, entry):
-        metadata = entry.metadata if hasattr(entry, "metadata") else entry["metadata"]
-        if metadata.get("model_mode") in {"attribute", "grid"}:
-            return float(str(answer).strip().lower() == str(entry.answer if hasattr(entry, "answer") else entry["answer"]).strip().lower())
-        def _parse(s):
-            if not isinstance(s, str) or not (s := s.strip()): return None
-            if s.upper() == "UNSAT": return "UNSAT"
+        expected = entry.answer if hasattr(entry, "answer") else entry["answer"]
+        mode = (entry.metadata if hasattr(entry, "metadata") else entry["metadata"]).get("query_type")
+        if mode not in {"all_solutions", "lexicographic_solution"}:
+            return float(str(answer).strip().casefold() == str(expected).strip().casefold())
+        def parse(value):
+            if not isinstance(value, str): return None
+            if value.strip().upper() == "UNSAT": return "UNSAT"
             try:
-                def norm(v): return [norm(u) for u in v] if isinstance(v, (list, tuple)) else v
-                x = norm(ast.literal_eval(s))
-                if isinstance(x, list) and (all(type(v) is int for v in x) or all(isinstance(r, list) and all(type(v) is int for v in r) for r in x)):
-                    return x
-            except Exception: pass
+                result = ast.literal_eval(value.strip())
+                if isinstance(result, list) and all(type(x) is int for x in result): return result
+                if isinstance(result, list) and all(isinstance(row,list) and all(type(x) is int for x in row) for row in result): return result
+            except (ValueError, SyntaxError): pass
             return None
-
-        parsed = _parse(answer)
-        expected = metadata["solution"]
-        if expected is None: return float(parsed == "UNSAT")
-        if parsed == "UNSAT" or not isinstance(parsed, list): return 0.0
-        
-        # Validates proper dimensionality match ("all" == 2D array, "min" == 1D array)
-        if metadata.get("solve_mode", "min") == "all":
-            return float(parsed == expected and (not parsed or isinstance(parsed[0], list)))
-        return float(parsed == expected and (not parsed or not isinstance(parsed[0], list)))
+        return float(parse(answer) == parse(expected))
 
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("TEST: 'any' mode (Randomly cycles graphs), default 'all' (Fallbacks to 'min')")
-    print("=" * 60)
-    for _ in range(4):
-        cfg = ConstraintSatisfactionConfig(
-            n_vars=4,
-            max_domain=3,
-            n_constraints=5,
-            coef_bound=2,
-            structure_mode="any",
-            solve_mode="all",
-            max_solutions=32,
-            seed=random.randint(0, 1000)
-        )
-        task = ConstraintSatisfaction(config=cfg)
-        prob = task.generate_entry()
-        
-        print(f"\n--- Structure chosen: {prob.metadata.structure_mode} ---")
-        print(task.render_prompt(prob.metadata))
-        
-        sol = json.loads(prob.answer) if prob.answer != "UNSAT" else "UNSAT"
-        count = len(sol) if isinstance(sol, list) and sol and isinstance(sol[0], list) else (0 if sol == "UNSAT" else 1)
-        print(f"Answer ({count} solutions, solve_mode used={prob.metadata.solve_mode}):\n{prob.answer}\n")
+    task = ConstraintSatisfaction()
+    problem = task.generate_entry()
+    print(task.render_prompt(problem.metadata)); print(problem.answer)
