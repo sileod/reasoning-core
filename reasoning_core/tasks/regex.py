@@ -12,7 +12,7 @@ from faker import Faker
 import sys, os
 from functools import wraps
 import codecs
-from collections import defaultdict
+from collections import defaultdict, deque
 
 #import re2 as re
 r"""
@@ -312,8 +312,8 @@ def canonical_instance(r_str):
 
 class RegexFollowing(Task):
     summary = "Produce a string that matches a specified regular expression pattern."
-    def __init__(self, config=RegexConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or RegexConfig())
         self.balancing_key_ratio = 0.4
 
     def generate_entry(self):
@@ -514,8 +514,8 @@ def synthesize_shortest_regex(
 
 class RegexInduction(DevTask):
     summary = "Induce a regular expression that separates positive and negative string sets."
-    def __init__(self, config=RegexConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or RegexConfig())
 
     def generate_entry(self):
         cfg = self.config
@@ -666,8 +666,8 @@ def _has_regex_abstraction(pattern):
 
 
 class RegexRetrieval(DevTask):
-    def __init__(self, config=RegexRetrievalConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or RegexRetrievalConfig())
 
     def _natural(self, cfg):
         text = fake.paragraph(nb_sentences=cfg.n_sentences)
@@ -764,10 +764,23 @@ def _sample_pair(G, depth, min_depth, mode, max_tries=40):
     return None
 
 
-def _shortest_witness(fsm):
-    """Shortest string in fsm, or None if empty."""
-    for s in fsm.strings(otherchars=[]):
-        return s
+def _shortest_witness(fsm, alphabet):
+    """First accepted string in shortlex order, or None if the FSM is empty."""
+    queue = deque([(fsm.initial, "")])
+    visited = {fsm.initial}
+    while queue:
+        state, path = queue.popleft()
+        if state in fsm.finals:
+            return path
+        for symbol in sorted(alphabet):
+            next_state = next(
+                target
+                for charclass, target in fsm.map[state].items()
+                if charclass.accepts(symbol)
+            )
+            if next_state not in visited:
+                visited.add(next_state)
+                queue.append((next_state, path + symbol))
     return None
 
 
@@ -815,8 +828,8 @@ def _sample_regex(G, depth, min_depth, mode="sequential", max_tries=60):
 
 class RegexReasoning(Task):
     summary = "Reason about regular expression equivalence, containment, and witnesses."
-    def __init__(self, config=RegexReasoningConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or RegexReasoningConfig())
         self.balancing_key_ratio = 0.25
 
     def generate_entry(self):
@@ -872,7 +885,7 @@ class RegexReasoning(Task):
 
         # distinguishing
         sd = f1.symmetric_difference(f2)
-        witness = _shortest_witness(sd)
+        witness = _shortest_witness(sd, alpha)
         if witness is None:
             return None
         meta = edict(qtype="distinguishing", regex_a=r1, regex_b=r2)

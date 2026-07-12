@@ -161,24 +161,8 @@ def _hard_negative_case(q_before, q_consequence, m, rng, reverse_rate=0.15):
     return None
 
 
-def _with_memory_distractors(case, n, rng):
-    if n <= 0:
-        case.core_context = set(case.context)
-        return case
-
-    core = set(case.context)
-    cons = tuple(case.consequence)
-    nodes = _nodes(core | {cons})
-    preds = _preds(core | {cons})
-
-    noise = _rand_atoms(nodes, preds, n, rng, avoid=core | {cons})
-    case.core_context = core
-    case.context = core | noise
-    return case
-
-
 def _transported_consequences(case, q_before, allow_reverse=True, injective_predicates=True, cap=16):
-    c_atoms = set(getattr(case, "core_context", case.context))
+    c_atoms = set(case.context)
     c_cons = tuple(case.consequence)  # edict coerces the consequence tuple to a list; restore hashability
     q_atoms = set(q_before)
 
@@ -249,58 +233,6 @@ def _all_consequences(cases, q_before):
     return hits
 
 
-def _visible_subset_consequences(case, q_before, min_size=2, max_size=None, cap=64):
-    shown = list(case.context)
-    max_size = len(shown) if max_size is None else min(max_size, len(shown))
-    out = set()
-
-    for r in range(min_size, max_size + 1):
-        for sub in it.combinations(shown, r):
-            sub = set(sub)
-            tmp = edict(context=sub, consequence=case.consequence)
-            out.update(_transported_consequences(tmp, q_before, cap=cap))
-            if len(out) >= cap:
-                return out
-
-    return out
-
-
-def _case_is_crisp(case, q_before, allowed):
-    core = set(getattr(case, "core_context", case.context))
-    distractors = set(case.context) - core
-    if distractors:
-        hits = _visible_subset_consequences(
-            edict(context=distractors, consequence=case.consequence),
-            q_before,
-            min_size=2,
-            max_size=len(distractors),
-        )
-        if not hits <= set(allowed):
-            return False
-
-    core_size = len(core)
-    hits = _visible_subset_consequences(
-        case,
-        q_before,
-        min_size=core_size,
-        max_size=core_size + 1,
-    )
-    return hits <= set(allowed)
-
-
-def _crisp_with_memory_distractors(case, n, rng, q_before, allowed, attempts=64):
-    if n <= 0:
-        return _with_memory_distractors(case, n, rng)
-
-    core = set(getattr(case, "core_context", case.context))
-    for _ in range(attempts):
-        candidate = edict(context=set(core), consequence=case.consequence)
-        candidate = _with_memory_distractors(candidate, n, rng)
-        if _case_is_crisp(candidate, q_before, allowed):
-            return candidate
-    return None
-
-
 @dataclass
 class AnalogicalCaseMatchingConfig(Config):
     n_query_objects: int = 5
@@ -331,8 +263,8 @@ class AnalogicalCaseMatchingConfig(Config):
 
 class AnalogicalCaseMatching(Task):
     summary = "Retrieve analogical cases matching query objects, links, and logical facts."
-    def __init__(self, config=AnalogicalCaseMatchingConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or AnalogicalCaseMatchingConfig())
 
     def _choose_answer_format(self, rng):
         return "index" if rng.random() < self.config.index_answer_rate else "fact"
@@ -371,15 +303,13 @@ class AnalogicalCaseMatching(Task):
 
             cases = []
             for _ in range(n_gold):
-                case = _crisp_with_memory_distractors(
-                    _inverse_case(q_before, q_answer, n_ctx, rng, reverse_rate=k.reverse_rate),
-                    n_mem_noise,
-                    rng,
+                case = _inverse_case(
                     q_before,
-                    {q_answer},
+                    q_answer,
+                    n_ctx + n_mem_noise,
+                    rng,
+                    reverse_rate=k.reverse_rate,
                 )
-                if case is None:
-                    break
                 cases.append(case)
             if len(cases) < n_gold:
                 continue
@@ -389,18 +319,15 @@ class AnalogicalCaseMatching(Task):
                 tries += 1
                 if rng.random() < 0.75:
                     case = _hard_negative_case(
-                        q_before, q_answer, n_ctx, rng, reverse_rate=k.reverse_rate
+                        q_before, q_answer, n_ctx + n_mem_noise, rng, reverse_rate=k.reverse_rate
                     )
                 else:
                     case = _random_case(
                         n_nodes=min(n_obj, max(3, len(_nodes(q_before)))),
                         n_preds=n_rel,
-                        n_context=n_ctx,
+                        n_context=n_ctx + n_mem_noise,
                         rng=rng,
                     )
-                if case is None:
-                    continue
-                case = _crisp_with_memory_distractors(case, n_mem_noise, rng, q_before, set())
                 if case is None:
                     continue
                 if not _transported_consequences(case, q_before, cap=1):
@@ -427,7 +354,6 @@ class AnalogicalCaseMatching(Task):
                     edict(
                         id=case.id,
                         context=sorted(case.context),
-                        core_context=sorted(getattr(case, "core_context", case.context)),
                         consequence=case.consequence,
                     )
                     for case in cases
@@ -468,15 +394,16 @@ class AnalogicalCaseMatching(Task):
 
     def render_prompt(self, metadata):
         answer_format = metadata.get("answer_format", "fact")
-        lines = [
-            "Memory cases list facts and a conclusion.",
-            "A case may match after consistent renaming of objects and links; each link may also be consistently reversed.",
-        ]
+        lines = ["Match all facts by consistently renaming objects and links; each link may be reversed consistently."]
         if answer_format == "index":
+            plural = int(self.config.n_gold_cases) > 1
+            subject = "cases" if plural else "case"
+            indices = "indices" if plural else "index"
+            verb = "match" if plural else "matches"
             if metadata.get("allow_no_match"):
-                lines.append("Which memory case matches the query? Answer with only its index, or None if no memory case matches.")
+                lines.append(f"Which memory {subject} {verb} the query? Answer with only the {indices}, or None.")
             else:
-                lines.append("Which memory case matches the query? Answer with only its index.")
+                lines.append(f"Which memory {subject} {verb} the query? Answer with only the {indices}.")
         else:
             if metadata.get("allow_no_match"):
                 lines.append("Infer the query conclusion, or answer None if no memory case matches.")

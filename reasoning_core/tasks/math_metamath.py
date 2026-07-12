@@ -776,10 +776,7 @@ class MetamathEntailment(Task):
     """True/False bounded derivability from displayed set.mm-derived rules."""
 
     def __init__(self, config=None, **kwargs):
-        config = config or MetamathConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
+        super().__init__(config=config or MetamathConfig(), timeout=120, **kwargs)
 
     def generate_entry(self):
         for _ in range(50):
@@ -847,10 +844,7 @@ class MetamathCoreSelect(Task):
     """Select the minimal sufficient displayed rule subset for a Metamath proof."""
 
     def __init__(self, config=None, **kwargs):
-        config = config or MetamathConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
+        super().__init__(config=config or MetamathConfig(), timeout=120, **kwargs)
 
     def generate_entry(self):
         labels = [r.label for r in _math_rule_catalog(int(self.config.formula_len_cap))]

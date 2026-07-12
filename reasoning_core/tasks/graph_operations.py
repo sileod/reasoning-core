@@ -36,8 +36,8 @@ _GRID_GENERATOR = (nx.grid_2d_graph, {'m': (3, 5), 'n': (3, 5)})
 
 class BaseGraphTask:
     """Handles shared, flexible directed graph generation and rendering."""
-    def __init__(self, config=GraphReasoningConfig()):
-        super().__init__(config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GraphReasoningConfig())
 
     def _generate_graph(self):
         """Randomly selects a topology, generates a graph, and converts to a unified DiGraph."""
@@ -306,8 +306,8 @@ class GraphSuccessorsConfig(Config):
 class GraphSuccessors(BaseGraphTask, Task):
     """DEPO-style k-th successor queries in a permutation digraph."""
     summary = "Determine the k-th successor of a node in a permutation digraph topology."
-    def __init__(self, config=GraphSuccessorsConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GraphSuccessorsConfig())
 
     def _jump(self, succ, x, k):
         for _ in range(k):
@@ -368,8 +368,8 @@ class GraphDependenciesConfig(Config):
 class GraphDependencies(BaseGraphTask, Task):
     """BREVO-style recursive dependency resolution implemented via DAG topologies."""
     summary = "Resolve recursive node prerequisites in directed acyclic graphs (DAGs)."
-    def __init__(self, config=GraphDependenciesConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GraphDependenciesConfig())
 
     def _make_dag(self):
         for _ in range(10):

@@ -190,8 +190,8 @@ def is_bloat(meta, label):
 class LogicNLI(Task):
     summary = "First-order logic natural language inference via automated theorem proving."
 
-    def __init__(self, config=LogicConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or LogicConfig())
         self.pronoun = random.choice(self.config.pronouns)
         self.names = gendered_names(self.config.n_names, self.pronoun)
         self.adjectives = ADJECTIVES[:self.config.n_adjectives]
@@ -278,9 +278,9 @@ class EvidenceRetrievalConfig(LogicConfig):
 
 class EvidenceRetrieval(DevTask):
     summary = "Identify minimal necessary premises from logic theories to prove a hypothesis."
-    def __init__(self, config=EvidenceRetrievalConfig()):
-        super().__init__(config=config)
-        self.nli = LogicNLI(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or EvidenceRetrievalConfig())
+        self.nli = LogicNLI(config=self.config)
 
     @staticmethod
     def compute_necessity(x):
@@ -379,8 +379,8 @@ def _alter_formula(f):
 
 class LogicFormalization(Task):
     summary = "Translate natural language premises into formal first-order logic formulas."
-    def __init__(self, config=LogicFormalizationConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or LogicFormalizationConfig())
         self.balancing_key_ratio = 0.5
         self.pronoun = random.choice(self.config.pronouns)
         self.names = gendered_names(self.config.n_names, self.pronoun)

@@ -414,8 +414,8 @@ RENDERERS = [render_edge_list, render_compact, render_table]
 class QualitativeCausalReasoning(Task):
     summary = "Reason qualitatively about causal effects and associations in graphs."
 
-    def __init__(self, config=QualitativeCausalReasoningConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or QualitativeCausalReasoningConfig())
 
     def generate_entry(self):
         instance = sample_instance(

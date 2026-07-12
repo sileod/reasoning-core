@@ -8,11 +8,11 @@ import random
 from dataclasses import dataclass, replace
 from typing import Optional
 
-from reasoning_core.csp.families import ALIASES, FAMILIES
-from reasoning_core.csp.generator import generate_instance, render_instance
-from reasoning_core.csp.ir import Eq, Ne, operator_name
-from reasoning_core.csp.metrics import analyze, split_key
-from reasoning_core.csp.solver import CSPSolver
+from reasoning_core.tasks._csp_utils import (
+    ALIASES, FAMILIES, CSPSolver, Eq, Ne, analyze, generate_instance,
+    graph_relation_candidate, operator_name, possibility_metrics,
+    query_leakage_metrics, render_instance, split_key,
+)
 from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
@@ -22,7 +22,7 @@ class ConstraintSatisfactionConfig(Config):
     max_domain: int = 2
     n_constraints: int = 3
     coef_bound: int = 3
-    unsat_prob: float = 0.15
+    unsat_prob: float = 0.0  # legacy override: force an UNSAT consistency example
     max_tries: int = 64
 
     # Compatibility aliases: attribute -> assignment, linear -> numeric.
@@ -31,8 +31,12 @@ class ConstraintSatisfactionConfig(Config):
     max_solutions: Optional[int] = 256
 
     # Semantic selection controls.
-    minimization_orders: int = 6
+    minimization_orders: int = 2
     counterfactual_prob: float = 0.15
+    possibility_prob: float = 0.15
+    relation_prob: float = 0.10
+    consistency_prob: float = 0.20
+    unsat_given_consistency: float = 0.50
 
     # Retained compatibility knobs. Numeric structure is now expressed by the IR.
     structure_mode: str = "any"
@@ -71,41 +75,65 @@ class ConstraintSatisfaction(Task):
             raise ValueError("coef_bound, max_tries, max_arity, and minimization_orders must be positive")
         if c.max_solutions is not None and c.max_solutions <= 0: raise ValueError("max_solutions must be positive or None")
         if c.grid_width is not None and c.grid_width <= 0: raise ValueError("grid_width must be positive or None")
-        for field in ("unsat_prob", "counterfactual_prob", "edge_prob", "p_in", "p_out"):
+        for field in ("unsat_prob", "counterfactual_prob", "possibility_prob", "relation_prob",
+                      "consistency_prob", "unsat_given_consistency", "edge_prob", "p_in", "p_out"):
             if not 0 <= getattr(c, field) <= 1: raise ValueError(f"{field} must be between 0 and 1")
 
     def generate_entry(self):
         c, rng = self.config, random
         requested = c.model_mode.lower()
         family = rng.choices(list(FAMILIES), weights=[3, 2, 3, 2, 2, 3])[0] if requested == "any" else ALIASES.get(requested, requested)
+        legacy_unsat = family == "numeric" and rng.random() < c.unsat_prob
+        consistency_task = legacy_unsat or rng.random() < c.consistency_prob
+        desired_unsat = legacy_unsat or (consistency_task and rng.random() < c.unsat_given_consistency)
+        desired_counterfactual = not consistency_task and rng.random() < c.counterfactual_prob
         instance = generate_instance(
-            family, rng, max(3, int(c.n_vars) + (2 if family != "numeric" else 0)),
+            family, rng, max(3, int(c.n_vars) + (1 if family != "numeric" else 0)),
             max_tries=int(c.max_tries), n_orders=int(c.minimization_orders),
             max_domain=max(2, int(c.max_domain)), coef_bound=int(c.coef_bound),
+            difficulty=int(c.level), require_consistency=consistency_task,
+            require_counterfactual=desired_counterfactual,
         )
         clues, answer, solve_mode = list(instance.clues), instance.answer, c.solve_mode.lower()
         query, query_type = instance.query, instance.query.kind
 
-        if instance.counterfactual_pair and rng.random() < c.counterfactual_prob:
+        if desired_counterfactual:
             index, mutation, changed_value, changed_answer = instance.counterfactual_pair
             clues[index], answer, query_type = mutation, changed_answer, "counterfactual"
             query = replace(query, answer=changed_value)
 
-        if family == "numeric" and rng.random() < c.unsat_prob:
-            q, value = instance.query.var, instance.query.answer
-            base_solver = CSPSolver(instance.world.variables, instance.base)
-            target = max(2, int(c.n_constraints)); contradiction = None
-            mutations = list(instance.counterfactuals); rng.shuffle(mutations)
-            for mutation in mutations:
-                trial = clues + [mutation]
-                if len(trial) <= target and not base_solver.is_sat(trial):
-                    contradiction = trial; break
-            if contradiction is None: contradiction = [Eq(q, value), Ne(q, value)]
-            fillers = [c for c in clues if c not in contradiction]
-            fillers += [Ne(v, x) for v in instance.world.variables for x in v.domain
-                        if x != instance.world.witness[v]]
-            clues = (contradiction + fillers)[:target]
-            answer, query_type = "UNSAT", "consistency"
+        relation_info = None
+        if (family == "graph" and not consistency_task and query_type != "counterfactual"
+                and rng.random() < c.relation_prob):
+            relation_info = graph_relation_candidate(instance.world, instance.base, clues, rng)
+            if relation_info:
+                answer = "Yes" if relation_info[2] else "No"
+                query_type = "relation"
+
+        possibility_value = None
+        if (not consistency_task and query_type != "counterfactual"
+                and query_type != "relation"
+                and rng.random() < c.possibility_prob):
+            active_solver = CSPSolver(instance.world.variables, instance.base)
+            ambiguous = [(var, active_solver.possible_values(var, clues))
+                         for var in instance.world.variables]
+            ambiguous = [(var, values) for var, values in ambiguous if len(values) > 1]
+            if ambiguous:
+                var, values = rng.choice(ambiguous)
+                impossible = [
+                    value for value in var.domain if value not in values
+                    and len(active_solver.formula_refutation_core(Eq(var, value), clues)) >= 2
+                    and all(active_solver.is_sat((clue,), (Eq(var, value),)) for clue in clues)
+                ]
+                ask_possible = not impossible or rng.random() < 0.5
+                possibility_value = rng.choice(values if ask_possible else impossible)
+                answer = "Yes" if ask_possible else "No"
+                query = replace(query, var=var)
+                query_type = "possibility"
+
+        if consistency_task:
+            clues = list(instance.unsat_clues if desired_unsat else instance.sat_consistency_clues)
+            answer, query_type = ("UNSAT" if desired_unsat else "SAT"), "consistency"
 
         # Full-assignment modes remain available for backwards compatibility, but
         # query mode is the SFT-oriented default.
@@ -124,29 +152,67 @@ class ConstraintSatisfaction(Task):
             query_type = "all_solutions" if solve_mode == "all" else "lexicographic_solution"
 
         rendered = [formula.render(instance.renderer) for formula in clues]
-        prompt = render_instance(instance)
-        if clues != instance.clues:
-            family_adapter = FAMILIES[family]
-            preamble = "\n".join(x for x in (family_adapter.domains_text(instance.world), family_adapter.invariant(instance.world)) if x)
-            prompt = f"{preamble}\n\nConstraints:\n" + "\n".join(f"{i}. {x}" for i,x in enumerate(rendered,1))
+        family_adapter = FAMILIES[family]
+        preamble = "\n".join(filter(None, (
+            family_adapter.domains_text(instance.world), family_adapter.invariant(instance.world),
+        )))
+        constraints_text = "\n".join(f"{i}. {text}" for i, text in enumerate(rendered, 1))
+        question_text, answer_policy = query.text, "Answer with one name or integer."
         if query_type == "all_solutions":
-            prompt += "\n\nQuestion: Enumerate all satisfying assignments in variable order [" + ", ".join(v.name for v in instance.world.variables) + "]?\nThe answer is a lexicographically sorted JSON list of lists, or UNSAT."
+            question_text = "Enumerate all satisfying assignments in variable order [" + ", ".join(v.name for v in instance.world.variables) + "]."
+            answer_policy = "The answer is a lexicographically sorted JSON list of lists, or UNSAT."
         elif query_type == "lexicographic_solution":
-            prompt += "\n\nQuestion: What is the lexicographically smallest satisfying assignment in variable order [" + ", ".join(v.name for v in instance.world.variables) + "]?\nThe answer is a JSON list of integers, or UNSAT."
+            question_text = "What is the lexicographically smallest satisfying assignment in variable order [" + ", ".join(v.name for v in instance.world.variables) + "]?"
+            answer_policy = "The answer is a JSON list of integers, or UNSAT."
         elif query_type == "consistency":
-            prompt += "\n\nQuestion: Are these constraints consistent?\nAnswer with SAT or UNSAT."
-        elif query_type == "counterfactual":
-            prompt += f"\n\nQuestion: {instance.query.text}\nAnswer with one name or integer."
+            question_text, answer_policy = "Are these constraints consistent?", "Answer with SAT or UNSAT."
+        elif query_type == "possibility":
+            if family == "assignment":
+                label = instance.renderer.role(query.var)
+                person = instance.world.data["people"][possibility_value]
+                question_text = f"Can the {label} be {person}?"
+            else:
+                question_text = f"Can {query.var.name} equal {possibility_value}?"
+            answer_policy = "Answer Yes or No."
+        elif query_type == "relation":
+            question_text = f"Must {relation_info[0].name} and {relation_info[1].name} have the same color?"
+            answer_policy = "Answer Yes or No."
+        prompt = f"{preamble}\n\nConstraints:\n{constraints_text}\n\nQuestion: {question_text}\n{answer_policy}"
 
-        metrics = (analyze(CSPSolver(instance.world.variables, instance.base), clues, query)
-                   if query_type == "counterfactual" else dict(instance.metrics))
-        if answer == "UNSAT":
-            active = list(clues); consistency_solver = CSPSolver(instance.world.variables, instance.base)
-            for clue in list(active):
-                trial = active.copy(); trial.remove(clue)
-                if not consistency_solver.is_sat(trial): active = trial
+        if query_type == "counterfactual":
+            metric_solver = CSPSolver(instance.world.variables, instance.base)
+            metrics = analyze(
+                metric_solver, clues, query, group_of=instance.world.data.get("group_of"),
+            )
+            metrics.update(query_leakage_metrics(metric_solver, clues, query))
             metrics.update({
-                "consistency_core_size": len(active),
+                "objective": "counterfactual_unique_value",
+                "full_solution_unique": metric_solver.full_unique(clues),
+            })
+        elif query_type == "possibility":
+            metric_solver = CSPSolver(instance.world.variables, instance.base)
+            metrics = dict(instance.metrics)
+            metrics.update(possibility_metrics(
+                metric_solver, clues, query.var, possibility_value,
+                instance.world.data.get("group_of"),
+            ))
+        else:
+            metrics = dict(instance.metrics)
+        if relation_info: metrics.update(relation_info[3])
+        if query_type == "consistency":
+            consistency_solver = CSPSolver(instance.world.variables, instance.base)
+            active = list(clues)
+            if answer == "UNSAT":
+                for clue in list(active):
+                    trial = active.copy(); trial.remove(clue)
+                    if not consistency_solver.is_sat(trial): active = trial
+            _, multiple = consistency_solver.solutions(clues, limit=1)
+            metrics.update({
+                "is_consistent": answer == "SAT",
+                "objective": "consistent" if answer == "SAT" else "inconsistent",
+                "consistency_core_size": len(active) if answer == "UNSAT" else None,
+                "multiple_full_solutions": multiple,
+                "full_solution_unique": False if answer == "SAT" else None,
                 "displayed_clue_essentiality": round(len(active) / len(clues), 4),
                 "operator_histogram": {name: sum(operator_name(c) == name for c in clues)
                                        for name in sorted({operator_name(c) for c in clues})},
@@ -154,9 +220,13 @@ class ConstraintSatisfaction(Task):
         metadata = edict({
             "model_mode": requested if requested != "any" else family,
             "family": family, "solve_mode": solve_mode, "query_type": query_type,
-            "query": ((int(instance.query.var.name.split('c')[0][1:]), int(instance.query.var.name.split('c')[1]))
-                      if family == "grid" else instance.query.var.name),
-            "query_var": instance.query.var.name, "clues": rendered, "constraints": rendered,
+            "query": ([relation_info[0].name, relation_info[1].name] if relation_info else
+                      (int(query.var.name.split('c')[0][1:]), int(query.var.name.split('c')[1]))
+                      if family == "grid" else query.var.name),
+            "query_var": None if relation_info else query.var.name,
+            "clues": rendered, "constraints": rendered,
+            "query_value": possibility_value,
+            "query_pair": [relation_info[0].name, relation_info[1].name] if relation_info else None,
             "canonical_clues": [repr(x.canonical()) for x in clues],
             "base_constraints": [repr(x.canonical()) for x in instance.base],
             "counterfactual_candidates": [repr(x.canonical()) for x in instance.counterfactuals],

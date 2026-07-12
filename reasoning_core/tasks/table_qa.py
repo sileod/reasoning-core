@@ -15,6 +15,7 @@ import csv
 import yaml
 import io
 import re
+from numbers import Number
 
 try:
     from sklearn.metrics import normalized_mutual_info_score
@@ -197,6 +198,29 @@ def apply_display_formats(dataframe, display_meta):
         if "null" in spec:
             df[c] = df[c].map(lambda x: spec["null"] if pd.isna(x) else x)
     return df.astype(object)
+
+
+def scalar_kind(x):
+    if pd.isna(x):
+        return "null"
+    if isinstance(x, (bool, np.bool_)):
+        return "bool"
+    if hasattr(x, "strftime"):
+        return "date"
+    if isinstance(x, Number):
+        return "number"
+    return None
+
+
+def canonical_scalar(x):
+    kind = scalar_kind(x)
+    if kind == "null":
+        return "NULL"
+    if kind == "bool":
+        return str(bool(x)).lower()
+    if kind == "date":
+        return x.strftime("%Y-%m-%d")
+    return str(x)
 
 
 def rows(dataframe, index=False):
@@ -448,8 +472,8 @@ def sample_query(df, conn, config, max_tries=80):
 
 class TableQA(Task):
     summary = "Answer queries on tabular data by executing SQL queries over dataframes."
-    def __init__(self, config=TableQAConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or TableQAConfig())
         self.balancing_key_ratio = 0.25
 
     def _query_family(self, query):
@@ -484,7 +508,11 @@ class TableQA(Task):
         fmt_name = random.choice(list(renderers))
         render_func = renderers[fmt_name]
         is_scalar = result.shape == (1, 1)
-        answer_df = result if is_scalar else apply_display_formats(result, display_meta)
+        answer = (
+            canonical_scalar(result.iloc[0, 0])
+            if is_scalar
+            else apply_display_formats(result, display_meta).to_csv(index=False, header=False).strip()
+        )
         
         tables = [render_func(index=False)]
         if self.config.num_tables > 1:
@@ -502,14 +530,23 @@ class TableQA(Task):
                 "query_family": self._query_family(q),
                 "result_bucket": self._result_bucket(result),
                 "is_scalar": is_scalar,
+                "scalar_kind": scalar_kind(result.iloc[0, 0]) if is_scalar else None,
                 "table_format": fmt_name,
                 **display_meta,
             },
-            answer=answer_df.to_csv(index=False, header=False).strip()
+            answer=answer,
         )
 
     def render_prompt(self, m):
-        fmt = "single value" if m['is_scalar'] else "CSV format (rows separated by newlines, values by commas). Do not include column headers."
+        scalar_formats = {
+            "date": "a single date in YYYY-MM-DD format",
+            "bool": "a single boolean (`true` or `false`)",
+            "null": "the literal NULL",
+            "number": "a single number without display formatting",
+        }
+        fmt = scalar_formats.get(m.get("scalar_kind"), "a single value") if m['is_scalar'] else (
+            "CSV format (rows separated by newlines, values by commas). Do not include column headers."
+        )
         tables = m.get('tables') or [m['table']]
         if len(tables) == 1:
             preamble = "Execute this SQL query on the table named dataframe:"
@@ -650,8 +687,8 @@ def corrupt_table(dataframe):
 
 class TableEquivalence(Task):
     summary = "Decide if two rendered tables are semantically equivalent under mutations."
-    def __init__(self, config=TableQAConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or TableQAConfig())
         self.balancing_key_ratio = 0.5
         self._same_next = False
 
@@ -835,8 +872,8 @@ def gen_categorical_nmi(config):
 
 class TableStatistics(Task):
     summary = "Compute statistical metrics (Pearson correlation, eta2, NMI) on tables."
-    def __init__(self, config=TableStatisticsConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or TableStatisticsConfig())
         self.balancing_key_ratio = 0.5
 
     def generate_entry(self):

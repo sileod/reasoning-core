@@ -1603,11 +1603,7 @@ class LeanMissingLine(Task):
     summary = "Select the correct proof line to fill a hole in a compilation-checked Lean proof."
 
     def __init__(self, config=None, **kwargs):
-        if config is None:
-            config = LeanConfig(use_mathlib=_profile_ready(use_mathlib=True))
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
+        super().__init__(config=config or LeanConfig(use_mathlib=_profile_ready(use_mathlib=True)), timeout=120, **kwargs)
 
     def generate_entry(self):
         use_mathlib = getattr(self.config, "use_mathlib", True)
@@ -1679,11 +1675,7 @@ class LeanCandidateCompilation(Task):
     summary = "Determine if a candidate proof body successfully closes a theorem in Lean."
 
     def __init__(self, config=None, **kwargs):
-        if config is None:
-            config = LeanConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
+        super().__init__(config=config or LeanConfig(), timeout=120, **kwargs)
 
     def generate_entry(self):
         for _ in range(50):

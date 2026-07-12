@@ -251,8 +251,8 @@ class MostProbableEvidenceConfig(Config):
 
 class MostProbableEvidence(Task):
     summary = "Find the most probable configuration of hidden variables given evidence."
-    def __init__(self, config=MostProbableEvidenceConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MostProbableEvidenceConfig())
 
     def generate_entry(self):
         for _ in range(self.config.max_attempts):
@@ -299,8 +299,8 @@ class MostProbableOutcomeConfig(Config):
 
 class MostProbableOutcome(Task):
     summary = "Predict the most probable outcome or select hidden factor values in ProbLog."
-    def __init__(self, config=MostProbableOutcomeConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MostProbableOutcomeConfig())
         self._target_i = 0
 
     def generate_entry(self):

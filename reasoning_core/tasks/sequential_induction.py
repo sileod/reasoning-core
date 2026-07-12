@@ -149,6 +149,35 @@ def parse_formula(formula, recurrence_depth):
     return sympy_to_poly(formula, recurrence_depth)
 
 
+def poly_to_string(poly):
+    """Serialize a sparse polynomial in a compact canonical form."""
+    if not poly:
+        return "0"
+
+    names = ("n",) + tuple(f"U[n - {lag}]" for lag in range(1, len(poly[0][0])))
+    pieces = []
+    for powers, coefficient in sorted(
+        poly, key=lambda term: (sum(term[0]), term[0]), reverse=True
+    ):
+        factors = [
+            name if power == 1 else f"{name}**{power}"
+            for name, power in zip(names, powers)
+            if power
+        ]
+        magnitude = abs(coefficient)
+        body = " * ".join(factors)
+        if not body:
+            body = str(magnitude)
+        elif magnitude != 1:
+            body = f"{magnitude} * {body}"
+
+        if not pieces:
+            pieces.append(f"-{body}" if coefficient < 0 else body)
+        else:
+            pieces.append(f"{'-' if coefficient < 0 else '+'} {body}")
+    return " ".join(pieces)
+
+
 def convert_to_sympy(tokens, recurrence_depth=3):
     n = sp.Symbol("n", integer=True, nonnegative=True)
     U = sp.IndexedBase("U")
@@ -569,7 +598,7 @@ class SequentialInduction(Task):
                 "canonical cost": identification.candidate.cost,
                 "canonical max cost": self.config.canonical_max_cost,
             }
-            return Entry(metadata=metadata, answer=identification.candidate.syntax)
+            return Entry(metadata=metadata, answer=poly_to_string(target_poly))
         raise RuntimeError(
             "Could not generate a canonical unique sequence after "
             f"{self.config.max_generation_attempts} attempts: {dict(reasons)}"
@@ -609,16 +638,15 @@ class SequentialInduction(Task):
             if degree == 1
             else f"U[n - 1] ... U[n - {degree}] and n"
         )
-        return "\n".join(
-            [
-                f"Infer U[n]. Max recurrence degree: {degree}. Ops: +, -, *.",
-                f"Use {refs} and integer constants from -9 to 9.",
-                "Use the AST-shortlex-first RHS.",
-                f"Sequence: {metadata['first elements']}",
-                f"Initial terms: {metadata['initial terms']}",
-                "The answer is the RHS only.",
-            ]
-        )
+        lines = [
+            f"Infer U[n]. Max recurrence degree: {degree}. Ops: +, -, *.",
+            f"Use {refs}. Give the simplified polynomial RHS.",
+            f"Sequence: {metadata['first elements']}",
+        ]
+        if degree:
+            lines.append(f"Initial terms: {metadata['initial terms']}")
+        lines.append("The answer is the RHS only.")
+        return "\n".join(lines)
 
     def deduplication_key(self, problem):
         return problem.answer, tuple(problem.metadata["first elements"])

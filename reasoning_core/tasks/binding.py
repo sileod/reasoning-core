@@ -44,6 +44,7 @@ def _subst(t, x, s):
     if k == 'a': return ('a', _subst(t[1], x, s), _subst(t[2], x, s))
     y, body = t[1], t[2]
     if y == x: return t
+    if x not in _fv(body): return t
     if y in _fv(s):
         y2 = _fresh(_fv(body) | _fv(s) | {x})
         body, y = _subst(body, y, ('v', y2)), y2
@@ -106,6 +107,20 @@ def _debruijn(t, env=()):
         return f"#{env.index(t[1])}" if t[1] in env else t[1]
     if k == 'l': return f"(\\.{_debruijn(t[2], (t[1],) + env)})"
     return f"({_debruijn(t[1], env)} {_debruijn(t[2], env)})"
+
+def _alpha_normalize(t, env=None, state=None):
+    """Give bound variables deterministic names without changing free variables."""
+    env = {} if env is None else env
+    state = {'next': 0, 'free': _fv(t)} if state is None else state
+    if t[0] == 'v':
+        return ('v', env.get(t[1], t[1]))
+    if t[0] == 'a':
+        return ('a', _alpha_normalize(t[1], env, state),
+                     _alpha_normalize(t[2], env, state))
+    while (new := f"x{state['next']}") in state['free']:
+        state['next'] += 1
+    state['next'] += 1
+    return ('l', new, _alpha_normalize(t[2], env | {t[1]: new}, state))
 
 def _skeleton(t):
     if t[0] == 'v': return 'v'
@@ -201,13 +216,25 @@ def _contracted_phenomena(trace):
     return out, counts
 
 def _split_key(t, nf):
-    s = repr((_skeleton(t), _skeleton(nf))).encode()
+    s = repr((_debruijn(t), _debruijn(nf))).encode()
     return hashlib.sha1(s).hexdigest()[:16]
 
 _LAM_TOK = re.compile(r'[()\\.\u03bb]|[A-Za-z_]\w*')
 
+def _strict_tokens(s, token_re):
+    """Tokenize while requiring every non-whitespace character to be valid."""
+    out, end = [], 0
+    for match in token_re.finditer(s):
+        if s[end:match.start()].strip():
+            raise ValueError(f"invalid input near {s[end:match.start()]!r}")
+        out.append(match.group())
+        end = match.end()
+    if s[end:].strip():
+        raise ValueError(f"invalid trailing input {s[end:]!r}")
+    return out
+
 def _parse_lam(s: str):
-    toks, i = _LAM_TOK.findall(s), [0]
+    toks, i = _strict_tokens(s, _LAM_TOK), [0]
     def peek(): return toks[i[0]] if i[0] < len(toks) else None
     def pop():  t = peek(); i[0] += 1; return t
     def atom():
@@ -218,6 +245,8 @@ def _parse_lam(s: str):
             return e
         if t in ('\\', 'λ'):
             pop(); name = pop()
+            if name is None or not re.fullmatch(r'[A-Za-z_]\w*', name):
+                raise ValueError("binder must be an identifier")
             if pop() != '.': raise ValueError("missing .")
             return ('l', name, expr())
         if t is None or t in (')', '.'):
@@ -369,7 +398,8 @@ class LambdaReduction(Task):
             if trace is None: continue
             if len(trace) - 1 < cfg.min_steps: continue
             if source == 'anti_reduction' and _debruijn(trace[-1]) != _debruijn(nf): continue
-            nf, normal = trace[-1], _pretty(trace[-1])
+            nf = _alpha_normalize(trace[-1])
+            normal = _pretty(nf)
             if not (3 <= len(normal) <= cfg.max_chars): continue
             if _step(nf) is not None: continue
             shadowing = _shadowing_count(t)
@@ -590,6 +620,28 @@ def _rw_step(t, rules):
     return None
 
 
+def _rw_step_rule_major(t, rules):
+    """Diagnostic alternative: rule priority before position priority."""
+    for r in rules:
+        for path, subterm in _rw_positions(t):
+            env = _rw_match(r.lhs, subterm)
+            if env is not None:
+                return _rw_replace(t, path, _rw_subst(r.rhs, env)), r.name
+    return None
+
+
+def _rw_trace_with(t, rules, step, max_steps=200):
+    terms, names = [t], []
+    for _ in range(max_steps):
+        out = step(t, rules)
+        if out is None:
+            return terms, names
+        t, name = out
+        terms.append(t)
+        names.append(name)
+    return None, names
+
+
 def _rw_trace(t, rules, max_steps=200):
     terms, names = [t], []
     for _ in range(max_steps):
@@ -609,11 +661,56 @@ def _rw_normalize(t, rules, max_steps=200):
     return terms[-1], names
 
 
-_RW_TOK = re.compile(r'[A-Za-z_]\w*|[(),]')
+def _rw_normalize_with(t, rules, step, max_steps=200):
+    terms, names = _rw_trace_with(t, rules, step, max_steps)
+    return (None, names) if terms is None else (terms[-1], names)
+
+
+def _rw_is_subterm(target, term, proper=False):
+    return any(sub == target and (not proper or path) for path, sub in _rw_positions(term))
+
+
+def _rw_step_stats(t, rules):
+    """Depth and overlap count at the position selected by position-major order."""
+    for path, subterm in _rw_positions(t):
+        matches = [r for r in rules if _rw_match(r.lhs, subterm) is not None]
+        if matches:
+            return len(path), len(matches)
+    return 0, 0
+
+
+def _rw_split_key(rules, term, normal_form):
+    """Canonicalize an instance up to arity-preserving symbol renaming."""
+    variables, symbols = {}, {}
+    counters = Counter()
+
+    def canon(t):
+        if _rw_isvar(t):
+            variables.setdefault(t, f"V{len(variables)}")
+            return variables[t]
+        if isinstance(t, tuple):
+            key = (t[0], len(t) - 1)
+            if key not in symbols:
+                arity = key[1]
+                symbols[key] = f"f{arity}_{counters[arity]}"
+                counters[arity] += 1
+            return (symbols[key], *(canon(x) for x in t[1:]))
+        key = (t, 0)
+        if key not in symbols:
+            symbols[key] = f"c{counters[0]}"
+            counters[0] += 1
+        return symbols[key]
+
+    value = (tuple((canon(r.lhs), canon(r.rhs)) for r in rules),
+             canon(term), canon(normal_form))
+    return hashlib.sha1(repr(value).encode()).hexdigest()[:16]
+
+
+_RW_TOK = re.compile(r'[A-Za-z_]\w*|\d+|[(),]')
 
 
 def _rw_parse(s):
-    toks, i = _RW_TOK.findall(s), [0]
+    toks, i = _strict_tokens(s, _RW_TOK), [0]
 
     def peek():
         return toks[i[0]] if i[0] < len(toks) else None
@@ -930,6 +1027,13 @@ class RewriteSystem(Task):
             if not isinstance(nf, tuple) and rng.random() > cfg.atom_keep_prob:
                 continue
 
+            reverse_nf, _ = _rw_normalize(t, list(reversed(rules)), cfg.max_steps)
+            rule_major_nf, _ = _rw_normalize_with(
+                t, rules, _rw_step_rule_major, cfg.max_steps)
+            full_nf, _ = _rw_normalize(t, pack.rules, cfg.max_steps)
+            step_stats = [_rw_step_stats(u, rules) for u in terms[:-1]]
+            used_counts = Counter(used)
+
             rules_s = _rw_rule_text(rules)
             cot = self._format_trace(terms)
             if len(rules_s) + len(term_s) + len(nf_s) + len(cot) > cfg.max_chars * 3:
@@ -942,6 +1046,18 @@ class RewriteSystem(Task):
                 normal_form=nf_s,
                 used=used,
                 cot=cot,
+                strategy='position_major',
+                num_steps=len(used),
+                num_distinct_rules_used=len(used_counts),
+                used_rule_counts=dict(used_counts),
+                max_rewrite_depth=max((d for d, _ in step_stats), default=0),
+                overlapping_matches=sum(max(0, n - 1) for _, n in step_stats),
+                answer_is_input_subterm=_rw_is_subterm(nf, t, proper=True),
+                reverse_order_same_nf=reverse_nf == nf,
+                rule_major_same_nf=rule_major_nf == nf,
+                full_pack_same_nf=full_nf == nf,
+                omitted_rule_count=len(pack.rules) - len(rules),
+                split_key=_rw_split_key(rules, t, nf),
             )
             meta.payload = {"rules": rules_s, "term": term_s}
             return Entry(metadata=meta, answer=nf_s)
@@ -950,9 +1066,10 @@ class RewriteSystem(Task):
 
     def render_prompt(self, metadata):
         return (
-            "Normalize by the ordered rewrite rules. At each step, use the first "
-            "applicable rule in the listed order, searching outermost-first and "
-            "left-to-right.\n\n"
+            "Normalize by the ordered rewrite rules. At each step, scan subterm "
+            "positions outermost-first and left-to-right. Stop at the first position "
+            "matched by at least one rule, then apply the earliest matching rule in "
+            "the listed order (position priority first; rule priority second).\n\n"
             f"{render_payload(metadata['payload'])}\n\n"
             "The answer is the normal form."
         )
@@ -1312,6 +1429,37 @@ def _mgu_tree_diff(a, b):
     return 1
 
 
+def _mgu_candidate_features(candidate):
+    a, b = candidate
+    av, bv = _mgu_vars(a), _mgu_vars(b)
+    return {
+        'left_depth': _mgu_depth(a),
+        'right_depth': _mgu_depth(b),
+        'left_variable_count': len(av),
+        'right_variable_count': len(bv),
+        'left_ground': not av,
+        'right_ground': not bv,
+        'same_root_symbol': (isinstance(a, tuple) and isinstance(b, tuple)
+                             and a[0] == b[0]),
+        'shared_variable_count': len(av & bv),
+        'candidate_tree_diff': _mgu_tree_diff(a, b),
+        'candidate_length': len(_mgu_show(a)) + len(_mgu_show(b)),
+    }
+
+
+def _mgu_split_key(equations, candidate, answer):
+    """Conservative structural grouping invariant to names and equation order."""
+    def shape(t):
+        if _mgu_is_var(t): return 'V'
+        if isinstance(t, tuple): return (f'F{len(t) - 1}', *(shape(x) for x in t[1:]))
+        return 'C'
+
+    ceqs = sorted((min((shape(a), shape(b)), (shape(b), shape(a)), key=repr)
+                   for a, b in equations), key=repr)
+    ccand = (shape(candidate[0]), shape(candidate[1]))
+    return hashlib.sha1(repr((ceqs, ccand, answer)).encode()).hexdigest()[:16]
+
+
 def _mgu_close_negative(sol, candidate):
     a = _mgu_apply(sol, candidate[0])
     b = _mgu_apply(sol, candidate[1])
@@ -1507,6 +1655,10 @@ class UnificationEntailment(Task):
                 equations, eq_tags, core_vars = self._build_equations(rng)
                 _, sol, stats = _mgu_candidate_answer(equations, ('x0', 'x0'))
                 candidate = _mgu_candidate(cfg, rng, equations, sol, target == 'yes', core_vars)
+                equations = [(b, a) if rng.random() < 0.5 else (a, b)
+                             for a, b in equations]
+                if rng.random() < 0.5:
+                    candidate = candidate[1], candidate[0]
                 equations, candidate = _mgu_rename(equations, candidate, rng)
                 answer, sol, stats = _mgu_candidate_answer(equations, candidate)
             except (RuntimeError, ValueError):
@@ -1522,6 +1674,7 @@ class UnificationEntailment(Task):
             funcs, consts = _mgu_all_symbols(equations)
             core = _mgu_core_size(equations, candidate, answer) if answer == 'yes' else 0
             meaningful = sum(_mgu_apply(sol, v) != v for v in sol)
+            candidate_features = _mgu_candidate_features(candidate)
             meta = edict(
                 answer=answer,
                 equations=eq_s,
@@ -1542,6 +1695,8 @@ class UnificationEntailment(Task):
                 minimal_core_size_estimate=core,
                 num_constants=len(consts),
                 num_function_symbols=len(funcs),
+                candidate_features=candidate_features,
+                split_key=_mgu_split_key(equations, candidate, answer),
             )
             return Entry(metadata=meta, answer=answer)
         raise RuntimeError("could not sample an MGU implied-equality instance")
@@ -1549,9 +1704,10 @@ class UnificationEntailment(Task):
     def render_prompt(self, metadata):
         equations = '\n'.join(f"- {e}" for e in metadata['equations'])
         return (
-            "Do the equations force the candidate equality under their most general unifier?\n"
-            "The equations are guaranteed to be unifiable.\n"
-            "Answer yes or no.\n\n"
+            "Compute a most general unifier of the equations. Apply it to both sides "
+            "of the candidate equality. Answer yes if the instantiated candidate "
+            "terms are identical, otherwise answer no. The equations are guaranteed "
+            "to be unifiable.\n\n"
             "Equations:\n"
             f"{equations}\n\n"
             "Candidate:\n"

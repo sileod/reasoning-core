@@ -443,8 +443,8 @@ class ProgramSynthesisCfg(Config):
 
 
 class ProgramSynthesis(Task):
-    def __init__(self, config=ProgramSynthesisCfg()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or ProgramSynthesisCfg())
 
     def _sample_target(self) -> Expr:
         frontier = _target_frontier(self.config.max_nodes, self.config.min_nodes)

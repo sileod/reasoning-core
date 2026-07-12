@@ -224,8 +224,8 @@ class _SmallGraphGame:
 
 class GameBestMove(_SmallGraphGame, Task):
     summary = "Determine the minimax-optimal move for a player in a finite graph-based game."
-    def __init__(self, config=GameBestMoveConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GameBestMoveConfig())
 
     def generate_entry(self):
         for position in self._sample_position():
@@ -252,8 +252,8 @@ class GameBestMove(_SmallGraphGame, Task):
 
 class GameForcedWin(_SmallGraphGame, Task):
     summary = "Decide if a player can force a win from a given state in a graph-based game."
-    def __init__(self, config=GameBestMoveConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GameBestMoveConfig())
 
     def generate_entry(self):
         desired = random.choice((True, False))

@@ -840,10 +840,7 @@ class MathScratchEntailment(DevTask):
     config_cls = ScratchConfig
 
     def __init__(self, config=None, **kwargs):
-        config = config or ScratchConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config)
+        super().__init__(config=config or ScratchConfig(), **kwargs)
         self._world_cache = None
         self._world_uses_left = 0
 
@@ -918,10 +915,7 @@ class MathScratchCoreSelect(DevTask):
     config_cls = ScratchConfig
 
     def __init__(self, config=None, **kwargs):
-        config = config or ScratchConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config)
+        super().__init__(config=config or ScratchConfig(), **kwargs)
         self._world_cache = None
         self._world_uses_left = 0
 
@@ -1011,10 +1005,7 @@ class MathScratchNormalize(DevTask):
     config_cls = ScratchConfig
 
     def __init__(self, config=None, **kwargs):
-        config = config or ScratchConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config)
+        super().__init__(config=config or ScratchConfig(), **kwargs)
         self._world_cache = None
         self._world_uses_left = 0
 

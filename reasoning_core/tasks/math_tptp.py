@@ -889,8 +889,8 @@ class TptpEntailment(DevTask):
     A task that generates problems to determine if a set of hypotheses
     proves a given conjecture.
     """
-    def __init__(self, config=EntailConfig()):
-        super().__init__(config)
+    def __init__(self, config=None):
+        super().__init__(config=config or EntailConfig())
         # Initialize prover session at task init (pulls docker image if needed)
         # This ensures docker setup happens before any generation timing
         from reasoning_core.utils.udocker_process import initialize_prover_session
@@ -1130,8 +1130,8 @@ class ConsistencyRepairConfig(Config):
 
 class TPTPConsistencyRepair(DevTask):
     """Find all singleton deletions that restore satisfiability."""
-    def __init__(self, config=ConsistencyRepairConfig()):
-        super().__init__(config, timeout=720)
+    def __init__(self, config=None):
+        super().__init__(config=config or ConsistencyRepairConfig(), timeout=720)
         self._sat_cache = {}
         self._prove_cache = {}
         self.graph = nx.DiGraph()

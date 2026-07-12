@@ -190,6 +190,10 @@ def timeout_retry(seconds=15, attempts=10):
                     time.sleep(0.5)
                 finally:
                     if on_main:
+                        signal.alarm(0)   # ALWAYS cancel — else a leaked alarm from a non-retryable
+                                          # exception path fires later at an arbitrary point (e.g. inside
+                                          # logging), raising TimeoutException(BaseException) past callers'
+                                          # `except Exception` and crashing the whole generation loop.
                         signal.signal(signal.SIGALRM, old_handler)
         return wrapper
     return decorator

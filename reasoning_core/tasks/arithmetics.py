@@ -26,16 +26,21 @@ def _num_divisors(n):
         raise ValueError("divisor count undefined for 0")
     return int(sympy.divisor_count(n))
 
+
+def _round_ties_to_even(x):
+    """Round a rational exactly, using Python's nearest-even convention."""
+    return Fraction(round(Fraction(x)))
+
 SAFE_FUNCS = {
     "max": max,
     "min": min,
     "abs": abs,
-    "round": lambda x: Fraction(round(float(x))),
+    "round": _round_ties_to_even,
     "gcd": lambda a, b: math.gcd(_as_int(a), _as_int(b)),
     "lcm": lambda a, b: math.lcm(_as_int(a), _as_int(b)),
     "bit_count": lambda x: abs(_as_int(x)).bit_count(),
-    "is_prime": lambda x: int(sympy.isprime(abs(_as_int(x)))),
-    "prime_count": lambda x: int(sympy.primepi(abs(_as_int(x)))),
+    "is_prime": lambda x: int(sympy.isprime(_as_int(x))),
+    "prime_count": lambda x: int(sympy.primepi(_as_int(x))),
     "num_divisors": _num_divisors,
 }
 
@@ -170,6 +175,45 @@ def _format_number(s, mode):
     return s
 
 
+def _canonical_decimal(value, decimal_places):
+    quantizer = Decimal(f"1e-{decimal_places}")
+    quantized = value.quantize(quantizer)
+    if quantized.is_zero():
+        return "0"
+    return f"{quantized:f}".rstrip("0").rstrip(".")
+
+
+def _contextual_semantics(expr):
+    """Describe only operator conventions that affect this expression."""
+    tree = ast.parse(expr, mode="eval")
+    cues = [f"Use Python semantics for {op}." for op in ("%", "//") if op in expr]
+
+    def evaluate(node):
+        if isinstance(node, ast.Constant):
+            return Fraction(str(node.value))
+        if isinstance(node, ast.UnaryOp):
+            return -evaluate(node.operand)
+        if isinstance(node, ast.Call):
+            args = [evaluate(arg) for arg in node.args]
+            if node.func.id == "round" and Fraction(args[0]).denominator == 2:
+                cues.append("Round ties to the nearest even integer.")
+            return Fraction(SAFE_FUNCS[node.func.id](*args))
+        left, right = evaluate(node.left), evaluate(node.right)
+        operations = {
+            ast.Add: operator.add,
+            ast.Sub: operator.sub,
+            ast.Mult: operator.mul,
+            ast.Div: operator.truediv,
+            ast.FloorDiv: operator.floordiv,
+            ast.Pow: operator.pow,
+            ast.Mod: operator.mod,
+        }
+        return Fraction(operations[type(node.op)](left, right))
+
+    evaluate(tree.body)
+    return list(dict.fromkeys(cues))
+
+
 class Arithmetics(Task):
     config_cls = ArithmeticsConfig
     summary = "Compositional arithmetics with float/int/bool, varied operators, number theory."
@@ -180,8 +224,7 @@ class Arithmetics(Task):
             expr = x@'py'
             if expr.count('NUM') > 1 or random.random() < self.config.trivial_prob: break
         final_expr, value = fill_num(expr, cfg=self.config)
-        quantizer = Decimal('1e-' + str(self.config.out_decimals))
-        ans_str = f"{value.quantize(quantizer):f}".rstrip('0').rstrip('.')
+        ans_str = _canonical_decimal(value, self.config.out_decimals)
         shown_expr, digit_mode = _display_expr(final_expr, self.config)
         meta = edict(expr=final_expr, display_expr=shown_expr, digit_mode=digit_mode, height=x.height, cot=self.get_cot(final_expr))
         return Entry(metadata=meta, answer=_format_number(ans_str, digit_mode))
@@ -191,7 +234,9 @@ class Arithmetics(Task):
             "spaced": " Digits are spaced; answer likewise.",
             "reversed_spaced": " Digits are reversed and spaced; answer likewise.",
         }.get(metadata.get("digit_mode"), "")
-        return f"Evaluate {metadata.get('display_expr', metadata.expr)}.{note}\nThe answer is a number."
+        cues = _contextual_semantics(metadata.expr)
+        semantics = "".join(f"\n{cue}" for cue in cues)
+        return f"Evaluate {metadata.get('display_expr', metadata.expr)}.{note}{semantics}\nThe answer is a number."
 
     def score_answer(self, answer, entry):
         if entry.metadata.get("digit_mode", "normal") == "normal":
@@ -347,8 +392,7 @@ def gen_process(config):
         inverse=inverse,
         steps=steps,
         expr=str(expr),
-        equation=str(sp.Eq(expr, observed)),
-        cot=f"Solve {sp.Eq(expr, observed)} for x; x = {base}.",
+        equation=str(sp.Eq(expr, observed))
     )
     return Entry(metadata=metadata, answer=str(answer))
 
@@ -428,16 +472,15 @@ def gen_relational(config):
         given_value=nums[given],
         values=nums,
         base=base,
-        equation=str(sp.Eq(val[given], nums[given])),
-        cot=f"Solve {sp.Eq(val[given], nums[given])}; then compute {asked} = {nums[asked]}.",
+        equation=str(sp.Eq(val[given], nums[given]))
     )
     return Entry(metadata=metadata, answer=str(nums[asked]))
 
 
 class MathWordProblem(Task):
     summary = "Solve relational and process math word problems involving objects and values."
-    def __init__(self, config=WordProblemMathConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or WordProblemMathConfig())
 
     def generate_entry(self):
         for _ in range(100):

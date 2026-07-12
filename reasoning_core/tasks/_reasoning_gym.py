@@ -18,11 +18,11 @@ class RGConfig(Config):
 
 class Reasoning_Gym(Task):
     summary = "Interface with diverse reasoning datasets generated via reasoning-gym."
-    def __init__(self, config=RGConfig()):
+    def __init__(self, config=None):
         if reasoning_gym is None:
             raise ImportError("reasoning_gym is not installed.")
         self.datasets = [d for d in reasoning_gym.factory.DATASETS.keys() if d != 'composite']
-        super().__init__(config)
+        super().__init__(config=config or RGConfig())
 
     def generate_entry(self):
         d = self.config.rg_task or random.choice(self.datasets)

@@ -101,8 +101,8 @@ class SetMissingElement(Task):
     https://aclanthology.org/2025.findings-ijcnlp.44.pdf
     """
     summary = "Identify missing elements from a shuffled sequence defined by set intension."
-    def __init__(self, config=SetMissingElementConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or SetMissingElementConfig())
         self.balancing_key_ratio = 0.25
         self.domains = make_domains(self.config.domain_size, ordered=True)
         
@@ -144,8 +144,8 @@ class CountElementsConfig(Config):
 
 class CountElements(Task):
     summary = "Count occurrences of a target element within a randomly generated list."
-    def __init__(self, config=CountElementsConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or CountElementsConfig())
         self.domains = make_domains(self.config.domain_size)
 
     def generate_entry(self):
@@ -512,8 +512,8 @@ class SetExpressionConfig(Config):
 
 class SetExpression(Task):
     summary = "Evaluate complex set expressions involving union, intersection, and nested lists."
-    def __init__(self, config=SetExpressionConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or SetExpressionConfig())
         self.balancing_key_ratio = 0.25
         self.domains = make_domains(self.config.domain_size)
 

@@ -1,7 +1,11 @@
 import random
-import itertools
 from dataclasses import dataclass
-from reasoning_core.template import Task, Entry, Config, edict
+from itertools import product
+
+import z3
+
+from reasoning_core.template import Config, Entry, Task, edict
+
 
 ROLES = ['doctor', 'lawyer', 'teacher', 'engineer', 'pilot', 'chef',
          'writer', 'nurse', 'banker', 'farmer', 'scientist', 'baker']
@@ -14,777 +18,363 @@ NAMES_M = ['John', 'Paul', 'Mark', 'Leo', 'Tom', 'Sam', 'Max', 'Ben',
 NAMES_F = ['Mary', 'Anna', 'Jane', 'Eve', 'Sara', 'Lucy', 'Zoe', 'Rita',
            'Emma', 'Nora', 'Lily', 'Mia', 'Rose', 'Iris', 'Lena', 'Kate']
 PRON = {'m': ('He', 'him'), 'f': ('She', 'her')}
-AGENT_NOUN = {'called': 'caller'}
-INTRO, NAME, DESC, DESC_EVENT, PRONOUN = 'intro', 'name', 'desc', 'desc_event', 'pron'
+INTRO, NAME, DESC, DESC_EVENT, PRONOUN = (
+    'intro', 'name', 'desc', 'desc_event', 'pron')
 
 
 @dataclass(frozen=True)
 class _Entity:
-    eid: int; name: str; gender: str; role: str; attrs: tuple
+    eid: int
+    name: str
+    gender: str
+    role: str
+    attrs: tuple
+
+
+@dataclass(frozen=True)
+class Derivation:
+    entity: _Entity
+    rule: str
+    dependencies: tuple
+    evidence: tuple
+    depth: int
+
+    @property
+    def signature(self):
+        return (self.rule, self.dependencies, self.evidence)
 
 
 def _pool(n, single_gender=False):
+    if n < 2:
+        raise ValueError("Coreference requires at least two entities")
+    if n > len(NAMES_M) + len(NAMES_F):
+        raise ValueError("Not enough distinct names for the requested entities")
     if single_gender:
-        n = min(n, len(NAMES_M), len(NAMES_F))
-        gender = random.choice(['m', 'f'])
-        names = random.sample(NAMES_M if gender == 'm' else NAMES_F, n)
-        genders = [gender] * n
+        names = random.sample(random.choice([NAMES_M, NAMES_F]), n)
+        genders = ['m' if names[0] in NAMES_M else 'f'] * n
     else:
-        n = min(n, len(NAMES_M) + len(NAMES_F))
-        lo, hi = max(1, n - len(NAMES_F)), min(n - 1, len(NAMES_M))
-        n_m = random.randint(lo, hi) if lo <= hi else lo
+        low = 2 if n >= 4 else 1
+        n_m = random.randint(max(low, n - len(NAMES_F)),
+                             min(n - low, len(NAMES_M)))
         names = random.sample(NAMES_M, n_m) + random.sample(NAMES_F, n - n_m)
         genders = ['m'] * n_m + ['f'] * (n - n_m)
-    pairs = list(zip(names, genders)); random.shuffle(pairs)
-    return [_Entity(i, pairs[i][0], pairs[i][1], random.choice(ROLES),
-                    tuple(sorted(random.choice(g)
-                                 for g in random.sample(ATTR_GROUPS, 2))))
-            for i in range(n)]
+    pairs = list(zip(names, genders))
+    random.shuffle(pairs)
+    return [_Entity(i, name, gender, random.choice(ROLES),
+                    tuple(sorted(random.choice(group)
+                                 for group in random.sample(ATTR_GROUPS, 2))))
+            for i, (name, gender) in enumerate(pairs)]
 
 
-def _indef(e):
-    desc = e.role
-    det = "an" if desc[0].lower() in 'aeiou' else "a"
-    return f"{det} {desc} named {e.name}"
-
-
-def _attr_fact(e, attr):
-    return f"{e.name} was {attr}."
-
-
-def _desc(e, pool):
-    """Minimal definite NP uniquely picking e out of scope, else None."""
-    same = [x for x in pool if x.role == e.role]
-    if len(same) == 1:
-        return f"the {e.role}"
-    for a in e.attrs:
-        if sum(a in x.attrs for x in same) == 1:
-            return f"the {a} {e.role}"
-    if sum(set(e.attrs) <= set(x.attrs) for x in same) == 1:
-        return f"the {' '.join(e.attrs)} {e.role}"
-    return None
+def _indef(entity):
+    gender = 'male' if entity.gender == 'm' else 'female'
+    words = (*entity.attrs, gender, entity.role)
+    desc = ' '.join(words)
+    article = 'an' if desc[0].lower() in 'aeiou' else 'a'
+    return f"{article} {desc} named {entity.name}"
 
 
 def _surface_parts(surface):
-    surf = surface[4:] if surface.startswith('the ') else surface
-    parts = surf.split()
-    return parts[-1], parts[:-1]
+    words = (surface[4:] if surface.lower().startswith('the ') else surface).split()
+    return words[-1].lower(), tuple(word.lower() for word in words[:-1])
 
 
-def _matches_desc(e, role, attrs):
-    return e.role == role and all(a in e.attrs for a in attrs)
+def _matches_desc(entity, role, attrs):
+    return entity.role == role and set(attrs) <= set(entity.attrs)
 
 
-def global_matches_for_surface(q, pool):
-    role, attrs = _surface_parts(q['surface'])
-    return [x for x in pool if _matches_desc(x, role, attrs)]
+def _desc(entity, visible):
+    """Return a shortest visible description unique to ``entity``."""
+    same_role = [candidate for candidate in visible if candidate.role == entity.role]
+    if len(same_role) == 1:
+        return f"the {entity.role}"
+    for attr in entity.attrs:
+        if sum(attr in candidate.attrs for candidate in same_role) == 1:
+            return f"the {attr} {entity.role}"
+    if sum(set(entity.attrs) <= set(candidate.attrs)
+           for candidate in same_role) == 1:
+        return f"the {' '.join(entity.attrs)} {entity.role}"
+    return None
 
 
-def scope_matches_for_surface(q, scope):
-    role, attrs = _surface_parts(q['surface'])
-    return [x for x in scope if _matches_desc(x, role, attrs)]
+def _descriptions(entity, visible):
+    """Return every available description of ``entity``, unique or not."""
+    descriptions = [f"the {entity.role}"]
+    descriptions.extend(f"the {attr} {entity.role}" for attr in entity.attrs)
+    descriptions.append(f"the {' '.join(entity.attrs)} {entity.role}")
+    return [description for description in dict.fromkeys(descriptions)
+            if entity in {candidate for candidate in visible
+                          if _matches_desc(candidate, *_surface_parts(description))}]
 
 
-def _display_ref(m):
-    if m['mode'] in (INTRO, NAME, PRONOUN):
-        return m['entity'].name
-    s = m['surface']
-    return s[:1].lower() + s[1:]
+def _order(mention):
+    return (mention['line_idx'], 0 if mention['pos'] == 'subject' else 1)
 
 
-def _event_surface(event, target_pos, arg):
-    verb = event['verb']
-    arg_ref = _display_ref(arg)
-    if target_pos == 'subject':
-        forms = []
-        if verb in AGENT_NOUN:
-            forms.append(f"the {AGENT_NOUN[verb]}")
-        forms.extend([f"the person who {verb} {arg_ref}",
-                      f"the one who {verb} {arg_ref}"])
-        return random.choice(forms)
-    return random.choice([f"the person {arg_ref} {verb}",
-                          f"the one {arg_ref} {verb}"])
+def _before(query, mentions):
+    return [mention for mention in mentions if _order(mention) < _order(query)]
 
 
-def event_matches_for_mention(q, mentions):
-    event = q.get('event_desc')
-    if not event:
-        return []
-    out = []
-    agent_verb = next((v for v, n in AGENT_NOUN.items()
-                       if q['surface'] == f"the {n}"), None)
-    for e in {m['event']['idx']: m['event'] for m in mentions if m.get('event')}.values():
-        if e['verb'] != event['verb']:
-            continue
-        target_pos = event['target_pos']
-        if agent_verb:
-            if e['verb'] == agent_verb and target_pos == 'subject':
-                out.append(mentions[e['subject']]['entity'])
-            continue
-        arg_key = 'object' if target_pos == 'subject' else 'subject'
-        if mentions[e[arg_key]]['entity'] != mentions[event[arg_key]]['entity']:
-            continue
-        out.append(mentions[e[target_pos]]['entity'])
-    return out
-
-
-def _recent_scope(mentions, sent, window=3):
+def _visible_entities(query, mentions, masked=frozenset()):
     return {
-        m['entity']
-        for m in mentions
-        if max(0, sent - window) <= m['sent'] < sent
+        mention['entity']
+        for mention in _before(query, mentions)
+        if mention['mode'] == INTRO and mention['idx'] not in masked
     }
-
-
-def _has_same_gender_distractor(e, mentions, sent, window):
-    ctx = _recent_scope(mentions, sent, window)
-    return any(x.gender == e.gender and x != e for x in ctx)
-
-
-def _mention_rank(m):
-    return (m['sent'], 0 if m['pos'] == 'subject' else 1)
-
-
-def _latest_mention(entity, mentions, sent=None, scope=None):
-    cands = [m for m in mentions if m['entity'] == entity]
-    if sent is not None:
-        cands = [m for m in cands if m['sent'] < sent]
-    if scope is not None:
-        cands = [m for m in cands if m['entity'] in scope]
-    return max(cands, key=_mention_rank) if cands else None
 
 
 def _pronoun_gender(surface):
-    s = surface.lower()
-    if s in ('he', 'him'):
-        return 'm'
-    if s in ('she', 'her'):
-        return 'f'
-    return None
+    return 'm' if surface.lower() in ('he', 'him') else 'f'
 
 
-def _pronoun_salience_antecedent(gender, mentions, sent, cur_subj, pos, window=3):
-    preferred_pos = 'subject' if pos == 'subject' else 'object'
-    for s in range(sent - 1, max(-1, sent - window - 1), -1):
-        preferred = [m for m in mentions
-                     if m['sent'] == s and m['pos'] == preferred_pos]
-        preferred = [m for m in preferred
-                     if m['entity'].gender == gender and
-                     not (pos == 'object' and m['entity'] == cur_subj)]
-        if len(preferred) == 1:
-            return preferred[0]
-    return None
+def _pronoun_antecedents(query, mentions):
+    """Nearest earlier, gender-compatible mention in the parallel position."""
+    gender = _pronoun_gender(query['surface'])
+    earlier = _before(query, mentions)
+    for event_idx in sorted({m['event_idx'] for m in earlier}, reverse=True):
+        tier = [m for m in earlier
+                if m['event_idx'] == event_idx and m['pos'] == query['pos']
+                and m['entity'].gender == gender]
+        if tier:
+            return tuple(m['idx'] for m in tier)
+    return ()
 
 
-def _desc_antecedent(entity, mentions, sent, scope):
-    if entity not in scope:
-        return None
-    ant = _latest_mention(entity, mentions, sent=sent, scope=scope)
-    return ant
+def _dedupe(proofs):
+    out = {}
+    for proof in proofs:
+        key = (proof.entity, proof.depth, proof.signature)
+        out[key] = proof
+    return sorted(out.values(), key=lambda p: (p.depth, p.signature))
 
 
-def _event_desc(entity, mentions, sent):
-    events = {m['event']['idx']: m['event'] for m in mentions
-              if m.get('event') and m['event']['sent'] < sent}
-    choices = []
-    for event in events.values():
-        for target_pos, arg_pos in (('subject', 'object'), ('object', 'subject')):
-            target = mentions[event[target_pos]]
-            if target['entity'] != entity:
+def resolve_mention(mention_idx, mentions, masked=frozenset(), _cache=None,
+                    _visiting=frozenset()):
+    """Resolve a mention from visible evidence, returning every derivation.
+
+    Gold entities label explicit introductions and validate generated mentions;
+    pronouns and descriptions are resolved independently of their gold label.
+    """
+    masked = frozenset(masked)
+    cache = {} if _cache is None else _cache
+    key = (mention_idx, masked)
+    if key in cache:
+        return cache[key]
+    if mention_idx in masked or mention_idx in _visiting:
+        return {}
+
+    query = mentions[mention_idx]
+    visiting = _visiting | {mention_idx}
+    proofs = []
+    if query['mode'] in (INTRO, NAME):
+        proofs.append(Derivation(query['entity'], 'explicit_name', (),
+                                 (mention_idx,), 0))
+    elif query['mode'] == DESC:
+        role, attrs = _surface_parts(query['surface'])
+        for entity in _visible_entities(query, mentions, masked):
+            if _matches_desc(entity, role, attrs):
+                intros = tuple(m['idx'] for m in _before(query, mentions)
+                               if m['mode'] == INTRO and m['entity'] == entity
+                               and m['idx'] not in masked)
+                proofs.append(Derivation(entity, 'description', intros,
+                                         intros, 1))
+    elif query['mode'] == PRONOUN:
+        antecedents = _pronoun_antecedents(query, mentions)
+        if len(antecedents) == 1:
+            antecedent = antecedents[0]
+            resolved = resolve_mention(antecedent, mentions, masked, cache,
+                                       visiting)
+            for candidates in resolved.values():
+                for proof in candidates:
+                    dependencies = tuple(sorted(set(
+                        proof.dependencies + (antecedent,))))
+                    proofs.append(Derivation(
+                        proof.entity, 'parallel_pronoun', dependencies,
+                        (antecedent,), proof.depth + 1))
+    elif query['mode'] == DESC_EVENT:
+        spec = query['event_desc']
+        for event in _events(mentions):
+            if event['line_idx'] >= query['line_idx'] or event['verb'] != spec['verb']:
                 continue
-            arg = mentions[event[arg_pos]]
-            if arg['mode'] not in (INTRO, NAME, DESC):
-                continue
-            q = {
-                'surface': _event_surface(event, target_pos, arg),
-                'mode': DESC_EVENT,
-                'entity': entity,
-                'event_desc': dict(event, target_pos=target_pos),
-                'antecedent': target['idx'],
-            }
-            if len(event_matches_for_mention(q, mentions)) == 1:
-                choices.append((q['surface'], target['idx'], q['event_desc']))
-    return random.choice(choices) if choices else (None, None, None)
+            target_pos = spec['target_pos']
+            arg_pos = 'object' if target_pos == 'subject' else 'subject'
+            arg_proofs = resolve_mention(event[arg_pos], mentions, masked,
+                                         cache, visiting)
+            target_proofs = resolve_mention(event[target_pos], mentions, masked,
+                                            cache, visiting)
+            for arg in arg_proofs.get(spec['argument'], ()):
+                for target_list in target_proofs.values():
+                    for target in target_list:
+                        deps = tuple(sorted(set(arg.dependencies + target.dependencies +
+                                                (event[arg_pos], event[target_pos]))))
+                        proofs.append(Derivation(
+                            target.entity, 'event_description', deps,
+                            (event['idx'],), 1 + max(arg.depth, target.depth)))
+
+    result = {}
+    for proof in _dedupe(proofs):
+        result.setdefault(proof.entity, []).append(proof)
+    cache[key] = result
+    return result
 
 
-def _sample_chain_positions(n, chain_len, max_gap=3):
-    for _ in range(100):
-        pos = sorted(random.sample(range(n), chain_len))
-        if pos[0] <= max_gap and all(b - a <= max_gap for a, b in zip(pos, pos[1:])):
-            return pos
-    pos = [random.randrange(min(max_gap, n))]
-    while len(pos) < chain_len:
-        lo = pos[-1] + 1
-        hi = min(n - (chain_len - len(pos)), pos[-1] + max_gap)
-        pos.append(random.randint(lo, hi))
-    return pos
+def _events(mentions):
+    events = {mention['event']['idx']: mention['event']
+              for mention in mentions if mention.get('event')}
+    return [events[idx] for idx in sorted(events)]
 
 
-def _plan(pool, chain_len, n_distractors, max_gap=3):
-    """Locally coherent discourse without a globally privileged target."""
-    n = chain_len + n_distractors
-    cur = tuple(random.sample(pool, 2))
-    chain_positions = set(_sample_chain_positions(n, chain_len, max_gap=max_gap))
-    out = []
-
-    for i in range(n):
-        if i == 0 or i in chain_positions:
-            keep = random.choice(cur)
-            other = random.choice([e for e in pool if e != keep])
-            cur = (keep, other) if random.random() < 0.5 else (other, keep)
-        else:
-            anchor = random.choice(cur)
-            similar = [e for e in pool if e != anchor and
-                       (e.gender == anchor.gender or e.role == anchor.role)]
-            other = random.choice(similar or [e for e in pool if e != anchor])
-            cur = (anchor, other) if random.random() < 0.5 else (other, anchor)
-        out.append(cur)
-
-    return out
+def event_matches_for_mention(query, mentions):
+    """Compatibility helper: unique matching entities, never event occurrences."""
+    return sorted(resolve_mention(query['idx'], mentions), key=lambda e: e.eid)
 
 
-def antecedent_path(q, mentions):
-    path = []
-    cur = q
-    seen = set()
-    while cur and id(cur) not in seen:
-        path.append(cur)
-        seen.add(id(cur))
-        ant = cur.get('antecedent')
-        if ant is None:
-            break
-        cur = mentions[ant]
-    return list(reversed(path))
+def min_proof_depth(query, mentions):
+    resolved = resolve_mention(query['idx'], mentions)
+    proofs = resolved.get(query['entity'], ())
+    return min((proof.depth for proof in proofs), default=None)
 
 
-def _get_hops(m, mentions):
-    return max(0, len(antecedent_path(m, mentions)) - 1)
+def _minimal_proofs(query, mentions):
+    resolved = resolve_mention(query['idx'], mentions)
+    if set(resolved) != {query['entity']}:
+        return []
+    depth = min(proof.depth for proof in resolved[query['entity']])
+    return [proof for proof in resolved[query['entity']] if proof.depth == depth]
 
 
-def _local_candidate_entities(q, mentions, pool, pronoun_window=3):
-    if q['mode'] == PRONOUN:
-        gender = _pronoun_gender(q['surface'])
-        cur_subj = None
-        if q['pos'] == 'object':
-            subj = [m for m in mentions
-                    if m['sent'] == q['sent'] and m['pos'] == 'subject']
-            cur_subj = subj[0]['entity'] if subj else None
-        ents = {
-            m['entity']
-            for m in mentions
-            if max(0, q['sent'] - pronoun_window) <= m['sent'] < q['sent']
-            and m['entity'].gender == gender
-            and m['entity'] != cur_subj
-        }
-        return sorted(ents, key=lambda e: e.eid)
-    if q['mode'] == DESC:
-        scope = q.get('scope') or []
-        return sorted(scope_matches_for_surface(q, scope), key=lambda e: e.eid)
-    if q['mode'] == DESC_EVENT:
-        return sorted(set(event_matches_for_mention(q, mentions)), key=lambda e: e.eid)
-    return [q['entity']]
-
-
-def _entity_for_idx(idx, assignment, mentions):
-    return assignment.get(idx, mentions[idx]['entity'])
-
-
-def _event_entities(event, assignment, mentions):
-    return (_entity_for_idx(event['subject'], assignment, mentions),
-            _entity_for_idx(event['object'], assignment, mentions))
-
-
-def _assignment_ok(assignment, mentions, constraints, rules):
-    events = {m['event']['idx']: m['event'] for m in mentions if m.get('event')}.values()
-    for c in constraints:
-        kind = c['kind']
-        if kind == 'identity':
-            ok = (_entity_for_idx(c['left'], assignment, mentions) ==
-                  _entity_for_idx(c['right'], assignment, mentions))
-        elif kind == 'not_identity':
-            ok = (_entity_for_idx(c['left'], assignment, mentions) !=
-                  _entity_for_idx(c['right'], assignment, mentions))
-        elif kind == 'event_role':
-            event = mentions[c['mention']]['event']
-            idx = event[c['pos']]
-            ok = _entity_for_idx(idx, assignment, mentions).role == c['role']
-        elif kind == 'no_same_object':
-            ok = True
-            evs = list(events)
-            for a in evs:
-                for b in evs:
-                    if a['idx'] == b['idx']:
-                        continue
-                    if a['verb'] == c['verb1'] and b['verb'] == c['verb2']:
-                        sa, oa = _event_entities(a, assignment, mentions)
-                        sb, ob = _event_entities(b, assignment, mentions)
-                        if sa == sb and oa == ob:
-                            ok = False
-                            break
-                if not ok:
-                    break
-        else:
-            ok = True
-        if not ok:
+def _load_bearing(query, mentions, proof):
+    for dependency in proof.dependencies:
+        resolved = resolve_mention(query['idx'], mentions, {dependency})
+        depths = [candidate.depth
+                  for candidate in resolved.get(query['entity'], ())]
+        if depths and min(depths) <= proof.depth:
             return False
-    for rule in rules:
-        for event in events:
-            subj, obj = _event_entities(event, assignment, mentions)
-            if event['verb'] == rule['verb'] and subj.role == rule['subject_role']:
-                if (obj.role == rule['object_role']) == rule.get('polarity', True):
-                    continue
-                return False
     return True
 
 
-def solve_global_assignments(mentions, pool, constraints=None, rules=None,
-                             pronoun_window=3):
-    constraints = constraints or []
-    rules = rules or []
-    variables, domains = [], []
-    for m in mentions:
-        if m.get('ambiguous'):
-            domain = _local_candidate_entities(m, mentions, pool, pronoun_window)
-            variables.append(m['idx'])
-            domains.append(domain or [m['entity']])
-    if not variables:
-        return [{}]
-
-    out = []
-    for values in itertools.product(*domains):
-        assignment = dict(zip(variables, values))
-        if _assignment_ok(assignment, mentions, constraints, rules):
-            out.append(assignment)
-    return out
+def validate_query(query, mentions, target_depth):
+    proofs = _minimal_proofs(query, mentions)
+    return (len(proofs) == 1 and proofs[0].depth == target_depth and
+            _load_bearing(query, mentions, proofs[0]))
 
 
-def globally_pins_query(q, mentions, pool, constraints=None, rules=None,
-                        pronoun_window=3):
-    constraints = constraints or []
-    rules = rules or []
-    variables, domains = [], []
-    for m in mentions:
-        if m.get('ambiguous'):
-            variables.append(m['idx'])
-            domains.append(_local_candidate_entities(m, mentions, pool, pronoun_window)
-                           or [m['entity']])
-    vals = set()
-    for values in itertools.product(*domains):
-        assignment = dict(zip(variables, values))
-        if not _assignment_ok(assignment, mentions, constraints, rules):
-            continue
-        vals.add(_entity_for_idx(q['idx'], assignment, mentions))
-        if len(vals) > 1:
-            return False
-    return vals == {q['entity']}
-
-
-def surface_antecedent(q, mentions, pronoun_window=3):
-    if q['mode'] == PRONOUN:
-        gender = _pronoun_gender(q['surface'])
-        cur_subj = None
-        if q['pos'] == 'object':
-            subj = [m for m in mentions
-                    if m['sent'] == q['sent'] and m['pos'] == 'subject']
-            cur_subj = subj[0]['entity'] if subj else None
-        return _pronoun_salience_antecedent(gender, mentions, q['sent'],
-                                            cur_subj, q['pos'],
-                                            pronoun_window)
-    if q['mode'] == DESC:
-        scope = q.get('scope') or []
-        matches = scope_matches_for_surface(q, scope)
-        if len(matches) != 1 or matches[0] != q['entity']:
-            return None
-        return _desc_antecedent(q['entity'], mentions, q['sent'], set(scope))
-    if q['mode'] == DESC_EVENT:
-        matches = event_matches_for_mention(q, mentions)
-        if len(matches) != 1 or matches[0] != q['entity']:
-            return None
-        ant = q.get('antecedent')
-        return mentions[ant] if ant is not None else None
-    return None
-
-
-def surface_identifiable(q, mentions, pronoun_window=3):
-    ant = surface_antecedent(q, mentions, pronoun_window)
-    return ant is not None and ant.get('idx') == q.get('antecedent')
-
-
-def _surface_salience_name_pred(q, mentions, pronoun_window=3):
-    ant = surface_antecedent(q, mentions, pronoun_window)
-    if ant is not None and ant['mode'] in (INTRO, NAME):
-        return ant['entity']
-    return None
-
-
-def _query_candidates(mentions, pool, target_hops=2, cfg=None, challenge=None):
-    pronoun_window = cfg.pronoun_window if cfg else 3
-    require_same_gender_distractor = cfg.require_same_gender_distractor if cfg else False
-    require_opaque_link = cfg.require_opaque_link_for_multihop if cfg else False
-    use_global = bool(cfg and (
-        cfg.n_ambiguous_mentions
-        or cfg.n_constraints
-        or cfg.n_rules
-        or cfg.n_identity_links
-        or cfg.n_state_changes
-    ))
-
-    counts = {}
-    for m in mentions:
-        counts[m['entity']] = counts.get(m['entity'], 0) + 1
-
-    top = max(counts.values())
-    unique_top = list(counts.values()).count(top) == 1
-    cands = []
-    direct_constraint_cands = []
-
-    for m in mentions:
-        if m['mode'] not in (PRONOUN, DESC, DESC_EVENT):
-            continue
-        if use_global and not m.get('ambiguous'):
-            continue
-        if not use_global and not surface_identifiable(m, mentions, pronoun_window):
-            continue
-        if use_global and not globally_pins_query(
-                m, mentions, pool,
-                (challenge or {}).get('constraints'),
-                (challenge or {}).get('rules'),
-                pronoun_window):
-            continue
-        direct_constraint = use_global and _constraint_lookup_pred(m, mentions, challenge or {}) == m['entity']
-        hops = _get_hops(m, mentions)
-        if hops != target_hops:
-            continue
-        if unique_top and counts[m['entity']] == top:
-            continue
-
-        if m['mode'] == DESC:
-            if len(global_matches_for_surface(m, pool)) < 2:
-                continue
-        elif m['mode'] == DESC_EVENT:
-            if len(event_matches_for_mention(m, mentions)) != 1:
-                continue
-        elif require_same_gender_distractor:
-            if not _has_same_gender_distractor(m['entity'], mentions, m['sent'],
-                                               pronoun_window):
-                continue
-            ant = mentions[m['antecedent']]
-            if not (1 < m['sent'] - ant['sent'] <= pronoun_window):
-                continue
-
-        if target_hops >= 2:
-            ant = mentions[m['antecedent']]
-            if ant['mode'] in (INTRO, NAME):
-                continue
-            path = antecedent_path(m, mentions)
-            if len(path) <= 2:
-                continue
-            if _surface_salience_name_pred(m, mentions, pronoun_window) == m['entity']:
-                continue
-            if (require_opaque_link and
-                    (not any(p['mode'] in (DESC, DESC_EVENT) for p in path[:-1]) or
-                     not any(p['mode'] == PRONOUN for p in path[:-1]))):
-                continue
-
-        if direct_constraint:
-            direct_constraint_cands.append(m)
-        else:
-            cands.append(m)
-
-    return cands or direct_constraint_cands
-
-
-def _pick(e, pool, introduced, mentions, sent, cur_subj, pos, p_pron, p_desc,
-          p_desc_event=0.4, pronoun_window=3, ambiguous_budget=None):
-    if e not in introduced:
-        return _indef(e), INTRO, None, None, None, False
-    prefs = []
-    if random.random() < p_pron: prefs.append(PRONOUN)
-    if random.random() < p_desc_event: prefs.append(DESC_EVENT)
-    if random.random() < p_desc: prefs.append(DESC)
-    prefs.append(NAME)
-    for m in prefs:
-        if m == PRONOUN:
-            if ambiguous_budget and ambiguous_budget[0] > 0:
-                q = {'mode': PRONOUN, 'surface': PRON[e.gender][0 if pos == 'subject' else 1],
-                     'sent': sent, 'pos': pos, 'entity': e}
-                domain = _local_candidate_entities(q, mentions, pool, pronoun_window)
-                ant = _latest_mention(e, mentions, sent=sent)
-                if ant is not None and e in domain and len(domain) >= 2:
-                    ambiguous_budget[0] -= 1
-                    return q['surface'], PRONOUN, ant['idx'], None, None, True
-            ant = _pronoun_salience_antecedent(e.gender, mentions, sent, cur_subj,
-                                               pos, pronoun_window)
-            if ant is not None and ant['entity'] == e:
-                return PRON[e.gender][0 if pos == 'subject' else 1], PRONOUN, ant['idx'], None, None, False
-        if m == DESC_EVENT:
-            d, ant, event = _event_desc(e, mentions, sent)
-            if d:
-                return d, DESC_EVENT, ant, None, event, False
-        if m == DESC:
-            scope = _recent_scope(mentions, sent)
-            d = _desc(e, scope or pool)
-            ant = _desc_antecedent(e, mentions, sent, scope)
-            if d and ant is not None:
-                return d, DESC, ant['idx'], list(scope), None, False
-        if m == NAME:
-            return e.name, NAME, None, None, None, False
-    return e.name, NAME, None, None, None, False
-
-
-def _emit(plan, pool, p_pron, p_desc, p_desc_event=0.4, pronoun_window=3,
-          n_ambiguous_mentions=0):
-    introduced, lines, mentions = set(), [], []
-    ambiguous_budget = [n_ambiguous_mentions]
-    for _, (s_e, o_e) in enumerate(plan):
-        sent = len(lines)
-        v = random.choice(VERBS)
-        new_entities = [e for e in (s_e, o_e) if e not in introduced]
-        s_ref, s_mode, s_ant, s_scope, s_event, s_amb = _pick(
-            s_e, pool, introduced, mentions, sent, None, 'subject',
-            p_pron, p_desc, p_desc_event, pronoun_window, ambiguous_budget)
-        introduced.add(s_e)
-        o_ref, o_mode, o_ant, o_scope, o_event, o_amb = _pick(
-            o_e, pool, introduced, mentions, sent, s_e, 'object',
-            p_pron, p_desc, p_desc_event, pronoun_window, ambiguous_budget)
-        introduced.add(o_e)
-        cap = lambda s: s[:1].upper() + s[1:]
-        lines.append(f"({sent+1}) {cap(s_ref)} {v} {o_ref}.")
-        mentions.append({'idx': len(mentions), 'sent': sent, 'pos': 'subject',
-                         'surface': s_ref, 'mode': s_mode, 'entity': s_e,
-                         'antecedent': s_ant, 'scope': s_scope,
-                         'event_desc': s_event, 'event': None,
-                         'ambiguous': s_amb})
-        mentions.append({'idx': len(mentions), 'sent': sent, 'pos': 'object',
-                         'surface': o_ref, 'mode': o_mode, 'entity': o_e,
-                         'antecedent': o_ant, 'scope': o_scope,
-                         'event_desc': o_event, 'event': None,
-                         'ambiguous': o_amb})
-        event = {'idx': sent, 'sent': sent, 'verb': v,
-                 'subject': mentions[-2]['idx'], 'object': mentions[-1]['idx']}
-        mentions[-2]['event'] = event
-        mentions[-1]['event'] = event
-        for e in new_entities:
-            for attr in e.attrs:
-                lines.append(f"({len(lines)+1}) {_attr_fact(e, attr)}")
-    return lines, mentions
-
-
-def _expr_ref(m):
-    return f"the {m['pos']} expression in sentence {m['sent'] + 1}"
-
-
-def _event_constraint_line(c, mentions):
-    event = mentions[c['mention']]['event']
-    target_pos = c['pos']
-    arg_pos = 'object' if target_pos == 'subject' else 'subject'
-    arg = mentions[event[arg_pos]]
-    surface = _event_surface(event, target_pos, arg)
-    return f"{surface[:1].upper() + surface[1:]} was a {c['role']}."
-
-
-def _add_global_challenge(lines, mentions, pool, cfg):
-    constraints, rules, identity_links, state_changes = [], [], [], []
-    targets = [m for m in mentions if m.get('ambiguous')]
-    random.shuffle(targets)
-
-    grouped = {}
-    for m in targets:
-        grouped.setdefault(m['entity'], []).append(m)
-    linked_rhs = set()
-    for ms in grouped.values():
-        if len(ms) < 2 or len(identity_links) >= cfg.n_identity_links:
-            continue
-        a, b = ms[0], ms[1]
-        constraints.append({'kind': 'identity', 'left': a['idx'], 'right': b['idx']})
-        identity_links.append((a['idx'], b['idx']))
-        linked_rhs.add(b['idx'])
-        lines.append(f"({len(lines)+1}) The people referred to by '{a['surface']}' in sentence {a['sent'] + 1} and '{b['surface']}' in sentence {b['sent'] + 1} were the same person.")
-
-    ordered_targets = (
-        [m for m in targets if m['idx'] in linked_rhs] +
-        [m for m in targets if m['idx'] not in linked_rhs]
-    )
-    for m in ordered_targets[:cfg.n_constraints]:
-        c = {'kind': 'event_role', 'mention': m['idx'],
-             'pos': m['pos'], 'role': m['entity'].role}
-        constraints.append(c)
-        lines.append(f"({len(lines)+1}) {_event_constraint_line(c, mentions)}")
-
-    evs = list({m['event']['idx']: m['event'] for m in mentions if m.get('event')}.values())
-    for a in evs:
-        for b in evs:
-            if a['idx'] == b['idx'] or a['verb'] == b['verb']:
-                continue
-            sa, oa = mentions[a['subject']]['entity'], mentions[a['object']]['entity']
-            sb, ob = mentions[b['subject']]['entity'], mentions[b['object']]['entity']
-            if sa == sb and oa != ob and len(constraints) < cfg.n_constraints:
-                c = {'kind': 'no_same_object', 'verb1': a['verb'], 'verb2': b['verb']}
-                constraints.append(c)
-                lines.append(f"({len(lines)+1}) No one both {a['verb']} and {b['verb']} the same person.")
-                break
-        if len(constraints) >= cfg.n_constraints:
+def antecedent_path(query, mentions):
+    """Generator provenance only; correctness uses ``resolve_mention``."""
+    path, current, seen = [], query, set()
+    while current['idx'] not in seen:
+        path.append(current)
+        seen.add(current['idx'])
+        antecedents = _pronoun_antecedents(current, mentions) if current['mode'] == PRONOUN else ()
+        if len(antecedents) != 1:
             break
-
-    same_entity = {}
-    for m in mentions:
-        if m['mode'] in (PRONOUN, DESC, DESC_EVENT):
-            same_entity.setdefault(m['entity'], []).append(m)
-    pairs = []
-    for ms in same_entity.values():
-        if len(ms) >= 2:
-            pairs.extend((a, b) for a, b in zip(ms, ms[1:])
-                         if a.get('ambiguous') or b.get('ambiguous'))
-    random.shuffle(pairs)
-    remaining_links = max(0, cfg.n_identity_links - len(identity_links))
-    for a, b in pairs[:remaining_links]:
-        constraints.append({'kind': 'identity', 'left': a['idx'], 'right': b['idx']})
-        identity_links.append((a['idx'], b['idx']))
-        lines.append(f"({len(lines)+1}) {_expr_ref(a).capitalize()} and {_expr_ref(b)} referred to the same person.")
-
-    events = {m['event']['idx']: m['event'] for m in mentions if m.get('event')}.values()
-    rule_choices = []
-    for event in events:
-        subj = mentions[event['subject']]['entity']
-        obj = mentions[event['object']]['entity']
-        rule = {'verb': event['verb'], 'subject_role': subj.role,
-                'object_role': obj.role, 'polarity': True}
-        if _assignment_ok({}, mentions, [], [rule]):
-            rule_choices.append(rule)
-    random.shuffle(rule_choices)
-    for rule in rule_choices[:cfg.n_rules]:
-        rules.append(rule)
-        lines.append(
-            f"({len(lines)+1}) In this story, {rule['subject_role']}s only "
-            f"{rule['verb']} {rule['object_role']}s."
-        )
-
-    introduced = sorted({m['entity'] for m in mentions}, key=lambda e: e.eid)
-    for e in random.sample(introduced, min(cfg.n_state_changes, len(introduced))):
-        new_role = random.choice([r for r in ROLES if r != e.role])
-        state_changes.append({'entity': e, 'role': new_role, 'sent': len(lines)})
-        lines.append(f"({len(lines)+1}) After that, {e.name} became a {new_role}.")
-
-    return {
-        'constraints': constraints,
-        'rules': rules,
-        'identity_links': identity_links,
-        'state_changes': state_changes,
-    }
+        current = mentions[antecedents[0]]
+    return list(reversed(path))
 
 
-def _current_role(entity, challenge=None):
-    role = entity.role
-    for change in (challenge or {}).get('state_changes', []):
-        if change['entity'] == entity:
-            role = change['role']
-    return role
+def _get_hops(query, mentions):
+    return min_proof_depth(query, mentions)
 
 
-def _mentions_before(q, mentions):
-    return [m for m in mentions
-            if (m['sent'], 0 if m['pos'] == 'subject' else 1) <
-            (q['sent'], 0 if q['pos'] == 'subject' else 1)]
+def _add_event(lines, mentions, subject, obj, verb=None):
+    line_idx = len(lines)
+    subject = dict(subject, idx=len(mentions), line_idx=line_idx,
+                   event_idx=line_idx, sent=line_idx, pos='subject', event=None)
+    mentions.append(subject)
+    obj = dict(obj, idx=len(mentions), line_idx=line_idx, event_idx=line_idx,
+               sent=line_idx, pos='object', event=None)
+    mentions.append(obj)
+    verb = verb or random.choice(VERBS)
+    event = {'idx': line_idx, 'line_idx': line_idx, 'event_idx': line_idx,
+             'sent': line_idx, 'verb': verb,
+             'subject': subject['idx'], 'object': obj['idx']}
+    mentions[-2]['event'] = event
+    mentions[-1]['event'] = event
+    cap = subject['surface'][:1].upper() + subject['surface'][1:]
+    lines.append(f"({line_idx + 1}) {cap} {verb} {obj['surface']}.")
+    return mentions[-2], mentions[-1]
 
 
-def _same_gender(q, mentions):
-    return [m for m in _mentions_before(q, mentions)
-            if m['entity'].gender == q['entity'].gender]
+def _mention(entity, surface, mode):
+    return {'entity': entity, 'surface': surface, 'mode': mode,
+            'antecedent': None, 'scope': None, 'event_desc': None,
+            'ambiguous': False}
 
 
-def h_nearest_same_gender_name(q, mentions):
-    for m in reversed(_same_gender(q, mentions)):
-        if m['mode'] in (INTRO, NAME):
-            return m['entity']
+def _build_discourse(pool, target_depth, n_distractors):
+    if target_depth < 1:
+        raise ValueError("target_hops must be at least 1")
+    opposite = [(a, b) for a in pool for b in pool
+                if a.gender != b.gender and a != b]
+    subject, obj = random.choice(opposite)
+    order = random.sample(pool, len(pool))
+    lines, mentions = [], []
+
+    for i in range(0, len(order), 2):
+        pair = order[i:i + 2]
+        if len(pair) == 1:
+            pair.append(random.choice(order[:i]))
+        refs = [_mention(e, _indef(e), INTRO) if e == order[i]
+                or e not in {m['entity'] for m in mentions}
+                else _mention(e, e.name, NAME)
+                for e in pair]
+        _add_event(lines, mentions, refs[0], refs[1])
+
+    for _ in range(n_distractors):
+        # Repeating either chain entities or distractors lets batch balancing
+        # decorrelate explicit-name recency from the answer.
+        a, b = random.sample(pool, 2)
+        _add_event(lines, mentions, _mention(a, a.name, NAME),
+                   _mention(b, b.name, NAME))
+
+    subject_desc, object_desc = _desc(subject, pool), _desc(obj, pool)
+    if not subject_desc or not object_desc:
+        return None
+    pair = _add_event(lines, mentions, _mention(subject, subject_desc, DESC),
+                      _mention(obj, object_desc, DESC))
+    for _ in range(1, target_depth):
+        pair = _add_event(
+            lines, mentions,
+            _mention(subject, PRON[subject.gender][0], PRONOUN),
+            _mention(obj, PRON[obj.gender][1], PRONOUN))
+    return lines, mentions, pair
+
+
+def _candidate_domain(query, mentions):
+    gender = query['entity'].gender
+    return {entity for entity in _visible_entities(query, mentions)
+            if entity.gender == gender}
+
+
+def h_nearest_same_gender_name(query, mentions):
+    for mention in reversed(_before(query, mentions)):
+        if (mention['mode'] in (INTRO, NAME) and
+                mention['entity'].gender == query['entity'].gender):
+            return mention['entity']
     return None
 
 
-def h_nearest_same_gender_mention(q, mentions):
-    ms = _same_gender(q, mentions)
-    return ms[-1]['entity'] if ms else None
-
-
-def h_prev_sentence_unique_gender(q, mentions):
-    ents = {m['entity'] for m in mentions
-            if m['sent'] == q['sent'] - 1 and
-            m['entity'].gender == q['entity'].gender}
-    return next(iter(ents)) if len(ents) == 1 else None
-
-
-def h_prev_sentence_unique_non_subject_gender(q, mentions):
-    ents = {m['entity'] for m in mentions
-            if m['sent'] == q['sent'] - 1 and m['pos'] != 'subject' and
-            m['entity'].gender == q['entity'].gender}
-    return next(iter(ents)) if len(ents) == 1 else None
-
-
-def h_global_desc_lookup(q, mentions, pool):
-    if q['mode'] != DESC:
-        return None
-    matches = global_matches_for_surface(q, pool)
-    return matches[0] if len(matches) == 1 else None
-
-
-def h_last_mentioned(q, mentions):
-    ms = _mentions_before(q, mentions)
-    return ms[-1]['entity'] if ms else None
-
-
-def h_most_frequent(q, mentions):
-    counts = {}
-    for m in _mentions_before(q, mentions):
-        counts[m['entity']] = counts.get(m['entity'], 0) + 1
-    if not counts:
-        return None
-    top = max(counts.values())
-    ents = [e for e, n in counts.items() if n == top]
-    return ents[0] if len(ents) == 1 else None
-
-
-def h_surface_salience_name(q, mentions):
-    return _surface_salience_name_pred(q, mentions)
-
-
-def h_one_step_antecedent_name(q, mentions):
-    ant = q.get('antecedent')
-    if ant is None:
-        return None
-    m = mentions[ant]
-    return m['entity'] if m['mode'] in (INTRO, NAME) else None
-
-
-def h_immediate_antecedent_oracle(q, mentions):
-    ant = q.get('antecedent')
-    return mentions[ant]['entity'] if ant is not None else None
-
-
-def _constraint_lookup_pred(q, mentions, challenge):
-    for c in challenge.get('constraints', []):
-        if c['kind'] == 'event_role' and c['mention'] == q['idx']:
-            domain = _local_candidate_entities(q, mentions, [], 999)
-            matches = [e for e in domain if e.role == c['role']]
-            return matches[0] if len(matches) == 1 else None
+def h_first_same_gender_name(query, mentions):
+    for mention in _before(query, mentions):
+        if mention['mode'] == INTRO and mention['entity'].gender == query['entity'].gender:
+            return mention['entity']
     return None
 
 
-def h_constraint_lookup(q, mentions):
-    return _constraint_lookup_pred(q, mentions, q.get('challenge') or {})
+def h_previous_sentence_name(query, mentions):
+    matches = [mention['entity'] for mention in _before(query, mentions)
+               if mention['line_idx'] == query['line_idx'] - 1
+               and mention['mode'] in (INTRO, NAME)
+               and mention['entity'].gender == query['entity'].gender]
+    return matches[0] if len(set(matches)) == 1 else None
 
 
 HEURISTICS = {
-    'nearest_same_gender_name': lambda q, mentions, pool: h_nearest_same_gender_name(q, mentions),
-    'nearest_same_gender_mention': lambda q, mentions, pool: h_nearest_same_gender_mention(q, mentions),
-    'previous_sentence_unique_gender': lambda q, mentions, pool: h_prev_sentence_unique_gender(q, mentions),
-    'prev_sentence_unique_non_subject_gender': lambda q, mentions, pool: h_prev_sentence_unique_non_subject_gender(q, mentions),
-    'global_desc_lookup': h_global_desc_lookup,
-    'last_mentioned': lambda q, mentions, pool: h_last_mentioned(q, mentions),
-    'most_frequent': lambda q, mentions, pool: h_most_frequent(q, mentions),
-    'surface_salience_name': lambda q, mentions, pool: h_surface_salience_name(q, mentions),
-    'one_step_antecedent_name': lambda q, mentions, pool: h_one_step_antecedent_name(q, mentions),
-    'immediate_antecedent_oracle': lambda q, mentions, pool: h_immediate_antecedent_oracle(q, mentions),
-    'constraint_lookup': lambda q, mentions, pool: h_constraint_lookup(q, mentions),
+    'nearest_same_gender_name': h_nearest_same_gender_name,
+    'first_same_gender_name': h_first_same_gender_name,
+    'previous_sentence_name': h_previous_sentence_name,
 }
-BALANCE_HEURISTICS = set(HEURISTICS) - {'immediate_antecedent_oracle'}
+BALANCE_HEURISTICS = set(HEURISTICS)
 
 
 def _as_raw_item(item):
@@ -796,47 +386,57 @@ def _as_raw_item(item):
 def _heuristic_rows(items):
     rows = {}
     for item in items:
-        raw = _as_raw_item(item)
-        q, mentions, pool = raw['q'], raw['mentions'], raw['pool']
-        stratum = (q['mode'], _get_hops(q, mentions))
-        for name, fn in HEURISTICS.items():
-            pred = fn(q, mentions, pool)
-            key = (name, stratum)
-            n, covered, correct = rows.get(key, [0, 0, 0])
+        for key, prediction, is_correct, chance in _heuristic_observations(item):
+            n, covered, n_correct, chance_sum = rows.get(key, [0, 0, 0, 0.0])
             n += 1
-            if pred is not None:
+            if prediction is not None:
                 covered += 1
-                correct += int(pred == q['entity'])
-            rows[key] = [n, covered, correct]
+                n_correct += is_correct
+                chance_sum += chance
+            rows[key] = [n, covered, n_correct, chance_sum]
     return rows
+
+
+def _heuristic_observations(item):
+    raw = _as_raw_item(item)
+    query, mentions = raw['q'], raw['mentions']
+    depth = raw.get('min_proof_depth') or min_proof_depth(query, mentions)
+    stratum = (query['mode'], depth)
+    domain = _candidate_domain(query, mentions)
+    chance = 1 / len(domain) if domain else 0.0
+    return [((name, stratum), prediction, prediction == query['entity'], chance)
+            for name, heuristic in HEURISTICS.items()
+            for prediction in (heuristic(query, mentions),)]
 
 
 def shortcut_report(items):
     report = []
-    for (name, stratum), (n, covered, correct) in sorted(_heuristic_rows(items).items()):
+    for (name, stratum), (n, covered, correct, chance_sum) in sorted(
+            _heuristic_rows(items).items()):
         report.append({
             'heuristic': name,
             'stratum': stratum,
             'n': n,
-            'accuracy': (correct / covered) if covered else None,
             'coverage': covered / n if n else 0.0,
+            'accuracy': correct / covered if covered else None,
+            'chance_accuracy': chance_sum / covered if covered else None,
         })
     return report
 
 
+def _rows_score(rows, eps, min_n):
+    score, acceptable = 0.0, True
+    for (name, _), (_, covered, correct, chance_sum) in rows.items():
+        if name not in BALANCE_HEURISTICS or covered < min_n:
+            continue
+        deviation = abs(correct / covered - chance_sum / covered)
+        score += max(0.0, deviation - eps) ** 2
+        acceptable &= deviation <= eps
+    return score, acceptable
+
+
 def _shortcut_score(items, eps=0.08, min_n=20):
-    score = 0.0
-    bad = False
-    for (name, _), (_, covered, correct) in _heuristic_rows(items).items():
-        if name not in BALANCE_HEURISTICS:
-            continue
-        if covered < min_n:
-            continue
-        acc = correct / covered
-        delta = abs(acc - 0.5)
-        score += delta
-        bad = bad or delta > eps
-    return score, not bad
+    return _rows_score(_heuristic_rows(items), eps, min_n)
 
 
 def shortcut_stats_ok(items, eps=0.08, min_n=20):
@@ -844,137 +444,126 @@ def shortcut_stats_ok(items, eps=0.08, min_n=20):
 
 
 def subsample_shortcut_balanced(candidates, n_final, eps=0.08, min_n=20):
-    random.shuffle(candidates)
-    selected = []
-    for item in candidates:
-        if len(selected) >= n_final:
-            break
-        trial = selected + [item]
-        if shortcut_stats_ok(trial, eps=eps, min_n=min_n):
-            selected.append(item)
-    if len(selected) >= n_final:
-        return selected
+    remaining = list(candidates)
+    random.shuffle(remaining)
+    selected, totals = [], {}
+    observations = {id(item): _heuristic_observations(item) for item in remaining}
+    while remaining and len(selected) < n_final:
+        scored = []
+        for i, item in enumerate(remaining):
+            trial = {key: row[:] for key, row in totals.items()}
+            _add_observations(trial, observations[id(item)])
+            scored.append((_rows_score(trial, eps, 1)[0], random.random(), i))
+        _, _, best = min(scored)
+        item = remaining.pop(best)
+        selected.append(item)
+        _add_observations(totals, observations[id(item)])
+    return selected
 
-    selected = []
-    cur_score = 0.0
-    remaining = []
-    for item in candidates:
-        if len(selected) >= n_final:
-            break
-        trial = selected + [item]
-        score, _ = _shortcut_score(trial, eps=eps, min_n=min_n)
-        if not selected or score <= cur_score + eps:
-            selected.append(item)
-            cur_score = score
-        else:
-            remaining.append((score, item))
-    if len(selected) < n_final:
-        remaining.sort(key=lambda x: x[0])
-        selected.extend(item for _, item in remaining[:n_final - len(selected)])
-    if len(selected) < n_final:
-        seen = {id(x) for x in selected}
-        selected.extend(x for x in candidates if id(x) not in seen)
-    return selected[:n_final]
+
+def _add_observations(rows, observations):
+    for key, prediction, correct, chance in observations:
+        n, covered, n_correct, chance_sum = rows.get(key, [0, 0, 0, 0.0])
+        rows[key] = [n + 1,
+                     covered + (prediction is not None),
+                     n_correct + (correct if prediction is not None else 0),
+                     chance_sum + (chance if prediction is not None else 0.0)]
 
 
 def generate_balanced_batch(task, n_final, oversample=20, eps=0.08):
     candidates = [task.generate_raw_candidate()
                   for _ in range(n_final * oversample)]
-    return subsample_shortcut_balanced(candidates, n_final, eps=eps,
-                                       min_n=task.config.shortcut_min_n)
+    selected = subsample_shortcut_balanced(
+        candidates, n_final, eps, task.config.shortcut_min_n)
+    if len(selected) != n_final or not shortcut_stats_ok(
+            selected, eps, task.config.shortcut_min_n):
+        raise RuntimeError("Could not construct a shortcut-balanced batch")
+    return selected
 
 
 @dataclass
 class CoreferenceConfig(Config):
     n_entities: int = 6
-    chain_len: int = 4
-    n_distractors: int = 4
-    p_pronoun: float = 0.7
-    p_desc: float = 0.5
-    p_desc_event: float = 0.4
-    p_shortcut: float = 0.05   # prob. of using a shorter chain for diversity
+    n_distractors: int = 2
+    p_desc_event: float = 0.0
     target_hops: int = 3
-    single_gender_pool: bool = True
-    balanced_generation: bool = True
-    oversample: int = 4
+    single_gender_pool: bool = False
+    balanced_generation: bool = False
+    oversample: int = 8
     balance_batch_size: int = 64
-    shortcut_eps: float = 0.08
+    shortcut_eps: float = 0.10
     shortcut_min_n: int = 20
-    pronoun_window: int = 8
-    p_compositional_query: float = 0.35
+    p_compositional_query: float = 0.0
     n_ambiguous_mentions: int = 0
     n_constraints: int = 0
     n_rules: int = 0
     n_identity_links: int = 0
     n_state_changes: int = 0
     require_same_gender_distractor: bool = True
-    require_opaque_link_for_multihop: bool = True
-    p_group_filler: float = 0.0
 
     def apply_difficulty(self, level):
         self.n_entities += level
-        self.chain_len += level
         self.n_distractors += level
         self.target_hops += level
 
 
 class Coreference(Task):
-    summary = "Resolve multi-hop entity coreference chains and pronouns in natural text."
-    def __init__(self, config=CoreferenceConfig()):
-        super().__init__(config=config)
+    summary = "Resolve reference chains whose shortest proof has a known depth."
+    config_cls = CoreferenceConfig
+
+    def __init__(self, config=None):
+        super().__init__(config=config or CoreferenceConfig())
         self._balanced_buffer = []
 
-    def generate_raw_candidate(self):
+    def _validate_config(self):
         cfg = self.config
-        n_entities = cfg.n_entities
-        if n_entities < 2:
-            raise ValueError("Coreference requires at least 2 entities")
-        chain_len = cfg.chain_len
-        single_gender_pool = cfg.single_gender_pool
-        n_distractors = cfg.n_distractors
-        p_pronoun = cfg.p_pronoun
-        p_desc = cfg.p_desc
-        p_desc_event = cfg.p_desc_event
-        p_shortcut = cfg.p_shortcut
-        pronoun_window = cfg.pronoun_window
-        n_ambiguous_mentions = cfg.n_ambiguous_mentions
-        target_hops = cfg.target_hops
-        p_compositional_query = cfg.p_compositional_query
-        for _ in range(1000):
-            clen = chain_len
-            if clen > 2 and random.random() < p_shortcut:
-                clen = random.randint(2, clen - 1)
-            pool = _pool(n_entities, single_gender_pool)
-            plan = _plan(pool, clen, n_distractors)
-            lines, mentions = _emit(plan, pool, p_pronoun, p_desc,
-                                    p_desc_event,
-                                    pronoun_window,
-                                    n_ambiguous_mentions)
-            challenge = _add_global_challenge(lines, mentions, pool, cfg)
+        unsupported = {
+            name: getattr(cfg, name)
+            for name in ('n_ambiguous_mentions', 'n_constraints', 'n_rules',
+                         'n_identity_links', 'n_state_changes')
+            if getattr(cfg, name)
+        }
+        if unsupported:
+            names = ', '.join(sorted(unsupported))
+            raise ValueError(
+                f"Global coreference mode is disabled pending assignment-aware semantics: {names}")
+        if cfg.p_compositional_query:
+            raise ValueError(
+                "Role queries are disabled pending identity-necessity validation")
+        if cfg.p_desc_event:
+            raise ValueError(
+                "Generated event descriptions are disabled pending compositional realization")
+        if cfg.single_gender_pool:
+            raise ValueError(
+                "single_gender_pool is incompatible with non-reflexive paired chains")
 
-            cands = _query_candidates(mentions, pool, target_hops=target_hops,
-                                      cfg=cfg, challenge=challenge)
-            if not cands:
+    def generate_raw_candidate(self):
+        self._validate_config()
+        cfg = self.config
+        for _ in range(300):
+            pool = _pool(cfg.n_entities)
+            built = _build_discourse(pool, cfg.target_hops, cfg.n_distractors)
+            if not built:
                 continue
-            event_descs = [m for m in cands if m['mode'] == DESC_EVENT]
-            prons = [m for m in cands if m['mode'] == PRONOUN]
-            if event_descs and random.random() < 0.6:
-                q = random.choice(event_descs)
-            elif prons and random.random() < 0.7:
-                q = random.choice(prons)
-            else:
-                q = random.choice(cands)
-            q['challenge'] = challenge
-            hops = _get_hops(q, mentions)
+            lines, mentions, final_pair = built
+            query = random.choice(final_pair)
+            if (cfg.require_same_gender_distractor and
+                    len(_candidate_domain(query, mentions)) < 2):
+                continue
+            if not validate_query(query, mentions, cfg.target_hops):
+                continue
+            proof = _minimal_proofs(query, mentions)[0]
+            problem = self._build(query, lines, mentions, proof)
             return edict({
-                'problem': self._build(q, lines, mentions, pool, hops, challenge),
-                'q': q,
+                'problem': problem,
+                'q': query,
                 'mentions': mentions,
                 'pool': pool,
-                'challenge': challenge,
-                'hops': hops,
-                'mode': q['mode'],
-                'target_hops': target_hops,
+                'hops': proof.depth,
+                'min_proof_depth': proof.depth,
+                'proof_signature': proof.signature,
+                'mode': query['mode'],
+                'target_hops': cfg.target_hops,
             })
         raise RuntimeError("Could not generate a valid coreference problem")
 
@@ -983,79 +572,411 @@ class Coreference(Task):
         if not cfg.balanced_generation:
             return self.generate_raw_candidate()['problem']
         if not self._balanced_buffer:
-            n = max(1, cfg.balance_batch_size)
             self._balanced_buffer = generate_balanced_batch(
-                self, n, cfg.oversample, cfg.shortcut_eps)
+                self, max(1, cfg.balance_batch_size), cfg.oversample,
+                cfg.shortcut_eps)
         return self._balanced_buffer.pop()['problem']
 
-    def _build(self, q, lines, mentions, pool, hops=None, challenge=None):
-        target = q['entity']
-        query_kind = 'role' if random.random() < self.config.p_compositional_query else 'name'
-        answer = _current_role(target, challenge) if query_kind == 'role' else target.name
-        sid = q['sent'] + 1
-        if q['mode'] == PRONOUN:
-            g = 'female' if target.gender == 'f' else 'male'
-            ant = mentions[q['antecedent']]
-            ant_sid = ant['sent'] + 1
-            if q['pos'] == 'object':
-                subj = next(m['entity'].name for m in mentions
-                            if m['sent'] == q['sent']
-                            and m['pos'] == 'subject')
-                diagnostic_trace = (f"s{sid} pron '{q['surface']}' | "
-                                    f"subject={subj}; salient s{ant_sid} "
-                                    f"{ant['pos']} {g} -> {target.name}")
-            else:
-                diagnostic_trace = (f"s{sid} pron '{q['surface']}' | "
-                                    f"salient s{ant_sid} {ant['pos']} "
-                                    f"{g} -> {target.name}")
-        elif q['mode'] == DESC:
-            role, attrs = _surface_parts(q['surface'])
-            matches = sorted(x.name for x in pool
-                             if x.role == role
-                             and all(a in x.attrs for a in attrs))
-            filt = f"role={role}" + (f", attrs={list(attrs)}" if attrs else "")
-            diagnostic_trace = (f"s{sid} desc '{q['surface']}' | {filt} | "
-                                f"{{{', '.join(matches)}}} -> {target.name}")
-        else:
-            event = q['event_desc']
-            arg_key = 'object' if event['target_pos'] == 'subject' else 'subject'
-            arg = mentions[event[arg_key]]
-            diagnostic_trace = (f"s{sid} event-desc '{q['surface']}' | "
-                                f"{event['target_pos']} of {event['verb']} "
-                                f"with {_display_ref(arg)} -> {target.name}")
-        meta = edict({
-            'sentences':    "\n".join(lines),
-            'q_sentence':   sid,
-            'q_position':   q['pos'],
-            'q_expression': q['surface'],
-            'query_kind':   query_kind,
-            'q':            q,
-            'mentions':     mentions,
-            'pool':         pool,
-            'challenge':    challenge or {},
-            'target_hops':  self.config.target_hops,
-            'hops':         hops,
-            'diagnostic_trace': diagnostic_trace,
+    def _build(self, query, lines, mentions, proof):
+        sentence = query['line_idx'] + 1
+        trace = (f"s{sentence} {query['mode']} '{query['surface']}' | "
+                 f"depth={proof.depth}; dependencies={proof.dependencies} -> "
+                 f"{query['entity'].name}")
+        metadata = edict({
+            'sentences': '\n'.join(lines),
+            'q_sentence': sentence,
+            'q_position': query['pos'],
+            'q_expression': query['surface'],
+            'query_kind': 'name',
+            'q': query,
+            'mentions': mentions,
+            'pool': sorted(_visible_entities(query, mentions), key=lambda e: e.eid),
+            'target_hops': self.config.target_hops,
+            'hops': proof.depth,
+            'min_proof_depth': proof.depth,
+            'proof_signature': proof.signature,
+            'all_minimal_proofs': [proof.signature],
+            'realized_distractor_count': self.config.n_distractors,
+            'realized_ambiguity_count': 0,
+            'realized_constraint_count': 0,
+            'identity_required_for_answer': True,
+            'diagnostic_trace': trace,
         })
-        return Entry(metadata=meta, answer=answer)
+        return Entry(metadata=metadata, answer=query['entity'].name)
 
     def render_prompt(self, metadata):
-        if metadata.get('query_kind') == 'role':
-            return (
-                f"{metadata['sentences']}\n\n"
-                f"In sentence {metadata['q_sentence']}, what role does the "
-                f"person referred to by the {metadata['q_position']} expression "
-                f"'{metadata['q_expression']}' have?\n"
-                f"The answer is one role word."
-            )
         return (
+            "Interpret each expression using only earlier sentences. Pronouns "
+            "continue the nearest gender-compatible reference in the same "
+            "grammatical position.\n\n"
             f"{metadata['sentences']}\n\n"
-            f"In sentence {metadata['q_sentence']}, what does the "
+            f"In sentence {metadata['q_sentence']}, who does the "
             f"{metadata['q_position']} expression "
             f"'{metadata['q_expression']}' refer to?\n"
-            f"The answer is the person's name."
+            "The answer is one name."
         )
 
     def score_answer(self, answer, entry):
-        norm = lambda s: (str(s or '').strip().strip('.').strip("'\"").split() or [''])[-1].lower()
-        return float(norm(answer) == norm(entry.answer))
+        def normalize(value):
+            words = str(value or '').strip().strip('.').strip("'\"").split()
+            return (words or [''])[-1].lower()
+        return float(normalize(answer) == normalize(entry.answer))
+
+
+@dataclass(frozen=True)
+class Factor:
+    kind: str
+    scope: tuple
+    data: tuple = ()
+    sentence: int = 0
+
+
+@dataclass
+class CSPSeed:
+    pool: list
+    mention_specs: list
+    event_specs: list
+    query_idx: int
+    intended_gold: int
+
+
+def initial_domains(mentions, pool):
+    by_gender = {
+        gender: {entity.eid for entity in pool if entity.gender == gender}
+        for gender in ('m', 'f')
+    }
+    domains = {}
+    for mention in mentions:
+        idx = mention['idx']
+        if mention['mode'] in (INTRO, NAME):
+            domains[idx] = {mention['entity'].eid}
+        elif mention['mode'] == DESC:
+            role, attrs = _surface_parts(mention['surface'])
+            domains[idx] = {
+                entity.eid for entity in _visible_entities(mention, mentions)
+                if _matches_desc(entity, role, attrs)
+            }
+        elif mention['mode'] == PRONOUN:
+            domains[idx] = set(by_gender[_pronoun_gender(mention['surface'])])
+        else:
+            raise ValueError(f"Unsupported CSP mention mode: {mention['mode']}")
+    return domains
+
+
+def compile_factors(mentions):
+    factors = []
+    for event in _events(mentions):
+        factors.append(Factor('different',
+                              (event['subject'], event['object']),
+                              sentence=event['line_idx']))
+    for mention in mentions:
+        if mention['mode'] != PRONOUN:
+            continue
+        previous = mention['line_idx'] - 1
+        events = [event for event in _events(mentions)
+                  if event['line_idx'] == previous]
+        if events:
+            event = events[0]
+            factors.append(Factor(
+                'previous_participant',
+                (mention['idx'], event['subject'], event['object']),
+                sentence=mention['line_idx']))
+    return factors
+
+
+def factor_holds(factor, values):
+    if factor.kind == 'different':
+        return values[0] != values[1]
+    if factor.kind == 'previous_participant':
+        return values[0] == values[1] or values[0] == values[2]
+    raise ValueError(factor.kind)
+
+
+def compile_z3(mentions, pool, domains, factors):
+    del pool
+    variables = {mention['idx']: z3.Int(f"m{mention['idx']}")
+                 for mention in mentions}
+    constraints = []
+    for idx, domain in domains.items():
+        constraints.append(z3.Or(*[variables[idx] == value
+                                   for value in sorted(domain)]))
+    for factor in factors:
+        xs = [variables[idx] for idx in factor.scope]
+        if factor.kind == 'different':
+            constraints.append(xs[0] != xs[1])
+        elif factor.kind == 'previous_participant':
+            constraints.append(z3.Or(xs[0] == xs[1], xs[0] == xs[2]))
+        else:
+            raise ValueError(factor.kind)
+    return variables, constraints
+
+
+def possible_values(variable, constraints, domain):
+    possible = set()
+    for value in domain:
+        solver = z3.Solver()
+        solver.add(*constraints, variable == value)
+        if solver.check() == z3.sat:
+            possible.add(value)
+    return possible
+
+
+def entailed_value(variable, constraints, domain):
+    possible = possible_values(variable, constraints, domain)
+    return next(iter(possible)) if len(possible) == 1 else None
+
+
+def revise_factor(factor, domains):
+    scope = factor.scope
+    revised = {idx: set(domains[idx]) for idx in scope}
+    for position, idx in enumerate(scope):
+        others = scope[:position] + scope[position + 1:]
+        for value in domains[idx]:
+            for other_values in product(*(domains[j] for j in others)):
+                values = list(other_values)
+                values.insert(position, value)
+                if factor_holds(factor, tuple(values)):
+                    break
+            else:
+                revised[idx].discard(value)
+    return revised
+
+
+def gac_round(domains, factors):
+    proposals = {idx: set(values) for idx, values in domains.items()}
+    for factor in factors:
+        for idx, values in revise_factor(factor, domains).items():
+            proposals[idx] &= values
+    return proposals
+
+
+def propagation_trace(query_idx, domains, factors, max_rounds=100):
+    current = {idx: set(values) for idx, values in domains.items()}
+    trace = [current]
+    for _ in range(max_rounds):
+        if len(current[query_idx]) == 1:
+            break
+        updated = gac_round(current, factors)
+        if any(not values for values in updated.values()):
+            return None
+        if updated == current:
+            break
+        current = updated
+        trace.append(current)
+    return trace
+
+
+def propagation_depth(query_idx, domains, factors):
+    trace = propagation_trace(query_idx, domains, factors)
+    if trace is None or len(trace[-1][query_idx]) != 1:
+        return None
+    return len(trace) - 1
+
+
+def is_entailed(query_idx, gold, variables, constraints):
+    solver = z3.Solver()
+    solver.add(*constraints, variables[query_idx] != gold)
+    return solver.check() == z3.unsat
+
+
+def necessary_constraints(query_idx, gold, mentions, pool, domains, factors):
+    necessary = []
+    for i in range(len(factors)):
+        reduced = factors[:i] + factors[i + 1:]
+        variables, constraints = compile_z3(mentions, pool, domains, reduced)
+        if not is_entailed(query_idx, gold, variables, constraints):
+            necessary.append(i)
+    return necessary
+
+
+def minimal_support(query_idx, gold, mentions, pool, domains, factors):
+    """Version-one support certificate: individually necessary factors."""
+    return necessary_constraints(query_idx, gold, mentions, pool, domains,
+                                 factors)
+
+
+@dataclass
+class CoreferenceCSPConfig(Config):
+    n_entities: int = 6
+    n_same_gender: int = 4
+    n_sentences: int = 6
+    target_depth: int = 3
+    min_query_domain: int = 2
+    candidate_width: int = 2
+    p_name: float = 0.15
+    p_partial_desc: float = 0.45
+    p_pronoun: float = 0.40
+    n_distractor_sentences: int = 2
+    antecedent_window: int = 1
+    balanced_generation: bool = False
+    balance_batch_size: int = 64
+    oversample: int = 12
+    shortcut_eps: float = 0.10
+    shortcut_min_n: int = 20
+    max_attempts: int = 1000
+
+    def apply_difficulty(self, level):
+        self.apply_depth_difficulty(level)
+
+    def apply_depth_difficulty(self, level):
+        self.target_depth += level
+        self.n_sentences += level
+
+    def apply_width_difficulty(self, level):
+        self.n_entities += level
+        self.n_same_gender += level
+        self.candidate_width += level
+
+    def apply_noise_difficulty(self, level):
+        self.n_distractor_sentences += level
+
+
+class CoreferenceCSP(Task):
+    summary = "Resolve globally entailed coreferences at a certified propagation depth."
+    config_cls = CoreferenceCSPConfig
+
+    def __init__(self, config=None):
+        super().__init__(config=config or CoreferenceCSPConfig())
+        self._balanced_buffer = []
+
+    def _sample_seed(self):
+        cfg = self.config
+        if cfg.target_depth < 1:
+            raise ValueError("target_depth must be at least 1")
+        if cfg.antecedent_window != 1:
+            raise ValueError("Only previous-sentence anaphora is supported")
+        width = max(2, cfg.candidate_width, cfg.n_same_gender)
+        if width > len(NAMES_M):
+            raise ValueError("n_same_gender/candidate_width exceeds the name pool")
+        n = max(cfg.n_entities, width + 2)
+        gender = random.choice(('m', 'f'))
+        names = random.sample(NAMES_M if gender == 'm' else NAMES_F, width)
+        candidates = [
+            _Entity(i, name, gender, 'doctor',
+                    tuple(group[(i >> bit) & 1]
+                          for bit, group in enumerate(ATTR_GROUPS)))
+            for i, name in enumerate(names)
+        ]
+        other_names = random.sample(NAMES_F if gender == 'm' else NAMES_M,
+                                    n - width)
+        others = [
+            _Entity(width + i, name, 'f' if gender == 'm' else 'm',
+                    ROLES[(i + 1) % len(ROLES)],
+                    tuple(group[i % 2] for group in ATTR_GROUPS[:2]))
+            for i, name in enumerate(other_names)
+        ]
+        pool = candidates + others
+        gold, _ = random.sample(candidates, 2)
+        blocker = random.choice(others)
+        return CSPSeed(pool, [], [], -1, gold.eid), gold, blocker
+
+    def _realize_seed(self, sampled):
+        seed, gold, blocker = sampled
+        lines, mentions = [], []
+        order = list(seed.pool)
+        random.shuffle(order)
+        for i in range(0, len(order), 2):
+            pair = order[i:i + 2]
+            if len(pair) == 1:
+                pair.append(random.choice(order[:i]))
+            _add_event(lines, mentions,
+                       _mention(pair[0], _indef(pair[0]), INTRO),
+                       _mention(pair[1], _indef(pair[1]), INTRO))
+
+        # A narrow description anchors the tree. Each following pronoun has a
+        # broad same-gender domain and adds exactly one synchronous GAC round;
+        # the opposite-gender object cannot be its antecedent.
+        subject, _ = _add_event(
+            lines, mentions,
+            _mention(gold, 'the ' + ' '.join((*gold.attrs, gold.role)), DESC),
+            _mention(blocker, blocker.name, NAME))
+        query = subject
+        for _ in range(self.config.target_depth):
+            query, _ = _add_event(
+                lines, mentions,
+                _mention(gold, PRON[gold.gender][0], PRONOUN),
+                _mention(blocker, blocker.name, NAME))
+        seed.query_idx = query['idx']
+        distractors = [entity for entity in seed.pool
+                       if entity not in (gold, blocker)]
+        for _ in range(self.config.n_distractor_sentences):
+            a, b = random.sample(distractors, 2)
+            _add_event(lines, mentions, _mention(a, a.name, NAME),
+                       _mention(b, b.name, NAME))
+        return seed, lines, mentions
+
+    def _validate_candidate(self, seed, lines, mentions, domains, factors):
+        query_idx = seed.query_idx
+        if len(domains[query_idx]) < self.config.min_query_domain:
+            return None
+        variables, constraints = compile_z3(mentions, seed.pool, domains, factors)
+        gold = entailed_value(variables[query_idx], constraints,
+                              domains[query_idx])
+        if gold != seed.intended_gold:
+            return None
+        trace = propagation_trace(query_idx, domains, factors)
+        depth = propagation_depth(query_idx, domains, factors)
+        if depth != self.config.target_depth or trace is None:
+            return None
+        if len(trace[depth - 1][query_idx]) <= 1 or len(trace[depth][query_idx]) != 1:
+            return None
+        necessary = minimal_support(query_idx, gold, mentions, seed.pool,
+                                    domains, factors)
+        query = mentions[query_idx]
+        audit_domains = lambda item: {str(idx): sorted(values)
+                                      for idx, values in item.items()}
+        metadata = edict({
+            'sentences': '\n'.join(lines), 'q': query, 'mentions': mentions,
+            'pool': seed.pool, 'propagation_depth': depth, 'factors': factors,
+            'initial_domains': audit_domains(domains),
+            'final_domains': audit_domains(trace[-1]),
+            'propagation_trace': [audit_domains(item) for item in trace],
+            'necessary_factor_indices': necessary,
+            'necessary_sentence_indices': sorted({factors[i].sentence
+                                                  for i in necessary}),
+            'initial_query_domain_size': len(domains[query_idx]),
+            'final_query_domain_size': len(trace[-1][query_idx]),
+            'identity_required_for_answer': True, 'z3_entailed': True,
+            'q_sentence': query['line_idx'] + 1,
+            'q_position': query['pos'], 'q_expression': query['surface'],
+            'answer_eid': gold,
+            'realized_distractor_count': self.config.n_distractor_sentences,
+        })
+        # EasyDict recursively converts mappings and rejects integer keys.
+        # Preserve the natural mention-indexed domain representation verbatim.
+        return Entry(metadata=metadata,
+                     answer=next(e.name for e in seed.pool if e.eid == gold))
+
+    def generate_raw_candidate(self):
+        for _ in range(self.config.max_attempts):
+            seed, lines, mentions = self._realize_seed(self._sample_seed())
+            domains = initial_domains(mentions, seed.pool)
+            if any(not values for values in domains.values()):
+                continue
+            factors = compile_factors(mentions)
+            candidate = self._validate_candidate(seed, lines, mentions,
+                                                 domains, factors)
+            if candidate is not None:
+                return edict({'problem': candidate, 'q': candidate.metadata.q,
+                              'mentions': mentions, 'pool': seed.pool,
+                              'propagation_depth': self.config.target_depth})
+        raise RuntimeError("Could not generate a valid CSP coreference problem")
+
+    def generate_entry(self):
+        return self.generate_raw_candidate()['problem']
+
+    def render_prompt(self, metadata):
+        return (
+            "Interpret all expressions jointly.\n\n"
+            "- A name refers to the named person.\n"
+            "- A description may refer to any previously introduced person matching all of its words.\n"
+            "- A pronoun refers to a gender-compatible participant of the previous sentence.\n"
+            "- The subject and object of one sentence are different people.\n"
+            "- Later sentences may disambiguate expressions in earlier sentences.\n\n"
+            f"{metadata['sentences']}\n\n"
+            f"In sentence {metadata['q_sentence']}, who does the "
+            f"{metadata['q_position']} expression '{metadata['q_expression']}' refer to?\n"
+            "The answer is one name."
+        )
+
+    score_answer = Coreference.score_answer

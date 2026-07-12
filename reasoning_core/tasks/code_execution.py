@@ -7,7 +7,6 @@ from reasoning_core.template import Task, DevTask, Entry, Config, edict, stochas
 from gramforge import generate
 from gramforge.grammars import mesopy_grammar
 
-
 @dataclass
 class MesopyCodeCfg(Config):
     difficulty: float = 0.0
@@ -23,9 +22,6 @@ class MesopyCodeCfg(Config):
     shortcut_prob: float = 0.08
     trivial_accept_prob: float = 0.05
     trivial_probes: int = 3
-    runnable_prob: float = 0.25
-    syntax_error_prob: float = 0.25
-    runtime_mutation_prob: float = 0.60
 
     def apply_difficulty(self, level):
         self.difficulty += level
@@ -119,7 +115,7 @@ def kill(p):
             p.join()
 
 
-def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, batch=False):
+def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, batch=False, reports=False):
     out, err = CapIO(), CapIO()
     ns = {"__builtins__": __builtins__}
     steps, t0 = 0, time.perf_counter()
@@ -149,13 +145,23 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, ba
             values = []
             for a in args_list or [args]:
                 steps = 0
-                sys.settrace(trace)
+                if not reports:
+                    sys.settrace(trace)
                 try:
-                    values.append(repr(ns["endpoint"](*a))[:500])
+                    value = repr(ns["endpoint"](*a))[:500]
+                    values.append(RunReport(ok=True, value=value, args=a) if reports else value)
+                except StepLimit:
+                    if not reports:
+                        raise
+                    values.append(RunReport(error="TimeoutError", args=a, steps=steps))
+                except Exception as e:
+                    if not reports:
+                        raise
+                    values.append(RunReport(error=type(e).__name__, args=a, steps=steps))
                 finally:
                     sys.settrace(None)
 
-        r = RunReport(
+        r = values if reports else RunReport(
             True,
             values if args_list else values[0],
             None,
@@ -199,10 +205,10 @@ def _worker(send, code, magnitude, recursionlimit, max_steps, call_args=None, ba
     send.close()
 
 
-def run_code(code, cfg, recursionlimit=80, call_args=None, batch=False):
+def run_code(code, cfg, recursionlimit=80, call_args=None, batch=False, reports=False):
     ctx = mp.get_context("fork")
     recv, send = ctx.Pipe(duplex=False)
-    p = ctx.Process(target=_worker, args=(send, code, cfg.magnitude, recursionlimit, cfg.max_steps, call_args, batch))
+    p = ctx.Process(target=_worker, args=(send, code, cfg.magnitude, recursionlimit, cfg.max_steps, call_args, batch, reports))
     p.start()
     send.close()
     timeout = min(4.0, cfg.timeout + 0.01 * len(call_args)) if batch else cfg.timeout
@@ -215,7 +221,7 @@ def run_code(code, cfg, recursionlimit=80, call_args=None, batch=False):
             return r
 
         kill(p)
-        return RunReport(error="TimeoutError", args=call_args, elapsed=timeout)
+        return [] if reports else RunReport(error="TimeoutError", args=call_args, elapsed=timeout)
 
     except KeyboardInterrupt:
         kill(p)
@@ -249,138 +255,145 @@ def make_code(cfg, failure_rate, profile="full"):
     return generate(g, depth=cfg.max_depth, min_depth=cfg.min_depth) @ "py"
 
 
-def source_endpoint_args(code, cfg):
+def endpoint_probes(code, cfg, limit=24):
     try:
         tree = ast.parse(code)
-    except SyntaxError:
+        fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "endpoint")
+    except (SyntaxError, StopIteration):
+        return []
+    n = max(3, int(cfg.magnitude))
+    values = {
+        "int": list(range(-n, n + 1)),
+        "str": ["", "a", "ab", "xyz", "0"],
+        "list": [[], [0], [1], [-1, 1], [0, 2, -2]],
+    }
+    pools = [values.get(getattr(arg.annotation, "id", None), [None]) for arg in fn.args.args]
+    probes = [list(xs) for xs in product(*pools)]
+    random.shuffle(probes)
+    return probes[:limit]
+
+
+def organic_mutations(code):
+    """Small mutations of Mesopy statements; callers still determine the label."""
+    tree, lines = ast.parse(code), code.splitlines()
+    arities = {
+        n.name: len(n.args.args) for n in tree.body if isinstance(n, ast.FunctionDef)
+    }
+    parents = {child: parent for parent in ast.walk(tree) for child in ast.iter_child_nodes(parent)}
+
+    def ancestor(node, kind):
+        while node in parents:
+            node = parents[node]
+            if isinstance(node, kind):
+                return node
         return None
-    for node in tree.body:
-        if isinstance(node, ast.FunctionDef) and node.name == "endpoint":
-            args = []
-            for arg in node.args.args:
-                name = getattr(arg.annotation, "id", None)
-                args.append(fake({"int": int, "str": str, "list": list}.get(name), cfg.magnitude))
-            return args
-    return None
 
-
-def subtle_syntax_error(code):
-    lines = code.splitlines()
+    scopes = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name != "endpoint"]
+    all_locals = {
+        n.name: {a.arg for a in n.args.args} | {
+            x.id for x in ast.walk(n) if isinstance(x, ast.Name) and isinstance(x.ctx, ast.Store)
+        }
+        for n in scopes
+    }
     edits = []
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped.startswith("def ") and "," in line:
-            edits.append((i, line.replace(",", "", 1)))
-        if stripped.startswith("def ") and re.search(r"\w+: \w+", line):
-            edits.append((i, re.sub(r"(\w+): (\w+)", r"\1 \2", line, count=1)))
-        if re.search(r"\w+\([^()\n]*,\s*[^()\n]*\)", line):
-            edits.append((i, line.replace(",", "", 1)))
-        if stripped.endswith(":") and stripped.split(None, 1)[0] in {"def", "if", "elif", "else", "for", "while", "try", "except"}:
-            edits.append((i, line[:-1]))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in arities:
+            arity = arities[node.func.id]
+            if len(node.args) == arity and ancestor(node, ast.If):
+                args = node.args[:-1] if node.args else [ast.Constant(0)]
+                replacement = f"{node.func.id}({', '.join(map(ast.unparse, args))})"
+                edits.append((node.lineno - 1, node.col_offset, node.end_col_offset, replacement, "arity"))
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Div, ast.FloorDiv, ast.Mod)):
+            fn = ancestor(node, ast.FunctionDef)
+            used = {x.id for x in ast.walk(node.left) if isinstance(x, ast.Name)}
+            names = list(all_locals.get(getattr(fn, "name", ""), ()) - used)
+            if names:
+                edits.append((node.right.lineno - 1, node.right.col_offset, node.right.end_col_offset, random.choice(names), "denominator"))
+        elif (
+            isinstance(node, ast.BinOp)
+            and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult))
+            and any(isinstance(x, ast.Name) for x in ast.walk(node.right))
+            and not (
+                {x.id for x in ast.walk(node.left) if isinstance(x, ast.Name)}
+                & {x.id for x in ast.walk(node.right) if isinstance(x, ast.Name)}
+            )
+        ):
+            between = lines[node.lineno - 1][node.left.end_col_offset:node.right.col_offset]
+            match = re.search(r"[+*-]", between)
+            if match:
+                start = node.left.end_col_offset + match.start()
+                edits.append((node.lineno - 1, start, start + 1, "//", "operator"))
+
+    for fn in scopes:
+        foreign = set().union(*(v for k, v in all_locals.items() if k != fn.name)) - all_locals[fn.name]
+        param_types = {a.arg: getattr(a.annotation, "id", None) for a in fn.args.args}
+        ints = [name for name, kind in param_types.items() if kind == "int"]
+        lists = [name for name, kind in param_types.items() if kind == "list"]
+        strings = [name for name, kind in param_types.items() if kind == "str"]
+        seqs = lists + strings
+        for node in ast.walk(fn):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "len"
+                and ints and seqs
+            ):
+                seq, index = random.choice(seqs), random.choice(ints)
+                edits.append((node.lineno - 1, node.col_offset, node.end_col_offset, f"{seq}[{index}]", "index"))
+                if lists:
+                    edits.append((node.lineno - 1, node.col_offset, node.end_col_offset, f"{random.choice(lists)}.index({index})", "lookup"))
+                if len(strings) >= 2:
+                    left, right = random.sample(strings, 2)
+                    edits.append((node.lineno - 1, node.col_offset, node.end_col_offset, f"{left}.index({right})", "lookup"))
+            if not (isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load) and ancestor(node, ast.If)):
+                continue
+            if node.id in all_locals[fn.name] and foreign:
+                edits.append((node.lineno - 1, node.col_offset, node.end_col_offset, random.choice(tuple(foreign)), "name"))
+            alternatives = [
+                name for name, kind in param_types.items()
+                if kind != param_types.get(node.id) and kind is not None
+            ]
+            if alternatives:
+                edits.append((node.lineno - 1, node.col_offset, node.end_col_offset, random.choice(alternatives), "type"))
+
     random.shuffle(edits)
-    for i, replacement in edits:
+    for line_no, start, end, replacement, kind in edits:
         candidate = lines[:]
-        candidate[i] = replacement
+        candidate[line_no] = candidate[line_no][:start] + replacement + candidate[line_no][end:]
         candidate = "\n".join(candidate) + "\n"
         try:
             compile(candidate, "<mesopy>", "exec")
         except SyntaxError:
-            return candidate
-    return None
-
-
-def sample_syntax_error_problem(cfg):
-    for _ in range(max(1, cfg.max_attempts // 3)):
-        code = make_code(cfg, failure_rate=0.0, profile="runnability")
-        args = source_endpoint_args(code, cfg)
-        if args is None:
             continue
-        broken = subtle_syntax_error(code)
-        if broken is not None:
-            return broken, RunReport(False, None, "SyntaxError", args)
-    raise RuntimeError("Failed to generate syntax error task")
+        yield kind, candidate
 
 
-def function_arities(code):
-    try:
-        tree = ast.parse(code)
-    except SyntaxError:
-        return {}
-    return {
-        node.name: len(node.args.args)
-        for node in tree.body
-        if isinstance(node, ast.FunctionDef)
-    }
-
-
-def function_name_scopes(code):
-    try:
-        tree = ast.parse(code)
-    except SyntaxError:
-        return []
-    scopes = []
-    for node in tree.body:
-        if not isinstance(node, ast.FunctionDef):
+def runnability_pair(cfg):
+    """Find two calls with different outcomes in an organically generated program."""
+    for _ in range(max(1, cfg.max_attempts // 2)):
+        base = make_code(cfg, failure_rate=random.uniform(0.05, 0.35), profile="runnability")
+        probes = endpoint_probes(base, cfg)
+        if len(probes) < 2:
             continue
-        names = {arg.arg for arg in node.args.args}
-        names.update(
-            child.id
-            for child in ast.walk(node)
-            if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store)
-        )
-        scopes.append((node.name, node.lineno, getattr(node, "end_lineno", node.lineno), names))
-    return scopes
-
-
-def runtime_error_mutations(code):
-    lines = code.splitlines()
-    edits = []
-    arities = function_arities(code)
-    scopes = function_name_scopes(code)
-    all_names = set().union(*(names for _, _, _, names in scopes)) if scopes else set()
-    call_re = re.compile(r"\b(f\d+|endpoint)\(([^()\n]*)\)")
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped.startswith("def "):
-            continue
-        for m in call_re.finditer(line):
-            args = [a.strip() for a in m.group(2).split(",") if a.strip()]
-            if len(args) == arities.get(m.group(1), 0) and len(args) >= 2:
-                repl = f"{m.group(1)}({', '.join(args[:-1])})"
-                edits.append((i, line[: m.start()] + repl + line[m.end() :]))
-        scope = next((s for s in scopes if s[1] <= i + 1 <= s[2]), None)
-        if scope and scope[0] != "endpoint" and any(stripped.startswith(prefix) for prefix in ("return ", "if ", "elif ", "print(")):
-            local_names = scope[3]
-            foreign_names = sorted(all_names - local_names)
-            ids = [
-                name for name in re.findall(r"\b[a-z]\w*\b", line)
-                if name not in {"if", "elif", "else", "return", "print", "len", "True", "False"}
-                and not re.fullmatch(r"f\d+", name)
-                and name in local_names
-            ]
-            if ids and foreign_names:
-                name = random.choice(ids)
-                replacement = random.choice(foreign_names)
-                edits.append((i, re.sub(rf"\b{re.escape(name)}\b", replacement, line, count=1)))
-        if re.search(r"(%|//|/)\s*[1-9]\d*", line):
-            edits.append((i, re.sub(r"(%|//|/)\s*[1-9]\d*", lambda m: m.group(1) + " 0", line, count=1)))
-    random.shuffle(edits)
-    for i, replacement in edits:
-        candidate = lines[:]
-        candidate[i] = replacement
-        yield "\n".join(candidate) + "\n"
-
-
-def sample_mutated_runtime_error_problem(cfg):
-    for _ in range(max(1, cfg.max_attempts // 3)):
-        code = make_code(cfg, failure_rate=0.0, profile="runnability")
-        if source_endpoint_args(code, cfg) is None:
-            continue
-        for candidate in runtime_error_mutations(code):
-            r = run_code(candidate, cfg)
-            if r.error and r.args is not None and r.error != "TimeoutError":
-                return candidate, r
-    raise RuntimeError("Failed to generate mutated runtime error task")
+        mutations = list(organic_mutations(base))
+        first_by_kind = {kind: candidate for kind, candidate in mutations}
+        perturbed = list(first_by_kind.items()) + mutations[:4]
+        random.shuffle(perturbed)
+        perturbed.sort(key=lambda item: item[0] in {"operator", "denominator"})
+        candidates = [("organic", base)] + perturbed
+        for kind, code in candidates:
+            reports = run_code(code, cfg, call_args=probes, batch=True, reports=True)
+            good = next((r for r in reports if r.ok), None)
+            bad = next((r for r in reports if r.error), None)
+            if good and bad:
+                verified = [run_code(code, cfg, call_args=r.args) for r in (bad, good)]
+                if (
+                    verified[0].error == bad.error
+                    and verified[1].ok
+                    and min(r.steps for r in verified) >= min(6, 4 + int(cfg.difficulty) // 3)
+                ):
+                    return kind, ((code, verified[0]), (code, verified[1]))
+    raise RuntimeError("Failed to generate a mixed-outcome Mesopy program")
 
 
 def meta(code, r):
@@ -396,20 +409,7 @@ def meta(code, r):
     )
 
 
-def sample_problem(cfg, want_error, failure_rate, profile="full", syntax_errors=False):
-    if want_error and syntax_errors:
-        roll = random.random()
-        if roll < cfg.syntax_error_prob:
-            try:
-                return sample_syntax_error_problem(cfg)
-            except RuntimeError:
-                pass
-        elif roll < cfg.syntax_error_prob + cfg.runtime_mutation_prob:
-            try:
-                return sample_mutated_runtime_error_problem(cfg)
-            except RuntimeError:
-                pass
-
+def sample_problem(cfg, want_error, failure_rate, profile="full"):
     for _ in range(cfg.max_attempts):
         code = make_code(cfg, failure_rate, profile)
         if "def endpoint" not in code:
@@ -441,18 +441,22 @@ class CodeRunnability(Task):
     summary = "Predict if a given Python code snippet runs successfully or raises an exception."
     def __init__(self, config=None):
         super().__init__(config=config or MesopyCodeCfg())
-        self.balancing_key_ratio = 1 / 5
+        self._pending_pair = []
 
     def generate_entry(self):
-        want_error = random.random() >= self.config.runnable_prob
-        code, r = sample_problem(
-            self.config,
-            want_error=want_error,
-            failure_rate=0.65 if want_error else 0.05,
-            profile="runnability",
-            syntax_errors=True,
-        )
-        return Entry(metadata=meta(code, r), answer=r.error or "OK")
+        if not self._pending_pair:
+            family, pair = runnability_pair(self.config)
+            self._pending_pair = list(pair)
+            random.shuffle(self._pending_pair)
+            for code, report in self._pending_pair:
+                report.family = family
+        code, r = self._pending_pair.pop()
+        metadata = meta(code, r)
+        metadata.family = r.family
+        return Entry(metadata=metadata, answer=r.error or "OK")
+
+    def on_config_level_change(self):
+        self._pending_pair.clear()
 
     def render_prompt(self, metadata):
         return (
@@ -467,7 +471,7 @@ class CodeRunnability(Task):
         return float(str(answer).strip() == str(reference).strip())
 
     def balancing_key(self, problem):
-        return str(problem.answer)
+        return None  # Pairing already guarantees exact OK/error balance.
 
 
 class CodeExecution(Task):

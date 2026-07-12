@@ -1754,8 +1754,8 @@ def make_direct_abduction_case(cfg):
 
 class MultistepNLI(Task):
     summary = "Multi-hop natural language inference over chained logic facts and rules."
-    def __init__(self, config=MultistepNLIConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MultistepNLIConfig())
         self.balancing_key_ratio = 1 / 3
         self._case_state = {}
 
@@ -1785,8 +1785,8 @@ class MultistepNLI(Task):
 class DefeasibleNLI(Task):
     summary = "NLI using defeasible logic rules and negation as failure."
 
-    def __init__(self, config=DefeasibleNLIConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or DefeasibleNLIConfig())
         self.balancing_key_ratio = 1 / 3
         self._case_state = {}
 
@@ -1801,10 +1801,7 @@ class DefeasibleNLI(Task):
 
     def render_prompt(self, meta):
         return (
-            f"{render_payload(meta.payload)}\n\n"
-            "Some rules use phrases like 'unless X can be shown'. This means the rule applies only when "
-            "that exception is not derivable from the premise. This is different from a classical "
-            "'is not' fact.\n"
+            f"{render_payload(meta.payload)}\n"
             "Is the hypothesis true given the premise? The answer is Yes, No, or Maybe."
         )
 
@@ -1816,8 +1813,8 @@ class DefeasibleNLI(Task):
 
 class MultistepEvidenceRetrieval(Task):
     summary = "Retrieve the specific premise indexes required to prove a logical hypothesis."
-    def __init__(self, config=MultistepNLIConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MultistepNLIConfig())
         self._case_state = {}
 
     def generate_entry(self):
@@ -1854,8 +1851,8 @@ class MultistepEvidenceRetrieval(Task):
 
 class MultistepAbduction(Task):
     summary = "Find the missing facts from candidates to satisfy a target hypothesis."
-    def __init__(self, config=MultistepAbductionConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MultistepAbductionConfig())
         self._case_state = {}
 
     def generate_entry(self):
@@ -1894,8 +1891,8 @@ class MultistepAbduction(Task):
 
 class LogicQA(Task):
     summary = "Answer multi-step logical reasoning queries over rule-based theories."
-    def __init__(self, config=LogicQAConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or LogicQAConfig())
         self.balancing_key_ratio = 1 / 3
 
     def generate_entry(self):

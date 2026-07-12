@@ -61,8 +61,8 @@ class ReferenceTracking(Task):
     """
     summary = "Track locations of balls in boxes across moves, swaps, and coreferences."
 
-    def __init__(self, config=ReferenceTrackingConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or ReferenceTrackingConfig())
 
 
 

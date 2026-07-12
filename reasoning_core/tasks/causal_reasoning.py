@@ -366,9 +366,9 @@ class Rung12Config(Config):
 
 class Rung(ABC):
     """An abstract base class for Rung tasks of any degree."""
-    def __init__(self, config=Rung12Config(), bn: DiscreteBayesianNetwork = None):
+    def __init__(self, config=None, bn: DiscreteBayesianNetwork = None):
         super().__init__()
-        self.config = config
+        self.config = config or Rung12Config()
         self.reason_graph = ReasoningGraph(bn=bn)
 
     @abstractmethod
@@ -461,8 +461,8 @@ class Rung(ABC):
 
 
 class BayesianAssociation(Rung, DevTask):
-    def __init__(self, config=Rung12Config()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or Rung12Config())
 
     def _generate_network(self,**kwargs):
         self.reason_graph.generate_new_graph(seed= self.config.seed,
@@ -492,8 +492,8 @@ class BayesianAssociation(Rung, DevTask):
 
 
 class BayesianIntervention(Rung, DevTask):
-    def __init__(self, config=Rung12Config()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or Rung12Config())
 
     def _generate_network(self,**kwargs):
         self.reason_graph.generate_new_graph(seed = self.config.seed,

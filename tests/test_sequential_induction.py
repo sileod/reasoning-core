@@ -8,6 +8,7 @@ from reasoning_core.tasks.sequential_induction import (
     candidate_index,
     identify_online,
     parse_formula,
+    poly_to_string,
     rollout_prefix,
 )
 
@@ -23,6 +24,12 @@ def test_candidate_bank_uses_ast_shortlex_canonical_form():
     bank = candidate_bank(0, max_cost=3)
 
     assert bank[candidate_index(0, max_cost=3)[polynomial]].syntax == "(1 + n)"
+
+
+def test_polynomial_answer_is_compact_and_canonical():
+    polynomial = parse_formula("((8 + 9) * n) + -9", recurrence_depth=0)
+
+    assert poly_to_string(polynomial) == "17 * n - 9"
 
 
 def test_identification_accepts_unique_minimum_cost_polynomial():
@@ -61,3 +68,4 @@ def test_generated_entry_is_json_serializable_and_self_scoring(tmp_path):
 
     json.dumps(dict(entry.metadata))
     assert task.score_answer(entry.answer, entry) == 1.0
+    assert "Initial terms:" not in task.render_prompt(entry.metadata)

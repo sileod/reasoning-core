@@ -632,10 +632,10 @@ def compile(problem):
 
 
 #@timeout_decorator.timeout(10)
-def solve(problem, planner="pyperplan-opt", lexicographic=True):
+def solve(problem, planner="pyperplan-opt", rank_tiebreak=True):
     if "pyperplan" in planner:
         problem=compile(problem)    
-    if lexicographic:
+    if rank_tiebreak:
         costs = {a: 10000+i for i,a in enumerate(problem.actions)}
         problem.add_quality_metric(up.model.metrics.MinimizeActionCosts(costs))
 
@@ -782,8 +782,8 @@ class Planning(Task):
     summary = "Generate action plans to achieve goals in domains like Blocksworld."
     task_name = "planning" 
 
-    def __init__(self, config=PlanningConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or PlanningConfig())
         shutup()
 
     def generate_entry(self):

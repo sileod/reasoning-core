@@ -54,8 +54,8 @@ def _verify_system(equations: List[sp.Eq], variables: List[sp.Symbol]) -> Dict[s
 
 class EquationSystem(Task):
     summary = "Solve systems of linear equations or detect inconsistent/underdetermined systems."
-    def __init__(self, config=EquationSystemCfg()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or EquationSystemCfg())
 
     def _generate_base_system(self) -> Tuple[List[sp.Eq], List[sp.Symbol], Dict[sp.Symbol, int]]:
         """Generates a unique system by construction."""
