@@ -11,6 +11,7 @@ from reasoning_core.tasks.belief_tracking import (
     all_chains,
     _event_from_metadata,
     _event_to_metadata,
+    _make_visible,
     _spec_from_metadata,
     _spec_to_metadata,
     full_chain_visibility_interventions,
@@ -89,7 +90,12 @@ def test_grounded_public_private_and_one_way_scenes_derive_views():
     one_way = materialize([one_way_spec], INIT, AGENTS, 2)[0]
     assert_exact_views(one_way_spec, one_way, 2)
     assert replay([one_way], INIT, ("Carol", "Bob"))[FACT] == "drawer"
+    assert replay([one_way], INIT, ("Bob", "Alice"))[FACT] == "drawer"
+    assert replay([one_way], INIT, ("Carol", "Alice"))[FACT] == "drawer"
     assert replay([one_way], INIT, ("Bob", "Carol"))[FACT] == "box"
+
+    one_way_depth_three = materialize([one_way_spec], INIT, AGENTS, 3)[0]
+    assert replay([one_way_depth_three], INIT, ("Carol", "Bob", "Alice"))[FACT] == "drawer"
 
 
 def test_event_views_are_deeply_immutable():
@@ -205,6 +211,28 @@ def test_surface_form_is_intent_independent_and_unambiguous():
     assert " they " not in f" {text} "
 
 
+def test_reports_state_their_local_semantics_without_global_rules():
+    nested = report("Bob", "Carol", ("Bob", "Alice"))
+    nested_event = materialize([nested], INIT, AGENTS, 3)[0]
+    nested_text = BeliefTracking()._event_text(nested, nested_event)
+    assert '"I think Alice thinks the key is in the box"' in nested_text
+
+    unconfirmed = report("Bob", "Carol", ("Bob",), scene="unconfirmed_message")
+    unconfirmed_event = materialize([unconfirmed], INIT, AGENTS, 2)[0]
+    unconfirmed_text = BeliefTracking()._event_text(unconfirmed, unconfirmed_event)
+    assert "Carol receives it, but Bob receives no delivery confirmation" in unconfirmed_text
+
+    direct = EventSpec(
+        kind="report", actor="Bob", target="Carol", policy="honest",
+        report_type="direct_claim", scene="face_to_face", object="key",
+        content_source_chain=("Bob",), asserted_proposition_chain=(),
+        attribution_update=False, adoption_policy="accept", surface_form="indirect_report",
+    )
+    direct_event = materialize([direct], INIT, AGENTS, 2)[0]
+    direct_text = BeliefTracking()._event_text(direct, direct_event)
+    assert "what Bob believes about where the key is" in direct_text
+
+
 def test_every_relay_is_causally_critical_after_rematerialization():
     specs = relay_specs()
     chain = ("Dave", "Alice", "Carol", "Bob")
@@ -241,6 +269,13 @@ def test_awareness_intervention_retains_the_event_and_actual_observer():
     assert replay(trace, INIT, ("Bob",))[FACT] == "tin"
     assert full_chain_visibility_interventions(specs, INIT, AGENTS, 4, chain, FACT, [4]) == [4]
 
+    original = specs[4]
+    made_visible = _make_visible(original, chain[-1], chain)
+    assert made_visible.scene == original.scene
+    assert made_visible.observers == original.observers
+    assert (chain[-1],) in made_visible.awareness_chains
+    assert chain in made_visible.awareness_chains
+
 
 def test_event_and_spec_serialization_round_trip():
     spec = report("Bob", "Carol", ("Bob",))
@@ -260,7 +295,9 @@ def test_generated_example_has_grounded_certificates_and_no_meta_language():
     assert len(entry.metadata.critical_events) == entry.metadata.knobs["critical_event_count"]
     assert entry.metadata.twin_answer != entry.answer
     assert "truthfully" not in prompt and "falsely" not in prompt
-    assert "starting locations are common knowledge" in prompt
+    assert prompt.startswith("initially, everyone knows that")
+    assert "starting locations are common knowledge" not in prompt
+    assert "unseen events and undelivered messages" not in prompt
     assert entry.metadata.requested_target_conflicts == len(
         entry.metadata.certified_target_conflicts
     )

@@ -150,6 +150,15 @@ def test_logic_qa_generates():
     assert seen
 
 
+def test_logic_qa_default_queries_have_a_multistep_nonempty_answer():
+    task = get_task("logic_qa")
+    for _ in range(8):
+        ex = task.generate_example(max_tokens=0)
+        assert ex.answer not in {"0", "none"}
+        assert ex.metadata.hard_answer_depths
+        assert min(ex.metadata.hard_answer_depths) >= 2
+
+
 def test_binary_logic_qa_questions_are_proof_oriented_and_grammatical():
     assert _binary_query("aunt_or_uncle", "alice", False, "kinship") == (
         "Which other entities can alice be shown to be an aunt or uncle of?"

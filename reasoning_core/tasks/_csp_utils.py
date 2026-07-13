@@ -11,7 +11,7 @@ from __future__ import annotations
 
 
 from dataclasses import dataclass
-from functools import reduce
+from functools import lru_cache, reduce
 from math import gcd
 from typing import Any, Mapping, Sequence
 
@@ -197,7 +197,11 @@ class Mod(Formula):
 class AllDifferent(Formula):
     vars: tuple[Var, ...]
 
-    def __init__(self, vars): object.__setattr__(self, "vars", tuple(sorted(set(vars), key=_vkey)))
+    def __init__(self, vars):
+        values = tuple(vars)
+        if len(set(values)) != len(values):
+            raise ValueError("AllDifferent variables must be distinct")
+        object.__setattr__(self, "vars", tuple(sorted(values, key=_vkey)))
     def to_z3(self, ctx): return z3.Distinct(*[ctx[v.name] for v in self.vars])
     def canonical(self): return ("alldifferent", tuple(map(_vkey, self.vars)))
     def variables(self): return frozenset(self.vars)
@@ -234,9 +238,23 @@ class Or(_Many):
     def to_z3(self, ctx): return z3.Or(*[f.to_z3(ctx) for f in self.formulas])
 
 
-class Xor(_Many):
+@dataclass(frozen=True)
+class Xor(Formula):
+    """Exactly one child holds; nesting and repeated children are significant."""
+
+    formulas: tuple[Formula, ...]
     tag = "xor"
-    def to_z3(self, ctx): return z3.PbEq([(f.to_z3(ctx), 1) for f in self.formulas], 1)
+
+    def __init__(self, formulas):
+        values = tuple(sorted(formulas, key=lambda f: repr(f.canonical())))
+        object.__setattr__(self, "formulas", values)
+
+    def to_z3(self, ctx):
+        if not self.formulas: return z3.BoolVal(False)
+        return z3.PbEq([(f.to_z3(ctx), 1) for f in self.formulas], 1)
+    def canonical(self): return (self.tag, tuple(f.canonical() for f in self.formulas))
+    def variables(self): return frozenset().union(*(f.variables() for f in self.formulas))
+    def complexity(self): return 1 + sum(f.complexity() for f in self.formulas)
 
 
 @dataclass(frozen=True)
@@ -299,6 +317,14 @@ class CSPSolver:
             raise ValueError("variable names must be unique")
         self.base, self.clues = tuple(base), tuple(clues)
         self.ctx = {v.name: z3.Int(v.name) for v in self.variables}
+        self._sat_cache = {}
+        self._values_cache = {}
+        self._solutions_cache = {}
+        self._expression_cache = {}
+
+    @staticmethod
+    def _key(formulas):
+        return tuple(sorted((f.canonical() for f in formulas), key=repr))
 
     def solver(self, clues=None, extra=(), domains=None):
         solver = z3.Solver()
@@ -306,19 +332,30 @@ class CSPSolver:
             values = v.domain if domains is None else domains[v]
             solver.add(z3.Or(*[self.ctx[v.name] == x for x in values]))
         for formula in (*self.base, *(self.clues if clues is None else clues), *extra):
-            solver.add(formula.to_z3(self.ctx))
+            key = formula.canonical()
+            if key not in self._expression_cache:
+                self._expression_cache[key] = formula.to_z3(self.ctx)
+            solver.add(self._expression_cache[key])
         return solver
 
     def is_sat(self, clues=None, extra=()):
-        return self.solver(clues, extra).check() == z3.sat
+        active = self.clues if clues is None else clues
+        key = (self._key(active), self._key(extra))
+        if key not in self._sat_cache:
+            self._sat_cache[key] = self.solver(active, extra).check() == z3.sat
+        return self._sat_cache[key]
 
     def possible_values(self, var, clues=None, extra=()):
-        solver = self.solver(clues, extra)
+        active = self.clues if clues is None else clues
+        key = (var, self._key(active), self._key(extra))
+        if key in self._values_cache: return list(self._values_cache[key])
+        solver = self.solver(active, extra)
         out = []
         for value in var.domain:
             solver.push(); solver.add(self.ctx[var.name] == value)
             if solver.check() == z3.sat: out.append(value)
             solver.pop()
+        self._values_cache[key] = tuple(out)
         return out
 
     def unique_value(self, var, clues=None):
@@ -326,14 +363,23 @@ class CSPSolver:
         return values[0] if len(values) == 1 else None
 
     def solutions(self, clues=None, limit=None):
-        solver, out = self.solver(clues), []
+        active = self.clues if clues is None else clues
+        key = (self._key(active), limit)
+        if key in self._solutions_cache:
+            solutions, overflow = self._solutions_cache[key]
+            return solutions, overflow
+        solver, out = self.solver(active), []
         while solver.check() == z3.sat:
             model = solver.model()
             row = tuple(model.eval(self.ctx[v.name], model_completion=True).as_long() for v in self.variables)
             out.append(row)
-            if limit is not None and len(out) > limit: return None, True
+            if limit is not None and len(out) > limit:
+                self._solutions_cache[key] = (None, True)
+                return None, True
             solver.add(z3.Or(*[self.ctx[v.name] != x for v, x in zip(self.variables, row)]))
-        return sorted(out), False
+        result = (sorted(out), False)
+        self._solutions_cache[key] = result
+        return result
 
     def lex_solution(self, clues=None):
         optimizer = z3.Optimize(); optimizer.set(priority="lex")
@@ -447,9 +493,11 @@ import z3
 
 
 
-def _supported(formula, target, value, domains):
+@lru_cache(maxsize=100_000)
+def _supported_cached(formula, target, value, domain_items):
     """Whether a value has local support in one constraint (generalized arc consistency)."""
     variables = sorted(formula.variables(), key=lambda v: v.name)
+    domains = dict(domain_items)
     ctx = {v.name: z3.Int(v.name) for v in variables}
     expression = formula.to_z3(ctx)
     for values in product(*(domains[v] if v != target else (value,) for v in variables)):
@@ -457,6 +505,11 @@ def _supported(formula, target, value, domains):
         if z3.is_true(z3.simplify(substituted)):
             return True
     return False
+
+
+def _supported(formula, target, value, domains):
+    domain_items = tuple((v, tuple(domains[v])) for v in sorted(formula.variables(), key=_vkey))
+    return _supported_cached(formula, target, value, domain_items)
 
 
 def propagate(variables, formulas, max_rounds=32, initial_domains=None):
@@ -610,11 +663,24 @@ def analyze(solver: CSPSolver, clues, query, group_of=None, base_full_essential=
 def split_key(family, base, clues, query_type):
     """A name-invariant structural key suitable for leakage-resistant splits."""
     def skeleton(formula):
-        canonical = formula.canonical()
-        names = {v.name: f"v{i}" for i, v in enumerate(sorted(formula.variables(), key=lambda x: x.name))}
-        text = repr(canonical)
-        for old, new in sorted(names.items(), key=lambda p: -len(p[0])): text = text.replace(old, new)
-        return text
+        if isinstance(formula, Eq): return ("eq", formula.value)
+        if isinstance(formula, Ne): return ("ne", formula.value)
+        if isinstance(formula, In): return ("in", formula.values)
+        if isinstance(formula, (EqVar, NeVar, Lt)): return (operator_name(formula),)
+        if isinstance(formula, Distance): return ("distance", formula.k)
+        if isinstance(formula, Linear): return ("linear", formula.op, formula.rhs)
+        if isinstance(formula, Mod): return ("mod", formula.modulus, formula.remainder)
+        if isinstance(formula, AllDifferent): return ("alldifferent", len(formula.vars))
+        if isinstance(formula, Not): return ("not", skeleton(formula.formula))
+        if isinstance(formula, Implies):
+            return ("implies", skeleton(formula.a), skeleton(formula.b))
+        if isinstance(formula, (Or, Xor)):
+            return (operator_name(formula), tuple(sorted(map(skeleton, formula.formulas), key=repr)))
+        if isinstance(formula, (Exactly, AtMost)):
+            return (operator_name(formula), formula.k,
+                    tuple(sorted(map(skeleton, formula.formulas), key=repr)))
+        raise TypeError(type(formula).__name__)
+
     def roles(formula, prefix=""):
         if isinstance(formula, (Eq, Ne, In)): return [(formula.x, prefix + "subject")]
         if isinstance(formula, Lt): return [(formula.x, prefix + "left"), (formula.y, prefix + "right")]
@@ -628,17 +694,25 @@ def split_key(family, base, clues, query_type):
         if isinstance(formula, Implies):
             return roles(formula.a, prefix + "antecedent:") + roles(formula.b, prefix + "consequent:")
         if isinstance(formula, (Or, Xor, Exactly, AtMost)):
-            return [item for i, child in enumerate(formula.formulas) for item in roles(child, f"{prefix}arg{i}:")]
+            return [
+                item
+                for child in formula.formulas
+                for item in roles(
+                    child, f"{prefix}{operator_name(formula)}:child:{skeleton(child)!r}:"
+                )
+            ]
         return [(v, prefix + "member") for v in sorted(formula.variables(), key=_vkey)]
 
     import networkx as nx
     graph = nx.Graph()
     formulas = list(base) + list(clues)
     variables = sorted(set().union(*(f.variables() for f in formulas)), key=lambda v: v.name)
-    for i, var in enumerate(variables): graph.add_node(f"v{i}", label=f"var:{var.sort}:{len(var.domain)}")
+    for i, var in enumerate(variables):
+        graph.add_node(f"v{i}", label=f"var:{var.sort}:{var.domain!r}")
     indices = {v: i for i,v in enumerate(variables)}
     for i, formula in enumerate(formulas):
-        node = f"c{i}"; graph.add_node(node, label=f"constraint:{skeleton(formula)}")
+        source = "base" if i < len(base) else "clue"
+        node = f"c{i}"; graph.add_node(node, label=f"{source}:{skeleton(formula)!r}")
         for j, (var, role) in enumerate(roles(formula)):
             role_node = f"r{i}:{j}"
             graph.add_node(role_node, label=f"role:{role}")
@@ -646,8 +720,8 @@ def split_key(family, base, clues, query_type):
     incidence_hash = nx.weisfeiler_lehman_graph_hash(graph, node_attr="label")
     return {
         "family": family,
-        "base_constraint_skeleton": sorted(skeleton(x) for x in base),
-        "clue_formula_skeletons": sorted(skeleton(x) for x in clues),
+        "base_constraint_skeleton": sorted((repr(skeleton(x)) for x in base)),
+        "clue_formula_skeletons": sorted((repr(skeleton(x)) for x in clues)),
         "query_type": query_type,
         "incidence_graph": incidence_hash,
         "operator_histogram": dict(Counter(operator_name(x) for x in clues)),
@@ -854,7 +928,7 @@ def minimize(solver, pool, query, rng, n_orders=6):
 
 
 def select_instance(variables, base, pool, queries, rng, n_orders=6, family="numeric",
-                    difficulty=0, group_of=None):
+                    difficulty=0, group_of=None, target_constraints=None):
     """Mix globally unique systems with ambiguous systems having one forced value."""
     solver = CSPSolver(variables, base)
     preferred = {
@@ -881,6 +955,7 @@ def select_instance(variables, base, pool, queries, rng, n_orders=6, family="num
             work.extend((query, clues, objective.name) for clues in systems
                         if not solver.full_unique(clues))
     work.sort(key=lambda item: (
+        abs(len(item[1]) - target_constraints) if target_constraints else 0,
         -sum(operator_name(c) in preferred for c in item[1]),
         -len({operator_name(c) for c in item[1]}),
         sum(len(c.variables()) == 1 for c in item[1]),
@@ -894,6 +969,14 @@ def select_instance(variables, base, pool, queries, rng, n_orders=6, family="num
         seen.add(key)
         if len(seen) > (6 if difficulty >= 1 else 3): break
         if _query_leaks(solver, clues, query, difficulty): continue
+        if len({operator_name(c) for c in clues}) < 2: continue
+        if len({v for c in clues for v in c.variables()}) < min(4, len(variables)): continue
+        values = solver.possible_values(query.var, clues)
+        core_floor = 3 if difficulty >= 2 and len(variables) >= 4 else 2
+        if any(
+            len(solver.refutation_core(query.var, value, clues)) < core_floor
+            for value in query.var.domain if value not in values
+        ): continue
         system_full_unique = solver.full_unique(clues)
         base_full_essential = [
             system_full_unique and not CSPSolver(
@@ -915,6 +998,7 @@ def select_instance(variables, base, pool, queries, rng, n_orders=6, family="num
             choices.append(SelectedInstance(query, clues, metrics, objective_name))
     if not choices: return None
     return max(choices, key=lambda x: (
+        -(abs(len(x.clues) - target_constraints) if target_constraints else 0),
         x.metrics["sampled_min_wrong_answer_core_size"],
         len(x.metrics["operator_histogram"]),
         x.metrics["query_forced_round"] or 0,
@@ -1046,12 +1130,13 @@ class AssignmentFamily:
 
 class GraphFamily:
     name = "graph"
+    edge_prob = .45
     def sample_world(self, rng, size):
         n, colors = max(4, min(8, size + 1)), 3
         variables = tuple(Var(f"v{i}", range(colors)) for i in range(n))
         witness = {v: rng.randrange(colors) for v in variables}
         edges = [(variables[i], variables[j]) for i in range(n) for j in range(i+1, n)
-                 if witness[variables[i]] != witness[variables[j]] and rng.random() < .45]
+                 if witness[variables[i]] != witness[variables[j]] and rng.random() < self.edge_prob]
         return World(variables, witness, {
             "edges": edges, "colors": colors, "group_of": {v: "graph" for v in variables},
         })
@@ -1126,11 +1211,52 @@ class GridFamily:
 
 class NumericFamily:
     name = "numeric"
-    def __init__(self, coef_bound=3): self.coef_bound = coef_bound
+    def __init__(self, coef_bound=3):
+        self.coef_bound = coef_bound
+        self.n_constraints = 3
+        self.structure_mode = "any"
+        self.max_arity = 3
+        self.edge_prob = .25
+        self.n_clusters = 3
+        self.p_in = .6
+        self.p_out = .1
+        self.grid_width = None
+
+    def _neighbors(self, rng, n, mode):
+        neighbors = [set() for _ in range(n)]
+        def link(i, j):
+            if i != j: neighbors[i].add(j); neighbors[j].add(i)
+        if mode in {"complete", "random"}:
+            for i in range(n): neighbors[i] = set(range(n)) - {i}
+        elif mode == "graph":
+            for i in range(n):
+                for j in range(i + 1, n):
+                    if rng.random() < self.edge_prob: link(i, j)
+        elif mode == "grid":
+            width = self.grid_width or max(1, round(n ** .5))
+            for i in range(n):
+                row, column = divmod(i, width)
+                for dr, dc in ((1, 0), (0, 1)):
+                    j = (row + dr) * width + column + dc
+                    if column + dc < width and j < n: link(i, j)
+        elif mode == "clustered":
+            cluster_count = max(1, min(self.n_clusters, n))
+            clusters = [rng.randrange(cluster_count) for _ in range(n)]
+            for i in range(n):
+                for j in range(i + 1, n):
+                    probability = self.p_in if clusters[i] == clusters[j] else self.p_out
+                    if rng.random() < probability: link(i, j)
+        for i in range(n):
+            if not neighbors[i]: link(i, rng.choice([j for j in range(n) if j != i]))
+        return tuple(tuple(sorted(items)) for items in neighbors)
+
     def sample_world(self, rng, size, max_domain=4):
-        n = max(2, min(7, size)); variables = tuple(Var(f"x{i}", range(rng.randint(2,max_domain)+1)) for i in range(n))
+        n = max(2, min(7, size))
+        variables = tuple(Var(f"x{i}", range(rng.randint(2,max_domain)+1)) for i in range(n))
+        mode = rng.choice(("random", "graph", "grid", "clustered")) if self.structure_mode == "any" else self.structure_mode
         return World(variables, {v: rng.choice(v.domain) for v in variables}, {
             "group_of": {v: "numeric" for v in variables},
+            "structure_mode": mode, "neighbors": self._neighbors(rng, n, mode),
         })
     def variables(self, w): return w.variables
     def base_constraints(self, w): return []
@@ -1139,8 +1265,20 @@ class NumericFamily:
         for v in w.variables:
             true += [Eq(v,w.witness[v]), *[Ne(v,x) for x in v.domain if x != w.witness[v]]]
             false.append(Ne(v,w.witness[v]))
-        for _ in range(5*len(w.variables)):
-            scope = rng.sample(w.variables, rng.randint(1,min(3,len(w.variables))))
+        for _ in range(max(5 * len(w.variables), 4 * self.n_constraints)):
+            arity = rng.randint(1, min(self.max_arity, len(w.variables)))
+            if arity == 1 or w.data["structure_mode"] == "random":
+                scope = rng.sample(w.variables, arity)
+            else:
+                seed = rng.randrange(len(w.variables)); indices = {seed}
+                frontier = set(w.data["neighbors"][seed])
+                while len(indices) < arity and frontier:
+                    item = rng.choice(tuple(frontier)); indices.add(item)
+                    frontier.update(w.data["neighbors"][item]); frontier.difference_update(indices)
+                if len(indices) < arity:
+                    rest = [i for i in range(len(w.variables)) if i not in indices]
+                    indices.update(rng.sample(rest, arity - len(indices)))
+                scope = [w.variables[i] for i in sorted(indices)]
             coeffs = [rng.choice([x for x in range(-self.coef_bound,self.coef_bound+1) if x]) for _ in scope]
             value = sum(a*w.witness[v] for a,v in zip(coeffs,scope)); op = rng.choice(("==","<=",">=","!="))
             rhs = value if op == "==" else value+rng.randint(0,2) if op == "<=" else value-rng.randint(0,2) if op == ">=" else value+rng.choice((-2,-1,1,2))
@@ -1152,6 +1290,7 @@ class NumericFamily:
             true.append(Mod(expr,modulus,normalized_value%modulus))
             false.append(Mod(expr,modulus,(normalized_value+1)%modulus))
         distinct = [v for v in w.variables if list(w.witness.values()).count(w.witness[v]) == 1]
+        distinct = distinct[:self.max_arity]
         if len(distinct)>1: true.append(AllDifferent(distinct))
         equal_pairs = [(a,b) for i,a in enumerate(w.variables) for b in w.variables[i+1:]
                        if w.witness[a] == w.witness[b]]
@@ -1220,6 +1359,8 @@ class SchedulingFamily:
 
 class SetFamily:
     name = "sets"
+    max_arity = 4
+    n_constraints = 3
     def sample_world(self, rng, size):
         n = max(4, min(8, size + 2)); variables = tuple(Var(f"m{i}", (0,1), "bool") for i in range(n))
         witness = {v: rng.randrange(2) for v in variables}
@@ -1233,8 +1374,8 @@ class SetFamily:
         true, false = [], []
         for v in w.variables:
             true.append(Eq(v, w.witness[v])); false.append(Eq(v, 1-w.witness[v]))
-        for _ in range(2*w.data["n"]):
-            subset = tuple(rng.sample(w.variables, rng.randint(2, min(4, len(w.variables)))))
+        for _ in range(max(2 * w.data["n"], 2 * self.n_constraints) if self.max_arity >= 2 else 0):
+            subset = tuple(rng.sample(w.variables, rng.randint(2, min(self.max_arity, len(w.variables)))))
             atoms = tuple(Eq(v, 1) for v in subset); count = sum(w.witness[v] for v in subset)
             true.extend((Exactly(count, atoms), AtMost(count, atoms)))
             if count < len(subset): false.append(Exactly(count+1, atoms))
@@ -1294,6 +1435,7 @@ class GeneratedInstance:
 
 def _minimal_unsat_core(solver, clues):
     active = list(clues)
+    if solver.is_sat(active): return []
     for clue in list(active):
         trial = active.copy(); trial.remove(clue)
         if not solver.is_sat(trial): active = trial
@@ -1370,36 +1512,162 @@ def graph_relation_candidate(world, base, clues, rng):
     return None
 
 
-def possibility_metrics(solver, clues, var, value, group_of=None):
-    values = solver.possible_values(var, clues)
-    possible = value in values
-    core = [] if possible else solver.formula_refutation_core(Eq(var, value), clues)
+def _objective_metrics(solver, clues, schema, objective, essential, group_of=None):
+    touched = {v for clue in clues for v in clue.variables()}
     return {
-        "query_domain_after": values,
-        "possible_value_count": len(values),
-        "possibility_expected": possible,
-        "objective": "allows" if possible else "forbids",
-        "possibility_refutation_core_size": len(core),
-        "possibility_core_operator_types": sorted({operator_name(c) for c in core}),
-        "semantic_groups_touched": _groups_for(
-            {v for c in (core or clues) for v in c.variables()}, group_of,
-        ),
+        "schema": schema,
+        "objective": objective,
+        "operator_histogram": dict(sorted(Counter(operator_name(c) for c in clues).items())),
+        "variables_touched": len(touched),
+        "semantic_groups_touched": _groups_for(touched, group_of),
+        "essential_for_objective": essential,
+        "displayed_clue_essentiality": round(sum(essential) / len(clues), 4) if clues else 0,
         "full_solution_unique": solver.full_unique(clues),
     }
 
 
+def value_metrics(solver, clues, query, group_of=None, objective="unique_value"):
+    metrics = analyze(solver, clues, query, group_of=group_of)
+    essential = metrics["essential_for_query"]
+    metrics.update(query_leakage_metrics(solver, clues, query))
+    metrics.update({
+        "schema": "value",
+        "objective": objective,
+        "essential_for_objective": essential,
+        "displayed_clue_essentiality": round(sum(essential) / len(clues), 4) if clues else 0,
+        "total_variables": len(solver.variables),
+        "full_solution_unique": solver.full_unique(clues),
+    })
+    return metrics
+
+
+def possibility_metrics(solver, clues, var, value, group_of=None):
+    values = solver.possible_values(var, clues)
+    possible = value in values
+    core = [] if possible else solver.formula_refutation_core(Eq(var, value), clues)
+    essential = [
+        (value in solver.possible_values(var, clues[:i] + clues[i + 1:])) != possible
+        for i in range(len(clues))
+    ]
+    metrics = _objective_metrics(
+        solver, clues, "possibility", "allows" if possible else "forbids",
+        essential, group_of,
+    )
+    metrics.update({
+        "query_domain_before": solver.possible_values(var, ()),
+        "query_domain_after": values,
+        "possible_value_count": len(values),
+        "possibility_expected": possible,
+        "possibility_refutation_core_size": len(core),
+        "possibility_core_operator_types": sorted({operator_name(c) for c in core}),
+    })
+    return metrics
+
+
+def relation_metrics(solver, clues, relation, expected, group_of=None):
+    before = solver.possible_truth_values(relation, ())
+    after = solver.possible_truth_values(relation, clues)
+    forbidden = Not(relation) if expected else relation
+    core = solver.formula_refutation_core(forbidden, clues)
+    essential = [
+        solver.possible_truth_values(relation, clues[:i] + clues[i + 1:]) != after
+        for i in range(len(clues))
+    ]
+    metrics = _objective_metrics(solver, clues, "relation", "entails", essential, group_of)
+    metrics.update({
+        "relation_truth_before": before,
+        "relation_truth_after": after,
+        "relation_expected": expected,
+        "relation_core_size": len(core),
+        "relation_core_operator_types": sorted({operator_name(c) for c in core}),
+        "relation_single_clue_forces": any(
+            len(solver.possible_truth_values(relation, (clue,))) == 1 for clue in clues
+        ),
+        "graph_edge_essential": any(
+            len(CSPSolver(solver.variables, solver.base[:i] + solver.base[i + 1:]).possible_truth_values(
+                relation, clues,
+            )) > 1
+            for i, edge in enumerate(solver.base) if isinstance(edge, NeVar)
+        ),
+    })
+    return metrics
+
+
+def consistency_metrics(solver, clues, group_of=None):
+    consistent = solver.is_sat(clues)
+    essential = [
+        solver.is_sat(clues[:i] + clues[i + 1:]) != consistent
+        for i in range(len(clues))
+    ]
+    metrics = _objective_metrics(
+        solver, clues, "consistency", "consistent" if consistent else "inconsistent",
+        essential, group_of,
+    )
+    _, multiple = solver.solutions(clues, limit=1)
+    active = list(clues)
+    if not consistent:
+        for clue in list(active):
+            trial = active.copy(); trial.remove(clue)
+            if not solver.is_sat(trial): active = trial
+    metrics.update({
+        "is_consistent": consistent,
+        "consistency_core_size": None if consistent else len(active),
+        "multiple_full_solutions": multiple,
+    })
+    return metrics
+
+
+def enumeration_metrics(solver, clues, mode, solutions=None, group_of=None):
+    if mode in {"all", "all_solutions"}:
+        if solutions is None: solutions, overflow = solver.solutions(clues)
+        else: overflow = False
+        if overflow: raise RuntimeError("Cannot measure an overflowing enumeration")
+        outcome = solutions
+        essential = []
+        for i in range(len(clues)):
+            reduced, _ = solver.solutions(clues[:i] + clues[i + 1:])
+            essential.append(reduced != outcome)
+        solution_count = len(outcome)
+    else:
+        outcome = solver.lex_solution(clues)
+        essential = [
+            solver.lex_solution(clues[:i] + clues[i + 1:]) != outcome
+            for i in range(len(clues))
+        ]
+        solution_count = None
+    metrics = _objective_metrics(solver, clues, "enumeration", mode, essential, group_of)
+    metrics.update({
+        "enumeration_mode": mode,
+        "is_consistent": outcome is not None and outcome != [],
+        "solution_count": solution_count,
+    })
+    return metrics
+
+
 def generate_instance(family_name, rng, size, max_tries=64, n_orders=6, max_domain=4,
                       coef_bound=3, difficulty=0, require_consistency=False,
-                      require_counterfactual=False):
+                      require_counterfactual=False, n_constraints=3, max_arity=3,
+                      structure_mode="any", edge_prob=.25, n_clusters=3,
+                      p_in=.6, p_out=.1, grid_width=None):
     family = get_family(family_name)
-    if family.name == "numeric": family.coef_bound = coef_bound
+    if family.name == "numeric":
+        family.coef_bound = coef_bound
+        family.structure_mode, family.edge_prob = structure_mode, edge_prob
+        family.n_clusters, family.p_in, family.p_out = n_clusters, p_in, p_out
+        family.grid_width = grid_width
+    if hasattr(family, "n_constraints"): family.n_constraints = n_constraints
+    if hasattr(family, "max_arity"): family.max_arity = max_arity
+    if family.name == "graph": family.edge_prob = edge_prob
     for _ in range(max_tries):
         world = family.sample_world(rng,size,max_domain) if family.name == "numeric" else family.sample_world(rng,size)
         base = family.base_constraints(world)
         pool, false_pool = family.candidate_formulas(world,rng)
+        pool = [formula for formula in pool if len(formula.variables()) <= max_arity]
+        false_pool = [formula for formula in false_pool if len(formula.variables()) <= max_arity]
         selected = select_instance(
             family.variables(world), base, pool, family.queries(world), rng, n_orders,
             family=family.name, difficulty=difficulty, group_of=world.data.get("group_of"),
+            target_constraints=n_constraints,
         )
         if selected is None: continue
         solver = CSPSolver(family.variables(world), base)

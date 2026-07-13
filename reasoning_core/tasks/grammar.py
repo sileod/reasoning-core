@@ -18,7 +18,7 @@ import re
 from collections import Counter, defaultdict
 from gramforge.grammars import simple_english_grammar, arith_grammar, dyck_grammar
 from gramforge import gramforge_to_nltk
-from rapidfuzz.distance import Levenshtein
+from rapidfuzz.distance import Indel, Levenshtein
 from itertools import islice
 from nltk.grammar import CFG, Nonterminal, Production
 from itertools import islice, combinations
@@ -539,7 +539,9 @@ def labeled_rules(meta):
 class ParsingDerivation(Task):
     summary = "Determine the derivation production rule sequence parsing a given string."
     def __init__(self, config=None):
-        super().__init__(config=config or GrammarConfig())
+        super().__init__(config=config or GrammarConfig(
+            target_num_rules=8, min_prod_depth=3, max_prod_depth=5, max_tokens=12,
+        ))
         self.config.perturbation_rate = 0.0
 
     def generate_entry(self):
@@ -569,9 +571,9 @@ class ParsingDerivation(Task):
     def score_answer(self, answer, entry):
         pred = re.findall(r"\bR\d+\b", str(answer))
         gold = entry["answer"].split()
-        # token-level edit-distance similarity (each R# is one token): partial credit
-        # for near-correct derivations instead of all-or-nothing exact match.
-        return Levenshtein.normalized_similarity(pred, gold)
+        valid = set(re.findall(r"\bR\d+\b", entry.metadata["labeled_g"]))
+        format_score = sum(rule in valid for rule in pred) / max(len(pred), len(gold))
+        return .9 * Indel.normalized_similarity(pred, gold) + .1 * format_score
 
 
 

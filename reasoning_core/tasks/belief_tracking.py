@@ -212,7 +212,12 @@ def _move_views(spec, percept, agents, max_depth):
             assignments[(spec.actor,)] = percept
         assignments[(subject,)] = percept
         assignments[(watcher,)] = percept
+        if spec.actor:
+            assignments[(subject, spec.actor)] = percept
+            assignments[(watcher, spec.actor)] = percept
         assignments[(watcher, subject)] = percept
+        if spec.actor:
+            assignments[(watcher, subject, spec.actor)] = percept
     elif spec.scene == "missed_observation":
         if spec.actor:
             assignments[(spec.actor,)] = percept
@@ -347,9 +352,9 @@ def _make_visible(spec, observer, chain):
     if spec.kind == "move":
         return replace(
             spec,
-            scene="private_observation",
-            observers=tuple(dict.fromkeys(spec.observers + (observer,))),
-            awareness_chains=spec.awareness_chains + (tuple(chain),),
+            awareness_chains=tuple(dict.fromkeys(
+                spec.awareness_chains + ((observer,), tuple(chain))
+            )),
         )
     if spec.scene == "failed_message":
         return replace(spec, scene="unconfirmed_message")
@@ -441,7 +446,12 @@ def expected_views(spec, percept, agents, max_depth):
         elif spec.scene == "one_way_observation":
             subject, watcher = spec.observers
             assignments.update(((agent,), percept) for agent in actor + spec.observers)
+            if spec.actor:
+                assignments[(subject, spec.actor)] = percept
+                assignments[(watcher, spec.actor)] = percept
             assignments[(watcher, subject)] = percept
+            if spec.actor:
+                assignments[(watcher, subject, spec.actor)] = percept
         elif spec.scene == "missed_observation":
             assignments.update(((agent,), percept) for agent in actor)
         else:
@@ -582,12 +592,13 @@ def _question_text(chain, obj):
 
 def _utterance_text(spec, content):
     chain = spec.asserted_proposition_chain
-    if chain and chain[0] == spec.actor:
+    speaker_is_outer_layer = bool(chain and chain[0] == spec.actor)
+    if speaker_is_outer_layer:
         chain = chain[1:]
     inner = f"the {spec.object} is in the {content}"
     for agent in reversed(chain):
         inner = f"{agent} thinks {inner}"
-    return f"I think {inner}" if not chain else inner
+    return f"I think {inner}" if speaker_is_outer_layer else inner
 
 
 def _attribution_text(spec):
@@ -1182,9 +1193,13 @@ class BeliefTracking(Task):
                 return move + " No one else sees the move."
             if spec.scene == "one_way_observation":
                 subject, watcher = spec.observers
-                return f"{move} {subject} watches, while {watcher} secretly watches {subject}."
-            if spec.scene == "missed_observation" and spec.observers:
-                return f"{move} {spec.observers[0]} is behind a closed door and misses it."
+                watched = f"{spec.actor} make the move" if spec.actor else "it happen"
+                return (
+                    f"{move} {subject} watches {watched}, while {watcher} secretly "
+                    f"watches {subject} watching {watched}."
+                )
+            if spec.scene == "missed_observation" and spec.actor:
+                return f"{move} {spec.actor} knows where they put it, but nobody else sees the move."
             return move + " Nobody sees this happen."
 
         content = event.details[1]
@@ -1197,45 +1212,53 @@ class BeliefTracking(Task):
             payload = f'"{utterance}"'
         elif spec.surface_form == "indirect_report":
             if spec.report_type == "direct_claim":
-                payload = f"where the {spec.object} is"
+                payload = f"what {spec.actor} believes about where the {spec.object} is"
             else:
                 payload = f"exactly what {_attribution_text(spec)}"
         else:
             raise ValueError(f"unknown report surface: {spec.surface_form}")
+        if spec.surface_form == "explicit_quote":
+            face_content = f", {payload}"
+            message_content = f"the message {payload}"
+        else:
+            face_content = f" {payload}"
+            message_content = f"a message stating {payload}"
         acceptance = ""
         if spec.scene != "failed_message" and spec.adoption_policy == "accept":
             acceptance = f" {spec.target} accepts the stated location."
 
         if spec.scene == "face_to_face":
-            return f"{spec.actor} tells {spec.target} face to face, {payload}.{acceptance}"
+            return f"{spec.actor} tells {spec.target} face to face{face_content}.{acceptance}"
         if spec.scene == "confirmed_message":
             return (
-                f"{spec.actor} sends {spec.target} the message {payload}. "
+                f"{spec.actor} sends {spec.target} {message_content}. "
                 f"{spec.target} confirms receipt.{acceptance}"
             )
         if spec.scene == "unconfirmed_message":
             return (
-                f"{spec.actor} sends {spec.target} the message {payload}. "
-                f"{spec.actor} receives no delivery confirmation.{acceptance}"
+                f"{spec.actor} sends {spec.target} {message_content}. "
+                f"{spec.target} receives it, but {spec.actor} receives no delivery confirmation."
+                f"{acceptance}"
             )
         if spec.scene == "failed_message":
             return (
-                f"{spec.actor} sends {spec.target} the message {payload}, "
+                f"{spec.actor} sends {spec.target} {message_content}, "
                 "but it is not delivered."
             )
         if spec.scene == "visible_conversation":
             witness_verb = "sees" if len(spec.observers) == 1 else "see"
             return (
-                f"{spec.actor} tells {spec.target}, {payload}.{acceptance} "
+                f"{spec.actor} tells {spec.target}{face_content}.{acceptance} "
                 f"{_join(spec.observers)} {witness_verb} them talking but cannot hear the words."
             )
         raise ValueError(f"unknown delivery scene: {spec.scene}")
 
     def _start_text(self, metadata):
-        return " ".join(
-            f"The {obj} starts in the {metadata.init['loc'][obj]}."
+        locations = (
+            f"the {obj} is in the {metadata.init['loc'][obj]}"
             for obj in metadata.objects
         )
+        return f"Initially, everyone knows that {_join(locations)}."
 
     def _story_text(self, metadata):
         return self._story_render(metadata)[0]
@@ -1273,19 +1296,14 @@ class BeliefTracking(Task):
         return " ".join(parts), spans
 
     def _render_with_spans(self, metadata):
-        rules = (
-            "Starting locations are common knowledge. When the story says a listener accepts a "
-            "location, that location becomes the listener's belief. Belief reports update the stated attribution. "
-            "Unseen events and undelivered messages do not change beliefs."
-        )
-        start = "Start: " + self._start_text(metadata)
+        start = self._start_text(metadata)
         story, spans = self._story_render(metadata)
         story_block = "Story: " + story
         question = "Question: " + _question_text(metadata.chain, metadata.object)
         prompt = "\n\n".join([
-            rules, start, story_block, question, "Answer with one container name."
+            start, story_block, question, "Answer with one container name."
         ])
-        story_offset = len(rules) + 2 + len(start) + 2 + len("Story: ")
+        story_offset = len(start) + 2 + len("Story: ")
         for span in spans:
             span["start"] += story_offset
             span["end"] += story_offset

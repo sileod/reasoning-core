@@ -1,0 +1,18 @@
+from easydict import EasyDict as edict
+
+from reasoning_core.tasks.grammar import ParsingDerivation
+from reasoning_core.template import Entry
+
+
+def test_parsing_derivation_soft_score():
+    entry = Entry(edict(labeled_g="R0: S -> A B\nR1: A -> 'a'\nR2: B -> 'b'"), "R0 R1 R2")
+    task = ParsingDerivation()
+
+    assert task.score_answer("Rules: R0, R1 R2", entry) == 1.0
+    assert 0.0 < task.score_answer("R0 R2", entry) < 1.0
+    assert task.score_answer("R8 R9", entry) == 0.0
+
+
+def test_parsing_derivation_uses_shorter_defaults():
+    config = ParsingDerivation().config
+    assert (config.target_num_rules, config.min_prod_depth, config.max_prod_depth, config.max_tokens) == (8, 3, 5, 12)

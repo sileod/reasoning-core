@@ -107,7 +107,8 @@ def test_parsing_derivation_generation_prompt_and_score(monkeypatch):
     assert problem.metadata.get("parses") is None
     assert problem.metadata.get("cot") is None
     assert ParsingDerivation().score_answer("Rules: R0, R1 R2 R3 R4 R5 R6 R7", problem) == 1.0
-    assert ParsingDerivation().score_answer("R0 R2", problem) == 0.0
+    assert 0.0 < ParsingDerivation().score_answer("R0 R2", problem) < 1.0
+    assert ParsingDerivation().score_answer("R8 R9", problem) == 0.0
 
 
 def test_cfg_span_filters_root_and_downsamples_length_two(monkeypatch):

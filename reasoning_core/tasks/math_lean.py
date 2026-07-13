@@ -5,6 +5,7 @@ so nothing leaks into the user's home or the project tree.
 """
 
 import ast
+from difflib import SequenceMatcher
 import json
 import os
 import platform
@@ -354,8 +355,6 @@ class LeanConfig(Config):
     use_mathlib: bool = True
 
     def apply_difficulty(self, level):
-        level = int(level)
-        self.level = level
         self.n_vars += level
         self.expr_depth += level
         self.n_hyps += 2 * level + max(0, level - 2)
@@ -501,8 +500,16 @@ def gen_linear_ineq(config):
     )
 
 
+_ORDER_RULES = {
+    ("≤", "≤"): ("Int.le_trans", "≤"),
+    ("<", "<"): ("Int.lt_trans", "<"),
+    ("<", "≤"): ("Int.lt_of_lt_of_le", "<"),
+    ("≤", "<"): ("Int.lt_of_le_of_lt", "<"),
+}
+
+
 def gen_order_chain(config):
-    """Random transitive chains with extra irrelevant hypotheses, solved by omega."""
+    """Random mixed strict/nonstrict chains with an explicit transitivity proof."""
     n = max(2, int(config.n_hyps))
     names = _vars(max(2, int(config.n_vars)))
     g = _int_lin_grammar(names, max_coef=3)
@@ -520,16 +527,20 @@ def gen_order_chain(config):
     if len(set(terms)) < 2:
         return None
     strict_at = random.randrange(n)
-    hyps = []
+    hyps, ops = [], []
     for i, (a, b) in enumerate(zip(terms, terms[1:])):
         op = "<" if i == strict_at and random.random() < 0.5 else "≤"
         hyps.append((f"h{i}", f"{a} {op} {b}"))
+        ops.append(op)
+    proof, current = "h0", ops[0]
+    for i, op in enumerate(ops[1:], 1):
+        theorem, current = _ORDER_RULES[(current, op)]
+        proof = f"{theorem} ({proof}) h{i}"
     used = _used_int_vars(*terms)
     return edict(
         decl=f"({' '.join(used)} : Int)" if used else "",
-        hyps=hyps,
-        goal=f"{terms[0]} {'<' if any('<' in h for _, h in hyps) else '≤'} {terms[-1]}",
-        primary="omega", kind="order_chain",
+        hyps=hyps, goal=f"{terms[0]} {current} {terms[-1]}",
+        primary=f"exact {proof}", kind="order_chain",
     )
 
 
@@ -540,10 +551,15 @@ def gen_divisibility(config):
     c1, c2 = random.randint(1, 4), random.randint(1, 4)
     sign = random.choice(["+", "-"])
     expr = f"{c1} * {a} {sign} {c2} * {b}"
+    combine = "dvd_add" if sign == "+" else "dvd_sub"
+    proof = (
+        f"exact {combine} (dvd_mul_of_dvd_right h1 {c1}) "
+        f"(dvd_mul_of_dvd_right h2 {c2})"
+    )
     return edict(
         decl=f"({' '.join(names)} : Int)",
         hyps=[("h1", f"({k} : Int) ∣ {a}"), ("h2", f"({k} : Int) ∣ {b}")],
-        goal=f"({k} : Int) ∣ ({expr})", primary="omega", kind="div",
+        goal=f"({k} : Int) ∣ ({expr})", primary=proof, kind="div",
     )
 
 
@@ -897,75 +913,11 @@ CORE_STRATEGIES = (
 # Instance assembly
 # ============================================================================
 
-TACTIC_POOL = (
-    "aesop",
-    "simp",
-    "simp_all",
-    "omega",
-    "tauto",
-    "ring",
-    "ring_nf",
-    "norm_num",
-    "linarith",
-)
-
-WEAK_PROOF_POOL = (
-    "rfl",
-    "decide",
-    "constructor",
-    "intro h",
-    "cases h",
-    "assumption",
-    "exact True.intro",
-    "exact False.elim h",
-)
-
-
 def _render(inst, name="ex"):
     hyp_str = " ".join(f"({h} : {b})" for h, b in inst.hyps)
     args = " ".join(x for x in (inst.decl, hyp_str) if x)
     args = f" {args}" if args else ""
     return f"theorem {name}{args} : {inst.goal} := by\n"
-
-
-def _candidate_pool(inst, n_candidates, header):
-    """Build candidate proofs and label them by compiling with Lean."""
-    use_mathlib = not str(inst.kind).startswith("core_")
-    n_candidates = max(2, int(n_candidates))
-    pool = []
-    hnames = [h for h, _ in inst.hyps]
-    local_candidates = (
-        *(f"exact {h}" for h in hnames),
-        *getattr(inst, "tactic_fallbacks", ()),
-        *TACTIC_POOL,
-        *WEAK_PROOF_POOL,
-    )
-    for cand in (inst.primary, *local_candidates):
-        if cand not in pool:
-            pool.append(cand)
-    runner = get_runner(use_mathlib=use_mathlib)
-    labeled = [
-        (cand, bool(_safe(cand) and runner.check(header + "  " + cand + "\n")[0]))
-        for cand in pool
-    ]
-    primary_label = next(ok for cand, ok in labeled if cand == inst.primary)
-    same = [(cand, ok) for cand, ok in labeled if cand != inst.primary and ok == primary_label]
-    opposite = [(cand, ok) for cand, ok in labeled if cand != inst.primary and ok != primary_label]
-    random.shuffle(same)
-    random.shuffle(opposite)
-    pairs = [(inst.primary, primary_label)]
-    if opposite:
-        pairs.append(opposite.pop())
-    alternates = [opposite, same] if random.random() < 0.5 else [same, opposite]
-    while len(pairs) < n_candidates and any(bucket for bucket in alternates):
-        for bucket in alternates:
-            if bucket and len(pairs) < n_candidates:
-                pairs.append(bucket.pop())
-    if len(pairs) < n_candidates:
-        pairs.extend((cand, ok) for cand, ok in labeled if (cand, ok) not in pairs)
-        pairs = pairs[:n_candidates]
-    random.shuffle(pairs)
-    return [c for c, _ in pairs], [l for _, l in pairs]
 
 
 def _is_theorem_specific_candidate(candidate):
@@ -975,41 +927,65 @@ def _is_theorem_specific_candidate(candidate):
         return True
     if re.search(r"\bhx\b|\bhp\b|\bhq\b|\bexact\s+[A-Za-z_][\w.]*\s+h", s):
         return True
+    if re.match(r"(?:exact|simpa using)\s+[A-Za-z_][\w.']*(?:\s+\S+)+$", s):
+        return True
     if any(tok in s for tok in ("le_trans", "lt_trans", "dvd_", "And.intro", "Or.inl", "Or.inr", "rcases", "cases ")):
         return True
     return False
 
 
-def _has_discriminative_candidate(candidates, labels):
-    strong = {"omega", "simp", "simp_all", "aesop", "tauto", "linarith", "ring", "ring_nf", "norm_num"}
-    specific = [_is_theorem_specific_candidate(c) for c in candidates]
-    generic_strong = [str(c).strip() in strong for c in candidates]
-    return (
-        any(s and ok for s, ok in zip(specific, labels))
-        or any(g and not ok for g, ok in zip(generic_strong, labels))
-    )
+def _hard_candidate_pairs(inst):
+    """Recover the already Lean-checked corruption pairs from an instance."""
+    if not _is_theorem_specific_candidate(inst.primary):
+        return []
+    negatives = [
+        c for c, ok in zip(inst.candidates, inst.labels)
+        if not ok and _is_theorem_specific_candidate(c)
+    ]
+    return [(inst.primary, negative) for negative in negatives]
 
 
-def make_instance(config):
-    """Sample a strategy and build a Lean-verified labeled instance."""
-    n_cand = max(2, int(getattr(config, "n_candidates", 4)))
+def _sample_base_instance(config):
+    """Sample a broad theorem schema and verify its intended proof once."""
     strategies = STRATEGIES if getattr(config, "use_mathlib", True) else CORE_STRATEGIES
     for _ in range(50):
         inst = random.choice(strategies)(config)
         if not inst or not _safe(inst.goal):
             continue
         header = _render(inst)
-        candidates, labels = _candidate_pool(inst, n_cand, header)
-        if inst.primary not in candidates:
+        runner = get_runner(use_mathlib=getattr(config, "use_mathlib", True))
+        if not _safe(inst.primary) or not runner.check(header + "  " + inst.primary + "\n")[0]:
             continue
-        primary_ok = labels[candidates.index(inst.primary)]
-        if not primary_ok or not any(labels) or all(labels):
+        inst.header = header
+        inst.use_mathlib = getattr(config, "use_mathlib", True)
+        return inst
+    raise RuntimeError("failed to produce a Lean theorem instance")
+
+
+def make_instance(config):
+    """Build a verified proof and closely corrupted nonproof candidates."""
+    n_cand = min(5, max(2, int(getattr(config, "n_candidates", 4))))
+    for _ in range(50):
+        inst = _sample_base_instance(config)
+        local = [f"exact {name}" for name, _ in inst.hyps]
+        proposed = [*_mutations(inst.primary), *_contextual_mutations(inst.primary, inst.header), *local]
+        runner = get_runner(use_mathlib=inst.use_mathlib)
+        negatives = _ranked_noncompiling(
+            inst.primary, proposed, inst.header + "  __ANSWER__\n", runner,
+            limit=n_cand - 1,
+        )
+        if not negatives:
             continue
+        candidates = [inst.primary, *negatives[:n_cand - 1]]
+        labels = [True] + [False] * (len(candidates) - 1)
+        order = list(range(len(candidates)))
+        random.shuffle(order)
         return edict(
-            kind=inst.kind, header=header,
+            kind=inst.kind, header=inst.header,
             primary=inst.primary, elegant=inst.primary,
-            candidates=candidates, labels=labels,
-            use_mathlib=getattr(config, "use_mathlib", True),
+            candidates=[candidates[i] for i in order],
+            labels=[labels[i] for i in order],
+            use_mathlib=inst.use_mathlib,
         )
     raise RuntimeError("failed to produce a Lean instance")
 
@@ -1026,11 +1002,19 @@ EASY_MISSING_LINES = frozenset({
     "aesop", "assumption", "decide", "linarith", "norm_num", "omega",
     "rfl", "ring", "ring_nf", "simp", "simp_all", "tauto",
 })
+AUTOMATION_TACTICS = frozenset({
+    "aesop", "decide", "linarith", "norm_num", "omega", "ring", "ring_nf",
+    "simp", "simp_all", "tauto",
+})
 
 
 def _is_easy_missing_line(line):
     s = str(line).strip()
     return s in EASY_MISSING_LINES or bool(re.fullmatch(r"[A-Za-z_][\w.']*", s))
+
+
+def _uses_automation(line):
+    return bool(set(re.findall(r"\b[A-Za-z_][\w']*\b", str(line))) & AUTOMATION_TACTICS)
 
 
 _MUTATION_PAIRS = (
@@ -1085,6 +1069,9 @@ def _argument_mutations(line):
             variants.append(f"{prefix} {' '.join(mutated)}")
         if len(args) == 3:
             variants.append(f"{prefix} {' '.join((args[1], args[2], args[0]))}")
+        for i in range(len(args)):
+            variants.append(f"{prefix} {' '.join(args[:i] + args[i + 1:])}")
+            variants.append(f"{prefix} {' '.join(args[:i] + [args[i]] + args[i:])}")
         return variants
     return []
 
@@ -1125,47 +1112,68 @@ def _mutations(line):
         yield from add(candidate)
 
 
-def _line_options(lines, answer, max_options=6, template=None, runner=None):
-    fillers = (
-        "rfl", "simp", "intro h", "intro x hx",
-        "exact h0", "exact h1", "assumption",
+def _contextual_mutations(line, context):
+    """Substitute identifiers that are locally available and lexically comparable."""
+    groups = (
+        r"\bhp\d+\b", r"\bh\d+\b", r"\bp\d+\b",
+        r"\b[a-n]\b", r"\b[s-z]\b",
     )
+    out = []
+    for pattern in groups:
+        local = sorted(set(re.findall(pattern, context)))
+        for match in re.finditer(pattern, line):
+            for replacement in local:
+                if replacement != match.group():
+                    out.append(line[:match.start()] + replacement + line[match.end():])
+    for match in re.finditer(r"\b\d+\b", line):
+        n = int(match.group())
+        for replacement in {max(0, n - 1), n + 1}:
+            out.append(line[:match.start()] + str(replacement) + line[match.end():])
+    return out
+
+
+def _ranked_noncompiling(answer, candidates, template, runner, limit=None):
+    seen, ranked = set(), []
+    for candidate in candidates:
+        candidate = str(candidate).strip()
+        if candidate == answer or candidate in seen or not _safe(candidate):
+            continue
+        seen.add(candidate)
+        similarity = SequenceMatcher(None, answer, candidate).ratio()
+        ranked.append((similarity, random.random(), candidate))
+    ranked.sort(reverse=True)
+    valid = []
+    for _, _, candidate in ranked:
+        if not runner.check(template.replace("__ANSWER__", candidate))[0]:
+            valid.append(candidate)
+            if limit is not None and len(valid) >= limit:
+                break
+    return valid
+
+
+def _line_options(lines, answer, max_options=6, template=None, runner=None, extra=()):
     max_options = max(2, int(max_options))
-
-    def usable(line):
-        if line == answer or not _safe(line):
-            return False
-        if template is not None and runner is not None:
-            ok, _ = runner.check(template.replace("__ANSWER__", line))
-            return not ok
-        return True
-
-    options = []
-
-    hard_negatives = [line for line in _mutations(answer) if usable(line)]
-    random.shuffle(hard_negatives)
-    for line in hard_negatives:
-        if line not in options:
-            options.append(line)
-        if len(options) >= max_options - 1:
-            break
-
-    for line in (*lines, *fillers):
-        if len(options) >= max_options - 1:
-            break
-        if line not in options and usable(line):
-            options.append(line)
-
-    random.shuffle(options)
-    options = options[:max_options - 1]
-    options.insert(random.randrange(len(options) + 1), answer)
+    context = template or "\n".join(lines)
+    candidates = [
+        *list(_mutations(answer)),
+        *_contextual_mutations(answer, context),
+        *extra,
+        *lines,
+    ]
+    negatives = _ranked_noncompiling(
+        answer, candidates, template, runner, limit=max_options - 1,
+    )
+    options = negatives[:max_options - 1]
+    if len(options) < max_options - 1:
+        return []
+    options.insert(random.randrange(max_options), answer)
     return options
 
 
 def _valid_missing_indices(lines, level=0):
     candidates = [
         i for i, line in enumerate(lines)
-        if not (level >= 2 and i == len(lines) - 1)
+        if not (level >= 2 and len(lines) > 1 and i == len(lines) - 1)
         and not _is_easy_missing_line(line)
     ]
     if not candidates:
@@ -1305,6 +1313,20 @@ def _proof_script_forward_order(config):
     )
 
 
+def _proof_script_instance(config):
+    """Reuse the broad theorem schemas while keeping the completion to one line."""
+    inst = _sample_base_instance(config)
+    if "\n" in inst.primary:
+        return None
+    local = [f"exact {name}" for name, _ in inst.hyps]
+    return edict(
+        kind=f"proof_script:{inst.kind}",
+        header=inst.header,
+        lines=[inst.primary],
+        candidate_lines=local,
+    )
+
+
 _PROOF_SCRIPT_BUILDERS = (
     _proof_script_set_union,
     _proof_script_set_inter,
@@ -1318,7 +1340,10 @@ def make_proof_script(config):
     level = int(getattr(config, "level", 0))
     if not getattr(config, "use_mathlib", True):
         for _ in range(50):
-            script = _proof_script_core(config)
+            builder = random.choice((_proof_script_core, _proof_script_instance))
+            script = builder(config)
+            if script is None:
+                continue
             if get_runner(use_mathlib=False).check(_script_code(script.header, script.lines))[0]:
                 return script
         raise RuntimeError("failed to produce a Lean proof script")
@@ -1328,6 +1353,7 @@ def make_proof_script(config):
         (_proof_script_finset, 1),
         (_proof_script_order, 1 + level),
         (_proof_script_prop, 1 + level),
+        (_proof_script_instance, 4),
     ]
     forward_weight = max(0, 6 * (level - 1))
     if forward_weight:
@@ -1345,13 +1371,6 @@ def make_proof_script(config):
 # ============================================================================
 # Lean-verified forward derivation graphs
 # ============================================================================
-
-_ORDER_RULES = {
-    ("≤", "≤"): ("Int.le_trans", "≤"),
-    ("<", "<"): ("Int.lt_trans", "<"),
-    ("<", "≤"): ("Int.lt_of_lt_of_le", "<"),
-    ("≤", "<"): ("Int.lt_of_le_of_lt", "<"),
-}
 
 
 def _split_order_formula(formula):
@@ -1599,8 +1618,8 @@ def gen_forward_order_graph(config):
 # ============================================================================
 
 class LeanMissingLine(Task):
-    """Choose the unique available proof line that fills a Lean proof hole."""
-    summary = "Select the correct proof line to fill a hole in a compilation-checked Lean proof."
+    """Choose the unique listed proof line that fills a Lean-checked hole."""
+    summary = "Select the correct proof line for a hole in a compilation-checked Lean proof."
 
     def __init__(self, config=None, **kwargs):
         super().__init__(config=config or LeanConfig(use_mathlib=_profile_ready(use_mathlib=True)), timeout=120, **kwargs)
@@ -1611,38 +1630,36 @@ class LeanMissingLine(Task):
         level = int(getattr(self.config, "level", 0))
         for _ in range(30):
             script = make_proof_script(self.config)
-            if level >= 1 and len(script.lines) < 2:
-                continue
-            if level >= 2 and len(script.lines) < 4:
-                continue
             valid_indices = _valid_missing_indices(script.lines, level)
             if not valid_indices:
                 continue
             idx = random.choice(valid_indices)
             correct_line = script.lines[idx]
-            if _is_easy_missing_line(correct_line):
+            if _is_easy_missing_line(correct_line) or _uses_automation(correct_line):
                 continue
             template = script.header + "".join(
                 "  __ANSWER__\n" if i == idx else f"  {line}\n"
                 for i, line in enumerate(script.lines)
             )
             available = _line_options(
-                script.lines, correct_line, self.config.n_candidates,
-                template=template, runner=runner,
+                script.lines,
+                correct_line,
+                self.config.n_candidates,
+                template,
+                runner,
+                getattr(script, "candidate_lines", ()),
             )
-            compiling = [
-                j for j, line in enumerate(available, 1)
-                if _safe(line) and runner.check(template.replace("__ANSWER__", line))[0]
-            ]
-            correct_index = available.index(correct_line) + 1
-            if compiling != [correct_index]:
+            if len(available) != max(2, int(self.config.n_candidates)):
                 continue
+            correct_index = available.index(correct_line) + 1
+            compiling = [correct_index]
             return Entry(
                 edict(
                     kind=script.kind,
                     template=template,
                     available_lines=available,
                     compiling_indices=compiling,
+                    compiling_lines=[correct_line],
                     correct_line=correct_line,
                     correct_index=correct_index,
                     missing_line=idx + 1,
@@ -1651,23 +1668,23 @@ class LeanMissingLine(Task):
                 ),
                 str(correct_index),
             )
-        raise RuntimeError("failed to generate a unique Lean missing-line-selection task")
+        raise RuntimeError("failed to generate unique hard Lean line options")
 
     def render_prompt(self, metadata):
-        opts = "\n".join(
-            f"{i + 1}. {line}" for i, line in enumerate(_mget(metadata, "available_lines"))
+        options = "\n".join(
+            f"{i}. {line}" for i, line in enumerate(_mget(metadata, "available_lines"), 1)
         )
         imports = "Mathlib is imported." if _mget(metadata, "use_mathlib") else "Only Lean/Std is imported."
         return (
             f"Fill `__ANSWER__` with one listed Lean proof line. {imports}\n"
             "The answer is the line number.\n\n"
             f"THEOREM:\n{_mget(metadata, 'template')}\n"
-            f"LINES:\n{opts}"
+            f"LINES:\n{options}"
         )
 
     def score_answer(self, answer, entry):
-        s = str(answer).strip().strip("`")
-        return float(bool(re.fullmatch(r"\d+", s)) and int(s) == int(entry.answer))
+        value = str(answer).strip().strip("`")
+        return float(bool(re.fullmatch(r"\d+", value)) and value == str(entry.answer))
 
 
 class LeanCandidateCompilation(Task):
@@ -1678,24 +1695,29 @@ class LeanCandidateCompilation(Task):
         super().__init__(config=config or LeanConfig(), timeout=120, **kwargs)
 
     def generate_entry(self):
-        for _ in range(50):
+        for _ in range(20):
             inst = make_instance(self.config)
-            if _has_discriminative_candidate(inst.candidates, inst.labels):
+            pairs = _hard_candidate_pairs(inst)
+            if pairs:
                 break
         else:
-            inst = make_instance(self.config)
+            positives = [c for c, ok in zip(inst.candidates, inst.labels) if ok]
+            negatives = [c for c, ok in zip(inst.candidates, inst.labels) if not ok]
+            pairs = [(positive, negative) for positive in positives for negative in negatives]
+            if not pairs:
+                raise RuntimeError("failed to generate paired Lean proof candidates")
         want_positive = random.random() < 0.5
-        pool = [i for i, ok in enumerate(inst.labels) if ok == want_positive]
-        if not pool:
-            pool = list(range(len(inst.candidates)))
-        idx = random.choice(pool)
+        positive, negative = random.choice(pairs)
+        candidate = positive if want_positive else negative
         return Entry(
             edict(kind=inst.kind,
                   theorem=inst.header + "  ?\n",
-                  candidate=inst.candidates[idx],
-                  candidate_count=len(inst.candidates),
+                  candidate=candidate,
+                  paired_candidate=negative if want_positive else positive,
+                  candidate_similarity=SequenceMatcher(None, positive, negative).ratio(),
+                  candidate_count=len(pairs),
                   use_mathlib=inst.use_mathlib),
-            "True" if inst.labels[idx] else "False",
+            "True" if want_positive else "False",
         )
 
     def render_prompt(self, metadata):

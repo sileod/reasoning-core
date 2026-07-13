@@ -103,7 +103,7 @@ class BaseGraphTask:
             for u, v, d in sorted(G.edges(data=True))
         )
 
-    def _render_graph(self, G, seed=None, weighted=False):
+    def _render_graph(self, G, weighted=False):
         """Randomly selects a method to describe the directed graph in text."""
         if weighted:
             return f"Nodes {sorted(list(G.nodes()))}. Directed Edges: {self._render_edges(G, weighted=True)}"
@@ -147,9 +147,8 @@ class BaseGraphTask:
                 if g.out_degree(n) > 0 else f"{n}:"
                 for n in sorted(g.nodes()))
 
-        rng = random.Random(seed)        
         renderers = [r_adjacency_list, r_edge_list, r_adj_dict, r_edge_pairs, r_adjacency_matrix, r_dot_notation, r_prose, r_incidence]
-        return rng.choice(renderers)(G)
+        return random.choice(renderers)(G)
 
 
 class GraphPathfinding(BaseGraphTask, Task):

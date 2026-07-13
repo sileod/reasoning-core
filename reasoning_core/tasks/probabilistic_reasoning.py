@@ -150,7 +150,12 @@ def evidence_grammar():
     R("pos(pos,pos)", "({0},{1})", "({0} and {1})", weight=1.2)
     R("pos(pos,pos)", "({0};{1})", "({0} or {1})")
     R("expr(pos)", "{0}", "{0}")
-    R("expr(pos,atom)", "({0},\\+{1})", "({0} unless factor {1})", weight=0.8)
+    R(
+        "expr(pos,atom)",
+        "({0},\\+{1})",
+        "({0} holds and factor {1} is false)",
+        weight=0.8,
+    )
     return R
 
 

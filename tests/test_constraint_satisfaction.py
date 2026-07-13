@@ -17,7 +17,10 @@ def test_constraint_satisfaction_modes_generate_and_score():
 def test_constraint_satisfaction_finite_prompts_are_short():
     random.seed(2)
     for mode in ("attribute", "grid"):
-        task = ConstraintSatisfaction(ConstraintSatisfactionConfig(model_mode=mode, n_vars=3, n_constraints=4))
+        task = ConstraintSatisfaction(ConstraintSatisfactionConfig(
+            model_mode=mode, n_vars=3, n_constraints=4,
+            possibility_prob=0, relation_prob=0, consistency_prob=0,
+        ))
         problem = task.generate_example(max_tokens=0)
         assert 3 <= len(problem.metadata.clues)
         assert "Answer with one" in problem.prompt
@@ -61,6 +64,9 @@ def test_consistency_questions_include_sat_with_multiple_models():
     assert problem.metadata.query_type == "consistency"
     assert problem.answer == "SAT"
     assert problem.metadata.metrics.multiple_full_solutions
+    assert problem.metadata.metrics.schema == "consistency"
+    assert problem.metadata.metrics.displayed_clue_essentiality == 0
+    assert "query_domain_after" not in problem.metadata.metrics
 
 
 def test_prompts_have_block_separators_and_consistent_payload():
@@ -80,6 +86,9 @@ def test_lex_all_is_normalized_and_scored_as_enumeration():
     ))
     problem = task.generate_entry()
     assert problem.metadata.solve_mode == "all"
+    assert problem.metadata.metrics.schema == "enumeration"
+    assert problem.metadata.metrics.enumeration_mode == "all_solutions"
+    assert "wrong_answer_cores" not in problem.metadata.metrics
     assert task.score_answer(problem.answer, problem) == 1
 
 
@@ -94,7 +103,7 @@ def test_all_overflow_regenerates_instead_of_changing_objective():
 
 @pytest.mark.parametrize("field,value", [
     ("solve_mode", "other"), ("model_mode", "other"), ("coef_bound", 0),
-    ("max_solutions", 0), ("grid_width", -1), ("unsat_prob", 2),
+    ("n_constraints", 0), ("max_solutions", 0), ("grid_width", -1), ("unsat_prob", 2),
 ])
 def test_invalid_config_is_rejected(field, value):
     config = ConstraintSatisfactionConfig(**{field: value})

@@ -1,10 +1,13 @@
 import random
 
+import pytest
+
 from reasoning_core.tasks._csp_utils import (
     AllDifferent, AssignmentRenderer, Eq, EqVar, Exactly, Implies, Linear, Lt,
     Mod, Ne, NeVar, Or, Var, Xor, CSPSolver, Query, analyze, minimize,
     UniqueValue, minimize_for_objective, minimize_system, possibility_metrics,
-    semantic_consistency_pair, split_key,
+    consistency_metrics, enumeration_metrics, relation_metrics,
+    semantic_consistency_pair, split_key, holds,
 )
 
 
@@ -25,6 +28,20 @@ def test_compositional_formulas_compile_and_solve():
     solver = CSPSolver((x, y), clues=formulas)
     assert solver.unique_value(x) == 1
     assert solver.unique_value(y) != 1
+
+
+def test_exact_one_xor_preserves_duplicates_and_nesting():
+    x, y, z = (Var(name, range(2), "bool") for name in "xyz")
+    a, b, c = Eq(x, 1), Eq(y, 1), Eq(z, 1)
+    assert not CSPSolver((x,)).is_sat([Xor((a, a))])
+    assert holds(Xor((Xor((a, b)), c)), {x: 1, y: 1, z: 1})
+    assert not holds(Xor((a, b, c)), {x: 1, y: 1, z: 1})
+
+
+def test_alldifferent_rejects_duplicate_variables():
+    x = Var("x", range(2))
+    with pytest.raises(ValueError, match="must be distinct"):
+        AllDifferent((x, x))
 
 
 def test_assignment_renderer_recurses_with_named_owners():
@@ -65,9 +82,19 @@ def test_structural_split_key_ignores_formula_argument_order():
 
 def test_structural_split_key_preserves_directed_roles_and_constants():
     x, y = Var("x", range(3)), Var("y", range(3))
-    assert split_key("numeric", [], [Lt(x, y)], "scalar") != split_key("numeric", [], [Lt(y, x)], "scalar")
+    assert split_key("numeric", [], [Eq(x, 0), Lt(x, y)], "scalar") != split_key(
+        "numeric", [], [Eq(x, 0), Lt(y, x)], "scalar"
+    )
     assert split_key("numeric", [], [Linear((1, 2), (x, y), "==", 2)], "scalar") != split_key(
         "numeric", [], [Linear((1, 3), (x, y), "==", 2)], "scalar"
+    )
+
+
+def test_structural_split_key_is_invariant_to_nonlexical_renaming():
+    x0, x1 = Var("x0", range(3)), Var("x1", range(3))
+    z1, z0 = Var("z1", range(3)), Var("z0", range(3))
+    assert split_key("numeric", [], [Eq(x0, 0), Lt(x0, x1)], "scalar") == split_key(
+        "numeric", [], [Eq(z1, 0), Lt(z1, z0)], "scalar"
     )
 
 
@@ -88,6 +115,28 @@ def test_unique_value_objective_allows_multiple_full_solutions():
     assert not solver.full_unique(systems[0])
     metrics = possibility_metrics(solver, systems[0], free, 1)
     assert metrics["possibility_expected"] and metrics["possible_value_count"] == 2
+
+
+def test_final_objective_metric_schemas_have_objective_specific_essentiality():
+    x, y = Var("x", range(2)), Var("y", range(2))
+    solver = CSPSolver((x, y))
+    sat = consistency_metrics(solver, [Eq(x, 0)])
+    assert sat["schema"] == "consistency"
+    assert sat["displayed_clue_essentiality"] == 0
+    assert "query_domain_after" not in sat
+
+    possibility = possibility_metrics(solver, [Eq(x, 0)], x, 1)
+    assert possibility["schema"] == "possibility"
+    assert possibility["essential_for_objective"] == [True]
+    assert "wrong_answer_cores" not in possibility
+
+    relation = relation_metrics(solver, [Eq(x, 0), Eq(y, 0)], EqVar(x, y), True)
+    assert relation["schema"] == "relation"
+    assert relation["essential_for_objective"] == [True, True]
+
+    enumeration = enumeration_metrics(solver, [Eq(x, 0)], "lexicographic_solution")
+    assert enumeration["schema"] == "enumeration"
+    assert enumeration["enumeration_mode"] == "lexicographic_solution"
 
 
 def test_consistency_pair_matches_surface_and_is_balanced():

@@ -738,33 +738,43 @@ def _sample_instance(config):
     raise RuntimeError("failed to generate a verified Metamath proof tree")
 
 
-def _negative_target(inst, config):
+def _critical_premise_foil(inst, config):
+    """Find a necessary leaf and a same-shape variable near miss for it."""
     rules = [_database().rules[l] for l in inst.rules]
-    closure = _closure(inst.premises, rules, int(config.formula_len_cap), check_dv=True)
-    relaxed = _closure(inst.premises, rules, int(config.formula_len_cap), check_dv=False)
-    if closure is None or relaxed is None:
+    cap = int(config.formula_len_cap)
+    db = _database()
+    full = _closure(inst.premises, rules, cap, check_dv=True)
+    if full is None or inst.tree.target not in full:
         return None
-    vars_ = sorted({t for f in list(inst.premises) + [inst.tree.target] for t in f if t in _database().var_type})
-    premise_vars = {t for f in inst.premises for t in f if t in _database().var_type}
-    for _ in range(80):
-        repl = {v: random.choice(_VARS.get(_database().var_type[v], (v,))) for v in vars_}
-        cand = tuple(repl.get(t, t) for t in inst.tree.target)
-        if {t for t in cand if t in _database().var_type} - premise_vars:
+    available = {
+        t for expr in (*inst.premises, inst.tree.target) for t in expr
+        if t in db.var_type
+    }
+    order = list(range(len(inst.premises)))
+    random.shuffle(order)
+    for i in order:
+        premise = inst.premises[i]
+        without = inst.premises[:i] + inst.premises[i + 1:]
+        relaxed = _closure(without, rules, cap, check_dv=False)
+        if relaxed is None or inst.tree.target in relaxed:
             continue
-        if cand != inst.tree.target and len(cand) <= int(config.formula_len_cap) and _head(cand) == _head(inst.tree.target):
-            _relaxed_gap(closure, relaxed, cand, "negative")
-            if cand not in closure and cand not in relaxed:
-                return cand
-    for r in _math_rule_catalog(int(config.formula_len_cap)):
-        subst = _fresh_subst(r)
-        if subst:
-            cand = _subst_expr(r.conclusion, subst)
-            if {t for t in cand if t in _database().var_type} - premise_vars:
-                continue
-            if _head(cand) == _head(inst.tree.target):
-                _relaxed_gap(closure, relaxed, cand, "negative")
-            if _head(cand) == _head(inst.tree.target) and cand not in closure and cand not in relaxed:
-                return cand
+        positions = [j for j, tok in enumerate(premise) if tok in db.var_type]
+        random.shuffle(positions)
+        for j in positions:
+            tok = premise[j]
+            replacements = [
+                v for v in available
+                if db.var_type.get(v) == db.var_type[tok] and v != tok
+            ]
+            random.shuffle(replacements)
+            for replacement in replacements:
+                foil = premise[:j] + (replacement,) + premise[j + 1:]
+                if foil in inst.premises or _fmt(foil) is None:
+                    continue
+                negative = inst.premises[:i] + (foil,) + inst.premises[i + 1:]
+                closure = _closure(negative, rules, cap, check_dv=False)
+                if closure is not None and inst.tree.target not in closure:
+                    return i, foil
     return None
 
 
@@ -785,23 +795,26 @@ class MetamathEntailment(Task):
             # toggle (self._want_positive) degenerates under generate_balanced_batch(workers>1),
             # where each pool.submit re-pickles a fresh `self` from the parent so the toggle
             # never advances -> every worker emits the same polarity -> balancing cap livelock.
+            pair = _critical_premise_foil(inst, self.config)
+            if pair is None:
+                continue
             positive = random.random() < 0.5
+            premise_index, foil = pair
+            premises_raw = inst.premises if positive else (
+                inst.premises[:premise_index] + (foil,) + inst.premises[premise_index + 1:]
+            )
             target = inst.tree.target
-            if not positive:
-                target = _negative_target(inst, self.config)
-                if target is None or _fmt(target) is None:
-                    continue
-            display_exprs = list(inst.premises) + [target]
+            display_exprs = list(premises_raw) + [target]
             for label in inst.rules:
                 rule = _database().rules[label]
                 display_exprs.extend(rule.essential)
                 display_exprs.append(rule.conclusion)
             env = _display_env(display_exprs)
             rule_rows = _rule_rows(inst.rules, env)
-            premises = [f"{i + 1}. {_fmt(p, env)}" for i, p in enumerate(inst.premises)]
+            premises = [f"{i + 1}. {_fmt(p, env)}" for i, p in enumerate(premises_raw)]
             meta = edict(
-                premises=[_fmt(p, env) for p in inst.premises],
-                raw_premises=[list(p) for p in inst.premises],
+                premises=[_fmt(p, env) for p in premises_raw],
+                raw_premises=[list(p) for p in premises_raw],
                 rules=[r.id for r in rule_rows],
                 raw_rule_labels=inst.rules,
                 rule_map={r.id: r.label for r in rule_rows},
@@ -816,6 +829,7 @@ class MetamathEntailment(Task):
                 conjecture=_fmt(target, env),
                 raw_conjecture=list(target),
                 positive=positive,
+                corrupted_premise=None if positive else premise_index + 1,
                 proof=list(inst.proof) if positive else [],
                 source="set.mm",
             )
@@ -832,9 +846,8 @@ class MetamathEntailment(Task):
 
     def render_prompt(self, metadata):
         return (
-            "Using only these premises and rules, does the conjecture follow?\n"
-            "Use only the listed premises and rules. No hidden background facts.\n"
-            "Rules may only rename variables, not substitute compound terms.\n"
+            "Does the conjecture follow using only the listed premises and rules?\n"
+            "Rules instantiate only by renaming variables.\n"
             "The answer is True or False.\n\n"
             f"{render_payload(metadata.payload)}"
         )

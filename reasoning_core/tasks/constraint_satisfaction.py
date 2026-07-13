@@ -9,9 +9,9 @@ from dataclasses import dataclass, replace
 from typing import Optional
 
 from reasoning_core.tasks._csp_utils import (
-    ALIASES, FAMILIES, CSPSolver, Eq, Ne, analyze, generate_instance,
-    graph_relation_candidate, operator_name, possibility_metrics,
-    query_leakage_metrics, render_instance, split_key,
+    ALIASES, FAMILIES, CSPSolver, Eq, EqVar, Ne, consistency_metrics,
+    enumeration_metrics, generate_instance, graph_relation_candidate,
+    possibility_metrics, relation_metrics, split_key, value_metrics,
 )
 from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
@@ -38,7 +38,7 @@ class ConstraintSatisfactionConfig(Config):
     consistency_prob: float = 0.20
     unsat_given_consistency: float = 0.50
 
-    # Retained compatibility knobs. Numeric structure is now expressed by the IR.
+    # Numeric scope topology; edge_prob also controls graph-family density.
     structure_mode: str = "any"
     max_arity: int = 3
     edge_prob: float = 0.25
@@ -71,8 +71,8 @@ class ConstraintSatisfaction(Task):
         if c.solve_mode.lower() not in {"query", "all", "min"}: raise ValueError(f"Unknown solve_mode: {c.solve_mode!r}")
         if c.structure_mode.lower() not in {"complete", "random", "graph", "grid", "clustered", "any"}:
             raise ValueError(f"Unknown structure_mode: {c.structure_mode!r}")
-        if min(c.coef_bound, c.max_tries, c.max_arity, c.minimization_orders) <= 0:
-            raise ValueError("coef_bound, max_tries, max_arity, and minimization_orders must be positive")
+        if min(c.n_constraints, c.coef_bound, c.max_tries, c.max_arity, c.minimization_orders) <= 0:
+            raise ValueError("n_constraints, coef_bound, max_tries, max_arity, and minimization_orders must be positive")
         if c.max_solutions is not None and c.max_solutions <= 0: raise ValueError("max_solutions must be positive or None")
         if c.grid_width is not None and c.grid_width <= 0: raise ValueError("grid_width must be positive or None")
         for field in ("unsat_prob", "counterfactual_prob", "possibility_prob", "relation_prob",
@@ -93,6 +93,10 @@ class ConstraintSatisfaction(Task):
             max_domain=max(2, int(c.max_domain)), coef_bound=int(c.coef_bound),
             difficulty=int(c.level), require_consistency=consistency_task,
             require_counterfactual=desired_counterfactual,
+            n_constraints=int(c.n_constraints), max_arity=int(c.max_arity),
+            structure_mode=c.structure_mode.lower(), edge_prob=c.edge_prob,
+            n_clusters=int(c.n_clusters), p_in=c.p_in, p_out=c.p_out,
+            grid_width=None if c.grid_width is None else int(c.grid_width),
         )
         clues, answer, solve_mode = list(instance.clues), instance.answer, c.solve_mode.lower()
         query, query_type = instance.query, instance.query.kind
@@ -137,6 +141,7 @@ class ConstraintSatisfaction(Task):
 
         # Full-assignment modes remain available for backwards compatibility, but
         # query mode is the SFT-oriented default.
+        enumerated_solutions = None
         if family == "numeric" and solve_mode in {"all", "min"}:
             active_solver = CSPSolver(instance.world.variables, instance.base, clues)
             solutions, overflow = active_solver.solutions(limit=c.max_solutions) if solve_mode == "all" else (None, False)
@@ -149,6 +154,7 @@ class ConstraintSatisfaction(Task):
                 answer = "UNSAT" if solution is None else json.dumps(list(solution))
             elif not solutions: answer = "UNSAT"
             else: answer = json.dumps([list(x) for x in solutions])
+            enumerated_solutions = solutions
             query_type = "all_solutions" if solve_mode == "all" else "lexicographic_solution"
 
         rendered = [formula.render(instance.renderer) for formula in clues]
@@ -179,47 +185,41 @@ class ConstraintSatisfaction(Task):
             answer_policy = "Answer Yes or No."
         prompt = f"{preamble}\n\nConstraints:\n{constraints_text}\n\nQuestion: {question_text}\n{answer_policy}"
 
+        metric_solver = CSPSolver(instance.world.variables, instance.base)
+        group_of = instance.world.data.get("group_of")
         if query_type == "counterfactual":
-            metric_solver = CSPSolver(instance.world.variables, instance.base)
-            metrics = analyze(
-                metric_solver, clues, query, group_of=instance.world.data.get("group_of"),
+            metrics = value_metrics(
+                metric_solver, clues, query, group_of, "counterfactual_unique_value",
             )
-            metrics.update(query_leakage_metrics(metric_solver, clues, query))
+        elif query_type in {"scalar", "entity"}:
+            metrics = dict(instance.metrics)
+            essential = metrics["essential_for_query"]
             metrics.update({
-                "objective": "counterfactual_unique_value",
-                "full_solution_unique": metric_solver.full_unique(clues),
+                "schema": "value", "objective": "unique_value",
+                "essential_for_objective": essential,
+                "displayed_clue_essentiality": round(sum(essential) / len(clues), 4),
             })
         elif query_type == "possibility":
-            metric_solver = CSPSolver(instance.world.variables, instance.base)
-            metrics = dict(instance.metrics)
-            metrics.update(possibility_metrics(
-                metric_solver, clues, query.var, possibility_value,
-                instance.world.data.get("group_of"),
-            ))
+            metrics = possibility_metrics(metric_solver, clues, query.var, possibility_value, group_of)
+        elif query_type == "relation":
+            metrics = relation_metrics(
+                metric_solver, clues, EqVar(relation_info[0], relation_info[1]),
+                relation_info[2], group_of,
+            )
+        elif query_type == "consistency":
+            metrics = consistency_metrics(metric_solver, clues, group_of)
+        elif query_type in {"all_solutions", "lexicographic_solution"}:
+            metrics = enumeration_metrics(
+                metric_solver, clues,
+                "all_solutions" if query_type == "all_solutions" else "lexicographic_solution",
+                enumerated_solutions, group_of,
+            )
         else:
-            metrics = dict(instance.metrics)
-        if relation_info: metrics.update(relation_info[3])
-        if query_type == "consistency":
-            consistency_solver = CSPSolver(instance.world.variables, instance.base)
-            active = list(clues)
-            if answer == "UNSAT":
-                for clue in list(active):
-                    trial = active.copy(); trial.remove(clue)
-                    if not consistency_solver.is_sat(trial): active = trial
-            _, multiple = consistency_solver.solutions(clues, limit=1)
-            metrics.update({
-                "is_consistent": answer == "SAT",
-                "objective": "consistent" if answer == "SAT" else "inconsistent",
-                "consistency_core_size": len(active) if answer == "UNSAT" else None,
-                "multiple_full_solutions": multiple,
-                "full_solution_unique": False if answer == "SAT" else None,
-                "displayed_clue_essentiality": round(len(active) / len(clues), 4),
-                "operator_histogram": {name: sum(operator_name(c) == name for c in clues)
-                                       for name in sorted({operator_name(c) for c in clues})},
-            })
+            raise RuntimeError(f"Unknown final CSP objective: {query_type}")
         metadata = edict({
             "model_mode": requested if requested != "any" else family,
             "family": family, "solve_mode": solve_mode, "query_type": query_type,
+            "structure_mode": instance.world.data.get("structure_mode"),
             "query": ([relation_info[0].name, relation_info[1].name] if relation_info else
                       (int(query.var.name.split('c')[0][1:]), int(query.var.name.split('c')[1]))
                       if family == "grid" else query.var.name),

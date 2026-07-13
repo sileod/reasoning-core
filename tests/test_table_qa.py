@@ -1,8 +1,9 @@
 from datetime import date
 
 import numpy as np
+import pandas as pd
 
-from reasoning_core.tasks.table_qa import TableQA, canonical_scalar
+from reasoning_core.tasks.table_qa import TableQA, canonical_scalar, render_nulls
 
 
 def test_canonical_scalar_conventions():
@@ -29,3 +30,11 @@ def test_table_qa_states_only_the_relevant_scalar_convention():
     assert "literal NULL" in scalar_prompt("null")
     assert "without display formatting" in scalar_prompt("number")
     assert "The answer is the result as a single value." in scalar_prompt(None)
+
+
+def test_table_qa_declares_and_uses_unambiguous_null_marker():
+    rendered, metadata = render_nulls(pd.Series([None, "-", "NA", "null", ""]))
+
+    assert rendered.tolist() == ["—", "-", "NA", "null", ""]
+    assert metadata == {"null": "—"}
+    assert "In this table, — represents SQL NULL." in scalar_prompt(None)

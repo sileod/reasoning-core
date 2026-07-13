@@ -1,10 +1,12 @@
+import ast
 import hashlib
 import random
-import re
 from collections import deque
 from dataclasses import dataclass
 from itertools import product
+from textwrap import indent
 
+from gramforge import generate, init_grammar
 from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
@@ -12,7 +14,7 @@ from reasoning_core.template import Config, Entry, Task, edict, stochastic_round
 class CodeAnalysisConfig(Config):
     n_vars: int = 2
     domain_size: int = 2
-    n_modes: int = 2
+    n_modes: int = 3
     n_predicates: int = 3
     formula_depth: int = 2
     branchiness: int = 2
@@ -28,10 +30,27 @@ class CodeAnalysisConfig(Config):
         self.formula_depth = sround(self.formula_depth + 0.55 * level)
         self.branchiness = sround(self.branchiness + 0.25 * level)
         self.max_states = sround(self.max_states + 20 * level)
-        self.min_witness_len = sround(self.min_witness_len + 0.25 * level)
 
 
-PHASE_NAMES = ("idle", "wait", "done", "fail", "check", "hold", "retry", "exit")
+NAME_POOLS = {
+    "cat": ("mode", "phase", "status", "stage", "color"),
+    "int": ("x", "y", "count", "level", "index"),
+    "bool": ("flag", "ready", "locked", "active", "valid"),
+}
+LABEL_POOLS = (
+    ("idle", "wait", "done", "fail", "retry", "hold", "check", "exit"),
+    ("red", "blue", "green", "amber", "white", "black", "cyan", "gold"),
+    ("new", "open", "busy", "closed", "stale", "ready", "paused", "final"),
+)
+
+
+class _BadProgram(Exception):
+    pass
+
+
+class _NeedChoice(Exception):
+    def __init__(self, options):
+        self.options = list(options)
 
 
 def _state_name(i):
@@ -50,6 +69,160 @@ def _depth(f):
     return 1 + max(_depth(f[1]), _depth(f[2]))
 
 
+def _var_kind(domain):
+    if set(domain) == {"False", "True"}:
+        return "bool"
+    if all(value.isdigit() for value in domain):
+        return "int"
+    return "cat"
+
+
+def _pick_variables(cfg):
+    n_vars = max(2, min(5, int(cfg.n_vars)))
+    used = set()
+    vars_ = []
+    kinds = [random.choice(("cat", "int"))]
+    kinds += [random.choice(("cat", "int", "bool")) for _ in range(n_vars - 1)]
+    for kind in kinds:
+        names = [name for name in NAME_POOLS[kind] if name not in used]
+        name = random.choice(names)
+        used.add(name)
+        if kind == "cat":
+            size = max(2, min(int(cfg.n_modes), len(LABEL_POOLS[0])))
+            domain = list(random.choice(LABEL_POOLS)[:size])
+        elif kind == "int":
+            domain = list(map(str, range(max(2, int(cfg.domain_size)))))
+        else:
+            domain = ["False", "True"]
+        random.shuffle(domain)
+        vars_.append((name, tuple(domain)))
+    while _domain_size(vars_) > cfg.max_states and len(vars_) > 2:
+        vars_.pop()
+    return vars_
+
+
+def _condition(vars_, compound=True):
+    if random.random() < 0.12:
+        return "random.choice([False, True])"
+    name, domain = random.choice(vars_)
+    kind = _var_kind(domain)
+    if kind == "bool":
+        atom = name if random.random() < 0.5 else f"not {name}"
+    elif kind == "int" and random.random() < 0.45:
+        values = sorted(map(int, domain))
+        op = random.choice(("<", ">="))
+        atom = f"{name} {op} {random.choice(values[1:])}"
+    else:
+        atom = f"{name} {random.choice(('==', '!='))} {_literal(random.choice(domain))}"
+    if compound and random.random() < 0.3:
+        other = _condition(vars_, compound=False)
+        atom = f"({atom}) {random.choice(('and', 'or'))} ({other})"
+    return atom
+
+
+def _rhs(name, domain, vars_):
+    kind = _var_kind(domain)
+    if kind == "cat":
+        offset = random.randrange(1, len(domain))
+        shuffled = list(domain[offset:] + domain[:offset])
+        pairs = ", ".join(f"{_literal(a)}: {_literal(b)}" for a, b in zip(domain, shuffled))
+        table = "{" + pairs + "}"
+        choices = "[" + ", ".join(map(_literal, domain)) + "]"
+        return random.choice((
+            _literal(random.choice(domain)),
+            f"random.choice({choices})",
+            f"{table}[{name}]",
+            f"{_literal(random.choice(domain))} if {_condition(vars_)} else {name}",
+        ))
+    if kind == "bool":
+        return random.choice((
+            f"not {name}",
+            "random.choice([False, True])",
+            f"bool({_condition(vars_)})",
+            f"{name} if {_condition(vars_)} else not {name}",
+        ))
+    size = len(domain)
+    other_ints = [
+        other for other, values in vars_
+        if _var_kind(values) == "int" and other != name
+    ]
+    other = random.choice(other_ints) if other_ints else name
+    step = random.randint(1, max(1, size - 1))
+    return random.choice((
+        f"({name} + {step}) % {size}",
+        f"({name} + {other} + {step}) % {size}",
+        f"min({name} + {step}, {size - 1})",
+        f"max({name} - {step}, 0)",
+        f"random.choice({list(map(int, domain))})",
+        f"{random.choice(domain)} if {_condition(vars_)} else {name}",
+    ))
+
+
+def _assignment(vars_, allow_tuple=True):
+    if allow_tuple and len(vars_) > 1 and random.random() < 0.25:
+        chosen = random.sample(vars_, 2)
+        lhs = ", ".join(name for name, _ in chosen)
+        rhs = ", ".join(_rhs(name, domain, vars_) for name, domain in chosen)
+        return f"{lhs} = {rhs}\n"
+    name, domain = random.choice(vars_)
+    return f"{name} = {_rhs(name, domain, vars_)}\n"
+
+
+def _match_statement(vars_):
+    name, domain = random.choice(vars_)
+    values = random.sample(list(domain), min(2, len(domain)))
+    lines = [f"match {name}:"]
+    for value in values:
+        lines += [f"    case {_literal(value)}:", indent(_assignment(vars_), "        ").rstrip()]
+    lines += ["    case _:", indent(_assignment(vars_), "        ").rstrip()]
+    return "\n".join(lines) + "\n"
+
+
+def _transition_grammar(vars_):
+    rules = init_grammar(["py"])
+
+    def render_if(cond, yes, no=None):
+        text = f"if {cond.render('py')}:\n{indent(yes.render('py'), '    ')}"
+        if no is not None:
+            text += f"else:\n{indent(no.render('py'), '    ')}"
+        return text
+
+    def render_guard(cond, action):
+        return f"if {cond.render('py')}:\n{indent(action.render('py'), '    ')}    return\n"
+
+    def render_if_chain(first, yes, second, middle, no):
+        return (
+            f"if {first.render('py')}:\n{indent(yes.render('py'), '    ')}"
+            f"elif {second.render('py')}:\n{indent(middle.render('py'), '    ')}"
+            f"else:\n{indent(no.render('py'), '    ')}"
+        )
+
+    rules("CTX", "")
+    rules("ACTION(CTX)", lambda _: _assignment(vars_))
+    rules("MATCH(CTX)", lambda _: _match_statement(vars_))
+    rules("COND(CTX)", lambda _: _condition(vars_))
+    rules("IF(COND, BLOCK)", render_if)
+    rules("IF(COND, BLOCK, BLOCK)", render_if, weight=1.5)
+    rules("IF(COND, BLOCK, COND, BLOCK, BLOCK)", render_if_chain, weight=0.6)
+    rules("GUARD(COND, ACTION)", render_guard, weight=0.8)
+    rules("STMT(ACTION)", "0", weight=2.0)
+    rules("STMT(MATCH)", "0", weight=0.5)
+    rules("STMT(IF)", "0", weight=1.2)
+    rules("STMT(GUARD)", "0", weight=0.8)
+    rules("BLOCK(STMT)", "0")
+    rules("BLOCK(STMT, STMT)", lambda a, b: a.render("py") + b.render("py"), weight=1.2)
+
+    def render_program(body):
+        names = ", ".join(name for name, _ in vars_)
+        initial = ", ".join(_literal(domain[0]) for _, domain in vars_)
+        block = indent(body.render("py"), "    ")
+        return f"import random\n\n{names} = {initial}\n\ndef step():\n    global {names}\n{block}"
+
+    rules("PROGRAM(BLOCK)", render_program)
+    rules("start(PROGRAM)", "0")
+    return rules
+
+
 class CodeAnalysis(Task):
     summary = "Analyze toy finite-state Python-like programs with CTL temporal formulas."
     config_cls = CodeAnalysisConfig
@@ -66,9 +239,16 @@ class CodeAnalysis(Task):
         self._query_i += 1
 
         for query_type in modes[start:] + modes[:start]:
-            for _ in range(max(1, cfg.max_retries // len(modes))):
-                kripke = self._make_kripke()
+            for _ in range(max(1, cfg.max_retries)):
+                try:
+                    kripke = self._make_kripke()
+                except _BadProgram:
+                    continue
+                if len(kripke.reachable) < min(3, len(kripke.states)):
+                    continue
                 predicates = self._make_predicates(kripke)
+                if not predicates:
+                    continue
                 formula = self._make_formula_for_query(query_type, kripke, predicates)
                 solved = self._solve_query(query_type, formula, kripke, predicates)
                 if solved is None:
@@ -82,43 +262,26 @@ class CodeAnalysis(Task):
 
     def render_prompt(self, m):
         parts = [
-            "Program:",
-            "```python",
-            m.program,
-            "```",
-            "",
-            "Reachable states:",
-            m.state_table,
-            "",
-            "Predicates:",
-            m.predicates,
-            "",
-            "Property:",
-            m.property_text,
-            "",
+            "Program:", "```python", m.program, "```", "",
+            "Start from the assignments above; each transition calls `step()`.",
         ]
+        if "random.choice" in m.program:
+            parts += ["", "Each `random.choice` outcome is a nondeterministic transition."]
+        parts += ["", f"Property: {m.property_text}", ""]
         if m.query_type == "holds":
-            parts.append("Question: Considering all possible random choices, does the property hold from the initial state?")
-            parts.append("Answer with exactly Yes or No.")
+            parts.append("Does the property hold from the initial state? Answer Yes or No.")
         elif m.query_type == "states":
-            parts.append("Question: List all reachable states where the property holds.")
-            parts.append("Answer as a sorted set like {s0,s2}.")
+            parts.append(f"State tuples use ({m.state_variables}).")
+            parts.append("Which reachable valuations satisfy it? Answer as a sorted list of tuples.")
         elif m.query_type == "rank":
-            parts.append(
-                "Question: At which fixed-point iteration does the initial state first enter the satisfying set?"
-            )
-            parts.append("Iteration 0 is the states where the inner condition already holds.")
-            parts.append("Answer with a nonnegative integer, or never.")
+            parts.append("When does the initial state first enter the least fixed point?")
+            parts.append("Iteration 0 contains states satisfying the inner condition. Answer with an integer or never.")
         else:
             if m.witness_kind == "counterexample":
-                parts.append(
-                    "Question: Give the shortest path with the smallest state indexes showing that the property fails from the initial state."
-                )
+                parts.append("Give the shortest lexicographic valuation path showing failure from the initial state.")
             else:
-                parts.append(
-                    "Question: Give the shortest path with the smallest state indexes reaching a state where the property holds."
-                )
-            parts.append("Answer as comma-separated state names, like s0,s2,s5.")
+                parts.append("Give the shortest lexicographic valuation path reaching the inner condition.")
+            parts.append(f"State tuples use ({m.state_variables}). Answer as a list of tuples.")
         return "\n".join(parts)
 
     def score_answer(self, answer, entry):
@@ -128,11 +291,11 @@ class CodeAnalysis(Task):
         if q == "holds":
             return float(_norm_yesno(answer) == ref)
         if q == "states":
-            return float(_parse_state_set(answer) == _parse_state_set(ref))
+            return float(set(_parse_valuations(answer)) == set(_parse_valuations(ref)))
         if q == "rank":
             return float(str(answer).strip().lower().rstrip(".") == ref)
         if q == "witness":
-            return float(_parse_path(answer) == _parse_path(ref))
+            return float(_parse_valuations(answer) == _parse_valuations(ref))
         return 0.0
 
     def balancing_key(self, problem):
@@ -148,190 +311,88 @@ class CodeAnalysis(Task):
 
     def _make_kripke(self):
         cfg = self.config
-        n_modes = max(2, min(int(cfg.n_modes), len(PHASE_NAMES)))
-        vars_ = [("phase", PHASE_NAMES[:n_modes])]
-        if cfg.n_vars >= 2:
-            vars_.append(("x", tuple(map(str, range(max(2, int(cfg.domain_size)))))))
-        if cfg.n_vars >= 3:
-            vars_.append(("flag", ("False", "True")))
-        if cfg.n_vars >= 4:
-            vars_.append(("y", tuple(map(str, range(2 + min(2, int(cfg.domain_size) // 2))))))
-
-        while _domain_size(vars_) > cfg.max_states and len(vars_) > 2:
-            vars_.pop()
+        vars_ = _pick_variables(cfg)
         states = list(product(*[range(len(domain)) for _, domain in vars_]))
         index = {state: i for i, state in enumerate(states)}
-        program = self._make_program(vars_)
+        depth = 6 + min(4, int(cfg.branchiness))
+        program = generate(_transition_grammar(vars_), depth=depth, min_depth=4) @ "py"
+        compile(program, "<code_analysis_program>", "exec")
+        if len(program.splitlines()) > 32:
+            raise _BadProgram("program too long")
         succ = []
         for state in states:
-            choices = [index[s] for s in self._program_successors(program, vars_, state)]
+            choices = [index[s] for s in self._execute_successors(program, vars_, state)]
             succ.append(sorted(set(choices)) or [index[state]])
 
         reachable = _reachable(succ, 0)
-        return edict(vars=vars_, states=states, succ=succ, initial=0, reachable=reachable, program=program)
-
-    def _make_program(self, vars_):
-        domains = dict(vars_)
-        phases = domains["phase"]
-        available = ["workflow", "cooldown"]
-        if "fail" in phases:
-            available += ["retry_fail", "alarm"]
-        if "flag" in domains:
-            available += ["lock", "coupled_flag"]
-        if "y" in domains:
-            available += ["buffer"]
-        motif = random.choice(available)
-        actions = ["advance"]
-        if "fail" in phases and random.random() < 0.75:
-            actions.append("fail")
-        if "x" in domains:
-            actions.append("reset")
-        if "flag" in domains:
-            actions.append("toggle")
+        features = sorted({
+            type(node).__name__.lower()
+            for node in ast.walk(ast.parse(program))
+            if isinstance(node, (ast.If, ast.Match, ast.Return, ast.Tuple, ast.Dict, ast.IfExp))
+        })
         return edict(
-            motif=motif,
-            idle_can_wait=random.random() < 0.85,
-            wait_actions=actions[: max(1, min(len(actions), int(self.config.branchiness) + 1))],
-            done_on_max="done" in phases,
-            fail_sticky=random.random() < 0.75,
+            vars=vars_, states=states, succ=succ, initial=0, reachable=reachable,
+            program=program, syntax="+".join(features or ["assign"]),
         )
 
-    def _program_successors(self, program, vars_, state):
-        domains = dict(vars_)
-        values = _state_values(vars_, state)
-        phase = values["phase"]
-        if program.motif == "cooldown":
-            nxt = dict(values)
-            if phase == "idle":
-                nxt["phase"] = "wait"
-            elif phase == "wait" and "x" in nxt:
-                x_max = len(domains["x"]) - 1
-                nxt["x"] = str(min(int(nxt["x"]) + 1, x_max))
-                if int(nxt["x"]) == x_max and "done" in domains["phase"]:
-                    nxt["phase"] = "done"
-            elif phase == "done":
-                nxt["phase"] = "idle"
-                if "x" in nxt:
-                    nxt["x"] = "0"
-            else:
-                nxt["phase"] = "idle"
-            return [_state_from_values(vars_, nxt)]
-        if program.motif == "retry_fail":
-            if phase == "idle":
-                return [_state_from_values(vars_, {**values, "phase": "wait"})]
-            if phase == "wait":
-                out = []
-                for target in ("wait", "fail"):
-                    nxt = dict(values)
-                    nxt["phase"] = target
-                    if target == "wait" and "x" in nxt:
-                        x_max = len(domains["x"]) - 1
-                        nxt["x"] = str(min(int(nxt["x"]) + 1, x_max))
-                    out.append(_state_from_values(vars_, nxt))
-                return out
-            if phase == "fail":
-                if program.fail_sticky:
-                    return [state]
-                return [_state_from_values(vars_, {**values, "phase": "idle"})]
-            return [_state_from_values(vars_, {**values, "phase": "idle"})]
-        if program.motif == "lock" and "flag" in values:
-            if phase == "idle":
-                return [_state_from_values(vars_, {**values, "phase": "wait", "flag": "True"})]
-            if phase == "wait":
-                target = "done" if "done" in domains["phase"] else "idle"
-                return [
-                    _state_from_values(vars_, {**values, "phase": target}),
-                    _state_from_values(vars_, {**values, "flag": "False"}),
-                ]
-            if phase == "done":
-                return [_state_from_values(vars_, {**values, "phase": "idle", "flag": "False"})]
-            return [_state_from_values(vars_, {**values, "phase": "idle"})]
-        if program.motif == "buffer" and "y" in values:
-            y_max = len(domains["y"]) - 1
-            out = []
-            for delta in (1, -1):
-                nxt = dict(values)
-                nxt["y"] = str(max(0, min(int(nxt["y"]) + delta, y_max)))
-                if int(nxt["y"]) == y_max and "done" in domains["phase"]:
-                    nxt["phase"] = "done"
-                out.append(_state_from_values(vars_, nxt))
-            return out
-        if program.motif == "alarm":
-            if phase == "idle":
-                return [_state_from_values(vars_, {**values, "phase": "wait"})]
-            if phase == "wait":
-                return [
-                    _state_from_values(vars_, {**values, "phase": "idle"}),
-                    _state_from_values(vars_, {**values, "phase": "fail"}),
-                ]
-            if phase == "fail":
-                if program.fail_sticky:
-                    return [state]
-                return [_state_from_values(vars_, {**values, "phase": "idle"})]
-            return [_state_from_values(vars_, {**values, "phase": "idle"})]
-        if program.motif == "coupled_flag" and "flag" in values:
-            nxt = dict(values)
-            if phase == "idle":
-                nxt["phase"] = "wait"
-            elif phase == "wait":
-                nxt["flag"] = "False" if nxt["flag"] == "True" else "True"
-                if nxt["flag"] == "False" and "done" in domains["phase"]:
-                    nxt["phase"] = "done"
-            elif phase == "done":
-                nxt["phase"] = "idle"
-            else:
-                nxt["phase"] = "idle"
-            return [_state_from_values(vars_, nxt)]
-        if phase == "idle":
-            targets = ["idle", "wait"] if program.idle_can_wait else ["wait"]
-            return [_state_from_values(vars_, {**values, "phase": target}) for target in targets]
-        if phase == "wait":
-            out = []
-            for action in program.wait_actions:
-                nxt = dict(values)
-                if action == "advance" and "x" in nxt:
-                    x_max = len(dict(vars_)["x"]) - 1
-                    nxt["x"] = str(min(int(nxt["x"]) + 1, x_max))
-                    if program.done_on_max and int(nxt["x"]) == x_max:
-                        nxt["phase"] = "done"
-                elif action == "reset":
-                    nxt["phase"] = "idle"
-                    if "x" in nxt:
-                        nxt["x"] = "0"
-                elif action == "fail":
-                    nxt["phase"] = "fail"
-                elif action == "toggle":
-                    nxt["flag"] = "False" if nxt["flag"] == "True" else "True"
-                out.append(_state_from_values(vars_, nxt))
-            return out
-        if phase == "done":
-            nxt = {**values, "phase": "idle"}
-            if "x" in nxt:
-                nxt["x"] = "0"
-            return [_state_from_values(vars_, nxt)]
-        if phase == "fail":
-            if program.fail_sticky:
-                return [state]
-            return [_state_from_values(vars_, {**values, "phase": "idle"})]
-        return [_state_from_values(vars_, {**values, "phase": "idle"})]
+    def _execute_successors(self, program, vars_, state):
+        pending = [()]
+        outcomes = set()
+        while pending:
+            path = pending.pop()
+            namespace = {}
+            exec(program, namespace, namespace)
+            for i, (name, domain) in enumerate(vars_):
+                namespace[name] = _runtime_value(domain[state[i]])
+            choice_index = 0
+
+            def choice(options):
+                nonlocal choice_index
+                if choice_index < len(path):
+                    value = path[choice_index]
+                    choice_index += 1
+                    return value
+                raise _NeedChoice(options)
+
+            namespace["random"] = edict(choice=choice)
+            try:
+                namespace["step"]()
+            except _NeedChoice as needed:
+                if len(pending) + len(outcomes) > 128:
+                    raise _BadProgram("too many nondeterministic paths")
+                pending.extend(path + (value,) for value in needed.options)
+                continue
+            try:
+                outcome = tuple(
+                    domain.index(_domain_value(namespace[name]))
+                    for name, domain in vars_
+                )
+            except (KeyError, ValueError, TypeError) as error:
+                raise _BadProgram("transition escaped its finite domain") from error
+            outcomes.add(outcome)
+        return outcomes
 
     def _make_predicates(self, k):
         candidates = []
         for vi, (name, domain) in enumerate(k.vars):
             for value_i, value in enumerate(domain):
                 sat = {sid for sid, state in enumerate(k.states) if state[vi] == value_i}
-                expr = f"{name} == {value!r}" if name == "phase" else f"{name} == {value}"
+                expr = f"{name} == {_literal(value)}"
                 candidates.append((expr, sat))
-            if name != "phase" and all(v.isdigit() for v in domain) and len(domain) > 2:
-                hi = len(domain) - 1
-                sat = {sid for sid, state in enumerate(k.states) if state[vi] < hi}
-                candidates.append((f"{name} < {domain[hi]}", sat))
+            if all(v.isdigit() for v in domain) and len(domain) > 2:
+                threshold = max(map(int, domain))
+                sat = {
+                    sid for sid, state in enumerate(k.states)
+                    if int(domain[state[vi]]) < threshold
+                }
+                candidates.append((f"{name} < {threshold}", sat))
         random.shuffle(candidates)
         preds = []
         seen = set()
         for expr, sat in candidates:
             key = tuple(sorted(sat))
-            if key in seen or len(sat) in (0, len(k.states)):
+            reachable_sat = sat & k.reachable
+            if key in seen or len(reachable_sat) in (0, len(k.reachable)):
                 continue
             seen.add(key)
             preds.append((f"p{len(preds)}", expr, sat))
@@ -340,6 +401,9 @@ class CodeAnalysis(Task):
         return preds
 
     def _make_formula_for_query(self, query_type, k, preds):
+        if query_type == "holds":
+            inner = self._random_formula(k, preds, max(1, self.config.formula_depth - 1), temporal=True)
+            return _formula(random.choice(("EX", "AX", "EF", "AF", "EG", "AG")), inner)
         if query_type == "rank":
             inner = self._random_formula(k, preds, max(1, self.config.formula_depth - 1), temporal=False)
             return _formula(random.choice(("EF", "AF")), inner)
@@ -366,22 +430,23 @@ class CodeAnalysis(Task):
         sat, fp_iters = self._sat(formula, k.succ, pred_map)
         reachable_sat = sat & k.reachable
         if query_type == "holds":
-            return ("Yes" if k.initial in sat else "No"), self._metrics(k, formula, reachable_sat, fp_iters)
+            return ("Yes" if k.initial in sat else "No"), self._metrics(k, formula, reachable_sat, fp_iters, pred_map)
         if query_type == "states":
-            answer = "{" + ",".join(_state_name(i) for i in sorted(reachable_sat)) + "}"
-            return answer, self._metrics(k, formula, reachable_sat, fp_iters)
+            valuations = sorted(_state_valuation(k, sid) for sid in reachable_sat)
+            answer = repr(valuations)
+            return answer, self._metrics(k, formula, reachable_sat, fp_iters, pred_map)
         if query_type == "rank":
             rank = self._entry_rank(formula, k.succ, pred_map, k.initial)
             answer = "never" if rank is None else str(rank)
-            metrics = self._metrics(k, formula, reachable_sat, fp_iters)
+            metrics = self._metrics(k, formula, reachable_sat, fp_iters, pred_map)
             metrics.fp_iterations = -1 if rank is None else rank
             return answer, metrics
         path = self._witness_path(formula, k, pred_map)
         if path is None:
             return None
-        metrics = self._metrics(k, formula, reachable_sat, fp_iters)
+        metrics = self._metrics(k, formula, reachable_sat, fp_iters, pred_map)
         metrics.shortest_witness_len = len(path) - 1
-        return ",".join(_state_name(i) for i in path), metrics
+        return repr([_state_valuation(k, sid) for sid in path]), metrics
 
     def _sat(self, f, succ, preds):
         n = len(succ)
@@ -446,12 +511,13 @@ class CodeAnalysis(Task):
             target = set(range(len(k.states))) - good
         else:
             return None
-        return _shortest_lex_path(k.succ, k.initial, target)
+        return _shortest_lex_path(k.succ, k.initial, target, key=lambda sid: _state_valuation(k, sid))
 
-    def _metrics(self, k, formula, sat, fp_iters):
+    def _metrics(self, k, formula, sat, fp_iters, preds):
         reachable = k.reachable
         branch_counts = [len(k.succ[i]) for i in reachable]
         sat_fraction = len(sat) / max(1, len(k.reachable))
+        effort, mixed, inner_count = self._temporal_effort(formula, k, preds, sat)
         return edict(
             n_states=len(k.states),
             n_edges=sum(len(s) for s in k.succ),
@@ -463,7 +529,40 @@ class CodeAnalysis(Task):
             sat_count=len(sat),
             sat_fraction=round(sat_fraction, 3),
             branching_entropy=round(sum(branch_counts) / max(1, len(branch_counts)), 3),
+            root_operator=formula[0],
+            temporal_effort=effort,
+            mixed_initial_branches=mixed,
+            inner_count=inner_count,
         )
+
+    def _temporal_effort(self, formula, k, preds, sat):
+        op = formula[0]
+        if op not in ("EX", "AX", "EF", "AF", "EG", "AG"):
+            return 0, False, 0
+        inner, _ = self._sat(formula[1], k.succ, preds)
+        inner_count = len(inner)
+        initial = k.initial
+        successors = set(k.succ[initial])
+        mixed = bool(successors & inner) and bool(successors - inner)
+        if op in ("EX", "AX"):
+            return len(successors), mixed, inner_count
+        if op == "EF":
+            if initial in sat:
+                return _shortest_distance(k.succ, initial, inner), False, inner_count
+            return _max_shortest_distance(k.succ, initial), False, inner_count
+        if op == "AF":
+            if initial in sat:
+                return self._entry_rank(formula, k.succ, preds, initial), False, inner_count
+            effort = _shortest_reachable_cycle(k.succ, initial, set(range(len(k.succ))) - inner)
+            return effort, False, inner_count
+        if op == "EG":
+            if initial in sat:
+                return _shortest_reachable_cycle(k.succ, initial, inner), False, inner_count
+            return _eg_removal_rank(inner, k.succ, initial), False, inner_count
+        if initial in sat:  # AG
+            return _max_shortest_distance(k.succ, initial), False, inner_count
+        effort = _shortest_distance(k.succ, initial, set(range(len(k.succ))) - inner)
+        return effort, False, inner_count
 
     def _accept(self, query_type, answer, metrics, k):
         if metrics.reachable_states < min(3, metrics.n_states):
@@ -474,36 +573,45 @@ class CodeAnalysis(Task):
             return random.random() < 0.2
         if query_type == "rank":
             if answer == "never":
-                return random.random() < 0.25
-            return int(answer) >= max(1, int(self.config.min_witness_len) - 1)
+                required = max(1, int(self.config.min_witness_len))
+                return (
+                    metrics.temporal_effort is not None
+                    and metrics.temporal_effort >= required
+                    and random.random() < 0.25
+                )
+            return int(answer) >= max(1, int(self.config.min_witness_len))
         if query_type == "witness":
             return metrics.shortest_witness_len >= max(1, int(self.config.min_witness_len))
         if query_type == "holds":
-            return metrics.temporal_depth > 0 and 0 < metrics.sat_count < metrics.reachable_states
+            required = 2 if metrics.root_operator in {"EX", "AX"} else max(1, int(self.config.min_witness_len))
+            if metrics.inner_count in (0, metrics.n_states):
+                return False
+            if metrics.temporal_effort is None or metrics.temporal_effort < required:
+                return False
+            if (metrics.root_operator, answer) in {("EX", "Yes"), ("AX", "No")}:
+                return metrics.mixed_initial_branches
+            return True
         return True
 
     def _metadata(self, query_type, formula, k, preds, metrics):
         formula_text = self._render_formula(formula)
-        state_table = "; ".join(
-            f"{_state_name(i)}=({', '.join(f'{name}={k.vars[j][1][state[j]]}' for j, (name, _) in enumerate(k.vars))})"
-            for i, state in enumerate(k.states)
-            if i in k.reachable
-        )
         pred_text = "\n".join(f"{name} := {expr}" for name, expr, _ in preds)
-        program = self._render_program(k)
+        program = k.program
+        if "random.choice" not in program:
+            program = program.removeprefix("import random\n\n")
         compile(program, "<code_analysis_program>", "exec")
         bucket = f"d{metrics.formula_depth}:s{metrics.n_states}:t{metrics.temporal_depth}"
         return edict(
             program=program,
             predicates=pred_text,
             formula=formula_text,
-            property_text=self._render_property(formula),
+            property_text=self._render_property(formula, {name: expr for name, expr, _ in preds}),
             query_type=query_type,
             witness_kind="counterexample" if query_type == "witness" and formula[0] == "AG" else "witness",
             initial_state=_state_name(k.initial),
-            state_table=state_table,
+            state_variables=", ".join(name for name, _ in k.vars),
             answer_format=query_type,
-            motif=k.program.motif,
+            syntax=k.syntax,
             difficulty_bucket=bucket,
             n_states=metrics.n_states,
             n_edges=metrics.n_edges,
@@ -515,151 +623,11 @@ class CodeAnalysis(Task):
             sat_count=metrics.sat_count,
             sat_fraction=metrics.sat_fraction,
             branching_entropy=metrics.branching_entropy,
+            root_operator=metrics.root_operator,
+            temporal_effort=metrics.temporal_effort,
+            mixed_initial_branches=metrics.mixed_initial_branches,
+            inner_count=metrics.inner_count,
         )
-
-    def _render_program(self, k):
-        lines = ["import random", ""]
-        names = ", ".join(name for name, _ in k.vars)
-        lhs = names
-        init_values = ", ".join(
-            _literal(domain[k.states[k.initial][i]])
-            for i, (_, domain) in enumerate(k.vars)
-        )
-        lines.append(f"{lhs} = {init_values}")
-        lines.append("")
-        lines.append("def step():")
-        lines.append(f"    global {names}")
-        domains = dict(k.vars)
-        phases = domains["phase"]
-        if k.program.motif == "cooldown":
-            lines.append("    if phase == 'idle':")
-            lines.append("        phase = 'wait'")
-            lines.append("    elif phase == 'wait':")
-            if "x" in domains:
-                x_max = len(domains["x"]) - 1
-                lines.append(f"        x = min(x + 1, {x_max})")
-                if "done" in phases:
-                    lines.append(f"        if x == {x_max}:")
-                    lines.append("            phase = 'done'")
-            else:
-                lines.append("        phase = 'wait'")
-            if "done" in phases:
-                lines.append("    elif phase == 'done':")
-                lines.append("        phase, x = 'idle', 0" if "x" in domains else "        phase = 'idle'")
-            lines.append("    else:")
-            lines.append("        phase = 'idle'")
-            return "\n".join(lines)
-        if k.program.motif == "retry_fail":
-            lines.append("    if phase == 'idle':")
-            lines.append("        phase = 'wait'")
-            lines.append("    elif phase == 'wait':")
-            lines.append("        if random.choice([True, False]):")
-            if "x" in domains:
-                lines.append(f"            x = min(x + 1, {len(domains['x']) - 1})")
-            else:
-                lines.append("            phase = 'wait'")
-            lines.append("        else:")
-            lines.append("            phase = 'fail'")
-            lines.append("    elif phase == 'fail':")
-            lines.append("        phase = 'fail'" if k.program.fail_sticky else "        phase = 'idle'")
-            lines.append("    else:")
-            lines.append("        phase = 'idle'")
-            return "\n".join(lines)
-        if k.program.motif == "lock":
-            target = "done" if "done" in phases else "idle"
-            lines.append("    if phase == 'idle':")
-            lines.append("        phase, flag = 'wait', True")
-            lines.append("    elif phase == 'wait':")
-            lines.append("        if random.choice([True, False]):")
-            lines.append(f"            phase = {target!r}")
-            lines.append("        else:")
-            lines.append("            flag = False")
-            if "done" in phases:
-                lines.append("    elif phase == 'done':")
-                lines.append("        phase, flag = 'idle', False")
-            lines.append("    else:")
-            lines.append("        phase = 'idle'")
-            return "\n".join(lines)
-        if k.program.motif == "buffer":
-            y_max = len(domains["y"]) - 1
-            lines.append("    if random.choice([True, False]):")
-            lines.append(f"        y = min(y + 1, {y_max})")
-            lines.append("    else:")
-            lines.append("        y = max(y - 1, 0)")
-            if "done" in phases:
-                lines.append(f"    if y == {y_max}:")
-                lines.append("        phase = 'done'")
-            return "\n".join(lines)
-        if k.program.motif == "alarm":
-            lines.append("    if phase == 'idle':")
-            lines.append("        phase = 'wait'")
-            lines.append("    elif phase == 'wait':")
-            lines.append("        phase = random.choice(['idle', 'fail'])")
-            lines.append("    elif phase == 'fail':")
-            lines.append("        phase = 'fail'" if k.program.fail_sticky else "        phase = 'idle'")
-            lines.append("    else:")
-            lines.append("        phase = 'idle'")
-            return "\n".join(lines)
-        if k.program.motif == "coupled_flag":
-            lines.append("    if phase == 'idle':")
-            lines.append("        phase = 'wait'")
-            lines.append("    elif phase == 'wait':")
-            lines.append("        flag = not flag")
-            if "done" in phases:
-                lines.append("        if not flag:")
-                lines.append("            phase = 'done'")
-                lines.append("    elif phase == 'done':")
-                lines.append("        phase = 'idle'")
-            lines.append("    else:")
-            lines.append("        phase = 'idle'")
-            return "\n".join(lines)
-        lines.append("    if phase == 'idle':")
-        if k.program.idle_can_wait:
-            lines.append("        phase = random.choice(['idle', 'wait'])")
-        else:
-            lines.append("        phase = 'wait'")
-        lines.append("    elif phase == 'wait':")
-        if len(k.program.wait_actions) == 1:
-            lines.append(f"        action = {k.program.wait_actions[0]!r}")
-        else:
-            lines.append(f"        action = random.choice({list(k.program.wait_actions)!r})")
-        if "x" in domains:
-            x_max = len(domains["x"]) - 1
-            lines.append("        if action == 'advance':")
-            lines.append(f"            x = min(x + 1, {x_max})")
-            if k.program.done_on_max:
-                lines.append(f"            if x == {x_max}:")
-                lines.append("                phase = 'done'")
-        else:
-            lines.append("        if action == 'advance':")
-            lines.append("            phase = 'wait'")
-        if "reset" in k.program.wait_actions:
-            lines.append("        elif action == 'reset':")
-            if "x" in domains:
-                lines.append("            phase, x = 'idle', 0")
-            else:
-                lines.append("            phase = 'idle'")
-        if "fail" in k.program.wait_actions:
-            lines.append("        elif action == 'fail':")
-            lines.append("            phase = 'fail'")
-        if "toggle" in k.program.wait_actions:
-            lines.append("        elif action == 'toggle':")
-            lines.append("            flag = not flag")
-        if "done" in phases:
-            lines.append("    elif phase == 'done':")
-            if "x" in domains:
-                lines.append("        phase, x = 'idle', 0")
-            else:
-                lines.append("        phase = 'idle'")
-        if "fail" in phases:
-            lines.append("    elif phase == 'fail':")
-            if k.program.fail_sticky:
-                lines.append("        phase = 'fail'")
-            else:
-                lines.append("        phase = 'idle'")
-        lines.append("    else:")
-        lines.append("        phase = 'idle'")
-        return "\n".join(lines)
 
     def _render_formula(self, f):
         op = f[0]
@@ -671,30 +639,30 @@ class CodeAnalysis(Task):
             return f"{op}({self._render_formula(f[1])})"
         return f"({self._render_formula(f[1])} {op} {self._render_formula(f[2])})"
 
-    def _render_property(self, f):
+    def _render_property(self, f, predicates=None):
         op = f[0]
         if op == "atom":
-            return f[1]
+            return predicates.get(f[1], f[1]) if predicates else f[1]
         if op == "!":
-            return f"not ({self._render_property(f[1])})"
+            return f"not ({self._render_property(f[1], predicates)})"
         if op == "&":
-            return f"({self._render_property(f[1])}) and ({self._render_property(f[2])})"
+            return f"({self._render_property(f[1], predicates)}) and ({self._render_property(f[2], predicates)})"
         if op == "|":
-            return f"({self._render_property(f[1])}) or ({self._render_property(f[2])})"
+            return f"({self._render_property(f[1], predicates)}) or ({self._render_property(f[2], predicates)})"
         if op == "->":
-            return f"if {self._render_property(f[1])}, then {self._render_property(f[2])}"
+            return f"if {self._render_property(f[1], predicates)}, then {self._render_property(f[2], predicates)}"
         if op == "EX":
-            return f"some next step can reach a state where {self._render_property(f[1])}"
+            return f"some next step can reach a state where {self._render_property(f[1], predicates)}"
         if op == "AX":
-            return f"every next step reaches a state where {self._render_property(f[1])}"
+            return f"every next step reaches a state where {self._render_property(f[1], predicates)}"
         if op == "EF":
-            return f"some execution can eventually reach a state where {self._render_property(f[1])}"
+            return f"some execution can eventually reach a state where {self._render_property(f[1], predicates)}"
         if op == "AF":
-            return f"every execution eventually reaches a state where {self._render_property(f[1])}"
+            return f"every execution eventually reaches a state where {self._render_property(f[1], predicates)}"
         if op == "EG":
-            return f"from the current state, there is some infinite execution where {self._render_property(f[1])} remains true forever"
+            return f"some infinite execution keeps {self._render_property(f[1], predicates)} true forever"
         if op == "AG":
-            return f"from the current state, {self._render_property(f[1])} holds now and after every possible sequence of steps"
+            return f"{self._render_property(f[1], predicates)} holds now and after every possible sequence of steps"
         return self._render_formula(f)
 
 
@@ -711,12 +679,23 @@ def _literal(value):
     return repr(value)
 
 
-def _state_values(vars_, state):
-    return {name: domain[state[i]] for i, (name, domain) in enumerate(vars_)}
+def _runtime_value(value):
+    if value in ("True", "False"):
+        return value == "True"
+    if value.isdigit():
+        return int(value)
+    return value
 
 
-def _state_from_values(vars_, values):
-    return tuple(domain.index(str(values[name])) for name, domain in vars_)
+def _domain_value(value):
+    if isinstance(value, bool):
+        return "True" if value else "False"
+    return str(value)
+
+
+def _state_valuation(k, sid):
+    state = k.states[sid]
+    return tuple(_runtime_value(domain[state[i]]) for i, (_, domain) in enumerate(k.vars))
 
 
 def _least_fixed_point(base_set, succ, existential, base=0):
@@ -758,14 +737,15 @@ def _reachable(succ, start):
     return seen
 
 
-def _shortest_lex_path(succ, start, targets):
+def _shortest_lex_path(succ, start, targets, key=None):
+    key = key or (lambda node: node)
     if start in targets:
         return [start]
     q = deque([(start, [start])])
     seen = {start}
     while q:
         node, path = q.popleft()
-        for nxt in sorted(succ[node]):
+        for nxt in sorted(succ[node], key=key):
             if nxt in seen:
                 continue
             npath = path + [nxt]
@@ -773,6 +753,55 @@ def _shortest_lex_path(succ, start, targets):
                 return npath
             seen.add(nxt)
             q.append((nxt, npath))
+    return None
+
+
+def _distances(succ, start, allowed=None):
+    allowed = set(range(len(succ))) if allowed is None else allowed
+    if start not in allowed:
+        return {}
+    distances = {start: 0}
+    q = deque([start])
+    while q:
+        node = q.popleft()
+        for nxt in succ[node]:
+            if nxt in allowed and nxt not in distances:
+                distances[nxt] = distances[node] + 1
+                q.append(nxt)
+    return distances
+
+
+def _shortest_distance(succ, start, targets):
+    distances = _distances(succ, start)
+    found = [distances[target] for target in targets if target in distances]
+    return min(found) if found else None
+
+
+def _max_shortest_distance(succ, start):
+    return max(_distances(succ, start).values())
+
+
+def _shortest_reachable_cycle(succ, start, allowed):
+    lengths = []
+    for root in _distances(succ, start, allowed):
+        for nxt in succ[root]:
+            back = _distances(succ, nxt, allowed).get(root)
+            if back is not None:
+                lengths.append(back + 1)
+    return min(lengths) if lengths else None
+
+
+def _eg_removal_rank(base_set, succ, start):
+    current = set(base_set)
+    if start not in current:
+        return 0
+    for iteration in range(1, len(succ) + 1):
+        new = {i for i in current if any(j in current for j in succ[i])}
+        if start not in new:
+            return iteration
+        if new == current:
+            return None
+        current = new
     return None
 
 
@@ -795,19 +824,14 @@ def _norm_yesno(answer):
     return text
 
 
-def _parse_state_set(answer):
+def _parse_valuations(answer):
     text = str(answer).strip()
-    sets = re.findall(r"\{[^{}]*\}", text)
-    if sets:
-        text = sets[-1]
-    else:
-        text = text.splitlines()[-1] if text else ""
-    if text in {"{}", "set()", ""}:
-        return set()
-    return set(re.findall(r"\bs\d+\b", text))
-
-
-def _parse_path(answer):
-    text = str(answer).strip()
-    text = text.splitlines()[-1] if text else ""
-    return re.findall(r"\bs\d+\b", text)
+    candidates = [text] + list(reversed(text.splitlines()))
+    for candidate in candidates:
+        try:
+            value = ast.literal_eval(candidate.strip().strip("`"))
+        except (SyntaxError, ValueError):
+            continue
+        if isinstance(value, list) and all(isinstance(item, (tuple, list)) for item in value):
+            return [tuple(item) for item in value]
+    return []

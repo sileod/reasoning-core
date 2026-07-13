@@ -800,7 +800,6 @@ class Planning(Task):
             meta.fluent_arity = fma = random.choices([1, 2], weights=[1, config.arity_weight], k=1)[0]
 
             domain = generate_domain(N, meta.domain_seed, fluent_max_arity=fma) if not config.domain else fetch_domain(config.domain)
-            random.seed(None)
             try:
                 if random.random() < config.pure_random_proba:
                     problem = generate_problem(N, domain=domain)

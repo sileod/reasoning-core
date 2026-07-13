@@ -104,6 +104,8 @@ class MultistepNLIConfig(Config):
     max_target_support_size: Optional[int] = 3
     
     def apply_difficulty(self, level):
+        self.n_entities = min(8, self.n_entities + level)
+        self.n_facts += level
         self.max_depth = sround(self.max_depth + 0.5 * level)
         self.n_rules += level
         self.n_distractors += 2 * level
@@ -112,7 +114,7 @@ class MultistepNLIConfig(Config):
         self.min_target_support_size = sround(min(5, 2 + 0.5 * level))
         if level > 0:
             self.max_target_support_size = None
-        self.min_target_depth = sround(min(self.max_depth, 2 + 0.5 * level))
+        self.min_target_depth = sround(min(3, self.max_depth, 2 + 0.5 * level))
         self.max_target_depth = min(self.max_depth, self.min_target_depth + 1)
 
 @dataclass
@@ -131,7 +133,7 @@ class MultistepAbductionConfig(MultistepNLIConfig):
 @dataclass
 class LogicQAConfig(MultistepNLIConfig):
     answer_mode: str = "any"
-    zero_answer_rate: float = 0.20
+    zero_answer_rate: float = 0.0
 
 
 NAMES = ("alice", "bruno", "clara", "david", "elena", "farah", "george", "hannah")
@@ -598,9 +600,26 @@ def _bad_rule(rule):
     return any(pair <= preds for preds in positive.values() for pair in conflicts)
 
 
-def _plant_backbone(theory, sigs, entities):
+def _plant_backbone(theory, sigs, entities, cfg=None):
     unaries = [s for s in sigs.values() if len(s.arg_types) == 1]
     binaries = [s for s in sigs.values() if len(s.arg_types) == 2]
+    support = int(getattr(cfg, "min_target_support_size", 2))
+    if support >= 3 and len(unaries) >= 2 * support - 1:
+        chosen = random.sample(unaries, 2 * support - 1)
+        inputs, outputs = chosen[:support], chosen[support:]
+        x = random.choice(entities[inputs[0].arg_types[0]])
+        theory.facts += [Atom(a.name, (x,)) for a in inputs]
+        previous = inputs[0]
+        for other, out in zip(inputs[1:], outputs):
+            theory.rules.append(Rule(
+                (Atom(previous.name, ("?x",)), Atom(other.name, ("?x",))),
+                Atom(out.name, ("?x",)), "backbone", "u_and",
+            ))
+            previous = out
+        return {
+            "kind": "wide_conjunctive", "entities": (x,),
+            "unaries": tuple(s.name for s in chosen), "binaries": (),
+        }
     options = ["unary"]
     if len(unaries) >= 2 and binaries:
         options.append("bridge")
@@ -714,17 +733,17 @@ def sample_theory(cfg):
     used = set()
     backbone = None
     if pack in {"abstract", "surface"}:
-        backbone = _plant_backbone(theory, sigs, entities)
+        backbone = _plant_backbone(theory, sigs, entities, cfg)
         _add_near_misses(theory, sigs, entities, backbone, cfg.n_distractors)
     elif pack == "spatial":
         es = entities["item"]
-        a, b, c = random.sample(es, min(3, len(es)))
+        chain = random.sample(es, min(len(es), max(3, int(cfg.min_target_support_size) + 1)))
         rel = random.choice(["left_of", "above", "inside"])
-        theory.facts += [Atom(rel, (a, b)), Atom(rel, (b, c))]
+        theory.facts += [Atom(rel, pair) for pair in zip(chain, chain[1:])]
     elif pack == "kinship":
         es = entities["person"]
-        a, b, c = random.sample(es, min(3, len(es)))
-        theory.facts += [Atom("parent", (a, b)), Atom("parent", (b, c))]
+        chain = random.sample(es, min(len(es), max(3, int(cfg.min_target_support_size) + 1)))
+        theory.facts += [Atom("parent", pair) for pair in zip(chain, chain[1:])]
     used.update(theory.facts)
     for _ in range(cfg.n_facts):
         if f := _fresh_fact(theory, used):
@@ -855,6 +874,68 @@ def support_sources(atom, deriv, source):
     for p in d.parents:
         out |= support_sources(p, deriv, source)
     return out
+
+
+def _focused_theory(theory, res, targets, n_distractors):
+    """Keep complete proof cones plus a bounded sample of irrelevant statements."""
+    facts, rules = set(), set()
+
+    def visit(atom):
+        d = res.derivations[atom]
+        if d.rule is None:
+            facts.add(atom)
+            return
+        rules.add(d.rule)
+        for parent in d.parents:
+            visit(parent)
+
+    for target in targets:
+        visit(target)
+    extras = [
+        (kind, item)
+        for kind, items, used in (
+            ("fact", theory.facts, facts), ("rule", theory.rules, rules)
+        )
+        for item in items if item not in used
+    ]
+    random.shuffle(extras)
+    for kind, item in extras[:max(0, int(n_distractors))]:
+        (facts if kind == "fact" else rules).add(item)
+    return Theory(
+        [x for x in theory.facts if x in facts],
+        [x for x in theory.rules if x in rules],
+        theory.denials, theory.pred_sigs, theory.entities, theory.domain_pack,
+    )
+
+
+def _focused_neutral_theory(theory, hypothesis, n_distractors):
+    """Retain all backward rule paths to a neutral predicate, including near misses."""
+    predicates = {pred_key(hypothesis), pred_key(opposite(hypothesis))}
+    rules = set()
+    changed = True
+    while changed:
+        changed = False
+        for rule in theory.rules:
+            if pred_key(rule.head) not in predicates or rule in rules:
+                continue
+            rules.add(rule)
+            before = len(predicates)
+            predicates.update(pred_key(a) for a in body_atoms(rule.body))
+            changed |= len(predicates) != before
+    facts = {a for a in theory.facts if pred_key(a) in predicates}
+    extras = [
+        (kind, item) for kind, items, used in (
+            ("fact", theory.facts, facts), ("rule", theory.rules, rules)
+        ) for item in items if item not in used
+    ]
+    random.shuffle(extras)
+    for kind, item in extras[:max(0, int(n_distractors))]:
+        (facts if kind == "fact" else rules).add(item)
+    return Theory(
+        [x for x in theory.facts if x in facts],
+        [x for x in theory.rules if x in rules],
+        theory.denials, theory.pred_sigs, theory.entities, theory.domain_pack,
+    )
 
 
 def hard_target(a, deriv, cfg):
@@ -1350,6 +1431,22 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         case = MultistepCase(theory, res, label, hyp, target, d, support, lines, source, surf, live_rule_rate, proof_rule_rate)
         if reject_shortcut(case):
             continue
+        focused = (
+            _focused_neutral_theory(theory, hyp, cfg.n_distractors)
+            if target is None else
+            _focused_theory(theory, res, [target], cfg.n_distractors)
+        )
+        focused_res = chase(focused, max_depth=None)
+        if focused_res.inconsistent or _label_for_atom(focused_res, hyp) != label:
+            continue
+        theory, res = focused, focused_res
+        lines, source, surf = render(theory)
+        d = None if target is None else res.derivations[target]
+        support = set() if target is None else support_atoms(target, res.derivations)
+        used_rules = derivation_rules(target, res.derivations) if target is not None else set()
+        live_rule_rate = len(participating_rules(res.derivations)) / max(1, len(theory.rules))
+        proof_rule_rate = len(used_rules) / max(1, len(theory.rules))
+        case = MultistepCase(theory, res, label, hyp, target, d, support, lines, source, surf, live_rule_rate, proof_rule_rate)
         min_label = min([label_counts[x] for x in allowed_labels] or [0])
         label_needs_examples = label_counts[label] <= min_label + 3
         if bins[key] >= cfg.max_bin_size and not label_needs_examples and random.random() > 0.2:
@@ -1602,7 +1699,15 @@ def _join_answer(xs):
 
 
 def _hard_answer_atoms(atoms, res, cfg):
-    return [a for a in atoms if a in res.derivations and hard_target(a, res.derivations, cfg)]
+    # Set-valued QA already requires closing the theory for every entity. Requiring
+    # each answer to also have many independent leaves makes deep planted chains
+    # disappear at high levels, so use proof depth as its hardness criterion.
+    min_depth = max(2, int(cfg.min_target_depth) - 1)
+    return [
+        a for a in atoms
+        if a in res.derivations
+        and min_depth <= res.derivations[a].depth <= cfg.max_depth
+    ]
 
 
 def _world_query(theory, res, source, cfg):
@@ -1611,6 +1716,7 @@ def _world_query(theory, res, source, cfg):
     random_modes = random.sample(modes, len(modes))
     sigs = list(theory.pred_sigs.values())
     random.shuffle(sigs)
+    allow_zero = random.random() < getattr(cfg, "zero_answer_rate", 0.0)
 
     for qmode in random_modes:
         for sig in sigs:
@@ -1618,12 +1724,12 @@ def _world_query(theory, res, source, cfg):
                 atoms = [Atom(sig.name, (x,)) for x in theory.entities[sig.arg_types[0]]]
                 answer_atoms = [a for a in atoms if _entails(theory, res, a)]
                 if not answer_atoms:
-                    if random.random() > getattr(cfg, "zero_answer_rate", 0.0):
+                    if not allow_zero:
                         continue
                     hard = []
                 else:
                     hard = _hard_answer_atoms(answer_atoms, res, cfg)
-                    if len(hard) != len(answer_atoms):
+                    if not hard:
                         continue
                 answers = sorted(a.args[0] for a in answer_atoms)
                 pred = _query_words(sig.name, theory.domain_pack)
@@ -1639,12 +1745,12 @@ def _world_query(theory, res, source, cfg):
                 atoms = [Atom(sig.name, (x, y)) for y in ys if y != x]
                 answer_atoms = [a for a in atoms if _entails(theory, res, a)]
                 if not answer_atoms:
-                    if random.random() > getattr(cfg, "zero_answer_rate", 0.0):
+                    if not allow_zero:
                         continue
                     hard = []
                 else:
                     hard = _hard_answer_atoms(answer_atoms, res, cfg)
-                    if len(hard) != len(answer_atoms):
+                    if not hard:
                         continue
                 answers = sorted(a.args[1] for a in answer_atoms)
                 question = _binary_query(sig.name, x, qmode == "count", theory.domain_pack)
@@ -1905,6 +2011,14 @@ class LogicQA(Task):
             query = _world_query(theory, res, source, self.config)
             if not query:
                 continue
+            if query.atoms:
+                theory = _focused_theory(
+                    theory, res, query.atoms, self.config.n_distractors
+                )
+                res = chase(theory, max_depth=None)
+                lines, source, _ = render(theory)
+                if any(not _entails(theory, res, atom) for atom in query.atoms):
+                    continue
             meta = edict(
                 premise=lines,
                 question=query.question,

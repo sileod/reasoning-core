@@ -1,5 +1,9 @@
+from unittest.mock import Mock
+
+import pytest
 from unified_planning.shortcuts import BoolType, Object, Problem, UserType
 
+import reasoning_core.tasks.planning as planning
 from reasoning_core.tasks.planning import translate
 
 
@@ -24,3 +28,21 @@ def test_translate_uses_closed_world_initial_state():
     assert "True values: active(first)" in prompt
     assert "active(second)" not in prompt
     assert "All facts not listed under True values are false." in prompt
+
+
+def test_generate_entry_does_not_reseed_global_random(monkeypatch):
+    class StopGeneration(BaseException):
+        pass
+
+    def stop_generation():
+        raise StopGeneration
+
+    seed = Mock()
+    monkeypatch.setattr(planning.random, "seed", seed)
+    monkeypatch.setattr(planning.random, "random", stop_generation)
+    monkeypatch.setattr(planning, "generate_domain", lambda *args, **kwargs: object())
+
+    with pytest.raises(StopGeneration):
+        planning.Planning().generate_entry()
+
+    seed.assert_not_called()

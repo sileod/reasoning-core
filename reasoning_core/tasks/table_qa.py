@@ -44,14 +44,16 @@ class TableQAConfig(Config):
 
 @dataclass
 class TableStatisticsConfig(Config):
-    num_rows: int = 9
+    num_rows: int = 12
     num_numeric: int = 4
     num_categories: int = 3
     margin: float = 0.45
     def apply_difficulty(self, level):
-        self.num_rows = sround(self.num_rows * (1.5 ** level))
-        self.num_numeric = sround(self.num_numeric + level)
-        self.num_categories = sround(self.num_categories + level)
+        # Difficulty is one branch-free continuum: slightly more objects and
+        # closer winners, with a hard prompt-size ceiling.
+        self.num_rows = min(20, sround(self.num_rows + 2 * level))
+        self.num_numeric = min(8, sround(self.num_numeric + 0.75 * level))
+        self.num_categories = min(5, sround(self.num_categories + 0.5 * level))
         self.margin = max(0.08, self.margin * (0.85 ** level))
 
 
@@ -74,7 +76,7 @@ BOOL_FORMATS = [
     {True: "1", False: "0"},
     {True: "✓", False: "✗"},
 ]
-NULL_TOKENS = ["", "NA", "N/A", "null", "-", "—"]
+SQL_NULL_MARKER = "—"
 
 def generate_random_table(config):
     f = _faker
@@ -156,8 +158,7 @@ def render_bool_series(s):
 
 
 def render_nulls(s):
-    token = random.choice(NULL_TOKENS)
-    return s.map(lambda x: token if pd.isna(x) else x), {"null": token}
+    return s.map(lambda x: SQL_NULL_MARKER if pd.isna(x) else x), {"null": SQL_NULL_MARKER}
 
 
 def make_display_dataframe(dataframe, number_formats=NUMBER_FORMATS, number_locales=LOCALES):
@@ -272,6 +273,28 @@ def get_renderers(dataframe):
         "to_python_records": lambda index=False: to_python_records(dataframe, index=index),
         "to_kv": lambda index=False: to_kv_rows(dataframe, index=index),
     }
+
+
+TABLE_RENDERER_WEIGHTS = {
+    "to_csv": 18, "to_tsv": 15, "to_pipe": 12, "to_string": 10,
+    "to_markdown": 9, "to_jsonl": 7, "to_kv": 6,
+    "to_python_records": 5, "to_yaml": 5, "to_latex": 4,
+    "to_html": 4, "to_json": 3, "to_grid": 2,
+}
+
+
+def sample_renderer(names=None):
+    names = list(names or TABLE_RENDERER_WEIGHTS)
+    return random.choices(names, weights=[TABLE_RENDERER_WEIGHTS[n] for n in names], k=1)[0]
+
+
+def sample_distinct_renderers(names, k=2):
+    pool, selected = list(names), []
+    for _ in range(k):
+        choice = sample_renderer(pool)
+        selected.append(choice)
+        pool.remove(choice)
+    return selected
 
 
 def split_table(dataframe, n):
@@ -505,7 +528,7 @@ class TableQA(Task):
         conn.register("dataframe", semantic_df)
         q, result, query_spec = sample_query(semantic_df, conn, self.config)
         renderers = get_renderers(display_df)
-        fmt_name = random.choice(list(renderers))
+        fmt_name = sample_renderer(renderers)
         render_func = renderers[fmt_name]
         is_scalar = result.shape == (1, 1)
         answer = (
@@ -553,7 +576,11 @@ class TableQA(Task):
         else:
             preamble = "The following tables are row-wise shards of one logical table named dataframe. Concatenate them in order to reconstruct dataframe, then execute the SQL query:"
         presentation = "\n\n".join(f"Table {i}:\n{table}" for i, table in enumerate(tables, 1))
-        return f"{preamble}\n\n{presentation}\n\nSQL: {m['query']}\n\nThe answer is the result as {fmt}."
+        return (
+            f"{preamble}\n\n{presentation}\n\n"
+            f"In this table, {SQL_NULL_MARKER} represents SQL NULL.\n\n"
+            f"SQL: {m['query']}\n\nThe answer is the result as {fmt}."
+        )
 
     def score_answer(self, ans, entry):
         def isnumeric(x):
@@ -606,15 +633,8 @@ class TableQA(Task):
             f"bucket={m.result_bucket}"
         )
 
-EQUIV_RENDERERS = [
-    "to_csv", "to_tsv", "to_markdown", "to_grid", "to_html", "to_latex",
-    "to_json", "to_jsonl", "to_yaml", "to_python_records", "to_kv",
-]
-
-STAT_RENDERERS = [
-    "to_csv", "to_tsv", "to_markdown", "to_grid", "to_html",
-    "to_json", "to_jsonl", "to_yaml", "to_python_records", "to_kv",
-]
+EQUIV_RENDERERS = list(TABLE_RENDERER_WEIGHTS)
+STAT_RENDERERS = list(TABLE_RENDERER_WEIGHTS)
 
 
 def permute_table(dataframe):
@@ -707,7 +727,7 @@ class TableEquivalence(Task):
                     break
             answer = "no"
 
-        fmt_a, fmt_b = random.sample(EQUIV_RENDERERS, 2)
+        fmt_a, fmt_b = sample_distinct_renderers(EQUIV_RENDERERS)
         return Entry(
             metadata={
                 "table_a": get_renderers(display_df)[fmt_a](index=False),
@@ -772,7 +792,7 @@ def permute_statistics_identifiers(df, spec):
         mapping = dict(zip(identifiers, random.sample(identifiers, len(identifiers))))
         df["row_id"] = df["row_id"].map(mapping)
     else:
-        identifiers = [c for c in df.columns if c != "label"]
+        identifiers = [c for c in df.columns if c not in {"label", "group"}]
         mapping = dict(zip(identifiers, random.sample(identifiers, len(identifiers))))
         df = df.rename(columns=mapping)
 
@@ -786,19 +806,46 @@ def permute_statistics_identifiers(df, spec):
     return df, spec
 
 
+STAT_IDENTIFIERS = list("ABCDEFGHJKLMNPQRSTUVWXYZ")
+
+
+def compact_statistics_identifiers(df, spec):
+    """Use short labels for selectable objects so the answer stays one token."""
+    df, spec = df.copy(), spec.copy()
+    is_row = spec["family"] == "row_pearson"
+    identifiers = list(df["row_id"]) if is_row else [
+        c for c in df.columns if c not in {"label", "group"}
+    ]
+    if len(identifiers) > len(STAT_IDENTIFIERS):
+        raise RuntimeError("Too many statistical identifiers for compact labels")
+    mapping = dict(zip(identifiers, random.sample(STAT_IDENTIFIERS, len(identifiers))))
+    if is_row:
+        df["row_id"] = df["row_id"].map(mapping)
+    else:
+        df = df.rename(columns=mapping)
+    pattern = "|".join(re.escape(identifier) for identifier in mapping)
+    spec["find"] = re.sub(
+        rf"\b(?:{pattern})\b", lambda match: mapping[match.group()], spec["find"]
+    )
+    spec["answer"] = mapping[spec["answer"]]
+    return df, spec
+
+
 def gen_column_pearson(config):
     n, p = max(8, config.num_rows), max(4, config.num_numeric)
-    for _ in range(100):
-        x0 = np.random.normal(size=n)
-        data = {"x0": np.round(x0, 2), "x1": np.round(x0 + np.random.normal(0, 0.06, n), 2)}
-        for i in range(2, p):
-            data[f"x{i}"] = np.round(0.25 * x0 + np.random.normal(0, 1.2, n), 2)
-        df = pd.DataFrame(data)
-        scores = {c: abs_pearson(df["x0"], df[c]) for c in df.columns if c != "x0"}
+    for _ in range(300):
+        # A random covariance geometry: the winner is measured, not assigned to a
+        # fixed near-copy column.
+        latent = np.random.normal(size=(n, random.randint(2, min(5, p))))
+        values = latent @ np.random.normal(size=(latent.shape[1], p))
+        values += np.random.normal(size=(n, p)) * np.random.uniform(0.3, 1.5, p)
+        df = pd.DataFrame(np.round(values, 2), columns=[f"x{i}" for i in range(p)])
+        target = random.choice(list(df.columns))
+        scores = {c: abs_pearson(df[target], df[c]) for c in df.columns if c != target}
         answer, margin = winner_with_margin(scores, config.margin)
-        if answer == "x1":
+        if answer is not None:
             return df, {
-                "find": "column name most associated with column x0",
+                "find": f"column name most associated with column {target}",
                 "metric": "absolute Pearson correlation",
                 "answer": answer, "family": "column_pearson", "margin": margin,
             }
@@ -807,17 +854,21 @@ def gen_column_pearson(config):
 
 def gen_row_pearson(config):
     n, p = max(8, config.num_rows), max(4, config.num_numeric)
-    for _ in range(100):
-        target = np.random.normal(size=p)
-        rows = [target, target + np.random.normal(0, 0.06, p)]
-        rows += [0.2 * target + np.random.normal(0, 1.3, p) for _ in range(n - 2)]
-        df = pd.DataFrame(np.round(rows, 2), columns=[f"x{i}" for i in range(p)])
+    for _ in range(300):
+        values = np.random.normal(size=(n, p))
+        values += np.random.normal(size=(n, 2)) @ np.random.normal(size=(2, p))
+        df = pd.DataFrame(np.round(values, 2), columns=[f"x{i}" for i in range(p)])
         df.insert(0, "row_id", [f"R{i}" for i in range(n)])
-        scores = {r.row_id: pearson(df.loc[0, df.columns[1:]], r[df.columns[1:]]) for _, r in df.iloc[1:].iterrows()}
+        target_i = random.randrange(n)
+        target = df.iloc[target_i]
+        scores = {
+            r.row_id: pearson(target[df.columns[1:]], r[df.columns[1:]])
+            for i, r in df.iterrows() if i != target_i
+        }
         answer, margin = winner_with_margin(scores, config.margin)
-        if answer == "R1":
+        if answer is not None:
             return df, {
-                "find": "row_id most associated with row R0",
+                "find": f"row_id most associated with row {target.row_id}",
                 "metric": "Pearson correlation over numeric columns",
                 "answer": answer, "family": "row_pearson", "margin": margin,
             }
@@ -826,17 +877,19 @@ def gen_row_pearson(config):
 
 def gen_label_eta2(config):
     n, p, k = max(9, config.num_rows), max(4, config.num_numeric), max(3, config.num_categories)
-    for _ in range(100):
+    for _ in range(300):
         labels = np.array([f"L{i % k}" for i in range(n)])
         np.random.shuffle(labels)
-        group = {g: i * 3.0 for i, g in enumerate(sorted(set(labels)))}
-        data = {"label": labels, "x0": np.round([group[g] + np.random.normal(0, 0.25) for g in labels], 2)}
-        for i in range(1, p):
-            data[f"x{i}"] = np.round(np.random.normal(0, 1.2, n), 2)
+        effects = np.random.normal(size=(p, k)) * np.random.uniform(0.0, 2.5, (p, 1))
+        noise = np.random.uniform(0.35, 1.8, p)
+        label_index = np.array([int(x[1:]) for x in labels])
+        data = {"label": labels}
+        for i in range(p):
+            data[f"x{i}"] = np.round(effects[i, label_index] + np.random.normal(0, noise[i], n), 2)
         df = pd.DataFrame(data)
         scores = {c: eta_squared(df[c], df["label"]) for c in df.columns if c != "label"}
         answer, margin = winner_with_margin(scores, config.margin)
-        if answer == "x0":
+        if answer is not None:
             return df, {
                 "find": "numeric column name most associated with column label",
                 "metric": "eta squared",
@@ -849,19 +902,19 @@ def gen_categorical_nmi(config):
     if normalized_mutual_info_score is None:
         raise RuntimeError("scikit-learn is required for categorical NMI generation")
     n, p, k = max(9, config.num_rows), max(4, config.num_categories), max(3, config.num_categories)
-    for _ in range(100):
+    for _ in range(300):
         label = np.array([f"L{i % k}" for i in range(n)])
         np.random.shuffle(label)
-        c0 = label.copy()
-        for i in random.sample(range(n), max(1, n // 12)):
-            c0[i] = f"L{random.randrange(k)}"
-        data = {"label": label, "c0": c0}
-        for i in range(1, p):
-            data[f"c{i}"] = np.random.choice([f"L{j}" for j in range(k)], size=n)
+        data = {"label": label}
+        for i, error_rate in enumerate(np.random.uniform(0.05, 0.95, p)):
+            values = label.copy()
+            mask = np.random.random(n) < error_rate
+            values[mask] = np.random.choice([f"L{j}" for j in range(k)], mask.sum())
+            data[f"c{i}"] = values
         df = pd.DataFrame(data)
         scores = {c: normalized_mutual_info_score(df["label"], df[c]) for c in df.columns if c != "label"}
         answer, margin = winner_with_margin(scores, config.margin)
-        if answer == "c0":
+        if answer is not None:
             return df, {
                 "find": "categorical column name most associated with column label",
                 "metric": "normalized mutual information",
@@ -870,20 +923,192 @@ def gen_categorical_nmi(config):
     raise RuntimeError("Could not generate categorical NMI table with sufficient margin")
 
 
+def partial_pearson(a, b, controls):
+    z = np.column_stack([np.ones(len(controls)), np.asarray(controls, dtype=float)])
+    residual = lambda x: np.asarray(x, dtype=float).reshape(-1) - z @ np.linalg.lstsq(
+        z, np.asarray(x, dtype=float).reshape(-1), rcond=None
+    )[0]
+    ra, rb = residual(a), residual(b)
+    return 0.0 if min(np.std(ra), np.std(rb)) < 1e-12 else pearson(ra, rb)
+
+
+def gen_partial_pearson(config):
+    n, p = max(12, config.num_rows), max(5, config.num_numeric)
+    for _ in range(300):
+        z, signal = np.random.normal(size=(2, n))
+        data = {
+            "x0": 1.8 * z + signal + np.random.normal(0, 0.35, n),
+            "x1": 2.2 * z + np.random.normal(0, 0.35, n),
+            "x2": signal + np.random.normal(0, 0.45, n),
+            "x3": z - 0.7 * signal + np.random.normal(0, 0.8, n),
+        }
+        for i in range(4, p):
+            data[f"x{i}"] = np.random.normal(0, 1.2, n)
+        df = pd.DataFrame({k: np.round(v, 2) for k, v in data.items()})
+        scores = {
+            c: abs(partial_pearson(df["x0"], df[c], df[["x1"]]))
+            for c in df.columns if c not in {"x0", "x1"}
+        }
+        answer, margin = winner_with_margin(scores, config.margin)
+        if answer is not None:
+            return df, {
+                "find": "column name most associated with column x0 while controlling for x1",
+                "metric": "absolute partial Pearson correlation",
+                "answer": answer, "family": "partial_pearson", "margin": margin,
+            }
+    raise RuntimeError("Could not generate partial Pearson table with sufficient margin")
+
+
+def gen_pearson_change(config):
+    n, p = max(12, config.num_rows), max(5, config.num_numeric)
+    for _ in range(300):
+        confounder, signal = np.random.normal(size=(2, n))
+        data = {
+            "x0": 2.5 * confounder + signal + np.random.normal(0, 0.2, n),
+            "x1": 2.5 * confounder + np.random.normal(0, 0.2, n),
+            "x2": confounder + np.random.normal(0, 0.15, n),
+            "x3": confounder + signal + np.random.normal(0, 0.35, n),
+            "x4": signal + np.random.normal(0, 1.2, n),
+        }
+        for i in range(5, p):
+            data[f"x{i}"] = np.random.normal(0, 1.2, n)
+        df = pd.DataFrame({k: np.round(v, 2) for k, v in data.items()})
+        scores = {
+            c: abs(partial_pearson(df["x0"], df[c], df[["x1"]]) - pearson(df["x0"], df[c]))
+            for c in df.columns if c not in {"x0", "x1"}
+        }
+        answer, margin = winner_with_margin(scores, config.margin)
+        if answer is not None:
+            return df, {
+                "find": "column name whose correlation with x0 changes most after controlling for x1",
+                "metric": "absolute difference between partial and ordinary Pearson correlation",
+                "answer": answer, "family": "pearson_change", "margin": margin,
+            }
+    raise RuntimeError("Could not generate Pearson-change table with sufficient margin")
+
+
+def _two_groups(n):
+    groups = np.array([f"G{i % 2}" for i in range(n)])
+    np.random.shuffle(groups)
+    return groups
+
+
+def gen_group_robust_pearson(config):
+    n, p = max(12, config.num_rows), max(4, config.num_numeric)
+    for _ in range(300):
+        groups, target = _two_groups(n), np.random.normal(size=n)
+        first = groups == "G0"
+        data = {
+            "group": groups,
+            "x0": target,
+            "x1": target + np.random.normal(0, 0.15, n),
+            "x2": np.where(first, target + np.random.normal(0, 0.15, n), np.random.normal(size=n)),
+            "x3": target + np.random.normal(0, 1.5, n),
+        }
+        for i in range(4, p):
+            data[f"x{i}"] = np.random.normal(size=n)
+        df = pd.DataFrame({k: v if k == "group" else np.round(v, 2) for k, v in data.items()})
+        scores = {
+            c: min(abs_pearson(part["x0"], part[c]) for _, part in df.groupby("group"))
+            for c in df.columns if c not in {"group", "x0"}
+        }
+        answer, margin = winner_with_margin(scores, config.margin)
+        if answer is not None:
+            return df, {
+                "find": "column name with the strongest worst-group association with x0",
+                "metric": "minimum absolute Pearson correlation across groups in group",
+                "answer": answer, "family": "group_robust_pearson", "margin": margin,
+            }
+    raise RuntimeError("Could not generate robust grouped-correlation table with sufficient margin")
+
+
+def gen_group_heterogeneity(config):
+    n, p = max(12, config.num_rows), max(4, config.num_numeric)
+    for _ in range(300):
+        groups, target = _two_groups(n), np.random.normal(size=n)
+        sign = np.where(groups == "G0", 1.0, -1.0)
+        data = {
+            "group": groups,
+            "x0": target,
+            "x1": sign * target + np.random.normal(0, 0.15, n),
+            "x2": target + np.random.normal(0, 0.3, n),
+            "x3": np.random.normal(size=n),
+        }
+        for i in range(4, p):
+            data[f"x{i}"] = np.random.normal(size=n)
+        df = pd.DataFrame({k: v if k == "group" else np.round(v, 2) for k, v in data.items()})
+        scores = {}
+        for c in df.columns:
+            if c not in {"group", "x0"}:
+                correlations = [pearson(part["x0"], part[c]) for _, part in df.groupby("group")]
+                scores[c] = max(correlations) - min(correlations)
+        answer, margin = winner_with_margin(scores, config.margin)
+        if answer is not None:
+            return df, {
+                "find": "column name whose association with x0 varies most between groups",
+                "metric": "range of Pearson correlation across groups in group",
+                "answer": answer, "family": "group_heterogeneity", "margin": margin,
+            }
+    raise RuntimeError("Could not generate heterogeneous grouped-correlation table with sufficient margin")
+
+
+def standardized_mean_difference(a, b):
+    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
+    pooled_variance = (
+        (len(a) - 1) * a.var(ddof=1) + (len(b) - 1) * b.var(ddof=1)
+    ) / (len(a) + len(b) - 2)
+    pooled = np.sqrt(pooled_variance)
+    return 0.0 if pooled < 1e-12 else abs(float(a.mean() - b.mean())) / pooled
+
+
+def gen_distribution_shift(config):
+    n, p = max(12, config.num_rows), max(4, config.num_numeric)
+    for _ in range(300):
+        groups = _two_groups(n)
+        effects = np.random.uniform(0, 2.5, p)
+        scales = np.random.uniform(0.5, 1.5, p)
+        data = {"group": groups}
+        for i in range(p):
+            data[f"x{i}"] = np.round(
+                effects[i] * (groups == "G1") + np.random.normal(0, scales[i], n), 2
+            )
+        df = pd.DataFrame(data)
+        scores = {
+            c: standardized_mean_difference(df.loc[groups == "G0", c], df.loc[groups == "G1", c])
+            for c in df.columns if c != "group"
+        }
+        answer, margin = winner_with_margin(scores, config.margin)
+        if answer is not None:
+            return df, {
+                "find": "column name with the largest shift from group G0 to G1",
+                "metric": "absolute mean difference divided by pooled standard deviation",
+                "answer": answer, "family": "distribution_shift", "margin": margin,
+            }
+    raise RuntimeError("Could not generate distribution-shift table with sufficient margin")
+
+
+STAT_GENERATORS = (
+    gen_column_pearson, gen_row_pearson, gen_label_eta2, gen_partial_pearson,
+    gen_pearson_change, gen_group_robust_pearson, gen_group_heterogeneity,
+    gen_distribution_shift,
+)
+
+
 class TableStatistics(Task):
-    summary = "Compute statistical metrics (Pearson correlation, eta2, NMI) on tables."
+    summary = "Select rows or columns using associations, conditioning, group robustness, and shifts."
     def __init__(self, config=None):
         super().__init__(config=config or TableStatisticsConfig())
         self.balancing_key_ratio = 0.5
 
     def generate_entry(self):
-        generators = [gen_column_pearson, gen_row_pearson, gen_label_eta2]
+        generators = list(STAT_GENERATORS)
         if normalized_mutual_info_score is not None:
             generators.append(gen_categorical_nmi)
         semantic_df, spec = random.choice(generators)(self.config)
         semantic_df, spec = permute_statistics_identifiers(semantic_df, spec)
+        semantic_df, spec = compact_statistics_identifiers(semantic_df, spec)
         display_df, display_meta = make_statistics_display_dataframe(semantic_df)
-        fmt = random.choice(STAT_RENDERERS)
+        fmt = sample_renderer(STAT_RENDERERS)
         table = get_renderers(display_df)[fmt](index=False)
 
         return Entry(
