@@ -409,8 +409,8 @@ def query_collinear(scene, cfg):
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         ans = "yes" if cross(pts[a], pts[b], pts[c]) == 0 else "no"
         if ans == want:
-            return query_result("collinear", "choice", ans, additions,
-                f"Are points {a}, {b}, and {c} collinear?", "Answer is either yes or no.", f"collinear:{ans}")
+            return query_result("collinear", "choice", ans.capitalize(), additions,
+                f"Are points {a}, {b}, and {c} collinear?", "Answer is either Yes or No.", f"collinear:{ans}")
     return None
 
 
@@ -517,9 +517,9 @@ def query_segment_intersection(scene, cfg):
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         ans = "yes" if Segment(pts[a], pts[b]).intersection(Segment(pts[c], pts[d])) else "no"
         if ans == want:
-            return query_result("segment_intersection", "choice", ans, additions,
+            return query_result("segment_intersection", "choice", ans.capitalize(), additions,
                 f"Do segments {a}{b} and {c}{d} intersect?",
-                "Endpoint contact and collinear overlap count as intersection. Answer is either yes or no.",
+                "Endpoint contact and collinear overlap count as intersection. Answer is either Yes or No.",
                 f"segment_intersection:{ans}", subtype)
     return None
 
@@ -540,8 +540,8 @@ def query_between(scene, cfg):
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         ans = "yes" if on_segment(pts[a], pts[b], pts[p]) else "no"
         if ans == want:
-            return query_result("between", "choice", ans, additions,
-                f"Is point {p} on segment {a}{b}?", "Endpoint contact counts. Answer is either yes or no.",
+            return query_result("between", "choice", ans.capitalize(), additions,
+                f"Is point {p} on segment {a}{b}?", "Endpoint contact counts. Answer is either Yes or No.",
                 f"between:{ans}")
     return None
 

@@ -4,6 +4,7 @@ from reasoning_core.tasks.binding import (
     LambdaReduction,
     RewriteSystem,
     Rule,
+    UnificationEntailment,
     _alpha_normalize,
     _debruijn,
     _parse_lam,
@@ -58,3 +59,12 @@ def test_prompts_state_operational_semantics():
     assert 'position priority first; rule priority second' in prompt
     prompt = LambdaReduction().render_prompt({'term': r'(\x.x)'})
     assert 'compared up to α-equivalence' in prompt
+
+
+def test_unification_entailment_uses_capitalized_boolean_answers():
+    task = UnificationEntailment()
+    entry = task.generate_example()
+
+    assert entry.answer in {"Yes", "No"}
+    assert "Answer Yes" in entry.prompt and "answer No" in entry.prompt
+    assert task.score_answer(entry.answer.lower(), entry) == 1

@@ -117,10 +117,17 @@ AUX_DATASET  = os.environ.get("AUX_DATASET", "rc").lower()
 assert AUX_DATASET in ("rc", "rgym", "basic"), AUX_DATASET
 _RESULTS_SUB = {"rc": "per_task_results", "rgym": "per_task_results_rgym",
                 "basic": "per_task_results_bproc"}[AUX_DATASET]
-# non-rc datasets carry their own {ds}_tasks.json task list in cwd (rc uses the builtin default list)
-_TASKLIST_F  = {"rgym": "rgym_tasks.json", "basic": "basic_tasks.json"}
-if AUX_DATASET in _TASKLIST_F:
-    ALL_TASKS = json.loads(Path(_TASKLIST_F[AUX_DATASET]).read_text())["tasks"]
+# non-rc datasets carry their own task list. rgym list lives in the reasoning_gym task module
+# (RGYM_TASKS); basic still reads basic_tasks.json in cwd; rc uses the builtin default list.
+def _load_tasklist(ds):
+    if ds == "rgym":
+        from reasoning_core.tasks._reasoning_gym import RGYM_TASKS
+        return list(RGYM_TASKS)
+    if ds == "basic":
+        return json.loads(Path("basic_tasks.json").read_text())["tasks"]
+    return None
+if AUX_DATASET in ("rgym", "basic"):
+    ALL_TASKS = _load_tasklist(AUX_DATASET)
 _filter      = os.environ.get("TASKS", "").strip()
 if _filter: ALL_TASKS = [t.strip() for t in _filter.split(",") if t.strip()]
 if MODE_MIX: ALL_TASKS = ["__ALLMIX__"]     # single full-mixture arm under the mode blend
@@ -131,8 +138,8 @@ GROUP_TASKS = [t.strip() for t in os.environ.get("GROUP_TASKS", "").split(",") i
 if GROUP_TASKS: ALL_TASKS = ["__GROUP__"]
 # PEER_MIX background: fixed seeded sample of N_PEERS tasks (independent of target).
 import random as _random
-_FULL_TASKS  = (json.loads(Path(_TASKLIST_F[AUX_DATASET]).read_text())["tasks"]
-                if AUX_DATASET in _TASKLIST_F else list(_DEFAULT_RC_TASKS))
+_FULL_TASKS  = (_load_tasklist(AUX_DATASET)
+                if AUX_DATASET in ("rgym", "basic") else list(_DEFAULT_RC_TASKS))
 PEER_TASKS   = sorted(_random.Random(SEED).sample(
                    _FULL_TASKS, min(N_PEERS, len(_FULL_TASKS)))) if PEER_MIX else []
 

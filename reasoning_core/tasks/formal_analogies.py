@@ -41,6 +41,11 @@ def _sent(atom):
     return f"{a} is {p}-linked to {b}."
 
 
+def _compact(atom):
+    p, a, b = atom
+    return f"{a} {p} {b}"
+
+
 def _parse_sent(s):
     s = str(s).strip()
     m = re.search(r"\b(\w+)\s+is\s+([A-Za-z]\w*)-linked\s+to\s+(\w+)\b", s)
@@ -48,7 +53,13 @@ def _parse_sent(s):
         a, p, b = m.groups()
         return p, a, b
     m = re.search(r"\b([A-Za-z]\w*)\s*\(\s*(\w+)\s*,\s*(\w+)\s*\)", s)
-    return m.groups() if m else None
+    if m:
+        return m.groups()
+    m = re.fullmatch(r"(\w+)\s+([A-Za-z]\w*)\s+(\w+)\.?", s)
+    if m:
+        a, p, b = m.groups()
+        return p, a, b
+    return None
 
 
 def _rand_atoms(nodes, preds, m, rng, avoid=()):
@@ -272,7 +283,7 @@ class AnalogicalCaseMatching(Task):
     def _format_answer(self, q_answer, gold_ids, answer_format):
         if answer_format == "index":
             return " ".join(gold_ids)
-        return _sent(q_answer)
+        return _compact(q_answer)
 
     def generate_entry(self):
         k = self.config
@@ -383,43 +394,40 @@ class AnalogicalCaseMatching(Task):
 
         raise RuntimeError("generation budget exhausted")
 
-    def _render_case(self, case):
-        lines = [
-            case["id"],
-            "Facts:",
-        ]
-        lines.extend(_sent(atom) for atom in sorted(case["context"]))
-        lines.append(f"Conclusion: {_sent(case['consequence'])}")
-        return lines
+    def _render_case(self, case, include_consequence):
+        facts = ", ".join(_compact(atom) for atom in sorted(case["context"]))
+        if include_consequence:
+            facts += f" -> {_compact(case['consequence'])}"
+        return f"{case['id']}: {facts}"
 
     def render_prompt(self, metadata):
         answer_format = metadata.get("answer_format", "fact")
-        lines = ["Match all facts by consistently renaming objects and links; each link may be reversed consistently."]
+        rule = "under consistent entity/relation renaming and per-relation direction reversal"
         if answer_format == "index":
             plural = int(self.config.n_gold_cases) > 1
             subject = "cases" if plural else "case"
-            indices = "indices" if plural else "index"
             verb = "match" if plural else "matches"
+            ids = "their IDs" if plural else "its ID"
+            prompt = f"Which {subject} {verb} Query {rule}? Answer with {ids}"
             if metadata.get("allow_no_match"):
-                lines.append(f"Which memory {subject} {verb} the query? Answer with only the {indices}, or None.")
+                prompt += ", or None."
             else:
-                lines.append(f"Which memory {subject} {verb} the query? Answer with only the {indices}.")
+                prompt += "."
         else:
+            prompt = f"Infer Query's missing fact by mapping a case {rule}. Answer with one fact"
             if metadata.get("allow_no_match"):
-                lines.append("Infer the query conclusion, or answer None if no memory case matches.")
+                prompt += ", or None if no case matches."
             else:
-                lines.append("Infer the query conclusion.")
+                prompt += "."
 
-        lines.append("")
+        lines = [prompt, ""]
         for case in metadata["cases"]:
-            lines.extend(self._render_case(case))
-            lines.append("")
+            lines.append(self._render_case(case, include_consequence=answer_format != "index"))
 
-        lines.append("Query facts:")
-        for atom in sorted(metadata["query_context"]):
-            lines.append(_sent(atom))
+        query = ", ".join(_compact(atom) for atom in sorted(metadata["query_context"]))
         if answer_format != "index":
-            lines.append("Conclusion:")
+            query += " -> ?"
+        lines.append(f"Query: {query}")
 
         return "\n".join(lines)
 

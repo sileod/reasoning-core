@@ -87,6 +87,9 @@ def test_answer_classes_add_the_same_number_of_local_points(monkeypatch, query_f
         query = query_fn(scene, cfg)
         assert query is not None
         assert len(query.additions) == n_additions
+        if wanted in {"yes", "no"}:
+            assert query.answer == wanted.capitalize()
+            assert "Yes or No" in query.instruction
         monkeypatch.setattr(math_geometry.random, "choice", choose)
 
 
@@ -99,9 +102,9 @@ def test_render_separates_coordinate_and_construction_modes(monkeypatch):
     query = edict(
         additions=[],
         kind="choice",
-        answer="yes",
+        answer="Yes",
         question="Is point p2 on segment p0p1?",
-        instruction="Answer is either yes or no.",
+        instruction="Answer is either Yes or No.",
         type="between",
         balance="between:yes",
     )

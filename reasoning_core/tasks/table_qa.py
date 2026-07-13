@@ -16,6 +16,7 @@ import yaml
 import io
 import re
 from numbers import Number
+from decimal import Decimal
 
 try:
     from sklearn.metrics import normalized_mutual_info_score
@@ -638,19 +639,68 @@ STAT_RENDERERS = list(TABLE_RENDERER_WEIGHTS)
 
 
 def permute_table(dataframe):
-    df = dataframe.copy()
-    cols = list(df.columns)
-    random.shuffle(cols)
-    df = df[cols]
-    return df.sample(frac=1).reset_index(drop=True) if len(df) > 1 else df
+    def permuted(items):
+        out = random.sample(list(items), len(items))
+        return out[1:] + out[:1] if len(out) > 1 and out == list(items) else out
+
+    df = dataframe[permuted(dataframe.columns)]
+    return df.iloc[permuted(range(len(df)))].reset_index(drop=True)
+
+
+def generate_equivalence_table(config):
+    df = generate_random_table(config).map(
+        lambda x: f"{x}_" if isinstance(x, str) and x in {"NULL", "—"} else x
+    )
+    while len(df.columns) < 2:
+        df[f"field_{len(df.columns)}"] = range(len(df))
+    first, second = df.columns[:2]
+    df = df.rename(columns={first: "event_date", second: "amount"})
+    df["event_date"] = [_faker.date_between("-2y", "today") for _ in range(len(df))]
+    df["amount"] = np.round(np.random.uniform(1, 2500, len(df)), 2)
+    df = df.astype(object)
+    duplicate = len(df) > 1 and random.random() < 0.5
+    stop = len(df) - duplicate
+    df.loc[random.randrange(stop), random.choice(list(df.columns))] = None
+    if duplicate:
+        df.iloc[-1] = df.iloc[random.randrange(len(df) - 1)]
+    return df
+
+
+def equivalence_display(dataframe, style):
+    def display(x):
+        kind = scalar_kind(x)
+        if kind == "null":
+            return "—" if style == "plain" else "NULL"
+        if kind == "date":
+            return x.strftime("%Y-%m-%d" if style == "plain" else "%b %d, %Y")
+        if kind == "number":
+            value = Decimal(str(x))
+            places = max(2, -value.as_tuple().exponent)
+            return canonical_scalar(x) if style == "plain" else f"{value:,.{places}f}"
+        return x
+
+    return dataframe.apply(lambda column: column.map(display)).astype(object)
 
 
 def canonical_table(dataframe):
+    def canonical(x):
+        kind = scalar_kind(x)
+        if kind == "null":
+            return kind, ""
+        if kind == "date":
+            return kind, x.strftime("%Y-%m-%d")
+        if kind == "bool":
+            return kind, str(bool(x)).lower()
+        if kind == "number":
+            value = Decimal(str(x))
+            return kind, format(Decimal(0) if value == 0 else value.normalize(), "f")
+        return "text", str(x)
+
     df = dataframe.copy()
     df.columns = [str(c) for c in df.columns]
     cols = tuple(sorted(df.columns))
     df = df.reindex(cols, axis=1)
-    body = sorted(tuple(str(row[c]) for c in cols) for _, row in df.iterrows())
+    body = sorted(tuple(canonical(row[c]) for c in cols) for _, row in df.iterrows())
     return cols, tuple(body)
 
 
@@ -674,8 +724,8 @@ def add_noise_row(df):
     return pd.concat([df, pd.DataFrame([row])], ignore_index=True)
 
 
-def corrupt_table(dataframe):
-    df = dataframe.copy()
+def _corrupt_once(dataframe):
+    df = dataframe.copy().astype(object)
     choices = ["cell", "column_name", "drop_row", "add_row", "drop_column", "add_column", "duplicate_row"]
     if len(df) <= 1:
         choices.remove("drop_row")
@@ -688,7 +738,10 @@ def corrupt_table(dataframe):
         df.loc[df.index[r], c] = mutate_cell(df.loc[df.index[r], c])
     elif kind == "column_name":
         c = random.choice(list(df.columns))
-        df = df.rename(columns={c: f"{c}_x"})
+        name = f"{c}_x"
+        while name in df.columns:
+            name += "_x"
+        df = df.rename(columns={c: name})
     elif kind == "drop_row":
         df = df.drop(df.index[random.randrange(len(df))]).reset_index(drop=True)
     elif kind == "add_row":
@@ -705,6 +758,25 @@ def corrupt_table(dataframe):
     return df, kind
 
 
+def corrupt_table(dataframe, count=None):
+    for _ in range(20):
+        df, mutations = dataframe.copy(), []
+        for _ in range(count or random.randint(2, 3)):
+            df, kind = _corrupt_once(df)
+            mutations.append(kind)
+        if canonical_table(df) != canonical_table(dataframe):
+            return df, mutations
+    raise RuntimeError("Could not produce a distinct corrupted table")
+
+
+def corrupt_duplicate_count(dataframe):
+    duplicates = dataframe.index[dataframe.duplicated(keep=False)].tolist()
+    if duplicates:
+        return dataframe.drop(random.choice(duplicates)).reset_index(drop=True), "drop_duplicate"
+    row = dataframe.iloc[[random.randrange(len(dataframe))]]
+    return pd.concat([dataframe, row], ignore_index=True), "duplicate_row"
+
+
 class TableEquivalence(Task):
     summary = "Decide if two rendered tables are semantically equivalent under mutations."
     def __init__(self, config=None):
@@ -712,28 +784,33 @@ class TableEquivalence(Task):
         self.balancing_key_ratio = 0.5
 
     def generate_entry(self):
-        semantic_df = generate_random_table(self.config)
-        display_df, display_meta = make_display_dataframe(semantic_df)
+        semantic_df = generate_equivalence_table(self.config)
 
         if random.random() < 0.5:
-            other_df, answer, mutation = permute_table(display_df), "yes", "none"
+            other_df, answer, corruptions = semantic_df.copy(), "Yes", []
         else:
-            for _ in range(20):
-                other_df, mutation = corrupt_table(display_df)
-                other_df = permute_table(other_df)
-                if canonical_table(other_df) != canonical_table(display_df):
-                    break
-            answer = "no"
+            if random.random() < 0.3:
+                other_df, mutation = corrupt_duplicate_count(semantic_df)
+                corruptions = [mutation]
+            else:
+                other_df, corruptions = corrupt_table(semantic_df)
+            answer = "No"
 
+        other_df = permute_table(other_df)
+        style_a, style_b = random.sample(["plain", "formatted"], 2)
+        display_a = equivalence_display(semantic_df, style_a)
+        display_b = equivalence_display(other_df, style_b)
         fmt_a, fmt_b = sample_distinct_renderers(EQUIV_RENDERERS)
         return Entry(
             metadata={
-                "table_a": get_renderers(display_df)[fmt_a](index=False),
-                "table_b": get_renderers(other_df)[fmt_b](index=False),
+                "table_a": get_renderers(display_a)[fmt_a](index=False),
+                "table_b": get_renderers(display_b)[fmt_b](index=False),
                 "format_a": fmt_a,
                 "format_b": fmt_b,
-                "mutation": mutation,
-                **display_meta,
+                "mutation": "+".join(corruptions) or "none",
+                "transformations": ["row_order", "column_order", "syntax", "numeric", "date", "null"],
+                "corruptions": corruptions,
+                "duplicate_sensitive": len(corruptions) == 1 and corruptions[0] in {"duplicate_row", "drop_duplicate"},
             },
             answer=answer,
         )
@@ -741,18 +818,19 @@ class TableEquivalence(Task):
     def render_prompt(self, m):
         return (
             "Do these tables contain the same data?\n"
-            "Ignore row order, column order, and table syntax. Match values by column name.\n\n"
+            "Ignore row order, column order, and table syntax; match values by column name.\n"
+            "Treat numeric grouping and trailing zeros as formatting, ISO and English month-name dates as dates, and — and NULL as missing. Repeated rows count.\n\n"
             f"Table A:\n{m['table_a']}\n\n"
             f"Table B:\n{m['table_b']}\n\n"
-            "Answer yes or no."
+            "Answer Yes or No."
         )
 
     def score_answer(self, answer, entry):
         ans = str(answer).strip().lower().strip(".")
         if ans in {"yes", "y", "true", "same"}:
-            ans = "yes"
+            ans = "Yes"
         elif ans in {"no", "n", "false", "different"}:
-            ans = "no"
+            ans = "No"
         return float(ans == entry.answer)
 
     def balancing_key(self, problem):
@@ -865,7 +943,7 @@ def gen_row_pearson(config):
         answer, margin = winner_with_margin(scores, config.margin)
         if answer is not None:
             return df, {
-                "find": f"row_id most associated with row {target.row_id}",
+                "find": f"row_id with highest Pearson correlation to row {target.row_id}",
                 "metric": "Pearson correlation over numeric columns",
                 "answer": answer, "family": "row_pearson", "margin": margin,
             }
@@ -1077,8 +1155,8 @@ def gen_distribution_shift(config):
         answer, margin = winner_with_margin(scores, config.margin)
         if answer is not None:
             return df, {
-                "find": "column name with the largest shift from group G0 to G1",
-                "metric": "absolute mean difference divided by pooled standard deviation",
+                "find": "column name with largest absolute standardized mean difference between G0 and G1",
+                "metric": "absolute standardized mean difference",
                 "answer": answer, "family": "distribution_shift", "margin": margin,
             }
     raise RuntimeError("Could not generate distribution-shift table with sufficient margin")

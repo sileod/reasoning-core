@@ -1675,8 +1675,9 @@ class UnificationEntailment(Task):
             core = _mgu_core_size(equations, candidate, answer) if answer == 'yes' else 0
             meaningful = sum(_mgu_apply(sol, v) != v for v in sol)
             candidate_features = _mgu_candidate_features(candidate)
+            canonical_answer = answer.capitalize()
             meta = edict(
-                answer=answer,
+                answer=canonical_answer,
                 equations=eq_s,
                 candidate=cand_s,
                 num_equations=len(equations),
@@ -1698,15 +1699,15 @@ class UnificationEntailment(Task):
                 candidate_features=candidate_features,
                 split_key=_mgu_split_key(equations, candidate, answer),
             )
-            return Entry(metadata=meta, answer=answer)
+            return Entry(metadata=meta, answer=canonical_answer)
         raise RuntimeError("could not sample an MGU implied-equality instance")
 
     def render_prompt(self, metadata):
         equations = '\n'.join(f"- {e}" for e in metadata['equations'])
         return (
             "Compute a most general unifier of the equations. Apply it to both sides "
-            "of the candidate equality. Answer yes if the instantiated candidate "
-            "terms are identical, otherwise answer no. The equations are guaranteed "
+            "of the candidate equality. Answer Yes if the instantiated candidate "
+            "terms are identical, otherwise answer No. The equations are guaranteed "
             "to be unifiable.\n\n"
             "Equations:\n"
             f"{equations}\n\n"
@@ -1718,4 +1719,4 @@ class UnificationEntailment(Task):
         if answer is None:
             return 0.0
         ans = str(answer).strip().lower().rstrip('.')
-        return float(ans == entry.answer)
+        return float(ans == entry.answer.lower())

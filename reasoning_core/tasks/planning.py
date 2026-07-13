@@ -873,7 +873,7 @@ class Planning(Task):
                 txt += f"\nHint: Reference solution has {meta.na} actions (but it may not be optimal)."
         answer_kind = "shortest valid" if meta.get("generator_mode") in {"planted_walk_optimal", "planted_walk_audited", "random_solve"} else "valid"
         txt += (
-            "\n\nAction format example: action_0(object1 object2)."
+            "\n\nAction format example: action_0(object1, object2)."
             f"\nThe answer is a {answer_kind} plan, one action per line."
         )
         return txt

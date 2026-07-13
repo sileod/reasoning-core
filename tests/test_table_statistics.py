@@ -63,6 +63,15 @@ def test_standardized_mean_difference_is_symmetric_and_scaled():
     assert table_qa.standardized_mean_difference(a, b) == table_qa.standardized_mean_difference(b, a)
 
 
+def test_signed_and_absolute_statistical_wording_is_precise():
+    _, row = table_qa.gen_row_pearson(table_qa.TableStatisticsConfig())
+    _, shift = table_qa.gen_distribution_shift(table_qa.TableStatisticsConfig())
+
+    assert "highest Pearson correlation" in row["find"]
+    assert "largest absolute standardized mean difference between G0 and G1" in shift["find"]
+    assert shift["metric"] == "absolute standardized mean difference"
+
+
 @pytest.mark.parametrize(
     ("generator", "score"),
     [
@@ -139,9 +148,9 @@ def test_compact_identifiers_update_grouped_query_and_answer(monkeypatch):
         (
             "row_pearson",
             pd.DataFrame({"row_id": ["R0", "R1", "R2"], "x0": [1, 2, 3]}),
-            "row_id most associated with row R0",
+            "row_id with highest Pearson correlation to row R0",
             "R1",
-            "row_id most associated with row R1",
+            "row_id with highest Pearson correlation to row R1",
             "R2",
         ),
         (

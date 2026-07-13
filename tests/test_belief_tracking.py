@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 
 import pytest
 
@@ -6,6 +7,7 @@ from reasoning_core.template import Entry, edict
 from reasoning_core.tasks.belief_tracking import (
     BeliefTracking,
     BeliefTrackingConfig,
+    CONTAINER_NAMES,
     EventSpec,
     Percept,
     all_chains,
@@ -311,6 +313,25 @@ def test_generated_example_has_grounded_certificates_and_no_meta_language():
         assert prompt[position : position + len(entry.answer)] == entry.answer
 
 
+def test_counterfactuals_are_emitted_as_an_atomic_certified_pair():
+    task = BeliefTracking(BeliefTrackingConfig(level=3, hard_fraction=0))
+    original, counterfactual = task.generate_examples()
+    assert original.answer != counterfactual.answer
+    assert not original.metadata.is_counterfactual
+    assert counterfactual.metadata.is_counterfactual
+    assert original.metadata.twin_answer == counterfactual.answer
+    assert counterfactual.metadata.twin_answer == original.answer
+    original_key = json.loads(original.deduplication_key)
+    counterfactual_key = json.loads(counterfactual.deduplication_key)
+    assert original_key.pop("pair_member") is False
+    assert counterfactual_key.pop("pair_member") is True
+    assert [event["kind"] for event in original_key["proof"]] == [
+        event["kind"] for event in counterfactual_key["proof"]
+    ]
+    task._assert_entry_invariants(original)
+    task._assert_entry_invariants(counterfactual)
+
+
 def test_deduplication_canonicalizes_all_entity_types():
     task = BeliefTracking(BeliefTrackingConfig(level=2, seed=11))
     entry = task.generate_example()
@@ -331,6 +352,24 @@ def test_deduplication_canonicalizes_all_entity_types():
     assert task.deduplication_key(entry) == task.deduplication_key(twin)
 
 
+def test_deduplication_ignores_incidental_events_but_keeps_proof_semantics():
+    task = BeliefTracking(BeliefTrackingConfig(level=2, hard_fraction=0))
+    entry = task.generate_example()
+    incidental = edict(json.loads(json.dumps(entry.metadata)))
+    incidental.specs.append(incidental.specs[-1])
+    incidental.trace.append(incidental.trace[-1])
+    assert task.deduplication_key(entry) == task.deduplication_key(
+        Entry(metadata=incidental, answer=entry.answer)
+    )
+
+    changed = edict(json.loads(json.dumps(entry.metadata)))
+    index = changed.critical_events[0]
+    changed.specs[index]["scene"] += "_changed"
+    assert task.deduplication_key(entry) != task.deduplication_key(
+        Entry(metadata=changed, answer=entry.answer)
+    )
+
+
 def test_shortcut_report_tracks_abstention_coverage():
     entry = Entry(
         metadata=edict(chain=["Alice"], containers=["box", "tin", "drawer"],
@@ -342,4 +381,17 @@ def test_shortcut_report_tracks_abstention_coverage():
     assert abstaining["coverage"] == 0
     assert abstaining["conditional_accuracy"] is None
     assert abstaining["advantage"] == 0
-    assert "depth:1:majority_answer" in report
+    majority = report["depth:1:majority_answer"]
+    assert majority["chance"] == 1 / len(CONTAINER_NAMES)
+
+
+def test_balanced_batch_uses_shared_pairing_balancing_and_deduplication():
+    task = BeliefTracking(BeliefTrackingConfig(level=2, hard_fraction=0))
+    batch = task.generate_balanced_batch(batch_size=8)
+    keys = [json.loads(entry.deduplication_key) for entry in batch]
+    assert all(not keys[i]["pair_member"] and keys[i + 1]["pair_member"]
+               for i in range(0, len(keys), 2))
+    assert all(batch[i].metadata.twin_answer == batch[i + 1].answer
+               for i in range(0, len(batch), 2))
+    assert len({entry.deduplication_key for entry in batch}) == len(batch)
+    assert max(Counter(entry.answer for entry in batch).values()) <= 2

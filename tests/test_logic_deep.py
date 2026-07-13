@@ -1,6 +1,8 @@
 from collections import Counter
 
+from easydict import EasyDict as edict
 from reasoning_core import get_task, list_tasks, score_answer
+from reasoning_core.template import render_payload
 import pytest
 
 from reasoning_core.tasks.logic_depth import (
@@ -12,14 +14,22 @@ from reasoning_core.tasks.logic_depth import (
     PredSig,
     Rule,
     Theory,
+    MultistepNLIConfig,
     _binary_query,
     chase,
     choose_naf_example,
     close_with,
+    derivation_rules,
+    generate_case,
+    group_entity_facts,
+    hard_target,
     naf_chase,
+    opposite,
     render,
+    render_naf,
     rule_text,
     stratify_rules,
+    support_atoms,
     support_sources,
 )
 
@@ -43,6 +53,34 @@ def test_multistep_nli_registers_and_generates():
     assert sum(task._case_state["label_counts"].values()) == 12
 
 
+def test_multistep_nli_groups_entities_without_changing_facts():
+    facts = [Atom("quiet", ("mary",)), Atom("quiet", ("paul",)), Atom("quiet", ("clara",), False)]
+    theory = Theory(facts, [], [], {}, {"person": ("mary", "paul", "clara")})
+    lines, _, _ = render(theory)
+    assert group_entity_facts(theory, lines, 1) == ["mary and paul are quiet.", "clara is not quiet."]
+    assert group_entity_facts(theory, lines, 0) == lines
+
+
+def test_multistep_neutral_is_a_hard_near_miss_at_level_zero():
+    cfg = MultistepNLIConfig()
+    state = {}
+    signs = Counter()
+    for _ in range(12):
+        case, _ = generate_case(cfg, ("neutral",), state)
+        assert case is not None
+        assert case.neutral_completion is not None
+        signs[case.hyp.sign] += 1
+        mentioned = {arg for atom in case.theory.facts for arg in atom.args}
+        assert all(arg in mentioned for arg in case.hyp.args)
+        completed = close_with(case.theory, [case.neutral_completion])
+        target = case.hyp if case.hyp in completed.derivations else opposite(case.hyp)
+        assert target in completed.derivations
+        assert hard_target(target, completed.derivations, cfg)
+        proof_size = len(support_atoms(target, completed.derivations)) + len(derivation_rules(target, completed.derivations))
+        assert len(case.lines) == proof_size + cfg.n_distractors
+    assert signs[True] == signs[False]
+
+
 def test_defeasible_nli_registers_and_generates():
     assert "defeasible_nli" in list_tasks()
     task = get_task("defeasible_nli")
@@ -50,12 +88,46 @@ def test_defeasible_nli_registers_and_generates():
     assert ex.answer
     assert ex.metadata.naf_rule_count >= 1
     assert task.score_answer(ex.answer, ex) == 1
+    verbose_prompt = (
+        f"{render_payload({'premise': chr(10).join(ex.metadata.premise), 'hypothesis': ex.metadata.hypothesis})}\n"
+        "Is the hypothesis true given the premise? The answer is Yes, No, or Maybe."
+    )
+    assert len(task.tokenizer.encode(ex.prompt)) < len(task.tokenizer.encode(verbose_prompt))
     nli = get_task("defeasible_nli")
     seen = {nli.generate_example(max_tokens=0).answer for _ in range(12)}
     assert seen <= {"Yes", "No", "Maybe"}
     assert len(seen) >= 2
     assert sum(nli._case_state["label_counts"].values()) == 12
     assert sum(nli._case_state["label_signs"].values()) == 12
+
+
+def test_defeasible_nli_uses_compact_natural_language():
+    sigs = {p: PredSig(p, ("person",)) for p in ("bird", "penguin", "ab_bird", "approved")}
+    theory = Theory(
+        facts=[Atom("bird", ("alice",)), Atom("penguin", ("bruno",))],
+        rules=[
+            Rule((Atom("penguin", ("?x",)),), Atom("ab_bird", ("?x",))),
+            Rule(
+                (Atom("bird", ("?x",)), Not(Atom("ab_bird", ("?x",)))),
+                Atom("approved", ("?x",)),
+            ),
+        ],
+        denials=[],
+        pred_sigs=sigs,
+        entities={"person": ("alice", "bruno")},
+    )
+    facts, rules = render_naf(theory)
+    assert facts == "Alice is a bird.\nBruno is a penguin."
+    assert rules == (
+        "Penguins are abnormal.\n"
+        "Birds are approved unless abnormal."
+    )
+    assert "ab bird" not in facts + rules
+
+    task = DefeasibleNLI()
+    prompt = task.render_prompt(edict(payload={"facts": facts, "rules": rules, "hypothesis": "Alice is approved."}))
+    assert "An `unless` condition must be shown to block its rule" in prompt
+    assert "it cannot be shown that" not in prompt
 
 
 @pytest.mark.parametrize(

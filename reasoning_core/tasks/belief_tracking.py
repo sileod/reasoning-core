@@ -32,6 +32,7 @@ class BeliefTrackingConfig(Config):
     candidate_count: int = 3
     observation_asymmetry: float = 0.10
     target_conflicts: int = 0
+    hard_fraction: float = 0.65
     max_tries: int = 200
 
     def apply_difficulty(self, level):
@@ -622,6 +623,10 @@ class BeliefTracking(Task):
     summary = "Track ordered beliefs through observation and communication."
     config_cls = BeliefTrackingConfig
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.balancing_key_ratio = 0.25
+
     def _delivery_scene(self):
         return random.choices(
             ("face_to_face", "confirmed_message", "unconfirmed_message"),
@@ -1009,14 +1014,157 @@ class BeliefTracking(Task):
                 continue
             yield chain, obj, causal, necessity, traps
 
-    def _twin(self, specs, init, agents, depth, chain, fact, causal):
-        index = causal[0]
-        twin_specs = list(specs)
-        twin_specs[index] = _disable_spec(twin_specs[index])
-        twin_trace = materialize(twin_specs, init, agents, depth)
-        return twin_specs, twin_trace, replay(twin_trace, init, chain)[fact], index
+    def _refresh_metadata(self, metadata, answer):
+        init = _state_from_metadata(metadata.init)
+        specs = [_spec_from_metadata(data) for data in metadata.specs]
+        trace = [_event_from_metadata(data) for data in metadata.trace]
+        chain, fact = tuple(metadata.chain), ("loc", metadata.object)
+        depth = metadata.knobs["modal_depth"]
+        causal = rematerialized_critical_specs(
+            specs, init, metadata.agents, depth, chain, fact
+        )
+        trap_candidates = [i for i in range(len(specs)) if i not in causal]
+        traps = rematerialized_trap_specs(
+            specs, init, metadata.agents, depth, chain, fact, trap_candidates
+        )
+        deceptive, conflicts = certified_report_properties(specs, trace, init)
+        backbone = [i for i, spec in enumerate(specs) if spec.role == "critical"]
+        metadata.critical_events = causal
+        metadata.fixed_trace_critical_events = fixed_trace_critical_events(
+            trace, init, chain, fact
+        )
+        metadata.trap_event_indices = traps
+        metadata.certified_visibility_sensitive_events = traps
+        metadata.certified_deceptive_reports = deceptive
+        metadata.certified_target_conflicts = conflicts
+        metadata.backbone_event_necessity = backbone_event_necessity(
+            specs, init, metadata.agents, depth, chain, fact, backbone
+        )
+        metadata.full_chain_visibility_interventions = full_chain_visibility_interventions(
+            specs, init, metadata.agents, depth, chain, fact,
+            [i for i, spec in enumerate(specs) if spec.role == "target_outcome"],
+        )
+        metadata.layer_deletion_diagnostic = layer_deletion_diagnostic(
+            trace, init, chain, fact
+        )
+        metadata.noncritical_nontrap_event_indices = [
+            i for i in range(len(specs)) if i not in set(causal + traps)
+        ]
+        metadata.profile = profile(trace, init, chain, fact)
+        metadata.answer_eq_reality = answer == replay(trace, init)[fact]
+        counterpart = edict(dict(metadata))
+        counterpart.specs = metadata.twin_specs
+        counterpart.trace = metadata.twin_trace
+        metadata.twin_prompt = self.render_prompt(counterpart)
+        prompt, spans = self._render_with_spans(metadata)
+        metadata.surface_spans = spans
+        mentions = self._textual_mentions(prompt, metadata.containers)
+        positions = [position for position, value in mentions if value == answer]
+        metadata.textual_mentions = mentions
+        metadata.answer_mention_positions = positions
+        metadata.answer_mention_count = len(positions)
+        metadata.answer_occurrence_contexts = [
+            prompt[max(0, position - 40) : position + len(answer) + 40]
+            for position in positions
+        ]
+        metadata.last_answer_mention_char_distance = (
+            prompt.index("\n\nQuestion:") - positions[-1] if positions else None
+        )
+        metadata.baselines = self._baselines(
+            specs, trace, init, chain, fact, mentions, prompt, metadata.containers, spans
+        )
+        proper = [
+            value for name, value in metadata.baselines.items()
+            if name.startswith("subchain:")
+        ]
+        metadata.differs_from_all_proper_prefixes_and_suffixes = (
+            len(chain) == 1 or all(value != answer for value in proper)
+        )
+        update_index, mechanism = self._final_update(specs, trace, chain, fact[1])
+        metadata.final_chain_update_position = update_index
+        metadata.final_chain_update_position_quantile = (
+            update_index / max(1, len(trace) - 1) if update_index is not None else None
+        )
+        metadata.final_update_mechanism = mechanism
+        quotes = self._matching_quotes(spans, chain, fact[1])
+        metadata.answer_in_matching_quote = any(
+            quote["content"] == answer for quote in quotes
+        )
+        metadata.final_answer_occurrence_inside_quote = bool(positions) and any(
+            span["quoted"] and span["start"] <= positions[-1] < span["end"]
+            for span in spans
+        )
+        values = [
+            event.truth.args[1] for event in trace
+            if event.truth.kind == "move" and event.truth.args[0] == fact[1]
+        ] + [
+            event.details[1] for event in trace
+            if event.truth.kind in {"conversation", "failed_message"}
+            and event.details[0] == fact[1]
+        ]
+        counts = Counter(values)
+        entropy = -sum(
+            (count / len(values)) * math.log2(count / len(values))
+            for count in counts.values()
+        )
+        metadata.target_event_value_entropy_bits = entropy
+        metadata.target_event_value_perplexity = 2**entropy
+        reader_rules = (
+            "quote:last_delivered_matching", "reader:direct_final_update",
+            "innermost_belief", "target:first_witnessed", "target:last_witnessed",
+        )
+        metadata.defeats_selected_reader_baselines = (
+            metadata.differs_from_all_proper_prefixes_and_suffixes
+            and all(metadata.baselines.get(name) != answer for name in reader_rules)
+        )
+        metadata.hard_example = (
+            metadata.defeats_selected_reader_baselines
+            and not metadata.answer_in_matching_quote
+        )
+        return metadata
 
-    def generate_entry(self):
+    def _twins(
+        self, specs, init, agents, depth, chain, fact, causal, containers, knobs,
+        original_answer,
+    ):
+        index = causal[0]
+        source = specs[index]
+        if source.kind != "move":
+            return []
+        alternatives = [value for value in containers if value != source.destination]
+        random.shuffle(alternatives)
+        twins = []
+        for value in alternatives:
+            twin_specs = list(specs)
+            twin_specs[index] = replace(source, destination=value)
+            twin_trace = materialize(twin_specs, init, agents, depth)
+            answer = replay(twin_trace, init, chain)[fact]
+            causal_twin = rematerialized_critical_specs(
+                twin_specs, init, agents, depth, chain, fact
+            )
+            traps = rematerialized_trap_specs(
+                twin_specs, init, agents, depth, chain, fact,
+                [i for i in range(len(twin_specs)) if i not in causal_twin],
+            )
+            backbone = [i for i, spec in enumerate(twin_specs) if spec.role == "critical"]
+            necessity = backbone_event_necessity(
+                twin_specs, init, agents, depth, chain, fact, backbone
+            )
+            _deceptive, conflicts = certified_report_properties(twin_specs, twin_trace, init)
+            if (
+                answer != original_answer
+                and len(causal_twin) == knobs["critical_event_count"]
+                and len(necessity) == knobs["critical_event_count"]
+                and len(traps) >= knobs["epistemic_traps"]
+                and len(conflicts) == knobs["target_conflicts"]
+            ):
+                twins.append((twin_specs, twin_trace, answer, index))
+        return twins
+
+    def generate_entry(self, _case=None, _paired_cases=None):
+        if _case is not None:
+            return _case
+        require_hard = random.random() < self.config.hard_fraction
         for _ in range(self.config.max_tries):
             knobs = self._sample_knobs()
             agents, objects, containers, init = self._sample_world(knobs)
@@ -1037,25 +1185,16 @@ class BeliefTracking(Task):
             ), None)
             if candidate is None:
                 continue
-            chain, obj, causal, necessity, traps = candidate
+            chain, obj, causal, _necessity, _traps = candidate
             fact = ("loc", obj)
             answer = replay(trace, init, chain)[fact]
-            twin_specs, twin_trace, twin_answer, twin_index = self._twin(
-                specs, init, agents, knobs["modal_depth"], chain, fact, causal
+            twins = self._twins(
+                specs, init, agents, knobs["modal_depth"], chain, fact, causal,
+                containers, knobs, answer,
             )
-            if twin_answer == answer:
+            if not twins:
                 continue
-            fixed = fixed_trace_critical_events(trace, init, chain, fact)
-            layers = layer_deletion_diagnostic(trace, init, chain, fact)
-            visibility_interventions = full_chain_visibility_interventions(
-                specs,
-                init,
-                agents,
-                knobs["modal_depth"],
-                chain,
-                fact,
-                [i for i, spec in enumerate(specs) if spec.role == "target_outcome"],
-            )
+            twin_specs, twin_trace, twin_answer, twin_index = twins[0]
             metadata = edict(
                 agents=agents,
                 objects=objects,
@@ -1068,111 +1207,55 @@ class BeliefTracking(Task):
                 query_kind="belief",
                 knobs=knobs,
                 requested_target_conflicts=knobs["target_conflicts"],
-                certified_target_conflicts=certified_conflicts,
-                certified_deceptive_reports=deceptive,
-                critical_events=causal,
-                fixed_trace_critical_events=fixed,
-                trap_event_indices=traps,
                 requested_epistemic_traps=knobs["epistemic_traps"],
-                certified_visibility_sensitive_events=traps,
                 delivery_mechanisms=dict(Counter(
                     spec.scene for spec in specs if spec.kind == "report"
                 )),
                 initial_state_semantics="common_knowledge",
-                backbone_event_necessity=necessity,
-                full_chain_visibility_interventions=visibility_interventions,
-                layer_deletion_diagnostic=layers,
-                noncritical_nontrap_event_indices=[
-                    i for i in range(len(specs)) if i not in set(causal + traps)
-                ],
-                profile=profile(trace, init, chain, fact),
                 twin_specs=[_spec_to_metadata(spec) for spec in twin_specs],
                 twin_trace=[_event_to_metadata(event) for event in twin_trace],
                 twin_answer=twin_answer,
                 twin_intervention_index=twin_index,
-                answer_eq_reality=answer == replay(trace, init)[fact],
                 temporal_gap=sum(spec.role == "temporal_gap" for spec in specs),
                 length=len(trace),
             )
-            twin_metadata = edict(dict(metadata))
-            twin_metadata.specs = metadata.twin_specs
-            twin_metadata.trace = metadata.twin_trace
-            metadata.twin_prompt = self.render_prompt(twin_metadata)
-            prompt, surface_spans = self._render_with_spans(metadata)
-            metadata.surface_spans = surface_spans
-            mentions = self._textual_mentions(prompt, containers)
-            answer_mentions = [position for position, value in mentions if value == answer]
-            metadata.textual_mentions = mentions
-            metadata.answer_mention_positions = answer_mentions
-            metadata.answer_mention_count = len(answer_mentions)
-            metadata.answer_occurrence_contexts = [
-                prompt[max(0, position - 40) : position + len(answer) + 40]
-                for position in answer_mentions
-            ]
-            metadata.last_answer_mention_char_distance = (
-                prompt.index("\n\nQuestion:") - answer_mentions[-1] if answer_mentions else None
+            metadata.is_counterfactual = False
+            self._refresh_metadata(metadata, answer)
+            if require_hard and not metadata.hard_example:
+                continue
+
+            paired = []
+            for twin_specs, twin_trace, twin_answer, twin_index in twins:
+                twin_metadata = edict(json.loads(json.dumps(metadata)))
+                twin_metadata.specs = [_spec_to_metadata(spec) for spec in twin_specs]
+                twin_metadata.trace = [_event_to_metadata(event) for event in twin_trace]
+                twin_metadata.twin_specs = [_spec_to_metadata(spec) for spec in specs]
+                twin_metadata.twin_trace = [_event_to_metadata(event) for event in trace]
+                twin_metadata.twin_answer = answer
+                twin_metadata.twin_intervention_index = twin_index
+                twin_metadata.is_counterfactual = True
+                self._refresh_metadata(twin_metadata, twin_answer)
+                paired.append(Entry(metadata=twin_metadata, answer=twin_answer))
+            preferred = [entry for entry in paired if entry.metadata.hard_example]
+            counterfactual = random.choice(preferred or paired)
+            metadata.twin_specs = counterfactual.metadata.specs
+            metadata.twin_trace = counterfactual.metadata.trace
+            metadata.twin_answer = counterfactual.answer
+            metadata.twin_intervention_index = counterfactual.metadata.twin_intervention_index
+            metadata.twin_prompt = counterfactual.prompt or self.render_prompt(
+                counterfactual.metadata
             )
-            metadata.baselines = self._baselines(
-                specs, trace, init, chain, fact, mentions, prompt, containers,
-                surface_spans,
-            )
-            proper_values = [
-                value
-                for name, value in metadata.baselines.items()
-                if name.startswith("subchain:")
-            ]
-            metadata.differs_from_all_proper_prefixes_and_suffixes = bool(proper_values) and all(
-                value != answer for value in proper_values
-            )
-            update_index, mechanism = self._final_update(specs, trace, chain, obj)
-            metadata.final_chain_update_position = update_index
-            metadata.final_chain_update_position_quantile = (
-                update_index / max(1, len(trace) - 1) if update_index is not None else None
-            )
-            metadata.final_update_mechanism = mechanism
-            matching_quotes = self._matching_quotes(surface_spans, chain, obj)
-            metadata.answer_in_matching_quote = any(
-                quote["content"] == answer for quote in matching_quotes
-            )
-            metadata.final_answer_occurrence_inside_quote = bool(answer_mentions) and any(
-                span["quoted"]
-                and span["start"] <= answer_mentions[-1] < span["end"]
-                for span in surface_spans
-            )
-            target_values = [
-                event.truth.args[1]
-                for event in trace
-                if event.truth.kind == "move" and event.truth.args[0] == obj
-            ] + [
-                event.details[1]
-                for event in trace
-                if event.truth.kind in {"conversation", "failed_message"}
-                and event.details[0] == obj
-            ]
-            value_counts = Counter(target_values)
-            entropy = -sum(
-                (count / len(target_values)) * math.log2(count / len(target_values))
-                for count in value_counts.values()
-            )
-            metadata.target_event_value_entropy_bits = entropy
-            metadata.target_event_value_perplexity = 2**entropy
-            reader_rules = (
-                "quote:last_delivered_matching",
-                "reader:direct_final_update",
-                "innermost_belief",
-                "target:first_witnessed",
-                "target:last_witnessed",
-            )
-            metadata.defeats_selected_reader_baselines = (
-                metadata.differs_from_all_proper_prefixes_and_suffixes and all(
-                metadata.baselines.get(name) != answer for name in reader_rules
-                )
-            )
-            metadata.balance_axis = random.choice(
-                ["answer", "reality", "initial", "first_text", "last_text"]
-            )
-            return Entry(metadata=metadata, answer=answer)
+            original = Entry(metadata=metadata, answer=answer)
+            if _paired_cases is not None:
+                _paired_cases.append(counterfactual)
+            return original
         raise RuntimeError("failed to generate a grounded, certified belief_tracking example")
+
+    def generate_examples(self, **kwargs):
+        paired_cases = []
+        original = self.generate_example(_paired_cases=paired_cases, **kwargs)
+        counterfactual = self.generate_example(_case=paired_cases.pop(), **kwargs)
+        return [original, counterfactual]
 
     def _event_text(self, spec, event):
         if spec.kind == "move":
@@ -1464,18 +1547,15 @@ class BeliefTracking(Task):
         return float(normalized == str(entry.answer).lower())
 
     def balancing_key(self, problem):
-        axis = problem.metadata.balance_axis
-        if axis == "answer":
-            value = problem.answer
-        else:
-            value = problem.metadata.baselines[axis] == problem.answer
-        return f"{axis}:{value}"
+        return problem.answer
 
     def shortcut_report(self, examples):
         report = {}
         for depth in sorted({len(entry.metadata.chain) for entry in examples}):
             bucket = [entry for entry in examples if len(entry.metadata.chain) == depth]
-            chance = sum(1 / len(entry.metadata.containers) for entry in bucket) / len(bucket)
+            candidate_chance = sum(
+                1 / len(entry.metadata.containers) for entry in bucket
+            ) / len(bucket)
             names = sorted({name for entry in bucket for name in entry.metadata.baselines})
             for name in names:
                 applicable = [
@@ -1487,95 +1567,48 @@ class BeliefTracking(Task):
                 )
                 coverage = len(applicable) / len(bucket)
                 conditional = hits / len(applicable) if applicable else None
-                overall = (hits + (len(bucket) - len(applicable)) * chance) / len(bucket)
+                overall = (
+                    hits + (len(bucket) - len(applicable)) * candidate_chance
+                ) / len(bucket)
                 report[f"depth:{depth}:{name}"] = {
                     "coverage": coverage,
                     "conditional_accuracy": conditional,
                     "overall_accuracy_with_defined_fallback": overall,
-                    "chance": chance,
-                    "advantage": overall - chance,
+                    "chance": candidate_chance,
+                    "advantage": overall - candidate_chance,
                     "n": len(bucket),
                     "defined_n": len(applicable),
                 }
             counts = Counter(entry.answer for entry in bucket)
             accuracy = max(counts.values()) / len(bucket)
+            label_chance = 1 / len(CONTAINER_NAMES)
             report[f"depth:{depth}:majority_answer"] = {
                 "coverage": 1.0,
                 "conditional_accuracy": accuracy,
                 "overall_accuracy_with_defined_fallback": accuracy,
-                "chance": chance,
-                "advantage": accuracy - chance,
+                "chance": label_chance,
+                "advantage": accuracy - label_chance,
                 "n": len(bucket),
                 "defined_n": len(bucket),
             }
         return report
 
     def generate_balanced_batch(
-        self, batch_size=32, deduplication=False, progress=False, workers=1,
-        max_advantage=0.15, max_rounds=3, **kwargs
+        self, batch_size=32, deduplication=True, **kwargs
     ):
-        """Select a batch and reject it unless every measured shortcut is near chance."""
-        for _round in range(max_rounds):
-            pool = [self.generate_example(**kwargs) for _ in range(max(batch_size + 4, 12))]
-            selected, hits, defined, depth_counts, seen = [], Counter(), Counter(), Counter(), set()
-            while len(selected) < batch_size:
-
-                def cost(entry):
-                    key_prefix = len(entry.metadata.chain)
-                    chance = 1 / len(entry.metadata.containers)
-                    baseline_cost = sum(
-                        abs(
-                            hits[(key_prefix, name)]
-                            + (value == entry.answer)
-                            - chance * (defined[(key_prefix, name)] + 1)
-                        )
-                        for name, value in entry.metadata.baselines.items()
-                        if value is not None
-                    )
-                    answer_cost = abs(
-                        hits[(key_prefix, f"answer:{entry.answer}")] + 1
-                        - chance * (depth_counts[key_prefix] + 1)
-                    )
-                    return baseline_cost + answer_cost
-
-                candidate_indices = [
-                    i for i, entry in enumerate(pool)
-                    if not deduplication or self.deduplication_key(entry) not in seen
-                ]
-                if not candidate_indices:
-                    break
-                chosen_index = min(candidate_indices, key=lambda i: cost(pool[i]))
-                chosen = pool.pop(chosen_index)
-                selected.append(chosen)
-                seen.add(self.deduplication_key(chosen))
-                depth = len(chosen.metadata.chain)
-                for name, value in chosen.metadata.baselines.items():
-                    if value is not None:
-                        defined[(depth, name)] += 1
-                        hits[(depth, name)] += value == chosen.answer
-                hits[(depth, f"answer:{chosen.answer}")] += 1
-                depth_counts[depth] += 1
-            if len(selected) == batch_size and all(
-                abs(item["advantage"]) <= max_advantage
-                for name, item in self.shortcut_report(selected).items()
-                if not (
-                    name.startswith("depth:1:target:last_seen_at")
-                    or name == "depth:1:target:last_witnessed"
-                )
-                and item["n"] >= 8
-            ) and all(
-                len({entry.metadata.final_update_mechanism for entry in selected
-                     if len(entry.metadata.chain) == depth}) > 1
-                for depth in {len(entry.metadata.chain) for entry in selected}
-                if sum(len(entry.metadata.chain) == depth for entry in selected) >= 8
-            ):
-                return selected
-        raise RuntimeError("failed shortcut gate; expand the pool or relax max_advantage")
+        if batch_size % 2:
+            raise ValueError("BeliefTracking requires an even batch_size for atomic pairs")
+        return super().generate_balanced_batch(
+            batch_size=batch_size, deduplication=deduplication, **kwargs
+        )
 
     def deduplication_key(self, problem):
         m = problem.metadata
+        critical = [
+            (m.specs[index], m.trace[index]) for index in m.critical_events
+        ]
         spec_agents = []
-        for spec in m.specs:
+        for spec, _event in critical:
             spec_agents.extend(value for value in (spec["actor"], spec["target"]) if value)
             spec_agents.extend(spec["observers"])
             spec_agents.extend(spec["delivery_observers"])
@@ -1583,40 +1616,47 @@ class BeliefTracking(Task):
             spec_agents.extend(spec["asserted_proposition_chain"])
             spec_agents.extend(agent for chain in spec["awareness_chains"] for agent in chain)
         agent_order = list(dict.fromkeys(list(m.chain) + spec_agents))
-        spec_objects = [spec["object"] for spec in m.specs]
-        object_order = list(dict.fromkeys([m.object] + spec_objects + list(m.objects)))
-        spec_containers = [
-            spec["destination"]
-            for spec in m.specs
-            if spec["kind"] == "move"
-        ] + [
-            spec["false_claim"]
-            for spec in m.specs
-            if spec["kind"] == "report" and spec["false_claim"] is not None
-        ]
-        container_order = list(dict.fromkeys(
-            [m.init["loc"][m.object]] + spec_containers
-            + [m.init["loc"][obj] for obj in object_order] + list(m.containers)
-        ))
-        maps = {
-            **{value: f"A{i}" for i, value in enumerate(agent_order)},
-            **{value: f"O{i}" for i, value in enumerate(object_order)},
-            **{value: f"C{i}" for i, value in enumerate(container_order)},
+        agent_map = {value: f"A{i}" for i, value in enumerate(agent_order)}
+        locations = [m.init["loc"][m.object], problem.answer]
+        for spec, event in critical:
+            locations.extend((spec["destination"], spec["false_claim"]))
+            if spec["kind"] == "report":
+                locations.append(event["details"][1])
+        location_order = list(dict.fromkeys(value for value in locations if value is not None))
+        location_map = {value: f"C{i}" for i, value in enumerate(location_order)}
+
+        def agents(values):
+            return [agent_map[value] for value in values]
+
+        proof = []
+        for spec, event in critical:
+            proof.append({
+                "kind": spec["kind"],
+                "actor": agent_map.get(spec["actor"]),
+                "target": agent_map.get(spec["target"]),
+                "policy": spec["policy"],
+                "report_type": spec["report_type"],
+                "scene": spec["scene"],
+                "destination": location_map.get(spec["destination"]),
+                "observers": agents(spec["observers"]),
+                "content_source_chain": agents(spec["content_source_chain"]),
+                "asserted_proposition_chain": agents(spec["asserted_proposition_chain"]),
+                "attribution_update": spec["attribution_update"],
+                "adoption_policy": spec["adoption_policy"],
+                "delivery_observers": agents(spec["delivery_observers"]),
+                "awareness_chains": [agents(chain) for chain in spec["awareness_chains"]],
+                "false_claim": location_map.get(spec["false_claim"]),
+                "realized_content": (
+                    location_map[event["details"][1]] if spec["kind"] == "report" else None
+                ),
+            })
+        latent = {
+            "chain": agents(m.chain),
+            "initial": location_map[m.init["loc"][m.object]],
+            "answer": location_map[problem.answer],
+            "proof": proof,
+            "pair_member": bool(m.is_counterfactual),
         }
-
-        def canonical(value):
-            if isinstance(value, dict):
-                return {canonical(key): canonical(item) for key, item in value.items()}
-            if isinstance(value, list):
-                return [canonical(item) for item in value]
-            return maps.get(value, value)
-
-        latent = canonical({
-            "chain": m.chain,
-            "object": m.object,
-            "init": m.init,
-            "specs": m.specs,
-        })
         return json.dumps(latent, sort_keys=True)
 
     def _assert_entry_invariants(self, entry):
@@ -1657,8 +1697,6 @@ class BeliefTracking(Task):
         assert len(conflicts) == m.requested_target_conflicts
         assert len(m.certified_visibility_sensitive_events) >= m.requested_epistemic_traps
         assert not {"nested", "layer_contrast"} & {spec.scene for spec in specs}
-        if m.differs_from_all_proper_prefixes_and_suffixes:
-            assert m.full_chain_visibility_interventions
         assert "model of" not in self.render_prompt(m).lower()
         assert "viewpoint" not in self.render_prompt(m).lower()
         assert "registers" not in self.render_prompt(m).lower()

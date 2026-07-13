@@ -261,8 +261,9 @@ class GameForcedWin(_SmallGraphGame, Task):
         for position in self._sample_position():
             if position.score == 50 or len(set(position.move_scores.values())) < 2:
                 continue
-            answer = "yes" if position.score > 50 else "no"
-            if (answer == "yes") == desired:
+            forced_win = position.score > 50
+            answer = "Yes" if forced_win else "No"
+            if forced_win == desired:
                 return Entry(metadata=self._metadata(position), answer=answer)
             if fallback is None:
                 fallback = (position, answer)
@@ -277,8 +278,8 @@ class GameForcedWin(_SmallGraphGame, Task):
             "Player chooses on player turns; opponent chooses on opponent turns. "
             "Opponent minimizes player score. A win means final player score is greater than 50.\n\n"
             f"{metadata.description}\n"
-            "The answer is yes or no."
+            "The answer is Yes or No."
         )
 
     def score_answer(self, answer, entry):
-        return float(str(answer).strip().lower() == entry.answer)
+        return float(str(answer).strip().lower() == entry.answer.lower())

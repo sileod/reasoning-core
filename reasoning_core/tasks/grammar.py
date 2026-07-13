@@ -1068,7 +1068,7 @@ class ConstrainedContinuation(Task):
             f"(TEMPLATE)\n{meta.template}\n\n"
             f"(SUFFIX)\n{sfx}\n\n"
             f"Fill in the {nb} {bw} (___) so that PREFIX + filled-TEMPLATE + SUFFIX "
-            f"is a grammatical sentence. Fixed tokens of TEMPLATE must remain in place.\n"
+            f"is a grammatical sentence.\n"
             f"Answer with the blank tokens in order, space-separated."
         )
 

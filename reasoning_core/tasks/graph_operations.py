@@ -1,6 +1,6 @@
 import networkx as nx
 import random
-from reasoning_core.template import Task, Entry, Config, render_payload, stochastic_rounding as sround
+from reasoning_core.template import Task, DevTask, Entry, Config, render_payload, stochastic_rounding as sround
 from reasoning_core.utils import parse_space_ints
 from dataclasses import dataclass
 
@@ -364,7 +364,7 @@ class GraphDependenciesConfig(Config):
         self.max_prereqs = sround(self.max_prereqs + 0.5 * level)
 
 
-class GraphDependencies(BaseGraphTask, Task):
+class GraphDependencies(BaseGraphTask, DevTask):
     """BREVO-style recursive dependency resolution implemented via DAG topologies."""
     summary = "Resolve recursive node prerequisites in directed acyclic graphs (DAGs)."
     def __init__(self, config=None):

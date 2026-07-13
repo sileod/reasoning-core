@@ -82,6 +82,7 @@ class MultistepCase:
     surf: list
     live_rule_rate: float
     proof_rule_rate: float
+    neutral_completion: Optional[Atom] = None
 
 SUPPORTED_DOMAIN_PACKS = ("surface", "abstract", "spatial", "kinship")
 
@@ -98,6 +99,7 @@ class MultistepNLIConfig(Config):
     n_distractors: int = 1
     neutral_rate: float = 0.33
     contradiction_rate: float = 0.33
+    group_entities: float = 0.5
     max_bin_size: int = 8
     domain_packs: tuple = SUPPORTED_DOMAIN_PACKS
     min_target_support_size: int = 2
@@ -908,36 +910,6 @@ def _focused_theory(theory, res, targets, n_distractors):
     )
 
 
-def _focused_neutral_theory(theory, hypothesis, n_distractors):
-    """Retain all backward rule paths to a neutral predicate, including near misses."""
-    predicates = {pred_key(hypothesis), pred_key(opposite(hypothesis))}
-    rules = set()
-    changed = True
-    while changed:
-        changed = False
-        for rule in theory.rules:
-            if pred_key(rule.head) not in predicates or rule in rules:
-                continue
-            rules.add(rule)
-            before = len(predicates)
-            predicates.update(pred_key(a) for a in body_atoms(rule.body))
-            changed |= len(predicates) != before
-    facts = {a for a in theory.facts if pred_key(a) in predicates}
-    extras = [
-        (kind, item) for kind, items, used in (
-            ("fact", theory.facts, facts), ("rule", theory.rules, rules)
-        ) for item in items if item not in used
-    ]
-    random.shuffle(extras)
-    for kind, item in extras[:max(0, int(n_distractors))]:
-        (facts if kind == "fact" else rules).add(item)
-    return Theory(
-        [x for x in theory.facts if x in facts],
-        [x for x in theory.rules if x in rules],
-        theory.denials, theory.pred_sigs, theory.entities, theory.domain_pack,
-    )
-
-
 def hard_target(a, deriv, cfg):
     d = deriv[a].depth
     s = len(support_atoms(a, deriv))
@@ -1144,6 +1116,25 @@ def atom_text(a, pack="surface"):
     return binary_text(a.pred, a.args, a.sign, pack)
 
 
+def group_entity_facts(theory, lines, rate):
+    """Sometimes render same-property unary facts as one conjunction."""
+    groups = defaultdict(list)
+    for i, atom in enumerate(theory.facts):
+        if len(atom.args) == 1:
+            groups[(atom.pred, atom.sign)].append(i)
+    packed, skipped = {}, set()
+    for (pred, sign), ids in groups.items():
+        if len(ids) < 2 or random.random() >= rate:
+            continue
+        names = [theory.facts[i].args[0] for i in ids]
+        subject = " and ".join(names) if len(names) == 2 else f"{', '.join(names[:-1])}, and {names[-1]}"
+        prop = f"{tag_word(pred)} tagged" if theory.domain_pack == "abstract" and pred.startswith("p") else pred_words(pred)
+        packed[ids[0]] = f"{subject} are {'not ' if not sign else ''}{prop}."
+        skipped.update(ids[1:])
+    facts = [packed.get(i, lines[i]) for i in range(len(theory.facts)) if i not in skipped]
+    return facts + lines[len(theory.facts):]
+
+
 def _lit_schema(a, names=None, pack="surface"):
     names = names or {"?x": "x", "?y": "y", "?z": "z", "?p": "p"}
     args = [names.get(x, x) for x in a.args]
@@ -1267,6 +1258,130 @@ def rule_text(rule, rid=None, pack="surface"):
     return templates[rid % len(templates)], (rule.shape, rid % len(templates), "if" if rid % 3 == 0 else "whenever", "normal")
 
 
+def _naf_predicate_text(pred, pack="surface"):
+    if pack == "abstract" and pred.startswith("p"):
+        return tag_word(pred)
+    if pack == "abstract" and pred.startswith("r"):
+        return rel_word(pred)
+    return "abnormal" if pred == "ab_bird" else pred_words(pred)
+
+
+def _naf_property_text(atom, pack="surface"):
+    pred = _naf_predicate_text(atom.pred, pack)
+    if pack == "abstract" and atom.pred.startswith("p"):
+        pred = f"{pred}-tagged"
+    elif atom.pred in {"bird", "penguin"}:
+        pred = f"a {pred}"
+    return f"{'not ' if not atom.sign else ''}{pred}"
+
+
+def _naf_atom_text(atom, pack="surface"):
+    arg_text = lambda arg: arg[1:] if is_var(arg) else arg.capitalize()
+    if len(atom.args) == 1:
+        return f"{arg_text(atom.args[0])} is {_naf_property_text(atom, pack)}"
+    x, y = (arg_text(arg) for arg in atom.args)
+    if pack == "abstract" and atom.pred.startswith("r"):
+        return f"{x} is {'not ' if not atom.sign else ''}{rel_word(atom.pred)} to {y}"
+    if atom.pred == "helps":
+        return f"{x} {'helps' if atom.sign else 'does not help'} {y}"
+    return binary_text(atom.pred, (x, y), atom.sign, pack)
+
+
+def _english_join(items):
+    if len(items) < 2:
+        return "".join(items)
+    if len(items) == 2:
+        return " and ".join(items)
+    return f"{', '.join(items[:-1])}, and {items[-1]}"
+
+
+def _capitalized(text):
+    return text[:1].upper() + text[1:]
+
+
+def _naf_group_text(atom, pack):
+    prop = _naf_property_text(atom, pack)
+    if atom.pred in {"bird", "penguin"} and atom.sign:
+        return f"{_naf_predicate_text(atom.pred, pack).capitalize()}s"
+    if atom.sign:
+        return f"{_capitalized(prop)} people"
+    return f"People who are {prop}"
+
+
+def _naf_complement_text(atom, pack):
+    if atom.pred in {"bird", "penguin"}:
+        noun = f"{_naf_predicate_text(atom.pred, pack)}s"
+        return f"{'not ' if not atom.sign else ''}{noun}"
+    return _naf_property_text(atom, pack)
+
+
+def _naf_person_text(atom, pack):
+    prop = _naf_property_text(atom, pack)
+    article = "an" if prop[0] in "aeiou" else "a"
+    return prop if atom.pred in {"bird", "penguin"} else f"{article} {prop} person"
+
+
+def _naf_rule_text(rule, pack="surface"):
+    atoms = body_atoms(rule.body)
+    exceptions = [item.atom for item in rule.body if isinstance(item, Not)]
+    if (
+        len(atoms) == 1
+        and len(atoms[0].args) == len(rule.head.args) == 1
+        and atoms[0].args == rule.head.args
+    ):
+        text = f"{_naf_group_text(atoms[0], pack)} are {_naf_complement_text(rule.head, pack)}"
+        if exceptions:
+            text += f" unless {' or '.join(_naf_complement_text(atom, pack) for atom in exceptions)}"
+        return text + "."
+    if (
+        len(atoms) == 2
+        and len(atoms[0].args) == 2
+        and len(atoms[1].args) == len(rule.head.args) == 1
+        and atoms[1].args == (atoms[0].args[1],)
+        and rule.head.args == (atoms[0].args[0],)
+    ):
+        obj = _naf_person_text(atoms[1], pack)
+        if pack == "abstract" and atoms[0].pred.startswith("r"):
+            subject = f"People {rel_word(atoms[0].pred)} to {obj}"
+        elif atoms[0].pred == "helps":
+            subject = f"People who help {obj}"
+        else:
+            subject = f"People for whom {_naf_atom_text(atoms[0], pack)} and {_naf_atom_text(atoms[1], pack)}"
+        text = f"{subject} are {_naf_complement_text(rule.head, pack)}"
+        if exceptions:
+            phrases = [
+                _naf_complement_text(atom, pack)
+                if atom.args == rule.head.args
+                else f"that person is {_naf_property_text(atom, pack)}"
+                if atom.args == atoms[1].args
+                else _naf_atom_text(atom, pack)
+                for atom in exceptions
+            ]
+            text += f" unless {' or '.join(phrases)}"
+        return text + "."
+    conditions = [_naf_atom_text(atom, pack) for atom in atoms]
+    conditions += [f"{item[1][1:]} differs from {item[2][1:]}" for item in body_checks(rule.body) if item[0] == "!="]
+    text = f"If {' and '.join(conditions)}, {_naf_atom_text(rule.head, pack)}"
+    if exceptions:
+        text += f" unless {' or '.join(_naf_atom_text(atom, pack) for atom in exceptions)}"
+    return text + "."
+
+
+def render_naf(theory):
+    """Render a NAF theory compactly without changing its logical representation."""
+    unary, other = {}, []
+    for atom in theory.facts:
+        if len(atom.args) == 1:
+            unary.setdefault(atom.args[0], []).append(_naf_property_text(atom, theory.domain_pack))
+        else:
+            other.append(_capitalized(_naf_atom_text(atom, theory.domain_pack)) + ".")
+    facts = "\n".join(
+        [f"{entity.capitalize()} is {_english_join(properties)}." for entity, properties in unary.items()] + other
+    )
+    rules = "\n".join(_naf_rule_text(rule, theory.domain_pack) for rule in theory.rules)
+    return facts, rules
+
+
 def render(theory):
     lines, source = [], {}
     for a in theory.facts:
@@ -1356,6 +1471,10 @@ def case_metadata(case, key=None):
         proof_rule_rate=case.proof_rule_rate,
         bin_key=repr(key) if key is not None else "",
         surface_bins=[repr(x) for x in case.surf],
+        neutral_completion=(
+            "" if case.neutral_completion is None
+            else atom_text(case.neutral_completion, case.theory.domain_pack) + "."
+        ),
         cot=trace_for(case.target, case.res.derivations, case.source, case.theory.domain_pack),
     )
 
@@ -1387,6 +1506,43 @@ def reject_shortcut(case):
     return False
 
 
+def _hard_neutral(theory, res, cfg, label_signs):
+    targets = [
+        atom for atom in res.closure
+        if atom not in theory.facts
+        and opposite(atom) not in theory.facts
+        and res.derivations[atom].depth > 0
+        and hard_target(atom, res.derivations, cfg)
+    ]
+    candidates = [(hyp, target) for target in targets for hyp in (target, opposite(target))]
+    wanted_sign = label_signs[("neutral", True)] <= label_signs[("neutral", False)]
+    random.shuffle(candidates)
+    candidates.sort(key=lambda pair: pair[0].sign != wanted_sign)
+    for hyp, target in candidates:
+        proof_size = len(support_atoms(target, res.derivations)) + len(derivation_rules(target, res.derivations))
+        focused = _focused_theory(theory, res, [target], cfg.n_distractors + 1)
+        missing_facts = list(support_atoms(target, res.derivations))
+        random.shuffle(missing_facts)
+        for missing in missing_facts:
+            reduced = Theory(
+                [atom for atom in focused.facts if atom != missing],
+                focused.rules, focused.denials, focused.pred_sigs,
+                focused.entities, focused.domain_pack,
+            )
+            reduced_res = chase(reduced, max_depth=None)
+            mentioned = {arg for atom in reduced.facts for arg in atom.args}
+            if (
+                not reduced_res.inconsistent
+                and _label_for_atom(reduced_res, hyp) == "neutral"
+                and all(arg in mentioned for arg in hyp.args)
+                and len(reduced.facts) + len(reduced.rules) == proof_size + cfg.n_distractors
+            ):
+                completed = close_with(reduced, [missing])
+                if target in completed.derivations and hard_target(target, completed.derivations, cfg):
+                    return reduced, reduced_res, hyp, missing
+    return None
+
+
 def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral"), state=None):
     if state is None:
         state = {}
@@ -1407,6 +1563,13 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         label, hyp, derivation, support = choice
         if label not in allowed_labels:
             continue
+        neutral_completion = None
+        if label == "neutral":
+            hard_neutral = _hard_neutral(theory, res, cfg, label_signs)
+            if hard_neutral is None:
+                continue
+            theory, res, hyp, neutral_completion = hard_neutral
+            derivation, support = None, set()
         ls_key = (label, hyp.sign)
         other = label_signs[(label, not hyp.sign)]
         if label_signs[ls_key] > other + 6 and random.random() > 0.2:
@@ -1428,12 +1591,14 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         if label != "neutral" and proof_rule_rate < 0.10:
             continue
         key = bin_key(label, hyp, d, support, theory, target, res.derivations)
-        case = MultistepCase(theory, res, label, hyp, target, d, support, lines, source, surf, live_rule_rate, proof_rule_rate)
+        case = MultistepCase(
+            theory, res, label, hyp, target, d, support, lines, source, surf,
+            live_rule_rate, proof_rule_rate, neutral_completion,
+        )
         if reject_shortcut(case):
             continue
         focused = (
-            _focused_neutral_theory(theory, hyp, cfg.n_distractors)
-            if target is None else
+            theory if target is None else
             _focused_theory(theory, res, [target], cfg.n_distractors)
         )
         focused_res = chase(focused, max_depth=None)
@@ -1446,7 +1611,10 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         used_rules = derivation_rules(target, res.derivations) if target is not None else set()
         live_rule_rate = len(participating_rules(res.derivations)) / max(1, len(theory.rules))
         proof_rule_rate = len(used_rules) / max(1, len(theory.rules))
-        case = MultistepCase(theory, res, label, hyp, target, d, support, lines, source, surf, live_rule_rate, proof_rule_rate)
+        case = MultistepCase(
+            theory, res, label, hyp, target, d, support, lines, source, surf,
+            live_rule_rate, proof_rule_rate, neutral_completion,
+        )
         min_label = min([label_counts[x] for x in allowed_labels] or [0])
         label_needs_examples = label_counts[label] <= min_label + 3
         if bins[key] >= cfg.max_bin_size and not label_needs_examples and random.random() > 0.2:
@@ -1869,7 +2037,8 @@ class MultistepNLI(Task):
         case, key = generate_case(self.config, state=self._case_state)
         if case:
             meta = case_metadata(case, key)
-            meta.payload = {"premise": "\n".join(meta.premise), "hypothesis": meta.hypothesis}
+            premise = group_entity_facts(case.theory, meta.premise, self.config.group_entities)
+            meta.payload = {"premise": "\n".join(premise), "hypothesis": meta.hypothesis}
             mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
             return Entry(meta, mapping[case.label])
         raise RuntimeError("could not generate a consistent multistep_nli example")
@@ -1900,15 +2069,21 @@ class DefeasibleNLI(Task):
         case, key = generate_naf_case(self.config, state=self._case_state)
         if case:
             meta = naf_case_metadata(case, key)
-            meta.payload = {"premise": "\n".join(meta.premise), "hypothesis": meta.hypothesis}
+            facts, rules = render_naf(case.theory)
+            meta.payload = {
+                "facts": facts,
+                "rules": rules,
+                "hypothesis": _capitalized(_naf_atom_text(case.hyp, case.theory.domain_pack)) + ".",
+            }
             mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
             return Entry(meta, mapping[case.label])
         raise RuntimeError("could not generate a stratified_naf_nli example")
 
     def render_prompt(self, meta):
         return (
-            f"{render_payload(meta.payload)}\n"
-            "Is the hypothesis true given the premise? The answer is Yes, No, or Maybe."
+            "An `unless` condition must be shown to block its rule.\n\n"
+            f"{render_payload(meta.payload)}\n\n"
+            "Is the hypothesis true? Answer Yes, No, or Maybe."
         )
 
     def score_answer(self, answer, entry):

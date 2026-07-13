@@ -4,7 +4,10 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from reasoning_core.tasks.table_qa import TableEquivalence, TableQA, canonical_scalar, render_nulls
+from reasoning_core.tasks.table_qa import (
+    TableEquivalence, TableQA, canonical_scalar, canonical_table, corrupt_table,
+    equivalence_display, render_nulls,
+)
 
 
 def test_canonical_scalar_conventions():
@@ -46,4 +49,22 @@ def test_table_equivalence_is_stateless_and_batch_balanced():
     batch = task.generate_balanced_batch(batch_size=4)
 
     assert not hasattr(task, "_same_next")
-    assert Counter(problem.answer for problem in batch) == {"yes": 2, "no": 2}
+    assert Counter(problem.answer for problem in batch) == {"Yes": 2, "No": 2}
+
+
+def test_equivalence_normalization_is_controlled_and_duplicate_sensitive():
+    df = pd.DataFrame({"number": [1000, None], "date": [date(2026, 7, 13)] * 2})
+
+    assert equivalence_display(df, "plain").iloc[0].tolist() == ["1000.0", "2026-07-13"]
+    assert equivalence_display(df, "formatted").iloc[0].tolist() == ["1,000.00", "Jul 13, 2026"]
+    assert equivalence_display(df, "plain").iloc[1, 0] == "—"
+    assert equivalence_display(df, "formatted").iloc[1, 0] == "NULL"
+    assert canonical_table(df) != canonical_table(pd.concat([df, df.iloc[[0]]], ignore_index=True))
+
+
+def test_multiple_corruptions_are_certified_inequivalent():
+    df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
+    corrupted, mutations = corrupt_table(df, count=3)
+
+    assert len(mutations) == 3
+    assert canonical_table(corrupted) != canonical_table(df)
