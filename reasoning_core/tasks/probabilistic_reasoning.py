@@ -306,11 +306,10 @@ class MostProbableOutcome(Task):
     summary = "Predict the most probable outcome or select hidden factor values in ProbLog."
     def __init__(self, config=None):
         super().__init__(config=config or MostProbableOutcomeConfig())
-        self._target_i = 0
+        self.balancing_key_ratio = 1 / 3
 
     def generate_entry(self):
-        target = ["A", "B", "equal"][self._target_i % 3]
-        self._target_i += 1
+        target = random.choice(["A", "B", "equal"])
 
         node = generate(outcome_grammar(self.config.max_count, target=target), depth=self.config.depth)
         src = node @ problog

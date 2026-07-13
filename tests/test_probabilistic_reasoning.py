@@ -1,4 +1,12 @@
-from reasoning_core.tasks.probabilistic_reasoning import evidence_grammar, mpe_answer
+from collections import Counter
+
+import pytest
+
+from reasoning_core.tasks.probabilistic_reasoning import (
+    MostProbableOutcome,
+    evidence_grammar,
+    mpe_answer,
+)
 
 
 def test_mpe_answer_rejects_ties():
@@ -18,3 +26,12 @@ def test_negated_conjunction_is_not_rendered_as_unless():
     assert rule.templates["eng"].format("factor P", "A") == (
         "(factor P holds and factor A is false)"
     )
+
+
+def test_most_probable_outcome_is_stateless_and_batch_balanced():
+    task = MostProbableOutcome()
+    batch = task.generate_balanced_batch(batch_size=6)
+
+    assert not hasattr(task, "_target_i")
+    assert task.balancing_key_ratio == pytest.approx(1 / 3)
+    assert Counter(problem.answer for problem in batch) == {"A": 2, "B": 2, "equal": 2}

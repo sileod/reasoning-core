@@ -2,6 +2,7 @@ import pytest
 
 from reasoning_core.tasks import code_execution as code_tasks
 from reasoning_core.tasks.code_execution import (
+    CodeInputDeduction,
     CodeRunnability,
     MesopyCodeCfg,
     RunReport,
@@ -37,16 +38,31 @@ def test_sample_problem_rejects_trivial_function(monkeypatch):
 
 
 def test_code_runnability_emits_paired_labels(monkeypatch):
-    bad = RunReport(error="NameError", args=[0])
-    good = report(4, [1])
-    monkeypatch.setattr(code_tasks, "runnability_pair", lambda _: ("name", (("code", bad), ("code", good))))
-    task = CodeRunnability()
-    problems = [task.generate(), task.generate()]
+    calls = []
 
-    assert {problem.answer for problem in problems} == {"OK", "NameError"}
-    assert problems[0].metadata.code == problems[1].metadata.code
+    def paired(_):
+        code = f"code-{len(calls)}"
+        calls.append(code)
+        return "name", ((code, RunReport(error="NameError", args=[0])), (code, report(4, [1])))
+
+    monkeypatch.setattr(code_tasks, "runnability_pair", paired)
+    task = CodeRunnability()
+    problems = task.generate_balanced_batch(batch_size=4)
+
+    assert len(calls) == 2
+    for code in calls:
+        pair = [problem for problem in problems if problem.metadata.code == code]
+        assert {problem.answer for problem in pair} == {"OK", "NameError"}
     assert "The answer is `OK`" in task.prompt(problems[0].metadata)
     assert all(task.score_answer(problem.answer, problem) == 1.0 for problem in problems)
+    assert not hasattr(task, "_pending_pair")
+
+
+def test_code_generators_have_no_mutable_balancing_state():
+    task = CodeInputDeduction()
+    assert not hasattr(task, "_mode_i")
+    assert not hasattr(task, "_recent_answers")
+    assert task.balancing_key_ratio == pytest.approx(1 / 3)
 
 
 def test_endpoint_probes_vary_each_annotated_argument():

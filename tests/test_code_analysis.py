@@ -144,13 +144,23 @@ def test_state_answers_use_valuations_without_prompt_leakage():
         random.setstate(state)
 
 
-def test_holds_queries_require_nontrivial_temporal_reasoning():
+def test_holds_queries_require_nontrivial_temporal_reasoning(monkeypatch):
     state = random.getstate()
     random.seed(1)
     try:
         task = CodeAnalysis()
+        original_shuffle = random.shuffle
+
+        def holds_first(items):
+            original_shuffle(items)
+            if len(items) == 4 and all(isinstance(item, str) for item in items) and set(items) == {
+                "holds", "states", "rank", "witness"
+            }:
+                items.remove("holds")
+                items.insert(0, "holds")
+
+        monkeypatch.setattr(random, "shuffle", holds_first)
         for _ in range(20):
-            task._query_i = 0
             entry = task.generate_entry()
             metadata = entry.metadata
             assert metadata.query_type == "holds"
@@ -158,5 +168,6 @@ def test_holds_queries_require_nontrivial_temporal_reasoning():
             assert metadata.temporal_effort >= 2
             if (metadata.root_operator, entry.answer) in {("EX", "Yes"), ("AX", "No")}:
                 assert metadata.mixed_initial_branches
+        assert not hasattr(task, "_query_i")
     finally:
         random.setstate(state)

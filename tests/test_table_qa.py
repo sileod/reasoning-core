@@ -1,9 +1,10 @@
+from collections import Counter
 from datetime import date
 
 import numpy as np
 import pandas as pd
 
-from reasoning_core.tasks.table_qa import TableQA, canonical_scalar, render_nulls
+from reasoning_core.tasks.table_qa import TableEquivalence, TableQA, canonical_scalar, render_nulls
 
 
 def test_canonical_scalar_conventions():
@@ -38,3 +39,11 @@ def test_table_qa_declares_and_uses_unambiguous_null_marker():
     assert rendered.tolist() == ["—", "-", "NA", "null", ""]
     assert metadata == {"null": "—"}
     assert "In this table, — represents SQL NULL." in scalar_prompt(None)
+
+
+def test_table_equivalence_is_stateless_and_batch_balanced():
+    task = TableEquivalence()
+    batch = task.generate_balanced_batch(batch_size=4)
+
+    assert not hasattr(task, "_same_next")
+    assert Counter(problem.answer for problem in batch) == {"yes": 2, "no": 2}

@@ -710,14 +710,12 @@ class TableEquivalence(Task):
     def __init__(self, config=None):
         super().__init__(config=config or TableQAConfig())
         self.balancing_key_ratio = 0.5
-        self._same_next = False
 
     def generate_entry(self):
         semantic_df = generate_random_table(self.config)
         display_df, display_meta = make_display_dataframe(semantic_df)
-        self._same_next = not self._same_next
 
-        if self._same_next:
+        if random.random() < 0.5:
             other_df, answer, mutation = permute_table(display_df), "yes", "none"
         else:
             for _ in range(20):
@@ -758,8 +756,7 @@ class TableEquivalence(Task):
         return float(ans == entry.answer)
 
     def balancing_key(self, problem):
-        m = problem.metadata
-        return f"{m.mutation}:formats={m.format_a}->{m.format_b}:answer={problem.answer}"
+        return problem.answer
 
 
 def pearson(a, b):

@@ -441,22 +441,30 @@ class CodeRunnability(Task):
     summary = "Predict if a given Python code snippet runs successfully or raises an exception."
     def __init__(self, config=None):
         super().__init__(config=config or MesopyCodeCfg())
-        self._pending_pair = []
 
-    def generate_entry(self):
-        if not self._pending_pair:
+    def generate_entry(self, _case=None, _paired_cases=None):
+        if _case is None:
             family, pair = runnability_pair(self.config)
-            self._pending_pair = list(pair)
-            random.shuffle(self._pending_pair)
-            for code, report in self._pending_pair:
-                report.family = family
-        code, r = self._pending_pair.pop()
+            pair = list(pair)
+            random.shuffle(pair)
+            _case = family, pair.pop()
+            if _paired_cases is not None:
+                _paired_cases.append((family, pair.pop()))
+        family, (code, r) = _case
         metadata = meta(code, r)
-        metadata.family = r.family
+        metadata.family = family
         return Entry(metadata=metadata, answer=r.error or "OK")
 
-    def on_config_level_change(self):
-        self._pending_pair.clear()
+    def generate_examples(self, **kwargs):
+        paired_cases = []
+        first = self.generate_example(_paired_cases=paired_cases, **kwargs)
+        second = self.generate_example(_case=paired_cases.pop(), **kwargs)
+        return [first, second]
+
+    def generate_balanced_batch(self, batch_size=32, **kwargs):
+        if batch_size % 2:
+            raise ValueError("CodeRunnability requires an even batch_size for atomic pairs")
+        return super().generate_balanced_batch(batch_size=batch_size, **kwargs)
 
     def render_prompt(self, metadata):
         return (
@@ -528,15 +536,13 @@ class CodeInputDeduction(DevTask):
     summary = "Deduce the Python function input that yields a target output value or condition."
     def __init__(self, config=None):
         super().__init__(config=config or CodeInputDeductionCfg())
-        self._mode_i = 0
-        self._recent_answers = []
+        self.balancing_key_ratio = 1 / 3
 
     def generate_entry(self):
         cfg = self.config
-        modes = ("int", "tuple", "str")
-        start = self._mode_i % len(modes)
-        self._mode_i += 1
-        for mode in modes[start:] + modes[:start]:
+        modes = ["int", "tuple", "str"]
+        random.shuffle(modes)
+        for mode in modes:
             for _ in range(max(1, cfg.max_attempts // len(modes))):
                 if mode == "int":
                     domain = list(range(cfg.lo, cfg.hi + 1))
@@ -589,14 +595,11 @@ class CodeInputDeduction(DevTask):
                 choices = [(y, min(xs)) for y, xs in buckets.items() if 1 < len(xs) < len(domain)]
                 choices = [c for c in choices if c[1] != domain[0]] or choices
                 if choices:
-                    fresh = [c for c in choices if (" ".join(map(str, c[1])) if isinstance(c[1], tuple) else str(c[1])) not in self._recent_answers]
-                    choices = fresh or choices
                     target, answer = random.choice(choices)
                     if isinstance(answer, tuple):
                         answer = " ".join(map(str, answer))
                     else:
                         answer = str(answer)
-                    self._recent_answers = (self._recent_answers + [answer])[-8:]
                     return Entry(
                         edict(code=code, mode=mode, goal=goal, call_text=call_text, answer_hint=answer_hint, target=target),
                         answer,
@@ -614,3 +617,6 @@ class CodeInputDeduction(DevTask):
     def score_answer(self, answer, entry):
         reference = entry["answer"] if isinstance(entry, dict) else entry.answer
         return float(str(answer).strip().strip("\"'") == reference)
+
+    def balancing_key(self, problem):
+        return problem.metadata.mode

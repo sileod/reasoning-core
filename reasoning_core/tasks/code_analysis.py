@@ -229,16 +229,14 @@ class CodeAnalysis(Task):
 
     def __init__(self, config=None):
         super().__init__(config=config)
-        self._query_i = 0
         self.balancing_key_ratio = 0.35
 
     def generate_entry(self):
         cfg = self.config
-        modes = ("holds", "states", "rank", "witness")
-        start = self._query_i % len(modes)
-        self._query_i += 1
+        modes = ["holds", "states", "rank", "witness"]
+        random.shuffle(modes)
 
-        for query_type in modes[start:] + modes[:start]:
+        for query_type in modes:
             for _ in range(max(1, cfg.max_retries)):
                 try:
                     kripke = self._make_kripke()

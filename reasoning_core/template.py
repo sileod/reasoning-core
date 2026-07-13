@@ -538,33 +538,42 @@ class Task(ProceduralDataset):
                 return problem
         return inner()
 
+    def generate_examples(self, **kwargs):
+        """Generate one atomic group for balanced batching."""
+        return [self.generate_example(**kwargs)]
+
     def generate_balanced_batch(self, batch_size=32, deduplication=False,
                                 progress=False, workers=1, **kwargs):
         max_per_key = math.ceil(batch_size * self.balancing_key_ratio)
         counts, seen, batch = Counter(), set(), []
 
-        def try_accept(ex):
-            b, d = ex.balancing_key, ex.deduplication_key
-            if (deduplication and d in seen) or (b is not None and counts[b] >= max_per_key):
-                return False
-            batch.append(ex)
-            if b is not None: counts[b] += 1
-            if deduplication and d is not None: seen.add(d)
-            return True
+        def try_accept(group):
+            if len(batch) + len(group) > batch_size:
+                return 0
+            keys = Counter(ex.balancing_key for ex in group if ex.balancing_key is not None)
+            dedup_keys = [ex.deduplication_key for ex in group if ex.deduplication_key is not None]
+            if any(counts[key] + n > max_per_key for key, n in keys.items()):
+                return 0
+            if deduplication and (seen.intersection(dedup_keys) or len(dedup_keys) != len(set(dedup_keys))):
+                return 0
+            batch.extend(group)
+            counts.update(keys)
+            if deduplication: seen.update(dedup_keys)
+            return len(group)
 
         with tqdm(total=batch_size, disable=not progress) as pbar:
             if workers == 1:
                 while len(batch) < batch_size:
-                    if try_accept(self.generate_example(**kwargs)): pbar.update(1)
+                    pbar.update(try_accept(self.generate_examples(**kwargs)))
             else:
-                submit = lambda pool: pool.submit(self.generate_example, **kwargs)
+                submit = lambda pool: pool.submit(self.generate_examples, **kwargs)
                 with ProcessPoolExecutor(max_workers=workers) as pool:
                     pending = {submit(pool) for _ in range(min(workers, batch_size))}
                     while len(batch) < batch_size:
                         done, pending = wait(pending, return_when=FIRST_COMPLETED)
                         for f in done:
                             if len(batch) >= batch_size: break
-                            if try_accept(f.result()): pbar.update(1)
+                            pbar.update(try_accept(f.result()))
                         target = min(workers, batch_size - len(batch))
                         pending |= {submit(pool) for _ in range(target - len(pending))}
         return batch
