@@ -795,12 +795,11 @@ class Planning(Task):
         target_na = random.choice(list(range(config.min_na, config.max_na + 1)))
 
         for _ in range(250):
-    
-            meta.domain_seed = f"{N}-{random.randint(0,config.max_domain_seed)}"
-            meta.fluent_arity = fma = random.choices([1, 2], weights=[1, config.arity_weight], k=1)[0]
-
-            domain = generate_domain(N, meta.domain_seed, fluent_max_arity=fma) if not config.domain else fetch_domain(config.domain)
             try:
+                meta.domain_seed = f"{N}-{random.randint(0,config.max_domain_seed)}"
+                meta.fluent_arity = fma = random.choices([1, 2], weights=[1, config.arity_weight], k=1)[0]
+
+                domain = generate_domain(N, meta.domain_seed, fluent_max_arity=fma) if not config.domain else fetch_domain(config.domain)
                 if random.random() < config.pure_random_proba:
                     problem = generate_problem(N, domain=domain)
                     solution = solve(problem, planner=config.planner)
@@ -817,50 +816,41 @@ class Planning(Task):
                         level=level,
                     )
                     generator_mode = "planted_walk"
-            except Exception as e:
-                if isinstance(e, RuntimeError):
-                    continue
-                print(f"ERR: {e}")
-                continue
 
-            planted_na = len(reference_plan.actions)
-            if generator_mode == "planted_walk" and config.optimal_relabel:
-                try:
+                planted_na = len(reference_plan.actions)
+                if generator_mode == "planted_walk" and config.optimal_relabel:
                     solution = solve(problem, planner=config.planner)
-                except Exception:
+                    if not solution.plan or len(solution.plan.actions) < config.min_na:
+                        continue
+                    reference_plan = solution.plan
+                    generator_mode = "planted_walk_optimal"
+                elif len(reference_plan.actions) < target_na:
                     continue
-                if not solution.plan or len(solution.plan.actions) < config.min_na:
-                    continue
-                reference_plan = solution.plan
-                generator_mode = "planted_walk_optimal"
-            elif len(reference_plan.actions) < target_na:
-                continue
 
-            if generator_mode == "planted_walk" and random.random() < config.audit_proba:
-                try:
+                if generator_mode == "planted_walk" and random.random() < config.audit_proba:
                     solution = solve(problem, planner=config.planner)
                     if solution.plan and 0 < len(solution.plan.actions) >= config.min_na:
                         reference_plan = solution.plan
                         generator_mode = "planted_walk_audited"
-                except Exception:
-                    pass
 
-            plan = format_plan(reference_plan)
-            meta.na = len(reference_plan.actions)
-            meta.planted_na = planted_na
-            meta.optimality_gap = planted_na - meta.na
-            meta.target_na = target_na
-            meta.generator_mode = generator_mode
-            meta.trim_mode = trim_mode
+                plan = format_plan(reference_plan)
+                meta.na = len(reference_plan.actions)
+                meta.planted_na = planted_na
+                meta.optimality_gap = planted_na - meta.na
+                meta.target_na = target_na
+                meta.generator_mode = generator_mode
+                meta.trim_mode = trim_mode
 
-            meta.problem_english = translate(problem)
-            writer = PDDLWriter(problem)
-            meta.problem_pddl = writer.get_problem()
-            meta.domain_pddl = writer.get_domain()
-            meta.verif_cot = make_cot(problem, reference_plan) #deprecated cot
-            if self.score_answer(plan, {'metadata': meta})<1:
+                meta.problem_english = translate(problem)
+                writer = PDDLWriter(problem)
+                meta.problem_pddl = writer.get_problem()
+                meta.domain_pddl = writer.get_domain()
+                meta.verif_cot = make_cot(problem, reference_plan) #deprecated cot
+                if self.score_answer(plan, {'metadata': meta})<1:
+                    continue
+                return Entry(meta, plan)
+            except Exception:
                 continue
-            return Entry(meta, plan)
         raise RuntimeError("Could not generate a planning problem")
 
 

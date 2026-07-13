@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
@@ -46,3 +47,25 @@ def test_generate_entry_does_not_reseed_global_random(monkeypatch):
         planning.Planning().generate_entry()
 
     seed.assert_not_called()
+
+
+def test_generate_entry_retries_finalization_errors(monkeypatch):
+    plan = SimpleNamespace(actions=[object()] * 3)
+    solution = SimpleNamespace(plan=plan)
+    writer = SimpleNamespace(get_problem=lambda: "problem", get_domain=lambda: "domain")
+    task = planning.Planning(planning.PlanningConfig(pure_random_proba=1.0))
+
+    monkeypatch.setattr(planning, "generate_domain", lambda *args, **kwargs: object())
+    monkeypatch.setattr(planning, "generate_problem", lambda *args, **kwargs: object())
+    monkeypatch.setattr(planning, "solve", lambda *args, **kwargs: solution)
+    monkeypatch.setattr(planning, "format_plan", lambda _: "action_0(object_1)")
+    translate = Mock(side_effect=[Exception("action_1_parameter0_type_0"), "problem"])
+    monkeypatch.setattr(planning, "translate", translate)
+    monkeypatch.setattr(planning, "PDDLWriter", lambda _: writer)
+    monkeypatch.setattr(planning, "make_cot", lambda *args: "trace")
+    monkeypatch.setattr(task, "score_answer", lambda *args: 1)
+
+    entry = task.generate_entry()
+
+    assert entry.answer == "action_0(object_1)"
+    assert translate.call_count == 2
