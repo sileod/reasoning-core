@@ -648,8 +648,10 @@ def permute_table(dataframe):
 
 
 def generate_equivalence_table(config):
-    df = generate_random_table(config).map(
-        lambda x: f"{x}_" if isinstance(x, str) and x in {"NULL", "—"} else x
+    df = generate_random_table(config).apply(
+        lambda column: column.map(
+            lambda x: f"{x}_" if isinstance(x, str) and x in {"NULL", "—"} else x
+        )
     )
     while len(df.columns) < 2:
         df[f"field_{len(df.columns)}"] = range(len(df))

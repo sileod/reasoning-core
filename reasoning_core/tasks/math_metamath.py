@@ -14,6 +14,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.request import urlretrieve
 
 from appdirs import AppDirs
@@ -732,7 +733,12 @@ def _sample_instance(config):
         if not _verify(proof, tree.target, premises, tree.used):
             continue
         displayed = sorted(tree.used)
-        inst = edict(tree=tree, premises=premises, proof=proof, rules=displayed)
+        # EasyDict releases differ in whether nested tuples are preserved.  These
+        # proof expressions rely on tuple concatenation, so keep this internal
+        # container out of EasyDict's recursive conversion path.
+        inst = SimpleNamespace(
+            tree=tree, premises=premises, proof=proof, rules=displayed
+        )
         if _keep_instance(inst):
             return inst
     raise RuntimeError("failed to generate a verified Metamath proof tree")
