@@ -270,7 +270,7 @@ class GridNavigation(Task):
         self.balancing_key_ratio = 0.25
 
     def generate_entry(self):
-        rng = random.Random(self.config.seed)
+        rng = random
         cfg = self.config
 
         n = max(2, cfg.n_objects)

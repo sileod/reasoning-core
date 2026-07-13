@@ -103,6 +103,7 @@ class EquationSystem(Task):
                 was_modified = True
             elif rand_val < self.config.p_inconsistent + self.config.p_underdetermined:
                 eqs.pop(random.randrange(len(eqs)))
+                eqs.extend(self._combined_equation(eqs) for _ in range(2))
                 was_modified = True
             else:
                 eqs.append(self._combined_equation(eqs))

@@ -36,4 +36,5 @@ def test_generated_non_unique_system_omits_cot():
     entry = task.generate_entry()
 
     assert entry.metadata.case != "unique"
+    assert len(entry.metadata.equations) == task.config.num_vars + 1
     assert "cot" not in entry.metadata
