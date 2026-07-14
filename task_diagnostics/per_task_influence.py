@@ -362,7 +362,9 @@ def save_perex(key, perex):
     PEREX_FILE.write_text(json.dumps(data))
 
 def sat_eval_rows(task):
-    """Held-out cached TaskRows for token accuracy and native score_answer reward."""
+    """First SAT_NEVAL cached TaskRows for token accuracy + native score_answer reward.
+    Held-out from training ONLY when SAT_HOLDOUT=1 (then _train_aux drops these rows); otherwise they
+    are ALSO in the training cycle → the resulting reward/acc is an in-training-fit signal, not held-out."""
     return list(_taskrow_aux.get(task, [])[:SAT_NEVAL])
 
 @torch.no_grad()
@@ -521,6 +523,16 @@ _taskrow_aux = _load_taskrow_aux(TASKROW_CACHE)
 print(f"📦 TaskRow cache: {sum(len(v) for v in _taskrow_aux.values())} rows "
       f"across {len(_taskrow_aux)} tasks from {TASKROW_CACHE}")
 
+# SAT_HOLDOUT: reserve the first SAT_NEVAL rows/task for token_acc + reward eval ONLY, and EXCLUDE them
+# from the training stream, so saturation/reward measure held-out GENERALIZATION rather than in-training
+# learnability/memorization. Default OFF for backward-compat (prior runs trained on those rows). When OFF,
+# the reward/saturation column is an IN-TRAINING fit signal — not held-out. Influence legs (BBH/MMLU/mbpp/
+# FW/dolci) are external and unaffected either way.
+SAT_HOLDOUT = os.environ.get("SAT_HOLDOUT", "0") != "0"
+_train_aux = ({t: rows[SAT_NEVAL:] for t, rows in _taskrow_aux.items()} if SAT_HOLDOUT else _taskrow_aux)
+if SAT_HOLDOUT:
+    print(f"🚧 SAT_HOLDOUT: first {SAT_NEVAL} rows/task held out of training → reward/acc are held-out")
+
 def _cycle_rows(rows):
     import itertools as _it
     for r in _it.cycle(rows):
@@ -528,28 +540,28 @@ def _cycle_rows(rows):
             yield _fmt_qa(r.get("prompt", ""), r["answer"])
 
 def rc_gen_factory(task_name):
-    return lambda: _cycle_rows(_taskrow_aux.get(task_name, []))
+    return lambda: _cycle_rows(_train_aux.get(task_name, []))
 
 def all_aux_gen():
     """Every aux example (all tasks), natural rate — the 'full mixture' component."""
-    yield from _cycle_rows([r for rs in _taskrow_aux.values() for r in rs])
+    yield from _cycle_rows([r for rs in _train_aux.values() for r in rs])
 
 def all_aux_gen_mode(mode):
     """All-tasks aux stream restricted to one answer mode (for MODE_MIX full-mixture blends)."""
     def g():
-        yield from _cycle_rows([r for rs in _taskrow_aux.values() for r in rs
+        yield from _cycle_rows([r for rs in _train_aux.values() for r in rs
                                 if (r.get("mode") or "") == mode])
     return g
 
 def peer_aux_gen():
     """PEER_MIX background: only the fixed N_PEERS sampled tasks."""
     peers = list(PEER_TASKS)
-    yield from _cycle_rows([r for t in peers for r in _taskrow_aux.get(t, [])])
+    yield from _cycle_rows([r for t in peers for r in _train_aux.get(t, [])])
 
 def group_aux_gen():
     """GROUP mode: pool the CHOSEN GROUP_TASKS into ONE aux arm (round-robin, equal share each)."""
     grp = list(GROUP_TASKS)
-    yield from _cycle_rows([r for t in grp for r in _taskrow_aux.get(t, [])])
+    yield from _cycle_rows([r for t in grp for r in _train_aux.get(t, [])])
 
 def baseline_ds():
     if PEER_MIX:     # realistic K-peer background: main + peers at MIX (peer set fixed)
