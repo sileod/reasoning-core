@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+"""collection_influence.py — one influence number per task COLLECTION (rc / rgym / pw / synlogic).
+
+WHY a collection-level score (not the mean of per-task deltas):
+    Collections differ in task count and composition (rc=50, rgym~94, synlogic=18, pw=10), so a
+    mean-of-per-task-deltas is confounded — it answers "average task", not "this collection". Training
+    on the WHOLE collection pooled at a fixed aux budget (MIX_AUX) is exactly how the data is deployed,
+    and yields one apples-to-apples ΔNLL per eval leg that IS comparable across collections. This is the
+    figure for the paper's collection table.
+
+HOW (reuse, no new training code): a thin driver over per_task_influence.py's built-in COLLECTION mode
+    (`COLLECTION=<name>` env → one pooled aux arm `__COLLECTION__` vs the main-only baseline, same paired
+    seed, same legs). Each collection is just `AUX_DATASET=rc` + its TaskRow cache. Output lands as
+    per_task_results/influence<...>_COLL-<name>_S<seed>_T<steps>_M<mix>_<main>_<init>.json.
+
+USAGE
+    # run (serial; point each collection at its cache):
+    python -m task_diagnostics.collection_influence run \\
+        --model allenai/OLMo-1B-0724-hf --run-tag OLMO1B \\
+        --collections rc=FULLROSTER_1783960035,rgym=41944106a49b,synlogic=1b7baa44062a,pw=b8058f4c1f3f \\
+        --env LR=2e-5 BATCH=1 GRAD_ACCUM=8 GRAD_CKPT=1 OPTIM=adamw_torch
+    # summarize (scan results, emit the table):
+    python -m task_diagnostics.collection_influence summarize --run-tag OLMO1B
+"""
+import argparse, json, os, subprocess, sys
+from pathlib import Path
+from statistics import mean
+
+REPO = Path(__file__).resolve().parent.parent
+RESULTS = Path(os.environ.get("OUT_DIR") or REPO / "per_task_results")
+ENGINE = str(REPO / "task_diagnostics" / "per_task_influence.py")
+CACHE_ROOT = REPO / "task_diagnostics" / "cache" / "task_rows"
+
+# The 6-leg global score (mean % NLL reduction). mmlu legs use the cloze form (matches the frozen roster).
+LEGS = ["bbh", "mmlu_math_cloze", "mmlu_logic_cloze", "mbpp", "fw", "dolci"]
+
+
+def _resolve_cache(spec: str) -> str:
+    """Accept a cache_id (looked up under cache/task_rows/) or an absolute/relative path."""
+    p = Path(spec)
+    return str(p) if p.exists() else str(CACHE_ROOT / spec)
+
+
+def collection_score(path, legs=LEGS):
+    """Per-leg %NLL-reduction + global mean for one COLLECTION run json (the single pooled arm)."""
+    d = json.loads(Path(path).read_text())
+    base, tasks = d["baseline"], d["tasks"]
+    arm = tasks.get("__COLLECTION__") or next(iter(tasks.values()))  # the pooled arm
+    per = {}
+    for l in legs:
+        dk, bk = l + "_delta", l + "_nll"
+        if arm.get(dk) is not None and base.get(bk):
+            per[l] = -arm[dk] / base[bk] * 100.0
+    per["global"] = mean(per.values()) if per else float("nan")
+    per["reward_final"] = arm.get("reward_final")
+    return per
+
+
+def out_file(name, run_tag, seed, steps, mix, main, init):
+    rt = ("_" + run_tag.lstrip("_")) if run_tag else ""
+    return RESULTS / f"influence_COLL-{name}{rt}_S{seed}_T{steps}_M{int(mix*100)}_{main}_{init}.json"
+
+
+def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env):
+    env = dict(os.environ)
+    env.update({
+        "AUX_DATASET": "rc", "TASKROW_CACHE": _resolve_cache(cache), "COLLECTION": name,
+        "MODEL": model, "RUN_TAG": run_tag, "MAIN_DATA": main, "SEED": str(seed),
+        "TRAIN_STEPS": str(steps), "MIX_AUX": str(mix),
+        "MAIN_LOCAL": env.get("MAIN_LOCAL", "data_cache"), "COMPLETION_ONLY": "1",
+        # cloze + letter mmlu, mbpp — same legs as the frozen roster / HH matrix
+        "EVAL_MBPP": "1", "EVAL_MMLU_MATH": "1", "EVAL_MMLU_LOGIC": "1",
+        "EVAL_MMLU_MATH_CLOZE": "1", "EVAL_MMLU_LOGIC_CLOZE": "1",
+        "LOG_SAT": "0", "LOG_REWARD": "1", "REWARD_MODE": "instruct",
+    })
+    for kv in extra_env:
+        k, _, v = kv.partition("="); env[k] = v
+    print(f"[coll] {name:<10s} cache={cache} model={model} tag={run_tag}", flush=True)
+    subprocess.run([sys.executable, ENGINE], cwd=str(REPO), env=env, check=True)
+
+
+def cmd_run(a):
+    cols = [c for c in a.collections.split(",") if c]
+    for c in cols:
+        name, _, cache = c.partition("=")
+        run_one(name, cache, a.model, a.run_tag, a.main, a.seed, a.steps, a.mix, a.env)
+    cmd_summarize(a)
+
+
+def cmd_summarize(a):
+    rt = ("_" + a.run_tag.lstrip("_")) if a.run_tag else ""
+    pat = f"influence_COLL-*{rt}_S{a.seed}_T{a.steps}_M{int(a.mix*100)}_{a.main}_*.json"
+    rows = []
+    for f in sorted(RESULTS.glob(pat)):
+        name = f.name.split("COLL-")[1].split(rt + "_S")[0] if rt else f.name.split("COLL-")[1].split("_S")[0]
+        rows.append((name, collection_score(f)))
+    if not rows:
+        print(f"no COLLECTION results match {pat} in {RESULTS}"); return
+    rows.sort(key=lambda r: -r[1]["global"])
+    hdr = ["collection", "global"] + LEGS + ["reward"]
+    print("| " + " | ".join(hdr) + " |")
+    print("|" + "|".join(["---"] * len(hdr)) + "|")
+    for name, s in rows:
+        cells = [name, f"{s['global']:+.2f}"] + [f"{s[l]:+.2f}" if l in s else "—" for l in LEGS] + \
+                [f"{s['reward_final']:.2f}" if s.get('reward_final') is not None else "—"]
+        print("| " + " | ".join(cells) + " |")
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("cmd", choices=["run", "summarize"])
+    ap.add_argument("--collections", default="", help="name=cache_id,name=cache_id,… (run only)")
+    ap.add_argument("--model", default="HuggingFaceTB/SmolLM2-135M")
+    ap.add_argument("--run-tag", dest="run_tag", default="")
+    ap.add_argument("--main", default="fwdolci")
+    ap.add_argument("--seed", type=int, default=43)
+    ap.add_argument("--steps", type=int, default=300)
+    ap.add_argument("--mix", type=float, default=0.2)
+    ap.add_argument("--env", nargs="*", default=[], help="extra K=V passed to the engine (LR, BATCH, …)")
+    a = ap.parse_args()
+    (cmd_run if a.cmd == "run" else cmd_summarize)(a)
+
+
+if __name__ == "__main__":
+    main()

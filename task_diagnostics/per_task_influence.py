@@ -136,6 +136,13 @@ if MODE_MIX: ALL_TASKS = ["__ALLMIX__"]     # single full-mixture arm under the 
 # per-task deltas. e.g. GROUP_TASKS=logic_nli,multistep_nli  → one arm, comparable to each alone.
 GROUP_TASKS = [t.strip() for t in os.environ.get("GROUP_TASKS", "").split(",") if t.strip()]
 if GROUP_TASKS: ALL_TASKS = ["__GROUP__"]
+# COLLECTION mode: score a whole NAMED collection (rc / rgym / pw / synlogic) as ONE pooled aux arm —
+# the deployment-realistic "train on all of it at MIX_AUX" number. It is comparable ACROSS collections
+# of different task counts (the per-task MEAN is confounded by how many/which tasks a collection has),
+# so it's the right figure for the paper's collection table. Reuses all_aux_gen (every task in the
+# TASKROW_CACHE) as the single X arm vs the main-only baseline. COLLECTION=<name> is just the label.
+COLLECTION = os.environ.get("COLLECTION", "").strip()
+if COLLECTION: ALL_TASKS = ["__COLLECTION__"]
 # PEER_MIX background: fixed seeded sample of N_PEERS tasks (independent of target).
 import random as _random
 _FULL_TASKS  = (_load_tasklist(AUX_DATASET)
@@ -159,11 +166,12 @@ _co_tag     = "" if COMPLETION_ONLY else "_FULLLM"   # answer-only = canonical c
 _mode_tag   = f"_MODE-{MODE_FILTER}" if MODE_FILTER else ""
 _level_tag  = f"_L{LEVEL_MAX}" if LEVEL_MAX else ""                       # easier-calibration runs → distinct file
 _grp_tag    = ("_GRP-" + "+".join(GROUP_TASKS)) if GROUP_TASKS else ""   # distinct file per group
+_coll_tag   = ("_COLL-" + COLLECTION) if COLLECTION else ""              # clean name (not 50 task names)
 # RUN_TAG: optional free-form suffix to write to distinct files without overwriting canonical
 # results (e.g. re-measuring tasks after the rc dataset was updated on HF). Default OFF.
 _run_tag    = os.environ.get("RUN_TAG", "")
 if _run_tag and not _run_tag.startswith("_"): _run_tag = "_" + _run_tag
-_tag        = f"{_ovs_tag}{_peer_tag}{_co_tag}{_mode_tag}{_level_tag}{_grp_tag}{_run_tag}"
+_tag        = f"{_ovs_tag}{_peer_tag}{_co_tag}{_mode_tag}{_level_tag}{_grp_tag}{_coll_tag}{_run_tag}"
 OUT_FILE    = OUT_DIR / f"influence{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
 LOG_PER_EX  = os.environ.get("LOG_PER_EX", "0") != "0"
 PEREX_FILE  = OUT_DIR / f"perex{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
@@ -497,7 +505,8 @@ def _load_taskrow_aux(path):
     except Exception:
         from cache import load_task_rows
     wanted = {t for t in (ALL_TASKS + PEER_TASKS + GROUP_TASKS)
-              if t not in ("__ALLMIX__", "__GROUP__")}
+              if t not in ("__ALLMIX__", "__GROUP__", "__COLLECTION__")}
+    # COLLECTION pools every task in the cache → load them all (wanted empties to None below).
     by_task = {}
     for row in load_task_rows(path=path, tasks=sorted(wanted) or None):
         d = row.to_dict()
@@ -560,6 +569,13 @@ def baseline_ds():
     return IterableDataset.from_generator(main_gen)
 
 def mixed_ds(task_name):
+    if task_name == "__COLLECTION__":   # whole collection pooled as ONE aux arm vs main-only baseline
+        return interleave_datasets(
+            [IterableDataset.from_generator(main_gen),
+             IterableDataset.from_generator(all_aux_gen)],
+            probabilities=[1.0 - MIX_AUX, MIX_AUX],
+            seed=SEED, stopping_strategy="first_exhausted",
+        )
     if task_name == "__ALLMIX__":   # full-mixture answer-format ablation: main + blended all-aux
         parts = [IterableDataset.from_generator(main_gen)]
         probs = [1.0 - MIX_AUX]
@@ -676,7 +692,7 @@ else:
 for i, task in enumerate(ALL_TASKS):
     if task in results["tasks"]:
         print(f"[{i+1}/{len(ALL_TASKS)}] {task} — already done"); continue
-    if _taskrow_aux is not None and task not in ("__ALLMIX__", "__GROUP__") and not _taskrow_aux.get(task):
+    if _taskrow_aux is not None and task not in ("__ALLMIX__", "__GROUP__", "__COLLECTION__") and not _taskrow_aux.get(task):
         print(f"[{i+1}/{len(ALL_TASKS)}] {task} — SKIP (no TaskRow cache rows)")
         continue
     t0 = time.time(); reset_model()
