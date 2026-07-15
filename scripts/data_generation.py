@@ -11,7 +11,7 @@ from reasoning_core.tasks.code_execution import (
     CodeRunnability,
     CodeExecution,
     CodeInputDeduction,
-    Consolidation,
+    CodeConsolidation as Consolidation,
     ConsolidationConfig,
 )
 
