@@ -1,253 +1,503 @@
 import random
 from dataclasses import dataclass
-from reasoning_core.template import Task, Problem, Config, edict
 
-ROLES = ['doctor', 'lawyer', 'teacher', 'engineer', 'pilot', 'chef',
-         'writer', 'nurse', 'banker', 'farmer', 'scientist', 'baker']
-ATTR_GROUPS = [['tall', 'short'], ['young', 'old'],
-               ['quiet', 'loud'], ['kind', 'stern']]
-VERBS = ['met', 'called', 'praised', 'avoided', 'questioned', 'greeted',
-         'thanked', 'watched', 'helped']
-NAMES_M = ['John', 'Paul', 'Mark', 'Leo', 'Tom', 'Sam', 'Max', 'Ben',
-           'Adam', 'Noah', 'Luke', 'Eric', 'Jack', 'Hugo', 'Alan', 'Owen']
-NAMES_F = ['Mary', 'Anna', 'Jane', 'Eve', 'Sara', 'Lucy', 'Zoe', 'Rita',
-           'Emma', 'Nora', 'Lily', 'Mia', 'Rose', 'Iris', 'Lena', 'Kate']
-PRON = {'m': ('He', 'him'), 'f': ('She', 'her')}
-INTRO, NAME, DESC, PRONOUN = 'intro', 'name', 'desc', 'pron'
+import z3
+
+from reasoning_core.template import Config, Entry, Task, edict
+
+
+ROLES = ('doctor', 'lawyer', 'teacher', 'engineer', 'pilot', 'chef',
+         'writer', 'nurse', 'banker', 'farmer', 'scientist', 'baker')
+ATTRS = (('tall', 'short'), ('young', 'old'), ('quiet', 'loud'),
+         ('kind', 'stern'))
+VERBS = ('met', 'called', 'praised', 'questioned', 'greeted', 'thanked')
+NAMES = ('John', 'Paul', 'Mark', 'Leo', 'Tom', 'Sam', 'Max', 'Ben',
+         'Adam', 'Noah', 'Luke', 'Eric', 'Jack', 'Hugo', 'Alan', 'Owen',
+         'Mary', 'Anna', 'Jane', 'Eve', 'Sara', 'Lucy', 'Zoe', 'Rita',
+         'Emma', 'Nora', 'Lily', 'Mia', 'Rose', 'Iris', 'Lena', 'Kate')
+Z3_TIMEOUT_MS = 1000
 
 
 @dataclass(frozen=True)
-class _Entity:
-    eid: int; name: str; gender: str; role: str; attrs: tuple
+class Entity:
+    eid: int
+    name: str
+    role: str
+    attrs: tuple
 
 
-def _pool(n):
-    n = min(n, len(NAMES_M) + len(NAMES_F))
-    lo, hi = max(1, n - len(NAMES_F)), min(n - 1, len(NAMES_M))
-    n_m = random.randint(lo, hi) if lo <= hi else lo
-    names = random.sample(NAMES_M, n_m) + random.sample(NAMES_F, n - n_m)
-    genders = ['m'] * n_m + ['f'] * (n - n_m)
-    pairs = list(zip(names, genders)); random.shuffle(pairs)
-    return [_Entity(i, pairs[i][0], pairs[i][1], random.choice(ROLES),
-                    tuple(sorted(random.choice(g)
-                                 for g in random.sample(ATTR_GROUPS, 2))))
-            for i in range(n)]
+@dataclass(frozen=True)
+class Factor:
+    kind: str
+    scope: tuple
+    data: tuple = ()
+    sentence: int = 0
 
 
-def _indef(e):
-    desc = f"{' '.join(e.attrs)} {e.role}"
-    det = "an" if desc[0].lower() in 'aeiou' else "a"
-    return f"{det} {desc} named {e.name}"
+@dataclass(frozen=True)
+class Group:
+    variables: tuple
+    latent: tuple
+    sentence: int
 
 
-def _desc(e, pool):
-    """Minimal definite NP uniquely picking e out of pool, else None."""
-    same = [x for x in pool if x.role == e.role]
-    if len(same) == 1:
-        return f"the {e.role}"
-    for a in e.attrs:
-        if sum(a in x.attrs for x in same) == 1:
-            return f"the {a} {e.role}"
-    if sum(set(e.attrs) <= set(x.attrs) for x in same) == 1:
-        return f"the {' '.join(e.attrs)} {e.role}"
-    return None
+def _solver():
+    solver = z3.Solver()
+    solver.set(timeout=Z3_TIMEOUT_MS)
+    return solver
 
 
-def _pron_ok(e, prev_ents, cur_subj, pos):
-    if pos == 'object' and e == cur_subj:       # Principle B
-        return False
-    if e not in prev_ents:                      # must be in previous sentence
-        return False
-    ctx = prev_ents | ({cur_subj} if cur_subj else set())
-    return not any(x.gender == e.gender and x != e for x in ctx)
+def _full_description(entity):
+    return 'the ' + ' '.join((*entity.attrs, entity.role))
 
 
-def _plan(pool, chain_len, n_distractors):
-    """Locally coherent discourse without a globally privileged target."""
-    n = chain_len + n_distractors
-    cur = tuple(random.sample(pool, 2))
-    out = [cur]
+def _introduction(entity):
+    words = ' '.join((*entity.attrs, entity.role))
+    article = 'an' if words[0].lower() in 'aeiou' else 'a'
+    return f"{article} {words} named {entity.name}"
 
-    for i in range(1, n):
-        if i < chain_len or random.random() < 0.45:
-            keep = random.choice(cur)
-            other = random.choice([e for e in pool if e != keep])
-            cur = (keep, other) if random.random() < 0.5 else (other, keep)
+
+def _join(items):
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} and {items[1]}"
+    return ', '.join(items[:-1]) + f", and {items[-1]}"
+
+
+def _random_permutation(width):
+    identity = tuple(range(width))
+    for _ in range(100):
+        permutation = tuple(random.sample(range(width), width))
+        if permutation != identity:
+            return permutation
+    raise RuntimeError("Could not sample a non-identity permutation")
+
+
+def compile_z3(domains, factors):
+    variables = {idx: z3.Int(f"m{idx}") for idx in domains}
+    constraints = [
+        z3.Or(*[variables[idx] == value for value in sorted(domain)])
+        for idx, domain in domains.items()
+    ]
+    for factor in factors:
+        xs = [variables[idx] for idx in factor.scope]
+        if factor.kind == 'equal':
+            constraints.append(xs[0] == xs[1])
+        elif factor.kind == 'different':
+            constraints.append(xs[0] != xs[1])
+        elif factor.kind == 'permutation':
+            width = len(xs) // 2
+            new, old = xs[:width], xs[width:]
+            constraints.extend(new[i] == old[source]
+                               for i, source in enumerate(factor.data))
+        elif factor.kind == 'all_different':
+            constraints.append(z3.Distinct(*xs))
         else:
-            cur = tuple(random.sample(pool, 2))
-        out.append(cur)
-
-    return out
+            raise ValueError(factor.kind)
+    return variables, constraints
 
 
-def _query_candidates(mentions, pool, target_hops=2):
-    counts = {}
-    for m in mentions:
-        counts[m['entity']] = counts.get(m['entity'], 0) + 1
+def entailment_status(query_idx, gold, domains, factors):
+    variables, constraints = compile_z3(domains, factors)
+    solver = _solver()
+    solver.add(*constraints)
+    result = solver.check()
+    if result == z3.unknown:
+        return None
+    if result != z3.sat:
+        return False
+    solver.add(variables[query_idx] != gold)
+    result = solver.check()
+    if result == z3.unknown:
+        return None
+    return result == z3.unsat
 
-    top = max(counts.values())
-    unique_top = list(counts.values()).count(top) == 1
-    cands = []
 
-    for m in mentions:
-        if m['mode'] not in (PRONOUN, DESC):
-            continue
-        if unique_top and counts[m['entity']] == top:
-            continue
+def entailed_value(query_idx, domains, factors):
+    possible = set()
+    variables, constraints = compile_z3(domains, factors)
+    for value in domains[query_idx]:
+        solver = _solver()
+        solver.add(*constraints, variables[query_idx] == value)
+        result = solver.check()
+        if result == z3.unknown:
+            return None
+        if result == z3.sat:
+            possible.add(value)
+    return next(iter(possible)) if len(possible) == 1 else None
 
-        if m['mode'] == DESC:
-            surf = m['surface'][4:] if m['surface'].startswith('the ') else m['surface']
-            role = surf.split()[-1]
-            if sum(x.role == role for x in pool) == 1:
+
+def _all_different_supported(scope, domains, fixed_idx, fixed_value):
+    match = {}
+
+    def augment(idx, seen):
+        values = ({fixed_value} if idx == fixed_idx else domains[idx])
+        for value in values:
+            if value in seen:
                 continue
+            seen.add(value)
+            if value not in match or augment(match[value], seen):
+                match[value] = idx
+                return True
+        return False
 
-        cands.append(m)
-
-    if not cands:
-        return []
-
-    def get_hops(m):
-        if m['mode'] in (INTRO, NAME):
-            return 0
-        prev = [p for p in mentions
-                if p['sent'] < m['sent'] and p['entity'] == m['entity']]
-        if not prev:
-            return 0
-        return 1 + get_hops(max(prev, key=lambda x: x['sent']))
-
-    cands.sort(key=lambda m: abs(get_hops(m) - target_hops))
-    best_dist = abs(get_hops(cands[0]) - target_hops)
-    return [c for c in cands if abs(get_hops(c) - target_hops) == best_dist]
+    ordered = sorted(scope, key=lambda idx: len(domains[idx]))
+    return all(augment(idx, set()) for idx in ordered)
 
 
-def _pick(e, pool, introduced, prev_ents, cur_subj, pos, p_pron, p_desc):
-    if e not in introduced:
-        return _indef(e), INTRO
-    prefs = []
-    if random.random() < p_pron: prefs.append(PRONOUN)
-    if random.random() < p_desc: prefs.append(DESC)
-    prefs.append(NAME)
-    for m in prefs:
-        if m == PRONOUN and _pron_ok(e, prev_ents, cur_subj, pos):
-            return PRON[e.gender][0 if pos == 'subject' else 1], PRONOUN
-        if m == DESC:
-            d = _desc(e, pool)
-            if d: return d, DESC
-        if m == NAME:
-            return e.name, NAME
-    return e.name, NAME
+def revise_factor(factor, domains):
+    revised = {idx: set(domains[idx]) for idx in factor.scope}
+    if factor.kind in ('equal', 'different'):
+        left, right = factor.scope
+        if factor.kind == 'equal':
+            shared = domains[left] & domains[right]
+            return {left: shared, right: shared}
+        revised[left] = {x for x in domains[left]
+                         if any(x != y for y in domains[right])}
+        revised[right] = {y for y in domains[right]
+                          if any(x != y for x in domains[left])}
+        return revised
+    if factor.kind == 'permutation':
+        width = len(factor.scope) // 2
+        new, old = factor.scope[:width], factor.scope[width:]
+        for i, source in enumerate(factor.data):
+            shared = domains[new[i]] & domains[old[source]]
+            revised[new[i]] &= shared
+            revised[old[source]] &= shared
+        return revised
+    if factor.kind == 'all_different':
+        for idx in factor.scope:
+            revised[idx] = {
+                value for value in domains[idx]
+                if _all_different_supported(factor.scope, domains, idx, value)
+            }
+        return revised
+    raise ValueError(factor.kind)
 
 
-def _emit(plan, pool, p_pron, p_desc):
-    introduced, lines, mentions = set(), [], []
-    for i, (s_e, o_e) in enumerate(plan):
-        prev = {m['entity'] for m in mentions if m['sent'] == i - 1}
-        v = random.choice(VERBS)
-        s_ref, s_mode = _pick(s_e, pool, introduced, prev, None,
-                              'subject', p_pron, p_desc)
-        introduced.add(s_e)
-        o_ref, o_mode = _pick(o_e, pool, introduced, prev, s_e,
-                              'object', p_pron, p_desc)
-        introduced.add(o_e)
-        cap = lambda s: s[:1].upper() + s[1:]
-        lines.append(f"({i+1}) {cap(s_ref)} {v} {o_ref}.")
-        mentions.extend([
-            {'sent': i, 'pos': 'subject', 'surface': s_ref, 'mode': s_mode, 'entity': s_e},
-            {'sent': i, 'pos': 'object',  'surface': o_ref, 'mode': o_mode, 'entity': o_e},
-        ])
-    return lines, mentions
+def propagation_round(domains, factors):
+    proposals = {idx: set(values) for idx, values in domains.items()}
+    for factor in factors:
+        for idx, values in revise_factor(factor, domains).items():
+            proposals[idx] &= values
+    return proposals
+
+
+def propagation_trace(query_idx, domains, factors, max_rounds=100):
+    current = {idx: set(values) for idx, values in domains.items()}
+    trace = [current]
+    for _ in range(max_rounds):
+        if len(current[query_idx]) == 1:
+            return trace
+        updated = propagation_round(current, factors)
+        if any(not values for values in updated.values()):
+            return None
+        if updated == current:
+            return trace
+        current = updated
+        trace.append(current)
+    raise RuntimeError("Local propagation did not converge")
+
+
+def propagation_depth(query_idx, domains, factors):
+    trace = propagation_trace(query_idx, domains, factors)
+    if trace is None or len(trace[-1][query_idx]) != 1:
+        return None
+    return len(trace) - 1
+
+
+def necessary_factor_indices(query_idx, gold, domains, factors, indices):
+    necessary = []
+    for index in indices:
+        reduced = factors[:index] + factors[index + 1:]
+        status = entailment_status(query_idx, gold, domains, reduced)
+        if status is None:
+            return None
+        if not status:
+            necessary.append(index)
+    return necessary
 
 
 @dataclass
 class CoreferenceConfig(Config):
-    n_entities: int = 6
-    chain_len: int = 3
-    n_distractors: int = 4
-    p_pronoun: float = 0.7
-    p_desc: float = 0.5
-    p_shortcut: float = 0.05   # prob. of using a shorter chain for diversity
-    target_hops: int = 2
+    family: str = 'mixed'
+    n_entities: int = 4
+    target_depth: int = 3
+    n_distractor_sentences: int = 2
+    max_attempts: int = 200
 
     def apply_difficulty(self, level):
+        self.target_depth += level
+
+    def apply_width_difficulty(self, level):
         self.n_entities += level
-        self.chain_len += level
-        self.n_distractors += level
-        self.target_hops += level
+
+    def apply_noise_difficulty(self, level):
+        self.n_distractor_sentences += level
 
 
 class Coreference(Task):
-    summary = "Resolve multi-hop entity coreference chains and pronouns in natural text."
-    def __init__(self, config=CoreferenceConfig()):
-        super().__init__(config=config)
+    """Track references through variable-width permutations and constraints."""
 
-    def generate(self):
-        cfg = self.config
-        if cfg.n_entities < 2:
-            raise ValueError("Coreference requires at least 2 entities")
-        for _ in range(100):
-            clen = cfg.chain_len
-            if clen > 2 and random.random() < cfg.p_shortcut:
-                clen = random.randint(2, clen - 1)
-            pool = _pool(cfg.n_entities)
-            plan = _plan(pool, clen, cfg.n_distractors)
-            lines, mentions = _emit(plan, pool, cfg.p_pronoun, cfg.p_desc)
+    summary = "Resolve references through ordered groups, later evidence, and branches."
+    config_cls = CoreferenceConfig
 
-            cands = _query_candidates(mentions, pool, target_hops=cfg.target_hops)
-            if not cands:
-                continue
-            prons = [m for m in cands if m['mode'] == PRONOUN]
-            if prons and random.random() < 0.7:
-                return self._build(random.choice(prons), lines, mentions, pool)
-            return self._build(random.choice(cands), lines, mentions, pool)
-        raise RuntimeError("Could not generate a valid coreference problem")
+    def _entities(self):
+        width = self.config.n_entities
+        if not 3 <= width <= 8:
+            raise ValueError("n_entities must be between 3 and 8")
+        names = random.sample(NAMES, width + 2)
+        role = random.choice(ROLES)
+        active = [
+            Entity(i, names[i], role,
+                   tuple(group[(i >> bit) & 1]
+                         for bit, group in enumerate(ATTRS)))
+            for i in range(width)
+        ]
+        distractors = [
+            Entity(width + i, names[width + i], random.choice(
+                [candidate for candidate in ROLES if candidate != role]),
+                   ('quiet', 'young'))
+            for i in range(2)
+        ]
+        return active, distractors
 
-    def _build(self, q, lines, mentions, pool):
-        target = q['entity']
-        sid = q['sent'] + 1
-        if q['mode'] == PRONOUN:
-            prev_names = sorted(m['entity'].name for m in mentions
-                                if m['sent'] == q['sent'] - 1)
-            g = 'female' if target.gender == 'f' else 'male'
-            if q['pos'] == 'object':
-                subj = next(m['entity'].name for m in mentions
-                            if m['sent'] == q['sent']
-                            and m['pos'] == 'subject')
-                cot = (f"s{sid} pron '{q['surface']}' | "
-                       f"s{sid-1}: {{{', '.join(prev_names)}}}; "
-                       f"subject={subj} | "
-                       f"unique non-subject {g} → {target.name}")
-            else:
-                cot = (f"s{sid} pron '{q['surface']}' | "
-                       f"s{sid-1}: {{{', '.join(prev_names)}}} | "
-                       f"unique {g} → {target.name}")
+    def _sample_family(self):
+        family = self.config.family
+        allowed = ('permutation_forward', 'permutation_backward',
+                   'branching_elimination')
+        if family == 'mixed':
+            choices = allowed if self.config.target_depth >= 2 else allowed[:2]
+            return random.choice(choices)
+        if family not in allowed:
+            raise ValueError(f"family must be mixed or one of {allowed}")
+        if family == 'branching_elimination' and self.config.target_depth < 2:
+            raise ValueError("branching_elimination requires target_depth >= 2")
+        return family
+
+    def _generate_candidate(self):
+        active, distractors = self._entities()
+        width = len(active)
+        active_ids = {entity.eid for entity in active}
+        by_eid = {entity.eid: entity for entity in (*active, *distractors)}
+        family = self._sample_family()
+        lines, mentions, domains, factors, permutations = [], [], {}, [], []
+        next_variable = 0
+
+        def add_line(text):
+            sentence = len(lines)
+            lines.append(f"({sentence + 1}) {text}")
+            return sentence
+
+        def add_group(text, latent, allowed):
+            nonlocal next_variable
+            sentence = add_line(text)
+            variables = tuple(range(next_variable, next_variable + width))
+            next_variable += width
+            for position, (idx, entity_id, domain) in enumerate(
+                    zip(variables, latent, allowed)):
+                domains[idx] = set(domain)
+                mentions.append({
+                    'idx': idx, 'sentence': sentence, 'position': position,
+                    'surface': f"position {position + 1}",
+                    'entity': by_eid[entity_id],
+                })
+            return Group(variables, tuple(latent), sentence)
+
+        def add_transition(parent):
+            permutation = _random_permutation(width)
+            numbers = ', '.join(str(index + 1) for index in permutation)
+            latent = tuple(parent.latent[index] for index in permutation)
+            child = add_group(
+                f"The lineup from sentence {parent.sentence + 1} was reordered "
+                f"using positions {numbers}, in that order.",
+                latent, [active_ids] * width)
+            factors.append(Factor(
+                'permutation', child.variables + parent.variables,
+                permutation, child.sentence))
+            permutations.append({
+                'sentence': child.sentence, 'source_sentence': parent.sentence,
+                'mapping': tuple(index + 1 for index in permutation),
+            })
+            return child, len(factors) - 1
+
+        introductions = _join([_introduction(entity) for entity in active])
+        support = []
+
+        if family in ('permutation_forward', 'branching_elimination'):
+            root = add_group(
+                f"{introductions} formed a lineup in that order.",
+                [entity.eid for entity in active],
+                [{entity.eid} for entity in active])
+
+        if family == 'permutation_forward':
+            current = root
+            for _ in range(self.config.target_depth):
+                current, factor_index = add_transition(current)
+                support.append(factor_index)
+            query_position = random.randrange(width)
+            query_group = current
+
+        elif family == 'permutation_backward':
+            add_line(f"{introductions} joined the exercise.")
+            role = active[0].role
+            root = add_group(
+                f"{_join([f'the {role}'] * width).capitalize()} formed a lineup "
+                "in that order.",
+                random.sample([entity.eid for entity in active], width),
+                [active_ids] * width)
+            query_position = random.randrange(width)
+            query_group = root
+            current = root
+            for _ in range(self.config.target_depth - 1):
+                current, factor_index = add_transition(current)
+                support.append(factor_index)
+            names = ', '.join(by_eid[eid].name for eid in current.latent)
+            anchor = add_group(
+                f"The lineup in sentence {current.sentence + 1} was {names}, "
+                "in that order.", current.latent,
+                [{eid} for eid in current.latent])
+            identity = tuple(range(width))
+            factors.append(Factor(
+                'permutation', anchor.variables + current.variables,
+                identity, anchor.sentence))
+            support.append(len(factors) - 1)
+            permutations.append({
+                'sentence': anchor.sentence,
+                'source_sentence': current.sentence,
+                'mapping': tuple(index + 1 for index in identity),
+            })
+
         else:
-            surf = q['surface'][4:] if q['surface'].startswith('the ') else q['surface']
-            parts = surf.split()
-            role, attrs = parts[-1], parts[:-1]
-            matches = sorted(x.name for x in pool
-                             if x.role == role
-                             and all(a in x.attrs for a in attrs))
-            filt = f"role={role}" + (f", attrs={list(attrs)}" if attrs else "")
-            cot = (f"s{sid} desc '{q['surface']}' | {filt} | "
-                   f"{{{', '.join(matches)}}} → {target.name}")
-        meta = edict({
-            'sentences':    "\n".join(lines),
-            'q_sentence':   sid,
-            'q_position':   q['pos'],
-            'q_expression': q['surface'],
-            'cot':          cot,
-        })
-        return Problem(metadata=meta, answer=target.name)
+            branch_depth = self.config.target_depth - 2
+            branches, branch_support = [], []
+            for _ in range(2):
+                current, path = root, []
+                for _ in range(branch_depth):
+                    current, factor_index = add_transition(current)
+                    path.append(factor_index)
+                branches.append(current)
+                branch_support.append(path)
 
-    def prompt(self, metadata):
+            query_position = random.randrange(width)
+            merge_latent = tuple(random.sample([entity.eid for entity in active],
+                                               width))
+            clauses, source_specs = [], []
+            specified = [position for position in range(width)
+                         if position != query_position]
+            random.shuffle(specified)
+            for order, output_position in enumerate(specified):
+                branch_index = order % 2 if branch_depth else 0
+                source = branches[branch_index]
+                source_position = source.latent.index(merge_latent[output_position])
+                clauses.append(
+                    f"position {output_position + 1} came from position "
+                    f"{source_position + 1} of sentence {source.sentence + 1}")
+                source_specs.append((output_position, source.variables[source_position],
+                                     branch_index))
+            merge = add_group(
+                "A new lineup was formed: " + '; '.join(clauses) + '.',
+                merge_latent, [active_ids] * width)
+            used_branches = set()
+            for output_position, source_variable, branch_index in source_specs:
+                factors.append(Factor(
+                    'equal', (merge.variables[output_position], source_variable),
+                    sentence=merge.sentence))
+                support.append(len(factors) - 1)
+                used_branches.add(branch_index)
+            factors.append(Factor('all_different', merge.variables,
+                                  sentence=merge.sentence))
+            support.append(len(factors) - 1)
+            for branch_index in used_branches:
+                support.extend(branch_support[branch_index])
+            query_group = merge
+
+        query_idx = query_group.variables[query_position]
+        gold = query_group.latent[query_position]
+        query_sentence = query_group.sentence
+
+        for _ in range(self.config.n_distractor_sentences):
+            first, second = random.sample(distractors, 2)
+            add_line(f"Outside the lineup, {first.name} {random.choice(VERBS)} "
+                     f"{second.name}.")
+
+        variables, constraints = compile_z3(domains, factors)
+        solver = _solver()
+        solver.add(*constraints)
+        if solver.check() != z3.sat:
+            return None
+        if entailed_value(query_idx, domains, factors) != gold:
+            return None
+        trace = propagation_trace(query_idx, domains, factors)
+        depth = propagation_depth(query_idx, domains, factors)
+        if (trace is None or depth != self.config.target_depth or
+                len(trace[-2][query_idx]) <= 1 or
+                len(trace[-1][query_idx]) != 1):
+            return None
+        support = sorted(set(support))
+        necessary = necessary_factor_indices(
+            query_idx, gold, domains, factors, support)
+        if necessary is None or necessary != support:
+            return None
+
+        prefix_entailed = None
+        if family == 'permutation_backward':
+            prefix_factors = [factor for factor in factors
+                              if factor.sentence <= query_sentence]
+            status = entailment_status(query_idx, gold, domains, prefix_factors)
+            if status is None or status:
+                return None
+            prefix_entailed = False
+
+        audit = lambda state: {str(idx): sorted(values)
+                               for idx, values in state.items()}
+        metadata = edict({
+            'sentences': '\n'.join(lines),
+            'family': family,
+            'width': width,
+            'target_depth': self.config.target_depth,
+            'propagation_depth': depth,
+            'query_idx': query_idx,
+            'query_sentence': query_sentence + 1,
+            'query_position': query_position + 1,
+            'answer_eid': gold,
+            'answer_domain_eids': sorted(active_ids),
+            'entities': [*active, *distractors],
+            'mentions': mentions,
+            'factors': factors,
+            'support_factor_indices': support,
+            'necessary_factor_indices': necessary,
+            'permutations': permutations,
+            'initial_domains': audit(domains),
+            'propagation_trace': [audit(state) for state in trace],
+            'prefix_entailed': prefix_entailed,
+            'full_csp_sat': True,
+            'z3_entailed': True,
+            'realized_distractor_count': self.config.n_distractor_sentences,
+        })
+        return Entry(metadata=metadata, answer=by_eid[gold].name)
+
+    def generate_entry(self):
+        for _ in range(self.config.max_attempts):
+            candidate = self._generate_candidate()
+            if candidate is not None:
+                return candidate
+        raise RuntimeError("Could not generate a certified coreference problem")
+
+    def render_prompt(self, metadata):
         return (
+            "Each lineup contains the same introduced people exactly once. "
+            "A reordering lists the source positions from left to right. "
+            "Each description occurrence is independent, and later statements "
+            "may resolve earlier ones.\n\n"
             f"{metadata['sentences']}\n\n"
-            f"In sentence {metadata['q_sentence']}, what does the "
-            f"{metadata['q_position']} expression "
-            f"'{metadata['q_expression']}' refer to?\n"
-            f"The answer is the person's name."
+            f"Who occupied position {metadata['query_position']} in sentence "
+            f"{metadata['query_sentence']}?\n"
+            "The answer is one name."
         )
 
     def score_answer(self, answer, entry):
-        norm = lambda s: (str(s or '').strip().strip('.').strip("'\"").split() or [''])[-1].lower()
-        return float(norm(answer) == norm(entry.answer))
+        words = str(answer or '').strip().strip('.').strip("'\"").split()
+        predicted = (words or [''])[-1].lower()
+        return float(predicted == entry.answer.lower())

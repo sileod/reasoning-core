@@ -24,7 +24,7 @@ from ._tptp_finite_interpretation import (
     validate_formula,
 )
 from ._tptp_sat_graph import generate_derivation_graph
-from reasoning_core.template import Task, DevTask, Problem, Config
+from reasoning_core.template import Task, DevTask, Entry, Config
 from reasoning_core.template import TimeoutException
 from itertools import combinations
 from math import comb
@@ -889,8 +889,8 @@ class TptpEntailment(DevTask):
     A task that generates problems to determine if a set of hypotheses
     proves a given conjecture.
     """
-    def __init__(self, config=EntailConfig()):
-        super().__init__(config)
+    def __init__(self, config=None):
+        super().__init__(config=config or EntailConfig())
         # Initialize prover session at task init (pulls docker image if needed)
         # This ensures docker setup happens before any generation timing
         from reasoning_core.utils.udocker_process import initialize_prover_session
@@ -977,7 +977,7 @@ class TptpEntailment(DevTask):
                 return True
         return False
 
-    def generate(self):
+    def generate_entry(self):
         main_limit = "15"
         ablation_limit = "15"
 
@@ -1069,11 +1069,11 @@ class TptpEntailment(DevTask):
                                 'proof_depth': self.config.proof_depth,
                                 'perturbation': self.config.perturbation,
                                 'axiom_set': self.axiom_set})
-                    return Problem(metadata, str(answer))
+                    return Entry(metadata, str(answer))
             self.interesting_thm = []
         raise RuntimeError("failed to build a compact TPTP entailment task with useful background")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
 
         background_text = "\n".join([f"- {h}" for h in metadata.get('background', [])])
         hypotheses_text = "\n".join([f"- {h}" for h in metadata['hypotheses']])
@@ -1130,8 +1130,8 @@ class ConsistencyRepairConfig(Config):
 
 class TPTPConsistencyRepair(DevTask):
     """Find all singleton deletions that restore satisfiability."""
-    def __init__(self, config=ConsistencyRepairConfig()):
-        super().__init__(config, timeout=720)
+    def __init__(self, config=None):
+        super().__init__(config=config or ConsistencyRepairConfig(), timeout=720)
         self._sat_cache = {}
         self._prove_cache = {}
         self.graph = nx.DiGraph()
@@ -1388,15 +1388,15 @@ class TPTPConsistencyRepair(DevTask):
                     "axiom_set": self.axiom_set,
                     "proof_depth": self.config.proof_depth,
                 })
-                return Problem(metadata, self._format_indices(repairs))
+                return Entry(metadata, self._format_indices(repairs))
             self._initialize_graph()
 
         raise RuntimeError("failed to build a compact real TPTP consistency-repair task")
 
-    def generate(self):
+    def generate_entry(self):
         return self._build_problem()
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         background = "\n".join(f"- {c}" for c in metadata.get("background", []))
         clauses = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(metadata["clauses"]))
 

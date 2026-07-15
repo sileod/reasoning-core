@@ -3,7 +3,7 @@ import sympy as sp
 from dataclasses import dataclass
 from typing import List, Dict, Any, Tuple
 
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Entry, Config
 from reasoning_core.utils import score_scalar
 
 @dataclass
@@ -54,8 +54,8 @@ def _verify_system(equations: List[sp.Eq], variables: List[sp.Symbol]) -> Dict[s
 
 class EquationSystem(Task):
     summary = "Solve systems of linear equations or detect inconsistent/underdetermined systems."
-    def __init__(self, config=EquationSystemCfg()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or EquationSystemCfg())
 
     def _generate_base_system(self) -> Tuple[List[sp.Eq], List[sp.Symbol], Dict[sp.Symbol, int]]:
         """Generates a unique system by construction."""
@@ -84,7 +84,13 @@ class EquationSystem(Task):
         mixed_exprs = [sp.expand(sum(C[i][j] * base_exprs[j] for j in range(n))) for i in range(n)]
         return [sp.Eq(expr, 0) for expr in mixed_exprs], variables, sol_map
 
-    def generate(self) -> Problem:
+    def _combined_equation(self, equations, shift=0):
+        weights = [randint_nonzero(-self.config.coeff_magnitude, self.config.coeff_magnitude) for _ in equations]
+        lhs = sp.expand(sum(w * eq.lhs for w, eq in zip(weights, equations)))
+        rhs = sp.expand(sum(w * eq.rhs for w, eq in zip(weights, equations)) + shift)
+        return sp.Eq(lhs, rhs)
+
+    def generate_entry(self) -> Entry:
         for _ in range(self.config.max_generation_attempts):
             eqs, variables, sol_map = self._generate_base_system()
             if not eqs: continue
@@ -93,12 +99,15 @@ class EquationSystem(Task):
             rand_val = random.random()
             was_modified = False
             if rand_val < self.config.p_inconsistent:
-                i, j = random.sample(range(len(eqs)), 2)
-                eqs[j] = sp.Eq(eqs[i].lhs, eqs[i].rhs + randint_nonzero(-10, 10))
+                eqs.append(self._combined_equation(eqs, shift=randint_nonzero(-10, 10)))
                 was_modified = True
             elif rand_val < self.config.p_inconsistent + self.config.p_underdetermined:
                 eqs.pop(random.randrange(len(eqs)))
+                eqs.extend(self._combined_equation(eqs) for _ in range(2))
                 was_modified = True
+            else:
+                eqs.append(self._combined_equation(eqs))
+            random.shuffle(eqs)
             
             verification = _verify_system(eqs, variables)
             case = verification['kind']
@@ -128,16 +137,17 @@ class EquationSystem(Task):
                 "query_variable": str(query_var),
                 "full_solution_map": {str(k): int(v) for k, v in sol_map.items()} if not was_modified else None,
                 "case": case,
-                "cot": self.get_cot(eqs, variables)
             }
+            if case == "unique" and (cot := self.get_cot(eqs, variables)):
+                metadata["cot"] = cot
             a = str(answer)
             if "." in a:
                 a = a.rstrip("0").rstrip(".")
-            return Problem(metadata=metadata, answer=a)
+            return Entry(metadata=metadata, answer=a)
 
         raise RuntimeError(f"Failed to generate a valid problem. Config: {self.config}")
 
-    def prompt(self, metadata: dict) -> str:
+    def render_prompt(self, metadata: dict) -> str:
         eq_block = "\n".join([f"  {eq_str}" for eq_str in metadata['equations']])
         return (f"Solve the following system of equations for the variable '{metadata['query_variable']}'.\n\n"
                 f"System:\n{eq_block}\n\n"
@@ -197,5 +207,9 @@ class EquationSystem(Task):
                 val = (row[-1] - sum(row[j]*sol.get(variables[j],0) for j in range(p_idx+1, len(variables)))) / row[p_idx]
                 sol[var] = val
                 log.append(f"{var} = {fmt_num(val)}")
-                
+
+            if set(sol) != set(variables):
+                return None
+            if any(sp.simplify(eq.lhs.subs(sol) - eq.rhs.subs(sol)) != 0 for eq in eqs):
+                return None
             return "\n".join(log)

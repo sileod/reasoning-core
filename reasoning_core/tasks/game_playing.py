@@ -12,7 +12,7 @@ from pyggp import game_description_language as gdl
 from pyggp.engine_primitives import Turn
 from pyggp.interpreters import ClingoInterpreter, Interpreter
 
-from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
 @dataclass
@@ -145,14 +145,13 @@ class _SmallGraphGame:
         for i, outs in sorted(edges.items()):
             if outs:
                 edge_parts.append(f"{_name(i)}->{','.join(_name(j) for j in sorted(outs))}")
-        terminal_parts = []
-        for i, outs in sorted(edges.items()):
-            if not outs:
-                terminal_parts.append(f"{_name(i)}:{payoffs[i]}")
+        payoff_parts = [f"{_name(i)}:{payoffs[i]}" for i in sorted(edges)]
         return (
             f"Start: {_name(start)}. Turns alternate player, opponent. "
             f"Move along one edge per turn, for at most {self.config.horizon} moves. "
-            f"Terminal player scores: {'; '.join(terminal_parts)}. "
+            "Play ends upon reaching a leaf or the move horizon; in either case, "
+            "player's score is the current node's payoff. "
+            f"Node payoffs: {'; '.join(payoff_parts)}. "
             f"Edges: {'; '.join(edge_parts)}."
         )
 
@@ -225,19 +224,19 @@ class _SmallGraphGame:
 
 class GameBestMove(_SmallGraphGame, Task):
     summary = "Determine the minimax-optimal move for a player in a finite graph-based game."
-    def __init__(self, config=GameBestMoveConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GameBestMoveConfig())
 
-    def generate(self):
+    def generate_entry(self):
         for position in self._sample_position():
             if len(set(position.move_scores.values())) < 2:
                 continue
             if list(position.move_scores.values()).count(position.score) > 1:
                 continue
-            return Problem(metadata=self._metadata(position), answer=position.answer)
+            return Entry(metadata=self._metadata(position), answer=position.answer)
         raise RuntimeError("Could not sample a non-degenerate game position")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "In this graph game, choose player's best move. "
             "Player chooses on player turns; opponent chooses on opponent turns. "
@@ -253,33 +252,34 @@ class GameBestMove(_SmallGraphGame, Task):
 
 class GameForcedWin(_SmallGraphGame, Task):
     summary = "Decide if a player can force a win from a given state in a graph-based game."
-    def __init__(self, config=GameBestMoveConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GameBestMoveConfig())
 
-    def generate(self):
+    def generate_entry(self):
         desired = random.choice((True, False))
         fallback = None
         for position in self._sample_position():
             if position.score == 50 or len(set(position.move_scores.values())) < 2:
                 continue
-            answer = "yes" if position.score > 50 else "no"
-            if (answer == "yes") == desired:
-                return Problem(metadata=self._metadata(position), answer=answer)
+            forced_win = position.score > 50
+            answer = "Yes" if forced_win else "No"
+            if forced_win == desired:
+                return Entry(metadata=self._metadata(position), answer=answer)
             if fallback is None:
                 fallback = (position, answer)
         if fallback is not None:
             position, answer = fallback
-            return Problem(metadata=self._metadata(position), answer=answer)
+            return Entry(metadata=self._metadata(position), answer=answer)
         raise RuntimeError("Could not sample a non-degenerate forced-win position")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "In this graph game, decide whether player can force a win. "
             "Player chooses on player turns; opponent chooses on opponent turns. "
             "Opponent minimizes player score. A win means final player score is greater than 50.\n\n"
             f"{metadata.description}\n"
-            "The answer is yes or no."
+            "The answer is Yes or No."
         )
 
     def score_answer(self, answer, entry):
-        return float(str(answer).strip().lower() == entry.answer)
+        return float(str(answer).strip().lower() == entry.answer.lower())

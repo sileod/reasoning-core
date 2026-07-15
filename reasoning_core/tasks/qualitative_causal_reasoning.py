@@ -3,12 +3,26 @@ import random
 
 import networkx as nx
 import numpy as np
+from networkx.algorithms.d_separation import is_d_separator
 
-from reasoning_core.template import Config, Problem, Task
+from reasoning_core.template import Config, Entry, Task
 
 
 SIGNS = {"+": 1, "-": -1}
-LABELS = ["increase", "decrease", "no_effect", "ambiguous"]
+ANSWER_SPACES = {
+    "intervention": ["increase", "decrease", "no_effect", "ambiguous"],
+    "marginal_association": [
+        "increase",
+        "decrease",
+        "no_association",
+        "ambiguous",
+    ],
+    "conditional_association": ["associated", "independent"],
+}
+LABELS = sorted({label for labels in ANSWER_SPACES.values() for label in labels})
+SEMANTIC_ASSUMPTION = (
+    "Assume linear causal relations, independent noise, and no exact cancellations."
+)
 
 
 @dataclass(frozen=True)
@@ -99,49 +113,51 @@ def undirected_edge_sign(G, u, v):
     return edge_sign(G, v, u)
 
 
-def conditioned_ancestors(G, conditioned):
-    out = set(conditioned)
-    for z in conditioned:
-        out |= nx.ancestors(G, z)
-    return out
-
-
-def active_path_sign(G, path, conditioned=frozenset()):
-    opened = conditioned_ancestors(G, conditioned)
-    sign = 1
-
-    for u, v in zip(path, path[1:]):
-        sign *= undirected_edge_sign(G, u, v)
-
-    for a, b, c in zip(path, path[1:], path[2:]):
-        if is_collider(G, a, b, c):
-            if b not in opened:
-                return None
-            sign *= -1
-        elif b in conditioned:
-            return None
-
-    return sign
-
-
-def verify_association(G, query):
-    if query.source in query.conditioned or query.target in query.conditioned:
-        return "no_effect"
-
-    effects = set()
+def verify_marginal_association(G, query):
+    if query.conditioned:
+        raise ValueError("marginal association queries cannot condition on nodes")
+    signs = set()
     U = G.to_undirected()
-    for path in nx.all_simple_paths(U, query.source, query.target, cutoff=len(G.nodes) - 1):
-        sign = active_path_sign(G, path, query.conditioned)
-        if sign is not None:
-            effects.add(sign)
-    return combine_signs(effects)
+    for path in nx.all_simple_paths(
+        U, query.source, query.target, cutoff=len(G) - 1
+    ):
+        if any(
+            is_collider(G, a, b, c)
+            for a, b, c in zip(path, path[1:], path[2:])
+        ):
+            continue
+
+        sign = 1
+        for u, v in zip(path, path[1:]):
+            sign *= undirected_edge_sign(G, u, v)
+        signs.add(sign)
+
+    if not signs:
+        return "no_association"
+    if signs == {1}:
+        return "increase"
+    if signs == {-1}:
+        return "decrease"
+    return "ambiguous"
+
+
+def verify_conditional_association(G, query):
+    separated = is_d_separator(
+        G,
+        {query.source},
+        {query.target},
+        set(query.conditioned),
+    )
+    return "independent" if separated else "associated"
 
 
 def verify(G, query):
     if query.kind == "intervention":
         return verify_intervention(G, query)
-    if query.kind == "association":
-        return verify_association(G, query)
+    if query.kind == "marginal_association":
+        return verify_marginal_association(G, query)
+    if query.kind == "conditional_association":
+        return verify_conditional_association(G, query)
     raise ValueError(query.kind)
 
 
@@ -183,28 +199,72 @@ def kernel_common_cause(label, rng):
     s2 = "+" if (label == "increase") == (s1 == "+") else "-"
     add_edge(G, "Z", "X", s1)
     add_edge(G, "Z", "Y", s2)
-    return G, Query("association", "X", "Y")
+    return G, Query("marginal_association", "X", "Y")
 
 
 def kernel_closed_collider(rng):
     G = nx.DiGraph()
     add_edge(G, "X", "C", "+")
     add_edge(G, "Y", "C", "+")
-    return G, Query("association", "X", "Y")
+    return G, Query("conditional_association", "X", "Y")
 
 
 def kernel_open_collider(rng):
     G = nx.DiGraph()
     add_edge(G, "X", "C", "+")
     add_edge(G, "Y", "C", "+")
-    return G, Query("association", "X", "Y", frozenset({"C"}))
+    return G, Query("conditional_association", "X", "Y", frozenset({"C"}))
+
+
+def kernel_descendant_open_collider(rng):
+    G = nx.DiGraph()
+    add_edge(G, "X", "C", "+")
+    add_edge(G, "Y", "C", "+")
+    add_edge(G, "C", "D", "+")
+    return G, Query("conditional_association", "X", "Y", frozenset({"D"}))
+
+
+def kernel_conditioned_chain(rng):
+    G = nx.DiGraph()
+    add_edge(G, "X", "M", "+")
+    add_edge(G, "M", "Y", "+")
+    return G, Query("conditional_association", "X", "Y", frozenset({"M"}))
+
+
+def kernel_conditioned_common_cause(rng):
+    G = nx.DiGraph()
+    add_edge(G, "Z", "X", "+")
+    add_edge(G, "Z", "Y", "+")
+    return G, Query("conditional_association", "X", "Y", frozenset({"Z"}))
+
+
+def kernel_multiple_treks(competing, rng):
+    G = nx.DiGraph()
+    add_edge(G, "A", "X", "+")
+    add_edge(G, "A", "Y", "+")
+    add_edge(G, "B", "X", "+")
+    add_edge(G, "B", "Y", "-" if competing else "+")
+    return G, Query("marginal_association", "X", "Y")
+
+
+def kernel_disconnected_marginal(rng):
+    G = nx.DiGraph()
+    G.add_nodes_from(["X", "Y"])
+    return G, Query("marginal_association", "X", "Y")
+
+
+def kernel_blocked_collider_marginal(rng):
+    G = nx.DiGraph()
+    add_edge(G, "X", "C", "+")
+    add_edge(G, "Y", "C", "+")
+    return G, Query("marginal_association", "X", "Y")
 
 
 def kernel_observe_vs_do_association(rng):
     G = nx.DiGraph()
     add_edge(G, "Z", "X", "+")
     add_edge(G, "Z", "Y", "+")
-    return G, Query("association", "X", "Y")
+    return G, Query("marginal_association", "X", "Y")
 
 
 def kernel_observe_vs_do_intervention(rng):
@@ -234,8 +294,15 @@ KERNELS = {
     "blocked_mediator": (["no_effect"], lambda label, rng: kernel_blocked_mediator(rng)),
     "competing_paths": (["ambiguous"], lambda label, rng: kernel_competing_paths(rng)),
     "common_cause_association": (["increase", "decrease"], kernel_common_cause),
-    "closed_collider": (["no_effect"], lambda label, rng: kernel_closed_collider(rng)),
-    "open_collider_explaining_away": (["decrease"], lambda label, rng: kernel_open_collider(rng)),
+    "closed_collider": (["independent"], lambda label, rng: kernel_closed_collider(rng)),
+    "open_collider_explaining_away": (["associated"], lambda label, rng: kernel_open_collider(rng)),
+    "descendant_of_collider": (["associated"], lambda label, rng: kernel_descendant_open_collider(rng)),
+    "conditioned_chain": (["independent"], lambda label, rng: kernel_conditioned_chain(rng)),
+    "conditioned_common_cause": (["independent"], lambda label, rng: kernel_conditioned_common_cause(rng)),
+    "multiple_same_sign_treks": (["increase"], lambda label, rng: kernel_multiple_treks(False, rng)),
+    "competing_sign_treks": (["ambiguous"], lambda label, rng: kernel_multiple_treks(True, rng)),
+    "disconnected_marginal_pair": (["no_association"], lambda label, rng: kernel_disconnected_marginal(rng)),
+    "blocked_collider_marginal": (["no_association"], lambda label, rng: kernel_blocked_collider_marginal(rng)),
     "confounded_observation": (["increase"], lambda label, rng: kernel_observe_vs_do_association(rng)),
     "confounded_intervention": (["no_effect"], lambda label, rng: kernel_observe_vs_do_intervention(rng)),
     "reverse_path_no_effect": (["no_effect"], lambda label, rng: kernel_reverse_path(rng)),
@@ -280,11 +347,20 @@ def relabel_graph_and_query(G, q, rng):
     return H, query
 
 
-def quality_ok(G, q, answer):
+def quality_ok(G, q, answer, phenomenon=None):
     if q.source == q.target:
         return False
-    if answer == "no_effect":
-        return nx.has_path(G.to_undirected(), q.source, q.target)
+    connected = nx.has_path(G.to_undirected(), q.source, q.target)
+    if q.kind == "intervention" and answer == "no_effect":
+        H = intervention_graph(G, q.source)
+        for node in q.conditioned:
+            H.remove_edges_from(list(H.in_edges(node)))
+            H.remove_edges_from(list(H.out_edges(node)))
+        return connected and not nx.has_path(H, q.source, q.target)
+    if q.kind == "marginal_association" and answer == "no_association":
+        return connected or phenomenon == "disconnected_marginal_pair"
+    if q.kind == "conditional_association" and answer == "independent":
+        return connected
     return True
 
 
@@ -307,45 +383,41 @@ def sample_instance(seed=None, n_extra=8, p_edge=0.10):
 
         H, relabeled_q = relabel_graph_and_query(H, q, rng)
         ans = verify(H, relabeled_q)
-        if ans == target_label and quality_ok(H, relabeled_q, ans):
+        if ans == target_label and quality_ok(H, relabeled_q, ans, phenomenon):
             return Instance(H, relabeled_q, ans, phenomenon, n_extra, p_edge)
 
     raise RuntimeError("failed to sample valid qualitative causal instance")
 
 
 def render_edge_list(G):
-    lines = []
-    for u, v, d in sorted(G.edges(data=True)):
-        word = "increase" if d["sign"] == 1 else "decrease"
-        lines.append(f"- Increasing {u} tends to {word} {v}.")
-    return "\n".join(lines)
+    return "\n".join(
+        f"- {u} directly {'increases' if d['sign'] == 1 else 'decreases'} {v}."
+        for u, v, d in sorted(G.edges(data=True))
+    )
 
 
 def render_compact(G):
-    edges = []
-    for u, v, d in sorted(G.edges(data=True)):
-        word = "increases" if d["sign"] == 1 else "decreases"
-        edges.append(f"increasing {u} {word} {v}")
-    return "Causal relations: " + "; ".join(edges) + "."
+    edges = [
+        f"{u} directly {'increases' if d['sign'] == 1 else 'decreases'} {v}"
+        for u, v, d in sorted(G.edges(data=True))
+    ]
+    return "; ".join(edges) + "."
 
 
 def render_table(G):
-    rows = ["cause | effect | sign"]
-    for u, v, d in sorted(G.edges(data=True)):
-        word = "increase" if d["sign"] == 1 else "decrease"
-        rows.append(f"{u} | {v} | {word}")
-    return "\n".join(rows)
+    return render_edge_list(G)
 
 
 RENDERERS = [render_edge_list, render_compact, render_table]
 
 
 class QualitativeCausalReasoning(Task):
-    summary = "Perform qualitative causal reasoning (increase, decrease, ambiguous) on graphs."
-    def __init__(self, config=QualitativeCausalReasoningConfig()):
-        super().__init__(config=config)
+    summary = "Reason qualitatively about causal effects and associations in graphs."
 
-    def generate(self):
+    def __init__(self, config=None):
+        super().__init__(config=config or QualitativeCausalReasoningConfig())
+
+    def generate_entry(self):
         instance = sample_instance(
             n_extra=self.config.n_extra,
             p_edge=self.config.p_edge,
@@ -367,12 +439,12 @@ class QualitativeCausalReasoning(Task):
             "phenomenon": instance.phenomenon,
             "n_extra": instance.n_extra,
             "p_edge": instance.p_edge,
-            "association_convention": "opened_colliders_flip_sign",
+            "semantics": "linear_sem_independent_noise_no_cancellation",
             "render_style": random.choice(["edge_list", "compact", "table"]),
         }
-        return Problem(metadata=metadata, answer=instance.answer)
+        return Entry(metadata=metadata, answer=instance.answer)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         G = nx.DiGraph()
         for u, v, sign in metadata.edges:
             G.add_edge(u, v, sign=SIGNS[sign])
@@ -390,18 +462,35 @@ class QualitativeCausalReasoning(Task):
             if q.conditioned:
                 cond = " while holding " + ", ".join(sorted(q.conditioned)) + " fixed"
             query_text = f"If we intervene to increase {q.source}{cond}, what happens to {q.target}?"
-        elif q.kind == "association":
-            cond = ""
+        elif q.kind == "marginal_association":
+            query_text = (
+                f"Without conditioning, how is {q.source} associated with {q.target}?"
+            )
+        elif q.kind == "conditional_association":
             if q.conditioned:
-                cond = " while conditioning on " + ", ".join(sorted(q.conditioned))
-            query_text = f"If we observe {q.source} increasing{cond}, what should we infer about {q.target}?"
+                given = ", ".join(sorted(q.conditioned))
+                query_text = f"Given {given}, are {q.source} and {q.target} associated?"
+            else:
+                query_text = (
+                    f"Without conditioning, are {q.source} and {q.target} associated?"
+                )
         else:
             raise ValueError(q.kind)
 
+        labels = ANSWER_SPACES[q.kind]
+        choices = (
+            f"{labels[0]} or {labels[1]}"
+            if len(labels) == 2
+            else ", ".join(labels[:-1]) + f", or {labels[-1]}"
+        )
         return (
-            graph_text
+            SEMANTIC_ASSUMPTION
+            + "\n\n"
+            + graph_text
             + f"\n\n{query_text}"
-            + "\nAnswer with one of: increase, decrease, no_effect, ambiguous."
+            + "\nAnswer with: "
+            + choices
+            + "."
         )
 
     def score_answer(self, answer, entry):
@@ -409,4 +498,7 @@ class QualitativeCausalReasoning(Task):
         return 1 if normalized == entry.answer else 0
 
     def balancing_key(self, problem):
-        return f"{problem.metadata.phenomenon}:{problem.answer}"
+        return (
+            f"{problem.metadata.query_kind}:"
+            f"{problem.metadata.phenomenon}:{problem.answer}"
+        )

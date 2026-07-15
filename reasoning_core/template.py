@@ -190,6 +190,10 @@ def timeout_retry(seconds=15, attempts=10):
                     time.sleep(0.5)
                 finally:
                     if on_main:
+                        signal.alarm(0)   # ALWAYS cancel — else a leaked alarm from a non-retryable
+                                          # exception path fires later at an arbitrary point (e.g. inside
+                                          # logging), raising TimeoutException(BaseException) past callers'
+                                          # `except Exception` and crashing the whole generation loop.
                         signal.signal(signal.SIGALRM, old_handler)
         return wrapper
     return decorator
@@ -248,8 +252,27 @@ def prepr_task_name(name):
     return underscore(name)
 
 
+def render_payload(payload):
+    """Render a JSON-friendly prompt payload mapping as labeled blocks."""
+    return "\n\n".join(
+        f"{key.replace('_', ' ').title()}:\n{value}"
+        for key, value in payload.items()
+    )
+
+
+def _shuffle_payload(payload, p=0.0, seed=None):
+    if not p or not isinstance(payload, Mapping) or len(payload) < 2:
+        return payload
+    rng = random.Random(seed)
+    if rng.random() >= p:
+        return payload
+    keys = list(payload.keys())
+    rng.shuffle(keys)
+    return {key: payload[key] for key in keys}
+
+
 class Payload(dict):
-    """Ordered prompt payload with a compact labeled-block string view."""
+    """Backward-compatible wrapper for rendering prompt payload mappings."""
 
     def __init__(self, *args, randomizable=True, **kwargs):
         super().__init__(*args, **kwargs)
@@ -258,10 +281,7 @@ class Payload(dict):
         self.order = list(self.original_order)
 
     def __str__(self):
-        return "\n\n".join(
-            f"{key.replace('_', ' ').title()}:\n{self[key]}"
-            for key in self.order
-        )
+        return render_payload({key: self[key] for key in self.order})
 
     def maybe_shuffle(self, p=0.2, seed=None):
         rng = random.Random(seed)
@@ -274,9 +294,7 @@ class Payload(dict):
 
     @classmethod
     def maybe_shuffle_mapping(cls, payload, p=0.0):
-        if not p or not isinstance(payload, Mapping) or len(payload) < 2:
-            return payload
-        return cls(payload).maybe_shuffle(p=p, seed=random.randrange(1 << 32))
+        return _shuffle_payload(payload, p=p, seed=random.randrange(1 << 32))
 
     @classmethod
     def maybe_shuffle_metadata(cls, metadata, p=0.0):
@@ -483,7 +501,12 @@ class Task(ProceduralDataset):
                     problem = self.generate_entry(**generate_kwargs)
                     if problem is None:
                         continue
-                    Payload.maybe_shuffle_metadata(problem.metadata, payload_shuffle_prob)
+                    if payload_shuffle_prob and "payload" in problem.metadata:
+                        problem.metadata.payload = _shuffle_payload(
+                            problem.metadata.payload,
+                            p=payload_shuffle_prob,
+                            seed=random.randrange(1 << 32),
+                        )
                     problem.prompt = self.render_prompt(problem.metadata)
 
                     prompt_tokens = len(self.tokenizer.encode(problem.prompt))
@@ -515,33 +538,42 @@ class Task(ProceduralDataset):
                 return problem
         return inner()
 
+    def generate_examples(self, **kwargs):
+        """Generate one atomic group for balanced batching."""
+        return [self.generate_example(**kwargs)]
+
     def generate_balanced_batch(self, batch_size=32, deduplication=False,
                                 progress=False, workers=1, **kwargs):
         max_per_key = math.ceil(batch_size * self.balancing_key_ratio)
         counts, seen, batch = Counter(), set(), []
 
-        def try_accept(ex):
-            b, d = ex.balancing_key, ex.deduplication_key
-            if (deduplication and d in seen) or (b is not None and counts[b] >= max_per_key):
-                return False
-            batch.append(ex)
-            if b is not None: counts[b] += 1
-            if deduplication and d is not None: seen.add(d)
-            return True
+        def try_accept(group):
+            if len(batch) + len(group) > batch_size:
+                return 0
+            keys = Counter(ex.balancing_key for ex in group if ex.balancing_key is not None)
+            dedup_keys = [ex.deduplication_key for ex in group if ex.deduplication_key is not None]
+            if any(counts[key] + n > max_per_key for key, n in keys.items()):
+                return 0
+            if deduplication and (seen.intersection(dedup_keys) or len(dedup_keys) != len(set(dedup_keys))):
+                return 0
+            batch.extend(group)
+            counts.update(keys)
+            if deduplication: seen.update(dedup_keys)
+            return len(group)
 
         with tqdm(total=batch_size, disable=not progress) as pbar:
             if workers == 1:
                 while len(batch) < batch_size:
-                    if try_accept(self.generate_example(**kwargs)): pbar.update(1)
+                    pbar.update(try_accept(self.generate_examples(**kwargs)))
             else:
-                submit = lambda pool: pool.submit(self.generate_example, **kwargs)
+                submit = lambda pool: pool.submit(self.generate_examples, **kwargs)
                 with ProcessPoolExecutor(max_workers=workers) as pool:
                     pending = {submit(pool) for _ in range(min(workers, batch_size))}
                     while len(batch) < batch_size:
                         done, pending = wait(pending, return_when=FIRST_COMPLETED)
                         for f in done:
                             if len(batch) >= batch_size: break
-                            if try_accept(f.result()): pbar.update(1)
+                            pbar.update(try_accept(f.result()))
                         target = min(workers, batch_size - len(batch))
                         pending |= {submit(pool) for _ in range(target - len(pending))}
         return batch

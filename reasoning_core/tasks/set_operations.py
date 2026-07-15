@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 import inflect
 from dataclasses import dataclass
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Entry, Config, stochastic_rounding as sround
 import itertools
 import string
 from ast import literal_eval
@@ -87,18 +87,26 @@ class SetMissingElementConfig(SetOpsConfig):
     set_size: int = 10
     prob_no_missing: float = 0.1
     def apply_difficulty(self, level):
-        self.set_size *= 2 ** level
-        self.domain_size *= 2 ** level
+        # 2**level exploded set_size to 160 / domain to huge at L4 (~1080 tok): prompt-length tax made this a
+        # net-hurter (global -0.29) despite a real bbh gain. Moderate 1.5**level ramp cuts the tax and flips it
+        # to a helper (global +0.34, reward 0.63 non-trivial). Validated 2026-07-09 (RESCALE_AB_OLMO1B).
+        self.set_size = sround(6 * 1.5 ** level)
+        self.domain_size = sround(200 * 1.5 ** level)
         self.n_domains += level
 
 class SetMissingElement(Task):
+    """
+    This is a perception task, goal is to probe attention sharpness. Domains are easy to guess.
+    But LLMs tend to repeat elements from the input.
+    https://aclanthology.org/2025.findings-ijcnlp.44.pdf
+    """
     summary = "Identify missing elements from a shuffled sequence defined by set intension."
-    def __init__(self, config=SetMissingElementConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or SetMissingElementConfig())
         self.balancing_key_ratio = 0.25
         self.domains = make_domains(self.config.domain_size, ordered=True)
         
-    def generate(self):
+    def generate_entry(self):
         chosen_domain = random.choice(self.domains[:self.config.n_domains])
         intention = create_intension(chosen_domain, self.config.set_size)
         n_missing = 0 if random.random() < self.config.prob_no_missing else random.randint(1, 3)
@@ -106,13 +114,12 @@ class SetMissingElement(Task):
         missing = sorted(random.sample(removable, min(n_missing, len(removable))), key=str)
         for e in missing: intention.remove(e)
         answer = "{" + ", ".join(map(repr, missing)) + "}"
-        return Problem(metadata={'element_list': return_shuffle(intention), 'missing_count': len(missing)}, answer=answer)
+        return Entry(metadata={'element_list': return_shuffle(intention), 'missing_count': len(missing)}, answer=answer)
 
-    def prompt(self, metadata) -> str:
-        return (
-            f"Set_A: {metadata['element_list']}\n"
-            "The answer is the missing elements from Set_A as a Python set."
-        )
+    def render_prompt(self, metadata) -> str:
+        S = metadata["element_list"]
+        return f"Answer with the missing elements in the ordered span of {S} as a Python set."
+
 
     def score_answer(self, answer, entry):
         try:
@@ -137,11 +144,11 @@ class CountElementsConfig(Config):
 
 class CountElements(Task):
     summary = "Count occurrences of a target element within a randomly generated list."
-    def __init__(self, config=CountElementsConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or CountElementsConfig())
         self.domains = make_domains(self.config.domain_size)
 
-    def generate(self):
+    def generate_entry(self):
         count = random.randint(0, self.config.max_count)
         domain = random.choice(self.domains)
         target = random.choice(domain)
@@ -149,9 +156,9 @@ class CountElements(Task):
         n_others = self.config.list_size - count
         elements = [target] * count + random.choices(others, k=n_others)
         random.shuffle(elements)
-        return Problem(metadata={'elements': elements, 'target': target}, answer=str(count))
+        return Entry(metadata={'elements': elements, 'target': target}, answer=str(count))
 
-    def prompt(self, metadata) -> str:
+    def render_prompt(self, metadata) -> str:
         return f"List: {metadata['elements']}\nHow many times does {metadata['target']!r} appear? The answer is a number."
 
     def score_answer(self, answer, entry):
@@ -494,16 +501,19 @@ class SetExpressionConfig(Config):
     list_dup_prob: float = 0.35
 
     def apply_difficulty(self, level):
-        self.set_size *= 2 ** level
-        self.domain_size *= 2 ** level
+        # 2**level exploded set_size to 128 at L4 (~1170 tok) — length tax trimmed the transfer. Moderate
+        # 1.5**level ramp on set_size/domain (KEEP max_depth+level, the real nesting-difficulty lever) cuts the
+        # tax: global +2.06 -> +2.35, bbh +8.7, reward 0.68 non-trivial. Validated 2026-07-09 (RESCALE_AB_OLMO1B).
+        self.set_size = sround(6 * 1.5 ** level)
+        self.domain_size = sround(32 * 1.5 ** level)
         self.n_domains += level
         self.max_depth += level
 
 
 class SetExpression(Task):
     summary = "Evaluate complex set expressions involving union, intersection, and nested lists."
-    def __init__(self, config=SetExpressionConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or SetExpressionConfig())
         self.balancing_key_ratio = 0.25
         self.domains = make_domains(self.config.domain_size)
 
@@ -539,7 +549,7 @@ class SetExpression(Task):
 
         return env, None
 
-    def generate(self):
+    def generate_entry(self):
         domain = random.choice(self.domains[:self.config.n_domains])
         list_mode = random.random() < self.config.list_prob
         env, shown = self.make_env(domain, list_mode=list_mode)
@@ -561,9 +571,9 @@ class SetExpression(Task):
             else:
                 meta[x] = shown[x] if shown else return_shuffle(env[x])
 
-        return Problem(metadata=meta, answer=repr_answer(e.value))
+        return Entry(metadata=meta, answer=repr_answer(e.value))
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         lines = []
 
         for x in "ABC":

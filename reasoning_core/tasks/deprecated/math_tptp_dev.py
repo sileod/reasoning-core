@@ -66,8 +66,8 @@ class FiniteInterpretationCheckConfig(Config):
 
 class FiniteInterpretationCheck(DevTask):
     """Evaluate signed first-order requirements in a finite interpretation."""
-    def __init__(self, config=FiniteInterpretationCheckConfig()):
-        super().__init__(config, timeout=180)
+    def __init__(self, config=None):
+        super().__init__(config=config or FiniteInterpretationCheckConfig(), timeout=180)
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
 
@@ -240,8 +240,8 @@ class ResolutionStepConfig(Config):
 
 class ResolutionStep(DevTask):
     """Reconstruct one validated binary-resolution step from an E derivation."""
-    def __init__(self, config=ResolutionStepConfig()):
-        super().__init__(config, timeout=120)
+    def __init__(self, config=None):
+        super().__init__(config=config or ResolutionStepConfig(), timeout=120)
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
         self.pool = []
@@ -380,8 +380,8 @@ class TheoremPremiseSelection(DevTask):
     required to prove a given conjecture from a larger pool of axioms.
     And a minimality check to ensure the ground truth is correct.
     """
-    def __init__(self, config=SelectionConfig()):
-        super().__init__(config, timeout=60)
+    def __init__(self, config=None):
+        super().__init__(config=config or SelectionConfig(), timeout=60)
         # Initialize prover session at task init
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()
@@ -658,8 +658,8 @@ class ProofReconstruction(DevTask):
     A task that generates problems where one must reconstruct the derivation
     graph from a numbered list of shuffled clauses.
     """
-    def __init__(self, config=ReconstructionConfig()):
-        super().__init__(config)
+    def __init__(self, config=None):
+        super().__init__(config=config or ReconstructionConfig())
         # Initialize prover session at task init
         from reasoning_core.utils.udocker_process import initialize_prover_session
         initialize_prover_session()

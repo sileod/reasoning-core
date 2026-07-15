@@ -1,6 +1,6 @@
 import networkx as nx
 import random
-from reasoning_core.template import Task, Problem, Config, Payload, stochastic_rounding as sround
+from reasoning_core.template import Task, DevTask, Entry, Config, render_payload, stochastic_rounding as sround
 from reasoning_core.utils import parse_space_ints
 from dataclasses import dataclass
 
@@ -15,7 +15,11 @@ class GraphReasoningConfig(Config):
     weight_min: int = 1
     weight_max: int = 9
     def apply_difficulty(self, level):
-        self.num_nodes *= 2 ** level
+        # 2**level exploded to 96 nodes at L4 (~1200 tok) making graph_pathfinding a net-hurter via prompt-
+        # length tax under answer-only training (global -0.52, mbpp -1.68). A moderate 1.5**level ramp (->30
+        # nodes) cuts the tax and flips it to a helper (global +0.95, bbh gain +3.5 preserved, reward 0.86
+        # non-trivial). Validated 2026-07-09 (RESCALE_AB_OLMO1B).
+        self.num_nodes = sround(6 * 1.5 ** level)
 
 _GRAPH_GENERATORS = [
     (nx.fast_gnp_random_graph, {'p': (0.15, 0.4)}),
@@ -32,8 +36,8 @@ _GRID_GENERATOR = (nx.grid_2d_graph, {'m': (3, 5), 'n': (3, 5)})
 
 class BaseGraphTask:
     """Handles shared, flexible directed graph generation and rendering."""
-    def __init__(self, config=GraphReasoningConfig()):
-        super().__init__(config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GraphReasoningConfig())
 
     def _generate_graph(self):
         """Randomly selects a topology, generates a graph, and converts to a unified DiGraph."""
@@ -99,7 +103,7 @@ class BaseGraphTask:
             for u, v, d in sorted(G.edges(data=True))
         )
 
-    def _render_graph(self, G, seed=None, weighted=False):
+    def _render_graph(self, G, weighted=False):
         """Randomly selects a method to describe the directed graph in text."""
         if weighted:
             return f"Nodes {sorted(list(G.nodes()))}. Directed Edges: {self._render_edges(G, weighted=True)}"
@@ -143,9 +147,8 @@ class BaseGraphTask:
                 if g.out_degree(n) > 0 else f"{n}:"
                 for n in sorted(g.nodes()))
 
-        rng = random.Random(seed)        
         renderers = [r_adjacency_list, r_edge_list, r_adj_dict, r_edge_pairs, r_adjacency_matrix, r_dot_notation, r_prose, r_incidence]
-        return rng.choice(renderers)(G)
+        return random.choice(renderers)(G)
 
 
 class GraphPathfinding(BaseGraphTask, Task):
@@ -194,7 +197,7 @@ class GraphPathfinding(BaseGraphTask, Task):
             return f"No directed path from {start} to {end}."
         return f"Optimal cost: {cost}. Path: {' '.join(map(str, path))}."
 
-    def generate(self):
+    def generate_entry(self):
         weighted = random.random() < self.config.weighted_prob
         G = self._generate_graph()
         
@@ -219,10 +222,12 @@ class GraphPathfinding(BaseGraphTask, Task):
             G = self._add_weights(G, weighted)
             path, cost = self._shortest_path(G, start, end)
 
-        return Problem(
+        graph_description = self._render_graph(G, weighted=weighted)
+        return Entry(
             metadata={
                 "weighted": weighted,
-                "graph_description": self._render_graph(G, weighted=weighted), "start_node": start, "end_node": end,
+                "graph_description": graph_description, "start_node": start, "end_node": end,
+                "payload": {"graph": graph_description},
                 "nodes": list(G.nodes()), "edges": [(u, v, d["weight"]) for u, v, d in G.edges(data=True)],
                 "optimal_cost": cost,
                 "optimal_length": len(path) if path is not None else None,
@@ -231,14 +236,14 @@ class GraphPathfinding(BaseGraphTask, Task):
             answer="None" if path is None else " ".join(map(str, path))
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         objective = "minimum-cost" if m.get("weighted") else "shortest"
         return (
             f"Find the {objective} directed path from node {m['start_node']} "
             f"to node {m['end_node']}. "
             "If several paths are tied, return the lexicographically smallest one. "
             "Answer with space-separated nodes, or `None` if no path exists.\n\n"
-            f"{Payload(graph=m['graph_description'])}"
+            f"{render_payload(m['payload'])}"
         )
 
     def score_answer(self, answer, entry):
@@ -300,15 +305,15 @@ class GraphSuccessorsConfig(Config):
 class GraphSuccessors(BaseGraphTask, Task):
     """DEPO-style k-th successor queries in a permutation digraph."""
     summary = "Determine the k-th successor of a node in a permutation digraph topology."
-    def __init__(self, config=GraphSuccessorsConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GraphSuccessorsConfig())
 
     def _jump(self, succ, x, k):
         for _ in range(k):
             x = succ[x]
         return x
 
-    def generate(self):
+    def generate_entry(self):
         nodes = list(range(self.config.num_nodes))
         succ = dict(zip(nodes, random.sample(nodes, len(nodes))))  # Ensure exact out-degree 1 per node
 
@@ -322,21 +327,23 @@ class GraphSuccessors(BaseGraphTask, Task):
         ]
         answer = [self._jump(succ, x, k) for x, k in queries]
 
-        return Problem(
+        graph_description = self._render_graph(G)
+        return Entry(
             metadata={
-                "graph_description": self._render_graph(G),
+                "graph_description": graph_description,
                 "queries": queries,
+                "payload": {"graph": graph_description, "queries": str(queries)},
                 "nodes": nodes,
                 "edges": list(G.edges()),
             },
             answer=" ".join(map(str, answer)),
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return (
             "For each query (x, k), give the k-th successor of x by following directed edges k times.\n"
             "Answer with space-separated integers in query order.\n\n"
-            f"{Payload(graph=m['graph_description'], queries=m['queries'])}"
+            f"{render_payload(m['payload'])}"
         )
 
     def score_answer(self, answer, entry):
@@ -357,11 +364,11 @@ class GraphDependenciesConfig(Config):
         self.max_prereqs = sround(self.max_prereqs + 0.5 * level)
 
 
-class GraphDependencies(BaseGraphTask, Task):
+class GraphDependencies(BaseGraphTask, DevTask):
     """BREVO-style recursive dependency resolution implemented via DAG topologies."""
     summary = "Resolve recursive node prerequisites in directed acyclic graphs (DAGs)."
-    def __init__(self, config=GraphDependenciesConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or GraphDependenciesConfig())
 
     def _make_dag(self):
         for _ in range(10):
@@ -378,7 +385,7 @@ class GraphDependencies(BaseGraphTask, Task):
         G.add_edges_from([(i, i+1) for i in range(self.config.num_nodes - 1)])
         return G
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(100):
             G = self._make_dag()
             # Find candidate that has at least two prerequisites to trace
@@ -392,23 +399,25 @@ class GraphDependencies(BaseGraphTask, Task):
             # Standard topological sort places ancestors (prerequisites) first
             answer = list(nx.lexicographical_topological_sort(G.subgraph(need)))
 
-            return Problem(
+            graph_description = self._render_graph(G)
+            return Entry(
                 metadata={
-                    "graph_description": self._render_graph(G),
+                    "graph_description": graph_description,
                     "query": q,
+                    "payload": {"graph": graph_description},
                     "nodes": list(G.nodes()),
                     "edges": list(G.edges()),
                 },
                 answer=" ".join(map(str, answer)),
             )
-        return self.generate()
+        return self.generate_entry()
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return (
             f"List all ancestors of node {m['query']}.\n"
             "Order them so predecessors come before successors, with lexicographic tie-breaks.\n"
             "Answer with space-separated indexes.\n\n"
-            f"{Payload(graph=m['graph_description'])}"
+            f"{render_payload(m['payload'])}"
         )
 
     def score_answer(self, answer, entry):

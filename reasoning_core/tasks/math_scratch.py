@@ -22,7 +22,7 @@ from typing import Any
 
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, DevTask, Entry, Payload, Task, stochastic_rounding as sround
+from reasoning_core.template import Config, DevTask, Entry, Task, render_payload, stochastic_rounding as sround
 
 
 Term = Any
@@ -840,10 +840,7 @@ class MathScratchEntailment(DevTask):
     config_cls = ScratchConfig
 
     def __init__(self, config=None, **kwargs):
-        config = config or ScratchConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config)
+        super().__init__(config=config or ScratchConfig(), **kwargs)
         self._world_cache = None
         self._world_uses_left = 0
 
@@ -888,11 +885,11 @@ class MathScratchEntailment(DevTask):
                     diagnostics=edict(trace=trace_stats, world=world.diagnostics),
                     source="scratch",
                 )
-                meta.payload = Payload(
-                    rules=_rule_text(rules),
-                    left=meta.left,
-                    right=meta.right,
-                )
+                meta.payload = {
+                    "rules": _rule_text(rules),
+                    "left": meta.left,
+                    "right": meta.right,
+                }
                 return Entry(meta, "True" if positive else "False")
             except RuntimeError:
                 self._world_uses_left = 0
@@ -905,7 +902,7 @@ class MathScratchEntailment(DevTask):
             "Rules may be applied repeatedly to any matching subexpression. "
             "Variables like X and Y may match compound expressions.\n\n"
             "End with: Answer: True or Answer: False.\n\n"
-            f"{Payload(metadata.payload)}"
+            f"{render_payload(metadata.payload)}"
         )
 
     def score_answer(self, answer, entry):
@@ -918,10 +915,7 @@ class MathScratchCoreSelect(DevTask):
     config_cls = ScratchConfig
 
     def __init__(self, config=None, **kwargs):
-        config = config or ScratchConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config)
+        super().__init__(config=config or ScratchConfig(), **kwargs)
         self._world_cache = None
         self._world_uses_left = 0
 
@@ -980,12 +974,12 @@ class MathScratchCoreSelect(DevTask):
                     core=list(core),
                     source="scratch",
                 )
-                meta.payload = Payload(
-                    rule_catalog=_rule_text(rules, bullet=True),
-                    left=meta.left,
-                    right=meta.right,
-                    options=option_text,
-                )
+                meta.payload = {
+                    "rule_catalog": _rule_text(rules, bullet=True),
+                    "left": meta.left,
+                    "right": meta.right,
+                    "options": option_text,
+                }
                 return Entry(meta, answer)
             except RuntimeError:
                 self._world_uses_left = 0
@@ -998,7 +992,7 @@ class MathScratchCoreSelect(DevTask):
             "Use only the rules in that option. Rules may be applied repeatedly to any matching subexpression. "
             "Variables like X and Y may match compound expressions.\n\n"
             "End with: Answer: X, where X is A, B, C, or D.\n\n"
-            f"{Payload(metadata.payload)}"
+            f"{render_payload(metadata.payload)}"
         )
 
     def score_answer(self, answer, entry):
@@ -1011,10 +1005,7 @@ class MathScratchNormalize(DevTask):
     config_cls = ScratchConfig
 
     def __init__(self, config=None, **kwargs):
-        config = config or ScratchConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config)
+        super().__init__(config=config or ScratchConfig(), **kwargs)
         self._world_cache = None
         self._world_uses_left = 0
 
@@ -1043,10 +1034,10 @@ class MathScratchNormalize(DevTask):
                     diagnostics=edict(trace=trace_stats, world=world.diagnostics),
                     source="scratch",
                 )
-                meta.payload = Payload(
-                    rules=_rule_text(rules),
-                    left=meta.left,
-                )
+                meta.payload = {
+                    "rules": _rule_text(rules),
+                    "left": meta.left,
+                }
                 return Entry(meta, meta.normal_form)
             except RuntimeError:
                 self._world_uses_left = 0
@@ -1059,7 +1050,7 @@ class MathScratchNormalize(DevTask):
             "Rules may be applied repeatedly to any matching subexpression. "
             "Variables like X and Y may match compound expressions.\n\n"
             "End with: Answer: <final expression>.\n\n"
-            f"{Payload(metadata.payload)}"
+            f"{render_payload(metadata.payload)}"
         )
 
     def score_answer(self, answer, entry):

@@ -29,7 +29,6 @@ MIGRATED_CONFIGS = [
     ("reasoning_core.tasks.game_playing", "GameBestMoveConfig"),
     ("reasoning_core.tasks.grammar", "GrammarConfig"),
     ("reasoning_core.tasks.grammar", "StressContinuationConfig"),
-    ("reasoning_core.tasks.grammar", "StressConstrainedContinuationConfig"),
     ("reasoning_core.tasks.graph_operations", "GraphReasoningConfig"),
     ("reasoning_core.tasks.graph_operations", "GraphSuccessorsConfig"),
     ("reasoning_core.tasks.graph_operations", "GraphDependenciesConfig"),

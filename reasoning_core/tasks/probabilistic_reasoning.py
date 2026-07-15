@@ -6,7 +6,7 @@ from itertools import product
 from gramforge import generate, init_grammar
 from problog import get_evaluatable
 from problog.program import PrologString
-from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 from reasoning_core.utils import score_space_ints
 
 
@@ -150,7 +150,12 @@ def evidence_grammar():
     R("pos(pos,pos)", "({0},{1})", "({0} and {1})", weight=1.2)
     R("pos(pos,pos)", "({0};{1})", "({0} or {1})")
     R("expr(pos)", "{0}", "{0}")
-    R("expr(pos,atom)", "({0},\\+{1})", "({0} unless factor {1})", weight=0.8)
+    R(
+        "expr(pos,atom)",
+        "({0},\\+{1})",
+        "({0} holds and factor {1} is false)",
+        weight=0.8,
+    )
     return R
 
 
@@ -251,10 +256,10 @@ class MostProbableEvidenceConfig(Config):
 
 class MostProbableEvidence(Task):
     summary = "Find the most probable configuration of hidden variables given evidence."
-    def __init__(self, config=MostProbableEvidenceConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MostProbableEvidenceConfig())
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(self.config.max_attempts):
             node = generate(evidence_grammar(), depth=self.config.depth, min_depth=4)
             instance = evidence_instance(node, self.config)
@@ -273,10 +278,10 @@ class MostProbableEvidence(Task):
             opts = lit_options(src)
             lits = sorted_lits(map(str, json.loads(answer)))
             answer = " ".join(str(opts.index(x)) for x in lits)
-            return Problem(edict(problog=src, english=english, options=opts, n_atoms=len(hidden_atoms(src)), margin=margin), answer)
+            return Entry(edict(problog=src, english=english, options=opts, n_atoms=len(hidden_atoms(src)), margin=margin), answer)
         raise RuntimeError("Failed to generate probabilistic evidence task")
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         opts = "\n".join(f"{i}. {x}" for i, x in enumerate(m.options))
         return (
             f"{m.english}\n\nHidden fact values:\n{opts}\n\n"
@@ -299,22 +304,21 @@ class MostProbableOutcomeConfig(Config):
 
 class MostProbableOutcome(Task):
     summary = "Predict the most probable outcome or select hidden factor values in ProbLog."
-    def __init__(self, config=MostProbableOutcomeConfig()):
-        super().__init__(config=config)
-        self._target_i = 0
+    def __init__(self, config=None):
+        super().__init__(config=config or MostProbableOutcomeConfig())
+        self.balancing_key_ratio = 1 / 3
 
-    def generate(self):
-        target = ["A", "B", "equal"][self._target_i % 3]
-        self._target_i += 1
+    def generate_entry(self):
+        target = random.choice(["A", "B", "equal"])
 
         node = generate(outcome_grammar(self.config.max_count, target=target), depth=self.config.depth)
         src = node @ problog
-        return Problem(
+        return Entry(
             metadata=edict(problog=src, english=node @ eng),
             answer=mpo_answer(src),
         )
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         return f"{m.english}\n\nThe answer is exactly one of: A, B, equal."
 
     def score_answer(self, answer, entry):

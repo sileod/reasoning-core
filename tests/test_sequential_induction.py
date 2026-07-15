@@ -1,20 +1,71 @@
-import sympy as sp
+import json
 
-from reasoning_core.tasks.sequential_induction import format_additive_normal_form
+from reasoning_core.tasks.sequential_induction import (
+    Sequence,
+    SequenceConfig,
+    SequentialInduction,
+    candidate_bank,
+    candidate_index,
+    identify_online,
+    parse_formula,
+    poly_to_string,
+    rollout_prefix,
+)
 
 
-def test_additive_normal_form_expands_and_sorts_low_degree_first():
-    n = sp.symbols("n", integer=True, nonnegative=True)
-    U = sp.IndexedBase("U")
+def test_sequence_parses_and_evaluates_string_recurrence():
+    sequence = Sequence("U[n - 1] + 1", initial_elem=[3])
 
-    expr = (n + 8) * (U[n - 2] - 6)
+    assert sequence.n_first_elem(5) == [3, 4, 5, 6, 7]
 
-    assert format_additive_normal_form(expr) == (
-        "-48 - 6*n + 8*U[n - 2] + n*U[n - 2]"
+
+def test_candidate_bank_uses_ast_shortlex_canonical_form():
+    polynomial = parse_formula("n + 1", recurrence_depth=0)
+    bank = candidate_bank(0, max_cost=3)
+
+    assert bank[candidate_index(0, max_cost=3)[polynomial]].syntax == "(1 + n)"
+
+
+def test_polynomial_answer_is_compact_and_canonical():
+    polynomial = parse_formula("((8 + 9) * n) + -9", recurrence_depth=0)
+
+    assert poly_to_string(polynomial) == "17 * n - 9"
+
+
+def test_identification_accepts_unique_minimum_cost_polynomial():
+    polynomial = parse_formula("n", recurrence_depth=0)
+
+    identification, reason = identify_online(
+        polynomial,
+        initial_terms=(),
+        recurrence_depth=0,
+        min_visible=2,
+        max_visible=4,
+        max_cost=3,
     )
 
+    assert reason == "accepted"
+    assert identification.candidate.syntax == "n"
+    assert identification.terms == (0, 1)
 
-def test_additive_normal_form_inverts_sympy_polynomial_order():
-    n = sp.symbols("n", integer=True, nonnegative=True)
 
-    assert format_additive_normal_form(-n**2 + 2 * n + 1) == "1 + 2*n - n**2"
+def test_rollout_retains_prefix_before_explosion():
+    polynomial = parse_formula("U[n - 1] * U[n - 1]", recurrence_depth=1)
+
+    assert rollout_prefix(polynomial, (10,), 1, 5, max_digits=3) == (10, 100)
+
+
+def test_generated_entry_is_json_serializable_and_self_scoring(tmp_path):
+    config = SequenceConfig(
+        recurrence_depth=0,
+        canonical_max_cost=3,
+        uniqueness_cache_dir=str(tmp_path),
+        max_generation_attempts=100,
+    )
+    task = SequentialInduction(config)
+
+    entry = task.generate_entry()
+
+    json.dumps(dict(entry.metadata))
+    assert task.score_answer(entry.answer, entry) == 1.0
+    assert "Initial terms:" not in task.render_prompt(entry.metadata)

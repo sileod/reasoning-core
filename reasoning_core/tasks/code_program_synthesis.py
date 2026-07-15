@@ -10,7 +10,7 @@ from functools import lru_cache
 from types import CodeType
 from typing import Iterable
 
-from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
 DSL_NAME = "StringFrag-v1"
@@ -443,8 +443,8 @@ class ProgramSynthesisCfg(Config):
 
 
 class ProgramSynthesis(Task):
-    def __init__(self, config=ProgramSynthesisCfg()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or ProgramSynthesisCfg())
 
     def _sample_target(self) -> Expr:
         frontier = _target_frontier(self.config.max_nodes, self.config.min_nodes)
@@ -458,7 +458,7 @@ class ProgramSynthesis(Task):
         size = random.choices(sizes, weights=weights, k=1)[0]
         return random.choice(by_nodes[size])
 
-    def generate(self) -> Problem:
+    def generate_entry(self) -> Entry:
         cfg = self.config
         for _ in range(cfg.max_attempts):
             target = self._sample_target()
@@ -495,10 +495,10 @@ class ProgramSynthesis(Task):
                     cheaper_hypotheses_killed=killed,
                 ),
             )
-            return Problem(metadata=meta, answer=meta.solution_function)
+            return Entry(metadata=meta, answer=meta.solution_function)
         raise RuntimeError(f"no StringFrag-v1 instance after {cfg.max_attempts} attempts")
 
-    def prompt(self, metadata) -> str:
+    def render_prompt(self, metadata) -> str:
         examples = "\n".join(f"f({inp!r}) = {out!r}" for inp, out in metadata.io_pairs)
         op_lines = "\n".join(f"- {op}: {OP_SYNTAX[op]}" for op in metadata.prompt_ops)
         return (

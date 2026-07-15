@@ -7,7 +7,11 @@ import random, re, exrex
 import itertools
 from gramforge.solver_utils.tptp import split_clauses, run as _run, to_tptp, extract_inferences_and_formulas
 
+
+
 AXIOMS = "fof(anywhere_ax, axiom, ![X]:anywhere(X))."
+# in the grammar anywhere is treated as a location, we quantify "anyone anywhere or anyone in the room. 
+# This axiom is necessary to say that people match being anywhere" 
 
 def run(expr, **kw):
     return _run(AXIOMS + "\n" + expr, **kw)
@@ -15,7 +19,7 @@ def run(expr, **kw):
 from gramforge.assets import fol_nli_verbalization
 
 import sys
-from reasoning_core.template import Task, DevTask, Problem, Config, Payload
+from reasoning_core.template import Task, DevTask, Entry, Config, render_payload
 from reasoning_core.utils import parse_space_ints
 from gramforge.grammars.FOL import FOL_grammar
 from easydict import EasyDict as edict
@@ -186,8 +190,8 @@ def is_bloat(meta, label):
 class LogicNLI(Task):
     summary = "First-order logic natural language inference via automated theorem proving."
 
-    def __init__(self, config=LogicConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or LogicConfig())
         self.pronoun = random.choice(self.config.pronouns)
         self.names = gendered_names(self.config.n_names, self.pronoun)
         self.adjectives = ADJECTIVES[:self.config.n_adjectives]
@@ -197,7 +201,7 @@ class LogicNLI(Task):
         self.hyps, self.hyps_weights=make_hyps(G_hyp)
         self.balancing_key_ratio=1/3
 
-    def generate(self):
+    def generate_entry(self):
         include_propositional = random.choice([True, False])
         empty_room = random.choice([True, False])
         self.G = fc.partial(FOL_grammar, names=self.names, adjs=self.adjectives,
@@ -245,19 +249,19 @@ class LogicNLI(Task):
             
             meta.prem, meta.hyp = x.dict(), hyp.dict()
             meta.label = label
-            meta.payload = Payload(premise=meta.prem.eng, hypothesis=meta.hyp.eng)
+            meta.payload = {
+                "premise": verbalize_predicates(meta.prem.eng, seed=meta.verbalize_seed),
+                "hypothesis": verbalize_predicates(meta.hyp.eng, seed=meta.verbalize_seed),
+            }
             mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
-            return Problem(meta, mapping[label])
+            return Entry(meta, mapping[label])
 
-    def prompt(self, meta):
-        P = (
-            f"{Payload(meta.payload)}\n\n"
+    def render_prompt(self, meta):
+        return (
+            f"{render_payload(meta.payload)}\n\n"
             "Is the hypothesis true given the premise? "
             "The answer is Yes, No, or Maybe."
         )
-
-        P=verbalize_predicates(P, seed=meta.verbalize_seed)
-        return P
 
     def score_answer(self, answer, entry):
         return float(str(answer).strip().lower() == str(entry.answer).strip().lower())
@@ -274,9 +278,9 @@ class EvidenceRetrievalConfig(LogicConfig):
 
 class EvidenceRetrieval(DevTask):
     summary = "Identify minimal necessary premises from logic theories to prove a hypothesis."
-    def __init__(self, config=EvidenceRetrievalConfig()):
-        super().__init__(config=config)
-        self.nli = LogicNLI(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or EvidenceRetrievalConfig())
+        self.nli = LogicNLI(config=self.config)
 
     @staticmethod
     def compute_necessity(x):
@@ -292,21 +296,21 @@ class EvidenceRetrieval(DevTask):
             changes[prefix]=y.status
         return set(changes.values())=={"Satisfiable"}
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(200):
             self.nli.config = self.config
-            x = self.nli.generate()
+            x = self.nli.generate_entry()
             label = x.metadata.get('label', x.answer)
             label = {'yes': 'entailment', 'no': 'contradiction', 'maybe': 'neutral'}.get(str(label).lower(), label)
             proof = x.metadata.get('proof')
             answer = [i for i in proof.indices if i != 'hyp'] if proof else []
             if label in ('entailment', 'contradiction') and answer and self.compute_necessity(x):
                 answer = ' '.join(f'{i}' for i in answer)
-                return Problem(x.metadata, answer)
+                return Entry(x.metadata, answer)
 
         raise RuntimeError("failed to generate evidence retrieval example with necessary proof inputs")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         prem_lines = [f"[{i}] {line}" for i, line in enumerate(meta.prem.eng.splitlines())]
         prem = '\n'.join(prem_lines)
         hyp = meta.hyp.eng
@@ -375,14 +379,14 @@ def _alter_formula(f):
 
 class LogicFormalization(Task):
     summary = "Translate natural language premises into formal first-order logic formulas."
-    def __init__(self, config=LogicFormalizationConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or LogicFormalizationConfig())
         self.balancing_key_ratio = 0.5
         self.pronoun = random.choice(self.config.pronouns)
         self.names = gendered_names(self.config.n_names, self.pronoun)
         self.adjectives = ADJECTIVES[:self.config.n_adjectives]
 
-    def generate(self):
+    def generate_entry(self):
         include_propositional = random.choice([True, False])
         empty_room = False
         G = fc.partial(FOL_grammar, names=self.names, adjs=self.adjectives,
@@ -400,16 +404,18 @@ class LogicFormalization(Task):
                 same = _equivalent(gold, candidate)
             except Exception:
                 continue
-            meta = edict(prem=x.dict(), verbalize_seed=seed, candidate=candidate,
-                         gold=gold, transformation=op)
-            return Problem(meta, str(same))
+            prem = x.dict()
+            eng = verbalize_predicates(prem.eng, seed=seed)
+            meta = edict(prem=prem, verbalize_seed=seed, candidate=candidate,
+                         gold=gold, transformation=op,
+                         payload={"English": eng, "TPTP": candidate})
+            return Entry(meta, str(same))
         raise RuntimeError("Could not generate a Vampire-checkable contrastive formalization")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         meta = edict(meta)
-        eng = verbalize_predicates(meta.prem.eng, seed=meta.verbalize_seed)
         return (
-            f"{str(Payload(English=eng, TPTP=meta.candidate)).replace('Tptp:', 'TPTP:')}\n\n"
+            f"{render_payload(meta.payload)}\n\n"
             "Does the TPTP denotation match the English? "
             "The answer is True or False."
         )

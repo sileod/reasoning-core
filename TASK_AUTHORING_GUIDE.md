@@ -11,8 +11,9 @@ Implement tasks that are:
 - concise in code, easy to audit
 - preferaby solver-backed (use strong external libraries instead of re-implementing),
 - distributionally broad (high structural variety),
+- focused on interesting cases without being templatic,
 - not mostly solvable with shortcuts (some are good for robustness but they should be rare),
-- verifiable, formal and robustly scorable (`score_answer(generate().answer) == 1`).
+- verifiable, formal and robustly scorable (`task.score_answer(entry.answer, entry) == 1`).
 - favour answer uniqueness if possible (e.g. specify lexicographic order) to ease next token prediction training.
 
 ## Core Contract (from `reasoning_core/template.py`)
@@ -22,8 +23,6 @@ Every task should provide:
   - `generate_entry(self) -> Entry`
   - `render_prompt(self, metadata) -> str`
   - `score_answer(self, answer, entry) -> float | Reward` (or rely on default exact match)
-
-Legacy `generate()` / `prompt()` and `Problem` remain supported aliases, but new or cleaned-up tasks should use `generate_entry()` / `render_prompt()` and `Entry`.
 
 `Entry` must include:
 - `metadata` (dict/easydict),
@@ -38,7 +37,6 @@ Legacy `generate()` / `prompt()` and `Problem` remain supported aliases, but new
 Base `Config` protected fields:
 - `level`: current level,
 - `seed`: RNG seed (do not use it. do not seed anything explictly unless it is requested.)
-- `size`: optional dataset size.
 
 Important behavior:
 - Int-typed fields (except `level/size/seed`) are tracked internally as floats and stochastically rounded on read.
@@ -50,7 +48,8 @@ Design rules for `apply_difficulty(level)`:
 - monotonic difficulty increase,
 - no mutation of `level`,
 - keep generation solvable and diverse
-- update should change knobs (problem sizes or reasoning depth, etc), not hardcode different subtasks (do not use "if level ... then ...")
+- update should change knobs (problem sizes or reasoning depth, etc)
+- do not hardcode different subtasks (do not use "if level ... then ...")
 - use direct formulas instead of recursively calling legacy update logic.
 
 Use `Config_difficulty_knob_migration.md` and `assert_difficulty_update_equivalence(...)` when migrating existing configs.
@@ -74,13 +73,14 @@ Level 5 should be tough even for large LLMs.
 - Prefer configurable families of instances over one fixed style.
 
 4. Reward quality over strict formatting:
-- Reward semantic correctness first, with optional light format penalties.
+- Reward semantic correctness first but prefer soft scoring.
+- Blatantly inccorect answer should be reward 0.0, correct answer should have reward 1.0.
 - Use `Reward(...)` tags when useful for diagnostics.
 
 ## Minimal Task Skeleton
 ```python
 from dataclasses import dataclass
-from reasoning_core.template import Task, Entry, Config, edict, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, edict, render_payload, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 
 @dataclass
@@ -100,6 +100,7 @@ class MyTask(Task):
     def generate_entry(self):
         # Build instance using external libs when possible.
         metadata = edict({"equation": "...", "cot": "...optional..."})
+        metadata.payload = {"equation": metadata.equation}
         answer = "..."
         return Entry(metadata=metadata, answer=answer)
 
@@ -107,7 +108,7 @@ class MyTask(Task):
         # Specify the answer format clearly, refer to it as "the answer" or "answer".
         # Do not use answer as a verb, do not use "return".
         # The wording logic should live here and not be buried in generation.
-        return f"Solve for x: {metadata['equation']}\n Answer is a scalar."
+        return f"{render_payload(metadata.payload)}\n\nThe answer is a scalar."
 
     def score_answer(self, answer, entry):
         # Answer is the answer to score (e.g. LLM prediction)
@@ -127,15 +128,20 @@ class MyTask(Task):
 - `config.set_level(1)` changes difficulty.
 - Prompt is unambiguous about output format.
 - Prompt is as concise as possible while allowing meaningful zero-shot solvability.
+- Answers should be short and canonical, valid SFT targets.
 - Metadata is ideally sufficient for offline debugging (instance params, optional `cot` entry).
+- If a task uses labeled prompt blocks, store them as a plain JSON-serializable
+  `metadata.payload` mapping and render them with `render_payload(metadata.payload)`.
+  Do not store renderer/helper objects in metadata.
 - Metadata is not too large (should not blow up memory).
+
 
 ## Registration and Discovery
 - Any `Task` subclass in `reasoning_core/tasks/*.py` is auto-discovered by AST and lazy-loaded through `reasoning_core.__init__.py`.
 - `task_name` defaults to snake_case class name.
 
 ## Gallery
-- Refresh examples with `python scripts/build_gallery.py`.
+- If requested, refresh examples with `python scripts/build_gallery.py`.
 - Gallery generation uses cached validation examples by default and builds missing cache entries.
 - Use `--refresh-cache` to regenerate cached examples for the current task behavior hash/config.
 - Use `--no-cache` to use balanced batch generation instead.

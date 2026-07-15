@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 
 from z3 import Int, Solver, sat
 
-from reasoning_core.template import Task, Problem, Config, Payload, edict, stochastic_rounding as sround
+from reasoning_core.template import Task, Entry, Config, edict, render_payload, stochastic_rounding as sround
 
 
 # Symmetric inverse of a size relation, used for deduplication.
@@ -61,8 +61,8 @@ class ReferenceTracking(Task):
     """
     summary = "Track locations of balls in boxes across moves, swaps, and coreferences."
 
-    def __init__(self, config=ReferenceTrackingConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or ReferenceTrackingConfig())
 
 
 
@@ -237,7 +237,7 @@ class ReferenceTracking(Task):
 
         return facts
 
-    def generate(self) -> Problem:
+    def generate_entry(self) -> Entry:
         c = self.config
 
         chain_len = max(1, int(c.chain_len))
@@ -260,6 +260,11 @@ class ReferenceTracking(Task):
             float(c.swap_move_p),
         )
         prefer_indirect = random.random() < float(c.prefer_indirect_p)
+        base_payload = {
+            "inventory": "\n".join(f"- {b}: {colors[b]}" for b in balls),
+            "initial_state": "\n".join(f"- {b} is in {initial_placement[b]}" for b in balls),
+            "moves": "\n".join(f"- {s}" for s in moves) if moves else "- (none)",
+        }
 
         # ---- pure tracking ----
         if random.random() >= float(c.winograd_p):
@@ -267,16 +272,15 @@ class ReferenceTracking(Task):
             desc = _qualify_desc(
                 self._pick_desc(target, balls, colors, initial_placement, boxes, prefer_indirect)
             )
-            return Problem(
-                metadata=edict(
-                    family="track", balls=balls, boxes=boxes, colors=colors,
-                    initial_placement=initial_placement,
-                    moves=moves, resolved_moves=resolved_moves, 
-                    final_placement=dict(placement),
-                    question=f"Where is {desc} now? The answer is a box tag, like x1.",
-                ),
-                answer=placement[target],
+            metadata = edict(
+                family="track", balls=balls, boxes=boxes, colors=colors,
+                initial_placement=initial_placement,
+                moves=moves, resolved_moves=resolved_moves,
+                final_placement=dict(placement),
+                question=f"Where is {desc} now? The answer is a box tag, like x1.",
             )
+            metadata.payload = base_payload
+            return Entry(metadata=metadata, answer=placement[target])
 
         # ---- logical winograd ----
         ask_loc = random.random() < float(c.ask_location_p)
@@ -320,53 +324,42 @@ class ReferenceTracking(Task):
             )
             answer = referent
 
-        return Problem(
-            metadata=edict(
-                family="logical_winograd",
-                balls=balls, boxes=boxes, colors=colors,
-                initial_placement=initial_placement,
-                moves=moves, resolved_moves=resolved_moves,
-                final_placement=dict(placement),
-                size_facts=facts,
-                size_facts_text=[self._rel_text(u, r, v) for u, r, v in facts],
-                dock=dict(
-                    a=a, b=b, desc_a=desc_a, desc_b=desc_b,
-                    reason=reason, larger=larger, smaller=smaller,
-                ),
-                gold_referent=referent,
-                question=question,
+        size_facts_text = [self._rel_text(u, r, v) for u, r, v in facts]
+        metadata = edict(
+            family="logical_winograd",
+            balls=balls, boxes=boxes, colors=colors,
+            initial_placement=initial_placement,
+            moves=moves, resolved_moves=resolved_moves,
+            final_placement=dict(placement),
+            size_facts=facts,
+            size_facts_text=size_facts_text,
+            dock=dict(
+                a=a, b=b, desc_a=desc_a, desc_b=desc_b,
+                reason=reason, larger=larger, smaller=smaller,
             ),
-            answer=answer,
+            gold_referent=referent,
+            question=question,
         )
-
-    def prompt(self, metadata) -> str:
-        m = metadata
-        base = dict(
-            inventory="\n".join(f"- {b}: {m.colors[b]}" for b in m.balls),
-            initial_state="\n".join(f"- {b} is in {m.initial_placement[b]}" for b in m.balls),
-            moves="\n".join(f"- {s}" for s in m.moves) if m.moves else "- (none)",
-        )
-
-        if m.family == "track":
-            return f"{Payload(base)}\n{m.question}"
-
-        payload = Payload(
-            rules="\n".join([
+        metadata.payload = {
+            "rules": "\n".join([
                 "- Each ball has a positive integer size.",
                 "- Dock(X, Y) succeeds iff size(X) == size(Y).",
                 "- If docking fails and the failure sentence says 'it was too large/small',",
                 "  'it' refers to the larger/smaller of the two docked balls.",
             ]),
-            **base,
-            size_facts="\n".join(f"- {t}" for t in m.size_facts_text),
-            story=(
-                f"- After the moves, Rae tried to dock {m.dock.desc_a} with {m.dock.desc_b}.\n"
-                f"- It failed because it was {m.dock.reason}."
+            **base_payload,
+            "size_facts": "\n".join(f"- {t}" for t in size_facts_text),
+            "story": (
+                f"- After the moves, Rae tried to dock {desc_a} with {desc_b}.\n"
+                f"- It failed because it was {reason}."
             ),
-        )
-        return f"{payload}\n{m.question}"
+        }
+        return Entry(metadata=metadata, answer=answer)
 
-    def score_answer(self, answer: str, entry: Problem) -> float:
+    def render_prompt(self, metadata) -> str:
+        return f"{render_payload(metadata.payload)}\n{metadata.question}"
+
+    def score_answer(self, answer: str, entry: Entry) -> float:
 
         norm = lambda s: re.sub(r"[^a-z0-9]", "", str(s).strip().lower())
 

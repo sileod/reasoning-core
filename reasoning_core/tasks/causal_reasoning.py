@@ -8,7 +8,7 @@ from math import log, nan, floor, ceil
 import ast
 from abc import ABC, abstractmethod
 
-from reasoning_core.template import Task, DevTask, Problem, Config, stochastic_rounding as sround
+from reasoning_core.template import Task, DevTask, Entry, Config, stochastic_rounding as sround
 from dataclasses import dataclass
 
 from typing import (
@@ -366,9 +366,9 @@ class Rung12Config(Config):
 
 class Rung(ABC):
     """An abstract base class for Rung tasks of any degree."""
-    def __init__(self, config=Rung12Config(), bn: DiscreteBayesianNetwork = None):
+    def __init__(self, config=None, bn: DiscreteBayesianNetwork = None):
         super().__init__()
-        self.config = config
+        self.config = config or Rung12Config()
         self.reason_graph = ReasoningGraph(bn=bn)
 
     @abstractmethod
@@ -387,7 +387,7 @@ class Rung(ABC):
     def _construct_scenario(self):
         pass
 
-    def generate(self):
+    def generate_entry(self):
         n_round = self.config.n_round #stochastic rounding value, that we will use for all subfunction to be coherent within the example    
         self._generate_network(n=self.config.n_nodes,
             method=self.config.graph_generation_mode,
@@ -428,9 +428,9 @@ class Rung(ABC):
         }
         metadata.update(specific_metadata)
         
-        return Problem(metadata=metadata, answer=answer)
+        return Entry(metadata=metadata, answer=answer)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         bif_data = metadata["bif_description"]
         model = ReasoningGraph(CanonicalBIFReader(string=bif_data).get_model())
         n_round = metadata['n_round']
@@ -461,8 +461,8 @@ class Rung(ABC):
 
 
 class BayesianAssociation(Rung, DevTask):
-    def __init__(self, config=Rung12Config()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or Rung12Config())
 
     def _generate_network(self,**kwargs):
         self.reason_graph.generate_new_graph(seed= self.config.seed,
@@ -492,8 +492,8 @@ class BayesianAssociation(Rung, DevTask):
 
 
 class BayesianIntervention(Rung, DevTask):
-    def __init__(self, config=Rung12Config()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or Rung12Config())
 
     def _generate_network(self,**kwargs):
         self.reason_graph.generate_new_graph(seed = self.config.seed,

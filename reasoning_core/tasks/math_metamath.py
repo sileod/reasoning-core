@@ -14,12 +14,13 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.request import urlretrieve
 
 from appdirs import AppDirs
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, Payload, Problem, Task
+from reasoning_core.template import Config, Entry, Task, render_payload
 
 
 _SET_MM_URL = "https://raw.githubusercontent.com/metamath/set.mm/develop/set.mm"
@@ -732,39 +733,54 @@ def _sample_instance(config):
         if not _verify(proof, tree.target, premises, tree.used):
             continue
         displayed = sorted(tree.used)
-        inst = edict(tree=tree, premises=premises, proof=proof, rules=displayed)
+        # EasyDict releases differ in whether nested tuples are preserved.  These
+        # proof expressions rely on tuple concatenation, so keep this internal
+        # container out of EasyDict's recursive conversion path.
+        inst = SimpleNamespace(
+            tree=tree, premises=premises, proof=proof, rules=displayed
+        )
         if _keep_instance(inst):
             return inst
     raise RuntimeError("failed to generate a verified Metamath proof tree")
 
 
-def _negative_target(inst, config):
+def _critical_premise_foil(inst, config):
+    """Find a necessary leaf and a same-shape variable near miss for it."""
     rules = [_database().rules[l] for l in inst.rules]
-    closure = _closure(inst.premises, rules, int(config.formula_len_cap), check_dv=True)
-    relaxed = _closure(inst.premises, rules, int(config.formula_len_cap), check_dv=False)
-    if closure is None or relaxed is None:
+    cap = int(config.formula_len_cap)
+    db = _database()
+    full = _closure(inst.premises, rules, cap, check_dv=True)
+    if full is None or inst.tree.target not in full:
         return None
-    vars_ = sorted({t for f in list(inst.premises) + [inst.tree.target] for t in f if t in _database().var_type})
-    premise_vars = {t for f in inst.premises for t in f if t in _database().var_type}
-    for _ in range(80):
-        repl = {v: random.choice(_VARS.get(_database().var_type[v], (v,))) for v in vars_}
-        cand = tuple(repl.get(t, t) for t in inst.tree.target)
-        if {t for t in cand if t in _database().var_type} - premise_vars:
+    available = {
+        t for expr in (*inst.premises, inst.tree.target) for t in expr
+        if t in db.var_type
+    }
+    order = list(range(len(inst.premises)))
+    random.shuffle(order)
+    for i in order:
+        premise = inst.premises[i]
+        without = inst.premises[:i] + inst.premises[i + 1:]
+        relaxed = _closure(without, rules, cap, check_dv=False)
+        if relaxed is None or inst.tree.target in relaxed:
             continue
-        if cand != inst.tree.target and len(cand) <= int(config.formula_len_cap) and _head(cand) == _head(inst.tree.target):
-            _relaxed_gap(closure, relaxed, cand, "negative")
-            if cand not in closure and cand not in relaxed:
-                return cand
-    for r in _math_rule_catalog(int(config.formula_len_cap)):
-        subst = _fresh_subst(r)
-        if subst:
-            cand = _subst_expr(r.conclusion, subst)
-            if {t for t in cand if t in _database().var_type} - premise_vars:
-                continue
-            if _head(cand) == _head(inst.tree.target):
-                _relaxed_gap(closure, relaxed, cand, "negative")
-            if _head(cand) == _head(inst.tree.target) and cand not in closure and cand not in relaxed:
-                return cand
+        positions = [j for j, tok in enumerate(premise) if tok in db.var_type]
+        random.shuffle(positions)
+        for j in positions:
+            tok = premise[j]
+            replacements = [
+                v for v in available
+                if db.var_type.get(v) == db.var_type[tok] and v != tok
+            ]
+            random.shuffle(replacements)
+            for replacement in replacements:
+                foil = premise[:j] + (replacement,) + premise[j + 1:]
+                if foil in inst.premises or _fmt(foil) is None:
+                    continue
+                negative = inst.premises[:i] + (foil,) + inst.premises[i + 1:]
+                closure = _closure(negative, rules, cap, check_dv=False)
+                if closure is not None and inst.tree.target not in closure:
+                    return i, foil
     return None
 
 
@@ -776,35 +792,35 @@ class MetamathEntailment(Task):
     """True/False bounded derivability from displayed set.mm-derived rules."""
 
     def __init__(self, config=None, **kwargs):
-        config = config or MetamathConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
+        super().__init__(config=config or MetamathConfig(), timeout=120, **kwargs)
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(50):
             inst = _sample_instance(self.config)
             # Polarity must be chosen per-call (stateless): the old instance-state
             # toggle (self._want_positive) degenerates under generate_balanced_batch(workers>1),
             # where each pool.submit re-pickles a fresh `self` from the parent so the toggle
             # never advances -> every worker emits the same polarity -> balancing cap livelock.
+            pair = _critical_premise_foil(inst, self.config)
+            if pair is None:
+                continue
             positive = random.random() < 0.5
+            premise_index, foil = pair
+            premises_raw = inst.premises if positive else (
+                inst.premises[:premise_index] + (foil,) + inst.premises[premise_index + 1:]
+            )
             target = inst.tree.target
-            if not positive:
-                target = _negative_target(inst, self.config)
-                if target is None or _fmt(target) is None:
-                    continue
-            display_exprs = list(inst.premises) + [target]
+            display_exprs = list(premises_raw) + [target]
             for label in inst.rules:
                 rule = _database().rules[label]
                 display_exprs.extend(rule.essential)
                 display_exprs.append(rule.conclusion)
             env = _display_env(display_exprs)
             rule_rows = _rule_rows(inst.rules, env)
-            premises = [f"{i + 1}. {_fmt(p, env)}" for i, p in enumerate(inst.premises)]
+            premises = [f"{i + 1}. {_fmt(p, env)}" for i, p in enumerate(premises_raw)]
             meta = edict(
-                premises=[_fmt(p, env) for p in inst.premises],
-                raw_premises=[list(p) for p in inst.premises],
+                premises=[_fmt(p, env) for p in premises_raw],
+                raw_premises=[list(p) for p in premises_raw],
                 rules=[r.id for r in rule_rows],
                 raw_rule_labels=inst.rules,
                 rule_map={r.id: r.label for r in rule_rows},
@@ -819,27 +835,27 @@ class MetamathEntailment(Task):
                 conjecture=_fmt(target, env),
                 raw_conjecture=list(target),
                 positive=positive,
+                corrupted_premise=None if positive else premise_index + 1,
                 proof=list(inst.proof) if positive else [],
                 source="set.mm",
             )
-            meta.payload = Payload(
-                premises="\n".join(premises),
-                allowed_rules=_rule_text(rule_rows),
-                conjecture=meta.conjecture,
-            )
-            return Problem(
+            meta.payload = {
+                "premises": "\n".join(premises),
+                "allowed_rules": _rule_text(rule_rows),
+                "conjecture": meta.conjecture,
+            }
+            return Entry(
                 meta,
                 "True" if positive else "False",
             )
         raise RuntimeError("failed to generate Metamath entailment task")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
-            "Using only these premises and rules, does the conjecture follow?\n"
-            "Use only the listed premises and rules. No hidden background facts.\n"
-            "Rules may only rename variables, not substitute compound terms.\n"
+            "Does the conjecture follow using only the listed premises and rules?\n"
+            "Rules instantiate only by renaming variables.\n"
             "The answer is True or False.\n\n"
-            f"{Payload(metadata.payload)}"
+            f"{render_payload(metadata.payload)}"
         )
 
 
@@ -847,12 +863,9 @@ class MetamathCoreSelect(Task):
     """Select the minimal sufficient displayed rule subset for a Metamath proof."""
 
     def __init__(self, config=None, **kwargs):
-        config = config or MetamathConfig()
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=120)
+        super().__init__(config=config or MetamathConfig(), timeout=120, **kwargs)
 
-    def generate(self):
+    def generate_entry(self):
         labels = [r.label for r in _math_rule_catalog(int(self.config.formula_len_cap))]
         for _ in range(80):
             inst = _sample_instance(self.config)
@@ -951,25 +964,25 @@ class MetamathCoreSelect(Task):
                 proof=list(inst.proof),
                 source="set.mm",
             )
-            meta.payload = Payload(
-                premises="\n".join(premises),
-                rule_catalog=_rule_text(rule_rows, bullet=True),
-                conjecture=meta.conjecture,
-                options=option_text,
-            )
-            return Problem(
+            meta.payload = {
+                "premises": "\n".join(premises),
+                "rule_catalog": _rule_text(rule_rows, bullet=True),
+                "conjecture": meta.conjecture,
+                "options": option_text,
+            }
+            return Entry(
                 meta,
                 answer,
             )
         raise RuntimeError("failed to generate Metamath core-selection task")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Which option is sufficient to derive the conjecture?\n"
             "Use only the listed premises and rules. No hidden background facts.\n"
             "Rules may only rename variables, not substitute compound terms.\n"
             "The answer is A, B, C, or D.\n\n"
-            f"{Payload(metadata.payload)}"
+            f"{render_payload(metadata.payload)}"
         )
 
     def score_answer(self, answer, entry):

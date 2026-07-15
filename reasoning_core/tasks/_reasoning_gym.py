@@ -1,4 +1,4 @@
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Entry, Config
 from dataclasses import dataclass
 try:
     import reasoning_gym
@@ -6,6 +6,30 @@ except ImportError:
     reasoning_gym = None
 import random
 import json
+
+# Curated reasoning-gym task subset used for per-task influence sweeps.
+# (Kept here as a plain list rather than a separate JSON data file.)
+RGYM_TASKS = [
+    'ab', 'acre', 'advanced_geometry', 'aiw', 'arc_1d', 'arc_agi', 'base_conversion',
+    'basic_arithmetic', 'bf', 'binary_alternation', 'binary_matrix', 'bitwise_arithmetic', 'boxnet',
+    'caesar_cipher', 'calendar_arithmetic', 'chain_sum', 'circuit_logic', 'codeio',
+    'color_cube_rotation', 'complex_arithmetic', 'count_bits', 'count_primes', 'countdown',
+    'course_schedule', 'cryptarithm', 'decimal_arithmetic', 'decimal_chain_sum', 'dice',
+    'emoji_mystery', 'family_relationships', 'figlet_font', 'fraction_simplification', 'futoshiki',
+    'game_of_life', 'game_of_life_halting', 'gcd', 'graph_color', 'group_anagrams', 'gsm_symbolic',
+    'intermediate_integration', 'isomorphic_strings', 'jugs', 'knights_knaves', 'largest_island',
+    'lcm', 'leg_counting', 'letter_counting', 'letter_jumble', 'list_functions', 'mahjong_puzzle',
+    'manipulate_matrix', 'maze', 'mini_sudoku', 'n_queens', 'needle_haystack', 'number_filtering',
+    'number_format', 'number_sequence', 'number_sorting', 'palindrome_generation',
+    'palindrome_partitioning', 'polynomial_equations', 'polynomial_multiplication', 'pool_matrix',
+    'power_function', 'prime_factorization', 'products', 'propositional_logic', 'puzzle24',
+    'quantum_lock', 'ransom_note', 'rearc', 'rectangle_count', 'rotate_matrix', 'rotten_oranges',
+    'rubiks_cube', 'rush_hour', 'self_reference', 'sentence_reordering', 'shortest_path',
+    'simple_equations', 'simple_geometry', 'simple_integration', 'sokoban', 'spell_backward',
+    'spiral_matrix', 'string_insertion', 'string_manipulation', 'string_splitting',
+    'string_synthesis', 'sudoku', 'syllogism', 'time_intervals', 'tower_of_hanoi', 'tsumego',
+    'word_ladder', 'word_sequence_reversal', 'word_sorting', 'zebra_puzzles',
+]
 
 
 @dataclass
@@ -18,13 +42,13 @@ class RGConfig(Config):
 
 class Reasoning_Gym(Task):
     summary = "Interface with diverse reasoning datasets generated via reasoning-gym."
-    def __init__(self, config=RGConfig()):
+    def __init__(self, config=None):
         if reasoning_gym is None:
             raise ImportError("reasoning_gym is not installed.")
         self.datasets = [d for d in reasoning_gym.factory.DATASETS.keys() if d != 'composite']
-        super().__init__(config)
+        super().__init__(config=config or RGConfig())
 
-    def generate(self):
+    def generate_entry(self):
         d = self.config.rg_task or random.choice(self.datasets)
         t, c_cls = reasoning_gym.factory.DATASETS[d]
 
@@ -43,7 +67,7 @@ class Reasoning_Gym(Task):
             "source_task": d,
             "_question": entry['question'],
         }
-        return Problem(json.loads(json.dumps(meta, default=str)), str(entry['answer']))
+        return Entry(json.loads(json.dumps(meta, default=str)), str(entry['answer']))
 
     def score_answer(self, answer, entry):
         sd = (entry['metadata'].get('source_task') or entry['metadata'].get('_source_task')
@@ -56,5 +80,5 @@ class Reasoning_Gym(Task):
             score = 0
         return score
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return metadata._question

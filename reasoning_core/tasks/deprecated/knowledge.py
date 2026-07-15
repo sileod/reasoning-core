@@ -80,8 +80,8 @@ class LexicalKnowledgeConfig(Config):
         self.n_words = min(int(self.n_words * (1 + c)), len(_FULL_WORDS) or float('inf'))
 
 class LexicalKnowledge(DevTask):
-    def __init__(self, config=LexicalKnowledgeConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or LexicalKnowledgeConfig())
         _load_wn()
         self.generators = [
                     partial(self._g_hypernym, 1), 

@@ -188,10 +188,8 @@ _PROOF_BUILDERS = (_proof_lia_chain, _proof_ring, _proof_tauto, _proof_list)
 class RocqProofRepair(DevTask):
     """Choose the unique Rocq proof body that compiles."""
 
-    def __init__(self, config=RocqConfig(), **kwargs):
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=180)
+    def __init__(self, config=None, **kwargs):
+        super().__init__(config=config or RocqConfig(), timeout=180, **kwargs)
 
     def generate(self):
         n_cand = max(2, min(6, int(self.config.n_candidates)))
@@ -366,10 +364,8 @@ _MCQ_BUILDERS = (_mcq_all_nonneg, _mcq_even_filter, _mcq_reverse, _mcq_sum_shift
 class RocqInvariantMCQ(DevTask):
     """Choose the unique same-typed candidate satisfying a Rocq boolean invariant."""
 
-    def __init__(self, config=RocqConfig(), **kwargs):
-        for k, v in kwargs.items():
-            setattr(config, k, v)
-        super().__init__(config=config, timeout=180)
+    def __init__(self, config=None, **kwargs):
+        super().__init__(config=config or RocqConfig(), timeout=180, **kwargs)
 
     def generate(self):
         n_cand = 4

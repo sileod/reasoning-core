@@ -6,13 +6,13 @@ import exrex
 import regex
 from dataclasses import dataclass
 from gramforge import init_grammar, generate
-from reasoning_core.template import Task, DevTask, Problem, register_dataset, Reward, Config, stochastic_rounding as sround
+from reasoning_core.template import Task, DevTask, Entry, register_dataset, Reward, Config, stochastic_rounding as sround
 from easydict import EasyDict as edict
 from faker import Faker
 import sys, os
 from functools import wraps
 import codecs
-from collections import defaultdict
+from collections import defaultdict, deque
 
 #import re2 as re
 r"""
@@ -40,8 +40,136 @@ fake = Faker()
 
 wordlist = fake.words(nb=100,unique=True)
 
+SFT_ALPHA = "".join(chr(i) for i in range(33, 127))
+_random_exrex_getone = exrex.getone
 
-def regex_grammar(fsm_subset=False, alpha=None, words=None):
+
+def _patch_exrex_domain(alphabet=SFT_ALPHA):
+    alphabet = "".join(sorted(set(alphabet)))
+    sre_parse = exrex.sre_parse
+    exrex.CATEGORIES["category_any"] = list(alphabet)
+    exrex.CATEGORIES[sre_parse.CATEGORY_SPACE] = [c for c in alphabet if re.fullmatch(r"\s", c, flags=re.ASCII)]
+    exrex.CATEGORIES[sre_parse.CATEGORY_NOT_SPACE] = [c for c in alphabet if re.fullmatch(r"\S", c, flags=re.ASCII)]
+    exrex.CATEGORIES[sre_parse.CATEGORY_DIGIT] = [c for c in alphabet if re.fullmatch(r"\d", c, flags=re.ASCII)]
+    exrex.CATEGORIES[sre_parse.CATEGORY_NOT_DIGIT] = [c for c in alphabet if re.fullmatch(r"\D", c, flags=re.ASCII)]
+    exrex.CATEGORIES[sre_parse.CATEGORY_WORD] = [c for c in alphabet if re.fullmatch(r"\w", c, flags=re.ASCII)]
+    exrex.CATEGORIES[sre_parse.CATEGORY_NOT_WORD] = [c for c in alphabet if re.fullmatch(r"\W", c, flags=re.ASCII)]
+
+
+_patch_exrex_domain()
+
+
+def _shortlex_key(s):
+    return (len(s), s)
+
+
+def _is_sft_sample(s):
+    return bool(s) and s.isprintable() and not any(c.isspace() for c in s)
+
+
+def _best_shortlex(strings):
+    strings = list(strings)
+    return min(strings, key=_shortlex_key) if strings else None
+
+
+def _concat_shortlex(left, right):
+    left_empty, left_best = left
+    right_empty, right_best = right
+    candidates = []
+    if left_best is not None and right_empty:
+        candidates.append(left_best)
+    if left_empty and right_best is not None:
+        candidates.append(right_best)
+    if left_best is not None and right_best is not None:
+        candidates.append(left_best + right_best)
+    return left_empty and right_empty, min(candidates, key=_shortlex_key) if candidates else None
+
+
+def _repeat_shortlex(summary, min_repeat, max_repeat, limit):
+    if max_repeat == exrex.sre_parse.MAXREPEAT or max_repeat + 1 - min_repeat >= limit:
+        max_repeat = min_repeat + limit - 1
+
+    nullable = min_repeat == 0 or summary[0]
+    candidates = []
+    counts = {min_repeat}
+    if min_repeat == 0 and max_repeat >= 1:
+        counts.add(1)
+
+    for count in counts:
+        acc = (True, None)
+        for _ in range(count):
+            acc = _concat_shortlex(acc, summary)
+        if acc[1] is not None:
+            candidates.append(acc[1])
+
+    return nullable, min(candidates, key=_shortlex_key) if candidates else None
+
+
+def _repeat_ops():
+    sre_parse = exrex.sre_parse
+    ops = {sre_parse.MAX_REPEAT, sre_parse.MIN_REPEAT}
+    if hasattr(sre_parse, "POSSESSIVE_REPEAT"):
+        ops.add(sre_parse.POSSESSIVE_REPEAT)
+    return ops
+
+
+def _shortlex_parsed(parsed, limit, grouprefs=None):
+    if grouprefs is None:
+        grouprefs = {}
+
+    sre_parse = exrex.sre_parse
+    acc = (True, None)
+    repeat_ops = _repeat_ops()
+    for op, arg in parsed:
+        if op == sre_parse.IN:
+            item = (False, _best_shortlex(exrex._in(arg)))
+        elif op == sre_parse.LITERAL:
+            item = (False, _best_shortlex([exrex.unichr(arg)]))
+        elif op == sre_parse.CATEGORY:
+            item = (False, _best_shortlex(exrex.CATEGORIES.get(arg, [""])))
+        elif op == sre_parse.ANY:
+            item = (False, _best_shortlex(exrex.CATEGORIES["category_any"]))
+        elif op in repeat_ops:
+            item = _repeat_shortlex(_shortlex_parsed(list(arg[2]), limit, grouprefs), arg[0], arg[1], limit)
+        elif op == sre_parse.BRANCH:
+            options = [_shortlex_parsed(branch, limit, grouprefs.copy()) for branch in arg[1]]
+            candidates = [best for _empty, best in options if best is not None]
+            item = (any(empty for empty, _best in options), min(candidates, key=_shortlex_key) if candidates else None)
+        elif op == sre_parse.SUBPATTERN:
+            subexpr = arg[3] if exrex.IS_PY36_OR_GREATER else arg[1]
+            item = _shortlex_parsed(subexpr, limit, grouprefs)
+            if arg[0]:
+                grouprefs[arg[0]] = item[1] or ""
+        elif op == sre_parse.AT:
+            item = (True, None)
+        elif op == sre_parse.NOT_LITERAL:
+            chars = list(exrex.CATEGORIES["category_any"])
+            c = exrex.unichr(arg)
+            if c in chars:
+                chars.remove(c)
+            item = (False, _best_shortlex(chars))
+        elif op == sre_parse.GROUPREF:
+            if arg not in grouprefs:
+                raise ValueError("cannot shortlex unresolved group reference")
+            ref = grouprefs[arg]
+            item = (ref == "", ref if ref else None)
+        elif op in (sre_parse.ASSERT, sre_parse.ASSERT_NOT):
+            raise ValueError("lookaround shortlex is not supported by exrex")
+        else:
+            raise ValueError(f"cannot shortlex exrex token {op!r}")
+        acc = _concat_shortlex(acc, item)
+    return acc
+
+
+def _shortlex_getone(regex_string, limit=20):
+    """Return the shortest non-empty match in the configured exrex domain."""
+    _nullable, best = _shortlex_parsed(exrex.parse(regex_string), limit)
+    if best is not None and regex.fullmatch(regex_string, best, timeout=1):
+        return best
+    raise ValueError(f"Could not determine direct shortlex match for regex: {regex_string}")
+
+
+def regex_grammar(fsm_subset=False, alpha=None, words=None, advanced=False):
     R = init_grammar(["re"], preprocess_template=lambda x: x)
 
     R("start(regex)", "{0}")
@@ -82,6 +210,16 @@ def regex_grammar(fsm_subset=False, alpha=None, words=None):
 
     R("regex(regex)", "(?:{0})")
 
+    if advanced:
+        R("regex(regex)", "^{0}", weight=0.2)
+        R("regex(regex)", "{0}$", weight=0.2)
+        R("regex(regex)", r"\b{0}", weight=0.2)
+        R("regex(regex)", r"{0}\b", weight=0.2)
+        R("regex(regex)", r"\B{0}", weight=0.03)
+        R("regex(regex)", r"{0}\B", weight=0.03)
+        R("regex(regex,regex)", "(?={0}){1}", weight=0.05)
+        R("regex(regex,regex)", "(?!{0}){1}", weight=0.05)
+
     R("regex(predef)", "{0}", weight=3)
 
     for c in string.ascii_letters + string.digits:
@@ -101,24 +239,27 @@ def regex_grammar(fsm_subset=False, alpha=None, words=None):
 
 
 @shutup
-def safe_regex(r):
+def safe_regex(r, canonical=False):
     try:
-        sample_instance(r, max_tries=10)
+        if canonical:
+            canonical_instance(r)
+        else:
+            sample_instance(r, max_tries=10)
         return True
     except (ValueError, Exception):
         return False
 
-def sample_regex(config, max_tries=100):
+def sample_regex(config, max_tries=100, canonical=False, advanced=False):
     max_depth = config.max_depth
     min_depth = config.min_depth
 
-    G = regex_grammar()
+    G = regex_grammar(advanced=advanced)
     for _ in range(max_tries):
         x = generate(G.start(), depth=max_depth, min_depth=min_depth, mode=config.gramforge_algorithm)
         if len(x.leaves)<=1:
             continue
         r = x @ 're'
-        if safe_regex(r):
+        if safe_regex(r, canonical=canonical):
             return r
     raise RuntimeError("No valid regex found")
 
@@ -150,48 +291,62 @@ def sample_instance(r_str, max_tries=100):
         raise ValueError(f"Could not compile invalid regex: {r_str}")
 
     for _ in range(max_tries):
-        s = exrex.getone(r_str, 5)
-        # Verify the generated string is a non-empty full match and has no unprintable characters
-        if s and s.isprintable() and p.fullmatch(s, timeout=5):
+        s = _random_exrex_getone(r_str, 5)
+        if _is_sft_sample(s) and p.fullmatch(s, timeout=5):
             return s
     raise ValueError(f"Could not generate a verified string for regex: {r_str}")
 
+
+@shutup
+def canonical_instance(r_str):
+    """Generates the canonical shortest visible non-empty match."""
+    try:
+        p = regex.compile(r_str)
+    except re.error:
+        raise ValueError(f"Could not compile invalid regex: {r_str}")
+
+    s = _shortlex_getone(r_str, 5)
+    if _is_sft_sample(s) and p.fullmatch(s, timeout=5):
+        return s
+    raise ValueError(f"Could not generate a canonical string for regex: {r_str}")
+
 class RegexFollowing(Task):
     summary = "Produce a string that matches a specified regular expression pattern."
-    def __init__(self, config=RegexConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or RegexConfig())
+        self.balancing_key_ratio = 0.4
 
-    def generate(self):
-        meta = edict()
-        r = sample_regex(self.config)
-        meta.regex = r
-        meta.string = sample_instance(r)
-        return Problem(meta, meta.string)
+    def generate_entry(self):
+        for _ in range(50):
+            meta = edict()
+            r = sample_regex(self.config, max_tries=300, canonical=True, advanced=True)
+            answer = canonical_instance(r)
+            if answer == "!" and random.random() < 0.75:
+                continue
+            meta.regex = r
+            meta.string = answer
+            return Entry(meta, meta.string)
+        raise RuntimeError("Could not generate a regex with a capped canonical target")
 
 
     def score_answer(self, answer, entry):
-        try:
-            answer_str, pattern = str(answer), entry['metadata']['regex']
-            expected_len = len(entry['metadata']['string'])
-            target_len_penalty = abs(len(answer_str) - expected_len)
-            
-            max_edits = len(answer_str) + len(pattern)
-            
-            distance = next((e for e in range(min(max_edits, 10) + 1)
-                            if regex.fullmatch(f'(?:{pattern}){{e<={e}}}', answer_str, timeout=0.5)),
-                            max_edits) # Corrected parenthesis here
-                            
-            return 1.0 / (1.0 + distance + target_len_penalty)
-        
-        except (TimeoutError, regex.error):
-            return None
+        pred = str(answer).strip("`\n\r ")
+        return float(pred == entry.answer)
 
-    def prompt(self, meta):
-        n = len(meta.string)
-        return f"The answer is a {n}-character string that fully matches the regular expression: {meta.regex}"
+    def render_prompt(self, meta):
+        return (
+            "The answer is the shortest non-empty visible non-whitespace ASCII string "
+            f"that fully matches this regular expression, with lexicographic tie-breaks: {meta.regex}"
+        )
 
     def balancing_key(self, problem):
-        return problem.metadata.regex
+        answer = problem.answer
+        if answer == "!":
+            return "answer:bang"
+        if answer.startswith("!"):
+            return "answer:bang_prefix"
+        bucket = "1" if len(answer) == 1 else "2" if len(answer) == 2 else "3+"
+        return f"answer:{bucket}:{answer[0]}"
 
 def strip_anchors_safe(text: str) -> str:
     """Strips optional ^, non-escaped $, and markdown formatting from a regex string."""
@@ -359,10 +514,10 @@ def synthesize_shortest_regex(
 
 class RegexInduction(DevTask):
     summary = "Induce a regular expression that separates positive and negative string sets."
-    def __init__(self, config=RegexConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or RegexConfig())
 
-    def generate(self):
+    def generate_entry(self):
         cfg = self.config
         alphabet = ALPHA[:max(2, cfg.n_alpha)]
         words = [a + b for a in alphabet for b in alphabet][:6]
@@ -438,7 +593,7 @@ class RegexInduction(DevTask):
                 shortest_regex=answer,
             )
 
-            return Problem(meta, answer)
+            return Entry(meta, answer)
 
         return None
 
@@ -458,7 +613,7 @@ class RegexInduction(DevTask):
             return 0.0
         return 1.0 / (1.0 + len(pred) - len(opt))
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         pos_examples = ", ".join(f"'{s}'" for s in meta["positives"])
         neg_examples = ", ".join(f"'{s}'" for s in meta["negatives"])
         sigma = "".join(meta["alphabet"])
@@ -511,8 +666,8 @@ def _has_regex_abstraction(pattern):
 
 
 class RegexRetrieval(DevTask):
-    def __init__(self, config=RegexRetrievalConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or RegexRetrievalConfig())
 
     def _natural(self, cfg):
         text = fake.paragraph(nb_sentences=cfg.n_sentences)
@@ -544,7 +699,7 @@ class RegexRetrieval(DevTask):
         sep = random.choice([" ", " ", ", ", ". "])
         return pattern, sep.join(chunks), "generated"
 
-    def generate(self):
+    def generate_entry(self):
         cfg = self.config
         p = random.random()
         make = self._natural if p < cfg.natural_rate else self._structured if p < cfg.natural_rate + cfg.structured_rate else self._generated
@@ -572,10 +727,10 @@ class RegexRetrieval(DevTask):
                 continue
 
             meta = edict(regex=pattern, text=text, matches=matches, source=source)
-            return Problem(meta, json.dumps(matches, ensure_ascii=True, separators=(",", ":")))
+            return Entry(meta, json.dumps(matches, ensure_ascii=True, separators=(",", ":")))
         return None
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         return (
             f"Text: {meta['text']}\n"
             f"Regex: {meta['regex']}\n"
@@ -609,11 +764,40 @@ def _sample_pair(G, depth, min_depth, mode, max_tries=40):
     return None
 
 
-def _shortest_witness(fsm):
-    """Shortest string in fsm, or None if empty."""
-    for s in fsm.strings(otherchars=[]):
-        return s
+def _shortest_witness(fsm, alphabet):
+    """First accepted string in shortlex order, or None if the FSM is empty."""
+    queue = deque([(fsm.initial, "")])
+    visited = {fsm.initial}
+    while queue:
+        state, path = queue.popleft()
+        if state in fsm.finals:
+            return path
+        for symbol in sorted(alphabet):
+            next_state = next(
+                target
+                for charclass, target in fsm.map[state].items()
+                if charclass.accepts(symbol)
+            )
+            if next_state not in visited:
+                visited.add(next_state)
+                queue.append((next_state, path + symbol))
     return None
+
+
+def _distinct_equivalent_rendering(regex, fsm):
+    candidate = str(gparse(regex).reduce())
+    if candidate == regex:
+        return None
+    candidate_fsm = gparse(candidate).to_fsm()
+    return candidate if fsm.equivalent(candidate_fsm) else None
+
+
+def _reduced_union_superset(regex_a, fsm_a, regex_other):
+    candidate = str(gparse(f"({regex_a})|({regex_other})").reduce())
+    candidate_fsm = gparse(candidate).to_fsm()
+    if regex_a in candidate or fsm_a.equivalent(candidate_fsm):
+        return None
+    return candidate if fsm_a.issubset(candidate_fsm) else None
 
 
 @dataclass
@@ -644,11 +828,11 @@ def _sample_regex(G, depth, min_depth, mode="sequential", max_tries=60):
 
 class RegexReasoning(Task):
     summary = "Reason about regular expression equivalence, containment, and witnesses."
-    def __init__(self, config=RegexReasoningConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or RegexReasoningConfig())
         self.balancing_key_ratio = 0.25
 
-    def generate(self):
+    def generate_entry(self):
         cfg = self.config
         alpha = ALPHA[: max(2, cfg.n_alpha)]
         words = [a + b for a in alpha for b in alpha][:6]
@@ -662,39 +846,52 @@ class RegexReasoning(Task):
         qtype = random.choice(["equivalence", "containment", "distinguishing"])
 
         if qtype == "equivalence":
-            # ~40% "Yes" (reuse same regex string), ~60% "No" (use the pair)
+            # ~40% "Yes" with distinct, solver-certified representations.
             if random.random() < 0.4:
-                meta = edict(qtype="equivalence", regex_a=r1, regex_b=r1)
-                return Problem(meta, "Yes")
+                candidates = [(r1, f1), (r2, f2)]
+                for _ in range(20):
+                    r, f = _sample_regex(G, cfg.max_depth, cfg.min_depth, cfg.gramforge_algorithm)
+                    if f is not None:
+                        candidates.append((r, f))
+                for r, f in candidates:
+                    if r_equiv := _distinct_equivalent_rendering(r, f):
+                        meta = edict(qtype="equivalence", regex_a=r, regex_b=r_equiv)
+                        return Entry(meta, "Yes")
+                raise RuntimeError("Could not generate distinct equivalent regex renderings")
             meta = edict(qtype="equivalence", regex_a=r1, regex_b=r2)
-            return Problem(meta, "No")
+            return Entry(meta, "No")
 
         if qtype == "containment":
-            # Force ~50% Yes by building a superset via union
+            # Force ~50% Yes without exposing A as a literal union arm of B.
             if random.random() < 0.5:
-                sup = gparse(f"({r1})|({r2})")
-                r_sup = str(sup)
-                # A=r1 ⊆ B=r1|r2 is always true
-                meta = edict(qtype="containment", regex_a=r1, regex_b=r_sup)
-                return Problem(meta, "Yes")
+                candidates = [(r1, f1, r2), (r2, f2, r1)]
+                for _ in range(20):
+                    r_other, f_other = _sample_regex(G, cfg.max_depth, cfg.min_depth, cfg.gramforge_algorithm)
+                    if f_other is not None:
+                        candidates.append((r1, f1, r_other))
+                for r, f, r_other in candidates:
+                    if r_sup := _reduced_union_superset(r, f, r_other):
+                        meta = edict(qtype="containment", regex_a=r, regex_b=r_sup)
+                        return Entry(meta, "Yes")
+                raise RuntimeError("Could not generate a non-revealing containment pair")
             else:
                 is_sub = f1.issubset(f2)
                 if random.random() < 0.5:
                     meta = edict(qtype="containment", regex_a=r1, regex_b=r2)
-                    return Problem(meta, "Yes" if is_sub else "No")
+                    return Entry(meta, "Yes" if is_sub else "No")
                 else:
                     meta = edict(qtype="containment", regex_a=r2, regex_b=r1)
-                    return Problem(meta, "Yes" if f2.issubset(f1) else "No")
+                    return Entry(meta, "Yes" if f2.issubset(f1) else "No")
 
         # distinguishing
         sd = f1.symmetric_difference(f2)
-        witness = _shortest_witness(sd)
+        witness = _shortest_witness(sd, alpha)
         if witness is None:
             return None
         meta = edict(qtype="distinguishing", regex_a=r1, regex_b=r2)
-        return Problem(meta, witness)
+        return Entry(meta, witness)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         a, b = metadata["regex_a"], metadata["regex_b"]
         qt = metadata["qtype"]
         if qt == "equivalence":

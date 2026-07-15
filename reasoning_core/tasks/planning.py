@@ -26,7 +26,7 @@ from unified_planning.interop import convert_problem_to_tarski
 from unified_planning.interop import convert_problem_from_tarski
 from dataclasses import dataclass, field
 from collections import Counter, namedtuple
-from reasoning_core.template import Task, Problem, Reward, Config
+from reasoning_core.template import Task, Entry, Reward, Config
 import logging
 logging.getLogger().setLevel(logging.WARNING)
 from unified_planning.shortcuts import SequentialSimulator
@@ -239,6 +239,7 @@ def rolling(n_times):
 
 #@rolling(10)
 def generate_domain(N=5, seed=None, fluent_max_arity=2):
+    state = random.getstate()
     random.seed(seed)
     problem = unified_planning.model.Problem(f"omniplan--N{N}-seed{seed}")
 
@@ -324,6 +325,7 @@ def generate_domain(N=5, seed=None, fluent_max_arity=2):
         problem.add_action(action)
 
     problem.domain_reuses=0
+    random.setstate(state)
     return problem
 
 def generate_problem(N=5, domain=None, add_random_goals=True):
@@ -630,10 +632,10 @@ def compile(problem):
 
 
 #@timeout_decorator.timeout(10)
-def solve(problem, planner="pyperplan-opt", lexicographic=True):
+def solve(problem, planner="pyperplan-opt", rank_tiebreak=True):
     if "pyperplan" in planner:
         problem=compile(problem)    
-    if lexicographic:
+    if rank_tiebreak:
         costs = {a: 10000+i for i,a in enumerate(problem.actions)}
         problem.add_quality_metric(up.model.metrics.MinimizeActionCosts(costs))
 
@@ -652,7 +654,7 @@ def to_pddl(s):
     actions = [a.strip('[]').strip().replace(',','').replace('(',' ') for a in s.split(')')]
     return "\n".join([f'({a})' for a in actions if a]).replace('))',')')
 
-def translate(problem: Problem, write_default=0.5) -> str:
+def translate(problem) -> str:
     desc = []
     
     # 1. Analyze Types
@@ -713,18 +715,11 @@ def translate(problem: Problem, write_default=0.5) -> str:
 
     # --- [STATE] ---
     desc.append("\nInitial state:")
-    
-    # Handle Default Value logic
-    if random.random() < write_default:
-        # Calculate majority value in initial state (True or False)
-        vals = [v.is_true() for v in problem.initial_values.values()]
-        # If vals is empty, default to False
-        default_val = Counter(vals).most_common(1)[0][0] if vals else False
-        desc.append(f"Default value: {default_val}")
 
     # Init (Standard PDDL assumption: list only True facts)
     init = [str(f) for f, v in problem.initial_values.items() if v.is_true()]
     desc.append(f"True values: {', '.join(init) if init else 'None'}")
+    desc.append("All facts not listed under True values are false.")
 
     desc.append('\nGoal:')
     goals = [str(g) for g in problem.goals]
@@ -787,11 +782,11 @@ class Planning(Task):
     summary = "Generate action plans to achieve goals in domains like Blocksworld."
     task_name = "planning" 
 
-    def __init__(self, config=PlanningConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or PlanningConfig())
         shutup()
 
-    def generate(self):
+    def generate_entry(self):
         meta=edict()
         config = self.config
         config.domain = random.choice(config.domains)
@@ -800,13 +795,11 @@ class Planning(Task):
         target_na = random.choice(list(range(config.min_na, config.max_na + 1)))
 
         for _ in range(250):
-    
-            meta.domain_seed = f"{N}-{random.randint(0,config.max_domain_seed)}"
-            meta.fluent_arity = fma = random.choices([1, 2], weights=[1, config.arity_weight], k=1)[0]
-
-            domain = generate_domain(N, meta.domain_seed, fluent_max_arity=fma) if not config.domain else fetch_domain(config.domain)
-            random.seed(None)
             try:
+                meta.domain_seed = f"{N}-{random.randint(0,config.max_domain_seed)}"
+                meta.fluent_arity = fma = random.choices([1, 2], weights=[1, config.arity_weight], k=1)[0]
+
+                domain = generate_domain(N, meta.domain_seed, fluent_max_arity=fma) if not config.domain else fetch_domain(config.domain)
                 if random.random() < config.pure_random_proba:
                     problem = generate_problem(N, domain=domain)
                     solution = solve(problem, planner=config.planner)
@@ -823,54 +816,45 @@ class Planning(Task):
                         level=level,
                     )
                     generator_mode = "planted_walk"
-            except Exception as e:
-                if isinstance(e, RuntimeError):
-                    continue
-                print(f"ERR: {e}")
-                continue
 
-            planted_na = len(reference_plan.actions)
-            if generator_mode == "planted_walk" and config.optimal_relabel:
-                try:
+                planted_na = len(reference_plan.actions)
+                if generator_mode == "planted_walk" and config.optimal_relabel:
                     solution = solve(problem, planner=config.planner)
-                except Exception:
+                    if not solution.plan or len(solution.plan.actions) < config.min_na:
+                        continue
+                    reference_plan = solution.plan
+                    generator_mode = "planted_walk_optimal"
+                elif len(reference_plan.actions) < target_na:
                     continue
-                if not solution.plan or len(solution.plan.actions) < config.min_na:
-                    continue
-                reference_plan = solution.plan
-                generator_mode = "planted_walk_optimal"
-            elif len(reference_plan.actions) < target_na:
-                continue
 
-            if generator_mode == "planted_walk" and random.random() < config.audit_proba:
-                try:
+                if generator_mode == "planted_walk" and random.random() < config.audit_proba:
                     solution = solve(problem, planner=config.planner)
                     if solution.plan and 0 < len(solution.plan.actions) >= config.min_na:
                         reference_plan = solution.plan
                         generator_mode = "planted_walk_audited"
-                except Exception:
-                    pass
 
-            plan = format_plan(reference_plan)
-            meta.na = len(reference_plan.actions)
-            meta.planted_na = planted_na
-            meta.optimality_gap = planted_na - meta.na
-            meta.target_na = target_na
-            meta.generator_mode = generator_mode
-            meta.trim_mode = trim_mode
+                plan = format_plan(reference_plan)
+                meta.na = len(reference_plan.actions)
+                meta.planted_na = planted_na
+                meta.optimality_gap = planted_na - meta.na
+                meta.target_na = target_na
+                meta.generator_mode = generator_mode
+                meta.trim_mode = trim_mode
 
-            meta.problem_english = translate(problem)
-            writer = PDDLWriter(problem)
-            meta.problem_pddl = writer.get_problem()
-            meta.domain_pddl = writer.get_domain()
-            meta.verif_cot = make_cot(problem, reference_plan) #deprecated cot
-            if self.score_answer(plan, {'metadata': meta})<1:
+                meta.problem_english = translate(problem)
+                writer = PDDLWriter(problem)
+                meta.problem_pddl = writer.get_problem()
+                meta.domain_pddl = writer.get_domain()
+                meta.verif_cot = make_cot(problem, reference_plan) #deprecated cot
+                if self.score_answer(plan, {'metadata': meta})<1:
+                    continue
+                return Entry(meta, plan)
+            except Exception:
                 continue
-            return Problem(meta, plan)
         raise RuntimeError("Could not generate a planning problem")
 
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         txt = meta.problem_english.strip()       
         if random.random() < self.config.hint_proba:
             if meta.get("generator_mode") == "planted_walk_optimal":
@@ -879,7 +863,7 @@ class Planning(Task):
                 txt += f"\nHint: Reference solution has {meta.na} actions (but it may not be optimal)."
         answer_kind = "shortest valid" if meta.get("generator_mode") in {"planted_walk_optimal", "planted_walk_audited", "random_solve"} else "valid"
         txt += (
-            "\n\nAction format example: action_0(object1 object2)."
+            "\n\nAction format example: action_0(object1, object2)."
             f"\nThe answer is a {answer_kind} plan, one action per line."
         )
         return txt

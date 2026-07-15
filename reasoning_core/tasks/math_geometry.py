@@ -1,11 +1,12 @@
 import random
 import re
+from copy import copy
 from dataclasses import dataclass, field
 
 import sympy as sp
 from sympy.geometry import Point, Line, Segment
 
-from reasoning_core.template import Config, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
 LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -80,6 +81,8 @@ def line_relation(A, B, C, D):
 
 
 def angle_type(A, B, C):
+    if cross(A, B, C) == 0:
+        return None
     d = dot(A, B, C)
     return "acute" if d > 0 else "right" if d == 0 else "obtuse"
 
@@ -114,16 +117,63 @@ def rand_frac(den, proper=True):
     return sp.Rational(n + (n in (0, d)), d)
 
 
-def line_point(A, B, t):
-    return Point(A.x + t * (B.x - A.x), A.y + t * (B.y - A.y))
+def rand_vector(m):
+    while True:
+        P = Point(random.randint(-m, m), random.randint(-m, m))
+        if P != Point(0, 0):
+            return P
 
 
-def bary_point(A, B, C, den):
-    w = [random.randint(1, den) for _ in range(3)]
-    s = sum(w)
-    return Point(
-        sp.Rational(w[0] * A.x + w[1] * B.x + w[2] * C.x, s),
-        sp.Rational(w[0] * A.y + w[1] * B.y + w[2] * C.y, s),
+def frac_scale(cfg):
+    return rand_frac(cfg.max_interp_den, proper=True)
+
+
+def scale_points(points, cfg):
+    s = frac_scale(cfg)
+    return [Point(s * P.x, s * P.y) for P in points]
+
+
+def affine_points(coords, cfg):
+    """Map canonical rational coordinates through a random nonsingular basis."""
+    for _ in range(cfg.max_tries):
+        u, v = rand_vector(cfg.coord_abs), rand_vector(cfg.coord_abs)
+        if u.x * v.y == u.y * v.x:
+            continue
+        s = frac_scale(cfg)
+        return [Point(s * (x * u.x + y * v.x), s * (x * u.y + y * v.y)) for x, y in coords]
+    return None
+
+
+def local_ids(scene, rel_points, cfg):
+    """Use one class-independent scene anchor and add every other local point."""
+    anchor = sample_ids(scene, 1, cfg)
+    if not anchor or not rel_points:
+        return None, []
+    anchor = anchor[0]
+    j = random.randrange(len(rel_points))
+    O, R = scene["points"][anchor], rel_points[j]
+    points = [Point(O.x + P.x - R.x, O.y + P.y - R.y) for P in rel_points]
+    if len({key(P) for P in points}) != len(points):
+        return None, []
+
+    additions, ids = [], []
+    for i, P in enumerate(points):
+        if i == j:
+            ids.append(anchor)
+            continue
+        p = candidate(scene, additions, P, cfg)
+        if p is None:
+            return None, []
+        ids.append(p)
+    return ids, additions
+
+
+def query_result(type_, kind, answer, additions, question, instruction, balance, subtype=None):
+    return edict(
+        type=type_, kind=kind, answer=answer, additions=additions,
+        question=question, instruction=instruction,
+        balance=f"{balance}:{subtype}" if subtype else balance,
+        construction_family=subtype,
     )
 
 
@@ -173,7 +223,7 @@ def render_text(s, labels):
     return ID_RE.sub(lambda m: labels[m.group(0)], s)
 
 
-def render(scene, query):
+def render(scene, query, construction_execution=False):
     points = dict(scene["points"])
     definitions = dict(scene["definitions"])
 
@@ -185,8 +235,12 @@ def render(scene, query):
     ids = list(points)
     labels = dict(zip(ids, random.sample(LABELS, len(ids))))
 
-    shown = edict({labels[i]: pstr(points[i]) for i in sorted(ids, key=lambda x: labels[x])})
-    defs = [f"{labels[i]} is {render_text(definitions[i], labels)}." for i in definitions]
+    shown_ids = [i for i in ids if not construction_execution or i not in definitions]
+    shown = edict({labels[i]: pstr(points[i]) for i in sorted(shown_ids, key=lambda x: labels[x])})
+    defs = (
+        [f"{labels[i]} is {render_text(definitions[i], labels)}." for i in definitions]
+        if construction_execution else []
+    )
 
     if query.kind in {"label", "label_or_tie"}:
         answer = query.answer if query.answer == "tie" else labels[query.answer]
@@ -203,6 +257,7 @@ def render(scene, query):
         query_type=query.type,
         answer_kind=query.kind,
         balance=query.balance,
+        construction_family=getattr(query, "construction_family", None),
         answer=answer,
         internal_query=query.question,
     )
@@ -323,363 +378,276 @@ def make_scene(cfg):
 def query_orientation(scene, cfg):
     want = random.choice(["left", "right", "on"])
     for _ in range(cfg.max_tries):
-        additions = []
-        ids = sample_ids(scene, 2 if want == "on" else 3, cfg)
+        u, t = rand_vector(cfg.coord_abs), rand_frac(cfg.max_interp_den, False)
+        h = 1
+        side = 0 if want == "on" else h if want == "left" else -h
+        rel = scale_points([Point(0, 0), u, Point(t*u.x-side*u.y, t*u.y+side*u.x)], cfg)
+        ids, additions = local_ids(scene, rel, cfg)
         if not ids:
-            return None
-
-        if want == "on":
-            a, b = ids
-            A, B = scene["points"][a], scene["points"][b]
-            if A == B:
-                continue
-            p = candidate(scene, additions, line_point(A, B, rand_frac(cfg.max_interp_den, proper=False)), cfg)
-            if p is None:
-                continue
-        else:
-            a, b, p = ids
-
-        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
-        if pts[a] == pts[b]:
             continue
+        a, b, p = ids
+        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         ans = orientation(pts[a], pts[b], pts[p])
         if ans == want:
-            return edict(
-                type="orientation",
-                kind="choice",
-                answer=ans,
-                additions=additions,
-                question=f"Where is point {p} relative to directed line {a}{b}?",
-                instruction="Answer is one of: left, right, on.",
-                balance=f"orientation:{ans}",
-            )
+            return query_result("orientation", "choice", ans, additions,
+                f"Where is point {p} relative to directed line {a}{b}?",
+                "Answer is one of: left, right, on.", f"orientation:{ans}")
     return None
 
 
 def query_collinear(scene, cfg):
-    want = random.choice(["Yes", "No"])
+    want = random.choice(["yes", "no"])
     for _ in range(cfg.max_tries):
-        additions = []
-        ids = sample_ids(scene, 2 if want == "Yes" else 3, cfg)
+        u, t = rand_vector(cfg.coord_abs), rand_frac(cfg.max_interp_den, False)
+        h = 1
+        side = 0 if want == "yes" else random.choice([-h, h])
+        rel = scale_points([Point(0, 0), u, Point(t*u.x-side*u.y, t*u.y+side*u.x)], cfg)
+        ids, additions = local_ids(scene, rel, cfg)
         if not ids:
-            return None
-
-        if want == "Yes":
-            a, b = ids
-            A, B = scene["points"][a], scene["points"][b]
-            if A == B:
-                continue
-            c = candidate(scene, additions, line_point(A, B, rand_frac(cfg.max_interp_den, proper=False)), cfg)
-            if c is None:
-                continue
-        else:
-            a, b, c = ids
-
-        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
-        if len({key(pts[a]), key(pts[b]), key(pts[c])}) < 3:
             continue
-        ans = "Yes" if cross(pts[a], pts[b], pts[c]) == 0 else "No"
+        a, b, c = ids
+        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
+        ans = "yes" if cross(pts[a], pts[b], pts[c]) == 0 else "no"
         if ans == want:
-            return edict(
-                type="collinear",
-                kind="choice",
-                answer=ans,
-                additions=additions,
-                question=f"Are points {a}, {b}, and {c} collinear?",
-                instruction="Answer is either Yes or No.",
-                balance=f"collinear:{ans}",
-            )
+            return query_result("collinear", "choice", ans.capitalize(), additions,
+                f"Are points {a}, {b}, and {c} collinear?", "Answer is either Yes or No.", f"collinear:{ans}")
     return None
 
 
 def query_line_relation(scene, cfg):
     want = random.choice(["parallel", "perpendicular", "neither"])
     for _ in range(cfg.max_tries):
-        additions = []
-
-        if want in {"parallel", "perpendicular"}:
-            ids = sample_ids(scene, 3, cfg)
-            if not ids:
-                return None
-            a, b, c = ids
-            A, B, C = (scene["points"][i] for i in ids)
-            if A == B:
-                continue
-            ux, uy = B.x - A.x, B.y - A.y
-            k = rand_nonzero(-cfg.max_vector_scale, cfg.max_vector_scale)
-            vx, vy = (k * ux, k * uy) if want == "parallel" else (-k * uy, k * ux)
-            d = candidate(scene, additions, Point(C.x + vx, C.y + vy), cfg)
-            if d is None:
-                continue
+        u, w = rand_vector(cfg.coord_abs), rand_vector(cfg.coord_abs)
+        if u.x*w.y == u.y*w.x:
+            continue
+        k = rand_nonzero(-cfg.max_vector_scale, cfg.max_vector_scale)
+        if want == "parallel":
+            v = Point(k*u.x, k*u.y)
+        elif want == "perpendicular":
+            v = Point(-k*u.y, k*u.x)
         else:
-            ids = sample_ids(scene, 4, cfg)
-            if not ids:
-                return None
-            a, b, c, d = ids
-
+            v = rand_vector(cfg.coord_abs)
+            if u.x*v.y == u.y*v.x or u.x*v.x + u.y*v.y == 0:
+                continue
+        rel = scale_points([Point(0, 0), u, w, Point(w.x+v.x, w.y+v.y)], cfg)
+        ids, additions = local_ids(scene, rel, cfg)
+        if not ids:
+            continue
+        a, b, c, d = ids
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
-        if pts[a] == pts[b] or pts[c] == pts[d]:
+        # School-geometry parallel lines are distinct; coincident lines are excluded.
+        if cross(pts[a], pts[b], pts[c]) == 0:
             continue
         ans = line_relation(pts[a], pts[b], pts[c], pts[d])
         if ans == want:
-            return edict(
-                type="line_relation",
-                kind="choice",
-                answer=ans,
-                additions=additions,
-                question=f"What is the relation between lines {a}{b} and {c}{d}?",
-                instruction="Answer is one of: parallel, perpendicular, neither.",
-                balance=f"line_relation:{ans}",
-            )
+            return query_result("line_relation", "choice", ans, additions,
+                f"What is the relation between lines {a}{b} and {c}{d}?",
+                "Answer is one of: parallel, perpendicular, neither.", f"line_relation:{ans}")
     return None
 
 
 def query_line_intersection(scene, cfg):
     want = random.choice(["point", "none"])
     for _ in range(cfg.max_tries):
-        additions = []
-
+        u = rand_vector(cfg.coord_abs)
         if want == "none":
-            ids = sample_ids(scene, 3, cfg)
-            if not ids:
-                return None
-            a, b, c = ids
-            A, B, C = (scene["points"][i] for i in ids)
-            if A == B:
+            w = rand_vector(cfg.coord_abs)
+            if u.x*w.y == u.y*w.x:
                 continue
             k = rand_nonzero(-cfg.max_vector_scale, cfg.max_vector_scale)
-            d = candidate(scene, additions, Point(C.x + k * (B.x - A.x), C.y + k * (B.y - A.y)), cfg)
-            if d is None:
-                continue
-            P = None
+            t = rand_frac(cfg.max_interp_den, False)
+            W = Point(t*w.x, t*w.y)
+            rel = [Point(0, 0), u, W, Point(W.x+k*u.x, W.y+k*u.y)]
         else:
-            ids = sample_ids(scene, 4, cfg)
-            if not ids:
-                return None
-            a, b, c, d = ids
-            P = line_intersection(*(scene["points"][i] for i in ids))
-            if P is None or not small_point(P, cfg):
+            v = rand_vector(cfg.coord_abs)
+            if u.x*v.y == u.y*v.x:
                 continue
-
-        return edict(
-            type="line_intersection",
-            kind="point_or_none",
-            answer="none" if P is None else pstr(P),
-            additions=additions,
-            question=f"What is the intersection point of lines {a}{b} and {c}{d}?",
-            instruction="Answer is a coordinate pair (e.g., (2, -1/3)), or none.",
-            balance=f"line_intersection:{'none' if P is None else 'point'}",
-        )
+            t, s = rand_frac(cfg.max_interp_den, False), rand_frac(cfg.max_interp_den, False)
+            rel = [Point(t*u.x, t*u.y), Point((t+1)*u.x, (t+1)*u.y),
+                   Point(s*v.x, s*v.y), Point((s+1)*v.x, (s+1)*v.y)]
+        ids, additions = local_ids(scene, scale_points(rel, cfg), cfg)
+        if not ids:
+            continue
+        a, b, c, d = ids
+        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
+        xs = Line(pts[a], pts[b]).intersection(Line(pts[c], pts[d]))
+        if want == "none" and xs:
+            continue
+        if want == "point" and (len(xs) != 1 or not isinstance(xs[0], Point) or not small_point(xs[0], cfg)):
+            continue
+        P = xs[0] if xs else None
+        return query_result("line_intersection", "point_or_none", "none" if P is None else pstr(P), additions,
+            f"What is the intersection point of lines {a}{b} and {c}{d}?",
+            "Answer is a coordinate pair (e.g., (2, -1/3)), or none.", f"line_intersection:{want}")
     return None
 
 
 def query_segment_intersection(scene, cfg):
-    want = random.choice(["Yes", "No"])
+    families = {
+        "yes": ["proper", "endpoint", "t_junction", "overlap"],
+        "no": ["collinear_disjoint", "parallel_separated", "outside_both"],
+    }
+    want = random.choice(["yes", "no"])
+    subtype = random.choice(families[want])
     for _ in range(cfg.max_tries):
-        additions = []
-
-        if want == "Yes":
-            O = rand_point(cfg.coord_abs)
-            u = Point(rand_nonzero(-cfg.coord_abs - 1, cfg.coord_abs + 1), random.randint(-cfg.coord_abs, cfg.coord_abs))
-            v = Point(random.randint(-cfg.coord_abs, cfg.coord_abs), rand_nonzero(-cfg.coord_abs - 1, cfg.coord_abs + 1))
-            if cross(Point(0, 0), u, v) == 0:
-                continue
-            su, sv = random.randint(1, 3), random.randint(1, 3)
-            ids = [
-                candidate(scene, additions, Point(O.x + su * u.x, O.y + su * u.y), cfg),
-                candidate(scene, additions, Point(O.x - su * u.x, O.y - su * u.y), cfg),
-                candidate(scene, additions, Point(O.x + sv * v.x, O.y + sv * v.y), cfg),
-                candidate(scene, additions, Point(O.x - sv * v.x, O.y - sv * v.y), cfg),
-            ]
-            if any(i is None for i in ids):
-                continue
-            a, b, c, d = ids
+        r = [sp.Rational(random.randint(1, cfg.max_interp_den), random.randint(2, cfg.max_interp_den)) for _ in range(4)]
+        a0, b0, c0, d0 = [x + 1 for x in r]
+        if subtype == "proper":
+            coords, refs = [(-a0, 0), (b0, 0), (0, -c0), (0, d0)], (0, 1, 2, 3)
+        elif subtype == "endpoint":
+            coords, refs = [(-a0, 0), (0, 0), (c0, d0), (b0, -c0)], (0, 1, 1, 2)
+        elif subtype == "t_junction":
+            coords, refs = [(-a0, 0), (b0, 0), (0, 0), (0, d0)], (0, 1, 2, 3)
+        elif subtype == "overlap":
+            coords, refs = [(0, 0), (a0+b0+c0, 0), (a0, 0), (a0+b0, 0)], (0, 1, 2, 3)
+        elif subtype == "collinear_disjoint":
+            coords, refs = [(0, 0), (a0, 0), (a0+b0, 0), (a0+b0+c0, 0)], (0, 1, 2, 3)
+        elif subtype == "parallel_separated":
+            coords, refs = [(0, 0), (a0, 0), (0, c0), (b0, c0)], (0, 1, 2, 3)
         else:
-            ids = sample_ids(scene, 4, cfg)
-            if not ids:
-                return None
-            a, b, c, d = ids
-
-        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
-        if pts[a] == pts[b] or pts[c] == pts[d]:
+            # Supporting lines meet at the origin, outside both positive-ray segments.
+            coords, refs = [(a0, 0), (a0+b0, 0), (0, c0), (0, c0+d0)], (0, 1, 2, 3)
+        rel = affine_points(coords, cfg)
+        if rel is None:
             continue
-        ans = "Yes" if Segment(pts[a], pts[b]).intersection(Segment(pts[c], pts[d])) else "No"
+        ids, additions = local_ids(scene, rel, cfg)
+        if not ids:
+            continue
+        a, b, c, d = (ids[i] for i in refs)
+        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
+        ans = "yes" if Segment(pts[a], pts[b]).intersection(Segment(pts[c], pts[d])) else "no"
         if ans == want:
-            return edict(
-                type="segment_intersection",
-                kind="choice",
-                answer=ans,
-                additions=additions,
-                question=f"Do segments {a}{b} and {c}{d} intersect?",
-                instruction="Answer is either Yes or No.",
-                balance=f"segment_intersection:{ans}",
-            )
+            return query_result("segment_intersection", "choice", ans.capitalize(), additions,
+                f"Do segments {a}{b} and {c}{d} intersect?",
+                "Endpoint contact and collinear overlap count as intersection. Answer is either Yes or No.",
+                f"segment_intersection:{ans}", subtype)
     return None
 
 
 def query_between(scene, cfg):
-    want = random.choice(["Yes", "No"])
+    want = random.choice(["yes", "no"])
     for _ in range(cfg.max_tries):
-        additions = []
-        ids = sample_ids(scene, 2 if want == "Yes" else 3, cfg)
-        if not ids:
-            return None
-
-        if want == "Yes":
-            a, b = ids
-            A, B = scene["points"][a], scene["points"][b]
-            if A == B:
-                continue
-            p = candidate(scene, additions, line_point(A, B, rand_frac(cfg.max_interp_den, proper=True)), cfg)
-            if p is None:
-                continue
+        u, t = rand_vector(cfg.coord_abs), frac_scale(cfg)
+        if want == "yes":
+            P = Point(t*u.x, t*u.y)
         else:
-            a, b, p = ids
-
-        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
-        if pts[a] == pts[b]:
+            h = random.choice([-1, 1]) * min(t, 1 - t)
+            P = Point(t*u.x-h*u.y, t*u.y+h*u.x)
+        ids, additions = local_ids(scene, scale_points([Point(0, 0), u, P], cfg), cfg)
+        if not ids:
             continue
-        ans = "Yes" if on_segment(pts[a], pts[b], pts[p]) else "No"
+        a, b, p = ids
+        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
+        ans = "yes" if on_segment(pts[a], pts[b], pts[p]) else "no"
         if ans == want:
-            return edict(
-                type="between",
-                kind="choice",
-                answer=ans,
-                additions=additions,
-                question=f"Is point {p} on segment {a}{b}?",
-                instruction="Answer is either Yes or No.",
-                balance=f"between:{ans}",
-            )
+            return query_result("between", "choice", ans.capitalize(), additions,
+                f"Is point {p} on segment {a}{b}?", "Endpoint contact counts. Answer is either Yes or No.",
+                f"between:{ans}")
     return None
 
 
 def query_angle_type(scene, cfg):
     want = random.choice(["acute", "right", "obtuse"])
     for _ in range(cfg.max_tries):
-        additions = []
-
+        u = rand_vector(cfg.coord_abs)
         if want == "right":
-            ids = sample_ids(scene, 2, cfg)
-            if not ids:
-                return None
-            b, a = ids
-            B, A = scene["points"][b], scene["points"][a]
-            if A == B:
-                continue
-            ux, uy = A.x - B.x, A.y - B.y
             k = rand_nonzero(-cfg.max_vector_scale, cfg.max_vector_scale)
-            c = candidate(scene, additions, Point(B.x - k * uy, B.y + k * ux), cfg)
-            if c is None:
-                continue
+            v = Point(-k*u.y, k*u.x)
         else:
-            ids = sample_ids(scene, 3, cfg)
-            if not ids:
-                return None
-            a, b, c = ids
-
+            v = rand_vector(cfg.coord_abs)
+            d = u.x*v.x + u.y*v.y
+            if d == 0 or (want == "acute") != (d > 0):
+                continue
+        ids, additions = local_ids(scene, scale_points([u, Point(0, 0), v], cfg), cfg)
+        if not ids:
+            continue
+        a, b, c = ids
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
-        if pts[a] == pts[b] or pts[c] == pts[b]:
+        if cross(pts[a], pts[b], pts[c]) == 0:
             continue
         ans = angle_type(pts[a], pts[b], pts[c])
         if ans == want:
-            return edict(
-                type="angle_type",
-                kind="choice",
-                answer=ans,
-                additions=additions,
-                question=f"What type of angle is angle {a}{b}{c}?",
-                instruction="Answer is one of: acute, right, obtuse.",
-                balance=f"angle_type:{ans}",
-            )
+            return query_result("angle_type", "choice", ans, additions,
+                f"What type of angle is angle {a}{b}{c}?",
+                "Answer is one of: acute, right, obtuse.", f"angle_type:{ans}")
     return None
 
 
 def query_inside_triangle(scene, cfg):
     want = random.choice(["inside", "outside", "boundary"])
     for _ in range(cfg.max_tries):
-        additions = []
-        ids = sample_ids(scene, 3, cfg)
-        if not ids:
-            return None
-        a, b, c = ids
-        A, B, C = (scene["points"][i] for i in ids)
+        A, B, C = Point(0, 0), rand_vector(cfg.coord_abs), rand_vector(cfg.coord_abs)
         if cross(A, B, C) == 0:
             continue
-
+        den = random.randint(3, cfg.max_interp_den)
+        subtype = None
+        vertex = want == "boundary" and random.random() < 0.2
         if want == "inside":
-            p = candidate(scene, additions, bary_point(A, B, C, cfg.max_interp_den), cfg)
-            if p is None:
-                continue
+            a = random.randint(1, den - 2)
+            b = random.randint(1, den - a - 1)
+            weights = [a, b, den - a - b]
+        elif vertex:
+            j = random.randrange(3)
+            weights = [int(i == j) for i in range(3)]
+            den = 1
+            subtype = "vertex"
         elif want == "boundary":
-            U, V = random.choice([(A, B), (B, C), (C, A)])
-            p = candidate(scene, additions, line_point(U, V, rand_frac(cfg.max_interp_den, proper=True)), cfg)
-            if p is None:
-                continue
+            j = random.randrange(3)
+            a = random.randint(1, den - 1)
+            weights = [a, den - a]
+            weights.insert(j, 0)
+            subtype = "edge"
         else:
-            candidates = [x for x in scene["points"] if x not in {a, b, c}]
-            if not candidates:
-                continue
-            p = random.choice(candidates)
-
-        if p in {a, b, c}:
+            j = random.randrange(3)
+            a = random.randint(1, max(1, den // 3))
+            b = random.randint(1, den + a - 1)
+            weights = [b, den + a - b]
+            weights.insert(j, -a)
+        P = Point(sum(w*Q.x for w, Q in zip(weights, (A, B, C)))/den,
+                  sum(w*Q.y for w, Q in zip(weights, (A, B, C)))/den)
+        rel = [A, B, C, rand_vector(cfg.coord_abs)] if vertex else [A, B, C, P]
+        ids, additions = local_ids(scene, scale_points(rel, cfg), cfg)
+        if not ids:
             continue
+        a, b, c = ids[:3]
+        p = ids[j] if vertex else ids[3]
         pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
         ans = triangle_position(pts[a], pts[b], pts[c], pts[p])
         if ans == want:
-            return edict(
-                type="inside_triangle",
-                kind="choice",
-                answer=ans,
-                additions=additions,
-                question=f"Where is point {p} relative to triangle {a}{b}{c}?",
-                instruction="Answer is one of: inside, outside, boundary.",
-                balance=f"inside_triangle:{ans}",
-            )
+            return query_result("inside_triangle", "choice", ans, additions,
+                f"Where is point {p} relative to triangle {a}{b}{c}?",
+                "Boundary includes edges and vertices. Answer is one of: inside, outside, boundary.",
+                f"inside_triangle:{ans}", subtype)
     return None
 
 
 def query_closer(scene, cfg):
     want = random.choice(["first", "second", "tie"])
     for _ in range(cfg.max_tries):
-        additions = []
-
+        u = rand_vector(cfg.coord_abs)
         if want == "tie":
-            ids = sample_ids(scene, 2, cfg)
-            if not ids:
-                return None
-            a, b = ids
-            A, B = scene["points"][a], scene["points"][b]
-            if A == B:
-                continue
-            M = Segment(A, B).midpoint
-            ux, uy = B.x - A.x, B.y - A.y
-            k = rand_frac(cfg.max_interp_den, proper=False)
-            p = candidate(scene, additions, Point(M.x - k * uy, M.y + k * ux), cfg)
-            if p is None:
-                continue
-            ans = "tie"
+            variants = [Point(-u.y, u.x), Point(u.y, -u.x), Point(-u.x, u.y), Point(u.x, -u.y)]
+            choices = [v for v in variants if v != u]
+            A, B = u, random.choice(choices)
         else:
-            ids = sample_ids(scene, 3, cfg)
-            if not ids:
-                return None
-            p, a, b = ids
-            P, A, B = (scene["points"][i] for i in ids)
-            if A == B:
+            v = rand_vector(cfg.coord_abs)
+            da, db = dsq(Point(0, 0), u), dsq(Point(0, 0), v)
+            if da == db:
                 continue
-            da, db = dsq(P, A), dsq(P, B)
-            ans = a if da < db else b if db < da else "tie"
-            if (want == "first" and ans != a) or (want == "second" and ans != b):
-                continue
-
-        return edict(
-            type="closer",
-            kind="label_or_tie",
-            answer=ans,
-            additions=additions,
-            question=f"Which point is closer to {p}: {a} or {b}?",
-            instruction=f"Answer is one of: {a}, {b}, tie.",
-            balance=f"closer:{'tie' if ans == 'tie' else 'label'}",
-        )
+            A, B = (u, v) if (want == "first") == (da < db) else (v, u)
+        ids, additions = local_ids(scene, scale_points([Point(0, 0), A, B], cfg), cfg)
+        if not ids:
+            continue
+        p, a, b = ids
+        pts = dict(scene["points"], **{i: P for i, P, _, _ in additions})
+        da, db = dsq(pts[p], pts[a]), dsq(pts[p], pts[b])
+        ans = a if da < db else b if db < da else "tie"
+        expected = "tie" if want == "tie" else a if want == "first" else b
+        if ans != expected:
+            continue
+        return query_result("closer", "label_or_tie", ans, additions,
+            f"Which point is closer to {p}: {a} or {b}?", f"Answer is one of: {a}, {b}, tie.",
+            f"closer:{want}")
     return None
 
 
@@ -725,6 +693,7 @@ class PlanarGeometryRelationsConfig(Config):
     max_vector_scale: int = 4
     constructed_operand_weight: float = 3.0
     constructed_operand_prob: float = 0.65
+    construction_execution: float = 0.5
     query_types: list = field(default_factory=lambda: list(QUERIES))
 
     def apply_difficulty(self, level):
@@ -743,17 +712,28 @@ class PlanarGeometryRelations(Task):
         super().__init__(config=config or PlanarGeometryRelationsConfig(), **kwargs)
         self.balancing_key_ratio = 0.18
 
-    def generate(self):
+    def generate_entry(self):
         query_types = [q for q in self.config.query_types if q in QUERIES] or list(QUERIES)
 
         for _ in range(self.config.max_tries):
             scene = make_scene(self.config)
+            construction_execution = (
+                bool(scene["definitions"])
+                and random.random() < self.config.construction_execution
+            )
+            query_config = copy(self.config)
+            if construction_execution:
+                query_config.constructed_operand_prob = 1.0
+
             for name in random.sample(query_types, len(query_types)):
-                query = QUERIES[name](scene, self.config)
+                query = QUERIES[name](scene, query_config)
                 if query is None:
                     continue
+                referenced = set(ID_RE.findall(query.question))
+                if construction_execution and not referenced.intersection(scene["definitions"]):
+                    continue
 
-                rendered = render(scene, query)
+                rendered = render(scene, query, construction_execution=construction_execution)
                 metadata = edict(
                     points=rendered.points,
                     definitions=rendered.definitions,
@@ -762,13 +742,15 @@ class PlanarGeometryRelations(Task):
                     query_type=rendered.query_type,
                     answer_kind=rendered.answer_kind,
                     balance=rendered.balance,
+                    construction_family=rendered.construction_family,
                     internal_query=rendered.internal_query,
+                    construction_execution=construction_execution,
                 )
-                return Problem(metadata=metadata, answer=rendered.answer)
+                return Entry(metadata=metadata, answer=rendered.answer)
 
-        return None
+        raise RuntimeError("Could not generate a valid planar geometry problem after bounded attempts")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         points = "; ".join(f"{a}={metadata.points[a]}" for a in sorted(metadata.points))
         lines = [f"Given points: {points}."]
 

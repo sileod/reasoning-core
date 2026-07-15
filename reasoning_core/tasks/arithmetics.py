@@ -1,4 +1,4 @@
-from reasoning_core.template import Problem, Task, DevTask, edict, Config, stochastic_rounding as sround
+from reasoning_core.template import Entry, Task, DevTask, edict, Config, stochastic_rounding as sround
 from reasoning_core.utils import score_scalar
 from gramforge import init_grammar
 from dataclasses import dataclass
@@ -6,7 +6,7 @@ import random
 import gramforge
 import re
 import math
-from decimal import Decimal, getcontext, ROUND_HALF_UP
+from decimal import Decimal, getcontext
 import ast, operator
 from fractions import Fraction
 import sympy
@@ -26,18 +26,29 @@ def _num_divisors(n):
         raise ValueError("divisor count undefined for 0")
     return int(sympy.divisor_count(n))
 
+
+def _round_ties_to_even(x):
+    """Round a rational exactly, using Python's nearest-even convention."""
+    return Fraction(round(Fraction(x)))
+
 SAFE_FUNCS = {
     "max": max,
     "min": min,
     "abs": abs,
-    "round": lambda x: Fraction(round(float(x))),
+    "round": _round_ties_to_even,
     "gcd": lambda a, b: math.gcd(_as_int(a), _as_int(b)),
     "lcm": lambda a, b: math.lcm(_as_int(a), _as_int(b)),
     "bit_count": lambda x: abs(_as_int(x)).bit_count(),
-    "is_prime": lambda x: int(sympy.isprime(abs(_as_int(x)))),
-    "prime_count": lambda x: int(sympy.primepi(abs(_as_int(x)))),
+    "is_prime": lambda x: int(sympy.isprime(_as_int(x))),
+    "prime_count": lambda x: int(sympy.primepi(_as_int(x))),
     "num_divisors": _num_divisors,
 }
+PYTHON_FUNCS = {**SAFE_FUNCS, "round": round}
+OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+       ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv,
+       ast.Pow: operator.pow, ast.Mod: operator.mod}
+OP_NAMES = {ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/",
+            ast.FloorDiv: "//", ast.Pow: "**", ast.Mod: "%"}
 
 def _grammar(symbolic=False, division=True):
     g = init_grammar(['py'], name="arith", preprocess_template=lambda s:s)
@@ -89,8 +100,10 @@ class ArithmeticsConfig(Config):
     trailing_zero_prob: float = 0.2
     trivial_prob = 0.01
     bool_prob = 0.1
-    spaced_digits_prob: float = 0.25
-    reversed_spaced_digits_prob: float = 0.25
+    spaced_digits_prob: float = 0.03
+    reversed_spaced_digits_prob: float = 0.02
+    semantics: str = "exact"
+    semantic_decoy_prob: float = 0.15
 
     def apply_difficulty(self, level):
         self.min_depth = sround(self.min_depth + level)
@@ -105,21 +118,67 @@ def _add_trailing_zeros(s, prob=0.2):
     return s
 
 
-def fill_num(expr, cfg=ArithmeticsConfig()):
-    pat = re.compile(r'\b(NUM|INT|NAT|POS)\b')
-    tokens = pat.findall(expr)
+def _evaluate(expr, semantics="exact", steps=None, ties=None):
+    """Evaluate the task grammar with exact rationals or native Python numbers."""
+    if semantics not in {"exact", "python"}:
+        raise ValueError(f"Unknown arithmetic semantics: {semantics}")
+    funcs = SAFE_FUNCS if semantics == "exact" else PYTHON_FUNCS
 
-    def to_decimal(v):
-        f = Fraction(v)
-        d = f.denominator
+    def fmt(x):
+        if semantics == "python": return repr(x) if isinstance(x, float) else str(x)
+        x = Fraction(x)
+        d = x.denominator
         while d % 2 == 0: d //= 2
         while d % 5 == 0: d //= 5
-        if d != 1: return None                                # non-terminating decimal
-        dec = (Decimal(f.numerator) / Decimal(f.denominator)).normalize()
-        _, _, exp = dec.as_tuple()
-        if max(0, -exp) > cfg.out_decimals: return None
-        s = f'{dec:.{cfg.out_decimals}f}'
-        return dec if len(s.replace('-','').replace('.','')) <= cfg.out_digits else None
+        return f"{float(x):g}" if d == 1 else str(x)
+
+    def visit(node):
+        if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+            return Fraction(str(node.value)) if semantics == "exact" else node.value
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
+            return -visit(node.operand)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            args = [visit(a) for a in node.args]
+            if node.func.id == "round" and abs(args[0]) % 1 == Fraction(1, 2):
+                if ties is not None: ties.append(True)
+            out = funcs[node.func.id](*args)
+            out = Fraction(out) if semantics == "exact" else out
+            if steps is not None: steps.append(f"{node.func.id}({', '.join(map(fmt, args))}) = {fmt(out)}")
+            return out
+        if isinstance(node, ast.BinOp) and type(node.op) in OPS:
+            a, b = visit(node.left), visit(node.right)
+            out = OPS[type(node.op)](a, b)
+            out = Fraction(out) if semantics == "exact" else out
+            if steps is not None: steps.append(f"{fmt(a)} {OP_NAMES[type(node.op)]} {fmt(b)} = {fmt(out)}")
+            return out
+        raise ValueError("Unsupported arithmetic expression")
+
+    return visit(ast.parse(expr, mode="eval").body)
+
+
+def _output_decimal(value, cfg):
+    if isinstance(value, Fraction):
+        d = value.denominator
+        while d % 2 == 0: d //= 2
+        while d % 5 == 0: d //= 5
+        if d != 1: return None
+        dec = Decimal(value.numerator) / Decimal(value.denominator)
+    elif isinstance(value, int):
+        dec = Decimal(value)
+    elif isinstance(value, float) and math.isfinite(value):
+        dec = Decimal(repr(value))
+    else:
+        return None
+    dec = dec.normalize()
+    if max(0, -dec.as_tuple().exponent) > cfg.out_decimals: return None
+    shown = f"{dec:.{cfg.out_decimals}f}"
+    return dec if len(shown.replace("-", "").replace(".", "")) <= cfg.out_digits else None
+
+
+def fill_num(expr, cfg=None):
+    cfg = cfg or ArithmeticsConfig()
+    pat = re.compile(r'\b(NUM|INT|NAT|POS)\b')
+    tokens = pat.findall(expr)
 
     has_division = '/' in expr
     for _ in range(cfg.n_trials):
@@ -135,13 +194,14 @@ def fill_num(expr, cfg=ArithmeticsConfig()):
             if tok == "NUM" and has_division and num == 0: num = random.choice([-1, 1])
             vals_str.append(str(num))
 
-        it = iter(f"Fraction('{x}')" for x in vals_str)
+        values = iter(vals_str)
+        final_expr = pat.sub(lambda _: next(values), expr)
         try:
-            v = eval(pat.sub(lambda _: next(it), expr),
-                     {"Fraction": Fraction, **SAFE_FUNCS})
-        except Exception: continue
+            value = _evaluate(final_expr, cfg.semantics)
+        except (ArithmeticError, OverflowError, TypeError, ValueError):
+            continue
 
-        dec = to_decimal(v)
+        dec = _output_decimal(value, cfg)
         if dec is not None:
             it_str = iter(_add_trailing_zeros(s, cfg.trailing_zero_prob) for s in vals_str)
             return pat.sub(lambda _: next(it_str), expr), dec
@@ -153,7 +213,15 @@ def _space_number(m, reverse=False):
     return " ".join(chars)
 
 
-def _display_expr(expr, cfg):
+def _display_expr(expr, answer, cfg):
+    tree = ast.parse(expr, mode="eval")
+    awkward = "." in answer or answer.startswith("-") or any(
+        isinstance(n, ast.Constant) and isinstance(n.value, float)
+        or isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.USub)
+        for n in ast.walk(tree)
+    )
+    if awkward or not any(len(n) > 1 for n in re.findall(r"\d+", expr) + [answer]):
+        return expr, "normal"
     r = random.random()
     if r < cfg.spaced_digits_prob:
         return re.sub(r"\d+(?:\.\d+)?", _space_number, expr), "spaced"
@@ -170,28 +238,88 @@ def _format_number(s, mode):
     return s
 
 
+def _canonical_decimal(value, decimal_places):
+    quantizer = Decimal(f"1e-{decimal_places}")
+    quantized = value.quantize(quantizer)
+    if quantized.is_zero():
+        return "0"
+    return f"{quantized:f}".rstrip("0").rstrip(".")
+
+
+def _canonical_value(value, places):
+    if isinstance(value, Fraction):
+        value = Decimal(value.numerator) / Decimal(value.denominator)
+    elif isinstance(value, float):
+        value = Decimal(repr(value))
+    else:
+        value = Decimal(value)
+    return _canonical_decimal(value, places)
+
+
+def _semantic_cue_required(expr, places):
+    try:
+        return _canonical_value(_evaluate(expr, "exact"), places) != \
+               _canonical_value(_evaluate(expr, "python"), places)
+    except (ArithmeticError, OverflowError, TypeError, ValueError):
+        return True
+
+
+def _semantic_decoy_eligible(expr):
+    tree = ast.parse(expr, mode="eval")
+    decimal = any(isinstance(n, ast.Constant) and isinstance(n.value, float) for n in ast.walk(tree))
+    relevant = any(
+        isinstance(n, ast.BinOp) and isinstance(n.op, (ast.Div, ast.FloorDiv, ast.Mod))
+        or isinstance(n, ast.Call) and getattr(n.func, "id", None) == "round"
+        for n in ast.walk(tree)
+    )
+    return decimal and relevant
+
+
+def _contextual_semantics(expr, semantics="exact", places=3, decoy=False):
+    cues = []
+    if _semantic_cue_required(expr, places) or decoy and _semantic_decoy_eligible(expr):
+        cues.append("Use exact arithmetic." if semantics == "exact"
+                    else "Use Python floating-point semantics.")
+    ties = []
+    _evaluate(expr, semantics, ties=ties)
+    if ties: cues.append("Round ties to the nearest even integer.")
+    return cues
+
+
 class Arithmetics(Task):
     config_cls = ArithmeticsConfig
     summary = "Compositional arithmetics with float/int/bool, varied operators, number theory."
 
-    def generate(self):
+    def generate_entry(self):
         while True:
             x = gramforge.generate(g, depth=self.config.max_depth, min_depth=self.config.min_depth, mode=self.config.gramforge_algorithm)
             expr = x@'py'
             if expr.count('NUM') > 1 or random.random() < self.config.trivial_prob: break
         final_expr, value = fill_num(expr, cfg=self.config)
-        quantizer = Decimal('1e-' + str(self.config.out_decimals))
-        ans_str = f"{value.quantize(quantizer):f}".rstrip('0').rstrip('.')
-        shown_expr, digit_mode = _display_expr(final_expr, self.config)
-        meta = edict(expr=final_expr, display_expr=shown_expr, digit_mode=digit_mode, height=x.height, cot=self.get_cot(final_expr))
-        return Problem(metadata=meta, answer=_format_number(ans_str, digit_mode))
+        ans_str = _canonical_decimal(value, self.config.out_decimals)
+        shown_expr, digit_mode = _display_expr(final_expr, ans_str, self.config)
+        cue = _semantic_cue_required(final_expr, self.config.out_decimals)
+        if not cue and _semantic_decoy_eligible(final_expr):
+            cue = random.random() < self.config.semantic_decoy_prob
+        meta = edict(expr=final_expr, display_expr=shown_expr, digit_mode=digit_mode,
+                     semantics=self.config.semantics, semantic_cue=cue,
+                     out_decimals=self.config.out_decimals, height=x.height,
+                     cot=self.get_cot(final_expr))
+        return Entry(metadata=meta, answer=_format_number(ans_str, digit_mode))
     
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         note = {
             "spaced": " Digits are spaced; answer likewise.",
             "reversed_spaced": " Digits are reversed and spaced; answer likewise.",
         }.get(metadata.get("digit_mode"), "")
-        return f"Evaluate {metadata.get('display_expr', metadata.expr)}.{note}\nThe answer is a number."
+        cues = _contextual_semantics(
+            metadata.expr,
+            metadata.get("semantics", self.config.semantics),
+            metadata.get("out_decimals", self.config.out_decimals),
+            metadata.get("semantic_cue", False),
+        )
+        semantics = "".join(f"\n{cue}" for cue in cues)
+        return f"Evaluate {metadata.get('display_expr', metadata.expr)}.{note}{semantics}\nThe answer is a number."
 
     def score_answer(self, answer, entry):
         if entry.metadata.get("digit_mode", "normal") == "normal":
@@ -199,39 +327,15 @@ class Arithmetics(Task):
         return float(str(answer).strip() == str(entry.answer).strip())
 
     def get_cot(self, expr):
-        ops = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, 
-               ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv, ast.Pow: operator.pow, ast.Mod: operator.mod}
-        syms = {ast.Add: '+', ast.Sub: '-', ast.Mult: '*', ast.Div: '/', ast.FloorDiv: '//', ast.Pow: '**', ast.Mod: '%'}
         steps = []
-        
-        def fmt(n):
-            d = n.denominator
-            while d % 2 == 0: d //= 2
-            while d % 5 == 0: d //= 5
-            return f"{float(n):g}" if d == 1 else str(n)
-
-        def visit(node):
-            if isinstance(node, ast.Constant): return Fraction(str(node.value))
-            if isinstance(node, ast.UnaryOp): return -visit(node.operand)
-            if isinstance(node, ast.Call):
-                fname = node.func.id
-                args = [visit(a) for a in node.args]
-                res = Fraction(SAFE_FUNCS[fname](*args))
-                steps.append(f"{fname}({', '.join(fmt(a) for a in args)}) = {fmt(res)}")
-                return res
-            l, r = visit(node.left), visit(node.right)
-            res = ops[type(node.op)](l, r)
-            steps.append(f"{fmt(l)} {syms[type(node.op)]} {fmt(r)} = {fmt(res)}")
-            return res
-
-        visit(ast.parse(expr, mode='eval').body)
+        _evaluate(expr, self.config.semantics, steps=steps)
         return "\n".join(steps)
 
 
 
 import random, sympy as sp
 from dataclasses import dataclass
-from reasoning_core.template import Task, Problem, Config, edict
+from reasoning_core.template import Task, Entry, Config, edict
 from reasoning_core.utils import score_scalar
 
 
@@ -346,10 +450,9 @@ def gen_process(config):
         inverse=inverse,
         steps=steps,
         expr=str(expr),
-        equation=str(sp.Eq(expr, observed)),
-        cot=f"Solve {sp.Eq(expr, observed)} for x; x = {base}.",
+        equation=str(sp.Eq(expr, observed))
     )
-    return Problem(metadata=metadata, answer=str(answer))
+    return Entry(metadata=metadata, answer=str(answer))
 
 
 def gen_relational(config):
@@ -427,18 +530,17 @@ def gen_relational(config):
         given_value=nums[given],
         values=nums,
         base=base,
-        equation=str(sp.Eq(val[given], nums[given])),
-        cot=f"Solve {sp.Eq(val[given], nums[given])}; then compute {asked} = {nums[asked]}.",
+        equation=str(sp.Eq(val[given], nums[given]))
     )
-    return Problem(metadata=metadata, answer=str(nums[asked]))
+    return Entry(metadata=metadata, answer=str(nums[asked]))
 
 
 class MathWordProblem(Task):
     summary = "Solve relational and process math word problems involving objects and values."
-    def __init__(self, config=WordProblemMathConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or WordProblemMathConfig())
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(100):
             gen = gen_relational if random.random() < self.config.relational_p else gen_process
             problem = gen(self.config)
@@ -446,7 +548,7 @@ class MathWordProblem(Task):
                 return problem
         return None
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         if m.family == "process":
             chain = "; then ".join(process_step_text(s, m.unit) for s in m.steps)
             if m.inverse:
@@ -463,7 +565,7 @@ class MathWordProblem(Task):
         lines = ". ".join(relation_text(r, m.unit) for r in m.relations)
         return (
             f"{lines}. {m.given} has {m.given_value} {m.unit}. "
-            f"How many {m.unit} does {m.asked} have? Answer with s a number."
+            f"How many {m.unit} does {m.asked} have? Answer with a number."
         )
 
     def score_answer(self, answer, entry):

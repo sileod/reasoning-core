@@ -39,8 +39,8 @@ def test_constrained_continuation_skips_oversized_sentences(monkeypatch):
         lambda *args, **kwargs: Generated(next(outputs)),
     )
 
-    config = GrammarConfig(min_k=3, max_k=3, max_tokens=3)
+    config = GrammarConfig(min_k=3, max_k=3, max_tokens=3, min_options=1)
     problem = ConstrainedContinuation(config).generate()
 
-    assert problem.answer == "a b c"
+    assert problem.answer.split() == ["abc"[i] for i in problem.metadata.blanks]
     assert len(problem.metadata.prefix) + problem.metadata.k + len(problem.metadata.suffix) == 3

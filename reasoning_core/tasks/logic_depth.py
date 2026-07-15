@@ -7,7 +7,7 @@ from typing import Optional
 
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, Payload, Problem, Task, stochastic_rounding as sround
+from reasoning_core.template import Config, Entry, Task, render_payload, stochastic_rounding as sround
 from reasoning_core.utils import parse_space_ints, score_space_ints
 
 
@@ -82,6 +82,7 @@ class MultistepCase:
     surf: list
     live_rule_rate: float
     proof_rule_rate: float
+    neutral_completion: Optional[Atom] = None
 
 SUPPORTED_DOMAIN_PACKS = ("surface", "abstract", "spatial", "kinship")
 
@@ -98,12 +99,15 @@ class MultistepNLIConfig(Config):
     n_distractors: int = 1
     neutral_rate: float = 0.33
     contradiction_rate: float = 0.33
+    group_entities: float = 0.5
     max_bin_size: int = 8
     domain_packs: tuple = SUPPORTED_DOMAIN_PACKS
     min_target_support_size: int = 2
     max_target_support_size: Optional[int] = 3
     
     def apply_difficulty(self, level):
+        self.n_entities = min(8, self.n_entities + level)
+        self.n_facts += level
         self.max_depth = sround(self.max_depth + 0.5 * level)
         self.n_rules += level
         self.n_distractors += 2 * level
@@ -112,7 +116,7 @@ class MultistepNLIConfig(Config):
         self.min_target_support_size = sround(min(5, 2 + 0.5 * level))
         if level > 0:
             self.max_target_support_size = None
-        self.min_target_depth = sround(min(self.max_depth, 2 + 0.5 * level))
+        self.min_target_depth = sround(min(3, self.max_depth, 2 + 0.5 * level))
         self.max_target_depth = min(self.max_depth, self.min_target_depth + 1)
 
 @dataclass
@@ -131,7 +135,7 @@ class MultistepAbductionConfig(MultistepNLIConfig):
 @dataclass
 class LogicQAConfig(MultistepNLIConfig):
     answer_mode: str = "any"
-    zero_answer_rate: float = 0.20
+    zero_answer_rate: float = 0.0
 
 
 NAMES = ("alice", "bruno", "clara", "david", "elena", "farah", "george", "hannah")
@@ -598,9 +602,26 @@ def _bad_rule(rule):
     return any(pair <= preds for preds in positive.values() for pair in conflicts)
 
 
-def _plant_backbone(theory, sigs, entities):
+def _plant_backbone(theory, sigs, entities, cfg=None):
     unaries = [s for s in sigs.values() if len(s.arg_types) == 1]
     binaries = [s for s in sigs.values() if len(s.arg_types) == 2]
+    support = int(getattr(cfg, "min_target_support_size", 2))
+    if support >= 3 and len(unaries) >= 2 * support - 1:
+        chosen = random.sample(unaries, 2 * support - 1)
+        inputs, outputs = chosen[:support], chosen[support:]
+        x = random.choice(entities[inputs[0].arg_types[0]])
+        theory.facts += [Atom(a.name, (x,)) for a in inputs]
+        previous = inputs[0]
+        for other, out in zip(inputs[1:], outputs):
+            theory.rules.append(Rule(
+                (Atom(previous.name, ("?x",)), Atom(other.name, ("?x",))),
+                Atom(out.name, ("?x",)), "backbone", "u_and",
+            ))
+            previous = out
+        return {
+            "kind": "wide_conjunctive", "entities": (x,),
+            "unaries": tuple(s.name for s in chosen), "binaries": (),
+        }
     options = ["unary"]
     if len(unaries) >= 2 and binaries:
         options.append("bridge")
@@ -714,17 +735,17 @@ def sample_theory(cfg):
     used = set()
     backbone = None
     if pack in {"abstract", "surface"}:
-        backbone = _plant_backbone(theory, sigs, entities)
+        backbone = _plant_backbone(theory, sigs, entities, cfg)
         _add_near_misses(theory, sigs, entities, backbone, cfg.n_distractors)
     elif pack == "spatial":
         es = entities["item"]
-        a, b, c = random.sample(es, min(3, len(es)))
+        chain = random.sample(es, min(len(es), max(3, int(cfg.min_target_support_size) + 1)))
         rel = random.choice(["left_of", "above", "inside"])
-        theory.facts += [Atom(rel, (a, b)), Atom(rel, (b, c))]
+        theory.facts += [Atom(rel, pair) for pair in zip(chain, chain[1:])]
     elif pack == "kinship":
         es = entities["person"]
-        a, b, c = random.sample(es, min(3, len(es)))
-        theory.facts += [Atom("parent", (a, b)), Atom("parent", (b, c))]
+        chain = random.sample(es, min(len(es), max(3, int(cfg.min_target_support_size) + 1)))
+        theory.facts += [Atom("parent", pair) for pair in zip(chain, chain[1:])]
     used.update(theory.facts)
     for _ in range(cfg.n_facts):
         if f := _fresh_fact(theory, used):
@@ -857,6 +878,38 @@ def support_sources(atom, deriv, source):
     return out
 
 
+def _focused_theory(theory, res, targets, n_distractors):
+    """Keep complete proof cones plus a bounded sample of irrelevant statements."""
+    facts, rules = set(), set()
+
+    def visit(atom):
+        d = res.derivations[atom]
+        if d.rule is None:
+            facts.add(atom)
+            return
+        rules.add(d.rule)
+        for parent in d.parents:
+            visit(parent)
+
+    for target in targets:
+        visit(target)
+    extras = [
+        (kind, item)
+        for kind, items, used in (
+            ("fact", theory.facts, facts), ("rule", theory.rules, rules)
+        )
+        for item in items if item not in used
+    ]
+    random.shuffle(extras)
+    for kind, item in extras[:max(0, int(n_distractors))]:
+        (facts if kind == "fact" else rules).add(item)
+    return Theory(
+        [x for x in theory.facts if x in facts],
+        [x for x in theory.rules if x in rules],
+        theory.denials, theory.pred_sigs, theory.entities, theory.domain_pack,
+    )
+
+
 def hard_target(a, deriv, cfg):
     d = deriv[a].depth
     s = len(support_atoms(a, deriv))
@@ -975,8 +1028,9 @@ def _naf_support_ok(target, deriv, cfg):
     )
 
 
-def choose_naf_example(theory, res, cfg, label_counts=None):
-    label_counts = label_counts or Counter()
+def choose_naf_example(theory, res, cfg, label_counts=None, label_signs=None):
+    label_counts = Counter() if label_counts is None else label_counts
+    label_signs = Counter() if label_signs is None else label_signs
     labels = ("entailment", "contradiction", "neutral")
     min_count = min(label_counts[x] for x in labels)
     preferred = [x for x in labels if label_counts[x] == min_count]
@@ -984,14 +1038,20 @@ def choose_naf_example(theory, res, cfg, label_counts=None):
     order = preferred + [x for x in labels if x not in preferred]
 
     derived = [a for a in res.closure if a not in theory.facts and res.derivations[a].depth > 0]
+
+    def balanced(label, pool):
+        want = label_signs[(label, True)] <= label_signs[(label, False)]
+        same = [hyp for hyp in pool if hyp.sign == want]
+        return same or pool
+
     for label in order:
         if label == "entailment":
-            pool = [a for a in derived if _naf_support_ok(a, res.derivations, cfg)]
+            pool = balanced(label, [a for a in derived if _naf_support_ok(a, res.derivations, cfg)])
             if pool:
                 hyp = random.choice(pool)
                 return label, hyp, res.derivations[hyp], support_atoms(hyp, res.derivations)
         elif label == "contradiction":
-            pool = [opposite(a) for a in derived if _naf_support_ok(a, res.derivations, cfg) and not a.sign]
+            pool = balanced(label, [opposite(a) for a in derived if _naf_support_ok(a, res.derivations, cfg)])
             if pool:
                 hyp = random.choice(pool)
                 target = opposite(hyp)
@@ -1003,7 +1063,7 @@ def choose_naf_example(theory, res, cfg, label_counts=None):
                 if a not in res.closure and opposite(a) not in res.closure and pred_key(a) in live
             ]
             if pool:
-                hyp = random.choice(pool)
+                hyp = random.choice(balanced(label, pool))
                 return label, hyp, None, set()
     return None
 
@@ -1054,6 +1114,25 @@ def atom_text(a, pack="surface"):
     if len(a.args) == 1:
         return f"{a.args[0]} is {neg}{p}"
     return binary_text(a.pred, a.args, a.sign, pack)
+
+
+def group_entity_facts(theory, lines, rate):
+    """Sometimes render same-property unary facts as one conjunction."""
+    groups = defaultdict(list)
+    for i, atom in enumerate(theory.facts):
+        if len(atom.args) == 1:
+            groups[(atom.pred, atom.sign)].append(i)
+    packed, skipped = {}, set()
+    for (pred, sign), ids in groups.items():
+        if len(ids) < 2 or random.random() >= rate:
+            continue
+        names = [theory.facts[i].args[0] for i in ids]
+        subject = " and ".join(names) if len(names) == 2 else f"{', '.join(names[:-1])}, and {names[-1]}"
+        prop = f"{tag_word(pred)} tagged" if theory.domain_pack == "abstract" and pred.startswith("p") else pred_words(pred)
+        packed[ids[0]] = f"{subject} are {'not ' if not sign else ''}{prop}."
+        skipped.update(ids[1:])
+    facts = [packed.get(i, lines[i]) for i in range(len(theory.facts)) if i not in skipped]
+    return facts + lines[len(theory.facts):]
 
 
 def _lit_schema(a, names=None, pack="surface"):
@@ -1179,6 +1258,130 @@ def rule_text(rule, rid=None, pack="surface"):
     return templates[rid % len(templates)], (rule.shape, rid % len(templates), "if" if rid % 3 == 0 else "whenever", "normal")
 
 
+def _naf_predicate_text(pred, pack="surface"):
+    if pack == "abstract" and pred.startswith("p"):
+        return tag_word(pred)
+    if pack == "abstract" and pred.startswith("r"):
+        return rel_word(pred)
+    return "abnormal" if pred == "ab_bird" else pred_words(pred)
+
+
+def _naf_property_text(atom, pack="surface"):
+    pred = _naf_predicate_text(atom.pred, pack)
+    if pack == "abstract" and atom.pred.startswith("p"):
+        pred = f"{pred}-tagged"
+    elif atom.pred in {"bird", "penguin"}:
+        pred = f"a {pred}"
+    return f"{'not ' if not atom.sign else ''}{pred}"
+
+
+def _naf_atom_text(atom, pack="surface"):
+    arg_text = lambda arg: arg[1:] if is_var(arg) else arg.capitalize()
+    if len(atom.args) == 1:
+        return f"{arg_text(atom.args[0])} is {_naf_property_text(atom, pack)}"
+    x, y = (arg_text(arg) for arg in atom.args)
+    if pack == "abstract" and atom.pred.startswith("r"):
+        return f"{x} is {'not ' if not atom.sign else ''}{rel_word(atom.pred)} to {y}"
+    if atom.pred == "helps":
+        return f"{x} {'helps' if atom.sign else 'does not help'} {y}"
+    return binary_text(atom.pred, (x, y), atom.sign, pack)
+
+
+def _english_join(items):
+    if len(items) < 2:
+        return "".join(items)
+    if len(items) == 2:
+        return " and ".join(items)
+    return f"{', '.join(items[:-1])}, and {items[-1]}"
+
+
+def _capitalized(text):
+    return text[:1].upper() + text[1:]
+
+
+def _naf_group_text(atom, pack):
+    prop = _naf_property_text(atom, pack)
+    if atom.pred in {"bird", "penguin"} and atom.sign:
+        return f"{_naf_predicate_text(atom.pred, pack).capitalize()}s"
+    if atom.sign:
+        return f"{_capitalized(prop)} people"
+    return f"People who are {prop}"
+
+
+def _naf_complement_text(atom, pack):
+    if atom.pred in {"bird", "penguin"}:
+        noun = f"{_naf_predicate_text(atom.pred, pack)}s"
+        return f"{'not ' if not atom.sign else ''}{noun}"
+    return _naf_property_text(atom, pack)
+
+
+def _naf_person_text(atom, pack):
+    prop = _naf_property_text(atom, pack)
+    article = "an" if prop[0] in "aeiou" else "a"
+    return prop if atom.pred in {"bird", "penguin"} else f"{article} {prop} person"
+
+
+def _naf_rule_text(rule, pack="surface"):
+    atoms = body_atoms(rule.body)
+    exceptions = [item.atom for item in rule.body if isinstance(item, Not)]
+    if (
+        len(atoms) == 1
+        and len(atoms[0].args) == len(rule.head.args) == 1
+        and atoms[0].args == rule.head.args
+    ):
+        text = f"{_naf_group_text(atoms[0], pack)} are {_naf_complement_text(rule.head, pack)}"
+        if exceptions:
+            text += f" unless {' or '.join(_naf_complement_text(atom, pack) for atom in exceptions)}"
+        return text + "."
+    if (
+        len(atoms) == 2
+        and len(atoms[0].args) == 2
+        and len(atoms[1].args) == len(rule.head.args) == 1
+        and atoms[1].args == (atoms[0].args[1],)
+        and rule.head.args == (atoms[0].args[0],)
+    ):
+        obj = _naf_person_text(atoms[1], pack)
+        if pack == "abstract" and atoms[0].pred.startswith("r"):
+            subject = f"People {rel_word(atoms[0].pred)} to {obj}"
+        elif atoms[0].pred == "helps":
+            subject = f"People who help {obj}"
+        else:
+            subject = f"People for whom {_naf_atom_text(atoms[0], pack)} and {_naf_atom_text(atoms[1], pack)}"
+        text = f"{subject} are {_naf_complement_text(rule.head, pack)}"
+        if exceptions:
+            phrases = [
+                _naf_complement_text(atom, pack)
+                if atom.args == rule.head.args
+                else f"that person is {_naf_property_text(atom, pack)}"
+                if atom.args == atoms[1].args
+                else _naf_atom_text(atom, pack)
+                for atom in exceptions
+            ]
+            text += f" unless {' or '.join(phrases)}"
+        return text + "."
+    conditions = [_naf_atom_text(atom, pack) for atom in atoms]
+    conditions += [f"{item[1][1:]} differs from {item[2][1:]}" for item in body_checks(rule.body) if item[0] == "!="]
+    text = f"If {' and '.join(conditions)}, {_naf_atom_text(rule.head, pack)}"
+    if exceptions:
+        text += f" unless {' or '.join(_naf_atom_text(atom, pack) for atom in exceptions)}"
+    return text + "."
+
+
+def render_naf(theory):
+    """Render a NAF theory compactly without changing its logical representation."""
+    unary, other = {}, []
+    for atom in theory.facts:
+        if len(atom.args) == 1:
+            unary.setdefault(atom.args[0], []).append(_naf_property_text(atom, theory.domain_pack))
+        else:
+            other.append(_capitalized(_naf_atom_text(atom, theory.domain_pack)) + ".")
+    facts = "\n".join(
+        [f"{entity.capitalize()} is {_english_join(properties)}." for entity, properties in unary.items()] + other
+    )
+    rules = "\n".join(_naf_rule_text(rule, theory.domain_pack) for rule in theory.rules)
+    return facts, rules
+
+
 def render(theory):
     lines, source = [], {}
     for a in theory.facts:
@@ -1268,6 +1471,10 @@ def case_metadata(case, key=None):
         proof_rule_rate=case.proof_rule_rate,
         bin_key=repr(key) if key is not None else "",
         surface_bins=[repr(x) for x in case.surf],
+        neutral_completion=(
+            "" if case.neutral_completion is None
+            else atom_text(case.neutral_completion, case.theory.domain_pack) + "."
+        ),
         cot=trace_for(case.target, case.res.derivations, case.source, case.theory.domain_pack),
     )
 
@@ -1299,8 +1506,46 @@ def reject_shortcut(case):
     return False
 
 
+def _hard_neutral(theory, res, cfg, label_signs):
+    targets = [
+        atom for atom in res.closure
+        if atom not in theory.facts
+        and opposite(atom) not in theory.facts
+        and res.derivations[atom].depth > 0
+        and hard_target(atom, res.derivations, cfg)
+    ]
+    candidates = [(hyp, target) for target in targets for hyp in (target, opposite(target))]
+    wanted_sign = label_signs[("neutral", True)] <= label_signs[("neutral", False)]
+    random.shuffle(candidates)
+    candidates.sort(key=lambda pair: pair[0].sign != wanted_sign)
+    for hyp, target in candidates:
+        proof_size = len(support_atoms(target, res.derivations)) + len(derivation_rules(target, res.derivations))
+        focused = _focused_theory(theory, res, [target], cfg.n_distractors + 1)
+        missing_facts = list(support_atoms(target, res.derivations))
+        random.shuffle(missing_facts)
+        for missing in missing_facts:
+            reduced = Theory(
+                [atom for atom in focused.facts if atom != missing],
+                focused.rules, focused.denials, focused.pred_sigs,
+                focused.entities, focused.domain_pack,
+            )
+            reduced_res = chase(reduced, max_depth=None)
+            mentioned = {arg for atom in reduced.facts for arg in atom.args}
+            if (
+                not reduced_res.inconsistent
+                and _label_for_atom(reduced_res, hyp) == "neutral"
+                and all(arg in mentioned for arg in hyp.args)
+                and len(reduced.facts) + len(reduced.rules) == proof_size + cfg.n_distractors
+            ):
+                completed = close_with(reduced, [missing])
+                if target in completed.derivations and hard_target(target, completed.derivations, cfg):
+                    return reduced, reduced_res, hyp, missing
+    return None
+
+
 def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral"), state=None):
-    state = state or {}
+    if state is None:
+        state = {}
     bins = state.setdefault("bins", Counter())
     label_counts = state.setdefault("label_counts", Counter())
     label_signs = state.setdefault("label_signs", Counter())
@@ -1318,6 +1563,13 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         label, hyp, derivation, support = choice
         if label not in allowed_labels:
             continue
+        neutral_completion = None
+        if label == "neutral":
+            hard_neutral = _hard_neutral(theory, res, cfg, label_signs)
+            if hard_neutral is None:
+                continue
+            theory, res, hyp, neutral_completion = hard_neutral
+            derivation, support = None, set()
         ls_key = (label, hyp.sign)
         other = label_signs[(label, not hyp.sign)]
         if label_signs[ls_key] > other + 6 and random.random() > 0.2:
@@ -1339,9 +1591,30 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
         if label != "neutral" and proof_rule_rate < 0.10:
             continue
         key = bin_key(label, hyp, d, support, theory, target, res.derivations)
-        case = MultistepCase(theory, res, label, hyp, target, d, support, lines, source, surf, live_rule_rate, proof_rule_rate)
+        case = MultistepCase(
+            theory, res, label, hyp, target, d, support, lines, source, surf,
+            live_rule_rate, proof_rule_rate, neutral_completion,
+        )
         if reject_shortcut(case):
             continue
+        focused = (
+            theory if target is None else
+            _focused_theory(theory, res, [target], cfg.n_distractors)
+        )
+        focused_res = chase(focused, max_depth=None)
+        if focused_res.inconsistent or _label_for_atom(focused_res, hyp) != label:
+            continue
+        theory, res = focused, focused_res
+        lines, source, surf = render(theory)
+        d = None if target is None else res.derivations[target]
+        support = set() if target is None else support_atoms(target, res.derivations)
+        used_rules = derivation_rules(target, res.derivations) if target is not None else set()
+        live_rule_rate = len(participating_rules(res.derivations)) / max(1, len(theory.rules))
+        proof_rule_rate = len(used_rules) / max(1, len(theory.rules))
+        case = MultistepCase(
+            theory, res, label, hyp, target, d, support, lines, source, surf,
+            live_rule_rate, proof_rule_rate, neutral_completion,
+        )
         min_label = min([label_counts[x] for x in allowed_labels] or [0])
         label_needs_examples = label_counts[label] <= min_label + 3
         if bins[key] >= cfg.max_bin_size and not label_needs_examples and random.random() > 0.2:
@@ -1357,8 +1630,10 @@ def generate_case(cfg, allowed_labels=("entailment", "contradiction", "neutral")
 
 
 def generate_naf_case(cfg, allowed_labels=("entailment", "contradiction", "neutral"), state=None):
-    state = state or {}
+    if state is None:
+        state = {}
     label_counts = state.setdefault("label_counts", Counter())
+    label_signs = state.setdefault("label_signs", Counter())
     allowed_labels = set(allowed_labels)
     for _ in range(500):
         theory = sample_naf_theory(cfg)
@@ -1368,7 +1643,7 @@ def generate_naf_case(cfg, allowed_labels=("entailment", "contradiction", "neutr
             continue
         if res.inconsistent:
             continue
-        choice = choose_naf_example(theory, res, cfg, label_counts)
+        choice = choose_naf_example(theory, res, cfg, label_counts, label_signs)
         if not choice:
             continue
         label, hyp, derivation, support = choice
@@ -1381,6 +1656,7 @@ def generate_naf_case(cfg, allowed_labels=("entailment", "contradiction", "neutr
         proof_rule_rate = len(used_rules) / max(1, len(theory.rules))
         key = bin_key(label, hyp, derivation, support, theory, target, res.derivations)
         label_counts[label] += 1
+        label_signs[(label, hyp.sign)] += 1
         return MultistepCase(theory, res, label, hyp, target, derivation, support, lines, source, surf, live_rule_rate, proof_rule_rate), key
     return None, None
 
@@ -1591,7 +1867,15 @@ def _join_answer(xs):
 
 
 def _hard_answer_atoms(atoms, res, cfg):
-    return [a for a in atoms if a in res.derivations and hard_target(a, res.derivations, cfg)]
+    # Set-valued QA already requires closing the theory for every entity. Requiring
+    # each answer to also have many independent leaves makes deep planted chains
+    # disappear at high levels, so use proof depth as its hardness criterion.
+    min_depth = max(2, int(cfg.min_target_depth) - 1)
+    return [
+        a for a in atoms
+        if a in res.derivations
+        and min_depth <= res.derivations[a].depth <= cfg.max_depth
+    ]
 
 
 def _world_query(theory, res, source, cfg):
@@ -1600,6 +1884,7 @@ def _world_query(theory, res, source, cfg):
     random_modes = random.sample(modes, len(modes))
     sigs = list(theory.pred_sigs.values())
     random.shuffle(sigs)
+    allow_zero = random.random() < getattr(cfg, "zero_answer_rate", 0.0)
 
     for qmode in random_modes:
         for sig in sigs:
@@ -1607,12 +1892,12 @@ def _world_query(theory, res, source, cfg):
                 atoms = [Atom(sig.name, (x,)) for x in theory.entities[sig.arg_types[0]]]
                 answer_atoms = [a for a in atoms if _entails(theory, res, a)]
                 if not answer_atoms:
-                    if random.random() > getattr(cfg, "zero_answer_rate", 0.0):
+                    if not allow_zero:
                         continue
                     hard = []
                 else:
                     hard = _hard_answer_atoms(answer_atoms, res, cfg)
-                    if len(hard) != len(answer_atoms):
+                    if not hard:
                         continue
                 answers = sorted(a.args[0] for a in answer_atoms)
                 pred = _query_words(sig.name, theory.domain_pack)
@@ -1628,12 +1913,12 @@ def _world_query(theory, res, source, cfg):
                 atoms = [Atom(sig.name, (x, y)) for y in ys if y != x]
                 answer_atoms = [a for a in atoms if _entails(theory, res, a)]
                 if not answer_atoms:
-                    if random.random() > getattr(cfg, "zero_answer_rate", 0.0):
+                    if not allow_zero:
                         continue
                     hard = []
                 else:
                     hard = _hard_answer_atoms(answer_atoms, res, cfg)
-                    if len(hard) != len(answer_atoms):
+                    if not hard:
                         continue
                 answers = sorted(a.args[1] for a in answer_atoms)
                 question = _binary_query(sig.name, x, qmode == "count", theory.domain_pack)
@@ -1743,23 +2028,24 @@ def make_direct_abduction_case(cfg):
 
 class MultistepNLI(Task):
     summary = "Multi-hop natural language inference over chained logic facts and rules."
-    def __init__(self, config=MultistepNLIConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MultistepNLIConfig())
         self.balancing_key_ratio = 1 / 3
         self._case_state = {}
 
-    def generate(self):
+    def generate_entry(self):
         case, key = generate_case(self.config, state=self._case_state)
         if case:
             meta = case_metadata(case, key)
-            meta.payload = Payload(premise="\n".join(meta.premise), hypothesis=meta.hypothesis)
+            premise = group_entity_facts(case.theory, meta.premise, self.config.group_entities)
+            meta.payload = {"premise": "\n".join(premise), "hypothesis": meta.hypothesis}
             mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
-            return Problem(meta, mapping[case.label])
+            return Entry(meta, mapping[case.label])
         raise RuntimeError("could not generate a consistent multistep_nli example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         return (
-            f"{Payload(meta.payload)}\n\n"
+            f"{render_payload(meta.payload)}\n\n"
             "Is the hypothesis true given the premise? "
             "The answer is Yes, No, or Maybe."
         )
@@ -1774,27 +2060,30 @@ class MultistepNLI(Task):
 class DefeasibleNLI(Task):
     summary = "NLI using defeasible logic rules and negation as failure."
 
-    def __init__(self, config=DefeasibleNLIConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or DefeasibleNLIConfig())
         self.balancing_key_ratio = 1 / 3
         self._case_state = {}
 
-    def generate(self):
+    def generate_entry(self):
         case, key = generate_naf_case(self.config, state=self._case_state)
         if case:
             meta = naf_case_metadata(case, key)
-            meta.payload = Payload(premise="\n".join(meta.premise), hypothesis=meta.hypothesis)
+            facts, rules = render_naf(case.theory)
+            meta.payload = {
+                "facts": facts,
+                "rules": rules,
+                "hypothesis": _capitalized(_naf_atom_text(case.hyp, case.theory.domain_pack)) + ".",
+            }
             mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
-            return Problem(meta, mapping[case.label])
+            return Entry(meta, mapping[case.label])
         raise RuntimeError("could not generate a stratified_naf_nli example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         return (
-            f"{Payload(meta.payload)}\n\n"
-            "Some rules use phrases like 'unless X can be shown'. This means the rule applies only when "
-            "that exception is not derivable from the premise. This is different from a classical "
-            "'is not' fact.\n"
-            "Is the hypothesis true given the premise? The answer is Yes, No, or Maybe."
+            "An `unless` condition must be shown to block its rule.\n\n"
+            f"{render_payload(meta.payload)}\n\n"
+            "Is the hypothesis true? Answer Yes, No, or Maybe."
         )
 
     def score_answer(self, answer, entry):
@@ -1805,11 +2094,11 @@ class DefeasibleNLI(Task):
 
 class MultistepEvidenceRetrieval(Task):
     summary = "Retrieve the specific premise indexes required to prove a logical hypothesis."
-    def __init__(self, config=MultistepNLIConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MultistepNLIConfig())
         self._case_state = {}
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(200):
             case, key = generate_case(self.config, ("entailment", "contradiction"), self._case_state)
             if not case:
@@ -1821,15 +2110,15 @@ class MultistepEvidenceRetrieval(Task):
             meta.necessary_indices = nec
             meta.valid_supports = [nec]
             meta.support_indices = nec
-            meta.payload = Payload(premise=indexed_premise(meta.premise), hypothesis=meta.hypothesis)
+            meta.payload = {"premise": indexed_premise(meta.premise), "hypothesis": meta.hypothesis}
             answer = " ".join(str(i) for i in nec)
-            return Problem(meta, answer)
+            return Entry(meta, answer)
         raise RuntimeError("could not generate a unique-support multistep_evidence_retrieval example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         verb = "entail" if meta.label == "entailment" else "contradict"
         return (
-            f"{Payload(meta.payload)}\n\n"
+            f"{render_payload(meta.payload)}\n\n"
             f"Which premise statements are necessary to {verb} the hypothesis, "
             "meaning removing any one of them breaks that result?\n"
             "Answer with space-separated indexes."
@@ -1843,11 +2132,11 @@ class MultistepEvidenceRetrieval(Task):
 
 class MultistepAbduction(Task):
     summary = "Find the missing facts from candidates to satisfy a target hypothesis."
-    def __init__(self, config=MultistepAbductionConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or MultistepAbductionConfig())
         self._case_state = {}
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(500):
             abd = make_direct_abduction_case(self.config)
             if not abd:
@@ -1859,19 +2148,19 @@ class MultistepAbduction(Task):
                 label=abd.label,
                 domain_pack=abd.domain_pack,
             )
-            meta.payload = Payload(
-                premise=indexed_premise(meta.premise),
-                hypothesis=meta.hypothesis,
-                candidate_facts=indexed_premise(meta.candidates),
-            )
+            meta.payload = {
+                "premise": indexed_premise(meta.premise),
+                "hypothesis": meta.hypothesis,
+                "candidate_facts": indexed_premise(meta.candidates),
+            }
             answer = " ".join(str(i) for i in abd.answer)
-            return Problem(meta, answer)
+            return Entry(meta, answer)
         raise RuntimeError("could not generate a consistent multistep_abduction example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         mode = "entail the hypothesis" if meta.label == "entailment" else "contradict the hypothesis"
         return (
-            f"{Payload(meta.payload)}\n\n"
+            f"{render_payload(meta.payload)}\n\n"
             f"Which smallest set of candidate facts, if added to the premise, make the premise {mode}?\n"
             "Do not include candidate facts that are not needed.\n"
             "Answer with space-separated indexes."
@@ -1883,11 +2172,11 @@ class MultistepAbduction(Task):
 
 class LogicQA(Task):
     summary = "Answer multi-step logical reasoning queries over rule-based theories."
-    def __init__(self, config=LogicQAConfig()):
-        super().__init__(config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config or LogicQAConfig())
         self.balancing_key_ratio = 1 / 3
 
-    def generate(self):
+    def generate_entry(self):
         for _ in range(300):
             theory = sample_theory(self.config)
             res = chase(theory, max_depth=None)
@@ -1897,6 +2186,14 @@ class LogicQA(Task):
             query = _world_query(theory, res, source, self.config)
             if not query:
                 continue
+            if query.atoms:
+                theory = _focused_theory(
+                    theory, res, query.atoms, self.config.n_distractors
+                )
+                res = chase(theory, max_depth=None)
+                lines, source, _ = render(theory)
+                if any(not _entails(theory, res, atom) for atom in query.atoms):
+                    continue
             meta = edict(
                 premise=lines,
                 question=query.question,
@@ -1907,16 +2204,16 @@ class LogicQA(Task):
                 hard_answer_depths=[res.derivations[a].depth for a in query.hard_atoms],
                 cot="\n\n".join(trace_for(a, res.derivations, source, theory.domain_pack) for a in query.atoms if a in res.derivations),
             )
-            meta.payload = Payload(premise="\n".join(lines), question=query.question)
-            return Problem(meta, query.answer)
+            meta.payload = {"premise": "\n".join(lines), "question": query.question}
+            return Entry(meta, query.answer)
         raise RuntimeError("could not generate a logic_qa example")
 
-    def prompt(self, meta):
+    def render_prompt(self, meta):
         if meta.answer_mode == "count":
             fmt = "Answer with one integer."
         else:
             fmt = "Answer with names in alphabetical order, comma-separated, or 'none'."
-        return f"{Payload(meta.payload)}\n\n{fmt}"
+        return f"{render_payload(meta.payload)}\n\n{fmt}"
 
     def score_answer(self, answer, entry):
         metadata = entry.metadata if hasattr(entry, "metadata") else entry["metadata"]

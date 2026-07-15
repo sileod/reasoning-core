@@ -1,0 +1,29 @@
+# Local/generated environments
+reasoning_core/openenv/
+.venv/
+**/.venv/
+tests_envs/
+reasoning_core/primeintellect/reasoning_core_env/.venv/
+
+# Generated training/eval artifacts
+checkpoints/
+**/checkpoints/
+wandb/
+**/wandb/
+torchinductor_dsileo/
+data_cache/
+per_task_results/
+per_task_results_rgym/
+run_logs/
+logs/
+
+# Python/runtime caches
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Large/generated package outputs
+dist/
+*.egg-info/

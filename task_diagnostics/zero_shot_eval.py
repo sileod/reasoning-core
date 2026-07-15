@@ -63,17 +63,34 @@ SYSTEM = (
 
 def _sig(behavior_hash, args):
     """Signature over what changes a prediction's MEANING (task version + eval config).
-    NOT n/seed: examples are non-deterministic by design; n is a target we accumulate to."""
-    payload = json.dumps({"bh": behavior_hash, "sys": args.system,
-                          "max_tokens": args.max_tokens}, sort_keys=True)
-    return hashlib.sha1(payload.encode()).hexdigest()[:16]
+    NOT n/seed: examples are non-deterministic by design; n is a target we accumulate to.
+    `shots` is only added when >0 so zero-shot rows keep their historical signature (cache reuse)."""
+    payload = {"bh": behavior_hash, "sys": args.system, "max_tokens": args.max_tokens}
+    if getattr(args, "shots", 0):
+        payload["shots"] = args.shots
+    return hashlib.sha1(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
+
+
+def build_fewshot_prompt(demos, query_prompt):
+    """Prepend K worked demonstrations (in-context learning). `demos` are (prompt, answer) drawn
+    fresh from the SAME task, disjoint from the query; format mirrors the system's <answer></answer>
+    contract so the model sees the exact target shape. Zero demos -> returns the bare query."""
+    if not demos:
+        return query_prompt
+    blocks = ["Here are worked examples — each problem followed by its correct final answer:\n"]
+    for i, d in enumerate(demos, 1):
+        blocks.append(f"[Example {i}]\n{d['prompt']}\nAnswer: <answer>{d['answer']}</answer>\n")
+    blocks.append(f"[Now solve this one the same way]\n{query_prompt}")
+    return "\n".join(blocks)
 
 
 def _row_sig(args):
-    """Eval signature for immutable TaskRow caches. Row identity/version is in row_hash."""
-    payload = json.dumps({"row_schema": "TaskRow.v1", "sys": args.system,
-                          "max_tokens": args.max_tokens}, sort_keys=True)
-    return hashlib.sha1(payload.encode()).hexdigest()[:16]
+    """Eval signature for immutable TaskRow caches. Row identity/version is in row_hash.
+    `shots` is only added when >0 so zero-shot rows keep their historical signature (cache reuse)."""
+    d = {"row_schema": "TaskRow.v1", "sys": args.system, "max_tokens": args.max_tokens}
+    if getattr(args, "shots", 0):
+        d["shots"] = args.shots
+    return hashlib.sha1(json.dumps(d, sort_keys=True).encode()).hexdigest()[:16]
 
 
 def _stable_json(x):
@@ -307,6 +324,9 @@ def run_taskrow_cache(args, rows, pred_rows):
     active = set()
     for task_name in sorted(by_task):
         target = by_task[task_name][:args.n]
+        # few-shot demos: disjoint cache rows of the same task (after the eval slice), same difficulty
+        demos = ([{"prompt": r.prompt, "answer": str(r.answer)}
+                  for r in by_task[task_name][args.n:args.n + args.shots]] if args.shots else [])
         wanted = {r.row_hash for r in target}
         for model in args.models:
             active.add((task_name, model, sig))
@@ -323,9 +343,11 @@ def run_taskrow_cache(args, rows, pred_rows):
             if args.dry_run:
                 continue
             try:
-                outs = litlm.complete([r.prompt for r in todo], model=model, system=args.system,
+                outs = litlm.complete([build_fewshot_prompt(demos, r.prompt) for r in todo],
+                                      model=model, system=args.system,
                                       caching=True, max_tokens=args.max_tokens, show_progress=False,
-                                      max_concurrency=args.max_concurrency)
+                                      max_concurrency=args.max_concurrency, rpm=args.rpm,
+                                      num_retries=args.num_retries)
             except Exception as exc:
                 print(f"{task_name:<30} {model:<42} API-ERR {type(exc).__name__}"[:110], flush=True)
                 continue
@@ -336,6 +358,7 @@ def run_taskrow_cache(args, rows, pred_rows):
                     "task": task_name, "model": model, "sig": sig, "row_hash": r.row_hash,
                     "behavior_hash": r.behavior_hash, "task_version": r.task_version,
                     "level": r.level, "mode": r.mode, "phash": _phash(r.prompt),
+                    "shots": args.shots, "demo_phashes": [_phash(d["prompt"]) for d in demos],
                     "prompt": r.prompt, "gold": str(r.answer), "output": out, "answer": ans,
                     "score": score_native(r, ans), "ok": bool(out.strip()),
                 }
@@ -350,12 +373,33 @@ def run_taskrow_cache(args, rows, pred_rows):
     return active
 
 
+def print_cost(tag=""):
+    """Surface this run's spend from litlm's in-process cost tracker (per-model + total).
+    In-memory only, so it reflects THIS process; free tiers (NIM) report $0."""
+    try:
+        cb = litlm.cost_breakdown(period="day", by="model")
+    except Exception:
+        return
+    total = sum(cb.values())
+    if not cb:
+        return
+    per = "  ".join(f"{m.split('/')[-1]}=${c:.4f}" for m, c in sorted(cb.items()))
+    print(f"[cost{(' ' + tag) if tag else ''}] this run ${total:.4f}  ({per})", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tasks", nargs="+", default=None, help="Tasks to eval (default: all registered).")
     ap.add_argument("--models", nargs="+", default=DEFAULT_MODELS, help="litlm model ids (cheap/free).")
     ap.add_argument("--n", type=int, default=25, help="Target ok examples per (task, model); runs accumulate to it.")
+    ap.add_argument("--shots", type=int, default=0,
+                    help="In-context demonstrations (K) prepended to each query (0 = zero-shot). Run "
+                         "0/1/3 to measure the ICL lift = reward@K - reward@0 (an in-context "
+                         "learnability signal). Stored separately per K (shots in the eval signature).")
     ap.add_argument("--max-tokens", type=int, default=640)
+    ap.add_argument("--rpm", type=int, default=None,
+                    help="Cap request starts to this many/min (parallel underneath). Use ~90%% of the "
+                         "provider limit to avoid RateLimitError, e.g. --rpm 450 for a 500 rpm account.")
     ap.add_argument("--max-concurrency", type=int, default=8,
                     help="Cap simultaneous API calls (litlm semaphore) — lower for rate-limited free tiers.")
     ap.add_argument("--gen-workers", type=int, default=1,
@@ -415,10 +459,15 @@ def main():
             print(md + f"\n[dry-run] would write {out_path} and {out_path.with_suffix('.md')}")
         else:
             print(f"\nwrote {preds_path}\nwrote {out_path}\nwrote {out_path.with_suffix('.md')}")
+        print_cost(f"shots={args.shots}")
         return
 
     for name in (() if args.dry_run else (args.tasks or list_tasks())):  # dry-run: report cache only
-        task = get_task(name)
+        try:                                             # unknown/renamed task -> skip, don't kill the run
+            task = get_task(name)
+        except Exception as exc:
+            print(f"{name:<30} {'':<42} SKIP {type(exc).__name__}: {str(exc)[:60]}", flush=True)
+            continue
         bh = task.behavior_hash()
         sig = _sig(bh, args)
         for model in args.models:
@@ -437,8 +486,18 @@ def main():
             except BaseException as exc:                 # framework TimeoutException is BaseException
                 print(f"{name:<30} {model:<42} GEN-ERR {type(exc).__name__}"[:110], flush=True)
                 continue
+            demos = []                                   # in-context demonstrations (fresh, disjoint)
+            if args.shots:
+                try:
+                    dexs, _ = generate(task, args.shots, workers=1)
+                    demos = [{"prompt": e.prompt, "answer": str(e.answer)} for e in dexs][:args.shots]
+                except BaseException as exc:
+                    print(f"{name:<30} {model:<42} DEMO-ERR {type(exc).__name__}"[:110], flush=True)
+                    continue
+            demo_ph = [_phash(d["prompt"]) for d in demos]
             try:
-                outs = litlm.complete([e.prompt for e in exs], model=model, system=args.system,
+                prompts = [build_fewshot_prompt(demos, e.prompt) for e in exs]
+                outs = litlm.complete(prompts, model=model, system=args.system,
                                       caching=True, max_tokens=args.max_tokens, show_progress=False,
                                       max_concurrency=args.max_concurrency)
             except Exception as exc:
@@ -459,6 +518,7 @@ def main():
                     score, serr = 1.0, ""
                 rows[(name, model, sig, _phash(e.prompt))] = {
                     "task": name, "model": model, "sig": sig, "behavior_hash": bh,
+                    "shots": args.shots, "demo_phashes": demo_ph,
                     "phash": _phash(e.prompt), "prompt": e.prompt, "gold": str(e.answer),
                     "metadata": str(getattr(e, "metadata", "")),   # enables offline re-scoring
                     "output": out, "answer": ans, "score": score, "score_err": serr,
@@ -485,6 +545,7 @@ def main():
         print(md + f"\n[dry-run] would write {out_path} and {out_path.with_suffix('.md')}")
     else:
         print(f"\nwrote {preds_path}\nwrote {out_path}\nwrote {out_path.with_suffix('.md')}")
+    print_cost(f"shots={args.shots}")
 
 
 def _write_aggregate(out_path, rows, args, gen_time, active=None, write=True):
@@ -499,11 +560,15 @@ def _write_aggregate(out_path, rows, args, gen_time, active=None, write=True):
     tasks = {}
     for t, rs in by.items():
         models = {}
-        for m in {r["model"] for r in rs}:
-            okr = [r for r in rs if r["model"] == m and r.get("ok")]
+        # break out by (model, shots): few-shot rows share the model id but differ in `shots`,
+        # so a plain per-model mean would blend zero-shot and K-shot. Label columns model@Ks.
+        for (m, sh) in {(r["model"], int(r.get("shots", 0))) for r in rs}:
+            okr = [r for r in rs if r["model"] == m and int(r.get("shots", 0)) == sh and r.get("ok")]
             scored = [r["score"] for r in okr if r.get("score") is not None]
-            models[m] = {"reward": (sum(scored) / len(scored)) if scored else None,
-                         "n_ok": len(okr), "n": sum(r["model"] == m for r in rs)}
+            label = m if sh == 0 else f"{m}@{sh}s"
+            models[label] = {"reward": (sum(scored) / len(scored)) if scored else None,
+                             "n_ok": len(okr), "shots": sh,
+                             "n": sum(r["model"] == m and int(r.get("shots", 0)) == sh for r in rs)}
         gt = gen_time.get(t)                             # fall back to prior JSON on cached-only rebuilds
         tasks[t] = {"gen_time": gt if gt is not None else prev.get(t, {}).get("gen_time"),
                     "models": models}

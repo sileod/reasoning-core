@@ -8,7 +8,7 @@ from math import log, nan
 import ast
 from abc import ABC, abstractmethod
 
-from reasoning_core.template import Task, Problem, Config
+from reasoning_core.template import Task, Entry, Config
 from dataclasses import dataclass
 
 import warnings
