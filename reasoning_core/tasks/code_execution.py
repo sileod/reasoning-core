@@ -1422,7 +1422,7 @@ from easydict import EasyDict as edict
 from reasoning_core.template import Task, Problem, Config
 from gramforge.grammars import mesopy_grammar
 from gramforge import generate
-from ._gramforge_helpers.prerequisites import run_sandboxed
+# from ._gramforge_helpers.prerequisites import run_sandboxed
 
 
 # ── Value domains ──────────────────────────────────────────────────────────
