@@ -15,6 +15,7 @@ from reasoning_core.training.dev_data import (
     steps_for_token_budget,
 )
 from reasoning_core.training.dev_engine import optimizer_eval_mode
+from reasoning_core.training.dev_evals import eval_id, evaluate_qa_nll, load_qa_jsonl
 
 
 def test_write_paths_must_stay_under_home(tmp_path):
@@ -171,3 +172,56 @@ def test_exact_token_filter_rejects_overlong_aux(tmp_path):
         Tokenizer(), max_length=100, max_tokens=4,
     ))
     assert [row["_source_index"] for row in rows] == [0]
+
+
+def test_local_stream_can_filter_task_column(tmp_path):
+    path = tmp_path / "aux.jsonl"
+    path.write_text(
+        '{"task":"logic","prompt":"p","answer":"a"}\n'
+        '{"task":"math","prompt":"q","answer":"b"}\n'
+    )
+    tokenizer = SimpleNamespace(eos_token="</s>")
+    rows = list(load_stream(
+        StreamSpec(str(path), "influence_legacy_v1", task="logic"), tokenizer,
+    ))
+    assert [row["prompt"] for row in rows] == ["p\n"]
+
+
+def test_frozen_qa_eval_contract_and_content_id(tmp_path):
+    path = tmp_path / "eval.jsonl"
+    path.write_text(
+        '{"prompt":"Question?","answer":"Answer"}\n'
+        '{"prompt":"","answer":"ignored"}\n'
+    )
+    assert load_qa_jsonl(path, "</s>") == [("Question?\n", "Answer</s>")]
+    assert eval_id("logic", path).startswith("logic/answer_nll@v1:")
+    assert eval_id("logic", path, 1) != eval_id("logic", path, 2)
+
+
+def test_qa_nll_matches_production_weighting_and_restores_mode():
+    class Tokenizer:
+        def __call__(self, text, add_special_tokens=False):
+            return SimpleNamespace(input_ids=list(range(len(text.split()))))
+
+    class Model:
+        training = True
+
+        def parameters(self):
+            yield __import__("torch").zeros(1)
+
+        def eval(self):
+            self.training = False
+
+        def train(self, mode=True):
+            self.training = mode
+
+        def __call__(self, input_ids, labels):
+            return SimpleNamespace(loss=SimpleNamespace(item=lambda: float(input_ids.shape[1])))
+
+    model = Model()
+    result = evaluate_qa_nll(
+        model, Tokenizer(), [("one ", "two three"), ("one two ", "three")], max_length=8,
+    )
+    assert result["nll"] == pytest.approx((3 * 2 + 3 * 1) / 3)
+    assert result["tokens"] == 3
+    assert model.training

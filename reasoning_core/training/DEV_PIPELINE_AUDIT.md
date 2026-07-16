@@ -18,8 +18,14 @@ must prove each item below before any migration.
 - Influence packing defaults on. Auxiliary streams use an exact token-length
   filter with the production-style `max_length - len_margin` budget; SFT streams
   retain their cheaper character guard.
+- Influence defaults also match production seed/data order, batch size, dtype,
+  and attention setup: seed 43, no post-interleave shuffle, batch 8, bf16 when
+  supported, and SDPA. Main local streams cycle without the SFT character guard.
 - Influence records both historical raw `delta_nll = treatment - baseline` and
   report-facing `reduction_pct = 100 * (baseline - treatment) / baseline`.
+- Frozen `{prompt,answer}` JSONL evaluation uses the exact production QA-NLL
+  tokenization, masking, overlength skip, and token-weighted aggregation. Its ID
+  hashes file contents and the evaluation limit.
 - Schedule-free optimizers enter eval mode only around evaluation/checkpoint
   serialization, then restore their prior mode.
 - Runtime writes are rooted under `~/.reasoning_core`.
@@ -38,6 +44,11 @@ must prove each item below before any migration.
 - The production-like AdamW/linear/packing influence path completed paired
   one-step runs with synthetic local data and Dolci + FLAN HF streams on
   `sileod/microlm-ettin-swa-5m`.
+- The dev evaluator and a literal production `eval_qa` reference returned
+  bit-identical NLL and per-example values on frozen MMLU logic examples.
+- A paired dev run consumed the production Dolci JSONL plus the canonical
+  full-roster Parquet cache filtered to `logic_nli`, and evaluated the frozen
+  MMLU logic leg. Directory-backed Parquet and task-column filtering are tested.
 - Seeded interleave+buffered-shuffle replay followed by deterministic skipping
   reproduces local-stream continuation exactly.
 - On `sileod/microlm-ettin-swa-5m`, signal checkpoint/resume over the shuffled
@@ -58,7 +69,8 @@ must prove each item below before any migration.
   is not packing-aware, so its packed results prove execution only.
 - Exact parity for main/task-level/intrinsic/downstream evaluation cadence and
   W&B mirroring.
-- Versioned evaluator registry covering every existing MMLU/BBH/Platinum leg.
+- Extend the first versioned frozen QA-NLL evaluator to every existing
+  MMLU/BBH/Platinum/LM leg and named suites.
 - A production-vs-dev real influence comparison using the same initialization,
   data, AdamW configuration, packing/filtering, and one shared NLL evaluator.
 - Durable initialization artifact and hash for paired influence arms.

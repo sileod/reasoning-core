@@ -23,6 +23,7 @@ from reasoning_core.training.paths import RUNS_HOME, home_path
 class ArmSpec:
     experiment_id: str
     arm_id: str
+    model: str = ""
     optimizer: str = "prodigy"
     learning_rate: float = 1.0
     weight_decay: float = 0.01
@@ -41,9 +42,13 @@ class ArmSpec:
     prompt_prefix: str = ""
     aux_prompt_prefix: str = ""
     main_source: str = "synthetic"
+    main_config: str | None = None
     aux_source: str | None = None
+    aux_config: str | None = None
+    aux_task: str | None = None
     aux_fraction: float = 0.0
     packing: bool = True
+    bf16: bool = False
 
     @property
     def run_dir(self):
@@ -96,7 +101,7 @@ def train_arm(model, tokenizer, dataset, spec, eval_dataset=None, callbacks=()):
             max_length=spec.max_length,
             completion_only_loss=True,
             packing=spec.packing,
-            bf16=False,
+            bf16=spec.bf16,
             report_to="none",
             logging_steps=1,
             save_strategy="steps",

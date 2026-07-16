@@ -19,6 +19,7 @@ class StreamSpec:
     config: str | None = None
     cycle: bool = False
     prompt_prefix: str = ""
+    task: str | None = None
 
     def __post_init__(self):
         if self.formatter not in FORMATTERS:
@@ -43,6 +44,8 @@ def load_stream(spec, tokenizer, max_length=None, chars_per_token=4.0, max_token
     # retained only for the SFT-style stream path.
     max_chars = max_length * chars_per_token if max_length and max_tokens is None else None
     raw = _raw_stream(spec)
+    if spec.task:
+        raw = raw.filter(lambda row: row.get("task") == spec.task)
 
     def format_example(row, index):
         return {
@@ -104,6 +107,11 @@ def settle_remote_streams(seconds=1):
 def _raw_stream(spec):
     path = Path(spec.source).expanduser()
     if path.exists():
+        if path.is_dir():
+            files = sorted(str(file) for file in path.glob("**/*.parquet"))
+            if not files:
+                raise ValueError(f"Local stream directory has no Parquet files: {path}")
+            return load_dataset("parquet", data_files=files, split=spec.split, streaming=True)
         suffix = path.suffix.lower()
         if suffix not in {".json", ".jsonl", ".parquet"}:
             raise ValueError(f"Local stream must be JSONL/JSON/Parquet, got {path}")

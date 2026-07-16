@@ -76,14 +76,16 @@ def main():
         )
     model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32).to("cuda")
     spec = ArmSpec(
-        experiment_id=args.experiment_id, arm_id="stage1", optimizer=args.optimizer,
+        experiment_id=args.experiment_id, arm_id="stage1", model=args.model,
+        optimizer=args.optimizer,
         max_steps=steps, batch_size=args.batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         max_length=args.max_length, checkpoint_every_minutes=args.checkpoint_every_minutes,
         save_final=True, formatter=args.main_format,
         aux_formatter=args.aux_format if args.aux_source else None,
         prompt_prefix=args.main_prefix, aux_prompt_prefix=args.aux_prefix,
-        main_source=args.main_source or "synthetic", aux_source=args.aux_source,
+        main_source=args.main_source or "synthetic", main_config=args.main_config,
+        aux_source=args.aux_source, aux_config=args.aux_config,
         aux_fraction=ratio_to_fraction(args.aux_ratio) if args.aux_source else 0,
     )
     _, metrics = train_arm(model, tokenizer, dataset, spec, eval_dataset=eval_dataset)
