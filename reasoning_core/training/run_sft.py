@@ -88,9 +88,10 @@ DATA_MAP = {
     "fw": "HuggingFaceFW/fineweb-edu",
     "synth": "tasksource/SYNTH",
     "dolci": "tasksource/dolci-instruct",
-    "rc": "reasoning-core/procedural-pretraining-pile",
+    "rc": "reasoning-core/procedural-pile",
     "rg": "reasoning-core/reasoning-gym",
-    "bp": "reasoning-core/basic-procedural",
+    "bp": "reasoning-core/procedural-warmup",
+    "sl": "reasoning-core/synlogic",
     "flan": "tasksource/flan"
 }
 

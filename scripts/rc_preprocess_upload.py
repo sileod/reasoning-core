@@ -1,288 +1,103 @@
 #!/usr/bin/env python3
-"""staging → reasoning-core/procedural-pretraining-pile
+"""NFS-friendly streaming rebuild for reasoning-core/procedural-pile.
 
-Smoke-test mode (fast, no upload):
-  python rc_preprocess_upload.py --smoke_test 50000
-Full run:
-  python rc_preprocess_upload.py
+This avoids materializing the full Hugging Face Dataset locally. Deduplication is
+done with sequential bucket files and a compact keep bitmap:
+
+  pass 1A: stream source rows -> write 128-bit prompt hash + row index buckets
+  pass 1B: sort one bucket at a time -> mark first occurrence in bitmap
+  pass 2: stream source again -> transform kept rows -> parquet shard -> upload/delete
+
+Smoke test, no upload:
+  python scripts/rc_preprocess_upload.py --smoke_test 10000 --dry_run
+
+Full upload:
+  python scripts/rc_preprocess_upload.py
 """
 
-import os, json, random, argparse, signal, time, html, sys, traceback, shutil, multiprocessing as mp, threading, contextlib, glob, re, gc, heapq
+import argparse
+import contextlib
+import gc
+import hashlib
+import html
+import json
+import multiprocessing as mp
+import os
+import random
+import shutil
+import signal
+import struct
+import sys
+import tempfile
+import time
+import traceback
 from array import array
+from collections import Counter, defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
-base = os.environ["HOME"]
-tmp_root = os.environ.get("TMPDIR", f"{base}/tmp")
-for name in ("TMPDIR", "TEMP", "TMP"):
-    os.environ.setdefault(name, tmp_root)
-os.makedirs(tmp_root, exist_ok=True)
-import tempfile; tempfile.tempdir = tmp_root
-
-import numpy as np, polars as pl, pyarrow as pa
-import pyarrow.compute as pc
-import datasets
-from datasets import load_dataset, Dataset, DatasetDict, concatenate_datasets, disable_caching, Features, Value
-from tqdm import tqdm
-from reasoning_core import list_tasks, score_answer
+import numpy as np
+import pyarrow as pa
+import pyarrow.parquet as pq
+import xxhash
+from datasets import Features, Value, disable_caching, load_dataset, load_dataset_builder
 from easydict import EasyDict as edict
-from distractor_retrieval import VerificationDistractorRetriever
+from huggingface_hub import CommitOperationDelete, HfApi
+from tqdm import tqdm
+
+from reasoning_core import get_task, list_tasks, score_answer
+
 disable_caching()
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-GENERATED_DATA_DIR = os.path.join(REPO_ROOT, "reasoning_core", "generated_data")
 
-
-class RegexDict(dict):
-    def get(self, key, default=None):
-        for pattern, value in self.items():
-            if re.fullmatch(pattern, key):
-                return value
-        return default
-
-
-SOURCE_DATASET_NAMES = RegexDict({
-    r"rg.*": "reasoning-gym",
-    r"rc.*high": "formal-reasoning-env",
+TARGET_FEATURES = Features({
+    "task": Value("large_string"),
+    "prompt": Value("large_string"),
+    "answer": Value("large_string"),
+    "metadata": Value("large_string"),
+    "cot": Value("large_string"),
+    "level": Value("int64"),
+    "mode": Value("large_string"),
 })
 
+TARGET_SCHEMA = pa.schema([
+    ("task", pa.large_string()),
+    ("prompt", pa.large_string()),
+    ("answer", pa.large_string()),
+    ("metadata", pa.large_string()),
+    ("cot", pa.large_string()),
+    ("level", pa.int64()),
+    ("mode", pa.large_string()),
+])
 
-TARGET_FEATURES = {
-    "procedural-pretraining-pile": Features({
-        "task": Value("large_string"),
-        "prompt": Value("large_string"),
-        "answer": Value("large_string"),
-        "metadata": Value("large_string"),
-        "cot": Value("large_string"),
-        "level": Value("int64"),
-        "mode": Value("large_string"),
-    }),
-    "reasoning-gym": Features({
-        "prompt": Value("large_string"),
-        "answer": Value("large_string"),
-        "metadata": Value("large_string"),
-        "task": Value("large_string"),
-        "level": Value("int64"),
-        "mode": Value("large_string"),
-    }),
-}
-
-
-# ── timing ───────────────────────────────────────────────────────────────────
-
-_timings = {}
-_RUN_DIR = None
-_KEEP_WORK_DIR = False
+RECORD = struct.Struct("<QQQ")  # hash_lo, hash_hi, row_index
 _SCORE_DEVNULL = None
+_VERIFY_POOLS = None
+_VERIFY_ARGS = None
 
 
-def _cleanup_work_dir():
-    global _RUN_DIR, _SCORE_DEVNULL
-    if _SCORE_DEVNULL is not None:
-        try:
-            _SCORE_DEVNULL.close()
-        except Exception:
-            pass
-        _SCORE_DEVNULL = None
-    if _RUN_DIR and _KEEP_WORK_DIR:
-        print(f"kept work dir: {_RUN_DIR}", flush=True)
-    elif _RUN_DIR:
-        path = _RUN_DIR
-        gc.collect()
-        try:
-            shutil.rmtree(path)
-        except OSError as exc:
-            print(f"WARN failed to clean work dir {path}: {exc}", flush=True)
-        else:
-            print(f"cleaned work dir: {path}", flush=True)
-        _RUN_DIR = None
-
-class _step:
-    def __init__(self, name):
-        self.name = name
-    def __enter__(self):
-        print(f"{self.name}…", flush=True)
-        self._t = time.time()
-        return self
-    def __exit__(self, *_):
-        dt = time.time() - self._t
-        _timings[self.name] = dt
-        print(f"  ↳ {dt:.1f}s", flush=True)
+class Timeout(Exception):
+    pass
 
 
-@contextlib.contextmanager
-def _heartbeat(label, every=30):
-    stop = threading.Event()
-
-    def beat():
-        t0 = time.time()
-        while not stop.wait(every):
-            print(f"  {label}: {time.time() - t0:.0f}s elapsed", flush=True)
-
-    thread = threading.Thread(target=beat, daemon=True)
-    thread.start()
-    try:
-        yield
-    finally:
-        stop.set()
-        thread.join(timeout=0.1)
+def now_iso():
+    return datetime.now(timezone.utc).isoformat()
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
-
-def _logical_batches(ds, cols, batch_size=100_000):
-    cols = [cols] if isinstance(cols, str) else list(cols)
-    table = ds.data.table.select(cols)
-    idx = getattr(ds, "_indices", None)
-    if idx is None:
-        yield from table.to_batches(max_chunksize=batch_size)
-        return
-
-    idx_col = idx.column(0)
-    for start in range(0, len(ds), batch_size):
-        n = min(batch_size, len(ds) - start)
-        physical = pa.array(idx_col.slice(start, n).to_numpy(zero_copy_only=False))
-        yield from table.take(physical).to_batches(max_chunksize=batch_size)
+def stable_u01(*parts, seed=42):
+    h = xxhash.xxh64(seed=seed)
+    for part in parts:
+        h.update(str(part).encode())
+        h.update(b"\0")
+    return h.intdigest() / 2**64
 
 
-def deduplicate_by_column(ds, column="prompt", batch_size=100_000):
-    """Deduplicate without Hugging Face Dataset.filter's per-row Python overhead."""
-    import xxhash
-
-    seen = set()
-    keep = array("Q")
-    n0 = ds.num_rows
-    row_i = 0
-
-    for rb in tqdm(_logical_batches(ds, column, batch_size), desc="deduplicating"):
-        for value in rb.column(column).to_pylist():
-            h = xxhash.xxh64_intdigest(str(value).encode())
-            if h not in seen:
-                seen.add(h)
-                keep.append(row_i)
-            row_i += 1
-
-    removed = n0 - len(keep)
-    report = {
-        "before": n0,
-        "after": len(keep),
-        "removed": removed,
-        "removed_pct": round(100 * removed / max(n0, 1), 2),
-    }
-    if removed:
-        indices = np.frombuffer(keep, dtype=np.uint64).astype(np.int64, copy=False)
-        ds = ds.select(indices)
-    del keep, seen
-    gc.collect()
-    return ds, report
+def prompt_hash(prompt):
+    digest = xxhash.xxh3_128_digest(str(prompt).encode())
+    return struct.unpack("<QQ", digest)
 
 
-def filter_by_string_length(ds, column="prompt", max_chars=50_000, batch_size=100_000):
-    keep = array("Q")
-    row_i = 0
-    for rb in tqdm(_logical_batches(ds, column, batch_size), desc=f"filter {column} length"):
-        lengths = pc.fill_null(pc.utf8_length(rb.column(column)), max_chars)
-        valid = np.asarray(pc.less(lengths, max_chars).to_numpy(zero_copy_only=False), dtype=bool)
-        keep.extend((row_i + np.flatnonzero(valid)).tolist())
-        row_i += len(valid)
-
-    if len(keep) == len(ds):
-        return ds
-    indices = np.frombuffer(keep, dtype=np.uint64).astype(np.int64, copy=False)
-    out = ds.select(indices)
-    del keep, indices
-    gc.collect()
-    return out
-
-
-def prettyorder_low_memory(ds, cols="task", n_pretty=3, seed=42, batch_size=100_000):
-    cols = [cols] if isinstance(cols, str) else list(cols)
-    print("building groups...", flush=True)
-    groups = {}
-    row_i = 0
-    for rb in tqdm(_logical_batches(ds, cols, batch_size), desc="grouping"):
-        columns = [rb.column(col).to_pylist() for col in cols]
-        for values in zip(*columns):
-            key = values[0] if len(values) == 1 else tuple(values)
-            groups.setdefault(key, array("Q")).append(row_i)
-            row_i += 1
-
-    sorted_keys = sorted(groups)
-    prefix_n = sum(min(n_pretty, len(groups[key])) for key in sorted_keys)
-    indices = np.empty(row_i, dtype=np.int64)
-    pos = 0
-    for cycle in range(n_pretty):
-        for key in sorted_keys:
-            rows = groups[key]
-            if cycle < len(rows):
-                indices[pos] = rows[cycle]
-                pos += 1
-    for key in sorted_keys:
-        tail = np.frombuffer(groups[key], dtype=np.uint64)[n_pretty:]
-        indices[pos:pos + len(tail)] = tail
-        pos += len(tail)
-
-    np.random.default_rng(seed).shuffle(indices[prefix_n:])
-    print(f"prettyorder: {prefix_n:,} interleaved rows "
-          f"({n_pretty}x{len(sorted_keys):,} groups) + "
-          f"{len(indices) - prefix_n:,} shuffled")
-    out = ds.select(indices)
-    del groups, indices
-    gc.collect()
-    return out
-
-
-def count_by_column(ds, key="task", batch_size=100_000):
-    counts = {}
-    for rb in _logical_batches(ds, key, batch_size):
-        for value in rb.column(key).to_pylist():
-            counts[value] = counts.get(value, 0) + 1
-    return counts
-
-
-def subsample(ds, top_k, key="task", seed=42):
-    if len(ds) == 0 or top_k <= 0:
-        return ds
-    counts = count_by_column(ds, key=key)
-    sorted_counts = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
-    if len(sorted_counts) <= top_k:
-        return ds
-    limit = int(sorted_counts[top_k][1])
-    rng = random.Random(seed)
-    seen = {task: 0 for task in counts}
-    reservoirs = {task: array("Q") for task in counts}
-
-    row_i = 0
-    for rb in _logical_batches(ds, key, 100_000):
-        for task in rb.column(key).to_pylist():
-            seen[task] += 1
-            reservoir = reservoirs[task]
-            if len(reservoir) < limit:
-                reservoir.append(row_i)
-            else:
-                j = rng.randrange(seen[task])
-                if j < limit:
-                    reservoir[j] = row_i
-            row_i += 1
-
-    n_indices = sum(map(len, reservoirs.values()))
-    indices = np.fromiter(
-        (i for reservoir in reservoirs.values() for i in reservoir),
-        dtype=np.int64,
-        count=n_indices,
-    )
-    indices.sort()
-    return ds.select(indices)
-
-
-class _Timeout(Exception): pass
-
-
-_WORKER_POOLS = None
-_WORKER_MAX_TRIES = 2
-_WORKER_SCORE_TIMEOUT = 1.0
-_WORKER_NEGATIVE_STRATEGY = "scored_same_task"
-
-
-def _metadata_obj(metadata):
+def metadata_obj(metadata):
     if isinstance(metadata, dict):
         return metadata
     try:
@@ -291,79 +106,30 @@ def _metadata_obj(metadata):
         return {}
 
 
-def _token_count(metadata, default=0):
-    obj = _metadata_obj(metadata)
-    try:
-        return int(obj.get("_prompt_tokens", 0)) + int(obj.get("_answer_tokens", 0))
-    except Exception:
-        return default
-
-
-def _metadata_level(metadata):
-    obj = _metadata_obj(metadata)
+def metadata_level(metadata):
+    obj = metadata_obj(metadata)
     try:
         return int(obj.get("_level", obj.get("level", 0)) or 0)
     except Exception:
         return 0
 
 
-def _metadata_task(row, meta):
+def metadata_task(row, meta):
     task = str(row.get("task") or meta.get("_task") or meta.get("task") or "")
     if task == "reasoning_gym" and meta.get("source_dataset"):
         return str(meta["source_dataset"])
     return task
 
 
-def infer_dataset_name(source):
-    if source == "staging":
-        return "procedural-pretraining-pile"
-    return SOURCE_DATASET_NAMES.get(os.path.basename(source.rstrip("/")), os.path.basename(source.rstrip("/")))
+def token_count(metadata):
+    obj = metadata_obj(metadata)
+    try:
+        return int(obj.get("_prompt_tokens", 0)) + int(obj.get("_answer_tokens", 0))
+    except Exception:
+        return 0
 
 
-def resolve_local_source(source):
-    if os.path.exists(source):
-        return os.path.abspath(source)
-    generated_path = os.path.join(GENERATED_DATA_DIR, source)
-    if os.path.exists(generated_path):
-        return generated_path
-    raise FileNotFoundError(
-        f"source '{source}' is neither 'staging', an existing path, nor a generated_data key under {GENERATED_DATA_DIR}"
-    )
-
-
-def local_jsonl_files(path):
-    if os.path.isfile(path):
-        files = [path]
-    else:
-        files = sorted(glob.glob(os.path.join(path, "*.jsonl")))
-    if not files:
-        raise FileNotFoundError(f"no .jsonl files found in {path}")
-    return files
-
-
-def normalize_columns(ds):
-    missing = {"mode", "cot", "level"} - set(ds.column_names)
-    if not missing:
-        return ds
-
-    def add_missing(batch):
-        n = len(next(iter(batch.values())))
-        out = {}
-        if "mode" in missing:
-            out["mode"] = ["instruct"] * n
-        if "cot" in missing:
-            out["cot"] = [""] * n
-        if "level" in missing:
-            out["level"] = [_metadata_level(m) for m in batch.get("metadata", ["{}"] * n)]
-        return out
-
-    return ds.map(add_missing, batched=True, desc="normalize schema")
-
-
-LOCAL_COLUMNS = ["prompt", "answer", "metadata", "task", "cot", "level", "mode"]
-
-
-def normalize_local_row(row):
+def normalize_row(row):
     metadata = row.get("metadata", "{}")
     if isinstance(metadata, dict):
         metadata = json.dumps(metadata, ensure_ascii=False)
@@ -371,435 +137,666 @@ def normalize_local_row(row):
         metadata = "{}"
     else:
         metadata = str(metadata)
-    meta = _metadata_obj(metadata)
+    meta = metadata_obj(metadata)
+    cot = str(row.get("cot") or meta.get("cot") or "")
     return {
         "prompt": str(row.get("prompt", "")),
         "answer": str(row.get("answer", "")),
         "metadata": metadata,
-        "task": _metadata_task(row, meta),
-        "cot": str(row.get("cot") or meta.get("cot") or ""),
-        "level": int(row.get("level", _metadata_level(metadata)) or 0),
+        "task": metadata_task(row, meta),
+        "cot": cot,
+        "level": int(row.get("level", metadata_level(metadata)) or 0),
         "mode": str(row.get("mode") or "instruct"),
     }
 
 
-def load_local_jsonl_sharded(files, out_dir, shard_rows=100_000):
-    if os.path.exists(out_dir):
-        shutil.rmtree(out_dir)
-    os.makedirs(out_dir, exist_ok=True)
-
-    shard_paths, pending = [], {col: [] for col in LOCAL_COLUMNS}
-
-    def flush():
-        if not pending["prompt"]:
-            return
-        shard_path = os.path.join(out_dir, f"shard-{len(shard_paths):05d}")
-        Dataset.from_dict(pending).save_to_disk(shard_path)
-        shard_paths.append(shard_path)
-        for col in LOCAL_COLUMNS:
-            pending[col].clear()
-
-    for path in tqdm(files, desc="loading local files"):
-        with open(path, encoding="utf-8") as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                row = normalize_local_row(json.loads(line))
-                for col in LOCAL_COLUMNS:
-                    pending[col].append(row[col])
-                if len(pending["prompt"]) >= shard_rows:
-                    flush()
-    flush()
-    if not shard_paths:
-        return Dataset.from_dict({col: [] for col in LOCAL_COLUMNS})
-    return concatenate_datasets([datasets.load_from_disk(path) for path in shard_paths])
-
-
-def _default_column(name, ds):
-    if name == "level":
-        return [0] * len(ds)
-    return [""] * len(ds)
-
-
-def format_for_target(ds, dataset_name):
-    features = TARGET_FEATURES.get(dataset_name)
-    if features is None:
-        return ds
-
-    for col in features:
-        if col not in ds.column_names:
-            ds = ds.add_column(col, _default_column(col, ds))
-    drop = [col for col in ds.column_names if col not in features]
-    if drop:
-        ds = ds.remove_columns(drop)
-    ds = ds.select_columns(list(features))
-    return ds.cast(features)
-
-
-def format_split_for_target(split, dataset_name):
-    return DatasetDict({k: format_for_target(v, dataset_name) for k, v in split.items()})
-
-
-def load_source_dataset(source, smoke_n=0, work_dir=None):
-    cache_dir = os.path.join(work_dir, "hf_cache") if work_dir else None
-    if source == "staging":
-        if smoke_n:
-            stream = load_dataset("reasoning-core/staging", split="train", streaming=True, cache_dir=cache_dir)
-            return Dataset.from_list(list(tqdm(
-                stream.take(smoke_n),
-                total=smoke_n,
-                desc="loading staging",
-            )))
-        with _heartbeat("loading staging"):
-            return load_dataset("reasoning-core/staging", split="train", cache_dir=cache_dir)
-
-    path = resolve_local_source(source)
-    files = local_jsonl_files(path)
-    print(f"  local source: {path}", flush=True)
-    print(f"  jsonl files: {len(files):,}", flush=True)
-    if smoke_n:
-        files = files[:max(1, min(len(files), smoke_n))]
-        print(f"  smoke files: {len(files):,}", flush=True)
-        stream = load_dataset("json", data_files=files, split="train", streaming=True, cache_dir=cache_dir)
-        ds = Dataset.from_list(list(tqdm(
-            stream.take(smoke_n),
-            total=smoke_n,
-            desc="loading local",
-        )))
+def source_iter(args):
+    cache_dir = os.path.join(args.run_dir, "huggingface", "datasets")
+    if args.source == "staging":
+        ds = load_dataset(
+            "reasoning-core/staging",
+            split="train",
+            streaming=True,
+            revision=args.source_revision,
+            cache_dir=cache_dir,
+        )
+        iterator = ds
+    elif os.path.isfile(args.source):
+        def lines():
+            with open(args.source, encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        yield json.loads(line)
+        iterator = lines()
+    elif os.path.isdir(args.source):
+        files = sorted(
+            os.path.join(args.source, name)
+            for name in os.listdir(args.source)
+            if name.endswith(".jsonl")
+        )
+        def many_lines():
+            for path in files:
+                with open(path, encoding="utf-8") as f:
+                    for line in f:
+                        if line.strip():
+                            yield json.loads(line)
+        iterator = many_lines()
     else:
-        shard_dir = os.path.join(work_dir or f"{base}/tmp/rc_preprocess_upload", "local_load")
-        ds = load_local_jsonl_sharded(files, shard_dir)
-    return normalize_columns(ds)
+        raise FileNotFoundError(f"unsupported source: {args.source}")
 
-def _safe_score(cand, row, timeout=2):
+    for row_i, row in enumerate(iterator):
+        if args.smoke_test and row_i >= args.smoke_test:
+            break
+        yield row_i, normalize_row(row)
+
+
+def source_total(args):
+    if args.smoke_test:
+        return args.smoke_test
+    if args.source == "staging":
+        try:
+            builder = load_dataset_builder(
+                "reasoning-core/staging",
+                revision=args.source_revision,
+                cache_dir=os.path.join(args.run_dir, "huggingface", "datasets"),
+            )
+            split = builder.info.splits.get("train") if builder.info.splits else None
+            return None if split is None else split.num_examples
+        except Exception:
+            return None
+    if os.path.isfile(args.source):
+        return None
+    return None
+
+
+@dataclass
+class Ewma:
+    alpha: float = 0.2
+    value: float | None = None
+
+    def update(self, x):
+        self.value = x if self.value is None else self.alpha * x + (1 - self.alpha) * self.value
+        return self.value
+
+
+@dataclass
+class Monitor:
+    run_dir: str
+    phase: str
+    total: int | None = None
+    status_every: float = 15.0
+    metrics_every: float = 30.0
+    started: float = field(default_factory=time.time)
+    last_tick: float = field(default_factory=time.time)
+    last_metrics: float = field(default_factory=time.time)
+    last_rows: int = 0
+    rate: Ewma = field(default_factory=Ewma)
+    extra: dict = field(default_factory=dict)
+
+    def tick(self, rows, force=False, **extra):
+        self.extra.update(extra)
+        now = time.time()
+        dt = max(now - self.last_tick, 1e-9)
+        if force or now - self.last_tick >= self.status_every:
+            recent = (rows - self.last_rows) / dt
+            rate = self.rate.update(recent)
+            eta = None
+            if self.total and rate and rate > 0:
+                eta = max(0, (self.total - rows) / rate)
+            payload = {
+                "time": now_iso(),
+                "phase": self.phase,
+                "rows": rows,
+                "total": self.total,
+                "pct": None if not self.total else round(rows / self.total * 100, 2),
+                "rows_per_second": round(rate or 0, 2),
+                "eta_seconds": None if eta is None else int(eta),
+                **self.extra,
+            }
+            self.write_status(payload)
+            if now - self.last_metrics >= self.metrics_every or force:
+                with open(os.path.join(self.run_dir, "metrics.jsonl"), "a", encoding="utf-8") as f:
+                    f.write(json.dumps(payload, sort_keys=True) + "\n")
+                self.last_metrics = now
+            msg = f"[{self.phase}] {rows:,}"
+            if self.total:
+                msg += f" / {self.total:,} ({rows / self.total * 100:.1f}%)"
+            msg += f" {rate or 0:,.0f} rows/s"
+            if eta is not None:
+                msg += f" ETA {eta / 60:.1f}m"
+            if extra:
+                msg += " " + " ".join(f"{k}={v}" for k, v in extra.items())
+            print(msg, flush=True)
+            self.last_tick = now
+            self.last_rows = rows
+
+    def write_status(self, payload):
+        path = os.path.join(self.run_dir, "status.json")
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2, sort_keys=True)
+            f.write("\n")
+        os.replace(tmp, path)
+
+
+class AnswerPools:
+    def __init__(self, cap=8192, seed=42):
+        self.cap = cap
+        self.seed = seed
+        self.heaps = defaultdict(list)
+        self.selected = defaultdict(set)
+
+    def add(self, task, answer):
+        if self.cap <= 0:
+            self.selected[task].add(answer)
+            return
+        chosen = self.selected[task]
+        if answer in chosen:
+            return
+        score = xxhash.xxh64(str(answer).encode(), seed=self.seed).intdigest()
+        heap = self.heaps[task]
+        item = (-score, answer)
+        if len(heap) < self.cap:
+            import heapq
+            heapq.heappush(heap, item)
+            chosen.add(answer)
+        elif score < -heap[0][0]:
+            import heapq
+            _, dropped = heapq.heapreplace(heap, item)
+            chosen.remove(dropped)
+            chosen.add(answer)
+
+    def as_dict(self):
+        if self.cap <= 0:
+            return {task: list(values) for task, values in self.selected.items()}
+        return {task: [answer for _, answer in heap] for task, heap in self.heaps.items()}
+
+
+def init_run_dir(args):
+    os.makedirs(args.work_root, exist_ok=True)
+    return tempfile.mkdtemp(prefix="stream-run-", dir=args.work_root)
+
+
+def isolate_runtime_dirs(run_dir, respect_env=False):
+    if respect_env:
+        return
+    tmp_dir = os.path.join(run_dir, "tmp")
+    hf_home = os.path.join(run_dir, "huggingface")
+    hf_datasets = os.path.join(hf_home, "datasets")
+    hf_hub = os.path.join(hf_home, "hub")
+    hf_assets = os.path.join(hf_home, "assets")
+    os.makedirs(tmp_dir, exist_ok=True)
+    os.makedirs(hf_home, exist_ok=True)
+    os.environ["TMPDIR"] = tmp_dir
+    os.environ["TEMP"] = tmp_dir
+    os.environ["TMP"] = tmp_dir
+    os.environ["HF_HOME"] = hf_home
+    os.environ["HF_DATASETS_CACHE"] = hf_datasets
+    os.environ["HF_HUB_CACHE"] = hf_hub
+    os.environ["HF_ASSETS_CACHE"] = hf_assets
+    os.environ["XDG_CACHE_HOME"] = os.path.join(run_dir, "xdg_cache")
+    tempfile.tempdir = tmp_dir
+    try:
+        import datasets.config as datasets_config
+        datasets_config.HF_CACHE_HOME = hf_home
+        datasets_config.HF_DATASETS_CACHE = hf_datasets
+        datasets_config.HF_MODULES_CACHE = os.path.join(hf_home, "modules")
+    except Exception:
+        pass
+    try:
+        import huggingface_hub.constants as hub_constants
+        hub_constants.HF_HOME = hf_home
+        hub_constants.HF_HUB_CACHE = hf_hub
+        hub_constants.HUGGINGFACE_HUB_CACHE = hf_hub
+        hub_constants.HF_ASSETS_CACHE = hf_assets
+    except Exception:
+        pass
+
+
+def write_manifest(run_dir, **data):
+    path = os.path.join(run_dir, "manifest.json")
+    current = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            current = json.load(f)
+    current.update(data)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(current, f, indent=2, sort_keys=True)
+        f.write("\n")
+    os.replace(tmp, path)
+
+
+def open_bucket_files(bucket_dir, n_buckets):
+    os.makedirs(bucket_dir, exist_ok=True)
+    files = []
+    for i in range(n_buckets):
+        files.append(open(os.path.join(bucket_dir, f"bucket-{i:04d}.bin"), "ab", buffering=1024 * 1024))
+    return files
+
+
+def pass1_partition(args, run_dir, total):
+    bucket_dir = os.path.join(run_dir, "dedup")
+    files = open_bucket_files(bucket_dir, args.dedup_buckets)
+    task_counts = Counter()
+    task_to_id = {}
+    row_task_ids = array("I")
+    token_sum = 0
+    answer_pools = AnswerPools(args.answer_pool_max_per_task, args.seed)
+    rows_seen = 0
+    accepted_pre_dedup = 0
+    monitor = Monitor(run_dir, "pass1_partition", total=total, status_every=args.status_every)
+    try:
+        for row_i, row in source_iter(args):
+            rows_seen = row_i + 1
+            task = row["task"]
+            task_id = task_to_id.setdefault(task, len(task_to_id))
+            row_task_ids.append(task_id)
+            prompt = row["prompt"]
+            if len(prompt) >= args.max_prompt_chars:
+                if rows_seen % args.tick_rows == 0:
+                    monitor.tick(rows_seen, accepted=accepted_pre_dedup)
+                continue
+            lo, hi = prompt_hash(prompt)
+            bucket = lo & (args.dedup_buckets - 1) if args.dedup_buckets & (args.dedup_buckets - 1) == 0 else lo % args.dedup_buckets
+            files[bucket].write(RECORD.pack(lo, hi, row_i))
+            accepted_pre_dedup += 1
+            task_counts[task] += 1
+            token_sum += token_count(row["metadata"])
+            answer_pools.add(task, row["answer"])
+            if rows_seen % args.tick_rows == 0:
+                monitor.tick(rows_seen, accepted=accepted_pre_dedup)
+    finally:
+        for f in files:
+            f.close()
+
+    stats = {
+        "rows_seen": rows_seen,
+        "accepted_pre_dedup": accepted_pre_dedup,
+        "task_counts_pre_dedup": dict(task_counts),
+        "task_to_id": task_to_id,
+        "token_sum_pre_dedup": token_sum,
+        "answer_pools": answer_pools.as_dict(),
+    }
+    with open(os.path.join(run_dir, "pass1_stats.json"), "w", encoding="utf-8") as f:
+        json.dump(stats, f)
+    with open(os.path.join(run_dir, "row_task_ids.u32"), "wb") as f:
+        row_task_ids.tofile(f)
+    monitor.tick(rows_seen, force=True, accepted=accepted_pre_dedup)
+    write_manifest(run_dir, pass1_partition_done=True, rows_seen=rows_seen)
+    return stats
+
+
+def set_bitmap_bit(bitmap, idx):
+    bitmap[idx >> 3] |= 1 << (idx & 7)
+
+
+def get_bitmap_bit(bitmap, idx):
+    return bool(bitmap[idx >> 3] & (1 << (idx & 7)))
+
+
+def pass1_resolve(args, run_dir, rows_seen, task_to_id):
+    bucket_dir = os.path.join(run_dir, "dedup")
+    bitmap = bytearray((rows_seen + 7) // 8)
+    bitmap_array = np.frombuffer(bitmap, dtype=np.uint8)
+    row_task_ids = np.fromfile(os.path.join(run_dir, "row_task_ids.u32"), dtype=np.uint32)
+    id_to_task = {v: k for k, v in task_to_id.items()}
+    unique_counts = Counter()
+    unique = 0
+    monitor = Monitor(run_dir, "pass1_resolve", total=args.dedup_buckets, status_every=args.status_every)
+    dtype = np.dtype([("lo", "<u8"), ("hi", "<u8"), ("idx", "<u8")])
+    for bucket_i in range(args.dedup_buckets):
+        path = os.path.join(bucket_dir, f"bucket-{bucket_i:04d}.bin")
+        if not os.path.exists(path):
+            monitor.tick(bucket_i + 1, unique=unique)
+            continue
+        size = os.path.getsize(path)
+        if size:
+            arr = np.fromfile(path, dtype=dtype)
+            if len(arr):
+                arr.sort(order=["lo", "hi", "idx"])
+                first = np.empty(len(arr), dtype=bool)
+                first[0] = True
+                if len(arr) > 1:
+                    first[1:] = (arr["lo"][1:] != arr["lo"][:-1]) | (arr["hi"][1:] != arr["hi"][:-1])
+                indices = arr["idx"][first].astype(np.int64, copy=False)
+                byte_indices = indices >> 3
+                bit_masks = (1 << (indices & 7)).astype(np.uint8)
+                np.bitwise_or.at(bitmap_array, byte_indices, bit_masks)
+                task_ids = row_task_ids[indices]
+                counts = np.bincount(task_ids, minlength=len(id_to_task))
+                for task_id in np.flatnonzero(counts):
+                    unique_counts[id_to_task[int(task_id)]] += int(counts[task_id])
+                unique += int(len(indices))
+                del arr
+                gc.collect()
+        os.remove(path)
+        write_manifest(run_dir, dedup_bucket_done=bucket_i, unique_rows=unique)
+        monitor.tick(bucket_i + 1, unique=unique)
+    bitmap_path = os.path.join(bucket_dir, "keep.bitmap")
+    with open(bitmap_path, "wb") as f:
+        f.write(bitmap)
+    monitor.tick(args.dedup_buckets, force=True, unique=unique)
+    with open(os.path.join(run_dir, "unique_task_counts.json"), "w", encoding="utf-8") as f:
+        json.dump(dict(unique_counts), f)
+    write_manifest(run_dir, pass1_resolve_done=True, unique_rows=unique, bitmap_path=bitmap_path)
+    del row_task_ids
+    return bitmap, unique, unique_counts
+
+
+def apply_task_cap(counts, top_k):
+    if not counts or top_k <= 0:
+        return dict(counts)
+    sorted_counts = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
+    if len(sorted_counts) <= top_k:
+        return dict(counts)
+    limit = int(sorted_counts[top_k][1])
+    return {task: min(count, limit) for task, count in counts.items()}
+
+
+def compute_task_targets(unique_counts, dataset_name):
+    first = apply_task_cap(unique_counts, top_k=max(1, len(unique_counts) - 6))
+    if dataset_name == "reasoning-gym":
+        return first
+    return apply_task_cap(first, top_k=len(first) // 2)
+
+
+def safe_score(cand, row, timeout=1.0):
     global _SCORE_DEVNULL
 
-    def _handler(signum, frame):
-        raise _Timeout()
+    def handler(signum, frame):
+        raise Timeout()
     if _SCORE_DEVNULL is None or _SCORE_DEVNULL.closed:
         _SCORE_DEVNULL = open(os.devnull, "w")
-    old = signal.signal(signal.SIGALRM, _handler)
+    old = signal.signal(signal.SIGALRM, handler)
     signal.setitimer(signal.ITIMER_REAL, timeout)
+    t0 = time.time()
     try:
         with contextlib.redirect_stderr(_SCORE_DEVNULL):
-            return score_answer(cand, edict(row))
+            return score_answer(cand, edict(row)), time.time() - t0
     except Exception:
-        return None
+        return None, time.time() - t0
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, old)
 
 
-def build_verification(
-    batch,
-    pools,
-    max_tries=2,
-    score_timeout=1.0,
-    negative_strategy="scored_same_task",
-    retrieval_candidates=None,
-):
-    prompts, answers, modes = [], [], []
-    for i, (prompt, ans, task) in enumerate(zip(batch["prompt"], batch["answer"], batch["task"])):
-        pool = pools.get(task, [])
-        candidates = retrieval_candidates[i] if retrieval_candidates is not None else None
-        chosen, label = ans, "Yes"
-        if random.random() < 0.5:
-            row = {k: batch[k][i] for k in batch}
-            if candidates:
-                for cand in candidates[:max_tries]:
-                    if cand == ans:
-                        continue
-                    if negative_strategy == "same_task":
-                        chosen, label = cand, "No"; break
-                    score = _safe_score(cand, row, timeout=score_timeout)
-                    if score is not None and score != 1:
-                        chosen, label = cand, "No"; break
-            if label == "Yes" and negative_strategy == "same_task" and len(pool) >= 2:
-                for cand in random.sample(pool, min(max_tries, len(pool))):
-                    if cand != ans:
-                        chosen, label = cand, "No"; break
-            elif label == "Yes" and negative_strategy == "scored_same_task" and len(pool) >= 2:
-                for cand in random.sample(pool, min(max_tries, len(pool))):
-                    if cand == ans: continue
-                    score = _safe_score(cand, row, timeout=score_timeout)
-                    if score is not None and score != 1:
-                        chosen, label = cand, "No"; break
-        prompts.append(f"{prompt}\nAnswer:\n{chosen}\nCorrect? (Yes/No)")
-        answers.append(label); modes.append("verification")
-    return {"prompt": prompts, "answer": answers, "mode": modes}
-
-
-def _init_verif_worker(pools, max_tries, score_timeout, negative_strategy):
-    global _WORKER_POOLS, _WORKER_MAX_TRIES, _WORKER_SCORE_TIMEOUT, _WORKER_NEGATIVE_STRATEGY
-    _WORKER_POOLS = pools
-    _WORKER_MAX_TRIES = max_tries
-    _WORKER_SCORE_TIMEOUT = score_timeout
-    _WORKER_NEGATIVE_STRATEGY = negative_strategy
-    random.seed(os.getpid() ^ int(time.time() * 1e6))
-    # Import task modules before SIGALRM-based scoring starts; otherwise alarms
-    # can interrupt importlib cleanup and produce noisy "Exception ignored" logs.
-    try:
-        from reasoning_core import DATASETS, match_task_name
-        for task in pools:
-            try:
-                _ = DATASETS[match_task_name(task)]._resolved
-            except Exception:
-                pass
-    except Exception:
-        pass
-
-
-def _build_verification_one(row):
-    prompt, ans, task = row["prompt"], row["answer"], row["task"]
-    pool = _WORKER_POOLS.get(task, [])
-    candidates = row.get("_retrieval_candidates")
-    score_row = {k: v for k, v in row.items() if not k.startswith("_")}
+def verification_row(row, pools, args):
+    metrics = Counter({"verification_rows": 1})
+    ans = row["answer"]
+    task = row["task"]
     chosen, label = ans, "Yes"
-    if random.random() < 0.5 and len(pool) >= 2:
-        if candidates:
-            for cand in candidates[:_WORKER_MAX_TRIES]:
-                if cand == ans:
-                    continue
-                if _WORKER_NEGATIVE_STRATEGY == "same_task":
-                    chosen, label = cand, "No"; break
-                score = _safe_score(cand, score_row, timeout=_WORKER_SCORE_TIMEOUT)
-                if score is not None and score != 1:
-                    chosen, label = cand, "No"; break
-        if label == "Yes" and _WORKER_NEGATIVE_STRATEGY == "same_task":
-            for cand in random.sample(pool, min(_WORKER_MAX_TRIES, len(pool))):
-                if cand != ans:
-                    chosen, label = cand, "No"; break
-        elif label == "Yes":
-            for cand in random.sample(pool, min(_WORKER_MAX_TRIES, len(pool))):
-                if cand == ans:
-                    continue
-                score = _safe_score(cand, score_row, timeout=_WORKER_SCORE_TIMEOUT)
-                if score is not None and score != 1:
-                    chosen, label = cand, "No"; break
-    return f"{prompt}\nAnswer:\n{chosen}\nCorrect? (Yes/No)", label, "verification"
-
-
-def build_verification_parallel(
-    batch,
-    pools,
-    workers,
-    pool=None,
-    max_tries=2,
-    score_timeout=1.0,
-    negative_strategy="scored_same_task",
-    chunksize=32,
-    distractor_retriever=None,
-):
-    rows = [{k: batch[k][i] for k in batch} for i in range(len(batch["prompt"]))]
-    if distractor_retriever is not None:
-        retrieval_candidates = distractor_retriever.batch_candidates(
-            rows,
-            k=max_tries,
-            rng=os.getpid() ^ int(time.time() * 1e6),
-        )
-        for row, candidates in zip(rows, retrieval_candidates):
-            row["_retrieval_candidates"] = candidates
-    if workers <= 1:
-        return build_verification(
-            batch,
-            pools,
-            max_tries=max_tries,
-            score_timeout=score_timeout,
-            negative_strategy=negative_strategy,
-            retrieval_candidates=[row.get("_retrieval_candidates") for row in rows],
-        )
-    if pool is None:
-        with mp.Pool(
-            processes=workers,
-            initializer=_init_verif_worker,
-            initargs=(pools, max_tries, score_timeout, negative_strategy),
-            maxtasksperchild=1000,
-        ) as local_pool:
-            triples = list(local_pool.imap(_build_verification_one, rows, chunksize=chunksize))
-    else:
-        triples = list(pool.imap(_build_verification_one, rows, chunksize=chunksize))
-    prompts, answers, modes = map(list, zip(*triples)) if triples else ([], [], [])
-    return {"prompt": prompts, "answer": answers, "mode": modes}
-
-
-def build_answer_pools(ds, max_per_task=8192, seed=42):
-    import xxhash
-
-    if max_per_task <= 0:
-        unique = {}
-        for rb in _logical_batches(ds, ["task", "answer"]):
-            for task, answer in zip(rb.column("task").to_pylist(), rb.column("answer").to_pylist()):
-                unique.setdefault(task, {}).setdefault(answer, None)
-        return {task: list(answers) for task, answers in unique.items()}
-
-    heaps = {}
-    selected = {}
-    for rb in _logical_batches(ds, ["task", "answer"]):
-        tasks = rb.column("task").to_pylist()
-        answers = rb.column("answer").to_pylist()
-        for task, answer in zip(tasks, answers):
-            chosen = selected.setdefault(task, set())
-            if answer in chosen:
+    pool = pools.get(task, [])
+    if pool and stable_u01(row["prompt"], "verification_negative", seed=args.seed) < 0.5:
+        rng = random.Random(xxhash.xxh64(row["prompt"].encode(), seed=args.seed).intdigest())
+        for cand in rng.sample(pool, min(args.verif_max_tries, len(pool))):
+            if cand == ans:
                 continue
-            h = xxhash.xxh64(str(answer).encode(), seed=seed).intdigest()
-            heap = heaps.setdefault(task, [])
-            item = (-h, answer)
-            if len(heap) < max_per_task:
-                heapq.heappush(heap, item)
-                chosen.add(answer)
-            elif h < -heap[0][0]:
-                _, dropped = heapq.heapreplace(heap, item)
-                chosen.remove(dropped)
-                chosen.add(answer)
+            if args.verif_negative_strategy == "same_task":
+                chosen, label = cand, "No"
+                metrics["verification_negatives"] += 1
+                break
+            metrics["score_attempts"] += 1
+            score, elapsed = safe_score(cand, row, timeout=args.score_timeout)
+            metrics["score_seconds"] += elapsed
+            if score is not None and score != 1:
+                chosen, label = cand, "No"
+                metrics["score_successes"] += 1
+                metrics["verification_negatives"] += 1
+                break
+            if score is None:
+                metrics["score_unknown"] += 1
+    out = dict(row)
+    out["prompt"] = f"{row['prompt']}\nAnswer:\n{chosen}\nCorrect? (Yes/No)"
+    out["answer"] = label
+    out["mode"] = "verification"
+    out["cot"] = ""
+    return out, metrics
 
-    return {task: [answer for _, answer in heap] for task, heap in heaps.items()}
+
+def init_verify_worker(pools, args_dict):
+    global _VERIFY_POOLS, _VERIFY_ARGS
+    _VERIFY_POOLS = pools
+    _VERIFY_ARGS = argparse.Namespace(**args_dict)
+    random.seed(os.getpid() ^ int(time.time() * 1e6))
 
 
-def build_verification_split_sharded(
-    ds_verif,
-    raw_pools,
-    out_dir,
-    batch_size=512,
-    shard_rows=100_000,
-    workers=1,
-    max_tries=2,
-    score_timeout=1.0,
-    negative_strategy="scored_same_task",
-    chunksize=32,
-    distractor_retriever=None,
-):
-    if os.path.exists(out_dir):
-        shutil.rmtree(out_dir)
-    os.makedirs(out_dir, exist_ok=True)
+def verify_worker(item):
+    row_i, row = item
+    out, metrics = verification_row(row, _VERIFY_POOLS, _VERIFY_ARGS)
+    return row_i, out, dict(metrics)
 
-    shard_paths = []
-    pending = {col: [] for col in ds_verif.column_names}
-    pending_rows = 0
 
-    def flush():
-        nonlocal pending, pending_rows
-        if pending_rows == 0:
+def maybe_few_shot(row, shot_pools, args):
+    if args.few_shot_ratio <= 0 or row["mode"] != "instruct":
+        return row
+    if stable_u01(row["prompt"], "few_shot", seed=args.seed) >= args.few_shot_ratio:
+        return row
+    pool = shot_pools.get(row["task"], [])
+    if not pool:
+        return row
+    rng = random.Random(xxhash.xxh64(row["prompt"].encode(), seed=args.seed + 1).intdigest())
+    shot = rng.choice(pool)
+    if shot["prompt"] == row["prompt"]:
+        return row
+    out = dict(row)
+    out["prompt"] = f"{shot['prompt']}\nAnswer:\n{shot['answer']}\n\n{row['prompt']}\nAnswer:\n"
+    out["mode"] = "few_shot"
+    return out
+
+
+def maybe_cot(row, args):
+    if args.cot_ratio <= 0 or row["mode"] == "verification":
+        return row
+    cot = row.get("cot") or metadata_obj(row["metadata"]).get("cot")
+    if not cot or stable_u01(row["prompt"], "cot", seed=args.seed) >= args.cot_ratio:
+        return row
+    out = dict(row)
+    out["prompt"] = f"/trace {row['prompt']}"
+    out["answer"] = f"<trace>\n{cot}\n</trace>\n{row['answer']}"
+    out["mode"] = "cot"
+    return out
+
+
+class ShardWriter:
+    def __init__(self, args, run_dir):
+        self.args = args
+        self.run_dir = run_dir
+        self.output_dir = os.path.join(run_dir, "output")
+        os.makedirs(self.output_dir, exist_ok=True)
+        self.api = HfApi()
+        self.repo_id = f"reasoning-core/{args.dataset_name}"
+        self.upload_prefix = args.upload_prefix.strip("/")
+        self.rows = {"train": [], "test": []}
+        self.shard_i = {"train": 0, "test": 0}
+        self.uploaded_rows = 0
+        self.uploaded_shards = []
+        if not args.dry_run:
+            self.api.create_repo(
+                self.repo_id,
+                repo_type="dataset",
+                private=args.private,
+                exist_ok=True,
+            )
+            if args.clear_existing_data:
+                self.clear_existing_data()
+
+    def clear_existing_data(self):
+        files = self.api.list_repo_files(self.repo_id, repo_type="dataset")
+        deletes = [
+            CommitOperationDelete(path_in_repo=path)
+            for path in files
+            if path.endswith(".parquet")
+        ]
+        if deletes:
+            self.api.create_commit(
+                repo_id=self.repo_id,
+                repo_type="dataset",
+                operations=deletes,
+                commit_message="clear previous streaming rebuild shards",
+            )
+
+    def add(self, row):
+        split = row.pop("_split", "train")
+        self.rows[split].append({k: row.get(k, "" if k != "level" else 0) for k in TARGET_SCHEMA.names})
+        if len(self.rows[split]) >= self.args.shard_rows:
+            self.flush(split)
+
+    def flush(self, split=None):
+        splits = [split] if split else ["train", "test"]
+        for split_name in splits:
+            self._flush_split(split_name)
+
+    def _flush_split(self, split):
+        if not self.rows[split]:
             return
-        shard_path = os.path.join(out_dir, f"shard-{len(shard_paths):05d}")
-        Dataset.from_dict(pending, features=ds_verif.features).save_to_disk(shard_path)
-        shard_paths.append(shard_path)
-        pending = {col: [] for col in ds_verif.column_names}
-        pending_rows = 0
+        shard_i = self.shard_i[split]
+        shard_name = f"{self.upload_prefix}/{split}-{shard_i:05d}.parquet"
+        path = os.path.join(self.output_dir, f"{split}-{shard_i:05d}.parquet")
+        table = pa.Table.from_pylist(self.rows[split], schema=TARGET_SCHEMA)
+        pq.write_table(table, path, compression="zstd")
+        row_count = len(self.rows[split])
+        sha = sha256_file(path)
+        if not self.args.dry_run:
+            self.api.upload_file(
+                path_or_fileobj=path,
+                path_in_repo=shard_name,
+                repo_id=self.repo_id,
+                repo_type="dataset",
+                commit_message=f"upload {split} shard {shard_i:05d}",
+            )
+        if not self.args.keep_output_shards:
+            os.remove(path)
+        self.uploaded_rows += row_count
+        self.uploaded_shards.append({"path": shard_name, "rows": row_count, "sha256": sha})
+        write_manifest(
+            self.run_dir,
+            next_shard={**self.shard_i, split: self.shard_i[split] + 1},
+            uploaded_rows=self.uploaded_rows,
+            uploaded_shards=self.uploaded_shards,
+        )
+        self.rows[split].clear()
+        self.shard_i[split] += 1
+        del table
+        gc.collect()
 
+
+def sha256_file(path, chunk=1024 * 1024):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while True:
+            data = f.read(chunk)
+            if not data:
+                break
+            h.update(data)
+    return h.hexdigest()
+
+
+def process_transform_batch(batch, pool, answer_pools, shot_pools, writer, args):
+    if not batch:
+        return 0, Counter()
+
+    metrics = Counter()
+    out_by_row = {}
+    verify_items = [(row_i, row) for row_i, row, is_verif in batch if is_verif]
+
+    if verify_items:
+        if pool is None:
+            verified = []
+            for row_i, row in verify_items:
+                out, item_metrics = verification_row(row, answer_pools, args)
+                verified.append((row_i, out, dict(item_metrics)))
+        else:
+            verified = pool.map(verify_worker, verify_items, chunksize=args.verif_chunksize)
+        for row_i, out, item_metrics in verified:
+            out_by_row[row_i] = out
+            metrics.update(item_metrics)
+
+    rows_out = 0
+    for row_i, row, is_verif in batch:
+        out = out_by_row[row_i] if is_verif else dict(row)
+        out = maybe_cot(out, args)
+        out = maybe_few_shot(out, shot_pools, args)
+        out["_split"] = "test" if stable_u01(row_i, row["prompt"], "test_split", seed=args.seed) < args.test_ratio else "train"
+        if out["mode"] == "instruct" and len(shot_pools[out["task"]]) < args.few_shot_pool_per_task:
+            shot_pools[out["task"]].append({"prompt": out["prompt"], "answer": out["answer"]})
+        writer.add(out)
+        rows_out += 1
+    return rows_out, metrics
+
+
+def pass2_transform(args, run_dir, bitmap, unique_counts, answer_pools, total):
+    targets = compute_task_targets(unique_counts, args.dataset_name)
+    remaining = dict(unique_counts)
+    remaining_keep = dict(targets)
+    shot_pools = defaultdict(list)
+    writer = ShardWriter(args, run_dir)
+    monitor = Monitor(run_dir, "pass2_transform", total=total, status_every=args.status_every)
+    rows_out = 0
+    rows_kept = 0
+    rows_seen = 0
+    task_seen = Counter()
+    score_metrics = Counter()
+    batch = []
     pool = None
+
+    if args.verif_workers > 1:
+        started = time.time()
+        for task in sorted(answer_pools):
+            getattr(get_task(task), "score_answer")
+        print(f"preloaded {len(answer_pools)} scorers in {time.time() - started:.1f}s", flush=True)
+        worker_args = vars(args).copy()
+        pool = mp.Pool(
+            processes=args.verif_workers,
+            initializer=init_verify_worker,
+            initargs=(answer_pools, worker_args),
+            maxtasksperchild=args.verif_worker_maxtasks,
+        )
+
     try:
-        if workers > 1:
-            pool = mp.Pool(
-                processes=workers,
-                initializer=_init_verif_worker,
-                initargs=(raw_pools, max_tries, score_timeout, negative_strategy),
-                maxtasksperchild=1000,
-            )
-        for start in tqdm(range(0, len(ds_verif), batch_size), desc="verif"):
-            batch = {k: ds_verif[start:start + batch_size][k] for k in ds_verif.column_names}
-            out = build_verification_parallel(
-                batch,
-                raw_pools,
-                workers=workers,
-                pool=pool,
-                max_tries=max_tries,
-                score_timeout=score_timeout,
-                negative_strategy=negative_strategy,
-                chunksize=chunksize,
-                distractor_retriever=distractor_retriever,
-            )
-            for col in ds_verif.column_names:
-                pending[col].extend(out[col] if col in out else batch[col])
-            pending_rows += len(batch["prompt"])
-            if pending_rows >= shard_rows:
-                flush()
+        for row_i, row in source_iter(args):
+            rows_seen = row_i + 1
+            if row_i >= len(bitmap) * 8 or not get_bitmap_bit(bitmap, row_i):
+                if rows_seen % args.tick_rows == 0:
+                    monitor.tick(rows_seen, kept=rows_kept, output=rows_out, shard=writer.shard_i, **score_metrics)
+                continue
+            if len(row["prompt"]) >= args.max_prompt_chars:
+                if rows_seen % args.tick_rows == 0:
+                    monitor.tick(rows_seen, kept=rows_kept, output=rows_out, shard=writer.shard_i, **score_metrics)
+                continue
+
+            task = row["task"]
+            rem = remaining.get(task, 0)
+            keep = remaining_keep.get(task, 0)
+            take = keep > 0 and (keep >= rem or stable_u01(row_i, task, "balance", seed=args.seed) < keep / max(rem, 1))
+            remaining[task] = max(0, rem - 1)
+            if take:
+                remaining_keep[task] = keep - 1
+                rows_kept += 1
+                task_seen[task] += 1
+                is_verif = stable_u01(row_i, row["prompt"], "verif_split", seed=args.seed) < args.verif_ratio
+                batch.append((row_i, row, is_verif))
+                if len(batch) >= args.transform_batch_rows:
+                    n_out, batch_metrics = process_transform_batch(batch, pool, answer_pools, shot_pools, writer, args)
+                    rows_out += n_out
+                    score_metrics.update(batch_metrics)
+                    batch.clear()
+
+            if rows_seen % args.tick_rows == 0:
+                monitor.tick(rows_seen, kept=rows_kept, output=rows_out, shard=writer.shard_i, **score_metrics)
+
+        if batch:
+            n_out, batch_metrics = process_transform_batch(batch, pool, answer_pools, shot_pools, writer, args)
+            rows_out += n_out
+            score_metrics.update(batch_metrics)
+            batch.clear()
+        writer.flush()
+        monitor.tick(total or rows_seen, force=True, kept=rows_kept, output=rows_out, shard=writer.shard_i, **score_metrics)
+        write_manifest(run_dir, pass2_done=True, output_rows=rows_out, kept_rows=rows_kept, score_metrics=dict(score_metrics))
     finally:
         if pool is not None:
             pool.close()
             pool.join()
-
-    flush()
-    if not shard_paths:
-        return ds_verif.select([])
-    return concatenate_datasets([datasets.load_from_disk(path) for path in shard_paths])
-
-
-def inject_cot(ds, ratio=0.0):
-    if ratio <= 0:
-        return ds
-
-    def get_cot(x):
-        if x["mode"] == "verification":
-            return None
-        cot = x.get("cot") or _metadata_obj(x["metadata"]).get("cot")
-        return str(cot) if cot is not None and str(cot).strip() else None
-
-    elig = ds.filter(lambda x: get_cot(x) is not None).shuffle(seed=42)
-    k = int(len(elig) * ratio)
-    cotted = elig.select(range(k)).map(lambda x: {
-        "prompt": f"/trace {x['prompt']}",
-        "answer": f"<trace>\n{get_cot(x)}\n</trace>\n{x['answer']}",
-        "mode": "cot"
-    })
-    return concatenate_datasets([
-        ds.filter(lambda x: get_cot(x) is None),
-        elig.select(range(k, len(elig))), cotted
-    ]).shuffle(seed=42)
-
-
-def inject_fs(ds, ratio=0.07, n_shots=1, max_len=1024, seed=0, cands=32, batch_size=2048):
-    rng, n, table = np.random.default_rng(seed), len(ds), ds.data.table
-    idx = getattr(ds, "_indices", None)
-    d2p = np.asarray(idx.column(0).to_numpy(zero_copy_only=False), dtype=np.int64) if idx else None
-
-    def _toks():
-        col, out, off = table.column("metadata"), np.empty(table.num_rows, dtype=np.int64), 0
-        for chunk in tqdm(col.chunks, desc="token counts", leave=False):
-            s = pl.from_arrow(chunk)
-            vals = (s.str.extract(r'"_prompt_tokens"\s*:\s*(\d+)', 1).cast(pl.Int64, strict=False)
-                  + s.str.extract(r'"_answer_tokens"\s*:\s*(\d+)', 1).cast(pl.Int64, strict=False)
-                   ).fill_null(max_len + 1)
-            out[off:off+len(chunk)] = vals.to_numpy(); off += len(chunk)
-        return out
-
-    toks_p = _toks()
-    toks = toks_p if d2p is None else toks_p[d2p]
-    small = table.select(["task", "mode"])
-    if d2p is not None: small = small.take(pa.array(d2p))
-    df = pl.from_arrow(small).with_row_index("_i")
-    shot_df = df.filter(pl.col("mode") == "instruct")
-    pool = {t: np.asarray(ix, dtype=np.int64)
-            for t, ix in shot_df.group_by("task").agg(pl.col("_i")).iter_rows()}
-
-    elig = rng.permutation(shot_df["_i"].to_numpy())
-    pick = np.sort(elig[:int(len(elig) * ratio)])
-    if not len(pick): return ds
-
-    mask = np.zeros(n, dtype=bool); mask[pick] = True
-    pc_col, ac_col = table.column("prompt"), table.column("answer")
-    phys = lambda i: int(i if d2p is None else d2p[i])
-
-    def shots(t, si, budget):
-        p = pool.get(t)
-        if p is None or budget <= 0: return ""
-        keep, used = [], 0
-        for j in map(int, rng.choice(p, size=min(cands, len(p)), replace=False)):
-            if j == si or used + toks[j] > budget: continue
-            keep.append(j); used += toks[j]
-            if len(keep) == n_shots: break
-        return "".join(f"{pc_col[phys(j)].as_py()}\nAnswer:\n{ac_col[phys(j)].as_py()}\n\n" for j in keep)
-
-    def transform(b):
-        out = {k: list(v) for k, v in b.items()}
-        for i, si in enumerate(map(int, b["_fs_i"])):
-            s = shots(b["task"][i], si, max_len - toks[si] - 24)
-            if s: out["prompt"][i] = s + b["prompt"][i] + "\nAnswer:\n"; out["mode"][i] = "few_shot"
-        return out
-
-    fs = (ds.select(pick).add_column("_fs_i", pick)
-            .map(transform, batched=True, batch_size=batch_size, desc="few-shot")
-            .remove_columns(["_fs_i"]))
-    return concatenate_datasets([ds.select(np.flatnonzero(~mask)), fs])
 
 
 def notify(subject, body=""):
@@ -816,203 +813,176 @@ def notify(subject, body=""):
         print(f"email failed: {e}")
 
 
-def print_yes_rate_warnings(ds_verif, tasks):
-    stats = {}
-    for rb in _logical_batches(ds_verif, ["task", "answer"]):
-        for task, answer in zip(rb.column("task").to_pylist(), rb.column("answer").to_pylist()):
-            n, yes = stats.get(task, (0, 0))
-            stats[task] = (n + 1, yes + (answer == "Yes"))
-    rates = {task: yes / n for task, (n, yes) in stats.items() if n}
-    for task in sorted(tasks):
-        yr = rates.get(task)
-        if yr is not None and abs(yr - 0.5) >= 0.15:
-            print(f"  WARN {task}: yes_rate={yr:.2f}")
+def close_score_devnull():
+    global _SCORE_DEVNULL
+    if _SCORE_DEVNULL is not None:
+        try:
+            _SCORE_DEVNULL.close()
+        except Exception:
+            pass
+        _SCORE_DEVNULL = None
 
 
-# ── main ──────────────────────────────────────────────────────────────────────
+def copy_run_logs(work_root, run_dir, success):
+    log_dir = os.path.join(work_root, "logs", os.path.basename(run_dir))
+    os.makedirs(log_dir, exist_ok=True)
+    for name in (
+        "manifest.json",
+        "metrics.jsonl",
+        "status.json",
+        "unique_task_counts.json",
+    ):
+        src = os.path.join(run_dir, name)
+        if os.path.exists(src):
+            shutil.copy2(src, os.path.join(log_dir, name))
+    with open(os.path.join(log_dir, "final.json"), "w", encoding="utf-8") as f:
+        json.dump({"success": success, "run_dir": run_dir, "finished": now_iso()}, f, indent=2)
+        f.write("\n")
+    return log_dir
+
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source", default="staging",
-                    help="'staging' for reasoning-core/staging, a generated_data key like rg3, or a local .jsonl file/directory")
-    ap.add_argument("--dataset_name", default=None,
-                    help="Output dataset name under reasoning-core; inferred from --source when omitted")
-    ap.add_argument("--private", action="store_true")
+    ap.add_argument("--source", default="staging")
+    ap.add_argument("--source_revision", default=None)
+    ap.add_argument("--dataset_name", default="procedural-pile")
+    ap.add_argument("--work_root", default=os.path.join(os.environ.get("TMPDIR", os.path.expanduser("~/tmp")), "rc_streaming"))
+    ap.add_argument("--resume_run_dir",
+                    help="Resume pass 2 from a run with completed pass-1 artifacts")
+    ap.add_argument("--upload_prefix", default=None,
+                    help="Repo prefix for parquet shards; defaults to data")
+    ap.add_argument("--keep_work_dir", action="store_true")
+    ap.add_argument("--keep_output_shards", action="store_true",
+                    help="Keep local parquet shards after write/upload for debugging")
+    ap.add_argument("--clear_existing_data", action="store_true",
+                    help="Delete existing data/*.parquet files in the target dataset before upload")
+    ap.add_argument("--respect_env_cache", action="store_true",
+                    help="Do not redirect HF/TMP caches under the run directory")
     ap.add_argument("--dry_run", action="store_true")
-    ap.add_argument("--smoke_test", type=int, default=0, metavar="N",
-                    help="Smoke-test: stream N examples, skip upload, print timings")
-    ap.add_argument("--answer_pool_max_per_task", type=int, default=8192,
-                    help="Max unique candidate answers kept per task for verification; <=0 keeps all")
-    ap.add_argument("--verif_batch_size", type=int, default=512)
-    ap.add_argument("--verif_shard_rows", type=int, default=25_000)
-    ap.add_argument("--verif_workers", type=int, default=int(os.environ.get("RC_VERIF_WORKERS", "6")),
-                    help="Process workers for scored verification negatives")
-    ap.add_argument("--verif_chunksize", type=int, default=32,
-                    help="Rows per multiprocessing dispatch chunk")
-    ap.add_argument("--verif_max_tries", type=int, default=2,
-                    help="Candidate answers tried per negative row")
-    ap.add_argument("--score_timeout", type=float, default=1.0,
-                    help="Wall-clock seconds per candidate scorer call")
-    ap.add_argument("--verif_negative_strategy", choices=["same_task", "scored_same_task"],
-                    default="scored_same_task",
-                    help="same_task is fast; scored_same_task is slower but filters accidental correct negatives")
-    ap.add_argument("--few_shot_ratio", type=float, default=0.07,
-                    help="Fraction of eligible instruct rows converted to few-shot")
-    ap.add_argument("--cot_ratio", type=float, default=0.0,
-                    help="Fraction of eligible instruct rows converted to CoT")
-    ap.add_argument("--retrieval_min_distractors", type=int, default=10,
-                    help="Use lexical distractor retrieval only for tasks with more than this many candidate answers")
-    ap.add_argument("--retrieval_radius", type=int, default=0,
-                    help="SimHash Hamming radius for lexical distractor retrieval buckets")
-    ap.add_argument("--retrieval_query_max_chars", type=int, default=128,
-                    help="Max prompt chars used as a lexical retrieval key; <=0 uses full prompt")
-    ap.add_argument("--disable_distractor_retrieval", action="store_true",
-                    help="Keep the original random same-task distractor sampling path")
-    ap.add_argument("--work_dir", default=f"{tmp_root}/rc_preprocess_upload",
-                    help="Parent directory for temporary on-disk shards")
-    ap.add_argument("--keep_work_dir", action="store_true",
-                    help="Keep this run's temporary shards for debugging")
+    ap.add_argument("--private", action="store_true")
+    ap.add_argument("--smoke_test", type=int, default=0)
+    ap.add_argument("--dedup_buckets", type=int, default=512)
+    ap.add_argument("--max_prompt_chars", type=int, default=50_000)
+    ap.add_argument("--answer_pool_max_per_task", type=int, default=8192)
+    ap.add_argument("--few_shot_pool_per_task", type=int, default=512)
+    ap.add_argument("--few_shot_ratio", type=float, default=0.07)
+    ap.add_argument("--cot_ratio", type=float, default=0.0)
+    ap.add_argument("--verif_ratio", type=float, default=0.125)
+    ap.add_argument("--test_ratio", type=float, default=0.01)
+    ap.add_argument("--verif_max_tries", type=int, default=2)
+    ap.add_argument("--verif_workers", type=int, default=6)
+    ap.add_argument("--verif_chunksize", type=int, default=32)
+    ap.add_argument("--verif_worker_maxtasks", type=int, default=1000)
+    ap.add_argument("--verif_negative_strategy", choices=["same_task", "scored_same_task"], default="scored_same_task")
+    ap.add_argument("--score_timeout", type=float, default=1.0)
+    ap.add_argument("--transform_batch_rows", type=int, default=2048)
+    ap.add_argument("--shard_rows", type=int, default=250_000)
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--status_every", type=float, default=15.0)
+    ap.add_argument("--tick_rows", type=int, default=8192,
+                    help="Only run monitor bookkeeping every N input rows")
     args = ap.parse_args()
-    args.dataset_name = args.dataset_name or infer_dataset_name(args.source)
 
-    global _RUN_DIR, _KEEP_WORK_DIR
-    os.makedirs(args.work_dir, exist_ok=True)
-    _RUN_DIR = tempfile.mkdtemp(prefix="run-", dir=args.work_dir)
-    _KEEP_WORK_DIR = args.keep_work_dir
-    args.work_dir = _RUN_DIR
+    if args.dedup_buckets <= 0:
+        raise ValueError("--dedup_buckets must be positive")
+    if args.tick_rows <= 0:
+        raise ValueError("--tick_rows must be positive")
+    if args.shard_rows <= 0:
+        raise ValueError("--shard_rows must be positive")
+    if args.transform_batch_rows <= 0:
+        raise ValueError("--transform_batch_rows must be positive")
+    if args.verif_workers < 1:
+        raise ValueError("--verif_workers must be >= 1")
+    if args.verif_chunksize <= 0:
+        raise ValueError("--verif_chunksize must be positive")
+    if not 0 <= args.verif_ratio <= 1:
+        raise ValueError("--verif_ratio must be between 0 and 1")
+    if not 0 <= args.test_ratio <= 1:
+        raise ValueError("--test_ratio must be between 0 and 1")
+    if not 0 <= args.few_shot_ratio <= 1:
+        raise ValueError("--few_shot_ratio must be between 0 and 1")
+    if not 0 <= args.cot_ratio <= 1:
+        raise ValueError("--cot_ratio must be between 0 and 1")
 
-    smoke = args.smoke_test > 0
-    if smoke:
-        args.dry_run = True
-        print(f"=== SMOKE TEST ({args.smoke_test:,} examples, no upload) ===")
-    print(f"source: {args.source}", flush=True)
-    print(f"name: {os.path.basename(args.source.rstrip('/'))} -> {args.dataset_name}", flush=True)
-    print(f"output: reasoning-core/{args.dataset_name}", flush=True)
-    print(f"work dir: {args.work_dir}", flush=True)
-
-    with _step(f"loading {args.source}"):
-        ds = load_source_dataset(args.source, smoke_n=args.smoke_test if smoke else 0, work_dir=args.work_dir)
-        print(f"  {len(ds):,} rows")
-        if len(ds) == 0:
-            raise RuntimeError(f"{args.source} returned 0 rows")
-
-    with _step("deduplicating"):
-        ds, rep = deduplicate_by_column(ds)
-        print(f"  {rep}")
-
-    task_counts = count_by_column(ds, key="task")
-    if args.source == "staging":
-        missing = set(list_tasks()) - set(task_counts)
-        if missing: print(f"  missing tasks: {missing}")
-
-    with _step("subsampling"):
-        ds = subsample(ds, top_k=max(1, len(task_counts) - 6))
-
-    sample_n = min(50_000, len(ds))
-    sample_tokens = sum(_token_count(x["metadata"]) for x in ds.select(range(sample_n)))
-    n_tok = sample_tokens / 1e9 * len(ds) / max(sample_n, 1)
-    print(f"  ~{n_tok:.2f}B tokens | {len(ds):,} rows")
-
-    with _step("filter long prompts"):
-        ds = filter_by_string_length(ds, "prompt", 50_000)
-        print(f"  {len(ds):,} rows")
-        if len(ds) < 2:
-            raise RuntimeError("fewer than 2 rows remain after filtering")
-
-    with _step("split train/verif"):
-        spl = ds.train_test_split(test_size=0.125, seed=42)
-        ds_std, ds_verif = spl["train"], spl["test"]
-        print(f"  train={len(ds_std):,} verif={len(ds_verif):,}")
-
-    with _step("build answer pools"):
-        raw_pools = build_answer_pools(ds, max_per_task=args.answer_pool_max_per_task)
-        total_candidates = sum(len(v) for v in raw_pools.values())
-        capped = "" if args.answer_pool_max_per_task <= 0 else f" (cap={args.answer_pool_max_per_task:,}/task)"
-        print(f"  {total_candidates:,} candidates across {len(raw_pools)} tasks{capped}")
-
-    distractor_retriever = None
-    if not args.disable_distractor_retrieval:
-        with _step("build distractor retrieval"):
-            distractor_retriever = VerificationDistractorRetriever.from_pools(
-                raw_pools,
-                min_distractors=args.retrieval_min_distractors,
-                radius=args.retrieval_radius,
-                query_max_chars=args.retrieval_query_max_chars,
-            )
-            stats = distractor_retriever.stats()
-            print(
-                f"  {stats['n_candidates']:,} indexed candidates across {stats['n_tasks']} tasks; "
-                f"{stats['eligible_tasks']} tasks have >{args.retrieval_min_distractors} candidates"
-            )
-
-    with _step("build verification split"):
-        # Iterate in main process to avoid forked subprocesses around SIGALRM.
-        shard_dir = os.path.join(args.work_dir, "verification")
-        ds_verif = build_verification_split_sharded(
-            ds_verif,
-            raw_pools,
-            shard_dir,
-            batch_size=args.verif_batch_size,
-            shard_rows=args.verif_shard_rows,
-            workers=args.verif_workers,
-            max_tries=args.verif_max_tries,
-            score_timeout=args.score_timeout,
-            negative_strategy=args.verif_negative_strategy,
-            chunksize=args.verif_chunksize,
-            distractor_retriever=distractor_retriever,
-        )
-
-    print_yes_rate_warnings(ds_verif, raw_pools)
-
-    with _step("concat + subsample"):
-        ds = concatenate_datasets([ds_std, ds_verif])
-        if args.dataset_name == "reasoning-gym":
-            print("  skipping final task balancing for reasoning-gym")
-        else:
-            ds = subsample(ds, top_k=len(count_by_column(ds, key="task")) // 2)
-
-    with _step("inject CoT"):
-        ds = inject_cot(ds, ratio=args.cot_ratio)
-
-    with _step("inject few-shot"):
-        ds = inject_fs(ds, ratio=args.few_shot_ratio)
-
-    with _step("final split + prettyorder"):
-        test_size = max(1, int(len(ds) * 0.01)) if len(ds) > 1 else 0
-        split = ds.train_test_split(test_size=test_size, seed=42) if test_size else DatasetDict({"train": ds})
-        split = DatasetDict({k: prettyorder_low_memory(v, ["task", "mode"]) for k, v in split.items()})
-        split = format_split_for_target(split, args.dataset_name)
-        print(split)
-
-    if args.dry_run:
-        print("\n[no upload]")
+    if args.resume_run_dir:
+        run_dir = os.path.abspath(args.resume_run_dir)
+        with open(os.path.join(run_dir, "manifest.json"), encoding="utf-8") as f:
+            resume_manifest = json.load(f)
+        if not resume_manifest.get("pass1_resolve_done"):
+            raise RuntimeError(f"pass 1 is incomplete in {run_dir}")
+        args.source = resume_manifest["source"]
+        args.source_revision = resume_manifest["source_revision"]
+        args.dataset_name = resume_manifest["dataset_name"]
+        if args.upload_prefix is None:
+            args.upload_prefix = resume_manifest["upload_prefix"]
     else:
-        with _step(f"push to reasoning-core/{args.dataset_name}"):
-            split.push_to_hub(f"reasoning-core/{args.dataset_name}", private=args.private)
-        notify(f"✅ RC preprocess done — {n_tok:.1f}B tokens",
-               f"{len(split['train']):,} train rows pushed to reasoning-core/{args.dataset_name}")
-
-    total = sum(_timings.values())
-    print("\n── timings ──")
-    for k, v in _timings.items():
-        print(f"  {k:<35} {v:6.1f}s  ({v/total*100:.0f}%)")
-    print(f"  {'TOTAL':<35} {total:6.1f}s")
-    if smoke:
-        if args.smoke_test >= 10_000:
-            scale = 13_700_000 / args.smoke_test
-            print(f"\n  (scaled to full ~{total*scale/3600:.1f}h estimate, "
-                  f"excl. verif which scales sub-linearly with scoring)")
+        run_dir = init_run_dir(args)
+    args.run_dir = run_dir
+    if args.upload_prefix is None:
+        args.upload_prefix = "data"
+    isolate_runtime_dirs(run_dir, respect_env=args.respect_env_cache)
+    if args.source == "staging" and args.source_revision is None:
+        args.source_revision = HfApi().repo_info("reasoning-core/staging", repo_type="dataset").sha
+        print(f"pinned staging revision: {args.source_revision}", flush=True)
+    print(f"run dir: {run_dir}", flush=True)
+    if args.resume_run_dir:
+        write_manifest(run_dir, resumed=now_iso(), upload_prefix=args.upload_prefix)
+    else:
+        write_manifest(
+            run_dir,
+            started=now_iso(),
+            source=args.source,
+            source_revision=args.source_revision,
+            dataset_name=args.dataset_name,
+            upload_prefix=args.upload_prefix,
+            dry_run=args.dry_run,
+            smoke_test=args.smoke_test,
+        )
+    total = source_total(args)
+    stats = None
+    bitmap = None
+    success = False
+    try:
+        if args.resume_run_dir:
+            with open(os.path.join(run_dir, "pass1_stats.json"), encoding="utf-8") as f:
+                stats = json.load(f)
+            with open(os.path.join(run_dir, "dedup", "keep.bitmap"), "rb") as f:
+                bitmap = bytearray(f.read())
+            with open(os.path.join(run_dir, "unique_task_counts.json"), encoding="utf-8") as f:
+                unique_counts = json.load(f)
+            unique = sum(unique_counts.values())
+            print(f"resuming pass 2 from {unique:,} unique rows", flush=True)
         else:
-            print("\n  (smoke sample too small for a useful full-run time estimate)")
+            stats = pass1_partition(args, run_dir, total)
+            bitmap, unique, unique_counts = pass1_resolve(args, run_dir, stats["rows_seen"], stats["task_to_id"])
+        missing = set(list_tasks()) - set(unique_counts)
+        if args.source == "staging" and missing:
+            print(f"missing tasks: {missing}", flush=True)
+        pass2_transform(args, run_dir, bitmap, unique_counts, stats["answer_pools"], total or stats["rows_seen"])
+        notify("RC streaming preprocess done", f"run dir: {run_dir}")
+        success = True
+    except Exception:
+        tb = traceback.format_exc()
+        print(tb, file=sys.stderr, flush=True)
+        notify("RC streaming preprocess failed", tb[-8000:])
+        raise
+    finally:
+        close_score_devnull()
+        try:
+            log_dir = copy_run_logs(args.work_root, run_dir, success)
+            print(f"copied run logs: {log_dir}", flush=True)
+        except Exception as exc:
+            print(f"WARN failed to copy run logs: {exc}", file=sys.stderr, flush=True)
+        if not success or args.keep_work_dir:
+            print(f"kept work dir: {run_dir}", flush=True)
+        else:
+            try:
+                shutil.rmtree(run_dir)
+            except Exception as exc:
+                print(f"WARN failed to clean work dir {run_dir}: {exc}", file=sys.stderr, flush=True)
+            else:
+                print(f"cleaned work dir: {run_dir}", flush=True)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        tb = traceback.format_exc()
-        print(tb, file=sys.stderr, flush=True)
-        notify(f"❌ RC preprocess failed: {type(e).__name__}", tb[-8000:])
-        raise
-    finally:
-        _cleanup_work_dir()
+    main()

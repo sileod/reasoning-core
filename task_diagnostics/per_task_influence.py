@@ -297,6 +297,10 @@ _EXTRA_SPEC = [   # (name, default_jsonl, cap)
     ("mmlu_logic", "data_cache/mmlu_logic_eval.jsonl", 200),
     ("mmlu_math_cloze",  "data_cache/mmlu_math_cloze_eval.jsonl",  400),   # format-fair: answer-text NLL
     ("mmlu_logic_cloze", "data_cache/mmlu_logic_cloze_eval.jsonl", 200),   # (no listed options in prompt)
+    # RETENTION GUARDRAIL (not a selection leg): MMLU ∖ {math, formal_logic, CS}, 47 subjects × 25, cloze.
+    # Per-example NLL is saved (LOG_PER_EX=1) so the subject-macro-average + subject-bootstrap are computed
+    # offline; the pooled *_delta here is only a coarse summary. Measures retention of broad academic domains.
+    ("mmlu_other_cloze", "data_cache/mmlu_other_cloze_eval.jsonl", 1175),
 ]
 EXTRA_EVALS = {}   # name -> [(prompt, answer)]
 for _nm, _path, _cap in _EXTRA_SPEC:
@@ -317,7 +321,7 @@ def eval_qa(examples):
     for prompt, answer in examples:
         p_ids = tok(prompt, add_special_tokens=False).input_ids
         a_ids = tok(answer, add_special_tokens=False).input_ids
-        if len(p_ids) + len(a_ids) > MAX_LEN: continue
+        if len(p_ids) + len(a_ids) > MAX_LEN: per_ex.append(None); continue  # keep per_ex index-aligned with `examples` (subject map)
         ids = torch.tensor([p_ids + a_ids], device=DEVICE)
         labels = ids.clone(); labels[0, :len(p_ids)] = -100
         out = model(ids, labels=labels)
@@ -501,6 +505,32 @@ TASKROW_CACHE = os.environ.get("TASKROW_CACHE", "")  # canonical TaskRow Parquet
 if not TASKROW_CACHE:
     raise SystemExit("TASKROW_CACHE is required; build one with `python -m task_diagnostics.cache build`.")
 
+def _drop_overlong(by_task):
+    """Discard aux rows whose formatted (prompt+answer) exceeds MAX_LEN under the MODEL tokenizer.
+    Under completion-only loss, packing (bfd) TRUNCATES an over-length row keep_start → the answer tail
+    is dropped and the row trains on nothing meaningful. Discarding is correct; clipping is not.
+    Default ON (DROP_OVERLONG=0 to keep legacy clip behavior). LEN_MARGIN reserves special-token headroom."""
+    if os.environ.get("DROP_OVERLONG", "1") == "0":
+        return by_task
+    limit = MAX_LEN - int(os.environ.get("LEN_MARGIN", "8"))
+    kept, dropped, gone = {}, 0, []
+    for t, rows in by_task.items():
+        pl = tok([f"{r.get('prompt','')}\n" for r in rows], add_special_tokens=True)["input_ids"]
+        al = tok([f"{r.get('answer','')}" for r in rows], add_special_tokens=False)["input_ids"]
+        keep = [r for r, p, a in zip(rows, pl, al) if len(p) + len(a) + 1 <= limit]  # +1 ≈ EOS
+        dropped += len(rows) - len(keep)
+        if keep:
+            kept[t] = keep
+        else:
+            gone.append(t)
+    if dropped:
+        msg = f"✂️  DROP_OVERLONG: dropped {dropped} aux rows > {limit} tok (of {sum(len(v) for v in by_task.values())})"
+        if gone:
+            msg += f"; {len(gone)} task(s) fully removed: {sorted(gone)}"
+        print(msg)
+    return kept
+
+
 def _load_taskrow_aux(path):
     try:
         from task_diagnostics.cache import load_task_rows
@@ -517,7 +547,7 @@ def _load_taskrow_aux(path):
         if not _level_ok(d):
             continue
         by_task.setdefault(d["task"], []).append(d)
-    return by_task
+    return _drop_overlong(by_task)
 
 _taskrow_aux = _load_taskrow_aux(TASKROW_CACHE)
 print(f"📦 TaskRow cache: {sum(len(v) for v in _taskrow_aux.values())} rows "
@@ -666,6 +696,21 @@ else:
                "peer_tasks": PEER_TASKS, "n_peers": N_PEERS if PEER_MIX else 0,
                "tasks": {}, "baseline": None, "pretrained_only": None}
 
+# Shared baseline cache: the pretrained-only eval and the main-only baseline depend ONLY on
+# (model, MAIN_DATA, SEED, TRAIN_STEPS) — never on the aux collection/task. Point BASELINE_CACHE at a
+# path keyed by those, and every collection/task run at the same setting reuses it instead of retraining
+# the (expensive at high step counts) baseline. Opt-in: unset → unchanged behavior.
+BASELINE_CACHE = os.environ.get("BASELINE_CACHE", "")
+if BASELINE_CACHE and results.get("baseline") is None and Path(BASELINE_CACHE).exists():
+    try:
+        _bc = json.loads(Path(BASELINE_CACHE).read_text())
+        results["baseline"] = _bc["baseline"]
+        if results.get("pretrained_only") is None:
+            results["pretrained_only"] = _bc.get("pretrained_only")
+        print(f"♻️  Baseline + pretrained-only loaded from shared cache {BASELINE_CACHE}")
+    except Exception as e:
+        print(f"⚠️  BASELINE_CACHE read failed ({e}); recomputing")
+
 # Pretrained-only sanity
 if results.get("pretrained_only") is None:
     (pb, pd, pf, pex), px = eval_all(); save_perex("pretrained_only", px)
@@ -691,6 +736,10 @@ if results.get("baseline") is None:
     results["baseline"] = {"bbh_nll": b_bbh, "dolci_nll": b_dolci, "fw_nll": b_fw}
     for k, v in b_ex.items(): results["baseline"][f"{k}_nll"] = v
     OUT_FILE.write_text(json.dumps(results, indent=2))
+    if BASELINE_CACHE:  # persist for peer collection/task runs at this (model, main, seed, steps)
+        Path(BASELINE_CACHE).write_text(json.dumps(
+            {"baseline": results["baseline"], "pretrained_only": results["pretrained_only"]}, indent=2))
+        print(f"💾 Baseline saved to shared cache {BASELINE_CACHE}")
 else:
     b_bbh, b_dolci, b_fw = (results["baseline"]["bbh_nll"],
                             results["baseline"]["dolci_nll"],

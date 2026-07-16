@@ -25,6 +25,14 @@ def check_mem(log_file, worker_id, task_str):
     if rss > MEM_LIMIT_GB * MEM_WARN_RATIO:
         with open(log_file, 'a') as f: f.write(f"Worker {worker_id} | {task_str}: MEM_WARN {rss:.1f}GB\n")
 
+def serialize_example(example):
+    row = example.to_dict()
+    metadata = row.get('metadata')
+    if metadata:
+        row['task'] = metadata.get('source_task', row.get('task'))
+        row['metadata'] = json.dumps(metadata)
+    return row
+
 def run_task(name, idx, level, out_path, batch_size, max_tokens):
     """Run a single task batch, return (success, message)."""
     try:
@@ -39,9 +47,7 @@ def run_task(name, idx, level, out_path, batch_size, max_tokens):
             dest = Path(out_path) / f'{name}-{idx}.jsonl'
             with open(dest, 'w') as f:
                 for x in examples:
-                    row = x.to_dict()
-                    if 'metadata' in row: row['metadata'] = json.dumps(row['metadata'])
-                    f.write(json.dumps(row) + '\n')
+                    f.write(json.dumps(serialize_example(x)) + '\n')
             return True, "OK"
         return False, "EMPTY"
     except BaseException as e:

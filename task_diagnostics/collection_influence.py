@@ -61,7 +61,7 @@ def out_file(name, run_tag, seed, steps, mix, main, init):
     return RESULTS / f"influence_COLL-{name}{rt}_S{seed}_T{steps}_M{int(mix*100)}_{main}_{init}.json"
 
 
-def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env):
+def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env, share_baseline=False):
     env = dict(os.environ)
     env.update({
         "AUX_DATASET": "rc", "TASKROW_CACHE": _resolve_cache(cache), "COLLECTION": name,
@@ -73,6 +73,9 @@ def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env):
         "EVAL_MMLU_MATH_CLOZE": "1", "EVAL_MMLU_LOGIC_CLOZE": "1",
         "LOG_SAT": "0", "LOG_REWARD": "1", "REWARD_MODE": "instruct",
     })
+    if share_baseline:  # baseline (main-only) is collection-independent → share across collections/mixes
+        slug = model.replace("/", "-")
+        env["BASELINE_CACHE"] = str(RESULTS / f"_baseline_{slug}_{main}_S{seed}_T{steps}.json")
     for kv in extra_env:
         k, _, v = kv.partition("="); env[k] = v
     print(f"[coll] {name:<10s} cache={cache} model={model} tag={run_tag}", flush=True)
@@ -83,7 +86,8 @@ def cmd_run(a):
     cols = [c for c in a.collections.split(",") if c]
     for c in cols:
         name, _, cache = c.partition("=")
-        run_one(name, cache, a.model, a.run_tag, a.main, a.seed, a.steps, a.mix, a.env)
+        run_one(name, cache, a.model, a.run_tag, a.main, a.seed, a.steps, a.mix, a.env,
+                share_baseline=a.share_baseline)
     cmd_summarize(a)
 
 
@@ -117,6 +121,8 @@ def main():
     ap.add_argument("--steps", type=int, default=300)
     ap.add_argument("--mix", type=float, default=0.2)
     ap.add_argument("--env", nargs="*", default=[], help="extra K=V passed to the engine (LR, BATCH, …)")
+    ap.add_argument("--share-baseline", dest="share_baseline", action="store_true",
+                    help="reuse one main-only baseline across all collections at this (model,main,seed,steps)")
     a = ap.parse_args()
     (cmd_run if a.cmd == "run" else cmd_summarize)(a)
 

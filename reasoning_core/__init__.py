@@ -18,6 +18,12 @@ from .zero_shot_eval import evaluate_model
 
 _PACKAGE_NAME = __name__ 
 
+COLLECTIONS = {
+    "procedural_warmup": ("_procedural_warmup", "ProceduralWarmup"),
+    "reasoning_gym": ("_reasoning_gym", "Reasoning_Gym"),
+    "synlogic": ("_synlogic", "Synlogic"),
+}
+
 
 class _PrettyLazy:
     def __init__(self, name, module_name):
@@ -110,31 +116,25 @@ scorers = {
 }
 
 
-try:
-    import reasoning_gym as _rg_check  # noqa: F401
-    def rg_scorer(a, e):
-        from .tasks import _reasoning_gym
-        return _reasoning_gym.Reasoning_Gym().score_answer(a, e)
-    scorers['reasoning_gym'] = lambda a, e: rg_scorer(a, e)
-    scorers['Reasoning_Gym'] = scorers['reasoning_gym']
-except ImportError:
-    pass
+for _collection in COLLECTIONS:
+    scorers[_collection] = lambda a, e, name=_collection: get_task(name).score_answer(a, e)
 
 def match_task_name(name, include_dev=False):
     datasets = list(DATASETS.keys())
     if include_dev:
         datasets += list(DEV_DATASETS.keys())
-    datasets += ['reasoning_gym']
+    datasets += list(COLLECTIONS)
     norm = lambda x: x.replace('_','').lower()
     matches = [t for t in datasets if norm(name)==norm(t)]
     assert len(matches)==1, f"Could not uniquely identify task {name} in {datasets}"
     return matches[0]
 
 def get_task(k, *args, **kwargs):
-    if k.lower()=='reasoning_gym':
-        from .tasks import _reasoning_gym
-        return _reasoning_gym.Reasoning_Gym(*args, **kwargs) 
     k=match_task_name(k, include_dev=True)
+    if k in COLLECTIONS:
+        module_name, class_name = COLLECTIONS[k]
+        module = importlib.import_module(f".tasks.{module_name}", _PACKAGE_NAME)
+        return getattr(module, class_name)(*args, **kwargs)
     if k in DATASETS:
         return DATASETS[k](*args, **kwargs)
     module_name, class_name = _dev_task_to_module_map[k]
