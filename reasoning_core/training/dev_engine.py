@@ -34,15 +34,15 @@ class ArmSpec:
     adamc_r: float = 0.0
     seed: int = 0
     save_final: bool = False
+    formatter: str = "sft_qa_v1"
+    aux_formatter: str | None = None
+    main_source: str = "synthetic"
+    aux_source: str | None = None
+    aux_ratio: float = 0.0
 
     @property
     def run_dir(self):
         return home_path(RUNS_HOME / "dev" / self.experiment_id / "arms" / safe_name(self.arm_id))
-
-
-def format_qa(prompt, answer, eos_token):
-    """Canonical production run_sft QA format."""
-    return {"prompt": f"Q: {prompt}\nA:", "completion": f" {answer}{eos_token}"}
 
 
 def train_arm(model, tokenizer, dataset, spec, eval_dataset=None, callbacks=()):
@@ -51,6 +51,8 @@ def train_arm(model, tokenizer, dataset, spec, eval_dataset=None, callbacks=()):
     status_path = run_dir / "status.json"
     status = _read_json(status_path)
     if status and status.get("state") == "complete":
+        if status.get("spec") != asdict(spec):
+            raise RuntimeError(f"Completed arm {spec.arm_id!r} has a different spec in {status_path}")
         return None, status["metrics"]
     sink = LocalMetricsSink(
         run_dir / "metrics.jsonl",
@@ -107,7 +109,11 @@ def train_arm(model, tokenizer, dataset, spec, eval_dataset=None, callbacks=()):
 def record_event(spec, kind, metrics):
     path = spec.run_dir.parent.parent / "events.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
-    row = {"experiment_id": spec.experiment_id, "arm_id": spec.arm_id, "kind": kind, **metrics}
+    row = {
+        "experiment_id": spec.experiment_id, "arm_id": spec.arm_id, "kind": kind,
+        "optimizer": spec.optimizer, "formatter": spec.formatter,
+        "aux_formatter": spec.aux_formatter, **metrics,
+    }
     encoded = json.dumps(row, sort_keys=True)
     if path.exists() and encoded in path.read_text().splitlines():
         return

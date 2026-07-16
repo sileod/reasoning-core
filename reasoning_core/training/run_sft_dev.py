@@ -3,6 +3,7 @@
 
 import argparse
 import sys
+from pathlib import Path
 
 sys.dont_write_bytecode = True
 
@@ -14,7 +15,11 @@ import torch
 from datasets import Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from reasoning_core.training.dev_engine import ArmSpec, format_qa, record_event, train_arm
+from reasoning_core.training.dev_data import (
+    FORMATTERS, StreamSpec, format_row, load_stream, mix_streams, settle_remote_streams,
+    steps_for_token_budget,
+)
+from reasoning_core.training.dev_engine import ArmSpec, record_event, train_arm
 
 
 def main():
@@ -22,27 +27,61 @@ def main():
     parser.add_argument("--model", default="sileod/microlm-ettin-swa-5m")
     parser.add_argument("--optimizer", choices=("prodigy", "adamc"), default="prodigy")
     parser.add_argument("--steps", type=int, default=2)
+    parser.add_argument("--token-budget", type=int)
+    parser.add_argument("--max-length", type=int, default=128)
+    parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument("--gradient-accumulation-steps", type=int, default=1)
     parser.add_argument("--checkpoint-every-minutes", type=float, default=60)
     parser.add_argument("--experiment-id", default="run-sft-dev")
+    parser.add_argument("--main-source")
+    parser.add_argument("--main-config")
+    parser.add_argument("--main-format", choices=FORMATTERS, default="sft_qa_v1")
+    parser.add_argument("--aux-source")
+    parser.add_argument("--aux-config")
+    parser.add_argument("--aux-format", choices=FORMATTERS, default="sft_qa_v1")
+    parser.add_argument("--aux-ratio", type=float, default=0.2)
+    parser.add_argument("--eval-examples", type=int, default=16)
     args = parser.parse_args()
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    rows = [format_qa(q, a, tokenizer.eos_token) for q, a in (
+    rows = [format_row({"prompt": q, "answer": a}, tokenizer.eos_token, args.main_format) for q, a in (
         ("1 + 1?", "2"), ("2 + 2?", "4"), ("3 + 3?", "6"), ("4 + 4?", "8"),
     )]
-    dataset = Dataset.from_list(rows)
+    if args.main_source:
+        main = load_stream(StreamSpec(args.main_source, args.main_format, config=args.main_config),
+                           tokenizer, max_length=args.max_length)
+        eval_dataset = Dataset.from_list(list(main.take(args.eval_examples)))
+        aux = (load_stream(StreamSpec(args.aux_source, args.aux_format, config=args.aux_config,
+                                      cycle=True), tokenizer, max_length=args.max_length)
+               if args.aux_source else None)
+        dataset = mix_streams(main, aux, args.aux_ratio)
+    else:
+        dataset = eval_dataset = Dataset.from_list(rows)
+    steps = args.steps
+    if args.token_budget:
+        steps = steps_for_token_budget(
+            args.token_budget, args.aux_ratio if args.aux_source else 0,
+            args.max_length, args.batch_size * args.gradient_accumulation_steps,
+        )
     model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32).to("cuda")
     spec = ArmSpec(
         experiment_id=args.experiment_id, arm_id="stage1", optimizer=args.optimizer,
-        max_steps=args.steps, checkpoint_every_minutes=args.checkpoint_every_minutes,
-        save_final=True,
+        max_steps=steps, batch_size=args.batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        max_length=args.max_length, checkpoint_every_minutes=args.checkpoint_every_minutes,
+        save_final=True, formatter=args.main_format,
+        aux_formatter=args.aux_format if args.aux_source else None,
+        main_source=args.main_source or "synthetic", aux_source=args.aux_source,
+        aux_ratio=args.aux_ratio if args.aux_source else 0,
     )
-    _, metrics = train_arm(model, tokenizer, dataset, spec, eval_dataset=dataset)
+    _, metrics = train_arm(model, tokenizer, dataset, spec, eval_dataset=eval_dataset)
     if metrics:
         record_event(spec, "stage_complete", metrics)
         print(metrics)
+    if args.main_source and not Path(args.main_source).expanduser().exists():
+        settle_remote_streams()
 
 
 if __name__ == "__main__":

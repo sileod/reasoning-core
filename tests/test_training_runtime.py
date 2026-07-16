@@ -9,7 +9,11 @@ from reasoning_core.training.checkpointing import (
     prepare_checkpoint_dir,
 )
 from reasoning_core.training.paths import HOME, home_path
-from reasoning_core.training.dev_engine import format_qa, optimizer_eval_mode
+from reasoning_core.training.dev_data import format_row
+from reasoning_core.training.dev_data import (
+    StreamSpec, load_stream, mix_streams, replay_after, steps_for_token_budget,
+)
+from reasoning_core.training.dev_engine import optimizer_eval_mode
 
 
 def test_write_paths_must_stay_under_home(tmp_path):
@@ -76,10 +80,15 @@ def test_short_arm_can_skip_forced_final_checkpoint(tmp_path):
     assert not control.should_save
 
 
-def test_dev_formatter_matches_run_sft_contract():
-    assert format_qa("1 + 1?", "2", "</s>") == {
+def test_versioned_formatters_preserve_both_contracts():
+    row = {"prompt": "1 + 1?", "answer": "2"}
+    assert format_row(row, "</s>", "sft_qa_v1") == {
         "prompt": "Q: 1 + 1?\nA:",
         "completion": " 2</s>",
+    }
+    assert format_row(row, "</s>", "influence_legacy_v1") == {
+        "prompt": "1 + 1?\n",
+        "completion": "2</s>",
     }
 
 
@@ -94,3 +103,31 @@ def test_optimizer_eval_mode_restores_prior_mode():
     with optimizer_eval_mode(optimizer):
         calls.append("body")
     assert calls == ["eval", "body", "train"]
+
+
+def test_local_and_mixed_streams_replay_exactly(tmp_path):
+    main_path, aux_path = tmp_path / "main.jsonl", tmp_path / "aux.jsonl"
+    main_path.write_text("".join(
+        f'{{"prompt":"m{i}","answer":"{i}"}}\n' for i in range(40)
+    ))
+    aux_path.write_text("".join(
+        f'{{"prompt":"a{i}","answer":"{i}"}}\n' for i in range(40)
+    ))
+    tokenizer = SimpleNamespace(eos_token="</s>")
+
+    def factory():
+        main = load_stream(StreamSpec(str(main_path), "sft_qa_v1"), tokenizer)
+        aux = load_stream(StreamSpec(str(aux_path), "sft_qa_v1", cycle=True), tokenizer)
+        return mix_streams(main, aux, aux_ratio=0.25, seed=42, shuffle_buffer=10)
+
+    stream = factory()
+    iterator = iter(stream)
+    consumed = [next(iterator) for _ in range(17)]
+    expected = [next(iterator) for _ in range(10)]
+    resumed = list(replay_after(factory, len(consumed)).take(10))
+    assert resumed == expected
+    assert {row["_source"] for row in consumed} == {str(main_path), str(aux_path)}
+
+
+def test_token_budget_matches_run_sft_iterable_formula():
+    assert steps_for_token_budget(1_000, 0.2, 100, 2) == 6
