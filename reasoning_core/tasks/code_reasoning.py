@@ -189,7 +189,11 @@ def run_code(code, cfg, recursionlimit=80, call_args=None, batch=False, reports=
 
     try:
         if recv.poll(timeout):
-            r = recv.recv()
+            try:
+                r = recv.recv()
+            except EOFError:
+                kill(p)
+                return [] if reports else RunReport(error="ProcessKilled", args=call_args, elapsed=timeout)
             p.join(0.05)
             kill(p)
             return r
@@ -200,7 +204,7 @@ def run_code(code, cfg, recursionlimit=80, call_args=None, batch=False, reports=
     except KeyboardInterrupt:
         kill(p)
         raise
-
+        
     finally:
         recv.close()
 
