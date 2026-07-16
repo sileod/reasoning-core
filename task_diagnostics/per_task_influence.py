@@ -252,20 +252,34 @@ def reset_model():
     model.load_state_dict({k: v.to(DEVICE) for k, v in INIT_STATE.items()})
 
 # ── Held-out evals (BBH, Dolci, FW) — eval all three regardless of main_data ──
-BBH_SUBTASKS = [
-    "boolean_expressions", "causal_judgement", "date_understanding",
-    "formal_fallacies", "logical_deduction_five_objects",
-    "multistep_arithmetic_two", "navigate", "object_counting",
-    "tracking_shuffled_objects_three_objects", "web_of_lies",
-    "word_sorting", "sports_understanding",
+# ── BBH DEV/SEALED split (held-out discipline on the EVAL itself) ────────────────────────────────
+# DEV = 12 BBH-NLP tasks: the ONLY BBH used to revise generators, tune difficulty, select tasks, and
+# choose mixture weights. SEALED = 11 BBH-algorithmic tasks: touched ONLY for the final headline number
+# (gated EVAL_BBH_SEALED=1) so selection can't overfit what we report. The `bbh` leg (selection) = DEV.
+BBH_DEV = [
+    "causal_judgement", "date_understanding", "disambiguation_qa", "formal_fallacies",
+    "hyperbaton", "movie_recommendation", "penguins_in_a_table",
+    "reasoning_about_colored_objects", "ruin_names", "salient_translation_error_detection",
+    "snarks", "sports_understanding",
 ]
+BBH_SEALED = [   # lukaemon/bbh splits two of these by object count → use a representative variant
+    "boolean_expressions", "dyck_languages", "geometric_shapes", "logical_deduction_five_objects",
+    "multistep_arithmetic_two", "navigate", "object_counting", "temporal_sequences",
+    "tracking_shuffled_objects_three_objects", "web_of_lies", "word_sorting",
+]
+BBH_SUBTASKS = BBH_DEV   # back-compat alias; the default `bbh` leg is the DEV set
 print("📊 Building eval sets…")
-BBH_EVAL = []
-for sub in BBH_SUBTASKS:
-    try:
-        for ex in list(load_dataset("lukaemon/bbh", sub, split="test"))[5:25]:
-            BBH_EVAL.append((f"{ex['input']}\n", f"{ex['target']}{EOS}"))
-    except Exception as e: print(f"  ⚠ {sub}: {e}")
+def _build_bbh(subtasks):
+    ev = []
+    for sub in subtasks:
+        try:
+            for ex in list(load_dataset("lukaemon/bbh", sub, split="test"))[5:25]:
+                ev.append((f"{ex['input']}\n", f"{ex['target']}{EOS}"))
+        except Exception as e: print(f"  ⚠ {sub}: {e}")
+    return ev
+BBH_EVAL = _build_bbh(BBH_DEV)
+EVAL_BBH_SEALED = os.environ.get("EVAL_BBH_SEALED", "0") == "1"   # final, sealed algorithmic eval
+BBH_SEALED_EVAL = _build_bbh(BBH_SEALED) if EVAL_BBH_SEALED else []
 DOLCI_EVAL, FW_EVAL = [], []
 if MAIN_LOCAL:                                   # stream-free eval slices
     for r in _read_jsonl(Path(MAIN_LOCAL) / "dolci_eval.jsonl"):
@@ -370,6 +384,9 @@ def eval_all():
     fw_m,    _, fw_px    = eval_lm(FW_EVAL)
     perex = {"bbh": bbh_px, "dolci": dolci_px, "fw": fw_px}
     extra = {}
+    if BBH_SEALED_EVAL:   # sealed algorithmic BBH — final report only, stored as bbh_sealed_nll/_delta
+        sm, _, spx = eval_qa(BBH_SEALED_EVAL)
+        extra["bbh_sealed"] = sm; perex["bbh_sealed"] = spx
     for _nm, _ex in EXTRA_EVALS.items():
         m, _, px = eval_qa(_ex)
         extra[_nm] = m
@@ -427,6 +444,9 @@ def eval_acc_all():
     d = {}
     a, _ = eval_gen_acc(BBH_EVAL)
     if a is not None: d["bbh_acc"] = a
+    if BBH_SEALED_EVAL:
+        sa, _ = eval_gen_acc(BBH_SEALED_EVAL)
+        if sa is not None: d["bbh_sealed_acc"] = sa
     for _nm, _ex in EXTRA_EVALS.items():
         _m = EXTRA_META.get(_nm)
         if _m and any(_m):
