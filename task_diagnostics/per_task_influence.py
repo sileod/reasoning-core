@@ -776,6 +776,11 @@ def train_on(ds, callbacks=None):
         cfg["completion_only_loss"] = True
     else:
         cfg["dataset_text_field"] = "text"
+    import dataclasses   # trl versions differ in SFTConfig kwargs (e.g. newer trl dropped overwrite_output_dir)
+    _valid = {f.name for f in dataclasses.fields(SFTConfig)}
+    _drop = [k for k in list(cfg) if k not in _valid]
+    for k in _drop: cfg.pop(k)
+    if _drop: print(f"  (SFTConfig: dropped kwargs unsupported by this trl: {_drop})", flush=True)
     SFTTrainer(model=model, processing_class=tok, train_dataset=ds,
                args=SFTConfig(**cfg), callbacks=callbacks).train()
 
