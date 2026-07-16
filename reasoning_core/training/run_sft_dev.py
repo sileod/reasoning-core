@@ -16,8 +16,8 @@ from datasets import Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from reasoning_core.training.dev_data import (
-    FORMATTERS, StreamSpec, format_row, load_stream, mix_streams, settle_remote_streams,
-    steps_for_token_budget,
+    FORMATTERS, StreamSpec, format_row, load_stream, mix_streams, ratio_to_fraction,
+    settle_remote_streams, steps_for_token_budget,
 )
 from reasoning_core.training.dev_engine import ArmSpec, record_event, train_arm
 
@@ -39,6 +39,8 @@ def main():
     parser.add_argument("--aux-source")
     parser.add_argument("--aux-config")
     parser.add_argument("--aux-format", choices=FORMATTERS, default="sft_qa_v1")
+    parser.add_argument("--main-prefix", default="")
+    parser.add_argument("--aux-prefix", default="")
     parser.add_argument("--aux-ratio", type=float, default=0.2)
     parser.add_argument("--eval-examples", type=int, default=16)
     args = parser.parse_args()
@@ -46,17 +48,24 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    rows = [format_row({"prompt": q, "answer": a}, tokenizer.eos_token, args.main_format) for q, a in (
+    rows = [format_row(
+        {"prompt": q, "answer": a}, tokenizer.eos_token, args.main_format, args.main_prefix,
+    ) for q, a in (
         ("1 + 1?", "2"), ("2 + 2?", "4"), ("3 + 3?", "6"), ("4 + 4?", "8"),
     )]
     if args.main_source:
-        main = load_stream(StreamSpec(args.main_source, args.main_format, config=args.main_config),
+        main = load_stream(StreamSpec(
+            args.main_source, args.main_format, config=args.main_config,
+            prompt_prefix=args.main_prefix,
+        ),
                            tokenizer, max_length=args.max_length)
         eval_dataset = Dataset.from_list(list(main.take(args.eval_examples)))
-        aux = (load_stream(StreamSpec(args.aux_source, args.aux_format, config=args.aux_config,
-                                      cycle=True), tokenizer, max_length=args.max_length)
+        aux = (load_stream(StreamSpec(
+            args.aux_source, args.aux_format, config=args.aux_config, cycle=True,
+            prompt_prefix=args.aux_prefix,
+        ), tokenizer, max_length=args.max_length)
                if args.aux_source else None)
-        dataset = mix_streams(main, aux, args.aux_ratio)
+        dataset = mix_streams(main, aux, ratio_to_fraction(args.aux_ratio))
     else:
         dataset = eval_dataset = Dataset.from_list(rows)
     steps = args.steps
@@ -73,8 +82,9 @@ def main():
         max_length=args.max_length, checkpoint_every_minutes=args.checkpoint_every_minutes,
         save_final=True, formatter=args.main_format,
         aux_formatter=args.aux_format if args.aux_source else None,
+        prompt_prefix=args.main_prefix, aux_prompt_prefix=args.aux_prefix,
         main_source=args.main_source or "synthetic", aux_source=args.aux_source,
-        aux_ratio=args.aux_ratio if args.aux_source else 0,
+        aux_fraction=ratio_to_fraction(args.aux_ratio) if args.aux_source else 0,
     )
     _, metrics = train_arm(model, tokenizer, dataset, spec, eval_dataset=eval_dataset)
     if metrics:

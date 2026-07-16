@@ -18,29 +18,35 @@ class StreamSpec:
     split: str = "train"
     config: str | None = None
     cycle: bool = False
+    prompt_prefix: str = ""
 
     def __post_init__(self):
         if self.formatter not in FORMATTERS:
             raise ValueError(f"Unknown formatter {self.formatter!r}; choose from {FORMATTERS}")
 
 
-def format_row(row, eos_token, formatter):
+def format_row(row, eos_token, formatter, prompt_prefix=""):
     if formatter == "text_v1":
         return {"prompt": "", "completion": row["text"] + eos_token}
     prompt, answer = row["prompt"], row["answer"]
     if formatter == "sft_qa_v1":
-        return {"prompt": f"Q: {prompt}\nA:", "completion": f" {answer}{eos_token}"}
-    return {"prompt": f"{prompt}\n", "completion": f"{answer}{eos_token}"}
+        return {
+            "prompt": f"{prompt_prefix}Q: {prompt}\nA:",
+            "completion": f" {answer}{eos_token}",
+        }
+    return {"prompt": f"{prompt_prefix}{prompt}\n", "completion": f"{answer}{eos_token}"}
 
 
-def load_stream(spec, tokenizer, max_length=None, chars_per_token=4.0):
+def load_stream(spec, tokenizer, max_length=None, chars_per_token=4.0, max_tokens=None):
     """Load a replayable local or HF stream and apply a versioned formatter."""
-    max_chars = max_length * chars_per_token if max_length else None
+    # Exact token filtering is the influence policy; the cheap character guard is
+    # retained only for the SFT-style stream path.
+    max_chars = max_length * chars_per_token if max_length and max_tokens is None else None
     raw = _raw_stream(spec)
 
     def format_example(row, index):
         return {
-            **format_row(row, tokenizer.eos_token, spec.formatter),
+            **format_row(row, tokenizer.eos_token, spec.formatter, spec.prompt_prefix),
             "_source": spec.source,
             "_source_index": index,
         }
@@ -50,15 +56,18 @@ def load_stream(spec, tokenizer, max_length=None, chars_per_token=4.0):
         stream = stream.filter(
             lambda row: len(row["prompt"]) + len(row["completion"]) <= max_chars
         )
+    if max_tokens:
+        stream = stream.filter(lambda row: formatted_length(row, tokenizer) <= max_tokens)
     return stream.repeat(None) if spec.cycle else stream
 
 
-def mix_streams(main, aux=None, aux_ratio=0.0, seed=42, shuffle_buffer=100):
+def mix_streams(main, aux=None, aux_fraction=0.0, seed=42, shuffle_buffer=100):
     parts = [stream for stream in (main, aux) if stream is not None]
     if len(parts) == 2:
-        p_main = 1 / (1 + aux_ratio)
+        if not 0 < aux_fraction < 1:
+            raise ValueError(f"aux_fraction must be between 0 and 1, got {aux_fraction}")
         stream = interleave_datasets(
-            parts, probabilities=[p_main, 1 - p_main],
+            parts, probabilities=[1 - aux_fraction, aux_fraction],
             seed=seed, stopping_strategy="first_exhausted",
         )
     else:
@@ -69,6 +78,16 @@ def mix_streams(main, aux=None, aux_ratio=0.0, seed=42, shuffle_buffer=100):
 def steps_for_token_budget(token_budget, aux_ratio, max_length, effective_batch_size):
     total = token_budget * (1 + aux_ratio)
     return max(1, int(total // (max_length * effective_batch_size)))
+
+
+def ratio_to_fraction(aux_ratio):
+    return aux_ratio / (1 + aux_ratio)
+
+
+def formatted_length(row, tokenizer):
+    prompt = tokenizer(row["prompt"], add_special_tokens=True)["input_ids"]
+    completion = tokenizer(row["completion"], add_special_tokens=False)["input_ids"]
+    return len(prompt) + len(completion)
 
 
 def replay_after(stream_factory, consumed):

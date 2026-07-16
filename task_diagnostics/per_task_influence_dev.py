@@ -27,7 +27,10 @@ from reasoning_core.training.dev_engine import ArmSpec, record_event, train_arm
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="sileod/microlm-ettin-swa-5m")
-    parser.add_argument("--optimizer", choices=("prodigy", "adamc"), default="prodigy")
+    parser.add_argument("--optimizer", choices=("adamw_torch", "prodigy", "adamc"),
+                        default="adamw_torch")
+    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--steps", type=int, default=2)
     parser.add_argument("--checkpoint-every-minutes", type=float, default=60)
     parser.add_argument("--experiment-id", default="influence-dev")
@@ -36,21 +39,35 @@ def main():
     parser.add_argument("--main-config")
     parser.add_argument("--aux-source")
     parser.add_argument("--aux-config")
-    parser.add_argument("--aux-ratio", type=float, default=0.2)
+    parser.add_argument("--mix-aux", type=float, default=0.2,
+                        help="Absolute auxiliary fraction, matching production MIX_AUX.")
+    parser.add_argument("--max-length", type=int, default=512)
+    parser.add_argument("--len-margin", type=int, default=8)
+    parser.add_argument("--packing", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--prompt-prefix", default="")
     parser.add_argument("--eval-examples", type=int, default=16)
     parser.add_argument("--arm", choices=("baseline", "treatment"), help=argparse.SUPPRESS)
     args = parser.parse_args()
     if bool(args.main_source) != bool(args.aux_source):
         parser.error("--main-source and --aux-source must be provided together")
+    if not 0 < args.mix_aux < 1:
+        parser.error("--mix-aux must be between 0 and 1")
+    if args.len_margin < 0 or args.len_margin >= args.max_length:
+        parser.error("--len-margin must be non-negative and smaller than --max-length")
 
     def make_spec(arm_id, treatment):
         return ArmSpec(
             experiment_id=args.experiment_id, arm_id=arm_id, optimizer=args.optimizer,
+            learning_rate=args.learning_rate, weight_decay=args.weight_decay,
+            lr_scheduler_type="linear" if args.optimizer == "adamw_torch" else "constant",
             max_steps=args.steps, checkpoint_every_minutes=args.checkpoint_every_minutes,
             formatter=args.format, aux_formatter=args.format if treatment else None,
+            prompt_prefix=args.prompt_prefix,
+            aux_prompt_prefix=args.prompt_prefix if treatment else "",
             main_source=args.main_source or "synthetic",
             aux_source=args.aux_source if treatment else None,
-            aux_ratio=args.aux_ratio if treatment else 0,
+            aux_fraction=args.mix_aux if treatment else 0,
+            max_length=args.max_length, packing=args.packing,
         )
 
     remote = args.main_source and any(
@@ -67,29 +84,46 @@ def main():
             losses[arm] = status["metrics"]["eval_loss"]
         spec = make_spec("treatment", True)
         delta = losses["treatment"] - losses["baseline"]
-        record_event(spec, "influence", {"eval_id": "dev/main_nll@v1", "delta": delta})
-        print({"losses": losses, "delta": delta})
+        reduction = 100 * (losses["baseline"] - losses["treatment"]) / losses["baseline"]
+        record_event(spec, "influence", {
+            "eval_id": "dev/main_nll@v1", "delta_nll": delta,
+            "reduction_pct": reduction,
+        })
+        print({"losses": losses, "delta_nll": delta, "reduction_pct": reduction})
         return
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    main_rows = [format_row({"prompt": q, "answer": a}, tokenizer.eos_token, args.format) for q, a in (
+    main_rows = [format_row(
+        {"prompt": q, "answer": a}, tokenizer.eos_token, args.format, args.prompt_prefix,
+    ) for q, a in (
         ("1 + 1?", "2"), ("2 + 2?", "4"), ("3 + 3?", "6"),
     )]
     task_rows = [format_row(
         {"prompt": "If A implies B and A is true, is B true?", "answer": "Yes"},
-        tokenizer.eos_token, args.format,
+        tokenizer.eos_token, args.format, args.prompt_prefix,
     )]
     if args.main_source:
-        main_spec = StreamSpec(args.main_source, args.format, config=args.main_config)
-        aux_spec = StreamSpec(args.aux_source, args.format, config=args.aux_config, cycle=True)
-        eval_ds = Dataset.from_list(list(load_stream(main_spec, tokenizer, 128).take(args.eval_examples)))
+        main_spec = StreamSpec(
+            args.main_source, args.format, config=args.main_config,
+            prompt_prefix=args.prompt_prefix,
+        )
+        aux_spec = StreamSpec(
+            args.aux_source, args.format, config=args.aux_config, cycle=True,
+            prompt_prefix=args.prompt_prefix,
+        )
+        eval_ds = Dataset.from_list(list(
+            load_stream(main_spec, tokenizer, args.max_length).take(args.eval_examples)
+        ))
 
         def arm_dataset(treatment):
-            main = load_stream(main_spec, tokenizer, 128)
-            aux = load_stream(aux_spec, tokenizer, 128) if treatment else None
-            return mix_streams(main, aux, args.aux_ratio if treatment else 0)
+            main = load_stream(main_spec, tokenizer, args.max_length)
+            aux = (load_stream(
+                aux_spec, tokenizer, args.max_length,
+                max_tokens=args.max_length - args.len_margin,
+            ) if treatment else None)
+            return mix_streams(main, aux, args.mix_aux if treatment else 0)
     else:
         eval_ds = Dataset.from_list(main_rows)
 
@@ -115,8 +149,12 @@ def main():
         gc.collect()
     if args.arm is None and len(losses) == 2:
         delta = losses["treatment"] - losses["baseline"]
-        record_event(spec, "influence", {"eval_id": "dev/main_nll@v1", "delta": delta})
-        print({"losses": losses, "delta": delta})
+        reduction = 100 * (losses["baseline"] - losses["treatment"]) / losses["baseline"]
+        record_event(spec, "influence", {
+            "eval_id": "dev/main_nll@v1", "delta_nll": delta,
+            "reduction_pct": reduction,
+        })
+        print({"losses": losses, "delta_nll": delta, "reduction_pct": reduction})
     if remote:
         settle_remote_streams()
 

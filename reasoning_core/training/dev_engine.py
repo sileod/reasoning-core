@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from types import SimpleNamespace
 
-from trl import SFTConfig
+from trl import SFTConfig, SFTTrainer
 
 from reasoning_core.training.checkpointing import (
     ResumableCheckpointCallback,
@@ -24,21 +24,26 @@ class ArmSpec:
     experiment_id: str
     arm_id: str
     optimizer: str = "prodigy"
+    learning_rate: float = 1.0
+    weight_decay: float = 0.01
+    lr_scheduler_type: str = "constant"
     max_steps: int = 10
     batch_size: int = 1
     gradient_accumulation_steps: int = 1
     max_length: int = 128
     checkpoint_every_minutes: float = 60
-    decay: float = 0.01
     adamc_weight_decay: float = 20.0
     adamc_r: float = 0.0
     seed: int = 0
     save_final: bool = False
     formatter: str = "sft_qa_v1"
     aux_formatter: str | None = None
+    prompt_prefix: str = ""
+    aux_prompt_prefix: str = ""
     main_source: str = "synthetic"
     aux_source: str | None = None
-    aux_ratio: float = 0.0
+    aux_fraction: float = 0.0
+    packing: bool = True
 
     @property
     def run_dir(self):
@@ -61,9 +66,14 @@ def train_arm(model, tokenizer, dataset, spec, eval_dataset=None, callbacks=()):
         script_args=SimpleNamespace(**asdict(spec), stage_name=spec.arm_id),
         eff_batch=spec.batch_size * spec.gradient_accumulation_steps,
     )
-    optimizer_args = SimpleNamespace(**asdict(spec), train_source_loss=False)
-    optimizer, scheduler = create_optimizer_and_scheduler(model, optimizer_args)
-    trainer_cls = schedule_free_trainer(trainer_cls_for_optimizer(optimizer_args))
+    schedule_free = spec.optimizer in {"prodigy", "adamc"}
+    trainer_cls, trainer_kwargs = SFTTrainer, {}
+    if schedule_free:
+        optimizer_payload = {**asdict(spec), "decay": spec.weight_decay, "train_source_loss": False}
+        optimizer_args = SimpleNamespace(**optimizer_payload)
+        optimizer, scheduler = create_optimizer_and_scheduler(model, optimizer_args)
+        trainer_cls = schedule_free_trainer(trainer_cls_for_optimizer(optimizer_args))
+        trainer_kwargs["optimizers"] = (optimizer, scheduler)
     checkpoint = ResumableCheckpointCallback(
         spec.checkpoint_every_minutes, save_final=spec.save_final,
     )
@@ -72,18 +82,20 @@ def train_arm(model, tokenizer, dataset, spec, eval_dataset=None, callbacks=()):
         processing_class=tokenizer,
         train_dataset=dataset,
         eval_dataset=eval_dataset,
-        optimizers=(optimizer, scheduler),
         callbacks=[LocalMetricsCallback(sink), checkpoint, *callbacks],
         args=SFTConfig(
             output_dir=str(run_dir),
             max_steps=spec.max_steps,
             per_device_train_batch_size=spec.batch_size,
             gradient_accumulation_steps=spec.gradient_accumulation_steps,
-            learning_rate=1.0,
-            max_grad_norm=0.0,
+            learning_rate=spec.learning_rate,
+            weight_decay=spec.weight_decay,
+            lr_scheduler_type=spec.lr_scheduler_type,
+            optim=spec.optimizer if not schedule_free else "adamw_torch",
+            max_grad_norm=0.0 if schedule_free else 1.0,
             max_length=spec.max_length,
             completion_only_loss=True,
-            packing=False,
+            packing=spec.packing,
             bf16=False,
             report_to="none",
             logging_steps=1,
@@ -93,6 +105,7 @@ def train_arm(model, tokenizer, dataset, spec, eval_dataset=None, callbacks=()):
             seed=spec.seed,
             disable_tqdm=True,
         ),
+        **trainer_kwargs,
     )
     resume = latest_complete_checkpoint(run_dir)
     result = trainer.train(resume_from_checkpoint=resume)
@@ -112,7 +125,8 @@ def record_event(spec, kind, metrics):
     row = {
         "experiment_id": spec.experiment_id, "arm_id": spec.arm_id, "kind": kind,
         "optimizer": spec.optimizer, "formatter": spec.formatter,
-        "aux_formatter": spec.aux_formatter, **metrics,
+        "aux_formatter": spec.aux_formatter, "aux_fraction": spec.aux_fraction,
+        **metrics,
     }
     encoded = json.dumps(row, sort_keys=True)
     if path.exists() and encoded in path.read_text().splitlines():

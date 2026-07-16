@@ -11,7 +11,8 @@ from reasoning_core.training.checkpointing import (
 from reasoning_core.training.paths import HOME, home_path
 from reasoning_core.training.dev_data import format_row
 from reasoning_core.training.dev_data import (
-    StreamSpec, load_stream, mix_streams, replay_after, steps_for_token_budget,
+    StreamSpec, load_stream, mix_streams, ratio_to_fraction, replay_after,
+    steps_for_token_budget,
 )
 from reasoning_core.training.dev_engine import optimizer_eval_mode
 
@@ -90,6 +91,10 @@ def test_versioned_formatters_preserve_both_contracts():
         "prompt": "1 + 1?\n",
         "completion": "2</s>",
     }
+    assert format_row(row, "</s>", "sft_qa_v1", "<SPECIAL>\n") == {
+        "prompt": "<SPECIAL>\nQ: 1 + 1?\nA:",
+        "completion": " 2</s>",
+    }
 
 
 def test_optimizer_eval_mode_restores_prior_mode():
@@ -118,7 +123,7 @@ def test_local_and_mixed_streams_replay_exactly(tmp_path):
     def factory():
         main = load_stream(StreamSpec(str(main_path), "sft_qa_v1"), tokenizer)
         aux = load_stream(StreamSpec(str(aux_path), "sft_qa_v1", cycle=True), tokenizer)
-        return mix_streams(main, aux, aux_ratio=0.25, seed=42, shuffle_buffer=10)
+        return mix_streams(main, aux, aux_fraction=0.25, seed=42, shuffle_buffer=10)
 
     stream = factory()
     iterator = iter(stream)
@@ -131,3 +136,38 @@ def test_local_and_mixed_streams_replay_exactly(tmp_path):
 
 def test_token_budget_matches_run_sft_iterable_formula():
     assert steps_for_token_budget(1_000, 0.2, 100, 2) == 6
+    assert ratio_to_fraction(0.2) == pytest.approx(1 / 6)
+
+
+def test_influence_mix_is_an_absolute_fraction(monkeypatch):
+    captured = {}
+
+    def fake_interleave(parts, probabilities, **kwargs):
+        captured["probabilities"] = probabilities
+        return parts[0]
+
+    monkeypatch.setattr("reasoning_core.training.dev_data.interleave_datasets", fake_interleave)
+    stream = SimpleNamespace(shuffle=lambda **kwargs: None)
+    mix_streams(stream, stream, aux_fraction=0.2, shuffle_buffer=0)
+    assert captured["probabilities"] == [0.8, 0.2]
+
+
+def test_exact_token_filter_rejects_overlong_aux(tmp_path):
+    path = tmp_path / "aux.jsonl"
+    path.write_text(
+        '{"prompt":"short","answer":"ok"}\n'
+        '{"prompt":"one two three four","answer":"too long"}\n'
+    )
+
+    class Tokenizer:
+        eos_token = "<eos>"
+
+        def __call__(self, text, add_special_tokens):
+            ids = text.replace("<eos>", " <eos>").split()
+            return {"input_ids": ([0] if add_special_tokens else []) + list(range(len(ids)))}
+
+    rows = list(load_stream(
+        StreamSpec(str(path), "influence_legacy_v1"),
+        Tokenizer(), max_length=100, max_tokens=4,
+    ))
+    assert [row["_source_index"] for row in rows] == [0]
