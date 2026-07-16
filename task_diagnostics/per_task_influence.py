@@ -303,12 +303,29 @@ _EXTRA_SPEC = [   # (name, default_jsonl, cap)
     ("mmlu_other_cloze", "data_cache/mmlu_other_cloze_eval.jsonl", 1175),
 ]
 EXTRA_EVALS = {}   # name -> [(prompt, answer)]
+EXTRA_META  = {}   # name -> [(choices, gold_idx) | None]   for MCQ choice-scoring accuracy
+def _gold_idx(choices, answer):
+    """robust gold index: prefer the choice whose text == stored answer; else the dataset's answer_idx."""
+    for i, c in enumerate(choices):
+        if str(c).strip() == str(answer).strip():
+            return i
+    return None
 for _nm, _path, _cap in _EXTRA_SPEC:
     if os.environ.get(f"EVAL_{_nm.upper()}", "0") == "1":
         _p = os.environ.get(f"{_nm.upper()}_EVAL_PATH", _path)
-        _rows = [(f"{r['prompt']}\n", f"{r['answer']}{EOS}")
-                 for r in _read_jsonl(Path(_p)) if r.get("prompt") and r.get("answer")]
-        EXTRA_EVALS[_nm] = _rows[:_cap]
+        _pairs, _meta = [], []
+        for r in _read_jsonl(Path(_p)):
+            if not (r.get("prompt") and r.get("answer") is not None): continue
+            _pairs.append((f"{r['prompt']}\n", f"{r['answer']}{EOS}"))
+            _ch = r.get("choices")
+            if _ch:
+                _gi = _gold_idx(_ch, r["answer"])
+                if _gi is None and r.get("answer_idx") is not None: _gi = int(r["answer_idx"])
+                _meta.append((_ch, _gi) if _gi is not None else None)
+            else:
+                _meta.append(None)
+        EXTRA_EVALS[_nm] = _pairs[:_cap]
+        EXTRA_META[_nm]  = _meta[:_cap]
 print(f"  BBH={len(BBH_EVAL)}  Dolci={len(DOLCI_EVAL)}  FW={len(FW_EVAL)}"
       + "".join(f"  {k}={len(v)}" for k, v in EXTRA_EVALS.items()) + "\n")
 
@@ -358,6 +375,65 @@ def eval_all():
         extra[_nm] = m
         perex[_nm] = px
     return (bbh_m, dolci_m, fw_m, extra), perex
+
+# ── Held-out ACCURACY (gated EVAL_ACC=1) — reviewers ask for accuracy, not just NLL. ─────────────
+# MCQ legs (mmlu_*_cloze): choice-scoring — predict argmin length-normalized NLL over the candidate
+# answer TEXTS; accuracy = pred == gold. BBH: greedy-decode exact-match (normalized) vs the gold string.
+EVAL_ACC = os.environ.get("EVAL_ACC", "0") == "1"
+
+@torch.no_grad()
+def _cand_nll(p_ids, cand):
+    """length-normalized NLL of candidate answer text `cand` given tokenized prompt ids p_ids."""
+    a_ids = tok(str(cand), add_special_tokens=False).input_ids
+    if not a_ids or len(p_ids) + len(a_ids) > MAX_LEN: return float("inf")
+    ids = torch.tensor([p_ids + a_ids], device=DEVICE)
+    labels = ids.clone(); labels[0, :len(p_ids)] = -100
+    return model(ids, labels=labels).loss.item()          # mean over answer tokens = length-normalized
+
+@torch.no_grad()
+def eval_mcq_acc(examples, metas):
+    """choice-scoring accuracy over MCQ candidates; metas[i]=(choices, gold_idx)|None."""
+    model.eval(); correct = total = 0
+    for (prompt, _a), meta in zip(examples, metas):
+        if not meta: continue
+        choices, gold = meta
+        p_ids = tok(prompt, add_special_tokens=False).input_ids
+        scores = [_cand_nll(p_ids, c) for c in choices]
+        if all(s == float("inf") for s in scores): continue
+        pred = min(range(len(scores)), key=lambda i: scores[i])
+        correct += int(pred == gold); total += 1
+    return (correct / total, total) if total else (None, 0)
+
+@torch.no_grad()
+def eval_gen_acc(examples, max_new=24):
+    """greedy-decode normalized exact-match accuracy (BBH: mixed MCQ/free-form, gold string stored)."""
+    import re
+    norm = lambda s: re.sub(r"[^a-z0-9]", "", s.lower())
+    model.eval(); correct = total = 0
+    pad = tok.pad_token_id if tok.pad_token_id is not None else tok.eos_token_id
+    for prompt, answer in examples:
+        gold = answer.replace(EOS, "").strip()
+        p_ids = tok(prompt, add_special_tokens=False, return_tensors="pt").input_ids.to(DEVICE)
+        if p_ids.shape[1] >= MAX_LEN: continue
+        g_ids = tok(gold, add_special_tokens=False).input_ids
+        gen = model.generate(p_ids, max_new_tokens=min(max_new, len(g_ids) + 6),
+                             do_sample=False, pad_token_id=pad)
+        out = tok.decode(gen[0][p_ids.shape[1]:], skip_special_tokens=True).split("\n")[0]
+        correct += int(norm(out) == norm(gold)); total += 1
+    return (correct / total, total) if total else (None, 0)
+
+def eval_acc_all():
+    """{leg}_acc dict: BBH (gen exact-match) + each MCQ EXTRA leg with choices (cloze choice-scoring)."""
+    d = {}
+    a, _ = eval_gen_acc(BBH_EVAL)
+    if a is not None: d["bbh_acc"] = a
+    for _nm, _ex in EXTRA_EVALS.items():
+        _m = EXTRA_META.get(_nm)
+        if _m and any(_m):
+            acc, _ = eval_mcq_acc(_ex, _m)
+            if acc is not None: d[f"{_nm}_acc"] = acc
+    model.train()
+    return d
 
 def save_perex(key, perex):
     if not LOG_PER_EX: return
@@ -735,6 +811,12 @@ if results.get("baseline") is None:
           + "".join(f"  {k}={v:.4f}" for k, v in b_ex.items()) + f"  ({dt:.0f}s)\n")
     results["baseline"] = {"bbh_nll": b_bbh, "dolci_nll": b_dolci, "fw_nll": b_fw}
     for k, v in b_ex.items(): results["baseline"][f"{k}_nll"] = v
+    if EVAL_ACC:
+        try:
+            for _k, _v in eval_acc_all().items(): results["baseline"][_k] = _v
+            print("  acc: " + "  ".join(f"{k}={results['baseline'][k]:.3f}" for k in results['baseline'] if k.endswith('_acc')))
+        except Exception as _ae:
+            print(f"  ⚠ baseline accuracy eval failed ({type(_ae).__name__}: {_ae}) — NLL-only", flush=True)
     OUT_FILE.write_text(json.dumps(results, indent=2))
     if BASELINE_CACHE:  # persist for peer collection/task runs at this (model, main, seed, steps)
         Path(BASELINE_CACHE).write_text(json.dumps(
@@ -795,6 +877,11 @@ for i, task in enumerate(ALL_TASKS):
             if k in b_ex:
                 results["tasks"][task][f"{k}_nll"]   = v
                 results["tasks"][task][f"{k}_delta"] = v - b_ex[k]
+        if EVAL_ACC:   # held-out accuracy + Δaccuracy (arm − baseline) for BBH + MCQ legs
+            for _k, _v in eval_acc_all().items():
+                results["tasks"][task][_k] = _v
+                _bk = results["baseline"].get(_k)
+                if _bk is not None: results["tasks"][task][f"{_k}_delta"] = _v - _bk
         OUT_FILE.write_text(json.dumps(results, indent=2))
         print(f"[{i+1:2d}/{len(ALL_TASKS)}] {task:<26s}  "
               f"BBH Δ={m_bbh-b_bbh:+.4f}  Dolci Δ={m_dolci-b_dolci:+.4f}  "
