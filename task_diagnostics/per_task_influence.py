@@ -851,7 +851,8 @@ else:
     b_bbh, b_dolci, b_fw = (results["baseline"]["bbh_nll"],
                             results["baseline"]["dolci_nll"],
                             results["baseline"]["fw_nll"])
-    b_ex = {k: results["baseline"][f"{k}_nll"] for k in EXTRA_EVALS if f"{k}_nll" in results["baseline"]}
+    _extra_legs = list(EXTRA_EVALS) + (["bbh_test"] if EVAL_BBH_TEST else [])  # bbh_test isn't in EXTRA_EVALS
+    b_ex = {k: results["baseline"][f"{k}_nll"] for k in _extra_legs if f"{k}_nll" in results["baseline"]}
     print(f"📏 Baseline (cached): BBH={b_bbh:.4f}  Dolci={b_dolci:.4f}  FW={b_fw:.4f}"
           + "".join(f"  {k}={v:.4f}" for k, v in b_ex.items()) + "\n")
 
