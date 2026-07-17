@@ -108,7 +108,7 @@ def _read_jsonl(p):
 _default_scratch = "1" if MAIN_DATA == "fw" else "0"
 FROM_SCRATCH = os.environ.get("FROM_SCRATCH", _default_scratch) != "0"
 LR           = float(os.environ.get("LR", 1e-4))
-MAX_LEN      = 512
+MAX_LEN      = int(os.environ.get("MAX_LEN", "512"))   # paper protocol sets MAX_LEN=1024 (cuts SynLogic discard ~0)
 BATCH        = int(os.environ.get("BATCH", 8))   # reduce for larger decoders (e.g. BATCH=2 for 400-600M)
 GRAD_ACCUM   = int(os.environ.get("GRAD_ACCUM", 1))  # effective batch = BATCH*GRAD_ACCUM; raise for cleaner PRETRAINING-regime gradients (max_steps counts optimizer steps → N× more tokens)
 
