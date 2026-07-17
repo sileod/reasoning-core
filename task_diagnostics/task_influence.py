@@ -434,10 +434,41 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
         sa, sb = fmt(a, digits), fmt(b, digits)
         return f"{sa}{sep}{sb}" if (sa or sb) else ""
 
+    # rows = []
+    # for row in records:
+    #     if row["task"] not in registered:
+    #         continue
+    #     rows.append([
+    #         str(len(rows) + 1),
+    #         row["task"],
+    #         fmt(row["influence_score"], 2, signed=True),
+    #         fmt(row.get("z"), 1, signed=True),
+    #         fmt(row.get("dolci_delta"), 4, signed=True),
+    #         fmt(row.get("bbh_delta"), 3, signed=True),
+    #         fmt(row.get("fw_delta"), 4, signed=True),
+    #         _pair(row.get("prompt_tokens_mean"), row.get("answer_tokens_mean"), 0, "/"),
+    #         _pair(row.get("acc_start"), row.get("acc_end"), 2, "→"),
+    #         (row.get("behavior_hash", "") or "")[:7],
+    #     ])
+
+    # lines.append("## Ranking")
+    # lines.append("")
+    # sigma = getattr(args, "global_sigma", None)
+    # zline = (f" `z` = score / global seed-noise σ={sigma:.3f} (|z|≳2 ⇒ effect exceeds seed noise);"
+    #          if sigma else " `z` needs ≥2 seeds (run more --seed replicates) — blank until then;")
+    # lines.append("Arrows mark the good direction: `score ↑` (higher = better helper); the deltas "
+    #              "`↓` (lower = reduced held-out loss = helped)." + zline + " `tok` = prompt/answer "
+    #              "tokens, `acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.")
+    # lines.append("")
+    # lines.append(markdown_table(rows, [
+    #     "#", "task", "score ↑", "z ↑", "dolci ↓", "bbh ↓", "fw ↓", "tok", "acc", "hash",
+    # ]))
+    
     rows = []
     for row in records:
         if row["task"] not in registered:
             continue
+        targets = row.get("targets", {})
         rows.append([
             str(len(rows) + 1),
             row["task"],
@@ -445,6 +476,9 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
             fmt(row.get("z"), 1, signed=True),
             fmt(row.get("dolci_delta"), 4, signed=True),
             fmt(row.get("bbh_delta"), 3, signed=True),
+            fmt(targets.get("mmlu_math", {}).get("mean"), 3, signed=True),
+            fmt(targets.get("mmlu_logic", {}).get("mean"), 3, signed=True),
+            fmt(targets.get("mbpp", {}).get("mean"), 3, signed=True),
             fmt(row.get("fw_delta"), 4, signed=True),
             _pair(row.get("prompt_tokens_mean"), row.get("answer_tokens_mean"), 0, "/"),
             _pair(row.get("acc_start"), row.get("acc_end"), 2, "→"),
@@ -461,7 +495,7 @@ def write_markdown(path, records, influence_runs, sat_runs, contrast_runs, args)
                  "tokens, `acc` = start→end (both diagnostic). flan delta is in the JSON sidecar.")
     lines.append("")
     lines.append(markdown_table(rows, [
-        "#", "task", "score ↑", "z ↑", "dolci ↓", "bbh ↓", "fw ↓", "tok", "acc", "hash",
+        "#", "task", "score ↑", "z ↑", "dolci ↓", "bbh ↓", "mmlu_math ↓", "mmlu_logic ↓", "mbpp ↓", "fw ↓", "tok", "acc", "hash",
     ]))
     lines.append("")
 
