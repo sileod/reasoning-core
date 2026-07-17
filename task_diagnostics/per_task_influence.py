@@ -793,6 +793,8 @@ else:
     results = {"seed": SEED, "train_steps": TRAIN_STEPS, "mix_aux": MIX_AUX,
                "main_data": MAIN_DATA, "from_scratch": FROM_SCRATCH,
                "lr": LR, "batch": BATCH, "model": MODEL_NAME,
+               "max_len": MAX_LEN, "packing": os.environ.get("PACKING", "1") != "0",
+               "drop_overlong": os.environ.get("DROP_OVERLONG", "1") != "0",
                "oversample": OVERSAMPLE, "peer_mix": PEER_MIX,
                "peer_tasks": PEER_TASKS, "n_peers": N_PEERS if PEER_MIX else 0,
                "tasks": {}, "baseline": None, "pretrained_only": None}
