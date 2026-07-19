@@ -396,7 +396,7 @@ def eval_all():
 # ── Held-out ACCURACY (gated EVAL_ACC=1) — reviewers ask for accuracy, not just NLL. ─────────────
 # MCQ legs (mmlu_*_cloze): choice-scoring — predict argmin length-normalized NLL over the candidate
 # answer TEXTS; accuracy = pred == gold. BBH: greedy-decode exact-match (normalized) vs the gold string.
-EVAL_ACC = os.environ.get("EVAL_ACC", "0") == "1"
+EVAL_ACC = os.environ.get("EVAL_ACC", "1") == "1"   # default ON: MCQ-cloze acc is free (choice-scoring), BBH exact-match is capped 24-tok greedy (~few min) — cheap enough to always log; set EVAL_ACC=0 to skip
 
 @torch.no_grad()
 def _cand_nll(p_ids, cand):
@@ -465,6 +465,18 @@ def sat_eval_rows(task):
     """First SAT_NEVAL cached TaskRows for token accuracy + native score_answer reward.
     Held-out from training ONLY when SAT_HOLDOUT=1 (then _train_aux drops these rows); otherwise they
     are ALSO in the training cycle → the resulting reward/acc is an in-training-fit signal, not held-out."""
+    if task == "__COLLECTION__":            # pooled collection arm → round-robin a sample across ALL tasks
+        lists = [v for v in _taskrow_aux.values() if v]     # (else reward_final stays None for every collection run)
+        pool, i, cap = [], 0, max(SAT_NEVAL, 200)           # pool wide so REWARD_MODE filter still leaves >=5
+        while lists and len(pool) < cap:
+            grew = False
+            for v in lists:
+                if i < len(v):
+                    pool.append(v[i]); grew = True
+                    if len(pool) >= cap: break
+            if not grew: break
+            i += 1
+        return pool
     return list(_taskrow_aux.get(task, [])[:SAT_NEVAL])
 
 @torch.no_grad()
