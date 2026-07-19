@@ -46,7 +46,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from reasoning_core import get_task, list_tasks  # noqa: E402
-import litlm  # noqa: E402
+try:                                    # only the LLM-predictor CLI needs litlm; score_native (the
+    import litlm  # noqa: E402         # native scorer imported by per_task_influence's reward) does not.
+except ModuleNotFoundError:            # keep this module importable on machines without litlm (e.g. G5K conda)
+    litlm = None                       # → reward_final logs on big-model runs instead of silently None
 
 DEFAULT_MODELS = [                                       # free NVIDIA NIM endpoint (needs NVIDIA_NIM_API_KEY)
     "nvidia_nim/meta/llama-3.1-8b-instruct",             # fast, reliable instruct — the default signal
