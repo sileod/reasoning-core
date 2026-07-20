@@ -81,6 +81,23 @@ def md_table(headers, rows):
     return "\n".join(["| " + " | ".join(headers) + " |", "|" + "|".join(["---"] * len(headers)) + "|",
                       *("| " + " | ".join(map(str, r)) + " |" for r in rows)])
 
+def tex_esc(s):
+    s = str(s)
+    for a, b in [("±", r"$\pm$"), ("—", "--"), ("−", r"$-$"), ("≪", r"$\ll$"), ("⊥", r"$\perp$"),
+                 ("%", r"\%"), ("&", r"\&")]:
+        s = s.replace(a, b)
+    return s.replace("*", r"$^{*}$").replace("_", r"\_")
+
+def tex_table(aid, shows, headers, rows, note=""):
+    """A ready-to-\\input booktabs float (author adds nothing; \\label{tab:<id>})."""
+    body = [r"\begin{table}[t]\centering", f"\\caption{{{tex_esc(shows)}}}\\label{{tab:{aid}}}",
+            f"\\begin{{tabular}}{{l{'c' * (len(headers) - 1)}}}", r"\toprule",
+            " & ".join(tex_esc(h) for h in headers) + r" \\", r"\midrule",
+            *(" & ".join(tex_esc(c) for c in r) + r" \\" for r in rows), r"\bottomrule", r"\end{tabular}"]
+    if note:
+        body.append(r"\\[2pt]{\footnotesize " + tex_esc(note) + "}")
+    return "\n".join(body + [r"\end{table}"])
+
 def cell(m, s, n):
     return "—" if n == 0 else f"{m:+.2f}±{s:.2f}" + ("*" if n == 1 else "")
 
@@ -100,7 +117,7 @@ def _main(T=300):
     for t in tags:                                             # rc−rgym lead per model = the headline number
         (rm, _, rn), (gm, _, gn) = stat("rc", t, T), stat("rgym", t, T)
         if rn and gn: claim(f"main_transfer_table.lead_{MODELS[t]}", rm - gm, n=min(rn, gn))
-    return md_table(["collection"] + [MODELS[t] for t in tags], rows)
+    return (["collection"] + [MODELS[t] for t in tags], rows)
 
 @artifact("scale_crossover_ladder", shows="rc−rgym transfer lead vs training steps, per model (the scale/compute crossover; defeats 'rc only easier for small models')")
 def _ladder():
@@ -113,7 +130,7 @@ def _ladder():
             n = min(rn, gn)
             row.append(claim(f"scale_crossover_ladder.{MODELS[t]}_T{T}", rm - gm, n=n) if n else "—")
         rows.append(row)
-    return md_table(["model \\ steps"] + [f"T{T}" for T in Ts], rows)
+    return (["model / steps"] + [f"T{T}" for T in Ts], rows)
 
 @artifact("saturation_reward_table", shows="End-of-training solve-rate (free-gen reward) per collection × model — learnability/headroom, NOT transfer")
 def _reward():
@@ -126,8 +143,8 @@ def _reward():
             r, n = reward(c, t)
             row.append(claim(f"saturation_reward_table.{c}_{MODELS[t]}", r, "{:.3f}", n=n) if n else "—")
         rows.append(row)
-    return md_table(["collection"] + [MODELS[t] for t in tags], rows) + \
-        "\n\n_pooled over available steps per cell; n annotated. Reward = task.score_answer on held-out aux, instruct-mode._"
+    return (["collection"] + [MODELS[t] for t in tags], rows,
+            "pooled over available steps per cell; n annotated. Reward = task.score_answer on held-out aux, instruct-mode.")
 
 @artifact("difficulty_confound_rebuttal", shows="Composed rebuttal to 'rc helps only because it is easier for small models' (reuses ladder + reward claims)")
 def _rebuttal():
@@ -143,10 +160,18 @@ def _rebuttal():
             "_'*' = single-seed (provisional). Never argue 'rc is hard' — its reward is highest; argue persistence + headroom._")
 
 # ── build / doc / refresh ─────────────────────────────────────────────────────
-def emit(aid, md):
+def emit(aid, content):
+    """Table artifact (headers, rows[, note]) → .md (human) + .tex (ready \\input float).
+       Prose artifact (str) → .md only (its numbers live in claims.tex via \\clm)."""
     shows = ART[aid][0]
-    hdr = f"<!-- artifact:{aid} | shows: {shows} | generated: {time.strftime('%Y-%m-%d %H:%M')} -->"
-    (GEN / f"{aid}.md").write_text(hdr + "\n\n" + md + "\n")
+    hdr = f"artifact:{aid} | shows: {shows} | generated: {time.strftime('%Y-%m-%d %H:%M')}"
+    if isinstance(content, tuple):
+        headers, rows = content[0], content[1]; note = content[2] if len(content) > 2 else ""
+        md = md_table(headers, rows) + (f"\n\n_{note}_" if note else "")
+        (GEN / f"{aid}.tex").write_text(f"% {hdr}\n" + tex_table(aid, shows, headers, rows, note) + "\n")
+    else:
+        md = content
+    (GEN / f"{aid}.md").write_text(f"<!-- {hdr} -->\n\n" + md + "\n")
     return md
 
 def build(which):
@@ -159,8 +184,12 @@ def build(which):
            "\\makeatletter\\def\\clm#1{\\csname clm@#1\\endcsname}",
            *(f"\\@namedef{{clm@{k}}}{{{v['render']}}}" for k, v in sorted(CLAIMS.items())), "\\makeatother"]
     (GEN / "claims.tex").write_text("\n".join(tex) + "\n")
+    bundle = ["% \\input this ONE file in the Overleaf paper to pull in all tables + inline numbers",
+              "\\input{generated/claims.tex}",
+              *(f"\\input{{generated/{aid}.tex}}" for aid in ART if (GEN / f"{aid}.tex").exists())]
+    (GEN / "paper_artifacts.tex").write_text("\n".join(bundle) + "\n")
     doc()  # keep the how-to-generate doc in sync
-    print(f"\n-> {len(ids)} artifact(s), {len(CLAIMS)} claims → {GEN}/  (claims.json, claims.tex)")
+    print(f"\n-> {len(ids)} artifact(s), {len(CLAIMS)} claims → {GEN}/  (*.tex, claims.tex, paper_artifacts.tex)")
 
 def doc():
     lines = ["# Paper artifacts — how to (re)generate & pair with prose", "",
