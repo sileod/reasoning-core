@@ -269,17 +269,35 @@ BBH_TEST = [   # lukaemon/bbh splits two of these by object count → use a repr
 ]
 BBH_SUBTASKS = BBH_DEV   # back-compat alias; the default `bbh` leg is the DEV set
 print("📊 Building eval sets…")
+import re as _re
+_BBH_BOOL = [("True", "False"), ("Yes", "No"), ("valid", "invalid")]   # fixed-label BBH tasks
+def _bbh_meta(inp, target):
+    """(choices, gold_idx) for MC max-likelihood scoring of one BBH example; None if free-form.
+    Letter-option tasks → score option LETTERs '(A)'… (target's own format); boolean/label tasks → the pair.
+    Free-form (object_counting/word_sorting/dyck/arithmetic) parse to None and are skipped in MC acc."""
+    tgt = str(target).replace(EOS, "").strip()
+    mt = _re.match(r"\(?([A-Z])\)?$", tgt)                              # multiple-choice letter task
+    if mt:
+        seen = list(dict.fromkeys(_re.findall(r"\(([A-Z])\)", inp)))    # option letters in prompt, deduped
+        if len(seen) >= 2 and mt.group(1) in seen:
+            return ([f"({L})" for L in seen], seen.index(mt.group(1)))
+        return None
+    for pair in _BBH_BOOL:                                              # boolean / fixed-label task
+        low = [x.lower() for x in pair]
+        if tgt.lower() in low: return (list(pair), low.index(tgt.lower()))
+    return None
 def _build_bbh(subtasks):
-    ev = []
+    ev, meta = [], []
     for sub in subtasks:
         try:
             for ex in list(load_dataset("lukaemon/bbh", sub, split="test"))[5:25]:
                 ev.append((f"{ex['input']}\n", f"{ex['target']}{EOS}"))
+                meta.append(_bbh_meta(ex["input"], ex["target"]))
         except Exception as e: print(f"  ⚠ {sub}: {e}")
-    return ev
-BBH_EVAL = _build_bbh(BBH_DEV)
+    return ev, meta
+BBH_EVAL, BBH_META = _build_bbh(BBH_DEV)
 EVAL_BBH_TEST = os.environ.get("EVAL_BBH_TEST", "0") == "1"   # final, held-out algorithmic TEST eval
-BBH_TEST_EVAL = _build_bbh(BBH_TEST) if EVAL_BBH_TEST else []
+BBH_TEST_EVAL, BBH_TEST_META = _build_bbh(BBH_TEST) if EVAL_BBH_TEST else ([], [])
 DOLCI_EVAL, FW_EVAL = [], []
 if MAIN_LOCAL:                                   # stream-free eval slices
     for r in _read_jsonl(Path(MAIN_LOCAL) / "dolci_eval.jsonl"):
@@ -445,9 +463,15 @@ def eval_acc_all():
     d = {}
     a, _ = eval_gen_acc(BBH_EVAL)
     if a is not None: d["bbh_acc"] = a
+    if any(BBH_META):                                    # MC max-likelihood over parseable BBH-DEV items
+        mc, _ = eval_mcq_acc(BBH_EVAL, BBH_META)
+        if mc is not None: d["bbh_mc_acc"] = mc
     if BBH_TEST_EVAL:
         sa, _ = eval_gen_acc(BBH_TEST_EVAL)
         if sa is not None: d["bbh_test_acc"] = sa
+        if any(BBH_TEST_META):                           # MC max-likelihood over parseable BBH-TEST items
+            smc, _ = eval_mcq_acc(BBH_TEST_EVAL, BBH_TEST_META)
+            if smc is not None: d["bbh_test_mc_acc"] = smc
     for _nm, _ex in EXTRA_EVALS.items():
         _m = EXTRA_META.get(_nm)
         if _m and any(_m):
