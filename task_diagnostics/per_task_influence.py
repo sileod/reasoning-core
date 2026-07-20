@@ -311,6 +311,7 @@ _EXTRA_SPEC = [   # (name, default_jsonl, cap)
     ("mmlu_logic", "data_cache/mmlu_logic_eval.jsonl", 200),
     ("mmlu_math_cloze",  "data_cache/mmlu_math_cloze_eval.jsonl",  400),   # format-fair: answer-text NLL
     ("mmlu_logic_cloze", "data_cache/mmlu_logic_cloze_eval.jsonl", 200),   # (no listed options in prompt)
+    ("folio",            "data_cache/folio_eval.jsonl",            203),   # LOGIC: first-order-logic NL entailment (True/False/Uncertain), cloze — gate EVAL_FOLIO=1
     # RETENTION GUARDRAIL (not a selection leg): MMLU ∖ {math, formal_logic, CS}, 47 subjects × 25, cloze.
     # Per-example NLL is saved (LOG_PER_EX=1) so the subject-macro-average + subject-bootstrap are computed
     # offline; the pooled *_delta here is only a coarse summary. Measures retention of broad academic domains.
