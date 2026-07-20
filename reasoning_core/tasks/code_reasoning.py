@@ -1109,7 +1109,7 @@ class CodeRepair(DevTask):
             if not toolkit or not var_types:
                 continue
 
-            tree = _grow_valid_tree(target_type, toolkit, var_types, cfg.min_depth, cfg.max_depth)
+            tree = _grow_valid_tree(target_type, toolkit, var_types, cfg.min_depth, cfg.max_depth, max_attempts=400)
             if tree is None:
                 continue
 
