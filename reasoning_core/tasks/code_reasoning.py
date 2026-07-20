@@ -1067,11 +1067,11 @@ def _parse_hole_answers(text):
 @dataclass
 class CodeRepairCfg(Config):
     difficulty: float = 0.0
-    min_depth: int = 4
+    min_depth: int = 2
     max_depth: int = 8
     n_holes: int = 1
     n_funcs: int = 8
-    max_attempts: int = 400
+    max_attempts: int = 800
     db_path: str = "functions.db"
     libraries: tuple[str, ...] | None = None  # None -> DEFAULT_LIBRARIES
 
