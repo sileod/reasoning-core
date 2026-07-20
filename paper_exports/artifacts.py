@@ -17,7 +17,9 @@ from pathlib import Path
 from statistics import mean, pstdev
 
 OUT = Path(__file__).resolve().parent
-PR, GEN = OUT.parent / "per_task_results", OUT / "generated"
+PR = OUT.parent / "per_task_results"
+TEX = OUT                       # paper-facing .tex — the paper's `generated/` symlink points HERE, so \input{generated/<id>}
+GEN = OUT / "generated"         # bookkeeping only (.md tables, claims.json/freeze) — never \input'd
 RX = re.compile(r"influence_COLL-([a-z_]+)_([A-Za-z0-9]+)_S(\d+)_T(\d+)_M(\d+)_fwdolci_pretrained\.json$")
 MODELS = {"HL135": "135M", "HL360": "360M", "HL17": "1.7B", "HLOLMO": "OLMo-1B", "HL3B": "3B"}
 REASON = ["bbh", "mmlu_math_cloze", "mmlu_logic_cloze"]        # reasoning-transfer legs (dev)
@@ -168,7 +170,7 @@ def emit(aid, content):
     if isinstance(content, tuple):
         headers, rows = content[0], content[1]; note = content[2] if len(content) > 2 else ""
         md = md_table(headers, rows) + (f"\n\n_{note}_" if note else "")
-        (GEN / f"{aid}.tex").write_text(f"% {hdr}\n" + tex_table(aid, shows, headers, rows, note) + "\n")
+        (TEX / f"{aid}.tex").write_text(f"% {hdr}\n" + tex_table(aid, shows, headers, rows, note) + "\n")
     else:
         md = content
     (GEN / f"{aid}.md").write_text(f"<!-- {hdr} -->\n\n" + md + "\n")
@@ -183,13 +185,12 @@ def build(which):
     tex = ["% single source of truth for inline numbers — prose cites \\clm{artifact.key}",
            "\\makeatletter\\def\\clm#1{\\csname clm@#1\\endcsname}",
            *(f"\\@namedef{{clm@{k}}}{{{v['render']}}}" for k, v in sorted(CLAIMS.items())), "\\makeatother"]
-    (GEN / "claims.tex").write_text("\n".join(tex) + "\n")
-    bundle = ["% \\input this ONE file in the Overleaf paper to pull in all tables + inline numbers",
-              "\\input{generated/claims.tex}",
-              *(f"\\input{{generated/{aid}.tex}}" for aid in ART if (GEN / f"{aid}.tex").exists())]
-    (GEN / "paper_artifacts.tex").write_text("\n".join(bundle) + "\n")
+    (TEX / "claims.tex").write_text("\n".join(tex) + "\n")
+    bundle = ["% all result TABLES — \\input in the BODY. (inline numbers: \\input{generated/claims} in the PREAMBLE)",
+              *(f"\\input{{generated/{aid}}}" for aid in ART if (TEX / f"{aid}.tex").exists())]
+    (TEX / "paper_artifacts.tex").write_text("\n".join(bundle) + "\n")
     doc()  # keep the how-to-generate doc in sync
-    print(f"\n-> {len(ids)} artifact(s), {len(CLAIMS)} claims → {GEN}/  (*.tex, claims.tex, paper_artifacts.tex)")
+    print(f"\n-> {len(ids)} artifact(s), {len(CLAIMS)} claims → {TEX}/  (paper uses \\input{{generated/<id>}})")
 
 def doc():
     lines = ["# Paper artifacts — how to (re)generate & pair with prose", "",
