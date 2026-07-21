@@ -273,14 +273,20 @@ import re as _re
 _BBH_BOOL = [("True", "False"), ("Yes", "No"), ("valid", "invalid")]   # fixed-label BBH tasks
 def _bbh_meta(inp, target):
     """(choices, gold_idx) for MC max-likelihood scoring of one BBH example; None if free-form.
-    Letter-option tasks → score option LETTERs '(A)'… (target's own format); boolean/label tasks → the pair.
-    Free-form (object_counting/word_sorting/dyck/arithmetic) parse to None and are skipped in MC acc."""
+    CLOZE-consistent with MMLU/FOLIO: choices are the option TEXTs (e.g. 'five', '02/16/2009'), NOT the
+    letter labels '(A)' — score answer content, not the label. Letter-option tasks → parse the '(X) text'
+    block; boolean/label tasks → the fixed pair (already text). Free-form
+    (object_counting/word_sorting/dyck/arithmetic) → None, skipped in MC acc.
+    (Unlike MMLU cloze, BBH options stay in the prompt — they ARE the question — so this is text-scoring
+    with options visible, the closest cloze form possible for BBH.)"""
     tgt = str(target).replace(EOS, "").strip()
     mt = _re.match(r"\(?([A-Z])\)?$", tgt)                              # multiple-choice letter task
     if mt:
-        seen = list(dict.fromkeys(_re.findall(r"\(([A-Z])\)", inp)))    # option letters in prompt, deduped
-        if len(seen) >= 2 and mt.group(1) in seen:
-            return ([f"({L})" for L in seen], seen.index(mt.group(1)))
+        region = inp.split("Options:")[-1]                             # parse only the options block
+        opts = _re.findall(r"\(([A-Z])\)\s*(.+?)\s*(?=\n\s*\([A-Z]\)|\Z)", region, _re.S)
+        letters = [L for L, _ in opts]; texts = [t.strip() for _, t in opts]
+        if len(letters) >= 2 and mt.group(1) in letters and all(texts):
+            return (texts, letters.index(mt.group(1)))               # score option TEXT (cloze)
         return None
     for pair in _BBH_BOOL:                                              # boolean / fixed-label task
         low = [x.lower() for x in pair]
