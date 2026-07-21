@@ -317,11 +317,20 @@ def _build_bbh_open(subs):
     for sub in subs:
         try:
             for ex in list(load_dataset("lukaemon/bbh", sub, split="test"))[5:25]:
-                m = _bbh_meta(ex["input"], ex["target"])                     # gold ANSWER TEXT (not the letter)
-                if m: ev.append((f"{ex['input'].split('Options:')[0].strip()}\nAnswer:", f"{m[0][m[1]]}{EOS}"))
+                m = _bbh_meta(ex["input"], ex["target"])                          # letter/bool → gold option TEXT
+                gold = m[0][m[1]] if m else str(ex["target"]).replace(EOS, "").strip()   # else raw target (free-form)
+                if not m and _re.match(r"\(?[A-Z]\)?$", gold): continue           # unparsed letter-MCQ → skip (no bare letter)
+                ev.append((f"{ex['input'].split('Options:')[0].strip()}\nAnswer:", f"{gold}{EOS}"))
         except Exception as e: print(f"  ⚠ open {sub}: {e}")
     return ev
 BBH_OPEN_EVAL = _build_bbh_open(BBH_OPEN_SUBS) if EVAL_BBH_OPEN else []
+# same treatment for the held-out TEST set (bbh_test_open): generable TEST subtasks — free-form
+# (arithmetic/word_sorting/dyck/object_counting → raw numeric/text target) + binary (boolean_expr/navigate/
+# web_of_lies) + letter-but-nameable (geometric_shapes/temporal/tracking). logical_deduction excluded (comparison-bound).
+BBH_TEST_OPEN_SUBS = ["boolean_expressions", "navigate", "web_of_lies", "object_counting",
+    "multistep_arithmetic_two", "word_sorting", "dyck_languages", "geometric_shapes",
+    "temporal_sequences", "tracking_shuffled_objects_three_objects"]
+BBH_TEST_OPEN_EVAL = _build_bbh_open(BBH_TEST_OPEN_SUBS) if (EVAL_BBH_OPEN and EVAL_BBH_TEST) else []
 DOLCI_EVAL, FW_EVAL = [], []
 if MAIN_LOCAL:                                   # stream-free eval slices
     for r in _read_jsonl(Path(MAIN_LOCAL) / "dolci_eval.jsonl"):
@@ -433,6 +442,9 @@ def eval_all():
     if BBH_OPEN_EVAL:   # options-omitted BBH cloze (answer generated, no visible menu) → bbh_open_nll/_delta
         om, _, opx = eval_qa(BBH_OPEN_EVAL)
         extra["bbh_open"] = om; perex["bbh_open"] = opx
+    if BBH_TEST_OPEN_EVAL:   # options-omitted BBH-TEST cloze → bbh_test_open_nll/_delta
+        tom, _, topx = eval_qa(BBH_TEST_OPEN_EVAL)
+        extra["bbh_test_open"] = tom; perex["bbh_test_open"] = topx
     for _nm, _ex in EXTRA_EVALS.items():
         m, _, px = eval_qa(_ex)
         extra[_nm] = m
@@ -921,7 +933,9 @@ else:
     b_bbh, b_dolci, b_fw = (results["baseline"]["bbh_nll"],
                             results["baseline"]["dolci_nll"],
                             results["baseline"]["fw_nll"])
-    _extra_legs = list(EXTRA_EVALS) + (["bbh_test"] if EVAL_BBH_TEST else []) + (["bbh_open"] if EVAL_BBH_OPEN else [])  # not in EXTRA_EVALS
+    _extra_legs = (list(EXTRA_EVALS) + (["bbh_test"] if EVAL_BBH_TEST else [])
+                   + (["bbh_open"] if EVAL_BBH_OPEN else [])
+                   + (["bbh_test_open"] if (EVAL_BBH_OPEN and EVAL_BBH_TEST) else []))  # not in EXTRA_EVALS
     b_ex = {k: results["baseline"][f"{k}_nll"] for k in _extra_legs if f"{k}_nll" in results["baseline"]}
     print(f"📏 Baseline (cached): BBH={b_bbh:.4f}  Dolci={b_dolci:.4f}  FW={b_fw:.4f}"
           + "".join(f"  {k}={v:.4f}" for k, v in b_ex.items()) + "\n")
