@@ -434,8 +434,9 @@ def _cand_nll(p_ids, cand):
 
 @torch.no_grad()
 def eval_mcq_acc(examples, metas):
-    """choice-scoring accuracy over MCQ candidates; metas[i]=(choices, gold_idx)|None."""
-    model.eval(); correct = total = 0
+    """choice-scoring accuracy + mean length-normalized NLL of the GOLD answer TEXT (content/cloze NLL),
+    over MCQ candidates; metas[i]=(choices, gold_idx)|None. Returns (acc, total, gold_content_nll)."""
+    model.eval(); correct = total = 0; gnll = 0.0; gn = 0
     for (prompt, _a), meta in zip(examples, metas):
         if not meta: continue
         choices, gold = meta
@@ -444,7 +445,8 @@ def eval_mcq_acc(examples, metas):
         if all(s == float("inf") for s in scores): continue
         pred = min(range(len(scores)), key=lambda i: scores[i])
         correct += int(pred == gold); total += 1
-    return (correct / total, total) if total else (None, 0)
+        if scores[gold] != float("inf"): gnll += scores[gold]; gn += 1
+    return ((correct / total) if total else None, total, (gnll / gn) if gn else None)
 
 @torch.no_grad()
 def eval_gen_acc(examples, max_new=24):
@@ -469,19 +471,21 @@ def eval_acc_all():
     d = {}
     a, _ = eval_gen_acc(BBH_EVAL)
     if a is not None: d["bbh_acc"] = a
-    if any(BBH_META):                                    # MC cloze (option-TEXT choice-scoring) over BBH-DEV
-        mc, _ = eval_mcq_acc(BBH_EVAL, BBH_META)          # NB: *_mc_cloze_acc — distinct from the retired
-        if mc is not None: d["bbh_mc_cloze_acc"] = mc     # letter-scored *_mc_acc (backward compat: old cells keep that key)
+    if any(BBH_META):                                    # MC cloze over BBH-DEV: choice-acc + gold content-NLL
+        mc, _, cn = eval_mcq_acc(BBH_EVAL, BBH_META)       # *_mc_cloze_acc / *_cloze_nll — content-scored twins of
+        if mc is not None: d["bbh_mc_cloze_acc"] = mc      # the letter-scored bbh_acc / bbh_nll (store both, choose later)
+        if cn is not None: d["bbh_cloze_nll"] = cn
     if BBH_TEST_EVAL:
         sa, _ = eval_gen_acc(BBH_TEST_EVAL)
         if sa is not None: d["bbh_test_acc"] = sa
-        if any(BBH_TEST_META):                           # MC cloze (option-TEXT choice-scoring) over BBH-TEST
-            smc, _ = eval_mcq_acc(BBH_TEST_EVAL, BBH_TEST_META)
+        if any(BBH_TEST_META):                           # MC cloze over BBH-TEST: choice-acc + gold content-NLL
+            smc, _, scn = eval_mcq_acc(BBH_TEST_EVAL, BBH_TEST_META)
             if smc is not None: d["bbh_test_mc_cloze_acc"] = smc
+            if scn is not None: d["bbh_test_cloze_nll"] = scn
     for _nm, _ex in EXTRA_EVALS.items():
         _m = EXTRA_META.get(_nm)
         if _m and any(_m):
-            acc, _ = eval_mcq_acc(_ex, _m)
+            acc, _, _ = eval_mcq_acc(_ex, _m)             # (MMLU cloze-NLL already logged via eval_qa; ignore here)
             if acc is not None: d[f"{_nm}_acc"] = acc
     model.train()
     return d
