@@ -469,15 +469,15 @@ def eval_acc_all():
     d = {}
     a, _ = eval_gen_acc(BBH_EVAL)
     if a is not None: d["bbh_acc"] = a
-    if any(BBH_META):                                    # MC max-likelihood over parseable BBH-DEV items
-        mc, _ = eval_mcq_acc(BBH_EVAL, BBH_META)
-        if mc is not None: d["bbh_mc_acc"] = mc
+    if any(BBH_META):                                    # MC cloze (option-TEXT choice-scoring) over BBH-DEV
+        mc, _ = eval_mcq_acc(BBH_EVAL, BBH_META)          # NB: *_mc_cloze_acc — distinct from the retired
+        if mc is not None: d["bbh_mc_cloze_acc"] = mc     # letter-scored *_mc_acc (backward compat: old cells keep that key)
     if BBH_TEST_EVAL:
         sa, _ = eval_gen_acc(BBH_TEST_EVAL)
         if sa is not None: d["bbh_test_acc"] = sa
-        if any(BBH_TEST_META):                           # MC max-likelihood over parseable BBH-TEST items
+        if any(BBH_TEST_META):                           # MC cloze (option-TEXT choice-scoring) over BBH-TEST
             smc, _ = eval_mcq_acc(BBH_TEST_EVAL, BBH_TEST_META)
-            if smc is not None: d["bbh_test_mc_acc"] = smc
+            if smc is not None: d["bbh_test_mc_cloze_acc"] = smc
     for _nm, _ex in EXTRA_EVALS.items():
         _m = EXTRA_META.get(_nm)
         if _m and any(_m):
