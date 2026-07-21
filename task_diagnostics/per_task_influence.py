@@ -304,6 +304,24 @@ def _build_bbh(subtasks):
 BBH_EVAL, BBH_META = _build_bbh(BBH_DEV)
 EVAL_BBH_TEST = os.environ.get("EVAL_BBH_TEST", "0") == "1"   # final, held-out algorithmic TEST eval
 BBH_TEST_EVAL, BBH_TEST_META = _build_bbh(BBH_TEST) if EVAL_BBH_TEST else ([], [])
+# `bbh_open` leg: options-OMITTED BBH cloze over DEV subtasks whose answer is generable (number/date/name/
+# category/binary) — strip the menu, score the gold answer TEXT as a free continuation (answer NOT in prompt,
+# like MMLU cloze) → a BBH reasoning signal with zero MCQ-format confound. Comparison-bound tasks
+# (snarks/movie_recommendation/ruin_names/hyperbaton) are excluded (they need the candidate list).
+BBH_OPEN_SUBS = ["reasoning_about_colored_objects", "penguins_in_a_table", "date_understanding",
+                 "disambiguation_qa", "salient_translation_error_detection", "causal_judgement",
+                 "formal_fallacies", "sports_understanding"]
+EVAL_BBH_OPEN = os.environ.get("EVAL_BBH_OPEN", "1") == "1"
+def _build_bbh_open(subs):
+    ev = []
+    for sub in subs:
+        try:
+            for ex in list(load_dataset("lukaemon/bbh", sub, split="test"))[5:25]:
+                m = _bbh_meta(ex["input"], ex["target"])                     # gold ANSWER TEXT (not the letter)
+                if m: ev.append((f"{ex['input'].split('Options:')[0].strip()}\nAnswer:", f"{m[0][m[1]]}{EOS}"))
+        except Exception as e: print(f"  ⚠ open {sub}: {e}")
+    return ev
+BBH_OPEN_EVAL = _build_bbh_open(BBH_OPEN_SUBS) if EVAL_BBH_OPEN else []
 DOLCI_EVAL, FW_EVAL = [], []
 if MAIN_LOCAL:                                   # stream-free eval slices
     for r in _read_jsonl(Path(MAIN_LOCAL) / "dolci_eval.jsonl"):
@@ -412,6 +430,9 @@ def eval_all():
     if BBH_TEST_EVAL:   # held-out algorithmic BBH-TEST — final report only, stored as bbh_test_nll/_delta
         sm, _, spx = eval_qa(BBH_TEST_EVAL)
         extra["bbh_test"] = sm; perex["bbh_test"] = spx
+    if BBH_OPEN_EVAL:   # options-omitted BBH cloze (answer generated, no visible menu) → bbh_open_nll/_delta
+        om, _, opx = eval_qa(BBH_OPEN_EVAL)
+        extra["bbh_open"] = om; perex["bbh_open"] = opx
     for _nm, _ex in EXTRA_EVALS.items():
         m, _, px = eval_qa(_ex)
         extra[_nm] = m
@@ -900,7 +921,7 @@ else:
     b_bbh, b_dolci, b_fw = (results["baseline"]["bbh_nll"],
                             results["baseline"]["dolci_nll"],
                             results["baseline"]["fw_nll"])
-    _extra_legs = list(EXTRA_EVALS) + (["bbh_test"] if EVAL_BBH_TEST else [])  # bbh_test isn't in EXTRA_EVALS
+    _extra_legs = list(EXTRA_EVALS) + (["bbh_test"] if EVAL_BBH_TEST else []) + (["bbh_open"] if EVAL_BBH_OPEN else [])  # not in EXTRA_EVALS
     b_ex = {k: results["baseline"][f"{k}_nll"] for k in _extra_legs if f"{k}_nll" in results["baseline"]}
     print(f"📏 Baseline (cached): BBH={b_bbh:.4f}  Dolci={b_dolci:.4f}  FW={b_fw:.4f}"
           + "".join(f"  {k}={v:.4f}" for k, v in b_ex.items()) + "\n")
