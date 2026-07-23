@@ -362,6 +362,21 @@ _EXTRA_SPEC = [   # (name, default_jsonl, cap)
     ("mmlu_logic", "data_cache/mmlu_logic_eval.jsonl", 200),
     ("mmlu_math_cloze",  "data_cache/mmlu_math_cloze_eval.jsonl",  400),   # format-fair: answer-text NLL
     ("mmlu_logic_cloze", "data_cache/mmlu_logic_cloze_eval.jsonl", 200),   # (no listed options in prompt)
+    # Per-subject MMLU cloze (build_mmlu_subjects.py). Separate legs so math/logic transfer is read per
+    # subject and a broader math aggregate reconstructed offline. Each gated EVAL_MMLU_<SUBJECT>_CLOZE=1.
+    ("mmlu_abstract_algebra_cloze",       "data_cache/mmlu_abstract_algebra_cloze_eval.jsonl",       400),
+    ("mmlu_college_mathematics_cloze",    "data_cache/mmlu_college_mathematics_cloze_eval.jsonl",    400),
+    ("mmlu_elementary_mathematics_cloze", "data_cache/mmlu_elementary_mathematics_cloze_eval.jsonl", 400),
+    ("mmlu_high_school_mathematics_cloze","data_cache/mmlu_high_school_mathematics_cloze_eval.jsonl",400),
+    ("mmlu_high_school_statistics_cloze", "data_cache/mmlu_high_school_statistics_cloze_eval.jsonl", 400),
+    ("mmlu_formal_logic_cloze",           "data_cache/mmlu_formal_logic_cloze_eval.jsonl",           400),
+    # normal/letter twins (options in prompt, gold LETTER) for the same 6 subjects — gate EVAL_MMLU_<SUBJECT>=1.
+    ("mmlu_abstract_algebra",       "data_cache/mmlu_abstract_algebra_eval.jsonl",       400),
+    ("mmlu_college_mathematics",    "data_cache/mmlu_college_mathematics_eval.jsonl",    400),
+    ("mmlu_elementary_mathematics", "data_cache/mmlu_elementary_mathematics_eval.jsonl", 400),
+    ("mmlu_high_school_mathematics","data_cache/mmlu_high_school_mathematics_eval.jsonl",400),
+    ("mmlu_high_school_statistics", "data_cache/mmlu_high_school_statistics_eval.jsonl", 400),
+    ("mmlu_formal_logic",           "data_cache/mmlu_formal_logic_eval.jsonl",           400),
     ("folio",            "data_cache/folio_eval.jsonl",            203),   # LOGIC: first-order-logic NL entailment (True/False/Uncertain), cloze — gate EVAL_FOLIO=1
     # RETENTION GUARDRAIL (not a selection leg): MMLU ∖ {math, formal_logic, CS}, 47 subjects × 25, cloze.
     # Per-example NLL is saved (LOG_PER_EX=1) so the subject-macro-average + subject-bootstrap are computed
@@ -865,6 +880,31 @@ def train_on(ds, callbacks=None):
                args=SFTConfig(**cfg), callbacks=callbacks).train()
 
 
+# ── Emergency-rerun checkpoints (opt-in; heavy runs only) ────────────────────────
+# Save the FINAL trained model per arm so a new eval leg can be re-scored WITHOUT retraining.
+# OFF unless SAVE_CKPT_DIR is set. Weights-only (no optimizer). Hard disk guard: never write if the
+# target FS has < SAVE_CKPT_MIN_FREE_GB free (protects the shared Lille NFS, ~95% full).
+SAVE_CKPT_DIR       = os.environ.get("SAVE_CKPT_DIR", "").strip()
+SAVE_CKPT_MIN_FREE_GB = float(os.environ.get("SAVE_CKPT_MIN_FREE_GB", "300"))
+def _save_ckpt_model(tag):
+    if not SAVE_CKPT_DIR:
+        return
+    import shutil
+    slug = MODEL_NAME.replace("/", "-")
+    dest = Path(SAVE_CKPT_DIR) / f"{slug}_{MAIN_DATA}_S{SEED}_T{TRAIN_STEPS}" / str(tag)
+    try:
+        free_gb = shutil.disk_usage(SAVE_CKPT_DIR).free / 2**30
+        if free_gb < SAVE_CKPT_MIN_FREE_GB:
+            print(f"⚠️  SKIP ckpt {tag}: {free_gb:.0f}GB free < {SAVE_CKPT_MIN_FREE_GB}GB guard", flush=True)
+            return
+        dest.mkdir(parents=True, exist_ok=True)
+        model.save_pretrained(dest, safe_serialization=True)   # weights only
+        tok.save_pretrained(dest)
+        print(f"💾 ckpt saved: {dest}  ({free_gb:.0f}GB free)", flush=True)
+    except Exception as e:
+        print(f"⚠️  ckpt save failed for {tag}: {e}", flush=True)
+
+
 # ── Resume support ──────────────────────────────────────────────────────────────
 if OUT_FILE.exists():
     results = json.loads(OUT_FILE.read_text())
@@ -912,6 +952,7 @@ if results.get("baseline") is None:
         _bl_curve = []; _bl_cb = [CkptEvalCB(_bl_curve)]
     train_on(baseline_ds(), callbacks=_bl_cb)
     if CKPT_EVAL: save_ckpt("baseline", _bl_curve)
+    _save_ckpt_model("baseline")
     (b_bbh, b_dolci, b_fw, b_ex), px = eval_all(); save_perex("baseline", px)
     dt = time.time() - t0
     print(f"  BBH={b_bbh:.4f}  Dolci={b_dolci:.4f}  FW={b_fw:.4f}"
@@ -962,6 +1003,7 @@ for i, task in enumerate(ALL_TASKS):
             ckpt_curve = []; sat_cbs = (sat_cbs or []) + [CkptEvalCB(ckpt_curve)]
         train_on(mixed_ds(task), callbacks=sat_cbs)
         if ckpt_curve is not None: save_ckpt(task, ckpt_curve)
+        _save_ckpt_model(COLLECTION or task)
         (m_bbh, m_dolci, m_fw, m_ex), px = eval_all(); save_perex(task, px)
         reward_final = free_gen_reward(sat_rows) if (reward0 is not None) else None  # END free-gen reward
         if sat_curve is not None or reward0 is not None:
