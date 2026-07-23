@@ -41,6 +41,15 @@ def _resolve_cache(spec: str) -> str:
     return str(p) if p.exists() else str(CACHE_ROOT / spec)
 
 
+def _cache_tasks(cache_path: str):
+    """Distinct task names in a TaskRow cache (drives per-task mode: one arm per task)."""
+    import glob, pyarrow.parquet as pq
+    ts = set()
+    for f in glob.glob(f"{cache_path}/data/*.parquet"):
+        ts |= set(pq.read_table(f, columns=["task"]).column("task").to_pylist())
+    return sorted(ts)
+
+
 def collection_score(path, legs=LEGS):
     """Per-leg %NLL-reduction + global mean for one COLLECTION run json (the single pooled arm)."""
     d = json.loads(Path(path).read_text())
@@ -61,10 +70,11 @@ def out_file(name, run_tag, seed, steps, mix, main, init):
     return RESULTS / f"influence_COLL-{name}{rt}_S{seed}_T{steps}_M{int(mix*100)}_{main}_{init}.json"
 
 
-def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env, share_baseline=False):
+def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env, share_baseline=False, per_task=False):
+    cache_path = _resolve_cache(cache)
     env = dict(os.environ)
     env.update({
-        "AUX_DATASET": "rc", "TASKROW_CACHE": _resolve_cache(cache), "COLLECTION": name,
+        "AUX_DATASET": "rc", "TASKROW_CACHE": cache_path,
         "MODEL": model, "RUN_TAG": run_tag, "MAIN_DATA": main, "SEED": str(seed),
         "TRAIN_STEPS": str(steps), "MIX_AUX": str(mix),
         "MAIN_LOCAL": env.get("MAIN_LOCAL", "data_cache"), "COMPLETION_ONLY": "1",
@@ -72,8 +82,16 @@ def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env, shar
         "EVAL_MBPP": "1", "EVAL_MMLU_MATH": "1", "EVAL_MMLU_LOGIC": "1",
         "EVAL_MMLU_MATH_CLOZE": "1", "EVAL_MMLU_LOGIC_CLOZE": "1",
         "EVAL_GSM8K": "1", "EVAL_DROP": "1",   # free-gen math + discrete-reasoning legs (nll + exact-match)
-        "LOG_SAT": "0", "LOG_REWARD": "1", "REWARD_MODE": "instruct",
+        "LOG_SAT": "1" if per_task else "0", "LOG_REWARD": "1", "REWARD_MODE": "instruct",
     })
+    # per-task mode: measure EACH task in the cache as its own aux arm (no COLLECTION pooling). Needed for
+    # the task-level feature analysis (answer/prompt length, headroom, calibration → influence). LOG_SAT on
+    # (saturation = headroom); caller slims heavy eval legs via --env. RUN_TAG carries the collection so the
+    # 4 per-task files don't collide (filename lacks a coll field outside COLLECTION mode).
+    if per_task:
+        env["TASKS"] = ",".join(_cache_tasks(cache_path)); env.pop("COLLECTION", None)
+    else:
+        env["COLLECTION"] = name
     if share_baseline:  # baseline (main-only) is collection-independent → share across collections/mixes
         slug = model.replace("/", "-")
         env["BASELINE_CACHE"] = str(RESULTS / f"_baseline_{slug}_{main}_S{seed}_T{steps}.json")
@@ -87,9 +105,11 @@ def cmd_run(a):
     cols = [c for c in a.collections.split(",") if c]
     for c in cols:
         name, _, cache = c.partition("=")
-        run_one(name, cache, a.model, a.run_tag, a.main, a.seed, a.steps, a.mix, a.env,
-                share_baseline=a.share_baseline)
-    cmd_summarize(a)
+        rt = f"{a.run_tag}{name.upper()}" if a.per_task else a.run_tag   # per-collection tag so per-task files differ
+        run_one(name, cache, a.model, rt, a.main, a.seed, a.steps, a.mix, a.env,
+                share_baseline=a.share_baseline, per_task=a.per_task)
+    if not a.per_task:            # per-task output feeds the offline feature analysis, not the collection table
+        cmd_summarize(a)
 
 
 def cmd_summarize(a):
@@ -124,6 +144,9 @@ def main():
     ap.add_argument("--env", nargs="*", default=[], help="extra K=V passed to the engine (LR, BATCH, …)")
     ap.add_argument("--share-baseline", dest="share_baseline", action="store_true",
                     help="reuse one main-only baseline across all collections at this (model,main,seed,steps)")
+    ap.add_argument("--per-task", dest="per_task", action="store_true",
+                    help="measure EACH task in every cache as its own aux arm (task-level feature analysis) "
+                         "instead of one pooled collection arm; writes influence_<tag><COLL>_... per collection")
     a = ap.parse_args()
     (cmd_run if a.cmd == "run" else cmd_summarize)(a)
 
