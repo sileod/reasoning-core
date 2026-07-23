@@ -34,6 +34,12 @@ CACHE_ROOT = REPO / "task_diagnostics" / "cache" / "task_rows"
 # The 6-leg global score (mean % NLL reduction). mmlu legs use the cloze form (matches the frozen roster).
 LEGS = ["bbh", "mmlu_math_cloze", "mmlu_logic_cloze", "mbpp", "fw", "dolci"]
 
+# Per-subject MMLU (build_mmlu_subjects.py) logged on every run in BOTH forms — cloze (answer-text NLL,
+# format-fair) + letter (options-in-prompt, gold-letter NLL) — so math/logic transfer reads per subject
+# and a broader math macro is reconstructed offline. Engine skips gracefully if a jsonl is absent.
+MMLU_SUBJECTS = ["abstract_algebra", "college_mathematics", "elementary_mathematics",
+                 "high_school_mathematics", "high_school_statistics", "formal_logic"]
+
 
 def _resolve_cache(spec: str) -> str:
     """Accept a cache_id (looked up under cache/task_rows/) or an absolute/relative path."""
@@ -84,6 +90,9 @@ def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env, shar
         "EVAL_GSM8K": "1", "EVAL_DROP": "1",   # free-gen math + discrete-reasoning legs (nll + exact-match)
         "LOG_SAT": "1" if per_task else "0", "LOG_REWARD": "1", "REWARD_MODE": "instruct",
     })
+    for _s in MMLU_SUBJECTS:   # per-subject MMLU (cloze + letter) on by default; --env can still override below
+        env.setdefault(f"EVAL_MMLU_{_s.upper()}", "1")
+        env.setdefault(f"EVAL_MMLU_{_s.upper()}_CLOZE", "1")
     # per-task mode: measure EACH task in the cache as its own aux arm (no COLLECTION pooling). Needed for
     # the task-level feature analysis (answer/prompt length, headroom, calibration → influence). LOG_SAT on
     # (saturation = headroom); caller slims heavy eval legs via --env. RUN_TAG carries the collection so the
