@@ -90,9 +90,17 @@ def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env, shar
         "EVAL_GSM8K": "1", "EVAL_DROP": "1",   # free-gen math + discrete-reasoning legs (nll + exact-match)
         "LOG_SAT": "1" if per_task else "0", "LOG_REWARD": "1", "REWARD_MODE": "instruct",
     })
-    for _s in MMLU_SUBJECTS:   # per-subject MMLU (cloze + letter) on by default; --env can still override below
-        env.setdefault(f"EVAL_MMLU_{_s.upper()}", "1")
-        env.setdefault(f"EVAL_MMLU_{_s.upper()}_CLOZE", "1")
+    # LOG-LARGE default for COLLECTION runs: full held-out + retention + per-subject panel. All cheap
+    # answer-NLL passes (~5k extra rows ≈ +1min/cell), so log everything and filter offline; --env still
+    # overrides any leg. Per-task mode (172 arms) stays lean — caller slims via --env, heavy panel skipped.
+    if not per_task:
+        env.setdefault("EVAL_BBH_TEST", "1")          # held-out algorithmic BBH TEST (dev/test hygiene)
+        env.setdefault("EVAL_MMLU_OTHER_CLOZE", "1")  # 47-subject general-knowledge retention guardrail
+        env.setdefault("EVAL_FOLIO", "1")             # LOGIC: first-order-logic NL entailment, cloze
+        env.setdefault("EVAL_FLAN", "1")              # instruction-following capability leg
+        for _s in MMLU_SUBJECTS:                       # per-subject MMLU math/logic, BOTH cloze + letter
+            env.setdefault(f"EVAL_MMLU_{_s.upper()}", "1")
+            env.setdefault(f"EVAL_MMLU_{_s.upper()}_CLOZE", "1")
     # per-task mode: measure EACH task in the cache as its own aux arm (no COLLECTION pooling). Needed for
     # the task-level feature analysis (answer/prompt length, headroom, calibration → influence). LOG_SAT on
     # (saturation = headroom); caller slims heavy eval legs via --env. RUN_TAG carries the collection so the
