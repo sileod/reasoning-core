@@ -71,6 +71,7 @@ def run_one(name, cache, model, run_tag, main, seed, steps, mix, extra_env, shar
         # cloze + letter mmlu, mbpp — same legs as the frozen roster / HH matrix
         "EVAL_MBPP": "1", "EVAL_MMLU_MATH": "1", "EVAL_MMLU_LOGIC": "1",
         "EVAL_MMLU_MATH_CLOZE": "1", "EVAL_MMLU_LOGIC_CLOZE": "1",
+        "EVAL_GSM8K": "1", "EVAL_DROP": "1",   # free-gen math + discrete-reasoning legs (nll + exact-match)
         "LOG_SAT": "0", "LOG_REWARD": "1", "REWARD_MODE": "instruct",
     })
     if share_baseline:  # baseline (main-only) is collection-independent → share across collections/mixes

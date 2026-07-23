@@ -386,6 +386,10 @@ _EXTRA_SPEC = [   # (name, default_jsonl, cap)
     ("mmlu_high_school_statistics", "data_cache/mmlu_high_school_statistics_eval.jsonl", 400),
     ("mmlu_formal_logic",           "data_cache/mmlu_formal_logic_eval.jsonl",           400),
     ("folio",            "data_cache/folio_eval.jsonl",            203),   # LOGIC: first-order-logic NL entailment (True/False/Uncertain), cloze — gate EVAL_FOLIO=1
+    # Free-gen capability legs (build_gsm8k_drop.py): short gold answer → answer-NLL (*_nll) AND numeric-aware
+    # free-gen exact-match (*_em, under EVAL_ACC). Default ON in the collection driver. gate EVAL_GSM8K/EVAL_DROP=1.
+    ("gsm8k",            "data_cache/gsm8k_eval.jsonl",            300),   # MATH: grade-school word problems, final-number answer
+    ("drop",             "data_cache/drop_eval.jsonl",             300),   # NUM/READING: discrete reasoning over paragraphs, span/number answer
     # RETENTION GUARDRAIL (not a selection leg): MMLU ∖ {math, formal_logic, CS}, 47 subjects × 25, cloze.
     # Per-example NLL is saved (LOG_PER_EX=1) so the subject-macro-average + subject-bootstrap are computed
     # offline; the pooled *_delta here is only a coarse summary. Measures retention of broad academic domains.
@@ -402,6 +406,9 @@ def _gold_idx(choices, answer):
 for _nm, _path, _cap in _EXTRA_SPEC:
     if os.environ.get(f"EVAL_{_nm.upper()}", "0") == "1":
         _p = os.environ.get(f"{_nm.upper()}_EVAL_PATH", _path)
+        if not Path(_p).exists():                 # default-on leg on a machine lacking the jsonl → skip, don't crash
+            print(f"  ⚠️  EVAL_{_nm.upper()}=1 but {_p} missing → skipping leg (build it with the matching builder)")
+            continue
         _pairs, _meta = [], []
         for r in _read_jsonl(Path(_p)):
             if not (r.get("prompt") and r.get("answer") is not None): continue
@@ -522,6 +529,38 @@ def eval_gen_acc(examples, max_new=24):
         correct += int(norm(out) == norm(gold)); total += 1
     return (correct / total, total) if total else (None, 0)
 
+# Free-gen EXACT-MATCH legs (no MCQ choices): greedy-decode + answer extraction. Numeric-aware — if the
+# gold parses as a number (GSM8K, many DROP) compare the LAST number in the generation (tolerates a short
+# chain); else normalized-string match the first line (DROP spans). Cheap: GEN_EM_MAXNEW tokens, GEN_EM_N rows.
+_GEN_EM_LEGS   = {"gsm8k", "drop"}
+GEN_EM_MAXNEW  = int(os.environ.get("GEN_EM_MAXNEW", 64))
+GEN_EM_N       = int(os.environ.get("GEN_EM_N", 200))
+_NUM_RE        = _re.compile(r"-?\d[\d,]*(?:\.\d+)?")
+def _last_num(s):
+    m = _NUM_RE.findall(s)
+    return m[-1].replace(",", "") if m else None
+
+@torch.no_grad()
+def eval_gen_em(examples, max_new=GEN_EM_MAXNEW):
+    import re
+    norm = lambda s: re.sub(r"[^a-z0-9]", "", s.lower())
+    model.eval(); correct = total = 0
+    pad = tok.pad_token_id if tok.pad_token_id is not None else tok.eos_token_id
+    for prompt, answer in examples[:GEN_EM_N]:
+        gold = answer.replace(EOS, "").strip()
+        p_ids = tok(prompt, add_special_tokens=False, return_tensors="pt").input_ids.to(DEVICE)
+        if p_ids.shape[1] >= MAX_LEN: continue
+        gen = model.generate(p_ids, max_new_tokens=max_new, do_sample=False, pad_token_id=pad)
+        out = tok.decode(gen[0][p_ids.shape[1]:], skip_special_tokens=True)
+        gnum = _last_num(gold)
+        if gnum is not None:                                   # numeric gold → compare final numbers
+            onum = _last_num(out)
+            ok = onum is not None and abs(float(onum) - float(gnum)) < 1e-6
+        else:                                                  # span gold → normalized first-line match
+            ok = norm(out.split("\n")[0]) == norm(gold)
+        correct += int(ok); total += 1
+    return (correct / total, total) if total else (None, 0)
+
 def eval_acc_all():
     """{leg}_acc dict: BBH (gen exact-match) + each MCQ EXTRA leg with choices (cloze choice-scoring)."""
     d = {}
@@ -543,6 +582,9 @@ def eval_acc_all():
         if _m and any(_m):
             acc, _, _ = eval_mcq_acc(_ex, _m)             # (MMLU cloze-NLL already logged via eval_qa; ignore here)
             if acc is not None: d[f"{_nm}_acc"] = acc
+        elif _nm in _GEN_EM_LEGS:                          # free-gen: numeric-aware greedy exact-match (nll logged via eval_qa)
+            em, _ = eval_gen_em(_ex)
+            if em is not None: d[f"{_nm}_em"] = em
     model.train()
     return d
 
