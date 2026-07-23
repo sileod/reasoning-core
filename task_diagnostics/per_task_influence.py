@@ -57,6 +57,13 @@ _DEFAULT_RC_TASKS = list(ALL_TASKS)   # full pool for PEER sampling (survives a 
 SEED         = int(os.environ.get("SEED", 43))
 TRAIN_STEPS  = int(os.environ.get("TRAIN_STEPS", 500))
 MIX_AUX      = float(os.environ.get("MIX_AUX", 0.2))
+# TOKEN_RATIO: interleave_datasets samples per EXAMPLE, so a fixed example-prob (MIX_AUX) gives each
+# collection an aux (prompt+answer) TOKEN slice ∝ its mean example length → verbose collections eat a
+# bigger share of the fixed packed-compute budget. When set, reinterpret MIX_AUX as the TARGET aux
+# TOKEN fraction and solve for the example-prob that hits it (measured mean lengths). Equalizes the
+# aux compute-slice across collections; reduces to example-matching when L_aux==L_main. COLLECTION arm
+# only. Off by default (backward-compatible). NB: matches total tokens, NOT answer tokens (completion-only).
+TOKEN_RATIO  = os.environ.get("TOKEN_RATIO", "0") != "0"
 # OVERSAMPLE: measure MARGINAL value of upweighting a task IN a full aux mixture.
 #   baseline = main(1-MIX) + all-aux(MIX);  treatment_X = main(1-MIX) + X(MIX/2) + all-aux(MIX/2)
 #   delta = NLL(treatment_X) - NLL(baseline_mix). Total aux stays MIX (fair compute).
@@ -167,11 +174,12 @@ _mode_tag   = f"_MODE-{MODE_FILTER}" if MODE_FILTER else ""
 _level_tag  = f"_L{LEVEL_MAX}" if LEVEL_MAX else ""                       # easier-calibration runs → distinct file
 _grp_tag    = ("_GRP-" + "+".join(GROUP_TASKS)) if GROUP_TASKS else ""   # distinct file per group
 _coll_tag   = ("_COLL-" + COLLECTION) if COLLECTION else ""              # clean name (not 50 task names)
+_tr_tag     = "_TR" if TOKEN_RATIO else ""                               # token-matched cells → distinct files
 # RUN_TAG: optional free-form suffix to write to distinct files without overwriting canonical
 # results (e.g. re-measuring tasks after the rc dataset was updated on HF). Default OFF.
 _run_tag    = os.environ.get("RUN_TAG", "")
 if _run_tag and not _run_tag.startswith("_"): _run_tag = "_" + _run_tag
-_tag        = f"{_ovs_tag}{_peer_tag}{_co_tag}{_mode_tag}{_level_tag}{_grp_tag}{_coll_tag}{_run_tag}"
+_tag        = f"{_ovs_tag}{_peer_tag}{_co_tag}{_mode_tag}{_level_tag}{_grp_tag}{_coll_tag}{_tr_tag}{_run_tag}"
 OUT_FILE    = OUT_DIR / f"influence{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
 LOG_PER_EX  = os.environ.get("LOG_PER_EX", "0") != "0"
 PEREX_FILE  = OUT_DIR / f"perex{_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
@@ -193,11 +201,11 @@ REWARD_MAXTOK= int(os.environ.get("REWARD_MAXTOK", 256))
 # with trivial verification Yes/No, so restrict the reward to a single clean mode. Default "instruct"
 # (the real free-gen task). "" / "all" = no filter.
 REWARD_MODE  = os.environ.get("REWARD_MODE", "instruct")
-SAT_FILE    = OUT_DIR / f"sat{_ovs_tag}{_peer_tag}{_mode_tag}{_run_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
+SAT_FILE    = OUT_DIR / f"sat{_ovs_tag}{_peer_tag}{_mode_tag}{_tr_tag}{_run_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
 # CKPT_EVAL: budget-convergence study — eval BBH/Dolci/FW every CKPT_EVAL steps DURING training
 # (baseline + each task), so influence@T = task_nll@T - baseline_nll@T from ONE run per task. 0=off.
 CKPT_EVAL   = int(os.environ.get("CKPT_EVAL", "0"))
-CKPT_FILE   = OUT_DIR / f"ckpt{_run_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
+CKPT_FILE   = OUT_DIR / f"ckpt{_tr_tag}{_run_tag}_S{SEED}_T{TRAIN_STEPS}_M{int(MIX_AUX*100)}_{MAIN_DATA}_{_init_tag}.json"
 DEVICE      = "cuda" if torch.cuda.is_available() else "cpu"
 DTYPE       = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32
 
@@ -649,7 +657,7 @@ def save_sat(task, rec):
     data = json.loads(SAT_FILE.read_text()) if SAT_FILE.exists() else \
         {"aux": AUX_DATASET, "main": MAIN_DATA, "init": _init_tag, "seed": SEED,
          "train_steps": TRAIN_STEPS, "mix_aux": MIX_AUX, "sat_every": SAT_EVERY,
-         "oversample": OVERSAMPLE, "tasks": {}}
+         "oversample": OVERSAMPLE, "token_ratio": TOKEN_RATIO, "tr_stats": TR_STATS, "tasks": {}}
     data["tasks"][task] = rec
     SAT_FILE.write_text(json.dumps(data, indent=2))
 
@@ -784,6 +792,42 @@ def group_aux_gen():
     grp = list(GROUP_TASKS)
     yield from _cycle_rows([r for t in grp for r in _train_aux.get(t, [])])
 
+# ── TOKEN_RATIO: derive the aux example-prob that matches (prompt+answer) token dose ──────
+# Exact under packing: a packed stream is just the concatenation of the sampled example stream, so
+#   aux_token_frac = p·L_aux / (p·L_aux + (1-p)·L_main).  Set aux_token_frac = MIX_AUX and solve:
+#   p = MIX_AUX / [ (L_aux/L_main)·(1-MIX_AUX) + MIX_AUX ].   p→MIX_AUX when L_aux==L_main.
+def _mean_qa_tok_len(rows, cap=4000):
+    if len(rows) > cap:
+        import random as _r; rows = _r.Random(SEED).sample(rows, cap)
+    pl = tok([f"{r.get('prompt','')}\n" for r in rows], add_special_tokens=True)["input_ids"]
+    al = tok([f"{r.get('answer','')}"   for r in rows], add_special_tokens=False)["input_ids"]
+    return sum(len(p) + len(a) + 1 for p, a in zip(pl, al)) / max(1, len(rows))  # +1 ≈ EOS
+
+def _mean_main_tok_len(n=1500):
+    tot = c = 0
+    for ex in main_gen():
+        ids = (tok(ex["prompt"], add_special_tokens=True)["input_ids"]
+               + tok(ex["completion"], add_special_tokens=False)["input_ids"]) if COMPLETION_ONLY \
+              else tok(ex["text"], add_special_tokens=True)["input_ids"]
+        tot += len(ids); c += 1
+        if c >= n: break
+    return tot / max(1, c)
+
+if TOKEN_RATIO:
+    _L_aux  = _mean_qa_tok_len([r for rs in _train_aux.values() for r in rs])
+    _L_main = _mean_main_tok_len()
+    _ratio  = _L_aux / max(1e-9, _L_main)
+    AUX_P   = MIX_AUX / (_ratio * (1.0 - MIX_AUX) + MIX_AUX)
+    TR_STATS = {"token_ratio": True, "target_aux_token_frac": MIX_AUX,
+                "L_aux": round(_L_aux, 2), "L_main": round(_L_main, 2),
+                "len_ratio": round(_ratio, 4), "aux_example_prob": round(AUX_P, 5)}
+    print(f"🎯 TOKEN_RATIO on: L_aux={_L_aux:.1f} tok  L_main={_L_main:.1f} tok  ratio={_ratio:.3f} "
+          f"→ aux example-prob {AUX_P:.4f}  (target aux TOKEN frac {MIX_AUX:.2f}; "
+          f"example-matched prob would be {MIX_AUX:.2f})", flush=True)
+else:
+    AUX_P, TR_STATS = MIX_AUX, {"token_ratio": False, "aux_example_prob": MIX_AUX}
+MAIN_P = 1.0 - AUX_P
+
 def baseline_ds():
     if PEER_MIX:     # realistic K-peer background: main + peers at MIX (peer set fixed)
         return interleave_datasets(
@@ -803,10 +847,10 @@ def baseline_ds():
 
 def mixed_ds(task_name):
     if task_name == "__COLLECTION__":   # whole collection pooled as ONE aux arm vs main-only baseline
-        return interleave_datasets(
+        return interleave_datasets(     # probs = [MAIN_P, AUX_P]; token-matched iff TOKEN_RATIO, else example-matched
             [IterableDataset.from_generator(main_gen),
              IterableDataset.from_generator(all_aux_gen)],
-            probabilities=[1.0 - MIX_AUX, MIX_AUX],
+            probabilities=[MAIN_P, AUX_P],
             seed=SEED, stopping_strategy="first_exhausted",
         )
     if task_name == "__ALLMIX__":   # full-mixture answer-format ablation: main + blended all-aux
@@ -915,6 +959,7 @@ else:
                "lr": LR, "batch": BATCH, "model": MODEL_NAME,
                "max_len": MAX_LEN, "packing": os.environ.get("PACKING", "1") != "0",
                "drop_overlong": os.environ.get("DROP_OVERLONG", "1") != "0",
+               "token_ratio": TOKEN_RATIO, "tr_stats": TR_STATS,
                "oversample": OVERSAMPLE, "peer_mix": PEER_MIX,
                "peer_tasks": PEER_TASKS, "n_peers": N_PEERS if PEER_MIX else 0,
                "tasks": {}, "baseline": None, "pretrained_only": None}
