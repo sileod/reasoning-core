@@ -25,7 +25,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .. import _discover_tasks, _task_to_module_map, prepr_task_name
+# Discovery internals live in the registry and are deliberately not bound at the package
+# root, so that reaching for them has to be spelled out. Landing is exactly the caller
+# that needs them: it has to know what name a copied directory will actually claim.
+from ..registry import _discover_tasks, _task_to_module_map, prepr_task_name
 from .plan import load_plan
 from .triage import _mark, _recorded_verdict, draft, pick, proposal_of, successes
 
@@ -51,12 +54,13 @@ def outside_generated(target):
 CHECK = """
 import sys, time
 import reasoning_core as rc
+from reasoning_core.registry import _task_to_module_map
 # Seconds one generate_example call may take before the task counts as unusable.
 DRAW_BUDGET = 20
 name, module = sys.argv[1], sys.argv[2]
 if name not in rc.list_tasks(include_generated=True):
     print("not discovered"); raise SystemExit(1)
-found = rc._task_to_module_map[name][0]
+found = _task_to_module_map[name][0]
 if found != module and not found.startswith(module + "."):
     print(f"the name is already taken by {found}"); raise SystemExit(1)
 task = rc.get_task(name)
