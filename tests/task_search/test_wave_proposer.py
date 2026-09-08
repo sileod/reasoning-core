@@ -54,12 +54,12 @@ def test_catalog_includes_gallery_plans_and_tasks():
 
     assert sources["gallery"] >= 60
     assert sources["plan"] >= 90
-    # Not a floor on proposals. The catalog keys by name and prefers the best account of
-    # an idea, so a proposal that got built is counted as the task it became: this number
-    # falls as the pipeline succeeds, and was 80 back when most of the catalog was still
-    # unbuilt. What has to hold is that no proposed idea drops out of the catalog, which
-    # is what the catalog is for -- a wave is remembered even if nobody implemented it.
-    assert sources["proposal"] >= 20
+    # No floor on proposals, in either direction. The catalog keys by name and prefers the
+    # best account of an idea, so a proposal that got built is counted as the task it
+    # became: the number falls as the pipeline succeeds -- 80 when most of the catalog was
+    # unbuilt, 8 once wave12 landed 27 of them. What has to hold is that no proposed idea
+    # drops out of the catalog, which is what the catalog is for: a wave is remembered even
+    # when nobody implemented it. That is the next line, and it is the whole claim.
     assert {entry.name for entry in _proposal_entries(ROOT)} <= {entry.name for entry in entries}
     assert any(entry.name == "graph_pathfinding" for entry in entries)
 

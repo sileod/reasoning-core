@@ -26,6 +26,7 @@ in the trial directory, so a re-run costs nothing for the trials already judged.
 """
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -55,6 +56,27 @@ REVIEW_PAUSE_SECONDS = 4
 DRAFT_SUFFIX = re.compile(r"v\d+$")
 
 
+def _read_cache(path):
+    """A cached answer, or None when there is not a readable one.
+
+    A cache here is a convenience, not a record. Two passes can overlap -- a wave's own
+    chain and a follow-up watchdog -- and an unreadable file means the question is still
+    open, which is what a missing file means too. Wave12 lost its whole review pass to a
+    JSONDecodeError raised on one truncated cache while 68 trials waited behind it.
+    """
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+
+
+def _write_cache(path, value):
+    """Replace in one step, so a concurrent reader never sees the truncation."""
+    staged = path.with_name(path.name + f".{os.getpid()}.tmp")
+    staged.write_text(json.dumps(value, indent=1))
+    os.replace(staged, path)
+
+
 def proposal_of(trial_id):
     """P001v2 -> P001. Drafts of one idea share a proposal."""
     return DRAFT_SUFFIX.sub("", trial_id)
@@ -78,17 +100,17 @@ def successes(wave_root):
 
 def _recorded_verdict(trial_dir, trial):
     """The verdict this trial has, from the run or from an earlier triage pass."""
-    cached = trial_dir / CACHE_NAME
-    if cached.is_file():
-        return json.loads(cached.read_text()), "triage"
+    found = _read_cache(trial_dir / CACHE_NAME)
+    if found is not None:
+        return found, "triage"
     return dict(trial.get("sample_sanity") or {"verdict": None, "why": ""}), "run"
 
 
 def _recorded_fidelity(trial_dir, trial):
     """The fidelity verdict, preferring a triage pass over what the run recorded."""
-    cached = trial_dir / FIDELITY_CACHE_NAME
-    if cached.is_file():
-        return json.loads(cached.read_text())
+    found = _read_cache(trial_dir / FIDELITY_CACHE_NAME)
+    if found is not None:
+        return found
     return dict(trial.get("sample_fidelity") or {})
 
 
@@ -114,11 +136,11 @@ def review(trial_dir, trial, plan_trial):
                source=_review_source(worktree, plan_trial.owned_path))
     if verdict.get("verdict") is None:
         verdict = _sample_sanity(samples[0], **ask)
-        (trial_dir / CACHE_NAME).write_text(json.dumps(verdict, indent=1))
+        _write_cache(trial_dir / CACHE_NAME, verdict)
     if _recorded_fidelity(trial_dir, trial).get("verdict") is None:
         time.sleep(REVIEW_PAUSE_SECONDS)
         fidelity = _sample_fidelity(samples[0], **ask)
-        (trial_dir / FIDELITY_CACHE_NAME).write_text(json.dumps(fidelity, indent=1))
+        _write_cache(trial_dir / FIDELITY_CACHE_NAME, fidelity)
     return verdict
 
 
@@ -129,8 +151,9 @@ def audit(trial_dir, trial, plan_trial):
     near the ceiling passes or fails mostly by luck. Nothing here is on a clock.
     """
     cached = trial_dir / AUDIT_NAME
-    if cached.is_file():
-        return json.loads(cached.read_text())
+    found = _read_cache(cached)
+    if found is not None:
+        return found
     finished = subprocess.run(
         [sys.executable, "-m", "reasoning_core.task_search.prior_audit",
          "--path", plan_trial.owned_path, "--n", str(AUDIT_SAMPLES),
@@ -144,7 +167,7 @@ def audit(trial_dir, trial, plan_trial):
     )
     tail = (finished.stdout or finished.stderr).strip().splitlines()
     result = {"ok": finished.returncode == 0, "why": tail[-1] if tail else "no output"}
-    cached.write_text(json.dumps(result, indent=1))
+    _write_cache(cached, result)
     return result
 
 
