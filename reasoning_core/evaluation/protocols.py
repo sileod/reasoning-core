@@ -73,7 +73,14 @@ SCALES = {
              "revision": "d7cbab742d80589e714b1a2d7f838dcd21cbe143",
              # 2e-5, the rate its 54 shipped std cells were measured at. Not a preference: see above.
              "std_lr": 2e-5, "batch_size": 2, "gradient_accumulation_steps": 2,
-             "warm": None},
+             # Tuned 2026-09-09 over {5e-6, 1e-5, 2e-5} x 300 steps, seed 43. 1e-5 and 2e-5 end on
+             # top of each other (loss 1.192 vs 1.194, min 0.420 vs 0.428) and BOTH hump at step 88
+             # -- that hump is the seed-43 data order, not instability. The separator is the gradient
+             # spike: 2e-5 hits grad_norm 66.5 at step 2, the early-step signature of the divergent
+             # 1e-4; 1e-5 peaks at 37 late. So 1e-5, which is also exactly learning_rate("rg75","1B").
+             # This dir carries optimizer.pt, so carry is satisfiable here -- seed 43 only; the
+             # seed 44/45 1B warms predate carry and have no moments.
+             "warm": "checkpoints/warm_1e323f8a24e1"},
 }
 
 # Both scales by default: a single-scale ranking is a claim about one model, and the ladder work

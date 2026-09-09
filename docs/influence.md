@@ -92,7 +92,12 @@ derived, not swept: linear decay from peak `p` over `T` steps integrates to `p*T
 `p/2` matches the same update budget.
 
 `rg75` and `carry` need a warm checkpoint at the scale to carry moments from. Where none exists the
-runner refuses rather than training from cold.
+runner refuses rather than training from cold. Both scales have one at **seed 43 only**:
+`warm_33432f34c7cf_adam` (360M) and `warm_1e323f8a24e1` (1B). The 1B rate was tuned, not assumed --
+1e-5 and 2e-5 reach the same loss (1.192 vs 1.194) but 2e-5 spikes grad_norm to 66.5 at step 2, the
+same early signature as the divergent 1e-4, so 1e-5 wins on stability at equal quality. The 1B warms
+at seeds 44 and 45 predate carry and hold no `optimizer.pt`, so a multi-seed rg75 run at 1B needs
+those re-warmed first.
 
 **Bands** select which levels the auxiliary rows are drawn from. `0-1-2` and `0-2-4` both draw three
 levels, so they cost the same and see the same number of distinct difficulties, and differ only in
