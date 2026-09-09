@@ -46,6 +46,37 @@ train at. Published results use 1024. Pass a
 small `FreeGenRewardSpec` evaluator through `evaluate_endpoints` to measure the same
 task rows before and after training.
 
+## Which protocol
+
+`collection_influence` fills any knob you do not pass from a named protocol (`--protocol`).
+
+| | rg75 *(default)* | std |
+|---|---|---|
+| init | warm checkpoint, Adam moments carried | cold pretrained base |
+| tail | 75 steps, lr 5e-5, constant behind a 4-step ramp | 300 steps, lr 1e-4, linear |
+| aux dose | 0.50 by tokens | 0.20 by tokens |
+| background | `fwdolcirg` | `fwdolci` |
+| battery | `copyfree_battery_v8_tiny` | `copyfree_battery_v8` |
+| cost per arm | **15.3 min** | **37.1 min** |
+
+Wall clock is measured, same node, back to back (job 4092169): 916/918 s per rg75 arm against
+2225/2231 s per std arm, a 2.43x difference. Nearly all of it is eval -- the full battery is about
+69% of an arm, the tiny one about 24%.
+
+**Use rg75 unless you are comparing against reasoning-gym.** Its background already contains
+reasoning-gym, so an rg arm on rg75 is scored against a background containing itself and "rg helps"
+is true by construction. That comparison needs `--protocol std`. The runner prints a warning when
+it sees an rg collection or an rgym task name on an rg background; it is a warning and not a
+refusal, because the same setup is legitimate when rg is the *background* under study rather than
+the treatment.
+
+rg75 needs a warm checkpoint: carrying Adam moments requires `optimizer.pt` beside the weights, and
+the run fails with that message if it is absent. Jobs that train from a cold base pin `--protocol
+std` explicitly so a future change to the default cannot reach them.
+
+Anything you pass on the command line wins, so a job script that already spells out every flag is
+unaffected by the default. The banner names what was filled.
+
 ## The protocol to match
 
 To produce a number comparable to the published results, pin all of it:
