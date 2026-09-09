@@ -228,3 +228,40 @@ def test_a_provider_backoff_grows_past_one_minute_and_is_jittered():
 
     assert all(_retry_delay(30, 9) <= _RETRY_CEILING_SECONDS * 1.5 for _ in range(20))
     assert sum(_retry_delay(60, 1) for _ in range(400)) / 400 == pytest.approx(60, rel=0.2)
+
+
+def test_mini_is_driven_by_text_because_the_workers_have_no_tool_calling(tmp_path):
+    """mini's default config talks to the model in tool calls, which the workers cannot make.
+
+    ALBERT's deepseek-v4-flash answers a `tools` request with two characters of content and
+    a null tool_calls, at any output budget, so mini's tool-calling loop never reaches step
+    one: eight trials, three API calls each, no assistant content, RepeatedFormatError,
+    `no_implementation` across the board. opencode is unaffected -- it does not drive the
+    worker through native tool calls -- which is why it scored 4/8 on the same eight
+    trials, on the same model, on the same commit.
+
+    This pins the config choice, not a working mini: the text config is necessary and not
+    yet sufficient, and mini still fails to parse an action out of a prompt the model
+    answers correctly when replayed by hand.
+    """
+    def command_for(harness):
+        return _prepare_harness(
+            "hlink", harness,
+            worktree=tmp_path / "worktree",
+            prompt="do the thing",
+            model="deepseek-v4-flash",
+            provider="albert",
+            agent="task-search-worker",
+            variant=None,
+            config_path=tmp_path / "config.yaml",
+            trajectory_path=tmp_path / "trajectory.json",
+            timeout_seconds=1800,
+            agy_log_path=tmp_path / "agy.log",
+        )
+
+    mini = command_for("mini")
+    assert "mini_textbased.yaml" in mini
+    assert "mini.yaml" not in mini
+
+    # The other harnesses do not get dragged along by the change.
+    assert "mini_textbased.yaml" not in command_for("opencode")

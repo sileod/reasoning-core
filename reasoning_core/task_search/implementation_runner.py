@@ -270,7 +270,19 @@ def _prepare_harness(
     elif harness == "mini":
         native = [
             "-c",
-            "mini.yaml",
+            # Text-based rather than mini's tool-calling default, because the default
+            # cannot work here at all: ALBERT's deepseek-v4-flash answers a `tools` request
+            # with two characters of content and a null tool_calls, at any output budget, so
+            # the tool-calling loop never reaches step one -- eight trials, three API calls
+            # each, no assistant content, RepeatedFormatError, `no_implementation` for all
+            # eight. This config asks for a fenced mswea_bash_command block instead, which
+            # the model demonstrably can produce: replaying mini's own 34k prompt straight
+            # at the endpoint returns 7.9k characters containing a well-formed block.
+            #
+            # Necessary, not sufficient. mini still reports "found 0 actions" on the same
+            # prompt it just answered correctly by hand, so something in mini or litellm's
+            # request shaping is still wrong. Keep the config that has a viable path.
+            "mini_textbased.yaml",
             "-c",
             str(config_path),
             "--exit-immediately",
