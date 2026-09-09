@@ -77,6 +77,29 @@ std` explicitly so a future change to the default cannot reach them.
 Anything you pass on the command line wins, so a job script that already spells out every flag is
 unaffected by the default. The banner names what was filled.
 
+### Scale and bands
+
+The default spans **360M and 1B**. A protocol is not scale-free: the learning rate does not travel.
+
+| scale | model | std lr | 75-step lr | batch |
+|---|---|---|---|---|
+| 360M | SmolLM2-360M | 1e-4 | 5e-5 | 4 x 2 |
+| 1B | OLMo-1B-0724-hf | 2e-5 | 1e-5 | 2 x 2 |
+
+1e-4 at 1B goes loss 0.68 -> 12.02 by step 2 and **exits 0 with a damaged checkpoint**, so the
+failure is silent. Ask the scale for the rate; never carry one across scales. The 75-step rate is
+derived, not swept: linear decay from peak `p` over `T` steps integrates to `p*T/2`, so a constant
+`p/2` matches the same update budget.
+
+`rg75` and `carry` need a warm checkpoint at the scale to carry moments from. Where none exists the
+runner refuses rather than training from cold.
+
+**Bands** select which levels the auxiliary rows are drawn from. `0-1-2` and `0-2-4` both draw three
+levels, so they cost the same and see the same number of distinct difficulties, and differ only in
+how far up the ladder they reach -- which separates "harder helps" from "more variety helps". A band
+is a row cache passed as its own collection, so each task x band gets its own arm and can be
+calibrated separately; the arm engine needs no changes.
+
 ## The protocol to match
 
 To produce a number comparable to the published results, pin all of it:
