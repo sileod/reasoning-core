@@ -53,3 +53,70 @@ BATTERY_IDS = {"rg75": "copyfree_battery_v8_tiny/battery@v1:c94e9ad44be0",
                "std":  "copyfree_battery_v8/battery@v1:1a482a2aeb5d"}
 
 DEFAULT = "rg75"
+
+
+# ------------------------------------------------------------------ scales --
+# A protocol is not scale-free. The knob that does NOT travel is the learning rate: 1e-4 is right
+# at 360M and DIVERGES at 1B -- measured, loss 0.68 -> 12.02 by step 2, and the run exits 0 leaving
+# a damaged checkpoint, so nothing about the failure is loud. Every scale therefore names its own
+# `std_lr`, and a protocol asks the scale for its rate rather than carrying one.
+#
+# `warm` is the checkpoint the 75-step protocols carry Adam moments out of. None means those
+# protocols are simply unavailable at that scale until a warm-up has been run there -- not a
+# preference, an absence.
+SCALES = {
+    "360M": {"model": "HuggingFaceTB/SmolLM2-360M",
+             "revision": "f8027fd0eaeea54caa13c31d31b9fdc459c38b49",
+             "std_lr": 1e-4, "batch_size": 4, "gradient_accumulation_steps": 2,
+             "warm": "checkpoints/warm_33432f34c7cf_adam"},
+    "1B":   {"model": "allenai/OLMo-1B-0724-hf",
+             "revision": "d7cbab742d80589e714b1a2d7f838dcd21cbe143",
+             # 2e-5, the rate its 54 shipped std cells were measured at. Not a preference: see above.
+             "std_lr": 2e-5, "batch_size": 2, "gradient_accumulation_steps": 2,
+             "warm": None},
+}
+
+# Both scales by default: a single-scale ranking is a claim about one model, and the ladder work
+# showed rankings that are stable at 360M can fail to settle at 1B.
+DEFAULT_SCALES = ("360M", "1B")
+
+
+def learning_rate(protocol, scale):
+    """The rate for this protocol AT THIS SCALE.
+
+    The 75-step protocols run a constant rate behind a short ramp. Linear decay from peak p to 0
+    over T steps integrates to p*T/2, so a constant p/2 matches the same total update budget -- the
+    same derivation that produced 5e-5 against 360M's 1e-4 linear, applied per scale rather than
+    frozen at one. Derived, not swept.
+    """
+    std_lr = SCALES[scale]["std_lr"]
+    return std_lr if protocol == "std" else std_lr / 2
+
+
+def available(protocol, scale):
+    """(ok, reason). A protocol that carries moments needs a warm checkpoint at that scale."""
+    if PROTOCOLS[protocol]["carry_optimizer_state"] and not SCALES[scale]["warm"]:
+        return False, (f"{protocol} carries Adam moments and {scale} has no warm checkpoint; "
+                       f"run the warm-up at {scale} first, or use --protocol std")
+    return True, ""
+
+
+# ------------------------------------------------------------------- bands --
+# Difficulty bands: WHICH levels the auxiliary rows are drawn from. Transfer is not monotone in
+# difficulty -- it peaks around mid saturation -- so one number pooled over the whole ladder averages
+# across the shape it is trying to measure.
+#
+# The bands below are chosen so that a comparison isolates SPAN from COUNT. `0-1-2` and `0-2-4` both
+# draw three levels, so they cost the same and see the same number of distinct difficulties; they
+# differ only in how far up the ladder they reach. A band that changed both at once would confound
+# "harder helps" with "more variety helps".
+#
+# A band needs nothing new in the arm engine: it is a row cache built at those levels, passed as its
+# own collection. Each task x band therefore gets its own arm, its own cell column, and can be
+# calibrated separately.
+BANDS = {
+    "0-4":   [0, 1, 2, 3, 4],   # the whole ladder -- the current default
+    "0-1-2": [0, 1, 2],         # three levels, bottom of the ladder
+    "0-2-4": [0, 2, 4],         # three levels, full span at stride 2
+}
+DEFAULT_BANDS = ("0-4",)
