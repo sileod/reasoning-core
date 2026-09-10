@@ -104,6 +104,41 @@ python -m reasoning_core.task_search check-proposals \
 
 See `proposals/FORMAT.md` for the proposal schema and novelty rules.
 
+## Implement the backlog
+
+What is owed is derived, not tracked: the archive says what was proposed, the package says
+what exists, and the plans say what was already attempted. Nothing else is written down, so
+nothing else can go stale.
+
+```bash
+python -m reasoning_core.task_search backlog                 # proposals with no task
+python -m reasoning_core.task_search backlog --max-attempts 3  # ...still worth a try
+```
+
+`plan --skip-implemented` builds a plan over only what a wave still owes, so an archive can
+be re-planned as tasks land instead of rebuilding what it already got. `--max-attempts N`
+also drops the ideas N plan trials have already failed at.
+
+`scripts/run_implementors.py` is that loop as a service: one wave at a time, `plan` then
+`run` then `land --apply`, sleeping when nothing is owed and picking up archives as the
+proposer writes them. It keeps no state, so it can be killed at any point.
+
+```bash
+scripts/run_implementors.py --once --dry-run     # what it would do
+scripts/run_implementors.py --max-attempts 3     # then leave it running
+scripts/run_implementors.py --variants 2 --design-choices
+```
+
+`--design-choices` runs the design proposer first and gives each variant its own named
+approach, as below. Provider and credential come from `TASK_SEARCH_PROVIDER` and
+`TASK_SEARCH_KEY_ENV`, so the service is not tied to one provider.
+
+Attempts are counted in trials rather than plans, because a plan with three variants spends
+three implementor runs. The count is what stops an unsupervised service from spending a
+night on the same failures: the five proposals with no task today have been attempted four
+to seven times each, so they are the ideas that resist implementation, not the ones nobody
+got to.
+
 ## Compare implementation choices
 
 Generate two distinct approaches per proposal, then run one worker per approach:

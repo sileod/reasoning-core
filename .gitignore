@@ -133,3 +133,7 @@ tests/test_difficulty_tune.py
 # private reports/ tree and shells into the private task_diagnostics runner. It cannot work for
 # anyone outside this setup, so it is workspace state, not part of the public package.
 scripts/g5k_influence_gaps.py
+# Driver logs: the proposer and the implementor service write a file per wave here for as
+# long as they are left running. Workspace state, and the reason `git status` stays quiet
+# while a service is working.
+/runs/

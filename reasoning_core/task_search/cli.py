@@ -168,9 +168,31 @@ def _parser():
              " variants across them, instead of splitting on seed alone; must equal"
              " --variants. 0 leaves the plan exactly as it has always been built",
     )
+    build.add_argument(
+        "--skip-implemented",
+        action="store_true",
+        help="leave out the proposals a task already implements, so a wave can be"
+             " re-planned for what it still owes instead of rebuilding what it got",
+    )
+    build.add_argument(
+        "--max-attempts",
+        type=int,
+        default=0,
+        help="with --skip-implemented, also leave out ideas already tried this many"
+             " times across all plans; 0 keeps them however often they have failed",
+    )
     build.add_argument("--design-model", default=DESIGN_MODEL)
     build.add_argument("--design-endpoint", default=DESIGN_ENDPOINT)
     build.add_argument("--design-api-key-env", default=DESIGN_API_KEY_ENV)
+    owed = subparsers.add_parser(
+        "backlog", help="proposals the package has no task for yet"
+    )
+    owed.add_argument(
+        "--max-attempts",
+        type=int,
+        default=0,
+        help="hide ideas already tried this many times across all plans; 0 shows all",
+    )
     catalog = subparsers.add_parser(
         "proposal-catalog", help="summarize the durable novelty catalog"
     )
@@ -321,6 +343,22 @@ def main(argv=None):
 
         repo_root = _repo_root(Path.cwd())
         wave = yaml.safe_load(Path(args.proposal_wave).read_text())
+        if args.skip_implemented:
+            from .backlog import unimplemented
+
+            owed = unimplemented(
+                wave, repo_root,
+                max_attempts=args.max_attempts or None)
+            dropped = len(wave.get("proposals") or []) - len(owed)
+            if not owed:
+                raise SystemExit(
+                    f"{args.proposal_wave}: every proposal is implemented or out of"
+                    f" attempts; nothing to plan")
+            # A copy, because the archive is the record of what was proposed and must not
+            # start describing what is left of it.
+            wave = {**wave, "proposals": [proposal for proposal, _, _ in owed]}
+            print(f"{dropped} of {dropped + len(owed)} proposals already implemented"
+                  f" or out of attempts")
         # Resolve a moving ref now: a plan that says HEAD means a different experiment
         # every time it is read, and base_ref is the commit every worktree is cut from.
         base_ref = subprocess.check_output(
@@ -379,6 +417,16 @@ def main(argv=None):
                 print(f"PROBLEM: {problem}")
             raise SystemExit(1)
         print(f"{args.proposal_wave}: OK")
+        return
+    if args.command == "backlog":
+        from .backlog import pending
+
+        repo_root = _repo_root(Path.cwd())
+        rows = pending(repo_root, max_attempts=args.max_attempts or None)
+        for row in rows:
+            print(f"{row.wave}\t{row.name}\t{row.attempts} attempts")
+        print(f"{len(rows)} unimplemented "
+              f"{'proposal' if len(rows) == 1 else 'proposals'}")
         return
     if args.command == "proposal-catalog":
         from .wave_proposer import build_catalog, catalog_record
