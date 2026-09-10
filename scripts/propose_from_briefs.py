@@ -24,12 +24,27 @@ ARCHIVE = ROOT / "reasoning_core" / "task_search" / "proposals" / "archive"
 # Consecutive failures that mean the provider is gone rather than one wave being unlucky.
 # Without this the job spends the night failing forty-three times in a row.
 GIVE_UP_AFTER = 3
+# `propose` writes the archive and *then* exits 2 when a wave accepted fewer than --count.
+# That is a wave that finished with a small yield, not a wave that failed: the archive
+# exists and the resume rule skips this brief from now on, so counting it as a failure
+# both misreports it and, three in a row, stops the job. Against a catalog of three
+# hundred tasks a short wave is the normal outcome -- the first one accepted 1 of 36.
+INCOMPLETE = 2
 
 
 def briefs():
     document = yaml.safe_load(BRIEFS.read_text())
     return [(brief["slug"], " ".join(brief["text"].split()))
             for group in document["groups"] for brief in group["briefs"]]
+
+
+def accepted(name):
+    """How many proposals the wave kept, for a log that shows novelty attrition."""
+    try:
+        document = yaml.safe_load((ARCHIVE / f"{name}.yaml").read_text()) or {}
+    except OSError:
+        return "?"
+    return len(document.get("proposals") or [])
 
 
 def main():
@@ -63,9 +78,9 @@ def main():
             completed = subprocess.run(command, cwd=ROOT, stdout=log,
                                        stderr=subprocess.STDOUT)
         minutes = (time.time() - started) / 60
-        if completed.returncode == 0:
+        if completed.returncode in (0, INCOMPLETE):
             failures = 0
-            print(f"    ok in {minutes:.0f}m", flush=True)
+            print(f"    ok in {minutes:.0f}m, {accepted(name)} accepted", flush=True)
         else:
             failures += 1
             print(f"    FAILED (exit {completed.returncode}) after {minutes:.0f}m"
