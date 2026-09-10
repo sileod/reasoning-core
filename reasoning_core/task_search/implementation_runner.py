@@ -227,6 +227,10 @@ def _mini_config(
             "timeout": min(300, timeout_seconds),
         },
         "model": {
+            # mini_textbased.yaml only swaps the prompts; the model class is chosen
+            # separately and defaults to the tool-calling one, so asking for a fenced block
+            # and then sending a `tools` request is what produced "found 0 actions".
+            "model_class": "litellm_textbased",
             "cost_tracking": "ignore_errors",
             "model_kwargs": model_kwargs,
         },
@@ -276,12 +280,10 @@ def _prepare_harness(
             # the tool-calling loop never reaches step one -- eight trials, three API calls
             # each, no assistant content, RepeatedFormatError, `no_implementation` for all
             # eight. This config asks for a fenced mswea_bash_command block instead, which
-            # the model demonstrably can produce: replaying mini's own 34k prompt straight
-            # at the endpoint returns 7.9k characters containing a well-formed block.
+            # the model produces readily.
             #
-            # Necessary, not sufficient. mini still reports "found 0 actions" on the same
-            # prompt it just answered correctly by hand, so something in mini or litellm's
-            # request shaping is still wrong. Keep the config that has a viable path.
+            # Half the switch. The config only carries prompts; the parser lives in the
+            # model class, which `_mini_config` has to set to match.
             "mini_textbased.yaml",
             "-c",
             str(config_path),

@@ -420,17 +420,28 @@ def validate_proposal_wave(data):
     return problems
 
 
+def _loads(text):
+    """Parse JSON, tolerating a literal newline or tab inside a string.
+
+    A model writing a multi-line `rationale` emits the break as a raw control character,
+    which the strict parser rejects and which costs a whole wave when it happens in one
+    field of one candidate. `strict=False` reads it as the character it is; nothing else
+    about the grammar is relaxed.
+    """
+    return json.loads(text, strict=False)
+
+
 def _extract_json(text):
     text = str(text or "").strip()
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.I)
     try:
-        return json.loads(text)
+        return _loads(text)
     except json.JSONDecodeError:
         start, end = text.find("{"), text.rfind("}")
         if start < 0 or end <= start:
             raise ValueError("model response contains no JSON object")
-        return json.loads(text[start:end + 1])
+        return _loads(text[start:end + 1])
 
 
 def provider_of(endpoint):

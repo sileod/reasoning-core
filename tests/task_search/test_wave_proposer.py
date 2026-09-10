@@ -767,3 +767,9 @@ def test_a_generated_wave_records_where_it_came_from_and_what_it_was_asked_for()
     open_wave = wave_proposer.propose_wave(
         ".", name="open_probe", count=1, rounds=1, client=client, critic_client=client)
     assert open_wave["provenance"]["brief"] == ""
+
+
+def test_extract_json_survives_a_raw_newline_inside_a_string():
+    """A model that breaks a line inside a field must not cost the wave its whole round."""
+    got = _extract_json('{"why": "first\nsecond"}')
+    assert got == {"why": "first\nsecond"}

@@ -240,9 +240,10 @@ def test_mini_is_driven_by_text_because_the_workers_have_no_tool_calling(tmp_pat
     worker through native tool calls -- which is why it scored 4/8 on the same eight
     trials, on the same model, on the same commit.
 
-    This pins the config choice, not a working mini: the text config is necessary and not
-    yet sufficient, and mini still fails to parse an action out of a prompt the model
-    answers correctly when replayed by hand.
+    The config alone was not enough: it carries prompts, while the parser is chosen by the
+    model class, which defaults to the tool-calling one. Asking for a fenced block and then
+    sending a `tools` request is what produced "found 0 actions" on a prompt the model
+    answers correctly by hand. Both halves have to move together, so both are pinned here.
     """
     def command_for(harness):
         return _prepare_harness(
@@ -262,6 +263,9 @@ def test_mini_is_driven_by_text_because_the_workers_have_no_tool_calling(tmp_pat
     mini = command_for("mini")
     assert "mini_textbased.yaml" in mini
     assert "mini.yaml" not in mini
+    assert _mini_config(
+        tmp_path / "worktree", max_steps=40, timeout_seconds=1800,
+    )["model"]["model_class"] == "litellm_textbased"
 
     # The other harnesses do not get dragged along by the change.
     assert "mini_textbased.yaml" not in command_for("opencode")
