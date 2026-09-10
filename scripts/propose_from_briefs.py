@@ -74,16 +74,40 @@ def main():
         help="append briefs.yaml's shared instruction, which tells the proposer the"
              " catalog already has the classic algorithms; --no-shared sends the briefs"
              " as written, for a wave meant to fill a known gap with a classic")
+    parser.add_argument(
+        "--passes", type=int, default=3,
+        help="sweep the unarchived briefs this many times; a wave that fails writes no"
+             " archive, so a later pass retries it")
     parser.add_argument("--dry-run", action="store_true")
     arguments = parser.parse_args()
     arguments.log_dir.mkdir(parents=True, exist_ok=True)
 
     every = briefs(arguments.shared)
-    pending = [(slug, text) for slug, text in every
-               if not (ARCHIVE / f"{arguments.prefix}_{slug}.yaml").exists()]
-    done = len(every) - len(pending)
-    print(f"{len(pending)} briefs to run, {done} already archived", flush=True)
+    for sweep in range(1, arguments.passes + 1):
+        pending = [(slug, text) for slug, text in every
+                   if not (ARCHIVE / f"{arguments.prefix}_{slug}.yaml").exists()]
+        done = len(every) - len(pending)
+        if not pending:
+            print("every brief has a wave", flush=True)
+            return 0
+        print(f"pass {sweep}/{arguments.passes}: {len(pending)} briefs to run,"
+              f" {done} already archived", flush=True)
+        status = sweep_once(arguments, pending)
+        if status is not None:
+            return status
+    print("passes exhausted; re-run to keep retrying what is left", flush=True)
+    return 0
 
+
+def sweep_once(arguments, pending):
+    """One pass over the briefs with no archive. A status means stop, None means continue.
+
+    A brief that fails writes no archive, so the next pass finds it again -- which is the
+    whole reason passes exist. Two of the first three waves after a restart died on a
+    truncated stream and on a 429 that outlasted sixteen minutes of backoff; both are the
+    kind of failure that simply works later, and a single-pass driver dropped them until
+    somebody noticed and restarted it.
+    """
     failures = 0
     for index, (slug, text) in enumerate(pending, start=1):
         name = f"{arguments.prefix}_{slug}"
@@ -110,8 +134,7 @@ def main():
                 print(f"stopping: {failures} waves failed in a row", flush=True)
                 return 1
         time.sleep(arguments.pause_seconds)
-    print("every brief has a wave", flush=True)
-    return 0
+    return None
 
 
 if __name__ == "__main__":
