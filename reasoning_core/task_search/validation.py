@@ -382,6 +382,28 @@ def _sanity_ask(system, message, verdicts=("VALID", "INVALID")):
     }
 
 
+def _json_events(events_path):
+    """The JSON objects in a harness log, in order.
+
+    Only opencode and AGY write one object per line; mini's `events_path` is its human
+    transcript, where a quoted line of the Python file the worker is typing parses cleanly
+    as a JSON string. Three separate readers called `.get` on the result and lost the trial
+    to an AttributeError after it had done all of its work, so the skip lives here once
+    rather than at each of them. A log with no events yields none, which is not a failure.
+    """
+    try:
+        lines = Path(events_path).read_text().splitlines()
+    except OSError:
+        return
+    for line in lines:
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(event, dict):
+            yield event
+
+
 def _step_usage(events_path, max_steps):
     """How much of the step budget the worker spent, and whether it ran out.
 
@@ -400,11 +422,7 @@ def _step_usage(events_path, max_steps):
     if not used:
         # AGY stream-json has a different, stable envelope. One completed agent
         # response is the closest cross-harness analogue to an OpenCode step.
-        for line in lines:
-            try:
-                event = json.loads(line)
-            except json.JSONDecodeError:
-                continue
+        for event in _json_events(events_path):
             update = event.get("step_update", {})
             if (
                 event.get("event") == "step_update"
@@ -442,21 +460,8 @@ def _sample_review(worktree, owned_path, trial_id, events_path):
     expected_command = _sample_command_for(owned_path, trial_id)
     last_write = -1
     last_read = -1
-    try:
-        lines = Path(events_path).read_text().splitlines()
-    except FileNotFoundError:
-        lines = []
-    for index, line in enumerate(lines):
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        # opencode and AGY write one JSON object per line; mini writes a human transcript,
-        # where a quoted line of the Python file the worker is typing parses cleanly as a
-        # JSON string. Everything below reads an event, so anything that is not one is not
-        # ours to interpret.
-        if not isinstance(event, dict):
-            continue
+    # Indices order the reads against the writes; they count events, not file lines.
+    for index, event in enumerate(_json_events(events_path)):
         if event.get("event") == "step_update":
             update = event.get("step_update", {})
             if update.get("step_type") != "tool" or update.get("state") != "DONE":

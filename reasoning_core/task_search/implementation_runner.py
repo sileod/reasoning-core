@@ -35,7 +35,7 @@ from .sandbox import (
     _sandbox_command,
     _write_json,
 )
-from .validation import _step_usage, validate_candidate
+from .validation import _json_events, _step_usage, validate_candidate
 
 
 def _repo_root(start):
@@ -576,15 +576,7 @@ def _retryable_harness_failure(result):
     log_path = result.get("harness_log")
     if not log_path:
         return None
-    try:
-        lines = Path(log_path).read_text().splitlines()
-    except OSError:
-        return None
-    for line in reversed(lines):
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            continue
+    for event in reversed(list(_json_events(log_path))):
         if event.get("type") != "error":
             continue
         data = event.get("error", {}).get("data", {})

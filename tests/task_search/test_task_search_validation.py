@@ -48,6 +48,7 @@ from reasoning_core.task_search.validation import (
     _outside_owned,
     _owned_digest,
     _review_source,
+    _json_events,
     _sample_review,
     _sample_sanity,
     _step_usage,
@@ -728,3 +729,6 @@ def test_sample_review_survives_a_harness_log_that_is_not_an_event_stream(tmp_pa
 
     assert result["ok"] is False
     assert result["read_after_last_edit"] is False
+    # The other two readers of the same log take the same path.
+    assert _step_usage(events, 40) == {"used": 0, "max": 40, "exhausted": False}
+    assert list(_json_events(events)) == []
