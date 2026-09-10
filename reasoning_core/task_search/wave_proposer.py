@@ -600,7 +600,13 @@ class ChatClient:
             response.raise_for_status()
             try:
                 content, response_bytes, response_id = self._read_reply(response, headers)
-            except UpstreamError as failure:
+            except (UpstreamError, json.JSONDecodeError,
+                    requests.RequestException) as failure:
+                # Reading the reply is transport, and transport fails transiently. A
+                # truncated SSE frame surfaces here as a JSONDecodeError from the chunk
+                # parse and used to escape the loop entirely, ending a wave seventeen
+                # minutes in on `Unterminated string starting at: line 1 column 125`.
+                # A connection dropped mid-stream is the same event wearing another name.
                 if last:
                     raise
                 response_bytes = str(failure).encode()

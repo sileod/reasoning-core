@@ -782,6 +782,65 @@ def test_extract_json_accepts_a_trailing_comma():
     assert _extract_json('{"a": [1, 2,], "b": 3,}') == {"a": [1, 2], "b": 3}
 
 
+def test_a_truncated_stream_frame_is_retried_rather_than_ending_the_wave(monkeypatch):
+    """A half-written SSE chunk is transport failing, which is what retries are for.
+
+    It used to escape the loop as a bare JSONDecodeError: wave 3 of the brief job died on
+    `Unterminated string starting at: line 1 column 125` seventeen minutes in.
+    """
+    client = ChatClient(model="m", endpoint="https://example.invalid/v1/chat/completions",
+                        api_key="k", stream=True)
+    bodies = iter([
+        ['data: {"choices": [{"delta": {"content": "half a fra'],
+        ['data: {"choices": [{"delta": {"content": "{\\"accepted\\": []}"}}]}',
+         "data: [DONE]"],
+    ])
+
+    class Response:
+        status_code = 200
+
+        def __init__(self):
+            self.lines = next(bodies)
+
+        def raise_for_status(self):
+            return None
+
+        def iter_lines(self, decode_unicode=False):
+            return iter(self.lines)
+
+    monkeypatch.setattr(wave_proposer.requests, "post", lambda *a, **k: Response())
+    slept = []
+    monkeypatch.setattr(wave_proposer.time, "sleep", slept.append)
+
+    assert client.json("propose", "system", "user") == {"accepted": []}
+    assert slept == [wave_proposer.RETRY_BACKOFF[0]]
+
+
+def test_a_connection_dropped_mid_stream_is_retried(monkeypatch):
+    client = ChatClient(model="m", endpoint="https://example.invalid/v1/chat/completions",
+                        api_key="k", stream=False)
+    outcomes = iter([wave_proposer.requests.ConnectionError("reset by peer"),
+                     ('{"accepted": []}', b"", "id-1")])
+
+    class Response:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+    def read(self, response, headers):
+        outcome = next(outcomes)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr(wave_proposer.requests, "post", lambda *a, **k: Response())
+    monkeypatch.setattr(ChatClient, "_read_reply", read)
+    monkeypatch.setattr(wave_proposer.time, "sleep", lambda seconds: None)
+
+    assert client.json("review", "system", "user") == {"accepted": []}
+
+
 def test_a_malformed_reply_is_retried_rather_than_ending_the_wave(monkeypatch):
     """The parse used to sit outside the retry loop, so one bad sample cost the wave.
 
