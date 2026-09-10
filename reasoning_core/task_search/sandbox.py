@@ -104,10 +104,63 @@ def _public_resource_limits(resource_limits):
     return {key: value for key, value in resource_limits.items() if key in fields}
 
 
-def _sanitized_environment(credential_env_names=()):
-    environment = dict(os.environ)
-    for name in credential_env_names:
-        environment.pop(name, None)
+# What a sandboxed process needs whatever it is doing: where to find programs, how to
+# decode bytes, how the interpreter loads its own libraries, and how to reach the network
+# through this site's TLS and proxy settings. Deliberately about the shape of a Unix
+# process and not about any vendor -- a provider credential is passed in by name.
+BASE_ENV_NAMES = (
+    "PATH",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TERM",
+    "LD_LIBRARY_PATH",
+    "SSL_CERT_FILE",
+    "SSL_CERT_DIR",
+    "REQUESTS_CA_BUNDLE",
+    "CURL_CA_BUNDLE",
+    "NODE_EXTRA_CA_CERTS",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "NO_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    # For `systemd-run --user`, which wraps bwrap from the outside and needs the session
+    # bus to reach the user manager; without these a strict run dies at "Failed to connect
+    # to bus". They are not a way back into the host from inside: bwrap mounts a tmpfs over
+    # /run, so both the runtime directory and the bus socket are gone by the time the
+    # worker starts.
+    "DBUS_SESSION_BUS_ADDRESS",
+    "XDG_RUNTIME_DIR",
+)
+
+# The name a worker sees itself under. Fixed so that nothing a worker writes can carry the
+# operator's login, and paired with --hostname for the same reason.
+SANDBOX_USER = "task-search"
+SANDBOX_HOSTNAME = "task-search"
+
+
+def _minimal_environment(passthrough=()):
+    """Build an environment from an allowlist rather than subtracting from the operator's.
+
+    Inheriting os.environ handed every trial the whole login session: seven API keys where
+    one is needed, this machine's ssh and dbus addresses, and the config paths that made
+    mini read the host's own ~/.config/mini-swe-agent/.env. A wave that calls itself
+    reproducible cannot be reading the operator's dotfiles, so the default is nothing and
+    each name that goes in is one somebody chose.
+
+    HOME and the XDG directories are not set here: they are bound into the trial runtime by
+    `_sandbox_command`, so the worker and the validation subprocess get the same answer.
+    """
+    environment = {
+        name: os.environ[name]
+        for name in (*BASE_ENV_NAMES, *passthrough)
+        if name in os.environ
+    }
+    environment["USER"] = SANDBOX_USER
+    environment["LOGNAME"] = SANDBOX_USER
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
     return environment
 
 
@@ -128,6 +181,7 @@ def _sandbox_command(
     runtime_root,
     bwrap_bin="bwrap",
     writable_overlays=(),
+    synthetic_home=True,
 ):
     """Wrap a worker so only its owned repository directory is writable."""
     executable = shutil.which(bwrap_bin)
@@ -144,12 +198,24 @@ def _sandbox_command(
     for path, label in ((worktree, "worktree"), (runtime_root, "runtime root")):
         _check_sandbox_location(path, label)
     runtime_dirs = {
+        # HOME last mattered because everything else was already redirected here except it:
+        # a harness that resolves its own config through the home directory read the
+        # operator's. XDG_CONFIG_HOME is named rather than left to default to $HOME/.config
+        # so the redirect holds for tools that read it directly.
+        "HOME": runtime_root / "home",
+        "XDG_CONFIG_HOME": runtime_root / "config",
         "XDG_DATA_HOME": runtime_root / "data",
         "XDG_CACHE_HOME": runtime_root / "cache",
         "XDG_STATE_HOME": runtime_root / "state",
         "TMPDIR": runtime_root / "tmp",
         "MPLCONFIGDIR": runtime_root / "matplotlib",
     }
+    if not synthetic_home:
+        # AGY reads its own authenticated installation out of the real home, and
+        # `_agy_writable_overlays` binds those paths in. Redirecting HOME would point it at
+        # an empty directory. Said plainly rather than worked around: an AGY trial is the
+        # one kind that still sees the operator's home.
+        runtime_dirs.pop("HOME")
     for path in runtime_dirs.values():
         path.mkdir(parents=True, exist_ok=True)
     wrapped = [
@@ -159,6 +225,8 @@ def _sandbox_command(
         "--unshare-pid",
         "--unshare-ipc",
         "--unshare-uts",
+        "--hostname",
+        SANDBOX_HOSTNAME,
         "--unshare-cgroup-try",
         "--cap-drop",
         "ALL",
@@ -241,8 +309,9 @@ def _run_validation(
     credential_env_names=(),
 ):
     results = []
-    environment = _sanitized_environment(credential_env_names)
-    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    # Candidate code gets no credential, named or not: it is the one process here with no
+    # reason to reach a provider.
+    environment = _minimal_environment()
     with log_path.open("w") as log:
         for command in commands:
             log.write(f"$ {command}\n")

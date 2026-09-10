@@ -40,7 +40,7 @@ from reasoning_core.task_search.sandbox import (
     _resource_command,
     _run_validation,
     _sandbox_command,
-    _sanitized_environment,
+    _minimal_environment,
 )
 from reasoning_core.task_search.validation import (
     _outside_owned,

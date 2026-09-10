@@ -11,8 +11,12 @@ trials. Proposal generation remains a separate subsystem in `wave_proposer.py`.
 - `plan.py` owns the frozen `Trial` and `SearchPlan` models, YAML loading, plan checks,
   and trial selection.
 - `implementor_prompt.py` owns `PACE` and `render_implementor_prompt()`.
-- `sandbox.py` owns Bubblewrap, resource limits, sanitized environments, and bounded
-  validation subprocesses.
+- `sandbox.py` owns Bubblewrap, resource limits, allowlisted environments, and bounded
+  validation subprocesses. A worker's environment is built from `BASE_ENV_NAMES` rather
+  than inherited: `HOME` and the XDG directories point into the trial runtime, the user
+  and hostname are fixed, and the only credential present is the one named by
+  `--credential-env` (default: the variable named by `TASK_SEARCH_KEY_ENV`). Candidate
+  validation gets no credential at all.
 - `validation.py` owns every coordinator and worker-facing gate and their failure
   precedence. `selfcheck.py` is only its CLI compatibility wrapper.
 - `implementation_runner.py` creates worktrees, launches Harness Link, validates candidates, retries

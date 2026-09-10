@@ -23,7 +23,7 @@ from .sandbox import (
     _resource_command,
     _run_validation,
     _sandbox_command,
-    _sanitized_environment,
+    _minimal_environment,
 )
 
 FAILURE_PRECEDENCE = (
@@ -671,8 +671,7 @@ def _run_contract_audit(
         return {"classes": [], "exit_code": 2, "parse_error": str(error)}
     if not classes:
         return {"classes": [], "exit_code": 2}
-    environment = _sanitized_environment(credential_env_names)
-    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    environment = _minimal_environment()
     command = _sandbox_command(
         [sys.executable, "-c", _CONTRACT_AUDIT, json.dumps(classes), str(seed)],
         worktree=worktree,

@@ -39,7 +39,7 @@ from reasoning_core.task_search.sandbox import (
     _resource_command,
     _run_validation,
     _sandbox_command,
-    _sanitized_environment,
+    _minimal_environment,
 )
 from reasoning_core.task_search.validation import (
     _outside_owned,
@@ -172,14 +172,32 @@ def test_independent_validation_times_out(tmp_path):
         }
     ]
 
-def test_validation_environment_removes_named_credentials(monkeypatch):
+def test_environment_is_built_from_an_allowlist_not_subtracted_from(monkeypatch):
+    """Inheriting the session is what leaked; naming what to drop can only ever lag it.
+
+    The old sanitizer removed the credentials it was told about and passed on everything
+    else -- which on this machine meant six other API keys, the ssh and dbus addresses of
+    the host, and the config paths that had mini reading the operator's own dotfiles.
+    """
     monkeypatch.setenv("PROVIDER_API_KEY", "secret")
-    monkeypatch.setenv("KEEP_ME", "visible")
+    monkeypatch.setenv("UNRELATED_API_KEY", "other-secret")
+    monkeypatch.setenv("SSH_CONNECTION", "10.0.0.1 22")
+    monkeypatch.setenv("PATH", "/usr/bin")
 
-    environment = _sanitized_environment(("PROVIDER_API_KEY",))
+    environment = _minimal_environment(("PROVIDER_API_KEY",))
 
-    assert "PROVIDER_API_KEY" not in environment
-    assert environment["KEEP_ME"] == "visible"
+    assert environment["PROVIDER_API_KEY"] == "secret"
+    assert environment["PATH"] == "/usr/bin"
+    # Not named, so not there -- and nobody had to think of it.
+    assert "UNRELATED_API_KEY" not in environment
+    assert "SSH_CONNECTION" not in environment
+    # The worker sees a fixed identity rather than the operator's login.
+    assert environment["USER"] == environment["LOGNAME"] == "task-search"
+
+
+def test_validation_is_given_no_credential_at_all():
+    """Candidate code is the one process here with no reason to reach a provider."""
+    assert "PROVIDER_API_KEY" not in _minimal_environment()
 
 def test_sandboxed_validation_does_not_receive_named_credential(monkeypatch):
     monkeypatch.setenv("PROVIDER_API_KEY", "secret")
@@ -200,3 +218,48 @@ def test_sandboxed_validation_does_not_receive_named_credential(monkeypatch):
         )
 
     assert results[0]["exit_code"] == 0
+
+
+def test_home_and_hostname_do_not_come_from_the_host(tmp_path):
+    """The last two ways a trial could still read the machine it happened to run on.
+
+    Every other XDG directory was already redirected into the trial runtime; HOME was not,
+    so a harness that resolves config through the home directory -- mini, through
+    ~/.config/mini-swe-agent/.env -- read the operator's. A fixed hostname costs one flag
+    on the --unshare-uts that was already there.
+    """
+    worktree = tmp_path / "worktree"
+    (worktree / "owned").mkdir(parents=True)
+    runtime_root = tmp_path / "runtime"
+
+    command = _sandbox_command(
+        ["true"],
+        worktree=worktree,
+        owned_path="owned",
+        runtime_root=runtime_root,
+        bwrap_bin="bwrap",
+    )
+
+    pairs = list(zip(command, command[1:]))
+    setenv = {name: value for flag, name in pairs for check, value in pairs
+              if flag == "--setenv" and check == name}
+    assert setenv["HOME"] == str(runtime_root.resolve() / "home")
+    assert setenv["XDG_CONFIG_HOME"] == str(runtime_root.resolve() / "config")
+    assert ("--hostname", "task-search") in pairs
+
+
+def test_agy_keeps_the_real_home_because_it_authenticates_through_it(tmp_path):
+    """Stated in a test rather than discovered when an AGY wave lands nothing."""
+    worktree = tmp_path / "worktree"
+    (worktree / "owned").mkdir(parents=True)
+
+    command = _sandbox_command(
+        ["true"],
+        worktree=worktree,
+        owned_path="owned",
+        runtime_root=tmp_path / "runtime",
+        bwrap_bin="bwrap",
+        synthetic_home=False,
+    )
+
+    assert "HOME" not in command

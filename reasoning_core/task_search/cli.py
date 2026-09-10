@@ -36,6 +36,19 @@ IMPLEMENTOR_MODEL = "deepseek-v4-flash"
 
 
 
+def _worker_credentials(named):
+    """The credential variables the harness may see, falling back to the old convention.
+
+    `scripts/run_task_search_weekend.sh` has always passed --credential-env the name held
+    in TASK_SEARCH_KEY_ENV. Reading that variable directly keeps a plain `run` working now
+    that the environment is an allowlist and an unnamed key would simply be absent.
+    """
+    if named:
+        return list(named)
+    fallback = os.environ.get("TASK_SEARCH_KEY_ENV", "").strip()
+    return [fallback] if fallback else []
+
+
 def _archive_path(repo_root, name):
     return (repo_root / "reasoning_core" / "task_search" / "proposals" / "archive"
             / f"{name}.yaml")
@@ -183,7 +196,8 @@ def _parser():
         "--credential-env",
         action="append",
         default=[],
-        help="environment variable to remove from candidate validation processes",
+        help="name of a provider credential the harness may see; candidate validation "
+             "never sees it (default: the variable named by TASK_SEARCH_KEY_ENV)",
     )
     run.add_argument("--jobs", type=int, default=1)
     run.add_argument("--trial", action="append", default=[])
@@ -413,6 +427,14 @@ def main(argv=None):
             end="",
         )
     else:
+        credential_env_names = _worker_credentials(args.credential_env)
+        if not credential_env_names:
+            print(
+                "warning: no worker credential named. The sandbox now builds the worker's"
+                " environment from an allowlist, so a provider key reaches it only when"
+                " named with --credential-env or TASK_SEARCH_KEY_ENV.",
+                file=sys.stderr,
+            )
         results = run_plan(
             args.plan,
             model=args.model,
@@ -440,7 +462,7 @@ def main(argv=None):
             tasks_max=args.tasks_max,
             cpu_quota=args.cpu_quota,
             validation_timeout_seconds=args.validation_timeout_seconds,
-            credential_env_names=args.credential_env,
+            credential_env_names=credential_env_names,
             pace=args.pace,
             snapshots=args.snapshots,
         )

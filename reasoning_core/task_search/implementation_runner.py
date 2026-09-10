@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
 
 import yaml
 
@@ -27,6 +28,7 @@ from .plan import _frozen_module_drift, _plan_problems, _select_trials, load_pla
 from .sandbox import (
     _agy_writable_overlays,
     _check_sandbox_location,
+    _minimal_environment,
     _public_resource_limits,
     _resolve_resource_limits,
     _resource_command,
@@ -466,9 +468,12 @@ def _run_trial(
         writable_overlays=(
             _agy_writable_overlays(runtime_root) if harness == "agy" else ()
         ),
+        synthetic_home=harness != "agy",
     )
     command = _resource_command(command, resource_limits)
-    environment = dict(os.environ)
+    # The harness needs the provider credential named by --credential-env and nothing else
+    # of the operator's session; validation gets not even that.
+    environment = _minimal_environment(credential_env_names)
     if harness == "opencode":
         environment["OPENCODE_CONFIG_CONTENT"] = config_path.read_text()
         environment["OPENCODE_DISABLE_EXTERNAL_SKILLS"] = "true"
@@ -807,6 +812,11 @@ def run_plan(
                     "status": "orchestration_error",
                     "error_type": type(error).__name__,
                     "error": str(error),
+                    # A bug in our own orchestration reaches the summary as one line with
+                    # no line number: "'str' object has no attribute 'get'" names neither
+                    # the file nor the call. The trial is already lost when we get here, so
+                    # keep what makes it diagnosable without re-running the wave.
+                    "traceback": traceback.format_exc(),
                 }
             results.append(result)
             write_summary()
