@@ -73,7 +73,13 @@ def steps(arguments, wave, name):
         run += ["--model", arguments.model]
     land = [sys.executable, "-m", "reasoning_core.task_search.land",
             str(RUNS / name), "--plan", str(plan_path), "--apply"]
-    return [("plan", build), ("run", run), ("land", land)]
+    # The flag is whether the step's exit status decides the wave. `run` exits non-zero
+    # when any single trial failed, which is the ordinary shape of a wave rather than a
+    # problem: the first wave this service ran was four successes and one
+    # `answers_impossible`, and treating that as a failed wave skipped landing and threw
+    # the four away. Only `land` can say whether a wave produced anything -- it refuses a
+    # run with no successful trials -- so it is the step whose status is the wave's.
+    return [("plan", build, True), ("run", run, False), ("land", land, True)]
 
 
 def implement(arguments, wave, log_dir):
@@ -84,7 +90,7 @@ def implement(arguments, wave, log_dir):
         return True
     name = plan_name(wave, next_round(ROOT, wave))
     print(f"  {time.strftime('%H:%M')} {name}", flush=True)
-    for label, command in steps(arguments, wave, name):
+    for label, command, decides in steps(arguments, wave, name):
         if arguments.dry_run:
             print(f"    would {label}: {' '.join(command[2:])}", flush=True)
             continue
@@ -94,11 +100,14 @@ def implement(arguments, wave, log_dir):
             completed = subprocess.run(command, cwd=ROOT, stdout=handle,
                                        stderr=subprocess.STDOUT)
         minutes = (time.time() - started) / 60
-        if completed.returncode != 0:
-            print(f"    {label} FAILED (exit {completed.returncode}) after"
-                  f" {minutes:.0f}m -- see {log}", flush=True)
+        if completed.returncode == 0:
+            print(f"    {label} ok in {minutes:.0f}m", flush=True)
+            continue
+        note = "FAILED" if decides else "some trials failed"
+        print(f"    {label} {note} (exit {completed.returncode}) after"
+              f" {minutes:.0f}m -- see {log}", flush=True)
+        if decides:
             return False
-        print(f"    {label} ok in {minutes:.0f}m", flush=True)
     return True
 
 
