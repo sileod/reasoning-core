@@ -1,0 +1,112 @@
+# What a proposal wave is asked for, one brief per wave.
+#
+# A brief is the proposer's prompt, not a filter applied afterwards: it goes into the
+# request as "What this wave is for" and is recorded verbatim in the wave's
+# `provenance.brief`, so an archived wave says what it was asked for a year later. Steering
+# narrows the search and relaxes no novelty rule -- a proposal that fits its brief and
+# repeats a known task is still a repeat.
+#
+# Slugs name the wave (`k3_<slug>`) and so must stay stable; the text may be revised, since
+# each archived wave carries the exact wording it was generated from.
+version: 1
+groups:
+- name: generalization and abstraction
+  briefs:
+  - slug: compositional-generalization
+    text: procedural tasks that would improve compositional generalization in language models
+  - slug: reusable-operations
+    text: procedural tasks that teach reusable intermediate reasoning operations
+  - slug: systematic-generalization
+    text: procedural tasks that improve systematic generalization to unseen combinations of familiar primitives
+  - slug: latent-representation
+    text: "procedural tasks that teach abstraction: problems where identifying the right latent representation makes the solution simple"
+  - slug: rule-induction
+    text: procedural tasks that teach models to infer latent rules from demonstrations and apply them to new cases
+  - slug: invariants
+    text: procedural tasks that teach models to identify invariants, sufficient statistics, or conserved structure
+- name: reasoning demands
+  briefs:
+  - slug: state-tracking
+    text: procedural tasks requiring state tracking and exact simulation over many steps
+  - slug: planning-backtracking
+    text: procedural tasks requiring planning, search, and backtracking under explicit constraints
+  - slug: inference-modes
+    text: procedural tasks requiring deduction, induction, abduction, or analogical inference
+  - slug: counterfactual
+    text: procedural tasks requiring counterfactual reasoning and interventions
+  - slug: uncertainty
+    text: procedural tasks requiring reasoning under uncertainty or partial information
+  - slug: verification-repair
+    text: procedural tasks requiring verification, error localization, and repair
+  - slug: dependence-relevance
+    text: procedural tasks requiring reasoning about dependencies, relevance, or conditional independence
+  - slug: global-over-greedy
+    text: procedural tasks where local greedy reasoning fails and global reasoning is necessary
+- name: robustness to shortcuts
+  briefs:
+  - slug: shortcuts-fail
+    text: procedural tasks designed so common shallow heuristics systematically fail while the intended reasoning procedure succeeds
+  - slug: novel-composition
+    text: procedural tasks with familiar atomic operations but novel compositions of those operations
+  - slug: relevance-separation
+    text: procedural tasks where irrelevant information must be separated from causally or logically relevant information
+  - slug: surface-invariance
+    text: procedural tasks requiring the same abstract operation across strongly different surface representations
+  - slug: representation-transfer
+    text: procedural tasks requiring transfer between equivalent representations of the same underlying problem
+  - slug: incremental-recomputation
+    text: procedural tasks where a small perturbation to the input requires recomputing only the consequences that actually change
+- name: structures
+  briefs:
+  - slug: representation-specific
+    text: procedural tasks over graphs, trees, strings, sets, relations, tables, programs, and symbolic expressions that require representation-specific reasoning
+  - slug: semantics-preserving-translation
+    text: procedural tasks requiring translation between two representations while preserving exact semantics
+  - slug: hierarchical-recursive
+    text: procedural tasks involving hierarchical or recursively structured objects
+  - slug: relational-structures
+    text: procedural tasks involving relational structures rather than scalar or sequence reasoning
+  - slug: dynamic-structures
+    text: procedural tasks involving dynamically changing structures or environments
+- name: language and semantics
+  briefs:
+  - slug: formal-semantics
+    text: procedural tasks targeting formal semantics and compositional interpretation of language
+  - slug: scope-and-binding
+    text: procedural tasks targeting quantifier scope, negation, binding, anaphora, presupposition, and compositional semantics
+  - slug: synthetic-grammars
+    text: procedural tasks requiring execution of synthetic grammars rather than memorized natural-language facts
+  - slug: parsing-and-agreement
+    text: procedural tasks requiring parsing, grammatical transformation, agreement, scope, or syntactic dependency reasoning
+  - slug: paraphrase-equivalence
+    text: procedural tasks where the same meaning is expressed by structurally different sentences and semantic equivalence must be computed
+  - slug: controlled-nli
+    text: procedural tasks requiring controlled natural-language inference with explicitly specified semantics
+- name: sources of inspiration
+  briefs:
+  - slug: cognitive-psychology
+    text: procedural tasks inspired by cognitive psychology experiments, excluding tasks already represented in the catalog
+  - slug: psychometrics
+    text: procedural tasks inspired by psychometric tests but converted into scalable generative training distributions
+  - slug: algorithms-and-data-structures
+    text: procedural tasks inspired by algorithms and data structures that teach generally useful reasoning rather than algorithm-name recall
+  - slug: language-implementation
+    text: procedural tasks inspired by compilers, interpreters, static analysis, databases, and programming-language semantics
+  - slug: formal-logic
+    text: procedural tasks inspired by formal logic, model theory, proof theory, automata, and formal languages
+  - slug: scientific-reasoning
+    text: "procedural tasks inspired by scientific reasoning: hypothesis testing, experimental design, causal identification, and evidence integration"
+  - slug: operations-research
+    text: "procedural tasks inspired by operations research: scheduling, allocation, optimization, matching, and constraint propagation"
+- name: global structure from local facts
+  briefs:
+  - slug: global-from-local
+    text: procedural tasks that require inferring a global property from many locally simple but interacting facts or constraints
+  - slug: multi-relation-integration
+    text: procedural tasks where the answer depends on integrating multiple relations, and no single local fact or short computation is sufficient
+  - slug: latent-structure-reconstruction
+    text: tasks involving global consistency, reconstruction, or latent-structure inference from partial local observations
+  - slug: interacting-updates
+    text: tasks where several individually simple state updates interact to create a non-obvious global consequence
+  - slug: non-local-structured
+    text: tasks requiring non-local reasoning over graphs, relations, events, constraints, or structured language, rather than tracing a standard algorithm
