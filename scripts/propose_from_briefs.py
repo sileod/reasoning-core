@@ -32,10 +32,25 @@ GIVE_UP_AFTER = 3
 INCOMPLETE = 2
 
 
-def briefs():
+def briefs(with_shared=True):
+    """(slug, prompt) per brief, each prompt carrying the shared instruction.
+
+    Joined here rather than written into all forty-three texts, so the standing advice can
+    be revised in one place while the briefs stay the ideas someone actually had. The
+    shared line tells the proposer to reach past the standard repertoire, which is right
+    for a catalog this mature and wrong for a wave that is meant to fill a known gap --
+    sometimes a classic is exactly what is wanted -- so `with_shared=False` sends the
+    briefs as written.
+    """
     document = yaml.safe_load(BRIEFS.read_text())
-    return [(brief["slug"], " ".join(brief["text"].split()))
+    shared = " ".join((document.get("shared") or "").split()) if with_shared else ''
+    return [(brief["slug"], _joined(" ".join(brief["text"].split()), shared))
             for group in document["groups"] for brief in group["briefs"]]
+
+
+def _joined(text, shared):
+    """The brief and the shared instruction as two sentences, not one run-on."""
+    return f"{text.rstrip('.')}. {shared}" if shared else text
 
 
 def accepted(name):
@@ -54,13 +69,19 @@ def main():
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--pause-seconds", type=int, default=60)
     parser.add_argument("--log-dir", type=Path, default=ROOT / "runs" / "briefs")
+    parser.add_argument(
+        "--shared", action=argparse.BooleanOptionalAction, default=True,
+        help="append briefs.yaml's shared instruction, which tells the proposer the"
+             " catalog already has the classic algorithms; --no-shared sends the briefs"
+             " as written, for a wave meant to fill a known gap with a classic")
     parser.add_argument("--dry-run", action="store_true")
     arguments = parser.parse_args()
     arguments.log_dir.mkdir(parents=True, exist_ok=True)
 
-    pending = [(slug, text) for slug, text in briefs()
+    every = briefs(arguments.shared)
+    pending = [(slug, text) for slug, text in every
                if not (ARCHIVE / f"{arguments.prefix}_{slug}.yaml").exists()]
-    done = len(briefs()) - len(pending)
+    done = len(every) - len(pending)
     print(f"{len(pending)} briefs to run, {done} already archived", flush=True)
 
     failures = 0

@@ -9,6 +9,19 @@
 # Slugs name the wave (`k3_<slug>`) and so must stay stable; the text may be revised, since
 # each archived wave carries the exact wording it was generated from.
 version: 1
+# Appended to every brief below before it is sent, and recorded in provenance as part of
+# the brief, so an archived wave still says exactly what it was asked for.
+#
+# The first two waves cost 202 minutes and yielded one proposal: k3 answered briefs that
+# name a property ("compositional generalization") with the classic algorithm that
+# exhibits it, and a 441-entry catalog already has those. Every rejection was unanimous,
+# so the gate was not the marginal factor -- what the proposer reached for was. This says
+# so in the prompt rather than relaxing the gate afterwards.
+shared: >-
+  The catalog you were shown already covers the classic textbook algorithms -- sorting,
+  gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that
+  names one will be rejected as a repeat however well it fits this brief. Reach past the
+  standard repertoire: propose structures the catalog does not have.
 groups:
 - name: generalization and abstraction
   briefs:
