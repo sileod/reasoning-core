@@ -19,6 +19,8 @@ import subprocess
 import sys
 import urllib.request
 
+from . import embedding
+
 # Worker credentials reach the harness through a blanket copy of the environment, so what
 # a provider needs is a fact about that provider, not about this repository.
 PROVIDER_KEYS = {
@@ -143,6 +145,17 @@ def check(provider=None, harness="opencode", live=False, timeout=60):
         report.add(True, "reviewer config",
                    f"{os.environ['TASK_SEARCH_REVIEW_MODEL']} via "
                    f"{os.environ['TASK_SEARCH_REVIEW_ENDPOINT']}")
+
+    # A warning and not a failure: the novelty gate falls back to string similarity, which
+    # is the ranking it had before embeddings existed. Worth saying out loud, because the
+    # fallback is silent and the gate is measurably better with it.
+    if embedding.configured():
+        report.add(True, "novelty retrieval",
+                   f"{embedding.model()} via {embedding.endpoint()}")
+    else:
+        report.add(None, "novelty retrieval", "not configured, ranking by string similarity",
+                   f"set TASK_SEARCH_EMBED_ENDPOINT, TASK_SEARCH_EMBED_KEY_ENV in {ENV_FILE} "
+                   "to rank the novelty catalog by meaning too")
 
     if not live:
         report.add(None, "provider reachable", "not checked",

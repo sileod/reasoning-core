@@ -624,3 +624,70 @@ def test_a_rejected_proposal_keeps_its_summary_so_it_can_be_rejudged():
                         critic_client=critic, critic_samples=1)
 
     assert wave["rejected"][0]["summary"] == proposal()["summary"]
+
+
+def _catalog_of(*pairs):
+    from reasoning_core.task_search.wave_proposer import CatalogEntry
+
+    return tuple(CatalogEntry(f"known:{name}", name, summary, "task")
+                 for name, summary in pairs)
+
+
+def test_semantic_retrieval_finds_the_duplicate_that_shares_no_words(monkeypatch):
+    """The duplicate the gate exists to catch is the one worded differently.
+
+    rapidfuzz ranks on spelling, so a proposal that renames a known task and paraphrases
+    its summary outranks nothing and the critic has to notice it by reading the catalog.
+    Meaning ranks it first.
+    """
+    from reasoning_core.task_search import embedding, wave_proposer
+
+    catalog = _catalog_of(
+        ("bit_string_parity", "Count set bits and report whether the total is even."),
+        ("quicksort_trace", "Order a list of integers and report the sorted sequence."),
+    )
+    proposal = {"name": "evenness_of_ones",
+                "summary": "Say if the number of ones in a binary word is even."}
+    # One axis per catalog entry: the query leans on the first, and shares no words with it.
+    vectors = {
+        "bit_string_parity": (1.0, 0.0),
+        "quicksort_trace": (0.0, 1.0),
+        "evenness_of_ones": (0.96, 0.28),
+    }
+
+    def fake_embed(texts):
+        return tuple(next(vector for name, vector in vectors.items() if name in text)
+                     for text in texts)
+
+    monkeypatch.setattr(embedding, "configured", lambda: True)
+    monkeypatch.setattr(embedding, "embed", fake_embed)
+
+    got = wave_proposer.semantic_entries([proposal], catalog, limit=1)
+    assert [entry.name for entry in got[0]] == ["bit_string_parity"]
+
+    # Both retrievers reach the critic, deduplicated, meaning first.
+    merged = wave_proposer.neighbor_entries([proposal], catalog, limit=2)
+    assert [entry.name for entry in merged[0]][0] == "bit_string_parity"
+    assert len(merged[0]) == len({entry.entry_id for entry in merged[0]})
+
+
+def test_an_unavailable_embedder_costs_the_ranking_and_not_the_wave(monkeypatch):
+    """Every way of not getting vectors has to land on the string ranking, not an error."""
+    from reasoning_core.task_search import embedding, wave_proposer
+
+    catalog = _catalog_of(("bit_string_parity", "Count set bits and report the parity."))
+    proposal = {"name": "bit_string_parity", "summary": "Count set bits, report parity."}
+
+    monkeypatch.setattr(embedding, "configured", lambda: False)
+    assert wave_proposer.semantic_entries([proposal], catalog) is None
+
+    def refuse(_texts):
+        raise RuntimeError("embedding request failed: HTTP Error 429: Too Many Requests")
+
+    monkeypatch.setattr(embedding, "configured", lambda: True)
+    monkeypatch.setattr(embedding, "embed", refuse)
+    assert wave_proposer.semantic_entries([proposal], catalog) is None
+
+    # ... and the critic still gets neighbours, from rapidfuzz alone.
+    merged = wave_proposer.neighbor_entries([proposal], catalog)
+    assert [entry.name for entry in merged[0]] == ["bit_string_parity"]
