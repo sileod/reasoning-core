@@ -71,6 +71,15 @@ def _parser():
         default="max",
         help="none omits the field, for endpoints that reject unknown keys",
     )
+    propose.add_argument(
+        "--brief",
+        help="what this wave is for, in a sentence or two: a domain, a family of "
+             "structures, a shape of answer. Recorded in the wave's provenance so an "
+             "archived wave says what it was asked for. Steering narrows the search and "
+             "relaxes no novelty rule")
+    propose.add_argument(
+        "--brief-file", type=Path,
+        help="read --brief from a file, for a steer worth keeping under version control")
     propose.add_argument("--rounds", type=int, default=3)
     propose.add_argument(
         "--timeout-seconds",
@@ -240,9 +249,13 @@ def main(argv=None):
             print(f"WARNING: {args.critic_api_key_env} is unset, so the critic shares the"
                   f" proposer's client and quota", file=sys.stderr)
             critic_model = None
+        if args.brief and args.brief_file:
+            raise SystemExit("pass --brief or --brief-file, not both")
+        brief = args.brief_file.read_text() if args.brief_file else (args.brief or "")
         wave = propose_wave(
             repo_root,
             name=args.name,
+            brief=brief,
             count=args.count,
             model=args.model,
             endpoint=args.endpoint,

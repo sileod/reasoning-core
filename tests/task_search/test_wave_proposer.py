@@ -691,3 +691,79 @@ def test_an_unavailable_embedder_costs_the_ranking_and_not_the_wave(monkeypatch)
     # ... and the critic still gets neighbours, from rapidfuzz alone.
     merged = wave_proposer.neighbor_entries([proposal], catalog)
     assert [entry.name for entry in merged[0]] == ["bit_string_parity"]
+
+
+def test_a_brief_steers_the_prompt_and_an_unsteered_wave_is_byte_identical():
+    """Steering must be opt-in at the byte level, or it breaks comparison with old waves.
+
+    Every archived wave was proposed against the unsteered prompt. If adding the feature
+    moved a single character of it, a wave proposed before and one proposed after would
+    stop being the same experiment.
+    """
+    from reasoning_core.task_search.wave_proposer import _proposer_prompt
+
+    plain = _proposer_prompt(3, "known:x | x | does x", ("y: rejected",))
+    steered = _proposer_prompt(3, "known:x | x | does x", ("y: rejected",),
+                               "Graph algorithms whose answer is a permutation.")
+
+    assert "What this wave is for" not in plain
+    assert "Graph algorithms whose answer is a permutation." in steered
+    # The steer is additive: removing its block leaves the prompt that has always been sent.
+    without = steered.replace(
+        steered[steered.index("\nWhat this wave is for"):steered.index("\nRules:")], "")
+    assert without == plain
+    # And it says the brief is not a licence to repeat a known task.
+    assert "relaxes nothing" in steered
+
+
+def test_a_brief_is_normalised_and_bounded():
+    from reasoning_core.task_search import wave_proposer
+
+    assert wave_proposer.clean_brief("  graph   algorithms\n only ") == "graph algorithms only"
+    assert wave_proposer.clean_brief(None) == ""
+    with pytest.raises(ValueError, match="over the 2000 character limit".replace(
+            " character limit", " limit")):
+        wave_proposer.clean_brief("x" * (wave_proposer.BRIEF_MAX_CHARS + 1))
+
+
+def test_a_generated_wave_records_where_it_came_from_and_what_it_was_asked_for():
+    """`proposer` was a provenance kind nothing ever wrote: generated waves had no origin."""
+    from reasoning_core.task_search import wave_proposer
+
+    class Client:
+        provider, model, calls = "testing", "test-model", ()
+
+        def json(self, purpose, _system, _user):
+            if purpose.startswith("propose"):
+                return {"proposals": [{
+                    "name": "permutation_composition",
+                    "summary": ("Compose a sequence of permutations given in cycle notation "
+                                "and report the resulting one-line permutation."),
+                }]}
+            return {"reviews": [{
+                "proposal_id": "C001", "verdict": "novel",
+                "nearest_neighbors": [
+                    {"id": "known:a", "relationship": "different", "overlap": "none"},
+                    {"id": "known:b", "relationship": "adjacent", "overlap": "graphs"},
+                    {"id": "known:c", "relationship": "different", "overlap": "none"},
+                ],
+                "substantive_difference": "composes permutations rather than sorting them",
+                "scores": {"novelty": 5, "sft_value": 5, "feasibility": 5, "clarity": 5},
+                "reason": "distinct operation",
+            }]}
+
+    client = Client()
+    wave = wave_proposer.propose_wave(
+        ".", name="steered_probe", count=1, rounds=1, client=client, critic_client=client,
+        brief="  Permutation   algebra.  ")
+    where = wave["provenance"]
+    assert where["kind"] == "proposer"
+    assert where["name"] == "steered_probe"
+    assert where["brief"] == "Permutation algebra."
+    assert "test-model" in where["source"]
+
+    # An unsteered wave still records provenance, with an empty brief rather than no key:
+    # absent means the wave predates steering, empty means nobody steered it.
+    open_wave = wave_proposer.propose_wave(
+        ".", name="open_probe", count=1, rounds=1, client=client, critic_client=client)
+    assert open_wave["provenance"]["brief"] == ""
