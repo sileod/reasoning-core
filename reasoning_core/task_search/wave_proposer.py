@@ -420,15 +420,24 @@ def validate_proposal_wave(data):
     return problems
 
 
-def _loads(text):
-    """Parse JSON, tolerating a literal newline or tab inside a string.
+# Only applied after a genuine parse failure, so a string that happens to contain ", }"
+# is never rewritten.
+_TRAILING_COMMA = re.compile(r",(\s*[}\]])")
 
-    A model writing a multi-line `rationale` emits the break as a raw control character,
-    which the strict parser rejects and which costs a whole wave when it happens in one
-    field of one candidate. `strict=False` reads it as the character it is; nothing else
-    about the grammar is relaxed.
+
+def _loads(text):
+    """Parse JSON the way a person would read it back.
+
+    Two things models do that json.loads will not accept, and that cost whole waves. A
+    multi-line `rationale` arrives with the break as a raw control character, which
+    `strict=False` reads as the character it is. And a list or object closed after a
+    trailing comma parses for every human reader; that one is only tried once the real
+    parse has already failed. Nothing else about the grammar is relaxed.
     """
-    return json.loads(text, strict=False)
+    try:
+        return json.loads(text, strict=False)
+    except json.JSONDecodeError:
+        return json.loads(_TRAILING_COMMA.sub(r"\1", text), strict=False)
 
 
 def _extract_json(text):
@@ -597,8 +606,19 @@ class ChatClient:
                 response_bytes = str(failure).encode()
                 time.sleep(backoff)
                 continue
+            try:
+                result = _extract_json(content)
+            except ValueError:
+                # A reply that is not JSON is as transient as a 502, and was not treated as
+                # one: this parse used to sit outside the loop, so a single malformed object
+                # ended a wave that had already cost fifteen minutes. Same prompt, same
+                # model, another sample -- which is exactly what a retry is for.
+                if last:
+                    raise
+                response_bytes = str(content).encode()
+                time.sleep(backoff)
+                continue
             break
-        result = _extract_json(content)
         self.calls.append({
             "purpose": purpose,
             "request_sha256": _sha256(request_bytes),

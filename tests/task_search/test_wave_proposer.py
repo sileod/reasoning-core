@@ -5,10 +5,12 @@ from pathlib import Path
 import pytest
 import yaml
 
+from reasoning_core.task_search import wave_proposer
 from reasoning_core.task_search.wave_proposer import (
     CatalogEntry,
     CRITIC_MAX_BATCH,
     ChatClient,
+    RETRY_BACKOFF,
     UpstreamError,
     _critic_votes,
     _extract_json,
@@ -773,3 +775,35 @@ def test_extract_json_survives_a_raw_newline_inside_a_string():
     """A model that breaks a line inside a field must not cost the wave its whole round."""
     got = _extract_json('{"why": "first\nsecond"}')
     assert got == {"why": "first\nsecond"}
+
+
+def test_extract_json_accepts_a_trailing_comma():
+    """Every human reader accepts it; json.loads does not, and a wave died on that."""
+    assert _extract_json('{"a": [1, 2,], "b": 3,}') == {"a": [1, 2], "b": 3}
+
+
+def test_a_malformed_reply_is_retried_rather_than_ending_the_wave(monkeypatch):
+    """The parse used to sit outside the retry loop, so one bad sample cost the wave.
+
+    Drives the real ChatClient.json: only the transport and the backoff are replaced, so
+    the retry being exercised is the one that runs in production.
+    """
+    client = ChatClient(model="m", endpoint="https://example.invalid/v1/chat/completions",
+                        api_key="k", stream=False)
+    replies = iter(["sorry, I cannot do that", '{"accepted": []}'])
+
+    class Response:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+    monkeypatch.setattr(wave_proposer.requests, "post", lambda *a, **k: Response())
+    monkeypatch.setattr(
+        ChatClient, "_read_reply",
+        lambda self, response, headers: (next(replies), b"", "id-1"))
+    slept = []
+    monkeypatch.setattr(wave_proposer.time, "sleep", slept.append)
+
+    assert client.json("review", "system", "user") == {"accepted": []}
+    assert slept == [wave_proposer.RETRY_BACKOFF[0]]
