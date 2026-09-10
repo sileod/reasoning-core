@@ -220,13 +220,12 @@ def test_sandboxed_validation_does_not_receive_named_credential(monkeypatch):
     assert results[0]["exit_code"] == 0
 
 
-def test_home_and_hostname_do_not_come_from_the_host(tmp_path):
-    """The last two ways a trial could still read the machine it happened to run on.
+def test_the_worker_is_told_no_path_that_describes_this_machine(tmp_path):
+    """Two runs of one trial on two machines should differ by the work, not the paths.
 
-    Every other XDG directory was already redirected into the trial runtime; HOME was not,
-    so a harness that resolves config through the home directory -- mini, through
-    ~/.config/mini-swe-agent/.env -- read the operator's. A fixed hostname costs one flag
-    on the --unshare-uts that was already there.
+    The host checkout lives under somebody's home on a share named after a cluster, and a
+    path handed to the worker reaches the model and then the trajectory. Here the worktree
+    is always the same string and so is the scratch space, whatever they are outside.
     """
     worktree = tmp_path / "worktree"
     (worktree / "owned").mkdir(parents=True)
@@ -243,9 +242,18 @@ def test_home_and_hostname_do_not_come_from_the_host(tmp_path):
     pairs = list(zip(command, command[1:]))
     setenv = {name: value for flag, name in pairs for check, value in pairs
               if flag == "--setenv" and check == name}
-    assert setenv["HOME"] == str(runtime_root.resolve() / "home")
-    assert setenv["XDG_CONFIG_HOME"] == str(runtime_root.resolve() / "config")
+    assert setenv["HOME"] == "/home/task-search"
+    assert setenv["XDG_CONFIG_HOME"] == "/home/runtime/config"
+    assert setenv["TASK_SEARCH_SPEC"] == "/home/runtime/trial_spec.json"
+    assert ("--chdir", "/home/workspace") in pairs
     assert ("--hostname", "task-search") in pairs
+
+    # Host paths appear only as bind sources, never as something the worker is handed.
+    sources = {command[i + 1] for i, flag in enumerate(command)
+               if flag in {"--bind", "--ro-bind"}}
+    handed = [argument for i, argument in enumerate(command)
+              if str(tmp_path) in argument and argument not in sources]
+    assert handed == []
 
 
 def test_agy_keeps_the_real_home_because_it_authenticates_through_it(tmp_path):

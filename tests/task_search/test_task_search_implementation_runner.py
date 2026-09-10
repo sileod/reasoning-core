@@ -264,7 +264,7 @@ def test_mini_is_driven_by_text_because_the_workers_have_no_tool_calling(tmp_pat
     assert "mini_textbased.yaml" in mini
     assert "mini.yaml" not in mini
     assert _mini_config(
-        tmp_path / "worktree", max_steps=40, timeout_seconds=1800,
+        max_steps=40, timeout_seconds=1800,
     )["model"]["model_class"] == "litellm_textbased"
 
     # The other harnesses do not get dragged along by the change.

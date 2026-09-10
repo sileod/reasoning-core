@@ -6,6 +6,8 @@ from pathlib import Path
 import shutil
 import subprocess
 
+from .namespace import HOSTNAME, USER, Namespace, require_free_root
+
 
 def _write_json(path, value):
     temporary = path.with_name(path.name + ".tmp")
@@ -135,12 +137,6 @@ BASE_ENV_NAMES = (
     "XDG_RUNTIME_DIR",
 )
 
-# The name a worker sees itself under. Fixed so that nothing a worker writes can carry the
-# operator's login, and paired with --hostname for the same reason.
-SANDBOX_USER = "task-search"
-SANDBOX_HOSTNAME = "task-search"
-
-
 def _minimal_environment(passthrough=()):
     """Build an environment from an allowlist rather than subtracting from the operator's.
 
@@ -158,8 +154,8 @@ def _minimal_environment(passthrough=()):
         for name in (*BASE_ENV_NAMES, *passthrough)
         if name in os.environ
     }
-    environment["USER"] = SANDBOX_USER
-    environment["LOGNAME"] = SANDBOX_USER
+    environment["USER"] = USER
+    environment["LOGNAME"] = USER
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
     return environment
 
@@ -190,34 +186,17 @@ def _sandbox_command(
             f"bubblewrap executable not found: {bwrap_bin!r}; "
             "strict task-search runs require bubblewrap"
         )
-    worktree = Path(worktree).resolve()
-    owned = (worktree / owned_path).resolve()
-    if worktree not in owned.parents:
-        raise ValueError(f"owned path escapes worktree: {owned_path}")
-    runtime_root = Path(runtime_root).resolve()
-    for path, label in ((worktree, "worktree"), (runtime_root, "runtime root")):
+    require_free_root()
+    space = Namespace(worktree, runtime_root)
+    for path, label in ((space.worktree, "worktree"), (space.runtime_root, "runtime root")):
         _check_sandbox_location(path, label)
-    runtime_dirs = {
-        # HOME last mattered because everything else was already redirected here except it:
-        # a harness that resolves its own config through the home directory read the
-        # operator's. XDG_CONFIG_HOME is named rather than left to default to $HOME/.config
-        # so the redirect holds for tools that read it directly.
-        "HOME": runtime_root / "home",
-        "XDG_CONFIG_HOME": runtime_root / "config",
-        "XDG_DATA_HOME": runtime_root / "data",
-        "XDG_CACHE_HOME": runtime_root / "cache",
-        "XDG_STATE_HOME": runtime_root / "state",
-        "TMPDIR": runtime_root / "tmp",
-        "MPLCONFIGDIR": runtime_root / "matplotlib",
-    }
-    if not synthetic_home:
-        # AGY reads its own authenticated installation out of the real home, and
-        # `_agy_writable_overlays` binds those paths in. Redirecting HOME would point it at
-        # an empty directory. Said plainly rather than worked around: an AGY trial is the
-        # one kind that still sees the operator's home.
-        runtime_dirs.pop("HOME")
-    for path in runtime_dirs.values():
+    for path in space.host_directories():
         path.mkdir(parents=True, exist_ok=True)
+    # AGY reads its own authenticated installation out of the real home, and
+    # `_agy_writable_overlays` binds those paths in. Redirecting HOME would point it at an
+    # empty directory. Said plainly rather than worked around: an AGY trial is the one kind
+    # that still sees the operator's home.
+    runtime_dirs = space.environment(home=synthetic_home)
     wrapped = [
         executable,
         "--die-with-parent",
@@ -226,7 +205,7 @@ def _sandbox_command(
         "--unshare-ipc",
         "--unshare-uts",
         "--hostname",
-        SANDBOX_HOSTNAME,
+        HOSTNAME,
         "--unshare-cgroup-try",
         "--cap-drop",
         "ALL",
@@ -245,19 +224,12 @@ def _sandbox_command(
         "/dev",
         "--proc",
         "/proc",
-        "--bind",
-        str(owned),
-        str(owned),
-        "--bind",
-        str(runtime_root),
-        str(runtime_root),
-        "--chdir",
-        str(worktree),
+        *space.binds(owned_path, home=synthetic_home),
     ]
     for source, target in writable_overlays:
         source = Path(source).resolve()
         target = Path(target).resolve()
-        if runtime_root != source and runtime_root not in source.parents:
+        if space.runtime_root != source and space.runtime_root not in source.parents:
             raise ValueError(f"writable overlay is outside runtime root: {source}")
         if not source.exists() or not target.exists():
             raise ValueError(
@@ -267,9 +239,7 @@ def _sandbox_command(
     for name, value in runtime_dirs.items():
         wrapped.extend(("--setenv", name, str(value)))
     wrapped.extend(("--setenv", "PYTHONDONTWRITEBYTECODE", "1"))
-    wrapped.extend(
-        ("--setenv", "TASK_SEARCH_SPEC", str(runtime_root / "trial_spec.json"))
-    )
+    wrapped.extend(("--setenv", "TASK_SEARCH_SPEC", str(space.runtime("trial_spec.json"))))
     wrapped.extend(command)
     return wrapped
 

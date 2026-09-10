@@ -11,9 +11,16 @@ trials. Proposal generation remains a separate subsystem in `wave_proposer.py`.
 - `plan.py` owns the frozen `Trial` and `SearchPlan` models, YAML loading, plan checks,
   and trial selection.
 - `implementor_prompt.py` owns `PACE` and `render_implementor_prompt()`.
+- `namespace.py` owns the filesystem a worker sees: the worktree is always
+  `/home/workspace` and the trial's scratch space `/home/runtime`, whatever they are on
+  this machine, so two runs of one trial differ by the work and not by the paths. It knows
+  nothing about task search and is the piece to move if Harness Link ever grows a sandbox
+  mode. `/home` is replaced wholesale because Bubblewrap cannot create a top-level mount
+  point on a read-only root; `require_free_root()` fails loudly on a machine that keeps the
+  interpreter or the operator's home there.
 - `sandbox.py` owns Bubblewrap, resource limits, allowlisted environments, and bounded
   validation subprocesses. A worker's environment is built from `BASE_ENV_NAMES` rather
-  than inherited: `HOME` and the XDG directories point into the trial runtime, the user
+  than inherited: `HOME` and the XDG directories are named by `namespace.py`, the user
   and hostname are fixed, and the only credential present is the one named by
   `--credential-env` (default: the variable named by `TASK_SEARCH_KEY_ENV`). Candidate
   validation gets no credential at all.

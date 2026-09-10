@@ -25,6 +25,7 @@ from .implementor_prompt import (
     render_implementor_prompt,
 )
 from .plan import _frozen_module_drift, _plan_problems, _select_trials, load_plan
+from . import namespace
 from .sandbox import (
     _agy_writable_overlays,
     _check_sandbox_location,
@@ -202,7 +203,6 @@ def opencode_config(
 
 
 def _mini_config(
-    worktree,
     *,
     max_steps,
     timeout_seconds,
@@ -225,7 +225,9 @@ def _mini_config(
             "cost_limit": 0,
         },
         "environment": {
-            "cwd": str(worktree),
+            # The worker's own path, not ours. A config file naming the host checkout would
+            # put it back into every trajectory even with the mounts right.
+            "cwd": str(namespace.WORKSPACE),
             "timeout": min(300, timeout_seconds),
         },
         "model": {
@@ -404,8 +406,11 @@ def _run_trial(
         },
     )
     started = datetime.now(timezone.utc).isoformat()
+    # Anything written for the worker goes under the runtime root, because that is the tree
+    # bound at a fixed path: a config the worker is pointed at by host path would put the
+    # checkout location back into the trial even with the mounts right.
     if harness == "opencode":
-        config_path = trial_root / "opencode.json"
+        config_path = runtime_root / "opencode.json"
         _write_json(
             config_path,
             opencode_config(
@@ -422,11 +427,10 @@ def _run_trial(
         events_path = trial_root / "events.jsonl"
         trajectory_path = None
     elif harness == "mini":
-        config_path = trial_root / "mini.yaml"
+        config_path = runtime_root / "mini.yaml"
         config_path.write_text(
             yaml.safe_dump(
                 _mini_config(
-                    worktree,
                     max_steps=max_steps,
                     timeout_seconds=timeout_seconds,
                     requested_seed=requested_seed,
@@ -445,19 +449,22 @@ def _run_trial(
         events_path = trial_root / "events.jsonl"
     else:
         raise ValueError(f"unsupported harness: {harness}")
+    # Everything the worker is told about is named in its own namespace; the coordinator
+    # keeps the host paths for the artifacts it has to find again afterwards.
+    space = namespace.Namespace(worktree, runtime_root)
     command = _prepare_harness(
         hlink_bin,
         harness,
-        worktree=worktree,
+        worktree=space.workspace(),
         prompt=prompt,
         model=model,
         provider=provider,
         agent=agent,
         variant=variant,
-        config_path=config_path,
-        trajectory_path=trajectory_path,
+        config_path=space.translate(config_path) if config_path else None,
+        trajectory_path=space.translate(trajectory_path) if trajectory_path else None,
         timeout_seconds=timeout_seconds,
-        agy_log_path=runtime_root / "agy.log",
+        agy_log_path=space.runtime("agy.log"),
     )
     command = _sandbox_command(
         command,
