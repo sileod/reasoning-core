@@ -711,3 +711,20 @@ def test_each_reviewer_is_read_in_the_vocabulary_it_was_asked_for(monkeypatch):
 
     answering("VERDICT: INVALID\nWHY: the gold answer is wrong")
     assert validation._sanity_ask("s", "m")["verdict"] == "INVALID"
+
+
+def test_sample_review_survives_a_harness_log_that_is_not_an_event_stream(tmp_path):
+    """mini logs a transcript, not JSONL, and a quoted source line is valid JSON.
+
+    Reading it as events used to raise AttributeError deep inside validate_candidate,
+    which the runner recorded as `orchestration_error` and the trial lost entirely.
+    """
+    worktree = tmp_path / "worktree"
+    (worktree / "owned").mkdir(parents=True)
+    events = tmp_path / "harness.log"
+    events.write_text('"a quoted line from the file being written"\n42\n[1, 2]\n')
+
+    result = _sample_review(worktree, "owned", "P001v1", events)
+
+    assert result["ok"] is False
+    assert result["read_after_last_edit"] is False

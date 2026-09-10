@@ -451,6 +451,12 @@ def _sample_review(worktree, owned_path, trial_id, events_path):
             event = json.loads(line)
         except json.JSONDecodeError:
             continue
+        # opencode and AGY write one JSON object per line; mini writes a human transcript,
+        # where a quoted line of the Python file the worker is typing parses cleanly as a
+        # JSON string. Everything below reads an event, so anything that is not one is not
+        # ours to interpret.
+        if not isinstance(event, dict):
+            continue
         if event.get("event") == "step_update":
             update = event.get("step_update", {})
             if update.get("step_type") != "tool" or update.get("state") != "DONE":
