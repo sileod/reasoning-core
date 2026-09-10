@@ -11,6 +11,7 @@ has a wave is skipped and a run interrupted at any point continues where it stop
 """
 import argparse
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -78,6 +79,13 @@ def main():
         "--passes", type=int, default=3,
         help="sweep the unarchived briefs this many times; a wave that fails writes no"
              " archive, so a later pass retries it")
+    parser.add_argument(
+        "--cooldowns", type=int, default=8,
+        help="how many times to wait out a provider that is refusing everything before"
+             " counting the wave as failed")
+    parser.add_argument(
+        "--cooldown-seconds", type=int, default=1800,
+        help="how long each of those waits is")
     parser.add_argument("--dry-run", action="store_true")
     arguments = parser.parse_args()
     arguments.log_dir.mkdir(parents=True, exist_ok=True)
@@ -99,6 +107,50 @@ def main():
     return 0
 
 
+# NIM answers a quota block with a bare `{"status":429,"title":"Too Many Requests"}` and
+# no Retry-After, so there is nothing to read but the status itself. It refuses a two-token
+# request just as fast as a wave, which is what separates it from ordinary throttling: no
+# amount of per-call backoff gets through, and moving to the next brief only spends the
+# same refusal on a different prompt.
+RATE_LIMITED = re.compile(r"\b429\b|Too Many Requests")
+
+
+def rate_limited(log_path):
+    """Did this wave die because the provider is refusing everything right now?"""
+    try:
+        tail = log_path.read_text()[-4000:]
+    except OSError:
+        return False
+    return bool(RATE_LIMITED.search(tail))
+
+
+def run_wave(arguments, command, log_path):
+    """Run one wave, waiting out a provider that is refusing everything.
+
+    A quota block is not a failed wave, it is a closed door, and the brief behind it is
+    still owed. Waiting costs nothing but time -- which an overnight job has -- while
+    giving up costs the night: the block that prompted this arrived at 01:32 and would
+    have burned the give-up budget on three waves that could not have succeeded.
+    """
+    for cooldown in range(arguments.cooldowns + 1):
+        started = time.time()
+        with log_path.open("w") as log:
+            completed = subprocess.run(command, cwd=ROOT, stdout=log,
+                                       stderr=subprocess.STDOUT)
+        minutes = (time.time() - started) / 60
+        if completed.returncode in (0, INCOMPLETE) or not rate_limited(log_path):
+            return completed, minutes
+        if cooldown == arguments.cooldowns:
+            print(f"    still rate limited after {arguments.cooldowns} waits",
+                  flush=True)
+            return completed, minutes
+        print(f"    rate limited after {minutes:.0f}m; waiting"
+              f" {arguments.cooldown_seconds // 60}m"
+              f" ({cooldown + 1}/{arguments.cooldowns})", flush=True)
+        time.sleep(arguments.cooldown_seconds)
+    raise AssertionError("unreachable")
+
+
 def sweep_once(arguments, pending):
     """One pass over the briefs with no archive. A status means stop, None means continue.
 
@@ -117,19 +169,16 @@ def sweep_once(arguments, pending):
         if arguments.dry_run:
             print(f"[{index}/{len(pending)}] would run: {name}", flush=True)
             continue
-        started = time.time()
         print(f"[{index}/{len(pending)}] {time.strftime('%H:%M')} {name}", flush=True)
-        with (arguments.log_dir / f"{slug}.log").open("w") as log:
-            completed = subprocess.run(command, cwd=ROOT, stdout=log,
-                                       stderr=subprocess.STDOUT)
-        minutes = (time.time() - started) / 60
+        log_path = arguments.log_dir / f"{slug}.log"
+        completed, minutes = run_wave(arguments, command, log_path)
         if completed.returncode in (0, INCOMPLETE):
             failures = 0
             print(f"    ok in {minutes:.0f}m, {accepted(name)} accepted", flush=True)
         else:
             failures += 1
             print(f"    FAILED (exit {completed.returncode}) after {minutes:.0f}m"
-                  f" -- see {arguments.log_dir / f'{slug}.log'}", flush=True)
+                  f" -- see {log_path}", flush=True)
             if failures >= GIVE_UP_AFTER:
                 print(f"stopping: {failures} waves failed in a row", flush=True)
                 return 1
