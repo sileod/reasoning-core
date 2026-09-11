@@ -658,6 +658,46 @@ for offset, (module_name, class_name) in enumerate(classes):
                 assert task.score_answer(bad, entry) < 1, (
                     module_name, class_name, sample,
                     f"invalid answer scored as correct: {bad!r}; gold={entry.answer!r}")
+        # Metadata is an EasyDict, so a key that shadows a dict method replaces it, and a
+        # key named `items` kills the parallel build when something calls metadata.items().
+        # Reported rather than asserted: measured across the library, `items` does break
+        # workers=8 while `values` does not, so failing on the whole set would reject four
+        # healthy tasks. The buildability gate below is the assertion, because it runs what
+        # actually ships instead of guessing which names are fatal.
+        if sample == 0:
+            shadowed = sorted(set(entry.to_dict().get("metadata") or {}) & set(dir(dict)))
+            if shadowed:
+                print(f"SHADOWED_METADATA {module_name}.{class_name}"
+                      f" {', '.join(shadowed)}")
+
+    # Every gate above audits generate_example; every consumer calls
+    # generate_balanced_batch. That seam has already produced false rejections in the
+    # constant-guess gate and false acceptances here, so the buildability gate asks for
+    # exactly what the cache builder asks for.
+    for level in range(5):
+        filled, why, keys = None, "", 0
+        # workers=8 is the builder's call; the retry at 1 separates an answer space too
+        # small to fill a batch from a break in the parallel path, which are different bugs.
+        for workers in (8, 1):
+            try:
+                batch = task.generate_balanced_batch(
+                    batch_size=64, level=level, deduplication=True, workers=workers)
+            except Exception as error:
+                why = f"{type(error).__name__}: {str(error)[:120]}"
+                continue
+            if len(batch) < 64:
+                why = f"only {len(batch)}/64 rows"
+                continue
+            filled, why = workers, ""
+            # An attribute the balancer sets on the problem, not a metadata field.
+            keys = len({str(getattr(row, "balancing_key", None)) for row in batch})
+            break
+        assert filled, (module_name, class_name, level,
+                        f"generate_balanced_batch cannot fill 64 at any worker count: {why}")
+        # Not pass/fail: a task whose batch realises a handful of distinct answers is
+        # near-degenerate, and narrow tasks saturate early and transfer least.
+        print(f"BUILDABLE {module_name}.{class_name} level={level}"
+              f" workers={filled} distinct_keys={keys}")
 print(f"CONTRACT_AUDIT_OK {len(classes)} task class(es)")
 """
 
