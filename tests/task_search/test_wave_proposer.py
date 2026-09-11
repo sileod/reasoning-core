@@ -23,6 +23,7 @@ from reasoning_core.task_search.wave_proposer import (
     closest_entries,
     proposal_problems,
     propose_wave,
+    rejected_candidates,
     validate_proposal_wave,
     write_proposal_wave,
 )
@@ -30,6 +31,8 @@ from reasoning_core.task_search.wave_proposer import (
 
 ROOT = Path(__file__).parents[2]
 VARIANT = re.compile(r"_v\d+$")
+SUMMARY = ("Propagate signed relation constraints across cycles and overlapping"
+           " paths, answering the queried pair's parity.")
 
 
 def proposal(name="fresh_operation"):
@@ -1333,3 +1336,46 @@ def test_a_resumed_wave_keeps_what_the_dead_attempt_had_already_accepted():
 
     assert [row["name"] for row in wave["proposals"]][:1] == ["already_accepted"]
     assert "already_judged" in {row["name"] for row in wave["rejected"]}
+
+
+def _archive(root, name, rejected):
+    directory = root / "reasoning_core" / "task_search" / "proposals" / "archive"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / f"{name}.yaml").write_text(yaml.safe_dump(
+        {"name": name, "proposals": [], "rejected": rejected}))
+
+
+def test_an_archived_rejection_is_a_whole_proposal_again(tmp_path):
+    """A proposal is a name and a summary, so nothing about a rejected one was lost. The
+    gate that turned them down is not the gate running today, and re-judging costs no
+    generation at all."""
+    _archive(tmp_path, "old", [
+        {"name": "worth_another_look", "summary": SUMMARY, "reason": "known"},
+        {"name": "pre_summary_era", "reason": "known"},
+    ])
+
+    found = rejected_candidates(tmp_path)
+
+    assert found == [{"name": "worth_another_look", "summary": SUMMARY}], (
+        "a rejection with no summary cannot be recovered and must not be invented")
+
+
+def test_a_rejection_gets_one_second_chance_and_not_a_third(tmp_path):
+    """Replay keeps no state, so the archives themselves have to stop it re-offering
+    everything the last replay rejected, every night, forever."""
+    _archive(tmp_path, "first", [{"name": "twice_judged", "summary": SUMMARY,
+                                  "reason": "known"},
+                                 {"name": "once_judged", "summary": SUMMARY,
+                                  "reason": "known"}])
+    _archive(tmp_path, "replay", [{"name": "twice_judged", "summary": SUMMARY,
+                                   "reason": "still known"}])
+
+    assert [row["name"] for row in rejected_candidates(tmp_path)] == ["once_judged"]
+
+
+def test_a_rejection_that_has_since_shipped_is_not_offered_again(tmp_path):
+    _archive(tmp_path, "old", [{"name": "already_here", "summary": SUMMARY,
+                                "reason": "known"}])
+    catalog = [CatalogEntry("task:already_here", "already_here", SUMMARY, "task")]
+
+    assert rejected_candidates(tmp_path, catalog) == []

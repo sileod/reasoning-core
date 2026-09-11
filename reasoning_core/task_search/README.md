@@ -102,6 +102,31 @@ python -m reasoning_core.task_search check-proposals \
   reasoning_core/task_search/proposals/archive/sft-wave-1.yaml
 ```
 
+### Replay what the gate turned down
+
+A wave that dies mid-flight leaves `<archive>.yaml.partial`, and the next `propose` for that
+name picks it up -- accepted proposals, ballots, and the candidates it generated but never
+had critic budget to review. The archive itself stays write-once, because an archive on disk
+is what tells the briefs driver a brief is finished.
+
+`--replay N` seeds that same pool from history instead. A proposal is a name and a summary
+and nothing else, so an archived rejection is a whole proposal: `--replay` re-judges up to N
+of them under the current gate, and because the pool is always reviewed before a round
+generates, they cost critic calls and no generation at all.
+
+```bash
+python -m reasoning_core.task_search propose replay-1 --count 12 --replay 60
+```
+
+This is the cheap half of a feedback loop, and deliberately the only half. Of 523 candidates
+proposed so far, 300 died at the novelty gate, 0 at scheduling and 2 at implementation --
+`funnel.py` prints that -- so the gate is already the only stage rejecting anything, and
+tightening it further would buy nothing. Replay is one second chance per idea: a name turned
+down twice is held back, counted from the archives so replaying needs no state of its own.
+Anything that has since shipped under the same name is skipped too. Use `audit_novelty.py`
+to measure how harsh the gate currently is -- it offers shipped tasks back as fresh
+candidates and reports what the critic says about tasks already known to be worth having.
+
 ### Several models, several keys
 
 `--model` and `--api-key-env` both take comma-separated lists: models in preference order,

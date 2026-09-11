@@ -118,6 +118,11 @@ def _parser():
         "--pool-size", type=int, default=48,
         help="candidates to ask for per round before diversity selection")
     propose.add_argument(
+        "--replay", type=int, default=0, metavar="N",
+        help="seed the pool with up to N proposals earlier waves generated and rejected,"
+             " so this wave re-judges them under the current gate before paying to"
+             " generate anything new")
+    propose.add_argument(
         "--critic-model", default=CRITIC_MODEL,
         help="model for the novelty review, on its own provider so that the two calls in"
              " a round cannot starve each other; 'same' reuses the proposer's client")
@@ -293,6 +298,18 @@ def main(argv=None):
             print(f"resuming {partial}: {len(resume.get('proposals') or [])} accepted, "
                   f"{len(resume.get('pool') or [])} pooled, "
                   f"{len(resume.get('rejected') or [])} already judged", file=sys.stderr)
+        if args.replay:
+            # The pool is reviewed before a round generates, so seeding it here is the
+            # whole feature: replayed candidates cost critic calls and nothing else.
+            from .wave_proposer import build_catalog, rejected_candidates
+
+            replayed = rejected_candidates(
+                repo_root, build_catalog(repo_root), limit=args.replay)
+            pooled = {row.get("name") for row in (resume or {}).get("pool") or []}
+            resume = {**(resume or {}), "pool": [*((resume or {}).get("pool") or []),
+                                                 *(row for row in replayed
+                                                   if row["name"] not in pooled)]}
+            print(f"replaying {len(replayed)} archived rejections", file=sys.stderr)
         # Both accept comma-separated lists: models in preference order, keys to share
         # round-robin. One of each is the single client this always built.
         models = [item.strip() for item in args.model.split(",") if item.strip()]

@@ -69,3 +69,26 @@ def test_a_checkpoint_can_be_written_twice_and_never_claims_the_archive(monkeypa
 
     assert archive.exists(), "the finished wave was never archived"
     assert not partial.exists(), "the working file outlived the wave"
+
+
+def test_replay_seeds_the_pool_so_a_wave_rejudges_before_it_generates(monkeypatch, tmp_path):
+    from reasoning_core.task_search import wave_proposer
+
+    archive = tmp_path / "replayed.yaml"
+    seen = {}
+
+    def fake_propose_wave(repo_root, **kwargs):
+        seen.update(kwargs)
+        return {"name": "replayed", "proposals": [], "rejected": [],
+                "objective": {"requested": 0, "complete": True}}
+
+    monkeypatch.setattr(wave_proposer, "propose_wave", fake_propose_wave)
+    monkeypatch.setattr(cli, "build_pool", lambda *args, **kwargs: None)
+    monkeypatch.setenv("FAKE_PROPOSER_KEY", "k")
+
+    cli.main(["propose", "replayed", "--output", str(archive), "--count", "1",
+              "--replay", "3", "--api-key-env", "FAKE_PROPOSER_KEY"])
+
+    pool = seen["resume"]["pool"]
+    assert len(pool) == 3, "the replayed rejections never reached the pool"
+    assert all(set(row) == {"name", "summary"} for row in pool)

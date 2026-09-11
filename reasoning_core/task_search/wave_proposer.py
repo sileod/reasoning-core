@@ -207,6 +207,48 @@ def _proposal_entries(repo_root):
     return entries
 
 
+def rejected_candidates(repo_root, catalog=(), limit=None):
+    """Proposals this pipeline generated, judged, and turned down.
+
+    A proposal is a name and a summary and nothing else, so an archived rejection is a
+    whole proposal: the wave already paid a model to write it. Rejections are also where
+    the funnel loses almost everything -- of 523 candidates proposed, 300 died here and 2
+    died in implementation -- and the gate that turned them down is not the gate running
+    today. Re-judging them costs critic calls and no generation at all, which is the cheap
+    half of a feedback loop: the expensive half would be tightening a gate that is already
+    the only thing rejecting anything.
+
+    Anything that has since shipped under the same name is left out, and so is anything
+    already turned down twice: one second chance per idea, counted from the archives
+    themselves so that replaying needs no state of its own. Without that rule every replay
+    would re-offer everything the previous replay rejected, forever.
+    """
+    known = {entry.name for entry in catalog}
+    root = Path(repo_root) / "reasoning_core" / "task_search" / "proposals" / "archive"
+    rows = []
+    for path in sorted(root.rglob("*.yaml")) if root.is_dir() else ():
+        try:
+            data = yaml.safe_load(path.read_text()) or {}
+        except yaml.YAMLError:
+            continue
+        rows.extend(data.get("rejected", ()))
+    judged = Counter(_snake(row.get("name")) for row in rows)
+    found, seen = [], set()
+    for row in rows:
+        candidate = {"name": _snake(row.get("name")),
+                     "summary": _one_line(row.get("summary"))}
+        # The invalid ones are the pre-summary archives and a handful the shape rules have
+        # since outgrown. They are not recoverable: what the proposer wrote is gone.
+        if (candidate["name"] in seen or candidate["name"] in known
+                or judged[candidate["name"]] > 1 or proposal_problems(candidate)):
+            continue
+        seen.add(candidate["name"])
+        found.append(candidate)
+        if limit is not None and len(found) >= limit:
+            break
+    return found
+
+
 def build_catalog(repo_root):
     """Build deterministic novelty memory from tasks, plans and archived proposals."""
     # Best account of an idea first, because the first one seen under a name is the one
