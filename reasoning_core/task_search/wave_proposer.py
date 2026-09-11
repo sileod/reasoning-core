@@ -961,6 +961,10 @@ def _critic_votes(critic, reviewable, catalog, *, max_catalog_chars, samples,
                 votes[position].append(
                     None if not review
                     else _review_verdict(review, candidate_id, allowed))
+            # A sample over a full catalog takes minutes, and a caller that prints only a
+            # final tally is silent for as long as every sample takes together -- long
+            # enough that a run killed near the end reports nothing at all.
+            print(f"  {purpose}: {len(seats)} reviewed", file=sys.stderr)
     return votes
 
 
