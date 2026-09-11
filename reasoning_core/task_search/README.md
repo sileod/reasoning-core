@@ -145,7 +145,7 @@ proposer writes them. It keeps no state, so it can be killed at any point.
 ```bash
 scripts/run_implementors.py --once --dry-run     # what it would do
 scripts/run_implementors.py --max-attempts 3     # then leave it running
-scripts/run_implementors.py --variants 2 --design-choices
+scripts/run_implementors.py --design-choices 2   # two named approaches + a baseline
 ```
 
 `--design-choices` runs the design proposer first and gives each variant its own named
@@ -164,13 +164,15 @@ Generate two distinct approaches per proposal, then run one worker per approach:
 
 ```bash
 python -m reasoning_core.task_search plan proposals.yaml --name choice_pilot \
-  --variants 2 --design-choices 2
+  --variants 3 --design-choices 2
 python -m reasoning_core.task_search run reasoning_core/task_search/plans/choice_pilot.yaml \
   --model deepseek-v4-flash --provider albert
 ```
 
 The design proposer defaults to DeepSeek V4 Flash on Albert and uses `ALBERT_API_KEY`.
-`--design-choices` must equal `--variants`; without it, variants differ only by seed.
+`--variants` must be `--design-choices` plus one: the extra draw gets no named approach,
+so every wave carries an unguided baseline to compare the guided ones against. Without
+`--design-choices` at all, variants differ only by seed.
 Every proposal in the input is included, so use a proposal subset for a small pilot.
 
 The exact assigned approach is stored as `trials[].design_choice` in the plan, under
