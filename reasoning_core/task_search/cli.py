@@ -114,7 +114,9 @@ def _parser():
         help="proposals per model call; NIM's gateway returns 504 long before "
              "kimi-k3 finishes writing sixty of them",
     )
-    propose.add_argument("--max-catalog-chars", type=int, default=240000)
+    propose.add_argument(
+        "--pool-size", type=int, default=48,
+        help="candidates to ask for per round before diversity selection")
     propose.add_argument(
         "--critic-model", default=CRITIC_MODEL,
         help="model for the novelty review, on its own provider so that the two calls in"
@@ -325,8 +327,8 @@ def main(argv=None):
                                      else args.critic_reasoning_effort),
             critic_samples=max(1, args.critic_samples),
             rounds=args.rounds,
+            pool_size=args.pool_size,
             max_batch=args.max_batch,
-            max_catalog_chars=args.max_catalog_chars,
             timeout=args.timeout_seconds,
         )
         write_proposal_wave(output, wave)

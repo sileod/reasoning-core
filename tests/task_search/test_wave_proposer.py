@@ -40,16 +40,48 @@ def proposal(name="fresh_operation"):
     }
 
 
+def shown_ids(user):
+    """The catalog ids a critic prompt actually offered, per candidate seat."""
+    candidates = json.loads(user.split("CANDIDATES:\n", 1)[1])
+    return {item["proposal_id"]: [entry["id"] for entry in item["closest_known"]]
+            for item in candidates}
+
+
+def grounded(reviews, user):
+    """Rewrite a scripted review's neighbour ids to ones this prompt offered.
+
+    The critic no longer holds the catalog, so naming an id from outside the prompt is
+    inventing one. A fake that recites ids fixed when the tests were written would be
+    testing a contract the critic can no longer meet; the relationships and scores are what
+    each test is really about, and those are left alone.
+    """
+    offered = shown_ids(user)
+    grounded_reviews = []
+    for review in reviews["reviews"]:
+        available = offered.get(review["proposal_id"]) or []
+        neighbors = review.get("nearest_neighbors")
+        if isinstance(neighbors, list) and available:
+            neighbors = [{**neighbor, "id": available[index % len(available)]}
+                         if isinstance(neighbor, dict) and "id" in neighbor else neighbor
+                         for index, neighbor in enumerate(neighbors)]
+            review = {**review, "nearest_neighbors": neighbors}
+        grounded_reviews.append(review)
+    return {**reviews, "reviews": grounded_reviews}
+
+
 class FakeClient:
-    def __init__(self, generated, reviews):
+    def __init__(self, generated, reviews, ground=True):
         self.generated = generated
         self.reviews = reviews
+        self.ground = ground
         self.calls = []
 
     def json(self, purpose, system, user, max_tokens=32768):
         self.calls.append({"purpose": purpose, "request_sha256": "a",
                            "response_sha256": "b", "response_id": purpose})
-        return self.generated if purpose.startswith("propose") else self.reviews
+        if purpose.startswith("propose"):
+            return self.generated
+        return grounded(self.reviews, user) if self.ground else self.reviews
 
 
 def test_catalog_includes_gallery_plans_and_tasks():
@@ -346,16 +378,16 @@ def test_the_critic_can_run_on_a_separate_client_from_the_proposer(tmp_path):
 
     proposer = Client("big", {"proposals": [
         {"name": "novel_thing", "summary": 'Given a labelled hypergraph and a rewrite budget, decide which contraction orders reach the target normal form and report the cheapest one.'}]})
-    critic = Client("small", {"reviews": [{
+    class GroundedCritic(Client):
+        def json(self, purpose, system, user):
+            reply = super().json(purpose, system, user)
+            return grounded(reply, user) if purpose.startswith("critic") else reply
+
+    critic = GroundedCritic("small", {"reviews": [{
         "proposal_id": "C001", "verdict": "novel",
-        "nearest_neighbors": [
-            {"id": "plan:WAVE0:M1", "relationship": "adjacent",
-             "overlap": "both propagate constraints"},
-            {"id": "gallery:belief_tracking", "relationship": "different",
-             "overlap": "both update latent relations"},
-            {"id": "gallery:constraint_satisfaction", "relationship": "adjacent",
-             "overlap": "both enforce consistency"},
-        ],
+        "nearest_neighbors": [{"id": "-", "relationship": "adjacent", "overlap": "a"},
+                              {"id": "-", "relationship": "different", "overlap": "b"},
+                              {"id": "-", "relationship": "adjacent", "overlap": "c"}],
         "substantive_difference": "contracts hyperedges under a cost budget",
         "scores": {"novelty": 5, "sft_value": 5, "feasibility": 5, "clarity": 5},
         "reason": "distinct operation"}]})
@@ -399,15 +431,15 @@ def test_one_client_still_does_both_jobs_when_no_critic_is_given(tmp_path):
     assert len(solo.purposes) == 2
 
 
-def _neighbors():
-    return [
-        {"id": "plan:WAVE0:M1", "relationship": "adjacent",
-         "overlap": "both propagate constraints"},
-        {"id": "gallery:belief_tracking", "relationship": "different",
-         "overlap": "both update latent relations"},
-        {"id": "gallery:constraint_satisfaction", "relationship": "adjacent",
-         "overlap": "both enforce consistency"},
-    ]
+def _neighbors(user, seat="C001"):
+    """Three well-formed neighbours, named from the ids this prompt actually offered."""
+    available = shown_ids(user)[seat]
+    relations = [("adjacent", "both propagate constraints"),
+                 ("different", "both update latent relations"),
+                 ("adjacent", "both enforce consistency")]
+    return [{"id": available[index % len(available)],
+             "relationship": relationship, "overlap": overlap}
+            for index, (relationship, overlap) in enumerate(relations)]
 
 
 class VotingCritic:
@@ -427,7 +459,7 @@ class VotingCritic:
             return {"reviews": []}
         return {"reviews": [{
             "proposal_id": "C001", "verdict": verdict,
-            "nearest_neighbors": _neighbors(),
+            "nearest_neighbors": _neighbors(user),
             "substantive_difference": "contracts hyperedges under a cost budget",
             "scores": {"novelty": 5 if verdict == "novel" else 2, "sft_value": 5,
                        "feasibility": 5, "clarity": 5},
@@ -510,7 +542,7 @@ def test_each_sample_shuffles_the_candidates_and_verdicts_follow_the_proposal():
             return {"reviews": [
                 {"proposal_id": f"C{seat:03d}",
                  "verdict": "novel" if name == liked else "duplicate",
-                 "nearest_neighbors": _neighbors(),
+                 "nearest_neighbors": _neighbors(user),
                  "substantive_difference": "a genuinely different operation",
                  "scores": {"novelty": 5 if name == liked else 1, "sft_value": 5,
                             "feasibility": 5, "clarity": 5},
@@ -612,7 +644,7 @@ def test_a_critic_batch_is_capped_so_a_truncated_reply_cannot_reject_the_tail():
 
     candidates = [proposal(f"candidate_number_{index:02d}") for index in range(30)]
     critic = Critic()
-    _critic_votes(critic, candidates, [], max_catalog_chars=1000, samples=1,
+    _critic_votes(critic, candidates, [], samples=1,
                   round_index=1, wave_name="capped")
 
     assert max(seen) <= CRITIC_MAX_BATCH, f"sent a batch of {max(seen)} candidates"
@@ -700,27 +732,43 @@ def test_an_unavailable_embedder_costs_the_ranking_and_not_the_wave(monkeypatch)
     assert [entry.name for entry in merged[0]] == ["bit_string_parity"]
 
 
-def test_a_brief_steers_the_prompt_and_an_unsteered_wave_is_byte_identical():
-    """Steering must be opt-in at the byte level, or it breaks comparison with old waves.
+def test_a_brief_steers_the_prompt_and_the_steer_stays_additive():
+    """The steer is a block, not a rewrite: removing it leaves the rest of the prompt.
 
-    Every archived wave was proposed against the unsteered prompt. If adding the feature
-    moved a single character of it, a wave proposed before and one proposed after would
-    stop being the same experiment.
+    This used to assert byte-identity with every archived wave, so that a wave proposed
+    before the feature and one proposed after were the same experiment. That comparison is
+    gone on purpose -- the prompt now shows the entries a brief attracts instead of the
+    whole catalog -- and pretending otherwise would make the test a fiction. What still has
+    to hold is that the brief only ever adds.
     """
     from reasoning_core.task_search.wave_proposer import _proposer_prompt
 
-    plain = _proposer_prompt(3, "known:x | x | does x", ("y: rejected",))
-    steered = _proposer_prompt(3, "known:x | x | does x", ("y: rejected",),
+    entries = (CatalogEntry("known:x", "x", "does x", "task"),)
+    plain = _proposer_prompt(3, entries, ("y: rejected",))
+    steered = _proposer_prompt(3, entries, ("y: rejected",),
                                "Graph algorithms whose answer is a permutation.")
 
     assert "What this wave is for" not in plain
     assert "Graph algorithms whose answer is a permutation." in steered
-    # The steer is additive: removing its block leaves the prompt that has always been sent.
     without = steered.replace(
         steered[steered.index("\nWhat this wave is for"):steered.index("\nRules:")], "")
     assert without == plain
     # And it says the brief is not a licence to repeat a known task.
     assert "relaxes nothing" in steered
+
+
+def test_the_proposer_is_shown_attractors_to_avoid_not_a_catalog_to_imitate():
+    """The catalog evaluates proposals; it must not prime them. Four hundred entries in a
+    negative prompt is a style guide the model cannot help imitating, and it was also the
+    single largest cost in the wave."""
+    from reasoning_core.task_search.wave_proposer import _proposer_prompt
+
+    entries = (CatalogEntry("known:x", "x", "does x", "task"),)
+    prompt = _proposer_prompt(3, entries)
+
+    assert "attractors to move" in prompt and "not examples to follow" in prompt
+    assert "KNOWN TASK CATALOG" not in prompt
+    assert "known:x | x | does x" in prompt
 
 
 def test_a_brief_is_normalised_and_bounded():
@@ -996,7 +1044,7 @@ class BallotCritic:
         self.purposes.append(purpose)
         self.calls.append({"purpose": purpose})
         entry = self.script.pop(0)
-        neighbors = [] if entry == "malformed" else _neighbors()
+        neighbors = [] if entry == "malformed" else _neighbors(user)
         return {"reviews": [{
             "proposal_id": "C001", "verdict": "novel",
             "nearest_neighbors": neighbors,
@@ -1070,3 +1118,84 @@ def test_a_pool_does_not_climb_the_retry_ladder_before_trying_another_key(monkey
     pool.json("propose", "s", "u")
     # The first route fails fast; only the last one, with nothing left to route to, waits.
     assert seen == [("key1", False), ("key2", True)]
+
+
+def _fake_embedding(monkeypatch, vectors):
+    """An embedder that returns a fixed vector per text, so selection is deterministic."""
+    from reasoning_core.task_search import embedding
+
+    monkeypatch.setattr(embedding, "configured", lambda: True)
+    monkeypatch.setattr(embedding, "embed",
+                        lambda texts: [vectors[text.split()[0]] for text in texts])
+
+
+def test_diversify_spends_the_critic_budget_on_distinct_directions(monkeypatch):
+    """A model asked for many tasks writes several passes over its favourite mechanism.
+    Taking the first few spends the whole critic budget inside one basin."""
+    from reasoning_core.task_search.wave_proposer import diversify
+
+    _fake_embedding(monkeypatch, {
+        "cluster_a1": [1.0, 0.0], "cluster_a2": [0.99, 0.14],
+        "cluster_a3": [0.98, 0.2], "far_away": [0.0, 1.0],
+        "known": [0.7, 0.7],
+    })
+    pool = [proposal("cluster_a1"), proposal("cluster_a2"),
+            proposal("cluster_a3"), proposal("far_away")]
+    catalog = [CatalogEntry("task:known", "known", "a known thing", "task")]
+
+    chosen = [item["name"] for item in diversify(pool, catalog, 2)]
+
+    assert "far_away" in chosen
+    assert len([name for name in chosen if name.startswith("cluster_a")]) == 1
+
+
+def test_diversify_without_an_embedder_keeps_the_pool_order(monkeypatch):
+    """The embedder is optional everywhere else in this file and stays optional here: no
+    endpoint means no selection, not a failed wave."""
+    from reasoning_core.task_search import embedding
+    from reasoning_core.task_search.wave_proposer import diversify
+
+    monkeypatch.setattr(embedding, "configured", lambda: False)
+    pool = [proposal(f"candidate_{index}") for index in range(5)]
+
+    assert [item["name"] for item in diversify(pool, [], 2)] == ["candidate_0", "candidate_1"]
+
+
+def test_a_ballot_naming_an_id_outside_the_prompt_abstains():
+    """The critic no longer holds the catalog, so an id it was not shown is invented rather
+    than recalled -- and an invented neighbour is not evidence of a duplicate."""
+    class Critic:
+        model, provider, endpoint, reasoning_effort = "small", "fake", "http://fake", None
+
+        def __init__(self):
+            self.calls = []
+
+        def json(self, purpose, system, user):
+            self.calls.append({"purpose": purpose})
+            return {"reviews": [{
+                "proposal_id": "C001", "verdict": "novel",
+                "nearest_neighbors": [
+                    {"id": "gallery:never_shown", "relationship": "adjacent", "overlap": "x"},
+                    {"id": "gallery:also_not_shown", "relationship": "different", "overlap": "y"},
+                    {"id": "gallery:nor_this", "relationship": "adjacent", "overlap": "z"},
+                ],
+                "substantive_difference": "...",
+                "scores": {"novelty": 5, "sft_value": 5, "feasibility": 5, "clarity": 5},
+                "reason": "distinct"}]}
+
+    catalog = [CatalogEntry("task:known", "known_thing", "a known thing", "task")]
+    votes = _critic_votes(Critic(), [proposal("something_new")], catalog,
+                          samples=1, round_index=1, wave_name="scoped")
+
+    assert votes[0][0]["neighbors_valid"] is False
+
+
+def test_the_critic_prompt_carries_neighbours_not_the_whole_catalog():
+    from reasoning_core.task_search.wave_proposer import _critic_prompt
+
+    catalog = [CatalogEntry(f"task:t{index}", f"task_{index}", f"does {index}", "task")
+               for index in range(40)]
+    prompt = _critic_prompt([proposal("a_candidate")], [tuple(catalog[:3])])
+
+    assert "FULL KNOWN CATALOG" not in prompt
+    assert "task:t0" in prompt and "task:t39" not in prompt

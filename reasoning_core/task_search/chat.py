@@ -24,10 +24,8 @@ import requests
 # just asks the same overloaded queue the same question twice and gives up. Wait longer
 # than a call takes, and keep waiting -- a wave is hours of work, and losing it to a
 # gateway timeout costs far more than sitting out ten minutes.
-# Which model to ask, and where, is the caller's decision -- a transport that defaults to
-# one names a proposer's preference in a file that should not have one. The key env is the
-# exception, kept because callers have always relied on finding one without naming it.
-FALLBACK_KEY_ENV = "NVIDIA_API_KEY"
+# Which model to ask, where, and with whose key are all the caller's decisions. A transport
+# that defaults to any of them names one job's preferences in a file shared by four.
 RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
 RETRY_BACKOFF = (30, 90, 240, 600)
 
@@ -108,9 +106,9 @@ class ChatClient:
                  reasoning_effort="max", timeout=600, stream=True):
         self.model, self.endpoint = model, endpoint
         self.provider = provider_of(endpoint)
-        self.api_key = api_key or os.environ.get(FALLBACK_KEY_ENV)
-        if not self.api_key:
+        if not api_key:
             raise RuntimeError(f"an API key is required for {self.provider}")
+        self.api_key = api_key
         if reasoning_effort not in {"low", "high", "max", None}:
             raise ValueError("reasoning_effort must be low, high, max or None")
         self.seed, self.temperature = seed, temperature

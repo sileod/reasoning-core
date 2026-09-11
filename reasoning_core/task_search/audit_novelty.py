@@ -43,12 +43,12 @@ def verdicts(votes, held_out):
         cast = [ballot for ballot in ballots if ballot and ballot["neighbors_valid"]]
         in_favour = [ballot for ballot in cast if ballot["passes"]]
         if not cast:
-            yield entry, None, f"0/{len(ballots)} usable ballots", []
+            yield entry, None, f"0/{len(ballots)} usable ballots", None
             continue
         tally = f"{len(in_favour)}/{len(cast)}"
         losing = next((other for other in cast if not other["passes"]), None)
-        yield (entry, len(in_favour) * 2 > len(cast), tally,
-               [] if losing is None else losing["neighbors"])
+        shown = losing if losing is not None else in_favour[0]
+        yield entry, len(in_favour) * 2 > len(cast), tally, shown
 
 
 def main(argv=None):
@@ -60,7 +60,6 @@ def main(argv=None):
     parser.add_argument("--endpoint", default=CRITIC_ENDPOINT)
     parser.add_argument("--api-key-env", default=CRITIC_API_KEY_ENV)
     parser.add_argument("--samples", type=int, default=CRITIC_SAMPLES)
-    parser.add_argument("--max-catalog-chars", type=int, default=240_000)
     parser.add_argument("--timeout-seconds", type=int, default=2400)
     arguments = parser.parse_args(argv)
 
@@ -76,17 +75,24 @@ def main(argv=None):
                         timeout=arguments.timeout_seconds)
     votes = _critic_votes(
         critic, [{"name": entry.name, "summary": entry.summary} for entry in held_out],
-        list(remaining), max_catalog_chars=arguments.max_catalog_chars,
+        list(remaining),
         samples=arguments.samples, round_index=1, wave_name="audit-novelty",
         max_batch=CRITIC_MAX_BATCH)
 
     readmitted = 0
-    for entry, passed, tally, neighbors in verdicts(votes, held_out):
+    for entry, passed, tally, ballot in verdicts(votes, held_out):
         readmitted += bool(passed)
         mark = "novel " if passed else ("REJECT" if passed is False else "unusable")
-        collided = next((n.get("id") for n in neighbors
+        # Why it failed, not just that it did: a rejection that names no overlap and
+        # scores 2 on novelty is the gate disliking the task, not finding a duplicate,
+        # and those are different problems with different fixes.
+        scores = (ballot or {}).get("scores") or {}
+        graded = " ".join(f"{key[:4]}={scores.get(key, '-')}"
+                          for key in ("novelty", "sft_value", "feasibility", "clarity"))
+        collided = next((n.get("id") for n in (ballot or {}).get("neighbors") or []
                          if n.get("relationship") in ("same_operation", "variant")), "")
-        print(f"  {mark} {tally:>5}  {entry.name:<44} {collided}")
+        print(f"  {mark} {tally:>5}  {entry.name:<42} "
+              f"{(ballot or {}).get('verdict', '-'):<10} {graded}  {collided}")
     print(f"\n{readmitted}/{len(held_out)} shipped tasks would be accepted as new today")
     return 0
 
