@@ -703,7 +703,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                  max_batch=MAX_BATCH, timeout=2400, client=None,
                  critic_model=None, critic_endpoint=None, critic_api_key=None,
                  critic_reasoning_effort=None, critic_client=None,
-                 critic_samples=1, brief=""):
+                 critic_samples=1, brief="", resume=None):
     """Generate and independently novelty-review an SFT proposal wave.
 
     The critic can run on a different provider from the proposer, and by default should.
@@ -719,7 +719,8 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
     `checkpoint` is called with the wave so far after every round. A wave is hours of
     provider latency and the archive used to be written only once it returned, so a 429 in
     the last round threw away every proposal the earlier ones had accepted and every ballot
-    already paid for.
+    already paid for. `resume` takes such a checkpoint back, so the retry continues the
+    wave instead of buying its candidates a second time.
     """
     if count < 1 or rounds < 1:
         raise ValueError("count and rounds must be positive")
@@ -749,10 +750,21 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
     # model whose cost is an hour of latency. They are reviewed first and, if the wave ends
     # with any left, archived rather than discarded.
     pool, round_names = [], set()
+    if resume:
+        # Everything the interrupted attempt paid for: the proposals it accepted, the
+        # ballots that rejected the others, and the candidates it generated but never had
+        # critic budget to review. Seeding the names too keeps the proposer from spending
+        # a round writing what this wave has already seen.
+        accepted.extend(resume.get("proposals") or [])
+        rejected.extend(resume.get("rejected") or [])
+        pool.extend(resume.get("pool") or [])
+        exclusions.extend(f"{row.get('name')}: {row.get('reason')}" for row in rejected)
+        round_names.update(_snake(row.get("name"))
+                           for row in (*accepted, *rejected, *pool))
 
     def document():
-            return {
-                "format_version": 1,
+        return {
+            "format_version": 1,
             "kind": "sft_task_proposals",
             "name": name,
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -923,14 +935,21 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
     return wave
 
 
-def write_proposal_wave(path, wave):
+def dump_wave(path, wave):
+    """Write a wave atomically, overwriting. Working state, not an archive."""
     path = Path(path)
-    if path.exists():
-        raise FileExistsError(f"refusing to overwrite proposal archive: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(yaml.safe_dump(wave, sort_keys=False, width=100))
     os.replace(temporary, path)
+
+
+def write_proposal_wave(path, wave):
+    """Finalise a wave into the archive, which is append-only by refusing to overwrite."""
+    path = Path(path)
+    if path.exists():
+        raise FileExistsError(f"refusing to overwrite proposal archive: {path}")
+    dump_wave(path, wave)
 
 
 def check_proposal_file(path):

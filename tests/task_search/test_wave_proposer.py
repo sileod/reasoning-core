@@ -1291,3 +1291,45 @@ def test_a_wave_checkpoints_every_round_so_a_late_failure_keeps_the_early_ones()
 
     assert saved, "the wave died with nothing checkpointed"
     assert [row["name"] for row in saved[-1]["rejected"]] == ["first_round_idea"]
+
+
+def test_a_resumed_wave_reviews_the_dead_attempt_pool_before_generating_again():
+    """A wave is hours of provider latency. Retrying a crashed brief used to buy the same
+    candidates a second time; the checkpoint already holds them, so it starts from there."""
+    reviews = {"reviews": [{
+        "proposal_id": f"C{seat:03d}", "verdict": "duplicate",
+        "nearest_neighbors": [{"id": "-", "relationship": "same_operation", "overlap": "a"},
+                              {"id": "-", "relationship": "adjacent", "overlap": "b"},
+                              {"id": "-", "relationship": "different", "overlap": "c"}],
+        "substantive_difference": "...",
+        "scores": {"novelty": 1, "sft_value": 1, "feasibility": 5, "clarity": 5},
+        "reason": "known"} for seat in range(1, 13)]}
+    client = _pool_client([f"resumed_candidate_{index:02d}" for index in range(10)], reviews)
+    crashed = {"proposals": [], "rejected": [],
+               "pool": [proposal(f"survivor_{index:02d}") for index in range(10)]}
+
+    wave = propose_wave(ROOT, name="resumed", count=1, rounds=1, client=client,
+                        resume=crashed)
+
+    assert client.proposed == 0, "generated again while the recovered pool had candidates"
+    seen = {row["name"] for row in wave["rejected"]} | {row["name"] for row in wave["pool"]}
+    assert seen == {f"survivor_{index:02d}" for index in range(10)}
+
+
+def test_a_resumed_wave_keeps_what_the_dead_attempt_had_already_accepted():
+    client = _pool_client(["fresh_candidate"], {"reviews": []})
+    accepted = {**proposal("already_accepted"), "id": "P001", "novelty": {
+        "verdict": "novel",
+        "nearest_neighbors": [{"id": "-", "relationship": "different", "overlap": seat}
+                              for seat in ("a", "b", "c")],
+        "substantive_difference": "...",
+        "scores": {"novelty": 5, "sft_value": 5, "feasibility": 5, "clarity": 5},
+        "reason": "new", "votes": "1/1", "dissent": []}}
+    crashed = {"proposals": [accepted],
+               "rejected": [{"name": "already_judged", "reason": "known"}], "pool": []}
+
+    wave = propose_wave(ROOT, name="resumed", count=2, rounds=1, client=client,
+                        resume=crashed)
+
+    assert [row["name"] for row in wave["proposals"]][:1] == ["already_accepted"]
+    assert "already_judged" in {row["name"] for row in wave["rejected"]}

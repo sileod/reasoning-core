@@ -274,7 +274,9 @@ def _parser():
 def main(argv=None):
     args = _parser().parse_args(argv)
     if args.command == "propose":
-        from .wave_proposer import propose_wave, write_proposal_wave
+        import yaml
+
+        from .wave_proposer import dump_wave, propose_wave, write_proposal_wave
 
         repo_root = _repo_root(Path.cwd())
         output = Path(args.output) if args.output else _archive_path(repo_root, args.name)
@@ -282,6 +284,15 @@ def main(argv=None):
             raise SystemExit(
                 f"refusing to spend model calls: archive already exists: {output}"
             )
+        # Round-by-round work lands here, never on the archive path: an archive on disk
+        # means "this brief is done", and a half-finished wave claiming that would
+        # silently retire the brief.
+        partial = output.with_suffix(output.suffix + ".partial")
+        resume = yaml.safe_load(partial.read_text()) if partial.exists() else None
+        if resume:
+            print(f"resuming {partial}: {len(resume.get('proposals') or [])} accepted, "
+                  f"{len(resume.get('pool') or [])} pooled, "
+                  f"{len(resume.get('rejected') or [])} already judged", file=sys.stderr)
         # Both accept comma-separated lists: models in preference order, keys to share
         # round-robin. One of each is the single client this always built.
         models = [item.strip() for item in args.model.split(",") if item.strip()]
@@ -330,11 +341,13 @@ def main(argv=None):
             pool_size=args.pool_size,
             # Written after every round, so a wave that dies in its last round keeps the
             # proposals and ballots the earlier ones already paid for.
-            checkpoint=lambda partial: write_proposal_wave(output, partial),
+            checkpoint=lambda wave: dump_wave(partial, wave),
+            resume=resume,
             max_batch=args.max_batch,
             timeout=args.timeout_seconds,
         )
         write_proposal_wave(output, wave)
+        partial.unlink(missing_ok=True)
         print(
             f"{output}: {len(wave['proposals'])} accepted, "
             f"{len(wave['rejected'])} rejected"
