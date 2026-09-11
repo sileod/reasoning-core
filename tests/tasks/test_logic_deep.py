@@ -192,7 +192,7 @@ def test_defeasible_nli_level2_is_not_all_maybe():
     cfg = DefeasibleNLIConfig()
     cfg.set_level(2)
     task = DefeasibleNLI(config=cfg)
-    seen = {task.generate().answer for _ in range(40)}
+    seen = {task.generate_entry().answer for _ in range(40)}
     assert seen <= {"Yes", "No", "Maybe"}
     assert seen != {"Maybe"}
 

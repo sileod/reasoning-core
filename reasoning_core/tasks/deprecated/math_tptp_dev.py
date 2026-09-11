@@ -10,7 +10,7 @@ import tempfile
 import networkx as nx
 from easydict import EasyDict as edict
 
-from reasoning_core.template import Config, DevTask, Problem, TimeoutException
+from reasoning_core.template import Config, DevTask, Entry, TimeoutException
 from reasoning_core.tasks.math_tptp import (
     TptpEntailment, DOMAIN_MAP, apply_subst_literal, canonical,
     check_clause_set_satisfiability, clause_term_depth, extract_problem_from_graph,
@@ -59,9 +59,9 @@ class FiniteInterpretationCheckConfig(Config):
     sparse_model_ratio: float = 0.75
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.proof_depth += c
-        self.perturbation += c
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.perturbation += level
 
 
 class FiniteInterpretationCheck(DevTask):
@@ -141,7 +141,7 @@ class FiniteInterpretationCheck(DevTask):
             return None
         return model, verdicts, flipped_index
 
-    def generate(self):
+    def generate_entry(self):
         self._initialize_graph()
         if not self.interesting_thm:
             return None
@@ -189,10 +189,10 @@ class FiniteInterpretationCheck(DevTask):
                 ),
                 "verdicts": verdicts,
             })
-            return Problem(metadata, _verdict_answer(verdicts))
+            return Entry(metadata, _verdict_answer(verdicts))
         return None
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         domain_name = DOMAIN_MAP.get(metadata["axiom_set"][:3], metadata["axiom_set"])
         requirements = "\n".join(
             f"{i}. Must be {'True' if req['should_be'] else 'False'}: {req['formula']}"
@@ -233,9 +233,9 @@ class ResolutionStepConfig(Config):
     allow_superposition: bool = False
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.min_total_literals += c
-        self.min_term_depth += c
+    def apply_difficulty(self, level):
+        self.min_total_literals += level
+        self.min_term_depth += level
 
 
 class ResolutionStep(DevTask):
@@ -306,7 +306,7 @@ class ResolutionStep(DevTask):
                 "term_depth": term_depth,
                 "resolvent_literals": len(possible[0]),
             })
-            accepted.append(Problem(metadata, answer))
+            accepted.append(Entry(metadata, answer))
 
         random.shuffle(accepted)
         self.pool = accepted
@@ -331,7 +331,7 @@ class ResolutionStep(DevTask):
             mean_depth,
         )
 
-    def generate(self):
+    def generate_entry(self):
         if not self.pool:
             self._initialize_graph()
             self._mine_pool()
@@ -339,7 +339,7 @@ class ResolutionStep(DevTask):
             return None
         return self.pool.pop()
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         domain_name = DOMAIN_MAP.get(metadata["axiom_set"][:3], metadata["axiom_set"])
         return (
             "Apply one step of binary resolution.\n"
@@ -369,9 +369,9 @@ class SelectionConfig(Config):
     num_distractors: int = 2
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.proof_depth += c
-        self.num_distractors += c
+    def apply_difficulty(self, level):
+        self.proof_depth += level
+        self.num_distractors += level
 
 
 class TheoremPremiseSelection(DevTask):
@@ -462,7 +462,7 @@ class TheoremPremiseSelection(DevTask):
                 return False
         return True
 
-    def generate(self):
+    def generate_entry(self):
         self._initialize_graph()
     
         for _ in range(50):
@@ -544,9 +544,9 @@ class TheoremPremiseSelection(DevTask):
                 'axiom_set': self.axiom_set
             })
             
-            return Problem(metadata, str(metadata.correct_indices))
+            return Entry(metadata, str(metadata.correct_indices))
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
     
         axiom_text = "\n".join([f"- {h}" for h in metadata['useful_axioms']])
         hypotheses_text = "\n".join(
@@ -606,8 +606,8 @@ class ReconstructionConfig(Config):
     min_interesting_score: float = 0
     domains = ['ALG', 'ANA', 'FLD', 'GEO', 'GRP', 'LCL', 'NUM', 'RNG', 'SET', 'TOP']
 
-    def update(self, c):
-        self.proof_depth += c
+    def apply_difficulty(self, level):
+        self.proof_depth += level
 
 
 def make_parent_table(proof_graph, node_to_idx, node_order=None):
@@ -667,7 +667,7 @@ class ProofReconstruction(DevTask):
     _initialize_graph = TptpEntailment._initialize_graph
     
 
-    def generate(self):
+    def generate_entry(self):
 
         self._initialize_graph()
         useless_axioms = {n for n, d in self.graph.in_degree() if d == 0}
@@ -764,9 +764,9 @@ class ProofReconstruction(DevTask):
         })
 
         answer = "\n".join(parent_table)
-        return Problem(metadata, answer)
+        return Entry(metadata, answer)
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         clauses_text = "\n".join([f"{i+1}. {c}" for i, c in enumerate(metadata['numbered_clauses'])])
         domain_name = DOMAIN_MAP.get(metadata['axiom_set'][:3], metadata['axiom_set'])
 

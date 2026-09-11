@@ -1,6 +1,6 @@
 import pytest
 
-from reasoning_core.template import Problem, edict
+from reasoning_core.template import Entry, edict
 from reasoning_core.tasks.math_lean import LeanConfig
 from reasoning_core.tasks import math_lean
 
@@ -12,7 +12,7 @@ from reasoning_core.tasks.math_lean import LeanProofRepair
 
 def test_lean_proof_repair_scores_exact_candidate_body():
     task = LeanProofRepair(LeanConfig(use_mathlib=True))
-    entry = Problem(
+    entry = Entry(
         edict(
             replacements=[
                 "intro x hx; exact ⟨hx.1, h0 hx.2⟩",
@@ -31,7 +31,7 @@ def test_lean_proof_repair_scores_exact_candidate_body():
 
 def test_lean_proof_repair_prompt_shows_candidate_replacements():
     task = LeanProofRepair(LeanConfig(use_mathlib=True))
-    prompt = task.prompt(
+    prompt = task.render_prompt(
         edict(
             broken="theorem ex : True := by\n  rfl\n",
             replacements=["exact True.intro", "rfl"],

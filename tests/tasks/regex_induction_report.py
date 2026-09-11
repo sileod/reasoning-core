@@ -13,7 +13,7 @@ def main(n=100):
 
     for _ in range(n):
         t0 = time.time()
-        p = task.generate()
+        p = task.generate_entry()
         dt = time.time() - t0
         if p is None:
             rejected += 1

@@ -161,18 +161,3 @@ def test_migrated_configs_keep_annotated_field_types():
                     f"{module_name}.{class_name}.{field.name} has value "
                     f"{value!r} of type {type(value).__name__}, expected {field.type}"
                 )
-
-
-def test_legacy_update_fallback_still_supported():
-    @dataclass
-    class LegacyConfig(Config):
-        n: int = 1
-
-        def update(self, c):
-            self.n += c
-
-    config = LegacyConfig()
-    config.set_level(2)
-
-    assert config.level == 2
-    assert config.n == 3

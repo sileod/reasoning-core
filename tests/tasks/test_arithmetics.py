@@ -1,7 +1,7 @@
 from decimal import Decimal
 from fractions import Fraction
 
-from reasoning_core.template import Problem, edict
+from reasoning_core.template import Entry, edict
 from reasoning_core.tasks.arithmetics import (
     Arithmetics,
     ArithmeticsConfig,
@@ -24,7 +24,7 @@ def test_arithmetics_number_theory_ops():
         "gcd(INT, INT) + lcm(POS, POS) + bit_count(NAT) + "
         "is_prime(NAT) + prime_count(NAT) + num_divisors(POS)"
     )
-    problem = Problem({"expr": expr, "cot": task.get_cot(expr)}, str(value))
+    problem = Entry({"expr": expr, "cot": task.get_cot(expr)}, str(value))
 
     assert task.score_answer(problem.answer, problem) == 1
     assert all(

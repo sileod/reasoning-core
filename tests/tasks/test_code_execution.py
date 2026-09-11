@@ -56,7 +56,7 @@ def test_code_runnability_emits_paired_labels(monkeypatch):
     for code in calls:
         pair = [problem for problem in problems if problem.metadata.code == code]
         assert {problem.answer for problem in pair} == {"OK", "NameError"}
-    assert "The answer is `OK`" in task.prompt(problems[0].metadata)
+    assert "The answer is `OK`" in task.render_prompt(problems[0].metadata)
     assert all(task.score_answer(problem.answer, problem) == 1.0 for problem in problems)
     assert not hasattr(task, "_pending_pair")
 

@@ -68,7 +68,7 @@ def test_constrained_continuation_skips_oversized_sentences(monkeypatch):
         min_k=3, max_k=3, max_tokens=3, min_options=1,
         bnf_operator_prob=1,
     )
-    problem = ConstrainedContinuation(config).generate()
+    problem = ConstrainedContinuation(config).generate_entry()
 
     assert problem.answer == "a b c"
     assert problem.metadata.n_candidates == 1

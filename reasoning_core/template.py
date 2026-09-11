@@ -4,7 +4,7 @@ import time
 from easydict import EasyDict as edict
 from collections import Counter
 from collections.abc import Mapping
-from dataclasses import dataclass, fields, field, asdict
+from dataclasses import dataclass, fields, asdict
 import random
 import copy
 import math
@@ -108,10 +108,6 @@ class Entry(Mapping):
     def __len__(self):
         return len(self.to_dict())
 
-
-Problem = Entry
-
-
 def render_payload(payload):
     """Render a JSON-friendly prompt payload mapping as labeled blocks."""
     return "\n\n".join(
@@ -129,37 +125,6 @@ def _shuffle_payload(payload, p=0.0, seed=None):
     keys = list(payload.keys())
     rng.shuffle(keys)
     return {key: payload[key] for key in keys}
-
-
-class Payload(dict):
-    """Backward-compatible wrapper for rendering prompt payload mappings."""
-
-    def __init__(self, *args, randomizable=True, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.randomizable = randomizable
-        self.original_order = list(self.keys())
-        self.order = list(self.original_order)
-
-    def __str__(self):
-        return render_payload({key: self[key] for key in self.order})
-
-    def maybe_shuffle(self, p=0.2, seed=None):
-        rng = random.Random(seed)
-        if self.randomizable and rng.random() < p:
-            rng.shuffle(self.order)
-            items = [(key, self[key]) for key in self.order]
-            self.clear()
-            self.update(items)
-        return self
-
-    @classmethod
-    def maybe_shuffle_mapping(cls, payload, p=0.0):
-        return _shuffle_payload(payload, p=p, seed=random.randrange(1 << 32))
-
-    @classmethod
-    def maybe_shuffle_metadata(cls, metadata, p=0.0):
-        if p and "payload" in metadata:
-            metadata.payload = cls.maybe_shuffle_mapping(metadata.payload, p)
 
 
 class Task:
@@ -190,28 +155,12 @@ class Task:
         self._answer_reservoir = []
 
     def generate_entry(self):
-        """To override in new tasks, return one Entry."""
-        if type(self).generate is not Task.generate:
-            return self.generate()
-        raise NotImplementedError
-
-    def generate(self):
-        """Legacy alias for generate_entry()."""
-        if type(self).generate_entry is not Task.generate_entry:
-            return self.generate_entry()
-        raise NotImplementedError
+        """Override to return one Entry."""
+        raise NotImplementedError("Task subclasses must implement 'generate_entry'")
 
     def render_prompt(self, metadata):
-        """To override in new tasks, render entry metadata as a prompt."""
-        if type(self).prompt is not Task.prompt:
-            return self.prompt(metadata)
-        return ""
-
-    def prompt(self, metadata):
-        """Legacy alias for render_prompt(metadata)."""
-        if type(self).render_prompt is not Task.render_prompt:
-            return self.render_prompt(metadata)
-        return ""
+        """Override to render entry metadata as a prompt."""
+        raise NotImplementedError("Task subclasses must implement 'render_prompt'")
 
     def score_answer(self, answer, entry):
         """To override in most cases; entry has entry.metadata and entry.answer fields"""
@@ -634,34 +583,23 @@ class Config:
             initial_level = self.level
             self.set_level(initial_level)
 
-    def _apply_difficulty_level(self, i: int, apply):
+    def set_level(self, i: int):
         current_seed = self.seed
         self.__dict__.update(copy.deepcopy(self._base_config_dict))
         self.seed = current_seed
         rounding_seed_token = _ROUNDING_SEED.set(current_seed)
         try:
             object.__setattr__(self, 'level', i)             
-            apply(i)
+            self.apply_difficulty(i)
         finally:
             _ROUNDING_SEED.reset(rounding_seed_token)
         
         object.__setattr__(self, 'level', i) 
         return self
 
-    def set_level(self, i: int):
-        return self._apply_difficulty_level(i, self.apply_difficulty)
-
     def apply_difficulty(self, level: int):
-        """Apply the target difficulty level from the base config state.
-
-        Subclasses should override this with an explicit non-recursive formula.
-        The default preserves legacy behavior by replaying `update(1)`.
-        """
-        for _ in range(level):
-            self.update(1)
-
-    def update(self, c):
-        raise NotImplementedError("Config subclasses must implement 'update'")
+        """Override to apply the target difficulty level from the base config state."""
+        raise NotImplementedError("Config subclasses must implement 'apply_difficulty'")
 
     def to_dict(self):
         return asdict(self)
@@ -673,41 +611,6 @@ class Config:
             field_strings.append(f"{f.name}={value!r}")
         
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
-
-
-def assert_difficulty_update_equivalence(config, levels=range(6), seed=0):
-    """Assert `apply_difficulty(level)` matches repeated legacy `update(1)`.
-
-    This is intended as a cheap migration test for task configs that add an
-    explicit `apply_difficulty` implementation while keeping `update`.
-    """
-    def equal(a, b):
-        if isinstance(a, float) or isinstance(b, float):
-            return math.isclose(a, b, rel_tol=1e-12, abs_tol=1e-12)
-        return a == b
-
-    for level in levels:
-        via_apply = copy.deepcopy(config)
-        via_update = copy.deepcopy(config)
-        if getattr(via_apply, "seed", None) is None:
-            via_apply.seed = seed
-        if getattr(via_update, "seed", None) is None:
-            via_update.seed = seed
-        via_apply.set_level(level)
-        via_update._apply_difficulty_level(
-            level,
-            lambda target_level, cfg=via_update: Config.apply_difficulty(cfg, target_level),
-        )
-        apply_state = via_apply.to_dict()
-        update_state = via_update.to_dict()
-        if apply_state.keys() != update_state.keys() or any(
-            not equal(apply_state[k], update_state[k]) for k in apply_state
-        ):
-            raise AssertionError(
-                f"{config.__class__.__name__} difficulty migration differs at level {level}: "
-                f"apply_difficulty={apply_state}, repeated_update={update_state}"
-            )
-    return True
 
 class Reward(wrapt.ObjectProxy):
     def __init__(self, wrapped, tag=None, **kwargs):

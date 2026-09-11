@@ -2,7 +2,7 @@ import random
 import re
 from dataclasses import dataclass
 
-from reasoning_core.template import Config, DevTask, Problem, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, DevTask, Entry, Task, edict, stochastic_rounding as sround
 from reasoning_core.tasks._rocq_common import ROCQ_IMAGE, check_rocq, eval_rocq
 
 
@@ -191,7 +191,7 @@ class RocqProofRepair(DevTask):
     def __init__(self, config=None, **kwargs):
         super().__init__(config=config or RocqConfig(), timeout=180, **kwargs)
 
-    def generate(self):
+    def generate_entry(self):
         n_cand = max(2, min(6, int(self.config.n_candidates)))
         for _ in range(80):
             inst = random.choice(_PROOF_BUILDERS)(self.config)
@@ -211,7 +211,7 @@ class RocqProofRepair(DevTask):
             source = _theorem(inst.header, "__BROKEN__")
             if len(source) + sum(map(len, pool)) > int(self.config.payload_cap):
                 continue
-            return Problem(
+            return Entry(
                 metadata=edict(
                     kind=inst.kind,
                     broken=source,
@@ -223,7 +223,7 @@ class RocqProofRepair(DevTask):
             )
         raise RuntimeError("failed to generate a unique RocqProofRepair instance")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         options = "\n".join(f"{i}. {c}" for i, c in enumerate(_mget(metadata, "candidates"), 1))
         return (
             "Fix the broken Rocq proof. Choose one candidate replacement.\n"
@@ -367,7 +367,7 @@ class RocqInvariantMCQ(DevTask):
     def __init__(self, config=None, **kwargs):
         super().__init__(config=config or RocqConfig(), timeout=180, **kwargs)
 
-    def generate(self):
+    def generate_entry(self):
         n_cand = 4
         for _ in range(100):
             values = _sample_mixed_zs(self.config)
@@ -385,7 +385,7 @@ class RocqInvariantMCQ(DevTask):
             ok, _, _ = check_rocq(cert, timeout=int(self.config.certify_timeout))
             if not ok:
                 continue
-            return Problem(
+            return Entry(
                 metadata=edict(
                     kind=kind,
                     source=source,
@@ -397,7 +397,7 @@ class RocqInvariantMCQ(DevTask):
             )
         raise RuntimeError("failed to generate a unique RocqInvariantMCQ instance")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return (
             "Exactly one candidate makes the Rocq boolean invariant evaluate to true.\n"
             "Answer with the candidate number only.\n\n"

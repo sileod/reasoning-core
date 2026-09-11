@@ -1,4 +1,4 @@
-from reasoning_core.template import Problem, edict
+from reasoning_core.template import Entry, edict
 from reasoning_core.tasks import math_lean as ml
 
 
@@ -13,13 +13,13 @@ def _fake_compile_pair():
     )
 
 
-def test_candidate_compilation_generate_returns_problem(monkeypatch):
+def test_candidate_compilation_generate_returns_entry(monkeypatch):
     monkeypatch.setattr(ml, "make_compilation_pair", lambda config: _fake_compile_pair())
     task = ml.LeanCandidateCompilation(ml.LeanConfig(use_mathlib=False))
 
-    ex = task.generate()
+    ex = task.generate_entry()
 
-    assert isinstance(ex, Problem)
+    assert isinstance(ex, Entry)
     assert ex.answer in {"A", "B"}
     assert len(ex.answer) == 1
     assert ex.metadata.options["AB".index(ex.answer)] == _fake_compile_pair().positive

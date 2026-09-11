@@ -3,7 +3,7 @@ import os
 import networkx as nx
 import pytest
 
-from reasoning_core.template import Problem
+from reasoning_core.template import Entry
 from reasoning_core.tasks._tptp_sat_graph import DerivationNode
 from reasoning_core.tasks.deprecated.math_tptp_dev import ResolutionStep, ResolutionStepConfig
 from reasoning_core.tasks.math_tptp import (
@@ -101,7 +101,7 @@ def test_mining_validates_child_and_renames_parents_apart():
 
 def test_score_answer_canonicalizes_and_has_string_fallback():
     task = ResolutionStep.__new__(ResolutionStep)
-    entry = Problem({}, "(p(X1) | ~q(X1))")
+    entry = Entry({}, "(p(X1) | ~q(X1))")
 
     assert task.score_answer("(~q(Z8)|p(Z8))", entry) == 1.0
     assert task.score_answer("`(p(X1) | ~q(X1))`", entry) == 1.0

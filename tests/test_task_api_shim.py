@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 
-from reasoning_core.template import Config, Entry, Problem, Task
+import reasoning_core.template as template
+from reasoning_core.template import Config, Entry, Task
 
 
-class NewStyleTask(Task):
+class CanonicalTask(Task):
     def __init__(self):
         super().__init__(Config())
 
@@ -12,17 +13,6 @@ class NewStyleTask(Task):
 
     def render_prompt(self, metadata):
         return f"x={metadata.x}"
-
-
-class LegacyStyleTask(Task):
-    def __init__(self):
-        super().__init__(Config())
-
-    def generate(self):
-        return Problem({"x": 2}, "old")
-
-    def prompt(self, metadata):
-        return f"legacy x={metadata.x}"
 
 
 @dataclass
@@ -37,25 +27,20 @@ class ConfigClassTask(Task):
     config_cls = CustomConfig
 
 
-def test_entry_problem_alias():
-    assert Entry is Problem
-    assert isinstance(Problem({}, ""), Entry)
+def test_legacy_protocol_names_are_removed():
+    assert not hasattr(template, "Problem")
+    assert not hasattr(template, "Payload")
+    assert not hasattr(Task, "generate")
+    assert not hasattr(Task, "prompt")
+    assert not hasattr(Config, "update")
 
 
-def test_new_style_task_api():
-    entry = NewStyleTask().generate_example(max_tokens=0)
+def test_canonical_task_contract():
+    entry = CanonicalTask().generate_example(max_tokens=0)
 
     assert isinstance(entry, Entry)
     assert entry.prompt == "x=1"
     assert entry.answer == "ok"
-
-
-def test_legacy_task_api_still_works():
-    entry = LegacyStyleTask().generate_example(max_tokens=0)
-
-    assert isinstance(entry, Entry)
-    assert entry.prompt == "legacy x=2"
-    assert entry.answer == "old"
 
 
 def test_config_cls_instantiates_fresh_default_config():

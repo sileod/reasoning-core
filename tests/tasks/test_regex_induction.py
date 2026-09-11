@@ -21,13 +21,13 @@ def test_synth_optional():
 
 def test_regex_induction_label_scores_one():
     task = RegexInduction()
-    p = task.generate()
+    p = task.generate_entry()
     assert p is None or task.score_answer(p.answer, p) == 1.0
 
 
 def test_regex_induction_rejects_forbidden_syntax():
     task = RegexInduction()
-    p = task.generate()
+    p = task.generate_entry()
     if p is not None:
         assert task.score_answer(".", p) == 0.0
         assert task.score_answer("[ab]", p) == 0.0
@@ -36,7 +36,7 @@ def test_regex_induction_rejects_forbidden_syntax():
 def test_regex_induction_label_not_hidden_artifact():
     task = RegexInduction()
     for _ in range(20):
-        p = task.generate()
+        p = task.generate_entry()
         if p is None:
             continue
         assert p.answer == p.metadata["shortest_regex"]
@@ -45,22 +45,22 @@ def test_regex_induction_label_not_hidden_artifact():
 
 def test_regex_induction_prompt_examples_first():
     task = RegexInduction()
-    p = task.generate()
-    assert p is None or task.prompt(p.metadata).startswith("Positive:")
+    p = task.generate_entry()
+    assert p is None or task.render_prompt(p.metadata).startswith("Positive:")
 
 
 def test_regex_retrieval_label_scores_one():
     task = RegexRetrieval()
-    p = task.generate()
+    p = task.generate_entry()
     assert p is None or task.score_answer(p.answer, p) == 1.0
 
 
 def test_regex_retrieval_prompt_and_order():
     task = RegexRetrieval()
-    p = task.generate()
+    p = task.generate_entry()
     if p is None:
         return
-    prompt = task.prompt(p.metadata)
+    prompt = task.render_prompt(p.metadata)
     assert prompt.startswith("Text:")
     assert "\nRegex:" in prompt
     assert "Return only a JSON array" in prompt

@@ -15,7 +15,7 @@ def main():
         for _ in range(2):
             task.config.set_level(level)
             ex = task.generate_example()
-            lines.append(f"Prompt:\n{task.prompt(ex.metadata)}")
+            lines.append(f"Prompt:\n{task.render_prompt(ex.metadata)}")
             lines.append(f"Answer: {ex.answer}")
     out = Path(__file__).with_name("samples_P003v1.md")
     out.write_text("\n\n".join(lines) + "\n")

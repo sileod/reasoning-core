@@ -13,14 +13,14 @@ _mod = _ilu.module_from_spec(_spec)
 _spec.loader.exec_module(_mod)
 _filter_available_tasks = _mod._filter_available_tasks
 _prepare_env_dataset = _mod._prepare_env_dataset
-from reasoning_core.template import Config, DevTask, Problem
+from reasoning_core.template import Config, DevTask, Entry
 
 
 class MetadataProbeTask(DevTask):
-    def generate(self):
-        return Problem(metadata={}, answer="42")
+    def generate_entry(self):
+        return Entry(metadata={}, answer="42")
 
-    def prompt(self, metadata):
+    def render_prompt(self, metadata):
         return "What is the answer?"
 
 

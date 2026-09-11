@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from collections import defaultdict
-from reasoning_core.template import Task, DevTask, Problem, Config, edict
+from reasoning_core.template import Task, DevTask, Entry, Config, edict
 import nltk
 from nltk.corpus import wordnet as wn
 from wordfreq import zipf_frequency
@@ -76,8 +76,8 @@ class LexicalKnowledgeConfig(Config):
     max_retries: int = 200
     n_distractors: int = 5
     
-    def update(self, c=1):
-        self.n_words = min(int(self.n_words * (1 + c)), len(_FULL_WORDS) or float('inf'))
+    def apply_difficulty(self, level):
+        self.n_words = min(int(self.n_words * 2**level), len(_FULL_WORDS) or float('inf'))
 
 class LexicalKnowledge(DevTask):
     def __init__(self, config=None):
@@ -334,7 +334,7 @@ class LexicalKnowledge(DevTask):
         random.shuffle(words)
         return f"odd_one_out({', '.join(words)})", iw, 'word', group, f"{', '.join(sorted(group))} are types of {cat_word}; {iw} is not", [self._s(iw).name()]
 
-    def generate(self):
+    def generate_entry(self):
         cfg = self.config
         last_exc = None
         for _ in range(cfg.max_retries):
@@ -358,14 +358,14 @@ class LexicalKnowledge(DevTask):
                 answer_str = answer
             
             random.shuffle(pool)
-            return Problem(
+            return Entry(
                 metadata=edict(expr=expr, answer_type=atype, candidates=pool, gold_synsets=gold_sids),
                 answer=answer_str,
             )
             
         raise RuntimeError(f"Generation failed. Last error: {last_exc}")
 
-    def prompt(self, m):
+    def render_prompt(self, m):
         cands = ', '.join(m.candidates)
         ctx = "Context: WordNet (relation holds for any valid noun sense)."
         if m.answer_type == 'bool':

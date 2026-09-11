@@ -158,7 +158,7 @@ def test_negative_model_is_generated_by_sign_flip(monkeypatch):
 
 def test_prompt_and_per_requirement_scoring():
     task = object.__new__(FiniteInterpretationCheck)
-    prompt = task.prompt({
+    prompt = task.render_prompt({
         "axiom_set": "GRP001-0.ax",
         "context_axioms": [],
         "requirements": [{"formula": "p(X)", "should_be": False}],
