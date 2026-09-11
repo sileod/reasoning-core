@@ -878,11 +878,12 @@ class _Route:
 
     def json(self, purpose, system, user, **kwargs):
         outcome = next(self._script)
-        self.calls.append({"purpose": purpose})
         if outcome == 429:
             response = wave_proposer.requests.Response()
             response.status_code = 429
             raise wave_proposer.requests.HTTPError(response=response)
+        self.calls.append({"purpose": purpose, "model": self.model,
+                           "provider": self.provider})
         return outcome
 
 
@@ -952,7 +953,23 @@ def test_the_pool_reports_the_model_that_actually_answered():
     pool = wave_proposer.ClientPool([_Route("k3", "key1", [429]),
                                      _Route("pro", "key1", [{"proposals": []}])])
     pool.json("propose", "s", "u")
-    assert pool.model == "pro" and len(pool.calls) == 2
+    assert pool.model == "pro"
+    assert [call["model"] for call in pool.calls] == ["pro"]
+
+
+def test_the_pool_logs_calls_in_the_order_they_were_answered():
+    """Concatenating each client's own log groups by route, which reads as though the
+    wave ran one model and then the next. A wave that fell back mid-round is exactly
+    where provenance has to say which model wrote which round."""
+    # cooldown=0 so the refused route reopens, which is what makes the two orderings
+    # differ: grouping by client would report k3, k3, pro whatever the wave really did.
+    pool = wave_proposer.ClientPool(
+        [_Route("k3", "key1", [{"proposals": []}, 429, {"proposals": []}]),
+         _Route("pro", "key1", [{"proposals": []}])], cooldown=0)
+    for round_index in range(1, 4):
+        pool.json(f"round-{round_index}", "s", "u")
+    assert [(call["purpose"], call["model"]) for call in pool.calls] == [
+        ("round-1", "k3"), ("round-2", "pro"), ("round-3", "k3")]
 
 
 class BallotCritic:

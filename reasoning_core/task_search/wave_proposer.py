@@ -637,6 +637,11 @@ class ChatClient:
             break
         self.calls.append({
             "purpose": purpose,
+            # Stamped per call, not per wave: a pool that fell back mid-wave otherwise
+            # leaves no way to tell which model wrote which round, which is the one
+            # question provenance exists to answer.
+            "model": self.model,
+            "provider": self.provider,
             "request_sha256": _sha256(request_bytes),
             "response_sha256": _sha256(response_bytes),
             "response_id": response_id,
@@ -778,11 +783,11 @@ class ClientPool:
     another key and downwards to another model, in that order. Sideways first: a second key
     on the model you asked for beats the first key on a model you did not.
 
-    Rotation is `itertools.cycle` over the keys, so consecutive calls start on different
-    ones and share the load rather than exhausting one and then discovering the next. A
-    route that answers 429 is remembered as closed for `cooldown` seconds: a cycle with no
-    memory hands work back to an exhausted key every other call and pays the full retry
-    ladder to learn what it was already told.
+    Consecutive calls start at a rotating offset into each model's keys, so they share
+    the load rather than exhausting one key and then discovering the next. A route that
+    answers 429 is remembered as closed for `cooldown` seconds: a rotation with no memory
+    hands work back to an exhausted key every other call and pays the full retry ladder to
+    learn what it was already told.
     """
 
     def __init__(self, clients, *, cooldown=1800):
@@ -795,6 +800,7 @@ class ClientPool:
         self._closed = {}
         self._turn = itertools.count()
         self._answered = self.clients[0]
+        self._log = []
 
     @property
     def model(self):
@@ -806,7 +812,13 @@ class ClientPool:
 
     @property
     def calls(self):
-        return [call for client in self.clients for call in client.calls]
+        """Answered calls in the order they were answered.
+
+        Concatenating the clients' own logs groups by route instead, which reads as
+        though the wave ran each model in turn. A refused route logs nothing, so what is
+        recorded here is what actually produced the wave.
+        """
+        return list(self._log)
 
     def _routes(self):
         """Every client, preferred model first, starting at a rotating key offset."""
@@ -826,7 +838,7 @@ class ClientPool:
 
     def _open(self, client):
         until = self._closed.get(id(client))
-        return until is None or time.time() >= until
+        return until is None or time.monotonic() >= until
 
     def json(self, purpose, system, user, **kwargs):
         routes = self._routes()
@@ -840,12 +852,13 @@ class ClientPool:
                 status = getattr(failure.response, "status_code", None)
                 if status != 429 or index == len(live) - 1:
                     raise
-                self._closed[id(client)] = time.time() + self.cooldown
+                self._closed[id(client)] = time.monotonic() + self.cooldown
                 print(f"WARNING: {client.model} is rate limited on this key; "
                       f"trying the next route", file=sys.stderr)
                 continue
             self._answered = client
             self._closed.pop(id(client), None)
+            self._log.append(client.calls[-1])
             return result
         raise AssertionError("unreachable")
 
@@ -858,7 +871,7 @@ def build_pool(models, endpoint, key_envs, **settings):
     """
     keys = [(env, os.environ[env]) for env in key_envs if os.environ.get(env)]
     if not keys:
-        raise SystemExit(f"none of {', '.join(key_envs)} is set")
+        raise ValueError(f"none of {', '.join(key_envs)} is set")
     return ClientPool([ChatClient(model=model, endpoint=endpoint, api_key=key, **settings)
                        for model in models for _, key in keys])
 
@@ -1083,9 +1096,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                 ballot = next((other for other in cast if not other["passes"]), cast[0])
                 review = ballot["review"]
                 reason = _one_line(review.get("reason")) or "critic thresholds not met"
-                if not ballot["neighbors_valid"]:
-                    reason = "critic did not return three valid catalog neighbors; " + reason
-                elif ballot["contradicts_novelty"] and review.get("verdict") == "novel":
+                if ballot["contradicts_novelty"] and review.get("verdict") == "novel":
                     reason = "novel verdict contradicted its nearest-neighbor labels; " + reason
                 if len(cast) > 1:
                     reason = f"{tally} samples judged it novel; " + reason
@@ -1124,7 +1135,8 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
         "catalog": initial_catalog,
         "generation": {
             "provider": getattr(client, "provider", provider_of(endpoint)),
-            "model": model, "endpoint": endpoint,
+            "model": getattr(client, "model", model), "requested_model": model,
+            "endpoint": endpoint,
             "seed": seed, "temperature": temperature,
             "reasoning_effort": reasoning_effort,
             "calls": list(client.calls),
