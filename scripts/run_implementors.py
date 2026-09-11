@@ -55,15 +55,15 @@ def still_owed(arguments, wave):
 def steps(arguments, wave, name):
     archive = ARCHIVE / f"{wave}.yaml"
     plan_path = PLANS / f"{name}.yaml"
+    # K named approaches plus one unguided variant, so the service asks for a behaviour
+    # and derives the count rather than offering a second knob that can only be set wrong.
+    variants = arguments.design_choices + 1
     build = [sys.executable, "-m", "reasoning_core.task_search", "plan", str(archive),
              "--name", name, "--skip-implemented",
              "--max-attempts", str(arguments.max_attempts),
-             "--variants", str(arguments.variants)]
+             "--variants", str(variants)]
     if arguments.design_choices:
-        # One named approach per variant. The CLI requires the two numbers to match, so
-        # the service asks for a behaviour and derives the number rather than offering a
-        # second knob that can only be set wrong.
-        build += ["--design-choices", str(arguments.variants)]
+        build += ["--design-choices", str(arguments.design_choices)]
     run = [sys.executable, "-m", "reasoning_core.task_search", "run", str(plan_path),
            "--harness", arguments.harness, "--jobs", str(arguments.jobs),
            "--max-steps", str(arguments.max_steps),
@@ -119,11 +119,10 @@ def waves_owed(arguments):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--variants", type=int, default=1,
-                        help="independent implementations per proposal")
-    parser.add_argument("--design-choices", action="store_true",
-                        help="ask the design proposer for one approach per variant"
-                             " before implementing, instead of splitting on seed alone")
+    parser.add_argument("--design-choices", type=int, default=2,
+                        help="named approaches to implement per proposal; each proposal"
+                             " also gets one unguided baseline variant, so K here is K+1"
+                             " implementations. 0 implements the summary alone")
     parser.add_argument("--max-attempts", type=int, default=3,
                         help="stop offering an idea once this many plan trials have"
                              " tried it; 0 retries forever")

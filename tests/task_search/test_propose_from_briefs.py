@@ -1,5 +1,6 @@
 """The brief driver's judgement about what is a failure and what is a closed door."""
 import argparse
+import subprocess
 import importlib.util
 from pathlib import Path
 
@@ -58,7 +59,7 @@ def test_a_wave_is_retried_after_the_provider_reopens(tmp_path, monkeypatch):
     monkeypatch.setattr(driver.subprocess, "run", run)
     monkeypatch.setattr(driver.time, "sleep", slept.append)
 
-    completed, _ = driver.run_wave(_arguments(), ["cmd"], log)
+    completed, _, _ = driver.run_wave(_arguments(), ["cmd"], log)
     assert completed.returncode == 0
     assert slept == [60]
 
@@ -74,7 +75,7 @@ def test_waiting_is_bounded_so_a_closed_door_cannot_hold_the_job_open(tmp_path, 
     monkeypatch.setattr(driver.subprocess, "run", run)
     monkeypatch.setattr(driver.time, "sleep", slept.append)
 
-    completed, _ = driver.run_wave(_arguments(cooldowns=2), ["cmd"], log)
+    completed, _, _ = driver.run_wave(_arguments(cooldowns=2), ["cmd"], log)
     assert completed.returncode == 1
     assert slept == [60, 60]
 
@@ -90,7 +91,7 @@ def test_a_failure_that_is_not_a_rate_limit_returns_at_once(tmp_path, monkeypatc
     monkeypatch.setattr(driver.subprocess, "run", run)
     monkeypatch.setattr(driver.time, "sleep", slept.append)
 
-    completed, _ = driver.run_wave(_arguments(), ["cmd"], log)
+    completed, _, _ = driver.run_wave(_arguments(), ["cmd"], log)
     assert completed.returncode == 1 and slept == []
 
 
@@ -101,3 +102,25 @@ def test_the_shared_instruction_is_optional():
     slug = "compositional-generalization"
     assert without[slug] in with_shared[slug]
     assert len(with_shared[slug]) > len(without[slug])
+
+
+def test_a_quota_block_does_not_spend_the_give_up_budget(tmp_path, monkeypatch, capsys):
+    """A closed door is not a bad brief. Counting it stopped the driver for the night with
+    thirty-seven briefs still owed, on waves that could not have succeeded."""
+    calls = []
+
+    def blocked(arguments, command, log_path):
+        calls.append(command)
+        log_path.write_text("429 Too Many Requests")
+        return subprocess.CompletedProcess(command, 1), 6.0, True
+
+    monkeypatch.setattr(driver, "run_wave", blocked)
+    monkeypatch.setattr(driver.time, "sleep", lambda _: None)
+    arguments = _arguments(log_dir=tmp_path, pause_seconds=0, prefix="k3",
+                           count=12, rounds=3, model="", api_key_env="", dry_run=False)
+    briefs = [(f"brief{index}", f"text {index}")
+              for index in range(driver.GIVE_UP_AFTER + 2)]
+
+    assert driver.sweep_once(arguments, briefs) is None
+    assert len(calls) == len(briefs), "a blocked wave must not stop the sweep"
+    assert "not counted" in capsys.readouterr().out

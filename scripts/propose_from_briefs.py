@@ -147,11 +147,11 @@ def run_wave(arguments, command, log_path):
                                        stderr=subprocess.STDOUT)
         minutes = (time.time() - started) / 60
         if completed.returncode in (0, INCOMPLETE) or not rate_limited(log_path):
-            return completed, minutes
+            return completed, minutes, False
         if cooldown == arguments.cooldowns:
             print(f"    still rate limited after {arguments.cooldowns} waits",
                   flush=True)
-            return completed, minutes
+            return completed, minutes, True
         print(f"    rate limited after {minutes:.0f}m; waiting"
               f" {arguments.cooldown_seconds // 60}m"
               f" ({cooldown + 1}/{arguments.cooldowns})", flush=True)
@@ -185,10 +185,17 @@ def sweep_once(arguments, pending):
             continue
         print(f"[{index}/{len(pending)}] {time.strftime('%H:%M')} {name}", flush=True)
         log_path = arguments.log_dir / f"{slug}.log"
-        completed, minutes = run_wave(arguments, command, log_path)
+        completed, minutes, blocked = run_wave(arguments, command, log_path)
         if completed.returncode in (0, INCOMPLETE):
             failures = 0
             print(f"    ok in {minutes:.0f}m, {accepted(name)} accepted", flush=True)
+        elif blocked:
+            # A closed door is not a bad brief. Counting it cost the give-up budget on
+            # three waves that could not have succeeded: the block outlasted every
+            # cooldown, and the driver stopped for the night with 37 briefs still owed.
+            # The brief writes no archive, so the next pass finds it again.
+            print(f"    quota blocked after {minutes:.0f}m; still owed, not counted"
+                  f" against the give-up budget", flush=True)
         else:
             failures += 1
             print(f"    FAILED (exit {completed.returncode}) after {minutes:.0f}m"

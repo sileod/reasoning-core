@@ -271,6 +271,27 @@ def test_design_choices_fan_variants_across_approaches_not_seeds():
         build_plan(wave, name="w", variants=2, design_choices={"P001": ("only one",)})
 
 
+def test_an_empty_design_choice_is_the_unguided_baseline():
+    """Named approaches measure which one won. Without a variant built from the summary
+    alone, a wave never measures whether naming an approach helped at all."""
+    from reasoning_core.task_search.plan_builder import build_plan
+
+    wave = {
+        "kind": "sft_task_proposals",
+        "name": "p",
+        "proposals": [{"id": "P001", "name": "thing", "summary": "Do a thing."}],
+    }
+    built = build_plan(wave, name="w", variants=3,
+                       design_choices={"P001": ("choice one", "choice two", "")})
+    guided = [trial.get("design_choice") for trial in built["trials"]]
+
+    assert guided == ["choice one", "choice two", None]
+    # Absent, not empty: the baseline trial is byte-identical to an unguided one.
+    assert "design_choice" not in built["trials"][2]
+    assert "unguided baseline" in built["trials"][2]["idea"]
+    assert "unguided baseline" not in built["trials"][0]["idea"]
+
+
 def test_the_design_proposer_rejects_a_short_or_duplicated_reply():
     """Fewer distinct choices than variants would run one approach twice."""
     from reasoning_core.task_search import design_proposer

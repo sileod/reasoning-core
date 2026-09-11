@@ -612,6 +612,14 @@ def _task_classes(worktree, owned_path):
     return found
 
 
+# The difficulty band the cache builder and every evaluation profile ask for today. A task
+# that cannot fill a batch inside it cannot be measured, which is why landing depends on it;
+# a task that fails only outside it is incompatible with this profile, not broken, and the
+# band moving is a reason to change this line rather than every gate below.
+BUILD_LEVELS = (0, 1, 2, 3, 4)
+BUILD_BATCH = 64
+
+
 _CONTRACT_AUDIT = r"""
 import importlib
 import json
@@ -636,6 +644,11 @@ def _spy_validate(self, *args, **kwargs):
 
 classes = json.loads(sys.argv[1])
 seed = int(sys.argv[2])
+# The difficulty band the evaluation profile asks for. Passed in rather than hard-coded,
+# because "cannot fill a batch" is a statement about a task and a band together: a task
+# that fills levels 2-4 and not 0 is not unmeasurable, it is outside this band.
+levels = [int(item) for item in sys.argv[3].split(",")]
+batch_size = int(sys.argv[4])
 for offset, (module_name, class_name) in enumerate(classes):
     task_class = getattr(importlib.import_module(module_name), class_name)
     # After the import, so a module that reassigns Task.validate loses the spy and
@@ -674,26 +687,28 @@ for offset, (module_name, class_name) in enumerate(classes):
     # generate_balanced_batch. That seam has already produced false rejections in the
     # constant-guess gate and false acceptances here, so the buildability gate asks for
     # exactly what the cache builder asks for.
-    for level in range(5):
+    for level in levels:
         filled, why, keys = None, "", 0
         # workers=8 is the builder's call; the retry at 1 separates an answer space too
         # small to fill a batch from a break in the parallel path, which are different bugs.
         for workers in (8, 1):
             try:
                 batch = task.generate_balanced_batch(
-                    batch_size=64, level=level, deduplication=True, workers=workers)
+                    batch_size=batch_size, level=level, deduplication=True,
+                    workers=workers)
             except Exception as error:
                 why = f"{type(error).__name__}: {str(error)[:120]}"
                 continue
-            if len(batch) < 64:
-                why = f"only {len(batch)}/64 rows"
+            if len(batch) < batch_size:
+                why = f"only {len(batch)}/{batch_size} rows"
                 continue
             filled, why = workers, ""
             # An attribute the balancer sets on the problem, not a metadata field.
             keys = len({str(getattr(row, "balancing_key", None)) for row in batch})
             break
         assert filled, (module_name, class_name, level,
-                        f"generate_balanced_batch cannot fill 64 at any worker count: {why}")
+                        f"generate_balanced_batch cannot fill {batch_size}"
+                        f" at any worker count: {why}")
         # Not pass/fail: a task whose batch realises a handful of distinct answers is
         # near-degenerate, and narrow tasks saturate early and transfer least.
         print(f"BUILDABLE {module_name}.{class_name} level={level}"
@@ -724,7 +739,8 @@ def _run_contract_audit(
         return {"classes": [], "exit_code": 2}
     environment = _minimal_environment()
     command = _sandbox_command(
-        [sys.executable, "-c", _CONTRACT_AUDIT, json.dumps(classes), str(seed)],
+        [sys.executable, "-c", _CONTRACT_AUDIT, json.dumps(classes), str(seed),
+         ",".join(str(level) for level in BUILD_LEVELS), str(BUILD_BATCH)],
         worktree=worktree,
         owned_path=owned_path,
         runtime_root=runtime_root,
@@ -1051,11 +1067,13 @@ def selfcheck_main(argv=None):
     report.gate("pytest", code == 0, "" if code == 0 else tail(out, 20))
 
     code, out = sh(
-        "python -c %s %s %d"
+        "python -c %s %s %d %s %d"
         % (
             shlex.quote(_CONTRACT_AUDIT),
             shlex.quote(json.dumps(classes)),
             int(hashlib.sha256(trial.encode()).hexdigest()[:6], 16),
+            shlex.quote(",".join(str(level) for level in BUILD_LEVELS)),
+            BUILD_BATCH,
         ),
         limit=min(120, remaining()),
     )

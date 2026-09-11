@@ -55,6 +55,10 @@ def build_plan(wave, *, name, base_ref="HEAD", variants=1,
     `design_choices` maps a proposal id to the approaches its variants should be split
     across, as `design_proposer` returns them. Pass none and the variants differ only by
     seed, which is what every wave so far has done.
+
+    An empty approach in that tuple is the baseline: that variant is implemented from the
+    summary alone, with no design guidance. Without it a wave measures which named approach
+    won and never whether naming one helped at all.
     """
     if not isinstance(wave, dict) or wave.get("kind") != "sft_task_proposals":
         raise ValueError("expected an SFT proposal wave")
@@ -77,6 +81,7 @@ def build_plan(wave, *, name, base_ref="HEAD", variants=1,
         # One choice per variant, so a proposal fanned three ways is three named
         # approaches and not one approach drawn three times.
         choices = tuple(design_choices.get(str(proposal.get("id", "")), ()))
+        choices = tuple(str(choice).strip() for choice in choices)
         if choices and len(choices) != variants:
             raise ValueError(
                 f"proposal {proposal.get('id', '?')} has {len(choices)} design choices"
@@ -90,12 +95,15 @@ def build_plan(wave, *, name, base_ref="HEAD", variants=1,
                 "id": trial_id,
                 "hypothesis": str((proposal.get("novelty") or {}).get("origin_id", "")
                                   or proposal.get("id", "")),
-                "idea": f"{task_name} (draw {index} of {variants})",
+                "idea": (f"{task_name} (draw {index} of {variants}"
+                     + (", unguided baseline" if choices and not choices[index - 1] else "")
+                     + ")"),
                 "changes": f"new task in {owned_path}",
                 "instruction": _instruction(task_name, summary),
                 "owned_path": owned_path,
                 "validation": [VALIDATION_COMMAND.format(owned_path=owned_path)],
-                **({"design_choice": choices[index - 1]} if choices else {}),
+                **({"design_choice": choices[index - 1]}
+                   if choices and choices[index - 1] else {}),
             })
             queues[f"v{index}"].append(trial_id)
     # One cheap draw to run first: the same six proposals every time, so a smoke run of two

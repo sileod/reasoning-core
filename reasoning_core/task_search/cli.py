@@ -390,10 +390,13 @@ def main(argv=None):
         if args.design_choices:
             from .design_proposer import propose_wave_design_choices
 
-            if args.design_choices != args.variants:
+            # K named approaches plus one unguided variant, so a wave measures whether
+            # naming an approach helped at all and not only which name won.
+            if args.design_choices + 1 != args.variants:
                 raise SystemExit(
-                    f"--design-choices {args.design_choices} must equal"
-                    f" --variants {args.variants}: one choice per variant"
+                    f"--design-choices {args.design_choices} needs"
+                    f" --variants {args.design_choices + 1}: one variant per named"
+                    f" approach, plus an unguided baseline"
                 )
             api_key = os.environ.get(args.design_api_key_env)
             if not api_key:
@@ -405,6 +408,10 @@ def main(argv=None):
                 endpoint=args.design_endpoint, api_key=api_key,
                 temperature=0.7, reasoning_effort=None,
             )
+            # The baseline is appended here rather than asked for: an "approach" that is
+            # the absence of one is not something to spend a design call on.
+            design_choices = {proposal_id: tuple(choices) + ("",)
+                              for proposal_id, choices in design_choices.items()}
         plan = build_plan(
             wave,
             name=args.name,
