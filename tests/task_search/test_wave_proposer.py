@@ -5,15 +5,17 @@ from pathlib import Path
 import pytest
 import yaml
 
-from reasoning_core.task_search import wave_proposer
-from reasoning_core.task_search.wave_proposer import (
-    CatalogEntry,
-    CRITIC_MAX_BATCH,
+from reasoning_core.task_search import chat, wave_proposer
+from reasoning_core.task_search.chat import (
     ChatClient,
     RETRY_BACKOFF,
     UpstreamError,
-    _critic_votes,
     _extract_json,
+)
+from reasoning_core.task_search.wave_proposer import (
+    CatalogEntry,
+    CRITIC_MAX_BATCH,
+    _critic_votes,
     _proposal_entries,
     build_catalog,
     catalog_record,
@@ -248,7 +250,8 @@ def test_client_polls_a_pending_asynchronous_request(monkeypatch):
         return finished
 
     monkeypatch.setattr("requests.get", get)
-    client = ChatClient(api_key="secret", timeout=10)
+    client = ChatClient(model="m", endpoint=wave_proposer.DEFAULT_ENDPOINT,
+                        api_key="secret", timeout=10)
 
     assert client.json("test", "system", "user") == {"proposals": []}
     assert observed["url"] == "https://integrate.api.nvidia.com/v1/status/abc"
@@ -291,7 +294,8 @@ def test_client_reads_a_streamed_reply(monkeypatch):
         return Response()
 
     monkeypatch.setattr("requests.post", post)
-    client = ChatClient(api_key="secret", timeout=10)
+    client = ChatClient(model="m", endpoint=wave_proposer.DEFAULT_ENDPOINT,
+                        api_key="secret", timeout=10)
 
     assert client.json("test", "system", "user") == {"proposals": []}
     # Asking for a stream and then not reading it as one is the failure that hangs.
@@ -314,7 +318,8 @@ def test_a_client_can_still_be_asked_for_a_whole_document(monkeypatch):
             return json.loads(self.content)
 
     monkeypatch.setattr("requests.post", lambda *args, **kwargs: Response())
-    client = ChatClient(api_key="secret", timeout=10, stream=False)
+    client = ChatClient(model="m", endpoint=wave_proposer.DEFAULT_ENDPOINT,
+                        api_key="secret", timeout=10, stream=False)
 
     assert client.json("test", "system", "user") == {"proposals": []}
     assert client.calls[0]["response_id"] == "doc-1"
@@ -554,8 +559,8 @@ def test_a_two_hundred_carrying_an_upstream_error_is_retried_not_parsed(monkeypa
         posted.append(url)
         return Response(replies[len(posted) - 1])
 
-    monkeypatch.setattr("reasoning_core.task_search.wave_proposer.requests.post", post)
-    monkeypatch.setattr("reasoning_core.task_search.wave_proposer.time.sleep", lambda _: None)
+    monkeypatch.setattr("reasoning_core.task_search.chat.requests.post", post)
+    monkeypatch.setattr("reasoning_core.task_search.chat.time.sleep", lambda _: None)
 
     client = ChatClient(model="m", endpoint="http://x", api_key="k", stream=False)
     assert client.json("probe", "s", "u") == {"ok": True}
@@ -574,9 +579,9 @@ def test_an_upstream_error_that_never_clears_is_raised_not_swallowed(monkeypatch
         def raise_for_status(self):
             return None
 
-    monkeypatch.setattr("reasoning_core.task_search.wave_proposer.requests.post",
+    monkeypatch.setattr("reasoning_core.task_search.chat.requests.post",
                         lambda url, **kwargs: Response())
-    monkeypatch.setattr("reasoning_core.task_search.wave_proposer.time.sleep", lambda _: None)
+    monkeypatch.setattr("reasoning_core.task_search.chat.time.sleep", lambda _: None)
 
     client = ChatClient(model="m", endpoint="http://x", api_key="k", stream=False)
     with pytest.raises(UpstreamError, match="still overloaded"):
@@ -808,18 +813,18 @@ def test_a_truncated_stream_frame_is_retried_rather_than_ending_the_wave(monkeyp
         def iter_lines(self, decode_unicode=False):
             return iter(self.lines)
 
-    monkeypatch.setattr(wave_proposer.requests, "post", lambda *a, **k: Response())
+    monkeypatch.setattr(chat.requests, "post", lambda *a, **k: Response())
     slept = []
-    monkeypatch.setattr(wave_proposer.time, "sleep", slept.append)
+    monkeypatch.setattr(chat.time, "sleep", slept.append)
 
     assert client.json("propose", "system", "user") == {"accepted": []}
-    assert slept == [wave_proposer.RETRY_BACKOFF[0]]
+    assert slept == [chat.RETRY_BACKOFF[0]]
 
 
 def test_a_connection_dropped_mid_stream_is_retried(monkeypatch):
     client = ChatClient(model="m", endpoint="https://example.invalid/v1/chat/completions",
                         api_key="k", stream=False)
-    outcomes = iter([wave_proposer.requests.ConnectionError("reset by peer"),
+    outcomes = iter([chat.requests.ConnectionError("reset by peer"),
                      ('{"accepted": []}', b"", "id-1")])
 
     class Response:
@@ -834,9 +839,9 @@ def test_a_connection_dropped_mid_stream_is_retried(monkeypatch):
             raise outcome
         return outcome
 
-    monkeypatch.setattr(wave_proposer.requests, "post", lambda *a, **k: Response())
+    monkeypatch.setattr(chat.requests, "post", lambda *a, **k: Response())
     monkeypatch.setattr(ChatClient, "_read_reply", read)
-    monkeypatch.setattr(wave_proposer.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(chat.time, "sleep", lambda seconds: None)
 
     assert client.json("review", "system", "user") == {"accepted": []}
 
@@ -857,15 +862,15 @@ def test_a_malformed_reply_is_retried_rather_than_ending_the_wave(monkeypatch):
         def raise_for_status(self):
             return None
 
-    monkeypatch.setattr(wave_proposer.requests, "post", lambda *a, **k: Response())
+    monkeypatch.setattr(chat.requests, "post", lambda *a, **k: Response())
     monkeypatch.setattr(
         ChatClient, "_read_reply",
         lambda self, response, headers: (next(replies), b"", "id-1"))
     slept = []
-    monkeypatch.setattr(wave_proposer.time, "sleep", slept.append)
+    monkeypatch.setattr(chat.time, "sleep", slept.append)
 
     assert client.json("review", "system", "user") == {"accepted": []}
-    assert slept == [wave_proposer.RETRY_BACKOFF[0]]
+    assert slept == [chat.RETRY_BACKOFF[0]]
 
 
 class _Route:
@@ -881,9 +886,9 @@ class _Route:
         self.asks += 1
         outcome = next(self._script)
         if outcome == 429:
-            response = wave_proposer.requests.Response()
+            response = chat.requests.Response()
             response.status_code = 429
-            raise wave_proposer.requests.HTTPError(response=response)
+            raise chat.requests.HTTPError(response=response)
         self.calls.append({"purpose": purpose, "model": self.model,
                            "provider": self.provider})
         return outcome
@@ -894,7 +899,7 @@ def test_a_pool_steps_sideways_to_another_key_before_another_model():
     deepseek, and a second key served both. A second key on the model you asked for beats
     the first key on a model you did not."""
     wanted, fallback = {"proposals": ["from k3"]}, {"proposals": ["from the fallback"]}
-    pool = wave_proposer.ClientPool([
+    pool = chat.ClientPool([
         _Route("k3", "key1", [429]),
         _Route("k3", "key2", [wanted]),
         _Route("pro", "key1", [fallback]),
@@ -906,7 +911,7 @@ def test_a_pool_steps_sideways_to_another_key_before_another_model():
 
 def test_a_pool_falls_back_to_the_next_model_once_every_key_refuses():
     fallback = {"proposals": ["from the fallback"]}
-    pool = wave_proposer.ClientPool([
+    pool = chat.ClientPool([
         _Route("k3", "key1", [429]),
         _Route("k3", "key2", [429]),
         _Route("pro", "key1", [fallback]),
@@ -920,7 +925,7 @@ def test_a_refusing_route_is_not_asked_again_until_its_cooldown_expires():
     answer = {"proposals": []}
     dead = _Route("k3", "key1", [429])           # scripted once: a second ask would raise
     live = _Route("k3", "key2", [answer, answer])
-    pool = wave_proposer.ClientPool([dead, live], cooldown=3600)
+    pool = chat.ClientPool([dead, live], cooldown=3600)
     assert pool.json("propose", "s", "u") == answer
     assert pool.json("propose", "s", "u") == answer
     assert dead.asks == 1
@@ -930,7 +935,7 @@ def test_keys_are_shared_round_robin_so_one_quota_does_not_cap_the_wave():
     answer = {"proposals": []}
     first = _Route("k3", "key1", [answer, answer])
     second = _Route("k3", "key2", [answer, answer])
-    pool = wave_proposer.ClientPool([first, second])
+    pool = chat.ClientPool([first, second])
     for _ in range(4):
         pool.json("propose", "s", "u")
     assert len(first.calls) == 2 and len(second.calls) == 2
@@ -938,21 +943,21 @@ def test_keys_are_shared_round_robin_so_one_quota_does_not_cap_the_wave():
 
 def test_a_failure_that_is_not_a_rate_limit_is_not_routed_around():
     """A pool is for quotas. Hiding a 500 behind a fallback hides a broken endpoint."""
-    response = wave_proposer.requests.Response()
+    response = chat.requests.Response()
     response.status_code = 500
 
     class Broken(_Route):
         def json(self, *args, **kwargs):
-            raise wave_proposer.requests.HTTPError(response=response)
+            raise chat.requests.HTTPError(response=response)
 
-    pool = wave_proposer.ClientPool([Broken("k3", "key1", []),
+    pool = chat.ClientPool([Broken("k3", "key1", []),
                                      _Route("k3", "key2", [{"proposals": []}])])
-    with pytest.raises(wave_proposer.requests.HTTPError):
+    with pytest.raises(chat.requests.HTTPError):
         pool.json("propose", "s", "u")
 
 
 def test_the_pool_reports_the_model_that_actually_answered():
-    pool = wave_proposer.ClientPool([_Route("k3", "key1", [429]),
+    pool = chat.ClientPool([_Route("k3", "key1", [429]),
                                      _Route("pro", "key1", [{"proposals": []}])])
     pool.json("propose", "s", "u")
     assert pool.model == "pro"
@@ -965,7 +970,7 @@ def test_the_pool_logs_calls_in_the_order_they_were_answered():
     where provenance has to say which model wrote which round."""
     # cooldown=0 so the refused route reopens, which is what makes the two orderings
     # differ: grouping by client would report k3, k3, pro whatever the wave really did.
-    pool = wave_proposer.ClientPool(
+    pool = chat.ClientPool(
         [_Route("k3", "key1", [{"proposals": []}, 429, {"proposals": []}]),
          _Route("pro", "key1", [{"proposals": []}])], cooldown=0)
     for round_index in range(1, 4):
@@ -1060,7 +1065,7 @@ def test_a_pool_does_not_climb_the_retry_ladder_before_trying_another_key(monkey
             seen.append((self.api_key, wait_out_rate_limits))
             return super().json(purpose, system, user, **kwargs)
 
-    pool = wave_proposer.ClientPool([Recording("k3", "key1", [429]),
+    pool = chat.ClientPool([Recording("k3", "key1", [429]),
                                      Recording("k3", "key2", [{"proposals": []}])])
     pool.json("propose", "s", "u")
     # The first route fails fast; only the last one, with nothing left to route to, waits.

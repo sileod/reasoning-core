@@ -14,8 +14,8 @@ from .design_proposer import (
     DEFAULT_MODEL as DESIGN_MODEL,
 )
 from .legacy import LEGACY_SOURCE
+from .chat import build_pool
 from .wave_proposer import (
-    build_pool,
     CRITIC_API_KEY_ENV,
     CRITIC_ENDPOINT,
     CRITIC_MODEL,
