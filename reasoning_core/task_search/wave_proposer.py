@@ -577,8 +577,19 @@ this batch. Name only ids that appear in this prompt.
 
 Scores are integers 1-5. `novel` requires a genuinely different cognitive operation, useful
 repeated SFT signal, a feasible exact oracle, and a coverage spec precise enough that two
-implementors would build the same distribution. Use `variant` for a known operation with surface, parameter, direction, or output-only
-changes. Use `duplicate` for the same operation and output. A `novel` verdict is inconsistent
+implementors would build the same distribution -- the same problem modes and answer, not the
+same code, difficulty ladder or formatting, which are the library's choices and not the
+proposal's. Use `variant` for a known operation with surface, parameter, direction, or output-only
+changes. Use `duplicate` for the same operation and output.
+
+`same_operation` and `variant` are the two labels that reject a candidate, so each one has
+to earn it: its `overlap` must name the procedure both tasks carry out, specifically enough
+that someone who knows the neighbor could follow it. A shared output category is not a
+shared operation. "Both produce a canonical form" does not make Jordan normal form a
+variant of DFA minimization -- one computes generalized eigenvectors and the other merges
+indistinguishable states -- any more than "both return a number" makes two tasks the same.
+If the only overlap you can name is the kind of answer, the shape of the input, or the
+field it comes from, the relationship is `adjacent`. A `novel` verdict is inconsistent
 with a nearest neighbor labelled `same_operation` or `variant` and will be rejected by the
 caller. Return one review per proposal_id in this exact shape:
 {json.dumps(shape, indent=2)}
@@ -688,7 +699,7 @@ def _exact_catalog_collision(proposal, catalog):
 
 def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                  endpoint=DEFAULT_ENDPOINT, api_key=None, seed=0, temperature=1.0,
-                 reasoning_effort="max", rounds=3, pool_size=48,
+                 reasoning_effort="max", rounds=3, pool_size=48, checkpoint=None,
                  max_batch=MAX_BATCH, timeout=2400, client=None,
                  critic_model=None, critic_endpoint=None, critic_api_key=None,
                  critic_reasoning_effort=None, critic_client=None,
@@ -704,6 +715,11 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
 
     critic_samples asks the same critic K times over shuffled candidate orders and takes
     the majority; see _critic_votes for why the shuffle is the part that matters.
+
+    `checkpoint` is called with the wave so far after every round. A wave is hours of
+    provider latency and the archive used to be written only once it returned, so a 429 in
+    the last round threw away every proposal the earlier ones had accepted and every ballot
+    already paid for.
     """
     if count < 1 or rounds < 1:
         raise ValueError("count and rounds must be positive")
@@ -728,23 +744,86 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
     # candidate still meets its own retrieved neighbours at the critic.
     attractors = brief_entries(brief, catalog)
     accepted, rejected, exclusions = [], [], []
+    # Candidates generated but not yet reviewed. The wave paid for these; dropping the ones
+    # a round did not have critic budget for means buying them again next round, from a
+    # model whose cost is an hour of latency. They are reviewed first and, if the wave ends
+    # with any left, archived rather than discarded.
+    pool, round_names = [], set()
+
+    def document():
+            return {
+                "format_version": 1,
+            "kind": "sft_task_proposals",
+            "name": name,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            # Written for every generated wave, where before only hand-supplied waves carried
+            # it and `proposer` was a provenance kind nothing produced. The brief lives here
+            # rather than under `objective` because it is where the ideas came from, not what
+            # the run was counting: an archived wave has to be able to say what it was asked
+            # for, or a themed wave and an open one read identically a month later. Present
+            # and empty means nobody steered it; absent means the wave predates steering.
+            "provenance": {
+                "kind": "proposer",
+                "name": name,
+                "received": datetime.now(timezone.utc).date().isoformat(),
+                # Asked of the client rather than of the arguments, the way `review` already
+                # asks the critic: a caller that passes its own client leaves `model` at the
+                # default, and provenance naming a model that did not write the wave is worse
+                # than provenance saying nothing.
+                "source": (f"{getattr(client, 'model', model)} via "
+                           f"{getattr(client, 'provider', provider_of(endpoint))}"),
+                "brief": brief,
+            },
+            "objective": {"training_stage": "sft", "requested": count,
+                          "accepted": len(accepted), "complete": len(accepted) == count},
+            "catalog": initial_catalog,
+            "generation": {
+                "provider": getattr(client, "provider", provider_of(endpoint)),
+                "model": getattr(client, "model", model), "requested_model": model,
+                "endpoint": endpoint,
+                "seed": seed, "temperature": temperature,
+                "reasoning_effort": reasoning_effort,
+                "calls": list(client.calls),
+            },
+            # Recorded separately even when it is the same client, so that a wave's novelty
+            # verdicts can always be attributed to the model that actually issued them.
+            "review": {
+                "provider": getattr(critic, "provider", None),
+                "model": getattr(critic, "model", None),
+                "endpoint": getattr(critic, "endpoint", None),
+                "reasoning_effort": getattr(critic, "reasoning_effort", None),
+                "shared_with_generator": critic is client,
+                "calls": [] if critic is client else list(critic.calls),
+            },
+            "proposals": accepted,
+            "rejected": rejected,
+            # Generated, validated, never reviewed: the wave ran out of critic budget or
+            # of rounds before reaching them. Archived so the next run can review what
+            # this one already paid for instead of buying it again.
+            "pool": list(pool),
+        }
+
     for round_index in range(1, rounds + 1):
         missing = count - len(accepted)
         if missing <= 0:
             break
-        # Ask for a population, not for `missing` answers. Asking for what is still owed
-        # and asking again when most of it is rejected is rejection sampling at a measured
-        # one-in-thirty-six, against a model whose cost is latency: a round trip is an hour
-        # and forty-eight candidates are barely longer to write than twelve. The pool is
-        # then cut down here, where it is free, instead of by the critic, where it is not.
-        requested = min(max(pool_size, missing), max_batch)
-        generated = client.json(
-            f"propose-round-{round_index}", _PROPOSER_SYSTEM,
-            _proposer_prompt(requested, attractors, exclusions, brief))
-        candidates = generated.get("proposals")
-        if not isinstance(candidates, list):
-            raise ValueError("proposer response requires a proposals list")
-        reviewable, round_names = [], set()
+        # Enough to fill the wave with room for rejections, and no more: every extra
+        # candidate sent on is `critic_samples` reviews of it.
+        budget = min(max(missing * 2, missing), CRITIC_MAX_BATCH)
+        candidates = []
+        if len(pool) < budget:
+            # Ask for a population, not for `missing` answers. Asking for what is still
+            # owed and asking again when most of it is rejected is rejection sampling at a
+            # measured one-in-thirty-six, against a model whose cost is latency: a round
+            # trip is an hour and forty-eight candidates are barely longer to write than
+            # twelve. Generation happens only when the pool cannot fill a round.
+            requested = min(max(pool_size, missing), max_batch)
+            generated = client.json(
+                f"propose-round-{round_index}", _PROPOSER_SYSTEM,
+                _proposer_prompt(requested, attractors, exclusions, brief))
+            candidates = generated.get("proposals")
+            if not isinstance(candidates, list):
+                raise ValueError("proposer response requires a proposals list")
         for proposal in candidates:
             problems = proposal_problems(proposal)
             collision = _exact_catalog_collision(proposal, catalog)
@@ -763,14 +842,15 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                                  "reason": reason})
                 exclusions.append(f"{proposal.get('name', 'invalid')}: {reason}")
             else:
-                reviewable.append(proposal)
+                pool.append(proposal)
                 round_names.add(_snake(proposal.get("name")))
-        if not reviewable:
+        if not pool:
             continue
-        # Enough to fill the wave with room for rejections, and no more: every extra
-        # candidate here is `critic_samples` reviews of it.
-        reviewable = diversify(reviewable, catalog, min(max(missing * 2, missing),
-                                                        CRITIC_MAX_BATCH))
+        # Diversity orders the review queue; it does not decide what survives. What this
+        # round has no critic budget for stays in the pool for the next one.
+        reviewable = diversify(pool, catalog, min(budget, len(pool)))
+        chosen = {id(proposal) for proposal in reviewable}
+        pool = [proposal for proposal in pool if id(proposal) not in chosen]
         votes = _critic_votes(critic, reviewable, catalog,
                               samples=critic_samples, round_index=round_index,
                               wave_name=name)
@@ -834,53 +914,9 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                                  "scores": ballot["scores"], "votes": tally})
                 exclusions.append(
                     f"{proposal['name']}: {reason}{_collisions(ballot, catalog)}")
-    wave = {
-        "format_version": 1,
-        "kind": "sft_task_proposals",
-        "name": name,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        # Written for every generated wave, where before only hand-supplied waves carried
-        # it and `proposer` was a provenance kind nothing produced. The brief lives here
-        # rather than under `objective` because it is where the ideas came from, not what
-        # the run was counting: an archived wave has to be able to say what it was asked
-        # for, or a themed wave and an open one read identically a month later. Present
-        # and empty means nobody steered it; absent means the wave predates steering.
-        "provenance": {
-            "kind": "proposer",
-            "name": name,
-            "received": datetime.now(timezone.utc).date().isoformat(),
-            # Asked of the client rather than of the arguments, the way `review` already
-            # asks the critic: a caller that passes its own client leaves `model` at the
-            # default, and provenance naming a model that did not write the wave is worse
-            # than provenance saying nothing.
-            "source": (f"{getattr(client, 'model', model)} via "
-                       f"{getattr(client, 'provider', provider_of(endpoint))}"),
-            "brief": brief,
-        },
-        "objective": {"training_stage": "sft", "requested": count,
-                      "accepted": len(accepted), "complete": len(accepted) == count},
-        "catalog": initial_catalog,
-        "generation": {
-            "provider": getattr(client, "provider", provider_of(endpoint)),
-            "model": getattr(client, "model", model), "requested_model": model,
-            "endpoint": endpoint,
-            "seed": seed, "temperature": temperature,
-            "reasoning_effort": reasoning_effort,
-            "calls": list(client.calls),
-        },
-        # Recorded separately even when it is the same client, so that a wave's novelty
-        # verdicts can always be attributed to the model that actually issued them.
-        "review": {
-            "provider": getattr(critic, "provider", None),
-            "model": getattr(critic, "model", None),
-            "endpoint": getattr(critic, "endpoint", None),
-            "reasoning_effort": getattr(critic, "reasoning_effort", None),
-            "shared_with_generator": critic is client,
-            "calls": [] if critic is client else list(critic.calls),
-        },
-        "proposals": accepted,
-        "rejected": rejected,
-    }
+        if checkpoint is not None:
+            checkpoint(document())
+    wave = document()
     problems = validate_proposal_wave(wave)
     if problems:
         raise ValueError("generated proposal wave is invalid:\n  " + "\n  ".join(problems))

@@ -328,6 +328,9 @@ def main(argv=None):
             critic_samples=max(1, args.critic_samples),
             rounds=args.rounds,
             pool_size=args.pool_size,
+            # Written after every round, so a wave that dies in its last round keeps the
+            # proposals and ballots the earlier ones already paid for.
+            checkpoint=lambda partial: write_proposal_wave(output, partial),
             max_batch=args.max_batch,
             timeout=args.timeout_seconds,
         )

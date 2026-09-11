@@ -1199,3 +1199,95 @@ def test_the_critic_prompt_carries_neighbours_not_the_whole_catalog():
 
     assert "FULL KNOWN CATALOG" not in prompt
     assert "task:t0" in prompt and "task:t39" not in prompt
+
+
+def _pool_client(names, reviews):
+    class Client:
+        model, provider, endpoint, reasoning_effort = "big", "fake", "http://f", None
+
+        def __init__(self):
+            self.calls, self.proposed = [], 0
+
+        def json(self, purpose, system, user, **kwargs):
+            self.calls.append({"purpose": purpose})
+            if purpose.startswith("propose"):
+                self.proposed += 1
+                return {"proposals": [proposal(name) for name in names]}
+            return grounded(reviews, user)
+
+    return Client()
+
+
+def test_candidates_the_critic_had_no_budget_for_stay_in_the_pool():
+    """The wave paid an hour of latency for these. Dropping the ones a round could not
+    review means buying them again, and the archive never learns they existed."""
+    reviews = {"reviews": [{
+        "proposal_id": f"C{seat:03d}", "verdict": "duplicate",
+        "nearest_neighbors": [{"id": "-", "relationship": "same_operation", "overlap": "a"},
+                              {"id": "-", "relationship": "adjacent", "overlap": "b"},
+                              {"id": "-", "relationship": "different", "overlap": "c"}],
+        "substantive_difference": "...",
+        "scores": {"novelty": 1, "sft_value": 1, "feasibility": 5, "clarity": 5},
+        "reason": "known"} for seat in range(1, 13)]}
+    names = [f"pooled_candidate_{index:02d}" for index in range(10)]
+    client = _pool_client(names, reviews)
+
+    wave = propose_wave(ROOT, name="pooled", count=1, rounds=1, client=client)
+
+    reviewed = {row["name"] for row in wave["rejected"]}
+    pooled = {row["name"] for row in wave["pool"]}
+    assert pooled, "unreviewed candidates were discarded"
+    assert not (reviewed & pooled), "a candidate cannot be both reviewed and pooled"
+    assert len(reviewed | pooled) == len(names), "a generated candidate went missing"
+
+
+def test_a_second_round_reviews_the_pool_before_paying_to_generate_again():
+    reviews = {"reviews": [{
+        "proposal_id": f"C{seat:03d}", "verdict": "duplicate",
+        "nearest_neighbors": [{"id": "-", "relationship": "same_operation", "overlap": "a"},
+                              {"id": "-", "relationship": "adjacent", "overlap": "b"},
+                              {"id": "-", "relationship": "different", "overlap": "c"}],
+        "substantive_difference": "...",
+        "scores": {"novelty": 1, "sft_value": 1, "feasibility": 5, "clarity": 5},
+        "reason": "known"} for seat in range(1, 13)]}
+    client = _pool_client([f"pooled_candidate_{index:02d}" for index in range(10)], reviews)
+
+    propose_wave(ROOT, name="pooled", count=1, rounds=3, client=client)
+
+    assert client.proposed == 1, "generated again while the pool still had candidates"
+
+
+def test_a_wave_checkpoints_every_round_so_a_late_failure_keeps_the_early_ones():
+    """The archive used to be written only once propose_wave returned, so a 429 in the last
+    round threw away every proposal and ballot the earlier rounds had paid for."""
+    saved = []
+
+    class DyingClient:
+        model, provider, endpoint, reasoning_effort = "big", "fake", "http://f", None
+
+        def __init__(self):
+            self.calls, self.rounds = [], 0
+
+        def json(self, purpose, system, user, **kwargs):
+            self.calls.append({"purpose": purpose})
+            if purpose.startswith("propose"):
+                self.rounds += 1
+                if self.rounds > 1:
+                    raise UpstreamError("provider gave up")
+                return {"proposals": [proposal("first_round_idea")]}
+            return grounded({"reviews": [{
+                "proposal_id": "C001", "verdict": "duplicate",
+                "nearest_neighbors": [
+                    {"id": "-", "relationship": "same_operation", "overlap": "a"},
+                    {"id": "-", "relationship": "adjacent", "overlap": "b"},
+                    {"id": "-", "relationship": "different", "overlap": "c"}],
+                "substantive_difference": "...",
+                "scores": {"novelty": 1, "sft_value": 1, "feasibility": 5, "clarity": 5},
+                "reason": "known"}]}, user)
+
+    with pytest.raises(UpstreamError):
+        propose_wave(ROOT, name="dying", count=2, rounds=3, client=DyingClient(),
+                     checkpoint=saved.append)
+
+    assert saved, "the wave died with nothing checkpointed"
+    assert [row["name"] for row in saved[-1]["rejected"]] == ["first_round_idea"]
