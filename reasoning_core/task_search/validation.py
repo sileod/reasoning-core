@@ -627,6 +627,7 @@ import random
 import sys
 
 import reasoning_core.template
+from reasoning_core.evaluation.difficulty import check_headroom
 
 # Most of the contract lives inside Task.validate -- the JSON round trip, the junk
 # answer probes, the level knob. A task that replaces it rather than extending it
@@ -656,6 +657,8 @@ for offset, (module_name, class_name) in enumerate(classes):
     reasoning_core.template.Task.validate = _spy_validate
     task = task_class()
     random.seed(seed + offset)
+    print("HEADROOM " + json.dumps(check_headroom(task)), flush=True)
+    task = task_class()
     del _reached[:]
     task.validate(n_samples=10)
     assert _reached, (
@@ -706,9 +709,18 @@ for offset, (module_name, class_name) in enumerate(classes):
             # An attribute the balancer sets on the problem, not a metadata field.
             keys = len({str(getattr(row, "balancing_key", None)) for row in batch})
             break
-        assert filled, (module_name, class_name, level,
-                        f"generate_balanced_batch cannot fill {batch_size}"
-                        f" at any worker count: {why}")
+        # Named as a band requirement, not as a broken task. Swept over the library while
+        # this was written: 11 of 300 landed tasks cannot fill the batch somewhere in the
+        # band, and 8 of those fail at level 0 alone, where the answer space is smallest.
+        # So this failure usually means the task is too narrow at its easiest level for the
+        # profile the cache builder asks for -- which is a reason it cannot be measured,
+        # and worth refusing in a new task, but not evidence that the generator is wrong.
+        assert filled, (
+            module_name, class_name, level,
+            f"generate_balanced_batch cannot fill {batch_size} rows at level {level}"
+            f" at any worker count ({why}); levels {list(levels)} are what the cache"
+            f" builder and every evaluation profile ask for, so a task too narrow here"
+            f" cannot be measured at all")
         # Not pass/fail: a task whose batch realises a handful of distinct answers is
         # near-degenerate, and narrow tasks saturate early and transfer least.
         print(f"BUILDABLE {module_name}.{class_name} level={level}"
