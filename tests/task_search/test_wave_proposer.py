@@ -873,10 +873,12 @@ class _Route:
 
     def __init__(self, model, key, script):
         self.model, self.api_key, self.calls = model, key, []
+        self.asks = 0
         self._script = iter(script)
         self.provider = "test"
 
     def json(self, purpose, system, user, **kwargs):
+        self.asks += 1
         outcome = next(self._script)
         if outcome == 429:
             response = wave_proposer.requests.Response()
@@ -921,7 +923,7 @@ def test_a_refusing_route_is_not_asked_again_until_its_cooldown_expires():
     pool = wave_proposer.ClientPool([dead, live], cooldown=3600)
     assert pool.json("propose", "s", "u") == answer
     assert pool.json("propose", "s", "u") == answer
-    assert len(dead.calls) == 1
+    assert dead.asks == 1
 
 
 def test_keys_are_shared_round_robin_so_one_quota_does_not_cap_the_wave():
