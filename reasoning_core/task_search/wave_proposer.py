@@ -7,11 +7,13 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import itertools
 import json
 import os
 from pathlib import Path
 import random
 import re
+import sys
 import time
 
 from rapidfuzz import fuzz
@@ -654,6 +656,22 @@ def clean_brief(brief):
     return text
 
 
+def _collisions(ballot, catalog):
+    """The catalog entries a rejected candidate actually collided with, named.
+
+    The prose reason already told the next round that something overlapped; it never said
+    what with, so "closely matches existing constraint propagation tasks" left the proposer
+    to guess which of four hundred entries it meant. The critic had already picked them out
+    and they were being written to the archive and dropped from the prompt. Only the fatal
+    relationships are worth the tokens: `adjacent` is what a good proposal looks like.
+    """
+    named = {entry.entry_id: entry.name for entry in catalog}
+    hits = [f"{named.get(item['id'], item['id'])} ({item['relationship']})"
+            for item in ballot["neighbors"]
+            if item["relationship"] in {"same_operation", "variant"}]
+    return f" [overlaps {', '.join(hits)}]" if hits else ""
+
+
 def _proposer_prompt(count, catalog_text, exclusions=(), brief=""):
     excluded = "\n".join("- " + item for item in exclusions) or "- none"
     # Placed above the rules and below nothing: an unsteered wave renders the prompt it
@@ -741,6 +759,98 @@ CANDIDATES:
 
 FULL KNOWN CATALOG:
 {_catalog_text(catalog, max_catalog_chars)}"""
+
+
+class ClientPool:
+    """Several clients for one job: preferred model first, keys shared round-robin.
+
+    Two dimensions, because the outage that prompted this had two. NVIDIA's quota is per
+    account *and* per model -- one key was refusing kimi-k3 while serving deepseek-v4-pro,
+    and a second key was serving both -- so a pool has to be able to step sideways to
+    another key and downwards to another model, in that order. Sideways first: a second key
+    on the model you asked for beats the first key on a model you did not.
+
+    Rotation is `itertools.cycle` over the keys, so consecutive calls start on different
+    ones and share the load rather than exhausting one and then discovering the next. A
+    route that answers 429 is remembered as closed for `cooldown` seconds: a cycle with no
+    memory hands work back to an exhausted key every other call and pays the full retry
+    ladder to learn what it was already told.
+    """
+
+    def __init__(self, clients, *, cooldown=1800):
+        if not clients:
+            raise ValueError("a pool needs at least one client")
+        # Preference order is the caller's; the rotation only picks where to start within
+        # each model's keys, so a pool never prefers a fallback model to a working one.
+        self.clients = list(clients)
+        self.cooldown = cooldown
+        self._closed = {}
+        self._turn = itertools.count()
+        self._answered = self.clients[0]
+
+    @property
+    def model(self):
+        return self._answered.model
+
+    @property
+    def provider(self):
+        return getattr(self._answered, "provider", None)
+
+    @property
+    def calls(self):
+        return [call for client in self.clients for call in client.calls]
+
+    def _routes(self):
+        """Every client, preferred model first, starting at a rotating key offset."""
+        by_model, order = {}, []
+        for client in self.clients:
+            if client.model not in by_model:
+                by_model[client.model] = []
+                order.append(client.model)
+            by_model[client.model].append(client)
+        start = next(self._turn)
+        routes = []
+        for model in order:
+            group = by_model[model]
+            offset = start % len(group)
+            routes.extend(group[offset:] + group[:offset])
+        return routes
+
+    def _open(self, client):
+        until = self._closed.get(id(client))
+        return until is None or time.time() >= until
+
+    def json(self, purpose, system, user, **kwargs):
+        routes = self._routes()
+        live = [client for client in routes if self._open(client)] or routes
+        for index, client in enumerate(live):
+            try:
+                result = client.json(purpose, system, user, **kwargs)
+            except requests.HTTPError as failure:
+                status = getattr(failure.response, "status_code", None)
+                if status != 429 or index == len(live) - 1:
+                    raise
+                self._closed[id(client)] = time.time() + self.cooldown
+                print(f"WARNING: {client.model} is rate limited on this key; "
+                      f"trying the next route", file=sys.stderr)
+                continue
+            self._answered = client
+            self._closed.pop(id(client), None)
+            return result
+        raise AssertionError("unreachable")
+
+
+def build_pool(models, endpoint, key_envs, **settings):
+    """A pool over every (model, key) pair, models in preference order.
+
+    Named environment variables rather than keys, so a key never travels through an
+    argument list and a missing one is reported by name.
+    """
+    keys = [(env, os.environ[env]) for env in key_envs if os.environ.get(env)]
+    if not keys:
+        raise SystemExit(f"none of {', '.join(key_envs)} is set")
+    return ClientPool([ChatClient(model=model, endpoint=endpoint, api_key=key, **settings)
+                       for model in models for _, key in keys])
 
 
 def _review_verdict(review, candidate_id, allowed_neighbor_ids):
@@ -915,15 +1025,25 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                               samples=critic_samples, round_index=round_index,
                               wave_name=name)
         for proposal, ballots in zip(reviewable, votes):
-            cast = [ballot for ballot in ballots if ballot]
+            # A ballot that names no three real neighbours is a critic that did not do the
+            # job, not a critic that found a duplicate, and it abstains for exactly the
+            # reason an omitted candidate does. Counting it as a vote against was biased in
+            # the worst direction available: the candidate hardest to name three
+            # overlapping neighbours for is the one with no close neighbours. It cost
+            # sandpile_stabilization, rotation_map_faces and ordered_bdd_reduction, scored
+            # novelty 5, 5 and 4 by the very samples whose ballots were malformed.
+            cast = [ballot for ballot in ballots if ballot and ballot["neighbors_valid"]]
             in_favour = [ballot for ballot in cast if ballot["passes"]]
             # A candidate that no sample reviewed is an omission, not a verdict; one that
             # a minority of samples skipped is judged by the samples that did look at it.
             if not cast:
+                unusable = any(ballot for ballot in ballots)
+                why = ("no critic sample returned a usable ballot"
+                       if unusable else "every critic sample omitted the candidate")
                 rejected.append({"name": proposal["name"], "verdict": "invalid",
                                  "summary": proposal.get("summary"), "closest_id": None,
-                                 "reason": "every critic sample omitted the candidate"})
-                exclusions.append(f"{proposal['name']}: critic omitted the candidate")
+                                 "reason": why})
+                exclusions.append(f"{proposal['name']}: {why}")
                 continue
             tally = f"{len(in_favour)}/{len(cast)}"
             if len(in_favour) * 2 > len(cast) and len(accepted) < count:
@@ -964,7 +1084,8 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                                  "verdict": review.get("verdict", "invalid"),
                                  "nearest_neighbors": ballot["neighbors"], "reason": reason,
                                  "scores": ballot["scores"], "votes": tally})
-                exclusions.append(f"{proposal['name']}: {reason}")
+                exclusions.append(
+                    f"{proposal['name']}: {reason}{_collisions(ballot, catalog)}")
     wave = {
         "format_version": 1,
         "kind": "sft_task_proposals",

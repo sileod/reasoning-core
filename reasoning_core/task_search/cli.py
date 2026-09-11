@@ -15,6 +15,7 @@ from .design_proposer import (
 )
 from .legacy import LEGACY_SOURCE
 from .wave_proposer import (
+    build_pool,
     CRITIC_API_KEY_ENV,
     CRITIC_ENDPOINT,
     CRITIC_MODEL,
@@ -73,9 +74,15 @@ def _parser():
     propose.add_argument("name")
     propose.add_argument("--count", type=int, default=12)
     propose.add_argument("--output")
-    propose.add_argument("--model", default=DEFAULT_MODEL)
+    propose.add_argument(
+        "--model", default=DEFAULT_MODEL,
+        help="comma-separated models in preference order; a later one is used only when"
+             " every key is refusing the earlier ones")
     propose.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
-    propose.add_argument("--api-key-env", default=DEFAULT_API_KEY_ENV)
+    propose.add_argument(
+        "--api-key-env", default=DEFAULT_API_KEY_ENV,
+        help="comma-separated names of credential variables to share round-robin, so one"
+             " key's quota does not cap the wave")
     propose.add_argument("--seed", type=int, default=0)
     propose.add_argument("--temperature", type=float, default=1.0)
     propose.add_argument(
@@ -273,9 +280,21 @@ def main(argv=None):
             raise SystemExit(
                 f"refusing to spend model calls: archive already exists: {output}"
             )
-        api_key = os.environ.get(args.api_key_env)
-        if not api_key:
-            raise SystemExit(f"{args.api_key_env} is required for the proposer")
+        # Both accept comma-separated lists: models in preference order, keys to share
+        # round-robin. One of each is the single client this always built.
+        models = [item.strip() for item in args.model.split(",") if item.strip()]
+        key_envs = [item.strip() for item in args.api_key_env.split(",") if item.strip()]
+        missing = [env for env in key_envs if not os.environ.get(env)]
+        if len(missing) == len(key_envs):
+            raise SystemExit(f"{' or '.join(key_envs)} is required for the proposer")
+        for env in missing:
+            print(f"WARNING: {env} is unset and will not be used", file=sys.stderr)
+        client = build_pool(
+            models, args.endpoint, key_envs,
+            seed=args.seed, temperature=args.temperature,
+            reasoning_effort=(None if args.reasoning_effort == "none"
+                              else args.reasoning_effort),
+            timeout=args.timeout_seconds)
         critic_model = None if args.critic_model == "same" else args.critic_model
         critic_key = os.environ.get(args.critic_api_key_env)
         if critic_model and not critic_key:
@@ -293,9 +312,9 @@ def main(argv=None):
             name=args.name,
             brief=brief,
             count=args.count,
-            model=args.model,
+            model=models[0],
             endpoint=args.endpoint,
-            api_key=api_key,
+            client=client,
             seed=args.seed,
             temperature=args.temperature,
             reasoning_effort=None if args.reasoning_effort == "none" else args.reasoning_effort,

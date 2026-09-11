@@ -102,6 +102,25 @@ python -m reasoning_core.task_search check-proposals \
   reasoning_core/task_search/proposals/archive/sft-wave-1.yaml
 ```
 
+### Several models, several keys
+
+`--model` and `--api-key-env` both take comma-separated lists: models in preference order,
+keys shared round-robin.
+
+```bash
+python -m reasoning_core.task_search propose wave-12 \
+  --model moonshotai/kimi-k3,deepseek-ai/deepseek-v4-pro-0813 \
+  --api-key-env NVIDIA_API_KEY,NVIDIA_API_KEY_2
+```
+
+NVIDIA's quota is per account *and* per model, which is what the two dimensions are for: a
+key that refuses kimi-k3 will still serve deepseek-v4-pro, and a second key serves both. A
+pool steps sideways to another key before it steps down to another model, because a second
+key on the model you asked for beats the first key on one you did not. A route that answers
+429 is remembered as closed for half an hour, so a rotation does not keep handing work back
+to an exhausted key and paying the retry ladder to learn what it was already told. Only 429
+is routed around: hiding a 500 behind a fallback hides a broken endpoint.
+
 See `proposals/FORMAT.md` for the proposal schema and novelty rules.
 
 ## Implement the backlog

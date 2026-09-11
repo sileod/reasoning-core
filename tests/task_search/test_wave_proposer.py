@@ -866,3 +866,166 @@ def test_a_malformed_reply_is_retried_rather_than_ending_the_wave(monkeypatch):
 
     assert client.json("review", "system", "user") == {"accepted": []}
     assert slept == [wave_proposer.RETRY_BACKOFF[0]]
+
+
+class _Route:
+    """A client that answers, or refuses with a 429, on a script."""
+
+    def __init__(self, model, key, script):
+        self.model, self.api_key, self.calls = model, key, []
+        self._script = iter(script)
+        self.provider = "test"
+
+    def json(self, purpose, system, user, **kwargs):
+        outcome = next(self._script)
+        self.calls.append({"purpose": purpose})
+        if outcome == 429:
+            response = wave_proposer.requests.Response()
+            response.status_code = 429
+            raise wave_proposer.requests.HTTPError(response=response)
+        return outcome
+
+
+def test_a_pool_steps_sideways_to_another_key_before_another_model():
+    """NVIDIA's quota is per account and per model: one key refused kimi-k3 while serving
+    deepseek, and a second key served both. A second key on the model you asked for beats
+    the first key on a model you did not."""
+    wanted, fallback = {"proposals": ["from k3"]}, {"proposals": ["from the fallback"]}
+    pool = wave_proposer.ClientPool([
+        _Route("k3", "key1", [429]),
+        _Route("k3", "key2", [wanted]),
+        _Route("pro", "key1", [fallback]),
+        _Route("pro", "key2", [fallback]),
+    ])
+    assert pool.json("propose", "s", "u") == wanted
+    assert pool.model == "k3"
+
+
+def test_a_pool_falls_back_to_the_next_model_once_every_key_refuses():
+    fallback = {"proposals": ["from the fallback"]}
+    pool = wave_proposer.ClientPool([
+        _Route("k3", "key1", [429]),
+        _Route("k3", "key2", [429]),
+        _Route("pro", "key1", [fallback]),
+    ])
+    assert pool.json("propose", "s", "u") == fallback
+    assert pool.model == "pro"
+
+
+def test_a_refusing_route_is_not_asked_again_until_its_cooldown_expires():
+    """A cycle with no memory hands work back to an exhausted key every other call."""
+    answer = {"proposals": []}
+    dead = _Route("k3", "key1", [429])           # scripted once: a second ask would raise
+    live = _Route("k3", "key2", [answer, answer])
+    pool = wave_proposer.ClientPool([dead, live], cooldown=3600)
+    assert pool.json("propose", "s", "u") == answer
+    assert pool.json("propose", "s", "u") == answer
+    assert len(dead.calls) == 1
+
+
+def test_keys_are_shared_round_robin_so_one_quota_does_not_cap_the_wave():
+    answer = {"proposals": []}
+    first = _Route("k3", "key1", [answer, answer])
+    second = _Route("k3", "key2", [answer, answer])
+    pool = wave_proposer.ClientPool([first, second])
+    for _ in range(4):
+        pool.json("propose", "s", "u")
+    assert len(first.calls) == 2 and len(second.calls) == 2
+
+
+def test_a_failure_that_is_not_a_rate_limit_is_not_routed_around():
+    """A pool is for quotas. Hiding a 500 behind a fallback hides a broken endpoint."""
+    response = wave_proposer.requests.Response()
+    response.status_code = 500
+
+    class Broken(_Route):
+        def json(self, *args, **kwargs):
+            raise wave_proposer.requests.HTTPError(response=response)
+
+    pool = wave_proposer.ClientPool([Broken("k3", "key1", []),
+                                     _Route("k3", "key2", [{"proposals": []}])])
+    with pytest.raises(wave_proposer.requests.HTTPError):
+        pool.json("propose", "s", "u")
+
+
+def test_the_pool_reports_the_model_that_actually_answered():
+    pool = wave_proposer.ClientPool([_Route("k3", "key1", [429]),
+                                     _Route("pro", "key1", [{"proposals": []}])])
+    pool.json("propose", "s", "u")
+    assert pool.model == "pro" and len(pool.calls) == 2
+
+
+class BallotCritic:
+    """A critic whose verdict *and* ballot validity are scripted per sample.
+
+    "malformed" is a sample that judged the candidate novel but failed to name three real
+    neighbours -- the shape that was costing novelty-5 proposals.
+    """
+
+    model, provider, endpoint = "small", "fake", "http://fake"
+    reasoning_effort = None
+
+    def __init__(self, script):
+        self.script, self.calls, self.purposes = list(script), [], []
+
+    def json(self, purpose, system, user):
+        self.purposes.append(purpose)
+        self.calls.append({"purpose": purpose})
+        entry = self.script.pop(0)
+        neighbors = [] if entry == "malformed" else _neighbors()
+        return {"reviews": [{
+            "proposal_id": "C001", "verdict": "novel",
+            "nearest_neighbors": neighbors,
+            "substantive_difference": "contracts hyperedges under a cost budget",
+            "scores": {"novelty": 5, "sft_value": 5, "feasibility": 5, "clarity": 5},
+            "reason": "judged novel"}]}
+
+
+def test_a_malformed_ballot_abstains_instead_of_voting_against():
+    """It cost sandpile_stabilization and rotation_map_faces, both scored novelty 5.
+
+    A critic that cannot name three overlapping neighbours has not found a duplicate; the
+    candidate hardest to place is the one with no close neighbours, so counting it against
+    was biased against exactly the proposals the wave exists to find.
+    """
+    critic = BallotCritic(["malformed", "malformed", "novel"])
+    wave = propose_wave(ROOT, name="abstain", count=1, rounds=1,
+                        client=_one_proposal_client("signed_constraint_parity"),
+                        critic_client=critic, critic_samples=3)
+
+    assert [p["name"] for p in wave["proposals"]] == ["signed_constraint_parity"]
+    assert wave["proposals"][0]["novelty"]["votes"] == "1/1"
+
+
+def test_a_candidate_no_sample_could_judge_is_reported_as_unusable_not_as_a_duplicate():
+    critic = BallotCritic(["malformed", "malformed", "malformed"])
+    wave = propose_wave(ROOT, name="unusable", count=1, rounds=1,
+                        client=_one_proposal_client("signed_constraint_parity"),
+                        critic_client=critic, critic_samples=3)
+
+    assert wave["proposals"] == []
+    assert wave["rejected"][0]["reason"] == "no critic sample returned a usable ballot"
+
+
+def test_a_rejection_names_the_catalog_entries_it_collided_with():
+    """The prose already said something overlapped; it never said what with."""
+    ballot = {"neighbors": [
+        {"id": "gallery:belief_tracking", "relationship": "same_operation",
+         "overlap": "same update"},
+        {"id": "gallery:constraint_satisfaction", "relationship": "adjacent",
+         "overlap": "both enforce consistency"},
+    ]}
+    catalog = [wave_proposer.CatalogEntry("gallery:belief_tracking", "belief_tracking",
+                                          "tracks beliefs", "gallery"),
+               wave_proposer.CatalogEntry("gallery:constraint_satisfaction",
+                                          "constraint_satisfaction", "solves", "gallery")]
+    said = wave_proposer._collisions(ballot, catalog)
+    # The fatal relationship is named; `adjacent` is what a good proposal looks like.
+    assert said == " [overlaps belief_tracking (same_operation)]"
+    assert "constraint_satisfaction" not in said
+
+
+def test_a_rejection_with_no_fatal_overlap_adds_nothing():
+    ballot = {"neighbors": [{"id": "gallery:x", "relationship": "adjacent",
+                             "overlap": "some"}]}
+    assert wave_proposer._collisions(ballot, []) == ""

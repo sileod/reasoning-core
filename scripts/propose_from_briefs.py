@@ -76,6 +76,14 @@ def main():
              " catalog already has the classic algorithms; --no-shared sends the briefs"
              " as written, for a wave meant to fill a known gap with a classic")
     parser.add_argument(
+        "--model", default="",
+        help="comma-separated models in preference order, passed to `propose`; empty"
+             " leaves the CLI default")
+    parser.add_argument(
+        "--api-key-env", default="",
+        help="comma-separated credential variables to share round-robin, so one key's"
+             " quota does not cap the run")
+    parser.add_argument(
         "--passes", type=int, default=3,
         help="sweep the unarchived briefs this many times; a wave that fails writes no"
              " archive, so a later pass retries it")
@@ -166,6 +174,12 @@ def sweep_once(arguments, pending):
         command = [sys.executable, "-m", "reasoning_core.task_search", "propose", name,
                    "--brief", text, "--count", str(arguments.count),
                    "--rounds", str(arguments.rounds)]
+        # Passed through only when set, so an unconfigured run renders the command it
+        # always did and the CLI keeps owning the defaults.
+        if arguments.model:
+            command += ["--model", arguments.model]
+        if arguments.api_key_env:
+            command += ["--api-key-env", arguments.api_key_env]
         if arguments.dry_run:
             print(f"[{index}/{len(pending)}] would run: {name}", flush=True)
             continue
