@@ -1029,3 +1029,20 @@ def test_a_rejection_with_no_fatal_overlap_adds_nothing():
     ballot = {"neighbors": [{"id": "gallery:x", "relationship": "adjacent",
                              "overlap": "some"}]}
     assert wave_proposer._collisions(ballot, []) == ""
+
+
+def test_a_pool_does_not_climb_the_retry_ladder_before_trying_another_key(monkeypatch):
+    """Sixteen minutes of backoff to learn a key is exhausted is sixteen minutes the
+    other key could have been answering."""
+    seen = []
+
+    class Recording(_Route):
+        def json(self, purpose, system, user, wait_out_rate_limits=True, **kwargs):
+            seen.append((self.api_key, wait_out_rate_limits))
+            return super().json(purpose, system, user, **kwargs)
+
+    pool = wave_proposer.ClientPool([Recording("k3", "key1", [429]),
+                                     Recording("k3", "key2", [{"proposals": []}])])
+    pool.json("propose", "s", "u")
+    # The first route fails fast; only the last one, with nothing left to route to, waits.
+    assert seen == [("key1", False), ("key2", True)]

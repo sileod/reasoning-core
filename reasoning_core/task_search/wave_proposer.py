@@ -566,7 +566,15 @@ class ChatClient:
             return self._read_document(self._poll(response, headers))
         return self._read_stream(response) if self.stream else self._read_document(response)
 
-    def json(self, purpose, system, user, max_tokens=32768):
+    def json(self, purpose, system, user, max_tokens=32768, wait_out_rate_limits=True):
+        """One JSON answer, retrying transport the way a wave needs it.
+
+        `wait_out_rate_limits=False` gives up on a 429 at once instead of climbing the
+        ladder. A pool with another key to try wants that: sixteen minutes of backoff to
+        learn that this key is exhausted is sixteen minutes the other key could have been
+        answering. The last route in a pool still waits, because then there is nothing to
+        route to and patience is all that is left.
+        """
         body = {
             "model": self.model,
             "messages": [{"role": "system", "content": system},
@@ -595,7 +603,7 @@ class ChatClient:
                 # Reading .content here consumes a streamed body, so it happens only on
                 # the failures, whose bodies are short and worth keeping for the call log.
                 response_bytes = response.content
-                if last:
+                if last or (response.status_code == 429 and not wait_out_rate_limits):
                     response.raise_for_status()
                 time.sleep(backoff)
                 continue
@@ -825,7 +833,9 @@ class ClientPool:
         live = [client for client in routes if self._open(client)] or routes
         for index, client in enumerate(live):
             try:
-                result = client.json(purpose, system, user, **kwargs)
+                result = client.json(purpose, system, user,
+                                     wait_out_rate_limits=index == len(live) - 1,
+                                     **kwargs)
             except requests.HTTPError as failure:
                 status = getattr(failure.response, "status_code", None)
                 if status != 429 or index == len(live) - 1:
