@@ -131,6 +131,15 @@ tests/test_difficulty_tune.py
 # Machine-specific orchestration: hardcoded paths to one cluster and one storage mount. It
 # cannot run anywhere else, so it is workspace state, not part of the package.
 scripts/g5k_influence_gaps.py
+# experiments/ is a separate private checkout. It was tracked here as a SUBMODULE, which wrote its
+# URL into .gitmodules and pinned its commit id -- both published, and both useless to anyone who
+# cannot clone it (the Pages workflow already had to disable submodules to build at all). Ignoring
+# the directory and the .gitmodules that described it keeps the working checkout exactly as it is
+# while taking the pointer out of this repo. To recreate the checkout:
+#   git clone https://github.com/sileod/reasoning-core-experiments.git experiments
+/experiments/
+/.gitmodules
+
 # Driver logs: the proposer and the implementor service write a file per wave here for as
 # long as they are left running. Workspace state, and the reason `git status` stays quiet
 # while a service is working.
