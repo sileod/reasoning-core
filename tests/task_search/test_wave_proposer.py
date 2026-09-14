@@ -1416,3 +1416,29 @@ def test_a_full_wave_pools_the_next_passing_candidate_instead_of_rejecting_it():
     assert [row["name"] for row in wave["proposals"]] == ["first_winner"]
     assert not wave["rejected"], "a candidate the critic passed was recorded as rejected"
     assert [row["name"] for row in wave["pool"]] == ["surplus_winner"]
+
+
+def test_a_resumed_wave_does_not_judge_a_pooled_candidate_it_already_settled():
+    """The killed attempt's pool is what it had *not* reached. A candidate that is both
+    pooled and already accepted gets reviewed twice, passes twice, and is accepted twice --
+    and a wave with a repeated name is invalid, so it dies at the very end and takes every
+    round it paid for with it. This is how k3_state-tracking lost twelve proposals."""
+    client = _pool_client(["unused_candidate"], {"reviews": []})
+    accepted = {**proposal("already_accepted"), "id": "P001", "novelty": {
+        "verdict": "novel",
+        "nearest_neighbors": [{"id": "-", "relationship": "different", "overlap": seat}
+                              for seat in ("a", "b", "c")],
+        "substantive_difference": "...",
+        "scores": {"novelty": 5, "sft_value": 5, "feasibility": 5, "clarity": 5},
+        "reason": "new", "votes": "1/1", "dissent": []}}
+    crashed = {"proposals": [accepted],
+               "rejected": [{"name": "already_rejected", "reason": "known"}],
+               "pool": [proposal("already_accepted"), proposal("already_rejected"),
+                        proposal("genuinely_unreviewed")]}
+
+    wave = propose_wave(ROOT, name="resumed", count=1, rounds=1, client=client,
+                        resume=crashed)
+
+    assert [row["name"] for row in wave["proposals"]] == ["already_accepted"]
+    assert "genuinely_unreviewed" in (
+        {row["name"] for row in wave["pool"]} | {row["name"] for row in wave["rejected"]})

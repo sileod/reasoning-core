@@ -305,11 +305,18 @@ def main(argv=None):
 
             replayed = unspent_candidates(
                 repo_root, build_catalog(repo_root), limit=args.replay)
-            pooled = {row.get("name") for row in (resume or {}).get("pool") or []}
-            resume = {**(resume or {}), "pool": [*((resume or {}).get("pool") or []),
-                                                 *(row for row in replayed
-                                                   if row["name"] not in pooled)]}
-            print(f"replaying {len(replayed)} archived rejections", file=sys.stderr)
+            # Against everything the resumed wave already holds, not just its pool. A
+            # candidate this wave accepted before it died is not in any archive yet, so
+            # `unspent_candidates` cannot know about it: offering it again got it reviewed
+            # and accepted twice, and the wave died at the end on duplicate names, losing
+            # every round it had paid for.
+            held = {row.get("name")
+                    for key in ("pool", "proposals", "rejected")
+                    for row in (resume or {}).get(key) or []}
+            fresh = [row for row in replayed if row["name"] not in held]
+            resume = {**(resume or {}),
+                      "pool": [*((resume or {}).get("pool") or []), *fresh]}
+            print(f"replaying {len(fresh)} archived candidates", file=sys.stderr)
         # Both accept comma-separated lists: models in preference order, keys to share
         # round-robin. One of each is the single client this always built.
         models = [item.strip() for item in args.model.split(",") if item.strip()]

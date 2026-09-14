@@ -805,7 +805,15 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
         # a round writing what this wave has already seen.
         accepted.extend(resume.get("proposals") or [])
         rejected.extend(resume.get("rejected") or [])
-        pool.extend(resume.get("pool") or [])
+        # A pooled candidate this wave has already judged would be judged a second time and,
+        # if it passed twice, accepted twice -- and a wave with a repeated name is invalid,
+        # so it would die at the very end and take every round with it. The pool is what an
+        # interrupted wave had *not* reached.
+        settled = {_snake(row.get("name"))
+                   for row in (*(resume.get("proposals") or []),
+                               *(resume.get("rejected") or []))}
+        pool.extend(row for row in (resume.get("pool") or [])
+                    if _snake(row.get("name")) not in settled)
         exclusions.extend(f"{row.get('name')}: {row.get('reason')}" for row in rejected)
         round_names.update(_snake(row.get("name"))
                            for row in (*accepted, *rejected, *pool))
