@@ -1,4 +1,5 @@
 import dataclasses
+import os
 import json
 import random
 import time
@@ -269,3 +270,28 @@ def test_mini_is_driven_by_text_because_the_workers_have_no_tool_calling(tmp_pat
 
     # The other harnesses do not get dragged along by the change.
     assert "mini_textbased.yaml" not in command_for("opencode")
+
+
+def test_a_pass_retires_only_a_bounded_number_of_spent_runs(tmp_path, monkeypatch):
+    """Deleting one run directory is a recursive unlink of a worktree over NFS and takes
+    minutes. Uncapped, a first pass facing a year of them stalls the service for an hour
+    before it plans anything, and the poll interval stops meaning what it says."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "run_implementors", Path(__file__).parents[2] / "scripts" / "run_implementors.py")
+    driver = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(driver)
+
+    runs = tmp_path / "runs"
+    for index in range(driver.RETIRE_PER_PASS + 3):
+        directory = runs / "wave1" / f"2026010{index}T000000Z"
+        directory.mkdir(parents=True)
+        os.utime(directory, (0, index))
+    monkeypatch.setattr(driver, "RUNS", runs)
+
+    spent = driver.retire_runs(7, apply=False, limit=driver.RETIRE_PER_PASS)
+
+    assert len(spent) == driver.RETIRE_PER_PASS
+    assert [directory.name for directory in spent] == sorted(
+        directory.name for directory in spent), "the oldest runs must go first"

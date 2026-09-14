@@ -42,7 +42,14 @@ RUNS = ROOT.parent / f".{ROOT.name}-task-search"
 GIVE_UP_AFTER = 3
 
 
-def retire_runs(days, *, apply=True):
+# Run directories to delete per pass. Deleting one is a recursive unlink of a whole
+# worktree over NFS and takes minutes; a first pass facing a year of them would stall the
+# service for an hour before planning anything. The backlog drains over a few passes, and
+# a steady state has one or two a night, so the cap is only ever felt once.
+RETIRE_PER_PASS = 4
+
+
+def retire_runs(days, *, apply=True, limit=RETIRE_PER_PASS):
     """Delete run worktrees older than `days` and unregister them.
 
     Every trial is a `git worktree add`, and git reads all of .git/worktrees over NFS each
@@ -53,9 +60,10 @@ def retire_runs(days, *, apply=True):
     registration stale; `git worktree prune` is what then removes it.
     """
     cutoff = time.time() - days * 86400
-    spent = [directory for wave in RUNS.glob("*") if wave.is_dir()
-             for directory in wave.glob("*")
-             if directory.is_dir() and directory.stat().st_mtime < cutoff]
+    spent = sorted((directory for wave in RUNS.glob("*") if wave.is_dir()
+                    for directory in wave.glob("*")
+                    if directory.is_dir() and directory.stat().st_mtime < cutoff),
+                   key=lambda directory: directory.stat().st_mtime)[:limit]
     if apply:
         for directory in spent:
             shutil.rmtree(directory, ignore_errors=True)
