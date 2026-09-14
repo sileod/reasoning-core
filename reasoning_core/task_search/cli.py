@@ -301,9 +301,9 @@ def main(argv=None):
         if args.replay:
             # The pool is reviewed before a round generates, so seeding it here is the
             # whole feature: replayed candidates cost critic calls and nothing else.
-            from .wave_proposer import build_catalog, rejected_candidates
+            from .wave_proposer import build_catalog, unspent_candidates
 
-            replayed = rejected_candidates(
+            replayed = unspent_candidates(
                 repo_root, build_catalog(repo_root), limit=args.replay)
             pooled = {row.get("name") for row in (resume or {}).get("pool") or []}
             resume = {**(resume or {}), "pool": [*((resume or {}).get("pool") or []),

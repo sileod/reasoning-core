@@ -117,7 +117,8 @@ def test_a_quota_block_does_not_spend_the_give_up_budget(tmp_path, monkeypatch, 
     monkeypatch.setattr(driver, "run_wave", blocked)
     monkeypatch.setattr(driver.time, "sleep", lambda _: None)
     arguments = _arguments(log_dir=tmp_path, pause_seconds=0, prefix="k3",
-                           count=12, rounds=3, model="", api_key_env="", dry_run=False)
+                           count=12, rounds=3, model="", api_key_env="", replay=0,
+                           dry_run=False)
     briefs = [(f"brief{index}", f"text {index}")
               for index in range(driver.GIVE_UP_AFTER + 2)]
 

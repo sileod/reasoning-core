@@ -207,8 +207,13 @@ def _proposal_entries(repo_root):
     return entries
 
 
-def rejected_candidates(repo_root, catalog=(), limit=None):
-    """Proposals this pipeline generated, judged, and turned down.
+def unspent_candidates(repo_root, catalog=(), limit=None):
+    """Proposals earlier waves paid for and did not ship.
+
+    Two kinds, and the pooled ones come first because they are the better bargain: a
+    pooled candidate was generated and never judged at all -- the wave ran out of rounds,
+    or filled up before reaching it -- so it has no verdict to overturn, only one nobody
+    ever reached. A rejected one has a verdict, and gets exactly one second chance.
 
     A proposal is a name and a summary and nothing else, so an archived rejection is a
     whole proposal: the wave already paid a model to write it. Rejections are also where
@@ -225,16 +230,17 @@ def rejected_candidates(repo_root, catalog=(), limit=None):
     """
     known = {entry.name for entry in catalog}
     root = Path(repo_root) / "reasoning_core" / "task_search" / "proposals" / "archive"
-    rows = []
+    pooled, turned_down = [], []
     for path in sorted(root.rglob("*.yaml")) if root.is_dir() else ():
         try:
             data = yaml.safe_load(path.read_text()) or {}
         except yaml.YAMLError:
             continue
-        rows.extend(data.get("rejected", ()))
-    judged = Counter(_snake(row.get("name")) for row in rows)
+        pooled.extend(data.get("pool", ()))
+        turned_down.extend(data.get("rejected", ()))
+    judged = Counter(_snake(row.get("name")) for row in turned_down)
     found, seen = [], set()
-    for row in rows:
+    for row in (*pooled, *turned_down):
         candidate = {"name": _snake(row.get("name")),
                      "summary": _one_line(row.get("summary"))}
         # The invalid ones are the pre-summary archives and a handful the shape rules have
@@ -930,7 +936,15 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                 exclusions.append(f"{proposal['name']}: {why}")
                 continue
             tally = f"{len(in_favour)}/{len(cast)}"
-            if len(in_favour) * 2 > len(cast) and len(accepted) < count:
+            if len(in_favour) * 2 > len(cast) and len(accepted) >= count:
+                # The wave is already full. A candidate the critic passed is not a
+                # rejection: recording it as one wrote `verdict: novel` into `rejected`,
+                # excluded a good idea from every later round's prompt, and -- now that
+                # rejections are replayed -- spent its one second chance on a verdict
+                # nobody ever reached. It goes back to the pool, which is archived.
+                pool.append(proposal)
+                continue
+            if len(in_favour) * 2 > len(cast):
                 # The neighbours kept are one ballot's, never merged across ballots: each
                 # sample saw its own ordering, so its candidate:* references mean nothing
                 # beside another sample's.

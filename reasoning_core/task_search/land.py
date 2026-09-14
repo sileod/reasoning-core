@@ -167,6 +167,20 @@ def settle_name(target):
     return name, None
 
 
+def _record(name, row, plan_trial, target):
+    """What landed, and which approach it was asked to take.
+
+    The implementor is told to copy its assigned choice into a `design_choice` class
+    attribute, and mostly does -- but "mostly" cannot answer whether guided draws beat the
+    unguided baseline, because a missing attribute and a baseline look identical. The plan
+    knows the assignment for certain, and landing is holding the plan trial, so it says so
+    here rather than trusting the worktree to have copied a string.
+    """
+    return {"name": name, "trial": row["trial"], "target": str(target),
+            "design_choice": plan_trial.design_choice,
+            "guided": bool(plan_trial.design_choice)}
+
+
 def owned_dir(row, plan_trial):
     """The worktree directory holding the draft, as the plan assigned it."""
     return Path(row["dir"]) / "worktree" / plan_trial.owned_path
@@ -240,7 +254,7 @@ def main(argv=None):
             skipped.append({"name": name, "why": "already in the package"})
             continue
         if not args.apply:
-            landed.append({"name": name, "trial": row["trial"], "target": str(target)})
+            landed.append(_record(name, row, plan_trial, target))
             continue
         if target.exists():
             shutil.rmtree(target)
@@ -271,7 +285,7 @@ def main(argv=None):
             skipped.append({"name": name or row["name"], "why": problem})
             continue
         CLAIMED[name] = module
-        landed.append({"name": name, "trial": row["trial"], "target": str(target)})
+        landed.append(_record(name, row, plan_trial, target))
 
     for row in landed:
         print(f"{'landed' if args.apply else 'would land':<12} {row['name']:<46} {row['trial']}")

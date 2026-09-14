@@ -21,6 +21,7 @@ Provider and credential come from the environment the CLI already reads
 import argparse
 from collections import Counter
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
@@ -39,6 +40,27 @@ RUNS = ROOT.parent / f".{ROOT.name}-task-search"
 # Consecutive wave failures that mean the machine or the provider is gone rather than one
 # wave being unlucky. Without it an overnight service fails identically until morning.
 GIVE_UP_AFTER = 3
+
+
+def retire_runs(days, *, apply=True):
+    """Delete run worktrees older than `days` and unregister them.
+
+    Every trial is a `git worktree add`, and git reads all of .git/worktrees over NFS each
+    time it makes another: at 1,273 registrations that add took ~50 seconds, which is most
+    of a short trial. Landing has already copied what it wanted out of a finished run, and
+    a worktree is regenerable from the commit it was cut from, so keeping them costs 15G
+    and an hour a night to buy nothing. Deleting the directory is what makes the
+    registration stale; `git worktree prune` is what then removes it.
+    """
+    cutoff = time.time() - days * 86400
+    spent = [directory for wave in RUNS.glob("*") if wave.is_dir()
+             for directory in wave.glob("*")
+             if directory.is_dir() and directory.stat().st_mtime < cutoff]
+    if apply:
+        for directory in spent:
+            shutil.rmtree(directory, ignore_errors=True)
+        subprocess.run(["git", "worktree", "prune"], cwd=ROOT, check=False)
+    return spent
 
 
 def still_owed(arguments, wave):
@@ -137,6 +159,12 @@ def main():
                         help="wait this long when nothing is owed, then look again")
     parser.add_argument("--once", action="store_true",
                         help="one pass over what is owed now, then stop")
+    parser.add_argument(
+        "--keep-runs-days", type=int, default=7,
+        help="delete run worktrees older than this at each pass. Landing has already"
+             " taken what it wanted from a finished run, and git re-reads every"
+             " registration over NFS on each new worktree, so keeping them slows down"
+             " exactly the thing that makes them")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--log-dir", type=Path, default=ROOT / "runs" / "implementors")
     arguments = parser.parse_args()
@@ -144,6 +172,12 @@ def main():
 
     failures = 0
     while True:
+        # Before planning, not after: a pass that is about to cut dozens of worktrees wants
+        # the stale ones gone first, and an idle pass is where the tidying is free.
+        retired = retire_runs(arguments.keep_runs_days, apply=not arguments.dry_run)
+        if retired:
+            print(f"{time.strftime('%H:%M')} retired {len(retired)} spent run"
+                  f" worktrees older than {arguments.keep_runs_days}d", flush=True)
         owed = waves_owed(arguments)
         total = sum(owed.values())
         print(f"{time.strftime('%H:%M')} {total} proposals owed across"

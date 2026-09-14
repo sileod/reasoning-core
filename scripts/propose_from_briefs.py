@@ -94,6 +94,10 @@ def main():
     parser.add_argument(
         "--cooldown-seconds", type=int, default=1800,
         help="how long each of those waits is")
+    parser.add_argument(
+        "--replay", type=int, default=0, metavar="N",
+        help="give each wave up to N proposals earlier waves rejected, re-judged under"
+             " the current gate before it pays to generate anything new")
     parser.add_argument("--dry-run", action="store_true")
     arguments = parser.parse_args()
     arguments.log_dir.mkdir(parents=True, exist_ok=True)
@@ -180,6 +184,8 @@ def sweep_once(arguments, pending):
             command += ["--model", arguments.model]
         if arguments.api_key_env:
             command += ["--api-key-env", arguments.api_key_env]
+        if arguments.replay:
+            command += ["--replay", str(arguments.replay)]
         if arguments.dry_run:
             print(f"[{index}/{len(pending)}] would run: {name}", flush=True)
             continue

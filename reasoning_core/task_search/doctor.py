@@ -105,9 +105,18 @@ def check(provider=None, harness="opencode", live=False, timeout=60):
         try:
             help_text = subprocess.check_output([hlink, "--help"], text=True,
                                                 stderr=subprocess.STDOUT, timeout=30)
-            report.add(harness in help_text, f"harness {harness}",
-                       "supported" if harness in help_text else "not built into this hlink",
-                       f"install an hlink that supports {harness}")
+            # hlink knowing the name and the machine having the binary are two different
+            # facts, and only the second one launches a worker. Checking the first alone
+            # printed PASS while every trial failed instantly with harness_failed: opencode
+            # was installed, but under node_modules/.bin and not on PATH.
+            known = harness in help_text
+            found = shutil.which(harness)
+            report.add(bool(known and found), f"harness {harness}",
+                       "supported and on PATH" if known and found
+                       else "not built into this hlink" if not known
+                       else f"hlink supports it but {harness} is not on PATH",
+                       f"install an hlink that supports {harness}" if not known
+                       else f"put the {harness} binary on PATH")
         except (subprocess.SubprocessError, OSError) as error:
             report.add(None, f"harness {harness}", f"could not ask hlink: {error}")
     _binary(report, "sandbox", "bwrap",

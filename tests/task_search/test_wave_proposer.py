@@ -23,7 +23,7 @@ from reasoning_core.task_search.wave_proposer import (
     closest_entries,
     proposal_problems,
     propose_wave,
-    rejected_candidates,
+    unspent_candidates,
     validate_proposal_wave,
     write_proposal_wave,
 )
@@ -1354,7 +1354,7 @@ def test_an_archived_rejection_is_a_whole_proposal_again(tmp_path):
         {"name": "pre_summary_era", "reason": "known"},
     ])
 
-    found = rejected_candidates(tmp_path)
+    found = unspent_candidates(tmp_path)
 
     assert found == [{"name": "worth_another_look", "summary": SUMMARY}], (
         "a rejection with no summary cannot be recovered and must not be invented")
@@ -1370,7 +1370,7 @@ def test_a_rejection_gets_one_second_chance_and_not_a_third(tmp_path):
     _archive(tmp_path, "replay", [{"name": "twice_judged", "summary": SUMMARY,
                                    "reason": "still known"}])
 
-    assert [row["name"] for row in rejected_candidates(tmp_path)] == ["once_judged"]
+    assert [row["name"] for row in unspent_candidates(tmp_path)] == ["once_judged"]
 
 
 def test_a_rejection_that_has_since_shipped_is_not_offered_again(tmp_path):
@@ -1378,4 +1378,41 @@ def test_a_rejection_that_has_since_shipped_is_not_offered_again(tmp_path):
                                 "reason": "known"}])
     catalog = [CatalogEntry("task:already_here", "already_here", SUMMARY, "task")]
 
-    assert rejected_candidates(tmp_path, catalog) == []
+    assert unspent_candidates(tmp_path, catalog) == []
+
+
+def test_a_pooled_candidate_is_offered_before_one_that_was_already_judged(tmp_path):
+    """A pooled candidate was generated and never reviewed -- the wave filled up or ran out
+    of rounds before reaching it -- so it has no verdict to overturn and is the better buy."""
+    directory = tmp_path / "reasoning_core" / "task_search" / "proposals" / "archive"
+    directory.mkdir(parents=True)
+    (directory / "old.yaml").write_text(yaml.safe_dump({
+        "name": "old", "proposals": [],
+        "rejected": [{"name": "was_judged", "summary": SUMMARY, "reason": "known"}],
+        "pool": [{"name": "never_judged", "summary": SUMMARY}]}))
+
+    assert [row["name"] for row in unspent_candidates(tmp_path)] == [
+        "never_judged", "was_judged"]
+
+
+def test_a_full_wave_pools_the_next_passing_candidate_instead_of_rejecting_it():
+    """A round reviews more candidates than the wave still owes, so a passing candidate can
+    arrive after the last seat is taken. It used to be written into `rejected` -- carrying
+    `verdict: novel` and a positive reason -- and added to the exclusions every later round
+    is told to avoid. Now that rejections are replayed it would also burn the idea's one
+    second chance on a verdict no critic ever reached."""
+    reviews = {"reviews": [{
+        "proposal_id": f"C{seat:03d}", "verdict": "novel",
+        "nearest_neighbors": [{"id": "-", "relationship": "different", "overlap": "a"},
+                              {"id": "-", "relationship": "different", "overlap": "b"},
+                              {"id": "-", "relationship": "different", "overlap": "c"}],
+        "substantive_difference": "a genuinely different operation",
+        "scores": {"novelty": 5, "sft_value": 4, "feasibility": 5, "clarity": 5},
+        "reason": "new"} for seat in range(1, 13)]}
+    client = _pool_client(["first_winner", "surplus_winner"], reviews)
+
+    wave = propose_wave(ROOT, name="full", count=1, rounds=1, client=client)
+
+    assert [row["name"] for row in wave["proposals"]] == ["first_winner"]
+    assert not wave["rejected"], "a candidate the critic passed was recorded as rejected"
+    assert [row["name"] for row in wave["pool"]] == ["surplus_winner"]
