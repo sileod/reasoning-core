@@ -102,7 +102,13 @@ def steps(arguments, wave, name):
     if arguments.model:
         run += ["--model", arguments.model]
     land = [sys.executable, "-m", "reasoning_core.task_search.land",
-            str(RUNS / name), "--plan", str(plan_path), "--apply"]
+            str(RUNS / name), "--plan", str(plan_path), "--apply",
+            # Which approach each landed task was asked to take, taken from the plan
+            # rather than from the worktree. Without it the guided arms and the unguided
+            # baseline are indistinguishable once landed, and the baseline variant exists
+            # for exactly that comparison -- k3_rule_induction landed 5/5 from the first
+            # guided choice, 2/5 from the second, and 4/5 from no guidance at all.
+            "--json-out", str(arguments.log_dir / f"{name}.landed.json")]
     # The flag is whether the step's exit status decides the wave. `run` exits non-zero
     # when any single trial failed, which is the ordinary shape of a wave rather than a
     # problem: the first wave this service ran was four successes and one
