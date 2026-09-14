@@ -183,6 +183,38 @@ night on the same failures: the five proposals with no task today have been atte
 to seven times each, so they are the ideas that resist implementation, not the ones nobody
 got to.
 
+## Running the loop as a service
+
+Both loops run as systemd **user** services, enabled with boot recovery:
+
+```bash
+systemctl --user status  rc-task-search-proposer rc-task-search-implementor
+systemctl --user restart rc-task-search-implementor
+journalctl --user -u rc-task-search-proposer -f      # or runs/*-service.log
+```
+
+Three things about this machine that a unit has to say out loud, because each one fails
+silently and looks like something else:
+
+- **The user manager runs with `HOME=/home/dsileo`, and this account's real home is on
+  NFS.** Units written to `$HOME/.config/systemd/user` are never found; they belong in
+  `/home/dsileo/.config/systemd/user`. Each unit sets `Environment=HOME=` back to the NFS
+  path, because Python resolves its *user* site-packages from `HOME`: without it `hlink` is
+  not importable and every trial fails as `harness_failed` in under a minute, which reads
+  exactly like a broken harness.
+- **The credential is in the profile, not the env file.** `~/.config/reasoning_core/env`
+  only *names* the variable (`TASK_SEARCH_KEY_ENV=ALBERT_API_KEY`); the value lives in
+  `.profile`, so a unit sources that by absolute path before the env file. Without it the
+  critic degrades to sharing the proposer's NVIDIA quota behind one WARNING line -- the 429
+  that killed wave9 -- and the wave dies hours later.
+- **Do not wrap the sourcing in `set -a`.** It exports shell *functions* too, and this
+  profile defines about 230KB of them, which is enough to fail every later `exec` with
+  `Argument list too long`. Both files already use `export`.
+
+A worker also runs under a synthetic `HOME` inside bubblewrap, on purpose, so anything the
+runner shells out to has to be importable without the operator's home. Install such tools
+into the interpreter's own site-packages rather than `--user`.
+
 ## Compare implementation choices
 
 Generate two distinct approaches per proposal, then run one worker per approach:
