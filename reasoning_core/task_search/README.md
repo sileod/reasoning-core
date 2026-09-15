@@ -238,3 +238,20 @@ trial's `run.json` and its `summary.json` result. This records the assignment, n
 proof that the implementation followed it: inspect the candidate and samples before
 comparing approaches. The generated module's `TASK_META` does not include this field;
 retain the plan and run records alongside any selected candidate.
+
+## Audit the gate
+
+```bash
+python -m reasoning_core.task_search.funnel          # add --json for the raw rows
+```
+
+Two tables, from the archives and the runs they produced, with no model calls. The first
+is per-wave yield: accepted, rejected, pooled, and how many rejections were decided by a
+short critic panel and how many of those were an exact split. The second is per-arm trial
+outcomes and landings, counted only from plans that actually ran an unguided baseline
+against guided arms -- the arm label alone means different things in different waves, so
+grouping by it reports how long `v1` has existed rather than whether guidance helps.
+
+Use it before concluding anything about a critic or prompt change. The redesigned critic
+was credited with 22% against 1.4% by hand, and the same numbers by hand missed that a
+third of all rejections that week ran on two samples instead of three.
