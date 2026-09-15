@@ -1,0 +1,487 @@
+version: 1
+name: k3_novel_composition_r1
+proposal_wave: k3_novel-composition
+defaults:
+  base_ref: f552bcf57ea36d8ef0f96fe67f0c411bc9c0f033
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: session_type_projection_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v1
+  instruction: |-
+    Author a new task from scratch: session_type_projection_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Project a global multiparty session type onto a participant endpoint, check duality, and output the local type or error.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v1
+  design_choice: Encode the global type as a process-calculus term with explicit recursion variables;
+    projection yields a local type as a canonical sequence of sends/receives/branch labels, and duality
+    is checked by syntactic structural congruence.
+- id: P001v2
+  hypothesis: P001
+  idea: session_type_projection_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v2
+  instruction: |-
+    Author a new task from scratch: session_type_projection_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Project a global multiparty session type onto a participant endpoint, check duality, and output the local type or error.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v2
+  design_choice: Represent the global type as a labeled transition system over roles; the answer is a
+    single canonical string naming the projected local type if dual, else the literal 'error', with instances
+    varying by branch arity and role count.
+- id: P001v3
+  hypothesis: P001
+  idea: session_type_projection_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v3
+  instruction: |-
+    Author a new task from scratch: session_type_projection_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Project a global multiparty session type onto a participant endpoint, check duality, and output the local type or error.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/session_type_projection_v3
+- id: P002v1
+  hypothesis: P002
+  idea: factor_graph_marginal_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v1
+  instruction: |-
+    Author a new task from scratch: factor_graph_marginal_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact single-variable marginal in a discrete factor graph by variable elimination or belief propagation; ranges over tree and loopy topologies, factor arities, and evidence configurations; answer is the marginal probability table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v1
+  design_choice: Represent the marginal as a sorted list of (value, probability) pairs for the queried
+    variable, with probabilities as reduced fractions.
+- id: P002v2
+  hypothesis: P002
+  idea: factor_graph_marginal_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v2
+  instruction: |-
+    Author a new task from scratch: factor_graph_marginal_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact single-variable marginal in a discrete factor graph by variable elimination or belief propagation; ranges over tree and loopy topologies, factor arities, and evidence configurations; answer is the marginal probability table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v2
+  design_choice: Fix the variable order for elimination to be a random permutation, and require the solver
+    to output the marginal after eliminating in that exact order, forcing order-independent reasoning.
+- id: P002v3
+  hypothesis: P002
+  idea: factor_graph_marginal_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v3
+  instruction: |-
+    Author a new task from scratch: factor_graph_marginal_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact single-variable marginal in a discrete factor graph by variable elimination or belief propagation; ranges over tree and loopy topologies, factor arities, and evidence configurations; answer is the marginal probability table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/factor_graph_marginal_v3
+- id: P003v1
+  hypothesis: P003
+  idea: loop_invariant_check_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v1
+  instruction: |-
+    Author a new task from scratch: loop_invariant_check_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Verify whether a candidate loop invariant is inductive and implies the postcondition for a while loop with linear arithmetic; ranges over invariant strength, loop complexity, and counterexample types; answer is valid or a violating state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v1
+  design_choice: Generate loops where the invariant is inductive but too weak, requiring a counterexample
+    state that satisfies the invariant and loop condition yet violates the postcondition.
+- id: P003v2
+  hypothesis: P003
+  idea: loop_invariant_check_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v2
+  instruction: |-
+    Author a new task from scratch: loop_invariant_check_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Verify whether a candidate loop invariant is inductive and implies the postcondition for a while loop with linear arithmetic; ranges over invariant strength, loop complexity, and counterexample types; answer is valid or a violating state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v2
+  design_choice: Vary the loop structure between single-variable updates and multi-variable coupled updates,
+    so the solver must track dependencies to find invariant violations.
+- id: P003v3
+  hypothesis: P003
+  idea: loop_invariant_check_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v3
+  instruction: |-
+    Author a new task from scratch: loop_invariant_check_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Verify whether a candidate loop invariant is inductive and implies the postcondition for a while loop with linear arithmetic; ranges over invariant strength, loop complexity, and counterexample types; answer is valid or a violating state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/loop_invariant_check_v3
+- id: P004v1
+  hypothesis: P004
+  idea: topological_sort_count_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v1
+  instruction: |-
+    Author a new task from scratch: topological_sort_count_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count linear extensions of a finite poset or DAG using recursive decomposition or dynamic programming over ideals; ranges over width, height, series-parallel structure, and diamond patterns; answer is the exact count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v1
+  design_choice: Represent the poset as an adjacency matrix of a Hasse diagram, with instances generated
+    by random transitive reductions of random DAGs, and require the exact integer count as the answer.
+- id: P004v2
+  hypothesis: P004
+  idea: topological_sort_count_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v2
+  instruction: |-
+    Author a new task from scratch: topological_sort_count_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count linear extensions of a finite poset or DAG using recursive decomposition or dynamic programming over ideals; ranges over width, height, series-parallel structure, and diamond patterns; answer is the exact count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v2
+  design_choice: Generate instances from series-parallel posets with explicit SP-tree descriptions, where
+    the solver must reconstruct the poset and count extensions via recursive composition formulas.
+- id: P004v3
+  hypothesis: P004
+  idea: topological_sort_count_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v3
+  instruction: |-
+    Author a new task from scratch: topological_sort_count_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count linear extensions of a finite poset or DAG using recursive decomposition or dynamic programming over ideals; ranges over width, height, series-parallel structure, and diamond patterns; answer is the exact count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/topological_sort_count_v3
+- id: P005v1
+  hypothesis: P005
+  idea: schensted_tableau_insertion_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v1
+  instruction: |-
+    Author a new task from scratch: schensted_tableau_insertion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Insert a word's symbols one at a time into a row-sorted tableau, bumping the smallest larger entry down to the next row on collision; answers are the final tableau rows or a single insertion's bump path.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v1
+  design_choice: Answer as the final row-sorted tableau encoded as a semicolon-separated list of row strings,
+    with each row's entries comma-separated.
+- id: P005v2
+  hypothesis: P005
+  idea: schensted_tableau_insertion_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v2
+  instruction: |-
+    Author a new task from scratch: schensted_tableau_insertion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Insert a word's symbols one at a time into a row-sorted tableau, bumping the smallest larger entry down to the next row on collision; answers are the final tableau rows or a single insertion's bump path.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v2
+  design_choice: Answer as the bump path for a single insertion, listing each bumped symbol followed by
+    its destination row index (0-based), separated by semicolons.
+- id: P005v3
+  hypothesis: P005
+  idea: schensted_tableau_insertion_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v3
+  instruction: |-
+    Author a new task from scratch: schensted_tableau_insertion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Insert a word's symbols one at a time into a row-sorted tableau, bumping the smallest larger entry down to the next row on collision; answers are the final tableau rows or a single insertion's bump path.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/schensted_tableau_insertion_v3
+- id: P006v1
+  hypothesis: P006
+  idea: polygon_area_point_location_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v1
+  instruction: |-
+    Author a new task from scratch: polygon_area_point_location_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Over simple polygons given as integer vertex lists: accumulate the shoelace cross-sum for signed area and classify query points by ray-crossing parity; answers are the doubled area or inside/outside/on-boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v1
+  design_choice: Generate polygons by random radial star-shaped vertex placement and query points from
+    a grid, with answers as doubled area and inside/outside/on-boundary labels.
+- id: P006v2
+  hypothesis: P006
+  idea: polygon_area_point_location_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v2
+  instruction: |-
+    Author a new task from scratch: polygon_area_point_location_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Over simple polygons given as integer vertex lists: accumulate the shoelace cross-sum for signed area and classify query points by ray-crossing parity; answers are the doubled area or inside/outside/on-boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v2
+  design_choice: Construct polygons as convex hulls of random point sets and queries on a fine lattice,
+    requiring exact tie-handling for boundary points.
+- id: P006v3
+  hypothesis: P006
+  idea: polygon_area_point_location_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v3
+  instruction: |-
+    Author a new task from scratch: polygon_area_point_location_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Over simple polygons given as integer vertex lists: accumulate the shoelace cross-sum for signed area and classify query points by ray-crossing parity; answers are the doubled area or inside/outside/on-boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/polygon_area_point_location_v3
+- id: P007v1
+  hypothesis: P007
+  idea: toy_spn_cipher_rounds_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v1
+  instruction: |-
+    Author a new task from scratch: toy_spn_cipher_rounds_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run a toy substitution-permutation cipher on small blocks: xor the round key, map nibbles through the given s-box, and permute bit positions over the stated rounds; answers are the ciphertext or an intermediate round state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v1
+  design_choice: Ask for the ciphertext after a fixed number of rounds, with the plaintext, key schedule,
+    and round count given; difficulty arises from correctly applying the s-box and permutation order.
+- id: P007v2
+  hypothesis: P007
+  idea: toy_spn_cipher_rounds_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v2
+  instruction: |-
+    Author a new task from scratch: toy_spn_cipher_rounds_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run a toy substitution-permutation cipher on small blocks: xor the round key, map nibbles through the given s-box, and permute bit positions over the stated rounds; answers are the ciphertext or an intermediate round state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v2
+  design_choice: Ask for the state after a specified intermediate round (not the final), requiring the
+    solver to track partial transformations and stop before the last round.
+- id: P007v3
+  hypothesis: P007
+  idea: toy_spn_cipher_rounds_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v3
+  instruction: |-
+    Author a new task from scratch: toy_spn_cipher_rounds_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run a toy substitution-permutation cipher on small blocks: xor the round key, map nibbles through the given s-box, and permute bit positions over the stated rounds; answers are the ciphertext or an intermediate round state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/toy_spn_cipher_rounds_v3
+- id: P008v1
+  hypothesis: P008
+  idea: bresenham_midpoint_rasterization_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v1
+  instruction: |-
+    Author a new task from scratch: bresenham_midpoint_rasterization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rasterize integer-endpoint segments by the midpoint error-term rule, stepping the major axis and conditionally the minor across varied octants; answers are the ordered lattice points or the point at a queried step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v1
+  design_choice: 'Answer format: return the full ordered list of rasterized lattice points for the segment.'
+- id: P008v2
+  hypothesis: P008
+  idea: bresenham_midpoint_rasterization_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v2
+  instruction: |-
+    Author a new task from scratch: bresenham_midpoint_rasterization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rasterize integer-endpoint segments by the midpoint error-term rule, stepping the major axis and conditionally the minor across varied octants; answers are the ordered lattice points or the point at a queried step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v2
+  design_choice: 'Answer format: return only the lattice point at a specified step index along the rasterized
+    path.'
+- id: P008v3
+  hypothesis: P008
+  idea: bresenham_midpoint_rasterization_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v3
+  instruction: |-
+    Author a new task from scratch: bresenham_midpoint_rasterization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rasterize integer-endpoint segments by the midpoint error-term rule, stepping the major axis and conditionally the minor across varied octants; answers are the ordered lattice points or the point at a queried step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r1/bresenham_midpoint_rasterization_v3

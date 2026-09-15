@@ -1,0 +1,489 @@
+version: 1
+name: k3_representation_transfer_r1
+proposal_wave: k3_representation-transfer
+defaults:
+  base_ref: f2bff82d4c70cb8930ffd2b89c9e5ae1d3825b3c
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: distributed_snapshot_recording_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v1
+  instruction: |-
+    Author a new task from scratch: distributed_snapshot_recording_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute marker-driven snapshots over processes with directed channels and in-flight messages, returning recorded process local states and channel contents after marker propagation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v1
+  design_choice: Represent process states as integer counters that increment per received message, with
+    channel contents as ordered message lists, and require the snapshot to capture a consistent cut where
+    no message is both sent and recorded as received.
+- id: P001v2
+  hypothesis: P001
+  idea: distributed_snapshot_recording_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v2
+  instruction: |-
+    Author a new task from scratch: distributed_snapshot_recording_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute marker-driven snapshots over processes with directed channels and in-flight messages, returning recorded process local states and channel contents after marker propagation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v2
+  design_choice: Represent process states as integer counters that increment per received message, so
+    a snapshot is a set of integers and channel contents are lists of integers.
+- id: P001v3
+  hypothesis: P001
+  idea: distributed_snapshot_recording_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v3
+  instruction: |-
+    Author a new task from scratch: distributed_snapshot_recording_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute marker-driven snapshots over processes with directed channels and in-flight messages, returning recorded process local states and channel contents after marker propagation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/distributed_snapshot_recording_v3
+- id: P002v1
+  hypothesis: P002
+  idea: allen_interval_composition_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v1
+  instruction: |-
+    Author a new task from scratch: allen_interval_composition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose chains of Allen interval relations, with disjunctions and inverses, through the standard composition table; return the tightest entailed relation set between the chain's endpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v1
+  design_choice: Present each instance as a triple of Allen relations with one disjunction per step and
+    ask for the composed relation set as a canonical comma-separated list of relation symbols.
+- id: P002v2
+  hypothesis: P002
+  idea: allen_interval_composition_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v2
+  instruction: |-
+    Author a new task from scratch: allen_interval_composition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose chains of Allen interval relations, with disjunctions and inverses, through the standard composition table; return the tightest entailed relation set between the chain's endpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v2
+  design_choice: Vary the chain length from two to five relations, with inverses and disjunctions, and
+    require the answer as a single canonical relation symbol when entailed, else 'NONE'.
+- id: P002v3
+  hypothesis: P002
+  idea: allen_interval_composition_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v3
+  instruction: |-
+    Author a new task from scratch: allen_interval_composition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose chains of Allen interval relations, with disjunctions and inverses, through the standard composition table; return the tightest entailed relation set between the chain's endpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/allen_interval_composition_v3
+- id: P003v1
+  hypothesis: P003
+  idea: matrix_characteristic_polynomial_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v1
+  instruction: |-
+    Author a new task from scratch: matrix_characteristic_polynomial_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact characteristic polynomial of a small integer matrix from traces of matrix powers (Faddeev-LeVerrier), returning the integer coefficient vector in canonical order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v1
+  design_choice: Vary matrix size from 2x2 to 5x5, with entries in [-5,5]; answer is coefficient vector
+    from highest to lowest degree, including leading 1.
+- id: P003v2
+  hypothesis: P003
+  idea: matrix_characteristic_polynomial_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v2
+  instruction: |-
+    Author a new task from scratch: matrix_characteristic_polynomial_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact characteristic polynomial of a small integer matrix from traces of matrix powers (Faddeev-LeVerrier), returning the integer coefficient vector in canonical order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v2
+  design_choice: Use only symmetric matrices with entries in [-3,3], forcing trace-based computation to
+    exploit symmetry; answer vector in ascending degree order.
+- id: P003v3
+  hypothesis: P003
+  idea: matrix_characteristic_polynomial_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v3
+  instruction: |-
+    Author a new task from scratch: matrix_characteristic_polynomial_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact characteristic polynomial of a small integer matrix from traces of matrix powers (Faddeev-LeVerrier), returning the integer coefficient vector in canonical order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/matrix_characteristic_polynomial_v3
+- id: P004v1
+  hypothesis: P004
+  idea: tree_axis_navigation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v1
+  instruction: |-
+    Author a new task from scratch: tree_axis_navigation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate chained axis steps (child, parent, descendant, ancestor, following- and preceding-sibling, with positional filters) from a stated context node over ordered labeled trees, returning the sorted ids of all reached nodes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v1
+  design_choice: Context nodes are random leaves; steps must include at least one upward and one downward
+    move to force path reversal.
+- id: P004v2
+  hypothesis: P004
+  idea: tree_axis_navigation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v2
+  instruction: |-
+    Author a new task from scratch: tree_axis_navigation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate chained axis steps (child, parent, descendant, ancestor, following- and preceding-sibling, with positional filters) from a stated context node over ordered labeled trees, returning the sorted ids of all reached nodes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v2
+  design_choice: All target nodes are hidden behind a sequence of sibling steps with positional filters
+    like [2] and [last()] to test index arithmetic.
+- id: P004v3
+  hypothesis: P004
+  idea: tree_axis_navigation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v3
+  instruction: |-
+    Author a new task from scratch: tree_axis_navigation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate chained axis steps (child, parent, descendant, ancestor, following- and preceding-sibling, with positional filters) from a stated context node over ordered labeled trees, returning the sorted ids of all reached nodes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/tree_axis_navigation_v3
+- id: P005v1
+  hypothesis: P005
+  idea: floor_quotient_blocks_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v1
+  instruction: |-
+    Author a new task from scratch: floor_quotient_blocks_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Exploit the few distinct values of floor(n/i): answer the number of distinct quotients over i=1..n, exact sums of floor(n/i) over index ranges, or the span of a queried constant-quotient block.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v1
+  design_choice: Answer with the count of distinct values of floor(n/i) for a given n, where n is a random
+    integer between 1 and 10^9, and the answer is that count as an integer.
+- id: P005v2
+  hypothesis: P005
+  idea: floor_quotient_blocks_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v2
+  instruction: |-
+    Author a new task from scratch: floor_quotient_blocks_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Exploit the few distinct values of floor(n/i): answer the number of distinct quotients over i=1..n, exact sums of floor(n/i) over index ranges, or the span of a queried constant-quotient block.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v2
+  design_choice: Given n and a query index i, output the start and end indices of the maximal block where
+    floor(n/k) equals floor(n/i), as two space-separated integers.
+- id: P005v3
+  hypothesis: P005
+  idea: floor_quotient_blocks_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v3
+  instruction: |-
+    Author a new task from scratch: floor_quotient_blocks_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Exploit the few distinct values of floor(n/i): answer the number of distinct quotients over i=1..n, exact sums of floor(n/i) over index ranges, or the span of a queried constant-quotient block.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/floor_quotient_blocks_v3
+- id: P006v1
+  hypothesis: P006
+  idea: morton_order_navigation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v1
+  instruction: |-
+    Author a new task from scratch: morton_order_navigation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Interleave coordinate bits into Z-order (Morton) indices over small grids: convert between cell coordinates and curve index, and answer the curve order, neighbor index, or rank of a queried cell.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v1
+  design_choice: Use fixed 4x4 grids with 2-bit coordinates; answers are integers 0-15, and each query
+    asks for the Morton index of a given (x,y) cell.
+- id: P006v2
+  hypothesis: P006
+  idea: morton_order_navigation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v2
+  instruction: |-
+    Author a new task from scratch: morton_order_navigation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Interleave coordinate bits into Z-order (Morton) indices over small grids: convert between cell coordinates and curve index, and answer the curve order, neighbor index, or rank of a queried cell.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v2
+  design_choice: Use variable grid sizes (e.g., 8x8 or 16x16) with coordinate bit-lengths 3 or 4; queries
+    ask for the rank of a cell in traversal order, requiring bit interleaving across different bit widths.
+- id: P006v3
+  hypothesis: P006
+  idea: morton_order_navigation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v3
+  instruction: |-
+    Author a new task from scratch: morton_order_navigation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Interleave coordinate bits into Z-order (Morton) indices over small grids: convert between cell coordinates and curve index, and answer the curve order, neighbor index, or rank of a queried cell.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/morton_order_navigation_v3
+- id: P007v1
+  hypothesis: P007
+  idea: critical_pair_generation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v1
+  instruction: |-
+    Author a new task from scratch: critical_pair_generation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Unify the left-hand side of one rewrite rule into a non-variable subterm of another, apply the mated substitution to both right-hand sides, and return the directed critical pair of terms or an empty result when no overlap exists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v1
+  design_choice: Represent terms as fully parenthesized prefix strings with explicit variable names, and
+    return the two rewritten terms separated by a semicolon, or 'NONE' when no overlap.
+- id: P007v2
+  hypothesis: P007
+  idea: critical_pair_generation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v2
+  instruction: |-
+    Author a new task from scratch: critical_pair_generation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Unify the left-hand side of one rewrite rule into a non-variable subterm of another, apply the mated substitution to both right-hand sides, and return the directed critical pair of terms or an empty result when no overlap exists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v2
+  design_choice: Use a canonical string format for terms (e.g., function symbols followed by args in parentheses),
+    and output the critical pair as a 'left -> right' arrow string, or 'EMPTY' for no overlap.
+- id: P007v3
+  hypothesis: P007
+  idea: critical_pair_generation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v3
+  instruction: |-
+    Author a new task from scratch: critical_pair_generation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Unify the left-hand side of one rewrite rule into a non-variable subterm of another, apply the mated substitution to both right-hand sides, and return the directed critical pair of terms or an empty result when no overlap exists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/critical_pair_generation_v3
+- id: P008v1
+  hypothesis: P008
+  idea: pitch_class_prime_normal_forms_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v1
+  instruction: |-
+    Author a new task from scratch: pitch_class_prime_normal_forms_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce pitch-class sets to normal order and prime form through transposition, inversion, and rotation comparisons, across cardinalities and symmetric special cases; answers are the ascending prime form as a compact pc list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v1
+  design_choice: 'Vary difficulty by set cardinality: use only 3- and 4-note sets for easy, 5-6 for medium,
+    and all 2-8 for hard, with symmetric sets (e.g., tritone, augmented triad) appearing only in hard
+    levels.'
+- id: P008v2
+  hypothesis: P008
+  idea: pitch_class_prime_normal_forms_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v2
+  instruction: |-
+    Author a new task from scratch: pitch_class_prime_normal_forms_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce pitch-class sets to normal order and prime form through transposition, inversion, and rotation comparisons, across cardinalities and symmetric special cases; answers are the ascending prime form as a compact pc list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v2
+  design_choice: Present sets in arbitrary rotational order and random transposition levels; the solver
+    must rotate, invert, and transpose to find the canonical prime form, ensuring no two instances share
+    the same starting orientation.
+- id: P008v3
+  hypothesis: P008
+  idea: pitch_class_prime_normal_forms_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v3
+  instruction: |-
+    Author a new task from scratch: pitch_class_prime_normal_forms_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce pitch-class sets to normal order and prime form through transposition, inversion, and rotation comparisons, across cardinalities and symmetric special cases; answers are the ascending prime form as a compact pc list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_transfer_r1/pitch_class_prime_normal_forms_v3

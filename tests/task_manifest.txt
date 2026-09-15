@@ -30,6 +30,7 @@ bloom_filter_membership
 boolean_network_knockout
 boolean_propagation_search
 borda_winner
+bresenham_midpoint_rasterization
 bridge_edges
 buddy_allocator
 burnside_orbit_count
@@ -138,6 +139,7 @@ finite_model_quantifiers
 finite_relation_properties
 firewall_rule_shadowing
 fixpoint_iteration
+flow_path_decomposition
 function_manipulation
 game_best_move
 game_forced_win
@@ -196,6 +198,7 @@ ll1_predictive_parsing
 logic_derivation
 logic_qa
 longest_prefix_route
+loop_invariant_check
 lossless_binary_decomposition
 lossless_summary
 lyndon_factorization_duval
@@ -230,6 +233,7 @@ nfa_subset_construction
 noisy_channel_recovery
 nominal_subtyping
 novel_word_application
+online_multiplicative_weights
 open_addressing_slot
 ordered_greedy_coloring
 overload_resolution
@@ -302,14 +306,18 @@ schedule_recoverability
 schema_bound_query
 schema_migration_execution
 schema_validation
+schensted_tableau_insertion
+schwartz_zippel_identity
 scope_explication
 scoped_instruction
 semantic_paraphrase
 semantic_version_precedence
+sensitive_input_identification
 separation_logic_frame
 sequence_assembly
 sequential_induction
 serializability
+session_type_projection
 set_associative_cache
 set_expression
 set_missing_element
@@ -356,6 +364,8 @@ tool_result_continuation
 top_trading_cycles
 topological_generation
 topological_layering
+topological_sort_count
+toy_spn_cipher_rounds
 transaction_serializability
 transitive_reduction
 tree_canonical_form

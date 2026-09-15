@@ -61,6 +61,15 @@ lists both, comma-separated); a fallback whose key is not named is refused befor
 wave, because unnamed it would be absent from every worker's environment and Harness Link
 would exit before the first step of every trial.
 
+**Measure before arming it.** A fallback makes Harness Link route every request through a
+local LiteLLM bridge, including the requests that never fall back, and on this machine
+that cost far more than it returned: in 78 trials over three waves it rescued 3, while two
+of those waves came back 29% and 31% `timed_out` against roughly 0% in the 480 trials
+before them, and two trials died outright on `LiteLLM bridge did not become HTTP-ready`.
+It also only fires on *errors*: a primary that answers slowly rather than refusing burns
+each trial's whole wall clock with the fallback sitting idle, which is what those timeouts
+were. Arm it when a provider is refusing outright, which is the case it wins.
+
 `run` requires a plan and `--model`. Defaults are OpenCode, one job, 56 steps,
 and a 30-minute worker timeout. With no `--trial` or `--queue`, it runs every
 trial in the plan; use `--trial ID` for a single-task smoke run.

@@ -1,0 +1,1162 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_paraphrase-equivalence
+created_at: '2026-09-15T17:11:31.822040+00:00'
+provenance:
+  kind: proposer
+  name: k3_paraphrase-equivalence
+  received: '2026-09-15'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks where the same meaning is expressed by structurally different sentences and
+    semantic equivalence must be computed. The catalog you were shown already covers the classic textbook
+    algorithms -- sorting, gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal
+    that names one will be rejected as a repeat however well it fits this brief. Reach past the standard
+    repertoire: propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 6
+  complete: false
+catalog:
+  sha256: 66d6ebb1452684039df96e1506b5a6fbc4c977ca3d18c284395c1b9b20a9d32a
+  entries: 623
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 115
+    task: 346
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  requested_model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-2
+    model: moonshotai/kimi-k3
+    provider: integrate.nvidia
+    request_sha256: e26c71e47492a69ae6e06bfb9ceec4660f146a46ff6c0a2b1bc969948e7c5b0b
+    response_sha256: d2d0477f5e7134987b188bd38bce41ba3dcf78f08150f3203516ef0559565166
+    response_id: chatcmpl-4df36a9f-4d55-4ac5-8cc8-1549b552eae0
+  - purpose: propose-round-3
+    model: moonshotai/kimi-k3
+    provider: integrate.nvidia
+    request_sha256: 1481c46bdd00468e40c7daf59690583a680fed03159fe05879ccdfa930e68a1f
+    response_sha256: 81e5a13333be8feebb81b32d33eade04cfa5df721af135fa8b26d2e1603d1ccf
+    response_id: chatcmpl-c7c79f3d-583f-49ea-8d04-3151f663a714
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: e1b41c00694d34a2869c0cfe7232a0253aeced71676df2aaf37a2e5dde013e3c
+    response_sha256: 5b68f01097997cd683356c7763d890a8deb24c9fded3da67c3c3870448f32b9f
+    response_id: chatcmpl-ae8c0e527968608b
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 6a41483e3717d78f334759887acce68d931903405492bac58fadb4ea8c618aec
+    response_sha256: 29fe0a6fa4f4aa26507ba4a3355019309965d84ee26fad499ee4705a986a3d79
+    response_id: chatcmpl-ac444e6d3121db31
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c9ca552f0608c1290ce3bb3547b99eeea69af156be4a361e5bf805b659c8c5ce
+    response_sha256: b5061a50f309e176f607531362eebeb72d545adccbff8cc81ec3a754ac771609
+    response_id: chatcmpl-96a142c75b1a0539
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: de99afbb9d4f2498ed8ca11bb5810a653b2fc92008f08e837ff560e17bf036e2
+    response_sha256: 97c1f43580abbe9bcc8cfec360ec02537e32d159cae5530d551d4d6223b7d4a4
+    response_id: chatcmpl-874c9a833b0e4188
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 4a1d3711a5f523bc27cdb8b59c572d414b4a6dcfb50efddb643cda9361615d08
+    response_sha256: 7ceaebe06b3d5f730e181e8c1f20f3299df215dda9027d06b10f322cdf2cc541
+    response_id: chatcmpl-ba12d6214bb9f802
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 854dcfbdfd11c54785b4c8d2b1bf50ca24898b1bc343baaea3b05c5380880d13
+    response_sha256: c40974d41ca66c8753586c1fed0b3997305f1ca0d9e2723cf90b0266b5f28687
+    response_id: chatcmpl-877f5065340151ef
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 48382f782b6f7329d96f178b350d889d8a63c0d0d1f581727502052074ffb879
+    response_sha256: f3eb6726abf55ab92bd6d65f3723c085cb78490fdbcf0349630659fd0285bda3
+    response_id: chatcmpl-bc48b285db1756b3
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 3cf66a76cdea5e6583c42656c3a16d68cdaa46cc87a4543fcc83f9ad3656edd8
+    response_sha256: b0e729ffba0d8ac5d535dd109402a320a73b1cab40754ce8179cbeb55c4a0cbb
+    response_id: chatcmpl-a55e40d9dcc06993
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: a95b4668a34b568f281a010e276973ca6ccc2994f8ca5cebacd3ce4b76981743
+    response_sha256: 21aea0b1d4ea416ed4c505ab57cbf068ff83ac21ffe97209befb2f4442e10208
+    response_id: chatcmpl-b92babd469bf27d0
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: filler_gap_licensing
+  summary: 'Trace filler-gap dependencies: judge extractions across complex-NP, subject, adjunct, wh-,
+    and coordinate islands, order multiple fillers by superiority, license parasitic gaps; answer the
+    verdict and violated constraint.'
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_scope-and-binding:P007
+      relationship: adjacent
+      overlap: Both involve judging syntactic well-formedness constraints, but C003 focuses on extraction
+        islands and filler-gap dependencies, while P007 handles binding constraints.
+    - id: proposal:k3_parsing-and-agreement:P003
+      relationship: adjacent
+      overlap: Both are licensing judgments (polarity vs. filler-gap), but the conditions and constraints
+        are entirely different.
+    - id: proposal:k3_formal-semantics:P008
+      relationship: different
+      overlap: 'Different formal systems: TAG derivation vs. island constraints.'
+    substantive_difference: C003 addresses a distinct set of syntactic constraints (islands, superiority,
+      parasitic gaps) with a clear verdict and violation output, not present in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Novel operation targeting extraction constraints, not present in catalog.
+    votes: 2/3
+    dissent:
+    - variant
+- name: tree_transducer_run
+  summary: 'Run top-down tree transducers: states consume input nodes and emit output templates that recurse
+    into children under reassigned states; answer the serialized output tree or the input position where
+    no rule applies.'
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_dynamic-structures:P004
+      relationship: adjacent
+      overlap: Both run tree automata, but C011 is top-down and emits output trees, while P004 is bottom-up
+        and only accepts/rejects.
+    - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+      relationship: adjacent
+      overlap: Both process trees with state, but C011 explicitly uses transducer rules to generate output.
+    - id: proposal:k3_dynamic-structures:P008
+      relationship: different
+      overlap: P008 counts pattern occurrences, not transducing output.
+    substantive_difference: C011 performs tree-to-tree transduction with state reassignment, a generative
+      operation different from acceptance-only automata.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Novel top-down transducer execution with output generation.
+    votes: 2/3
+    dissent:
+    - variant
+- name: focus_particle_equivalence
+  summary: Focus particles (only, even, also) in shifted positions plus clefts and pseudo-clefts, evaluated
+    over a given situation model; compute each form's excluded alternatives; answer which versions are
+    truth-conditionally identical.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave12.information_seeking.information_seeking:InformationSeeking
+      relationship: adjacent
+      overlap: 'Both evaluate alternatives under a model, but catalog selects queries by entropy partitioning,
+        while C006 computes the set of excluded alternatives for focus particles and compares truth conditions
+        across structures. Different operation: model comparison vs. query selection.'
+    - id: proposal:k3_formal-semantics:P004
+      relationship: adjacent
+      overlap: Both evaluate quantified sentences against models, but catalog evaluates determiner truth,
+        C006 computes alternatives for focus particles; different phenomena and computation.
+    - id: gallery:table_equivalence
+      relationship: different
+      overlap: Table equivalence checks semantic equivalence of data tables, not linguistic focus alternatives;
+        no overlap.
+    - id: proposal:k3_dynamic-structures:P003
+      relationship: different
+      overlap: Transformation semigroup closure is algebraic closure, not semantic alternative computation;
+        no overlap.
+    substantive_difference: 'C006 introduces a distinct cognitive operation: computing the set of excluded
+      alternatives for focus particles across different syntactic positions and structures, and then comparing
+      these alternative sets to determine truth-conditional equivalence. No neighbor performs this alternative-set
+      comparison.'
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: the operation of modeling focus particle alternatives and computing equivalence across
+      structural variants is not covered by any existing proposal or task; neighbors deal with query selection,
+      determiner truth, or data equivalence.'
+    votes: 3/3
+    dissent: []
+- name: modal_negation_equivalence
+  summary: Deontic and epistemic modals (must, need, may, can, be required, be forbidden) with negation
+    above or below the modal; normalize force, flavor and polarity; answer which differently negated phrasings
+    are equivalent.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_scope-and-binding:P006
+      relationship: adjacent
+      overlap: Both involve modality, but C004 is about modal force/flavor under negation, while the neighbor
+        computes scalar implicatures from ordering of modals.
+    - id: task:generated.wave10.semantic_paraphrase.semantic_paraphrase:SemanticParaphrase
+      relationship: adjacent
+      overlap: Both manipulate sentence meaning with polarity, but C004 specifically normalizes modal
+        morphology and computes equivalence of differently phrased negations, not voice/tense.
+    - id: proposal:k3_synthetic-grammars:P003
+      relationship: different
+      overlap: trace monoid canonization uses commutation, not modal semantics.
+    substantive_difference: C004 defines a normalization mapping from modal phrase structure (force, flavor,
+      negation placement) to an equivalence class, then checks paraphrase equivalence. No catalog task
+      performs this exact modal-logic normalization.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: C004 is a new decomposition task for modal scope and polarity, distinct from scalar alternatives
+      or general paraphrase.
+    votes: 2/3
+    dissent:
+    - variant
+- name: nominal_compound_relation
+  summary: Two- and three-noun compounds interpreted over a fixed inventory of modifier-head relations;
+    enumerate bracketing and relation readings; answer whether a compound matches a given paraphrase or
+    which paraphrases split its readings.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave10.novel_word_application.novel_word_application:NovelWordApplication
+      relationship: adjacent
+      overlap: 'Both deal with compound construction in invented languages, but catalog applies morphological
+        rules to produce forms, while C002 interprets existing compounds over a fixed relation inventory
+        to compare paraphrases. Different cognitive operation: productive generation vs. enumerating ambiguities.'
+    - id: proposal:k3_scope-and-binding:P009
+      relationship: adjacent
+      overlap: Both enumerate readings of linguistic expressions, but plural predication deals with distributive/collective
+        readings over models, while C002 enumerates modifier-head relation readings and bracketing ambiguities.
+        Related field, distinct operation.
+    - id: proposal:k3_synthetic-grammars:P003
+      relationship: different
+      overlap: Trace monoid canonization is about string rewriting under commutation; C002 is lexical
+        semantics with relation inventories. No overlap.
+    - id: task:generated.wave11.scope_explication.scope_explication:ScopeExplication
+      relationship: different
+      overlap: Scope explication resolves quantifier/negation scope, not compound bracketing/relations.
+        Different linguistic phenomena and procedure.
+    substantive_difference: 'C002 performs a novel operation: enumerating all possible bracketing and
+      modifier-head relation assignments for a compound and comparing against paraphrases to identify
+      which readings match. No neighbor does this.'
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: the operation of computing and comparing ambiguity sets for nominal compounds over
+      a relation inventory is not present in any neighbor, which either generate forms, compute entailments,
+      or handle other ambiguity types.'
+    votes: 3/3
+    dissent: []
+- name: direct_inverse_inflection
+  summary: 'Inflect transitive verbs in a synthetic direct-inverse system: compare arguments on a person-animacy
+    hierarchy, assign proximate/obviative status among third persons, choose direct or inverse voice;
+    answer the fully inflected forms.'
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_parsing-and-agreement:P010
+      relationship: adjacent
+      overlap: Both involve thematic role linking and voice, but P010 only maps roles to arguments without
+        the full direct/inverse morphological computation (person hierarchy, obviation, verb affix choice).
+    - id: task:generated.wave10.semantic_paraphrase.semantic_paraphrase:SemanticParaphrase
+      relationship: adjacent
+      overlap: both change voice, but C008 is a synthetic direct-inverse system with morphological exponence,
+        not a simple active/passive flip.
+    - id: proposal:k3_parsing-and-agreement:P006
+      relationship: different
+      overlap: inversion triggers reorder clauses but do not involve direct-inverse agreement morphology.
+    substantive_difference: C008's operation is to compute the direct/inverse verb form based on a person-animacy
+      hierarchy and obviation, which is a complex morphological system not present in the catalog's role-linking
+      or paraphrasing tasks.
+    scores:
+      novelty: 5
+      sft_value: 5
+      feasibility: 4
+      clarity: 4
+    reason: C008 introduces a novel synthetic morphology task with a well-defined hierarchy-driven voice
+      system.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: reported_speech_transposition
+  summary: 'Convert direct quotation to reported speech: tense backshift, pronoun realignment from stated
+    speaker and addressee, time/place deictic shifts, questions to statement order, imperatives to infinitives;
+    answer the reported clause.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave11.deictic_reanchoring.deictic_reanchoring:DeicticReanchoring
+    relationship: variant
+    overlap: both shift deictic expressions (pronouns, time/place words) according to a change in speaker/context,
+      producing a reanchored sentence
+  - id: task:generated.wave10.semantic_paraphrase.semantic_paraphrase:SemanticParaphrase
+    relationship: variant
+    overlap: both transform sentences while preserving core meaning, including tense and pronoun changes,
+      but one is construction-based and the other context-shift-based
+  - id: proposal:k3_parsing-and-agreement:P006
+    relationship: adjacent
+    overlap: both apply word-order and auxiliary changes, but one is for inversion triggers and the other
+      for reported speech
+  reason: 1/3 samples judged it novel; Reported speech is a composition of deictic reanchoring and tense/voice
+    paraphrase, all previously implemented.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: syntactic_relation_queries
+  summary: 'Given indexed bracketed trees, answer structural queries between node pairs: c-command, m-command,
+    dominance, precedence, sisterhood; or return the set of nodes a queried node c-commands or the minimal
+    constituent over a span.'
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_representation-transfer:P004
+    relationship: variant
+    overlap: 'Both query tree relations: P004 evaluates axis steps (child, parent, descendant) while C002
+      queries c-command, m-command, dominance, precedence, sisterhood; both return sets of nodes or boolean
+      relations, and both rely on tree structure.'
+  - id: proposal:k3_parsing-and-agreement:P008
+    relationship: adjacent
+    overlap: Both work with syntactic trees, but P008 converts constituency to dependencies while C002
+      directly queries structural relations without conversion.
+  - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+    relationship: adjacent
+    overlap: Both involve trees and node values, but C002 queries structural relations, not execution
+      traces.
+  reason: 0/3 samples judged it novel; Same operation as tree_axis_navigation but with linguistic terminology.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: raising_control_construal
+  summary: Classify the matrix predicate from a supplied list as raising, subject-control, object-control,
+    or ECM; identify the understood subject of the infinitive and decide whether passivizing the complement
+    preserves the construal.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_scope-and-binding:P007
+    relationship: variant
+    overlap: both determine the understood subject/antecedent for an argument (infinitive subject vs binding
+      antecedent) using grammatical role and locality, and judge whether a transform preserves that relation
+  - id: proposal:k3_parsing-and-agreement:P011
+    relationship: adjacent
+    overlap: both assign grammatical functions to arguments based on predicate frame and clause structure,
+      but one assigns case and the other control/raising status
+  - id: proposal:k3_relational-structures:P002
+    relationship: different
+    overlap: symbolic differentiation is purely symbolic computation, unrelated to syntactic construal
+  reason: 1/3 samples judged it novel; Raising/control classification is a specific case of identifying
+    the bearer of a missing argument, which antecedent_binding_legality already resolves via c-command
+    and locality.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: conjunct_feature_resolution
+  summary: Compute agreement features for conjoined or disjoined phrases under a stated resolution-rule
+    list (person hierarchy, single-conjunct and gender options) across synthetic grammars; answer the
+    resolved feature bundle.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.agreement_completion.agreement_completion:AgreementCompletion
+    relationship: variant
+    overlap: Both resolve agreement features across conjoined phrases, but C004 explicitly uses resolution
+      rules and outputs the feature bundle rather than the inflected word.
+  - id: proposal:k3_synthetic-grammars:P005
+    relationship: adjacent
+    overlap: Both use synthetic grammars with attribute equations, but C004 is specifically about conjoined/disjoined
+      agreement resolution.
+  - id: proposal:k3_parsing-and-agreement:P011
+    relationship: adjacent
+    overlap: Both involve feature assignment, but C004 is about agreement features, not case.
+  reason: 0/3 samples judged it novel; Variant of agreement completion with a different output format.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: topological_field_linearization
+  summary: 'Serialize clauses from dependency structures with a topological-fields model: finite verb
+    in V2 or final bracket, separable particles, midfield ordered by definiteness and case; answer the
+    exact token sequence.'
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_parsing-and-agreement:P006
+    relationship: variant
+    overlap: 'Both linearize clauses from syntactic structures: C005 uses topological fields (V2, midfield
+      ordering) while P006 uses inversion triggers; both produce the exact token sequence.'
+  - id: proposal:k3_parsing-and-agreement:P009
+    relationship: adjacent
+    overlap: Both involve clause structure and word order, but C005 focuses on topological fields while
+      P009 handles clitic placement.
+  - id: proposal:k3_parsing-and-agreement:P008
+    relationship: different
+    overlap: P008 converts constituency to dependencies, C005 linearizes from dependencies.
+  reason: 0/3 samples judged it novel; Variant of existing linearization tasks with a different ordering
+    principle.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: dependency_projectivity_analysis
+  summary: Given a dependency tree and a candidate word order, test projectivity by checking arc interval
+    nesting; answers give the verdict, the first crossing arc pair, or a repair reordering that resolves
+    the crossings.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_hierarchical-recursive:P008
+    relationship: variant
+    overlap: 'both analyze interval nesting: projectivity checks arc interval nesting while interval_nesting_forest
+      builds containment forests from endpoints'
+  - id: task:generated.wave8.incremental_build_rebuild_set.incremental_build_rebuild_set:RebuildSet
+    relationship: adjacent
+    overlap: both process dependency DAGs to identify affected elements, but one is projectivity/order
+      and the other is rebuild propagation
+  - id: task:generated.wave12.dominator_analysis.dominator_analysis:DominatorAnalysis
+    relationship: adjacent
+    overlap: both examine directed graph reachability/dominance relations, though with different structural
+      questions
+  reason: 1/3 samples judged it novel; Core projectivity check is the same interval nesting relation as
+    existing interval_nesting_forest, only parameterized by dependency arcs.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: tag_question_formation
+  summary: 'Supply the tag for declaratives, imperatives, existentials: find the finite auxiliary or add
+    do-support, pronominalize the subject, reverse polarity even with negative quantifiers, and apply
+    special forms (aren''t I, shall we).'
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_parsing-and-agreement:P006
+    relationship: variant
+    overlap: Both involve auxiliary inversion and do-support, but C012 specifically forms tag questions
+      with pronoun subjects and polarity reversal.
+  - id: task:generated.wave10.minimal_edit.minimal_edit:MinimalEdit
+    relationship: adjacent
+    overlap: Both manipulate sentence polarity, but C012 adds a tag with pronoun and polarity reversal.
+  - id: task:generated.wave10.semantic_paraphrase.semantic_paraphrase:SemanticParaphrase
+    relationship: different
+    overlap: 'Different focus: tag formation vs. voice/polarity paraphrase.'
+  reason: 0/3 samples judged it novel; Variant of inversion/do-support applied to tag questions.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: inflectional_paradigm_derivation
+  summary: Inflect lexemes for feature bundles via stem-class tables, ordered mutation and affixation
+    rules, suppletive and zero exponents, and haplology; answers are queried cells, full paradigms, or
+    the feature bundle behind a form.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.novel_word_application.novel_word_application:NovelWordApplication
+    relationship: variant
+    overlap: Both involve morphological derivation, but C010 uses explicit stem-class tables and ordered
+      rules, while novel_word_application does compounding/derivation in an invented language.
+  - id: proposal:k3_synthetic-grammars:P005
+    relationship: adjacent
+    overlap: Both use synthetic grammars, but C010 is specifically about inflectional paradigms.
+  - id: proposal:k3_parsing-and-agreement:P008
+    relationship: different
+    overlap: 'Different: inflection vs. dependency conversion.'
+  reason: 1/3 samples judged it novel; Variant of morphological derivation with a formalized rule system.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: regex_residual_derivatives
+  summary: Compute Brzozowski derivatives of regular expressions along a given prefix, simplifying to
+    canonical form with stated identities; answer the residual expression, the nullability sequence, or
+    a tail-acceptance verdict.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_systematic-generalization:P001
+    relationship: same_operation
+    overlap: Both compute Brzozowski derivatives of regular expressions with simplification and nullability
+      checks; the only difference is that C008 allows a prefix (sequence of symbols) instead of a single
+      symbol, which is a trivial parameter extension.
+  - id: task:generated.k3_systematic_generalization_r1.reg_exp_derivative.regular_expression_derivative:RegExpDerivative
+    relationship: same_operation
+    overlap: 'Same: computes derivative, simplifies via identities, returns residual expression or nullability.'
+  - id: gallery:variable_elimination
+    relationship: different
+    overlap: Different algebraic operation (elimination vs. derivative).
+  reason: 0/3 samples judged it novel; Exact duplicate of existing derivative task.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: binding_principle_antecedents
+  summary: 'Apply binding principles A, B, C over bracketed clauses: compute c-command and local domains
+    for pronouns, reflexives, and names; return licit antecedents, forced disjointness, or the first violated
+    condition.'
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_scope-and-binding:P007
+    relationship: variant
+    overlap: "Both apply binding principles A, B, C to judge coindexed pairs for locality, c-command,\
+      \ and disjointness. The catalog outputs licensed/blocked verdicts per pair; C011 adds the first\
+      \ violated principle and licit antecedent set, but the core operation\u2014checking binding conditions\
+      \ over c-command domains\u2014is identical."
+  - id: task:generated.wave10.agreement_completion.agreement_completion:AgreementCompletion
+    relationship: different
+    overlap: Agreement completion is about subject-verb agreement, not binding of pronouns/reflexives;
+      no overlap.
+  - id: proposal:k3_parsing-and-agreement:P009
+    relationship: different
+    overlap: Clitic placement is about ordering clitics, not binding principles; no overlap.
+  - id: proposal:k3_representation-transfer:P002
+    relationship: different
+    overlap: Allen intervals are temporal relations, not anaphora; no overlap.
+  reason: '0/3 samples judged it novel; Variant: binding_principle_antecedents computes the same c-command/local-domain
+    checks as antecedent_binding_legality; the added output modes do not change the underlying operation.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: operator_scope_permutations
+  summary: From c-command heights of quantifiers, negation, and modals, plus clause-bounded islands and
+    freezing, enumerate the licensed scope permutations; answers give the reading count or the n-th reading's
+    operator order.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_parsing-and-agreement:P003
+    relationship: variant
+    overlap: "Both enumerate licensed scope/reading permutations from syntactic operators (negation, quantifiers,\
+      \ modals) over clause-bounded domains; the catalog computes polarity licensing while C001 computes\
+      \ full scope orders, but the cognitive operation\u2014tracing c-command and clause boundaries to\
+      \ filter operator orderings\u2014is the same."
+  - id: task:generated.wave11.scope_explication.scope_explication:ScopeExplication
+    relationship: variant
+    overlap: Both generate and interpret scope ambiguities from negation, quantifiers, and modifiers;
+      catalog resolves readings from ambiguous sentences, C001 enumerates licensed permutations from structural
+      heights. Same underlying scope-resolution operation with different output projection.
+  - id: proposal:k3_paraphrase-equivalence:P001
+    relationship: adjacent
+    overlap: Both involve syntactic constraints on dependencies (islands vs. c-command heights) affecting
+      possible readings or extractions; related but catalog focuses on filler-gap licensing, C001 on operator
+      orderings.
+  - id: task:generated.wave8.lexical_scope_resolution.lexical_scope_resolution:LexicalScopeResolution
+    relationship: different
+    overlap: Catalog resolves variable binding in code scopes; C001 does linguistic c-command scope. No
+      shared operation.
+  reason: '1/3 samples judged it novel; Rejected as variant: the core operation of tracing c-command and
+    clause boundaries to determine licensed operator orderings already exists in the catalog''s polarity_item_licensing,
+    and the scope_explication task shares the same scope-resolution mechanism.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: agreement_head_selection
+  summary: Choose the agreeing verb when distractor nouns intervene in prepositional or relative modifiers,
+    or under inversion, existentials, quantifiers, coordination, collectives; answer the correct form.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.agreement_completion.agreement_completion:AgreementCompletion
+    relationship: variant
+    overlap: Both select the correct verb form by ignoring intervening distractor nouns and handling coordination,
+      quantifiers, and relative clauses. The catalog produces the next inflected word; C012 directly answers
+      the correct form. Same agreement-head selection operation.
+  - id: proposal:k3_parsing-and-agreement:P010
+    relationship: adjacent
+    overlap: Thematic role linking maps arguments, but does not specifically focus on number agreement
+      with attractors; different operation.
+  - id: proposal:k3_scope-and-binding:P009
+    relationship: different
+    overlap: Plural predication is about collective/distributive readings, not agreement; no overlap.
+  - id: proposal:k3_scope-and-binding:P001
+    relationship: different
+    overlap: Adjective inference modes concern modification semantics, not syntactic agreement; no overlap.
+  reason: "0/3 samples judged it novel; Variant: agreement_head_selection is the same operation as wave10's\
+    \ agreement_completion\u2014choosing the verb form despite intervening nouns and coordinate structures\u2014\
+    with no new cognitive step."
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: converse_relation_equivalence
+  summary: Converse and symmetric predicates over kinship, space and commerce (parent/child, above/below,
+    sell/buy); compose chained clauses; answer whether argument-permuted paraphrases state the same fact
+    or who holds a queried relation.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_relational-structures:P001
+    relationship: variant
+    overlap: 'Both resolve kinship relations on pedigree DAGs: catalog computes cousin relationships and
+      LCAs, C007 composes converse relations (parent/child) to answer who holds a chained relation. Same
+      underlying operation of traversing kinship graphs with converse edge types.'
+  - id: proposal:k3_paraphrase-equivalence:P001
+    relationship: different
+    overlap: Filler-gap dependencies are about syntactic extraction islands, not semantic relation composition;
+      no overlap.
+  - id: proposal:k3_scope-and-binding:P007
+    relationship: adjacent
+    overlap: Both involve binding/relations, but antecedent binding is syntactic locality constraints,
+      C007 is semantic relation chains; distinct operation.
+  - id: task:generated.wave8.finite_relation_properties.finite_relation_properties:FiniteRelationProperties
+    relationship: different
+    overlap: Checking relation properties (reflexive, symmetric) is static, not composing converse chains;
+      C007 does inference from base relations.
+  reason: '0/3 samples judged it novel; Variant: kinship_relation_resolution already performs the same
+    graph traversal over converse relations; adding other domains like space and commerce is just a surface
+    re-parameterization.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: markov_algorithm_trace
+  summary: 'Execute Markov algorithms: ordered string-rewrite rules replace the leftmost match, first
+    applicable rule wins, until a halting rule fires; modes request the final string, the step count,
+    or whether a queried rule ever fires.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_synthetic-grammars:P004
+    relationship: same_operation
+    overlap: 'Both execute Markov algorithms with identical rule application (first applicable rule, leftmost
+      match, restart, halt on dot-rule) and offer the same modes: final word, step count, cycle verdict.
+      C003''s ''queried rule fires'' is an additional output mode but the underlying operation is identical.'
+  - id: proposal:k3_parsing-and-agreement:P004
+    relationship: adjacent
+    overlap: Both are deterministic state-machine execution traces, but counter machines use jumps and
+      registers, not string rewriting; different operation.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: different
+    overlap: Protocol state machines process event traces, not string rewrite rules; distinct execution
+      model and output.
+  - id: proposal:k3_dynamic-structures:P007
+    relationship: different
+    overlap: Suffix automaton construction is a data structure algorithm, not a string rewriting system;
+      no overlap.
+  reason: '0/3 samples judged it novel; Duplicate: the catalog''s markov_algorithm_execution already specifies
+    the same rule-application procedure and modes; adding a ''did rule fire?'' query is a surface change
+    without a new cognitive operation.'
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: ellipsis_material_reconstruction
+  summary: Reconstruct elided material in VP ellipsis, gapping, sluicing, and fragment replies by copying
+    the antecedent constituent and substituting contrasted elements with adjusted case and agreement;
+    answers give the recovered clause text.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_parsing-and-agreement:P005
+    relationship: same_operation
+    overlap: 'Both reconstruct elided material in VP ellipsis, gapping, sluicing, etc., by copying antecedent
+      structure and substituting contrasted elements, with case/agreement adjustments. Identical procedure
+      and output: the recovered clause text.'
+  - id: task:generated.wave10.ellipsis_completion.ellipsis_completion:EllipsisCompletion
+    relationship: variant
+    overlap: Catalog completes elliptical replies by recovering omitted predicates and arguments, but
+      as a quantitative resolution task, not producing the full reconstructed clause. Same recovery operation,
+      different output projection.
+  - id: proposal:k3_paraphrase-equivalence:P001
+    relationship: different
+    overlap: Filler-gap licensing is about extraction constraints, not ellipsis reconstruction; no overlap.
+  - id: proposal:k3_parsing-and-agreement:P006
+    relationship: different
+    overlap: Inversion linearization is word order changes, not elision reconstruction; no overlap.
+  reason: '0/3 samples judged it novel; Duplicate: k3_parsing-and-agreement:P005 already specifies the
+    same ellipsis types, the same copy-and-substitute procedure, and the same clause-text output.'
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: valency_alternation_transformation
+  summary: 'Apply a named valency change (passive, antipassive, causative, applicative) to a clause: promote/demote
+    arguments, reassign case and agreement; add auxiliaries and adpositions, reorder; answers give the
+    transformed clause string.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.semantic_paraphrase.semantic_paraphrase:SemanticParaphrase
+    relationship: variant
+    overlap: 'Both transform a clause while preserving participants and meaning: the catalog flips voice,
+      polarity, and tense, while C005 applies passive, causative, applicative, etc. Both reorder arguments,
+      add auxiliaries/adpositions, and output the transformed clause string. Same syntactic transformation
+      operation.'
+  - id: task:generated.wave10.novel_word_application.novel_word_application:NovelWordApplication
+    relationship: adjacent
+    overlap: 'Both involve morphological/derivational changes to words, but catalog applies compounding/affix
+      rules in an invented language, while C005 changes valency and case in a clause. Different operation:
+      word-level vs. clause-level.'
+  - id: proposal:k3_parsing-and-agreement:P010
+    relationship: variant
+    overlap: Both map arguments across valency-changing constructions (passive, causative, dative shift),
+      but catalog just labels roles, while C005 produces surface forms. The underlying thematic role remapping
+      is the same.
+  - id: proposal:k3_parsing-and-agreement:P006
+    relationship: different
+    overlap: Inversion linearization changes word order due to triggers, not valency changes; distinct
+      operation.
+  reason: '1/3 samples judged it novel; Variant: the cognitive operation of remapping arguments across
+    passive/causative/applicative and producing a transformed clause is already present in semantic_paraphrase
+    and thematic_role_linking; adding more alternation types is a parameter extension.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: scalar_implicature_evaluation
+  summary: Compute literal versus strengthened readings of scalar terms (some, or, numerals, possible)
+    in plain, negated, conditional, and universally embedded contexts; answers are a verdict on a candidate
+    implicature or the surviving reading.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_scope-and-binding:P006
+    relationship: variant
+    overlap: Both derive scalar implicatures over the same scales (some/all, or/and, numerals, modals)
+      by excluding stronger alternatives. C004 adds specific embedding contexts, but the exclusion procedure
+      and scale inventory are identical.
+  - id: proposal:k3_scope-and-binding:P009
+    relationship: adjacent
+    overlap: Both compute alternative readings, but plural predication is about distributive/collective,
+      not scalar alternatives; different operation.
+  - id: proposal:k3_scope-and-binding:P008
+    relationship: adjacent
+    overlap: Both deal with meaning under embeddings, but answerhood is about question semantics, not
+      scalar exclusion; related field, distinct operation.
+  - id: proposal:k3_scope-and-binding:P003
+    relationship: different
+    overlap: De re/de dicto evaluation is about belief contexts, not scalar implicatures; no overlap in
+      operation.
+  reason: '0/3 samples judged it novel; Variant: the core operation of excluding stronger alternatives
+    on scalar terms is already specified by scalar_alternative_exclusion; C004''s embedding variation
+    is a parameter change, not a new cognitive procedure.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: straightline_program_equivalence
+  summary: "Decide if two straight-line integer programs\xE2\x80\x94assignments, arithmetic, branches\xE2\
+    \x80\x94over the same inputs compute the same piecewise function; answers give an equivalence verdict,\
+    \ a distinguishing input, or the shared value on given inputs."
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_parsing-and-agreement:P004
+    relationship: variant
+    overlap: Both execute straight-line or counter programs, but C011 checks equivalence of such programs,
+      a new operation.
+  - id: proposal:k3_parsing-and-agreement:P002
+    relationship: adjacent
+    overlap: Both evaluate program-like structures, but stack evaluation is not about equivalence.
+  - id: gallery:unification_entailment
+    relationship: adjacent
+    overlap: Both check equality entailment but in different computational domains.
+  reason: 1/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; While program
+    execution exists, equivalence checking with counterexamples is a new and useful direction.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: presupposition_projection_path
+  summary: Track presupposition triggers (again, stop, too, realize) through negation, conditionals, modals,
+    and attitude verbs by hole/filter/plug rules; answers list the presuppositions surviving to the matrix
+    or name the cancelled trigger.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_formal-semantics:P005
+    relationship: same_operation
+    overlap: Both implement the same hole/filter/plug presupposition projection algorithm over the same
+      trigger types and outputs.
+  - id: proposal:k3_paraphrase-equivalence:P004
+    relationship: adjacent
+    overlap: Both involve modals and negation but with different semantic phenomena.
+  - id: task:generated.wave10.presupposition_repair.presupposition_repair:PresuppositionRepair
+    relationship: adjacent
+    overlap: Both handle presuppositions but repair is about false premises in questions, not projection.
+  reason: 0/3 samples judged it novel; Exact same operation and output as the catalog neighbor.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: dimensional_quantity_reduction
+  summary: Reduce compound units built by products, powers, and quotients to base-dimension exponent vectors;
+    answers check an equation's homogeneity, whether two written quantities match dimensionally, or a
+    missing exponent.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.dimensional_consistency.dimensional_consistency:DimensionalConsistency
+    relationship: same_operation
+    overlap: Both compute base-dimension exponent vectors for quantities and check dimensional homogeneity
+      of equations.
+  - id: task:generated.wave8.missing_dimension.missing_dimension:MissingDimension
+    relationship: variant
+    overlap: Both find missing exponents or check dimensional validity in monomial equations.
+  - id: proposal:k3_relational-structures:P002
+    relationship: different
+    overlap: No shared operation besides quantitative structure.
+  reason: 0/3 samples judged it novel; Directly matches existing dimensional analysis tasks in the catalog.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: modal_duality_evaluation
+  summary: "Evaluate \xE2\x96\xA1/\xE2\x97\x87 formulas on small Kripke frames via reachability and negation\
+    \ pushed through duals; answers give a truth verdict at a world, the worlds satisfying a formula,\
+    \ or whether two duality-related formulas agree frame-wide."
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.kripke_knowledge_evaluation.kripke_knowledge_evaluation:KripkeKnowledgeEvaluation
+    relationship: variant
+    overlap: Both evaluate modal formulas on Kripke frames with reachability and negation, but C008 adds
+      duality checking and formula set outputs.
+  - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+    relationship: adjacent
+    overlap: Both evaluate quantified formulas on finite models, but one is first-order and the other
+      modal.
+  - id: proposal:k3_scope-and-binding:P003
+    relationship: adjacent
+    overlap: Both handle modal/attitude semantics but de re/de dicto is about belief reports, not necessity
+      diamonds.
+  reason: 0/3 samples judged it novel; The nearest neighbor already evaluates Kripke formulas; only the
+    duality angle is new.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: valency_alternation_rewrite
+  summary: "Rewrite clauses across valency alternations\xE2\x80\x94first- or second-object passive, impersonal\
+    \ passive, dative shift, locative, causative and inchoative\xE2\x80\x94under a supplied verb-class\
+    \ table; answer the rewritten clause or blocked."
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_paraphrase-equivalence:P006
+    relationship: variant
+    overlap: Both manipulate verb argument structure for voice/passive alternations, but C006 covers a
+      wider set of valency changes.
+  - id: proposal:k3_parsing-and-agreement:P006
+    relationship: adjacent
+    overlap: Both are syntactic transformations but different phenomena (valency vs. word order).
+  - id: task:generated.wave10.semantic_paraphrase.semantic_paraphrase:SemanticParaphrase
+    relationship: adjacent
+    overlap: Both rewrite sentences preserving meaning, but semantic paraphrase is construction-based,
+      not valency-specific.
+  reason: 0/3 samples judged it novel; The rewrite operation is similar to existing voice alternation
+    tasks, just with additional valency types.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: joint_table_event_arithmetic
+  summary: Compute event probabilities from a joint table of variables via marginalization, conditioning,
+    inclusion-exclusion, and independence checks; answers are exact rationals or a verdict on whether
+    two phrasings denote equal quantities.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: variant
+    overlap: Both compute exact rational probability quantities from a joint distribution via marginalization
+      and conditioning.
+  - id: proposal:k3_novel-composition:P002
+    relationship: variant
+    overlap: Both compute marginal probabilities from a factor graph or joint table using elimination
+      or propagation.
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: adjacent
+    overlap: Both evaluate event probabilities but C002 uses joint tables while tree uses sequential branching.
+  reason: 0/3 samples judged it novel; Rehashes known probability computation operations with minor surface
+    changes.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: ground_congruence_closure
+  summary: Propagate equalities from ground equations through congruence to decide whether differently
+    built ground terms denote the same object; answers give equality verdicts, a merged class's membership,
+    or which equation unified two terms.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave0.n01_congruence_closure.n01_congruence_closure:CongruenceClosure
+    relationship: same_operation
+    overlap: Both perform the exact same congruence closure propagation on ground equations with the same
+      outputs.
+  - id: gallery:unification_entailment
+    relationship: variant
+    overlap: Both reason about equality implication, but unification uses substitutions whereas C007 uses
+      congruence closure.
+  - id: proposal:k3_relational-structures:P006
+    relationship: adjacent
+    overlap: Both compute closures, but one is congruence and the other is formal concept closure.
+  reason: 0/3 samples judged it novel; The catalog already has an exact name-match for this operation.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: proportional_quantity_equivalence
+  summary: Ratio, fraction, percentage, per-item and times-as-many constructions over group counts; translate
+    each phrasing into linear constraints on cardinalities; answer equivalence or give counts satisfying
+    one but not the other.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_formal-semantics:P004
+    relationship: variant
+    overlap: Both translate quantity phrases (ratios, percentages, determiners) into constraints on set
+      sizes and evaluate their truth or equivalence.
+  - id: task:generated.wave10.presupposition_repair.presupposition_repair:PresuppositionRepair
+    relationship: adjacent
+    overlap: Both use arithmetic constraints but for different tasks (presupposition repair vs. quantity
+      equivalence).
+  - id: gallery:table_equivalence
+    relationship: different
+    overlap: Only both concern equivalence, in different domains.
+  reason: 0/3 samples judged it novel; The linguistic quantity reasoning is essentially generalized quantifier
+    semantics.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: attachment_reading_equivalence
+  summary: Sentences with attachment, modifier-scope and coordination-scope ambiguity paired with unambiguous
+    paraphrases; enumerate licensed readings and answer which paraphrase each reading matches or which
+    strings share a reading.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_paraphrase-equivalence:P005
+    relationship: variant
+    overlap: Both enumerate readings and match paraphrases, but one is for nominal compounds and the other
+      for syntactic attachment.
+  - id: task:generated.wave11.scope_explication.scope_explication:ScopeExplication
+    relationship: adjacent
+    overlap: Both disambiguate ambiguous structures but scope explication rewrites statements rather than
+      matching readings.
+  - id: proposal:k3_paraphrase-equivalence:P004
+    relationship: different
+    overlap: Only both concern equivalence, in different linguistic domains.
+  reason: 0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; New combination
+    of ambiguity resolution and paraphrase matching for attachment structures.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: alpha_equivalence_checking
+  summary: Judge whether two terms with binders (quantified formulas, lambda abstractions) differ by bound
+    renamings, shadowing, or binder order; answers give the alpha-equivalence verdict, the induced renaming,
+    or the first conflicting subterm.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_semantics-preserving-translation:P003
+    relationship: variant
+    overlap: Both deal with binder handling and variable renaming in lambda terms, but C003 adds alpha-equivalence
+      judgments and produces renaming mappings.
+  - id: task:generated.wave3.term_unification.term_unification:TermUnification
+    relationship: adjacent
+    overlap: Both compare term structures, but unification solves for substitutions while alpha-equivalence
+      checks binder renaming.
+  - id: gallery:table_equivalence
+    relationship: different
+    overlap: Only both are equivalence checks, in different domains.
+  reason: 0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Although
+    some binder machinery exists, explicit alpha-equivalence checking with renaming output is a new operation.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: permutation_expression_equivalence
+  summary: Reduce cycle-notation forms with products, inverses, and conjugates to point mappings; judge
+    whether two differently structured forms denote the same permutation, name the image of a queried
+    point, or state parity and cycle count.
+  verdict: novel
+  nearest_neighbors:
+  - id: plan:WAVE2:S19
+    relationship: variant
+    overlap: Both reduce permutation expressions in cycle notation and evaluate point mappings, but C001
+      extends to equivalence of differently structured forms, parity, and cycle count.
+  - id: plan:WAVE0:N6
+    relationship: variant
+    overlap: Both involve permutation composition, inversion, and powers in cycle notation; C001 adds
+      conjugation and equivalence checks.
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: adjacent
+    overlap: Both determine equivalence of different expressions, but one in permutation algebra and the
+      other in focus particle semantics.
+  reason: 0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Builds
+    on existing permutation reasoning but adds a new equivalence-checking dimension and broader output
+    regime.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: temporal_connective_equivalence
+  summary: Clauses linked by until, since, while, before/after and no-sooner under negation and durative
+    or punctual aspect; coerce each to event orderings and intervals; answer whether restructured paraphrases
+    preserve the temporal claim.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_paraphrase-equivalence:P004
+    relationship: variant
+    overlap: Both test equivalence of paraphrases involving sentential connectives and negation, one modal
+      and one temporal.
+  - id: task:generated.wave10.event_order_reconstruction.event_order_reconstruction:EventOrderReconstruction
+    relationship: adjacent
+    overlap: Both deal with temporal ordering of events but reconstruction recovers order, not equivalence.
+  - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+    relationship: adjacent
+    overlap: Both reason about temporal logic but C010 uses natural language connectives.
+  reason: 0/3 samples judged it novel; Known paraphrase equivalence operation applied to temporal connectives.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+pool:
+- name: plural_predication_verdicts
+  summary: Judge distributive, collective, cumulative and reciprocal (strong/intermediate) readings of
+    plural sentences over atom, group and relation tables; answers are the true readings.
+- name: quantifier_scope_equivalence
+  summary: Sentences stacking quantifiers (every, each, a, exactly n) and negation in permuted surface
+    orders; enumerate scope readings via commutation and duality; answer whether two sentences share all
+    readings or give a separating model.
+- name: connective_paraphrase_equivalence
+  summary: Clauses joined by varied connectives (unless, only if, provided, or else, neither-nor, but)
+    in either order; translate each to a Boolean formula; answer whether the pair is equivalent or give
+    the truth assignment separating them.
+- name: implicative_factive_inference
+  summary: Implicative and factive verbs (manage, fail, remember, pretend) under negation and conditional
+    or question embedding; compute whether the complement is entailed, denied or open; also judge equivalence
+    with the bare assertion.
+- name: degree_construction_equivalence
+  summary: Comparative, superlative, equative, too/enough and correlative degree constructions over stated
+    quantities; translate to order and threshold constraints; answer whether two wordings coincide or
+    give the implied ranking.
+- name: adjective_subsectivity_inference
+  summary: Adjective stacks mixing intersective, subsective, privative and intensional classes in varied
+    orders and bracketings; compute which inferences survive stacking and reordering; answer whether two
+    forms denote identically.
+- name: propositional_formula_equivalence
+  summary: "Judge whether two propositional formulas over shared atoms with \xC2\xAC\xE2\x88\xA7\xE2\x88\
+    \xA8\xE2\x86\x92\xE2\x86\x94\xE2\x8A\x95 denote the same truth function; answers give the equivalence\
+    \ verdict, a counterexample valuation, or a formula's satisfying-row count."
+- name: finite_model_quantifier_verification
+  summary: Evaluate first-order formulas over explicit finite models with mixed and counting quantifiers;
+    answers give a truth verdict, satisfying tuples for an open formula, or whether two differently quantified
+    formulas share an extension.
+- name: comparative_quantity_equivalence
+  summary: 'Evaluate comparative claims over count tables: more/fewer than, as many as, twice/half as
+    many, with difference vs ratio readings; answers give a truth verdict, the count gap, or whether two
+    phrasings state the same relation.'
+- name: aspectual_composition_classification
+  summary: Compose verb class with objects, PPs, and operators (progressive, almost, in/for-PPs) and classify
+    via entailment tests; answers label state/activity/accomplishment/achievement or judge telicity, homogeneity,
+    culmination.
