@@ -1,0 +1,135 @@
+version: 1
+name: k3_incremental_recomputation_r1
+proposal_wave: k3_incremental-recomputation
+defaults:
+  base_ref: 64043c3abe6e32b694ea6008cbf9b39e2cb6bb03
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  v2:
+  - P001v2
+  - P002v2
+  v3:
+  - P001v3
+  - P002v3
+  pilot:
+  - P001v1
+  - P002v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: alphabeta_cutoff_trace_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v1
+  instruction: |-
+    Author a new task from scratch: alphabeta_cutoff_trace_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run alpha-beta over an explicit valued game tree with fixed move order, tracking the window and logging each cutoff; vary depth, branching, and ordering; answer is the root value and pruned-leaf set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v1
+  design_choice: Represent the game tree as a nested list of integer terminal values, with the move order
+    fixed by list order; the solver must output the root value and the set of pruned leaf indices in preorder.
+- id: P001v2
+  hypothesis: P001
+  idea: alphabeta_cutoff_trace_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v2
+  instruction: |-
+    Author a new task from scratch: alphabeta_cutoff_trace_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run alpha-beta over an explicit valued game tree with fixed move order, tracking the window and logging each cutoff; vary depth, branching, and ordering; answer is the root value and pruned-leaf set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v2
+  design_choice: Encode the tree as a compact string using parentheses and comma-separated integers (e.g.,
+    (5,(3,7),2)), with branching factor and depth implicit; the answer is the root value and a sorted
+    list of pruned leaf values.
+- id: P001v3
+  hypothesis: P001
+  idea: alphabeta_cutoff_trace_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v3
+  instruction: |-
+    Author a new task from scratch: alphabeta_cutoff_trace_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run alpha-beta over an explicit valued game tree with fixed move order, tracking the window and logging each cutoff; vary depth, branching, and ordering; answer is the root value and pruned-leaf set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_incremental_recomputation_r1/alphabeta_cutoff_trace_v3
+- id: P002v1
+  hypothesis: P002
+  idea: skyline_rectangle_update_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v1
+  instruction: |-
+    Author a new task from scratch: skyline_rectangle_update_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Grounded rectangle unions summarized as run-length skylines with areas; one rectangle is inserted or removed, altering only the slabs it spans; answer is the skyline segments that change and the new total covered area.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v1
+  design_choice: Represent skyline as per-slab height runs; answer lists changed (x-range, old height,
+    new height) plus integer area delta.
+- id: P002v2
+  hypothesis: P002
+  idea: skyline_rectangle_update_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v2
+  instruction: |-
+    Author a new task from scratch: skyline_rectangle_update_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Grounded rectangle unions summarized as run-length skylines with areas; one rectangle is inserted or removed, altering only the slabs it spans; answer is the skyline segments that change and the new total covered area.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v2
+  design_choice: Answer is a canonical string of new skyline runs only, with area; solver must infer changes
+    by comparing to given old skyline.
+- id: P002v3
+  hypothesis: P002
+  idea: skyline_rectangle_update_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v3
+  instruction: |-
+    Author a new task from scratch: skyline_rectangle_update_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Grounded rectangle unions summarized as run-length skylines with areas; one rectangle is inserted or removed, altering only the slabs it spans; answer is the skyline segments that change and the new total covered area.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_incremental_recomputation_r1/skyline_rectangle_update_v3

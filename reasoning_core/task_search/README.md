@@ -63,12 +63,16 @@ would exit before the first step of every trial.
 
 **Measure before arming it**, and read the measurement carefully. A fallback makes Harness
 Link route every request through a local LiteLLM bridge, including the requests that never
-fall back. Over 107 trials in four waves it rescued 3 (two of which then failed
-validation) and killed 2 outright on `LiteLLM bridge did not become HTTP-ready`, which is
-the only cost directly attributable to it. Two of those waves also came back 29% and 31%
-`timed_out` against roughly 0% in the 480 trials before them -- but the other two armed
-waves timed out not at all, and the timeouts fall inside one two-hour window, so they look
-like a slow afternoon on the primary that the bridge is merely suspected of worsening.
+fall back. Over 99 trials in four waves it rescued 3 (two of which then failed validation)
+and killed 2 outright on `LiteLLM bridge did not become HTTP-ready`, which is the only
+cost directly attributable to it. Those waves also ran 60% successful against 74% over the
+321 trials before them, and 18% `timed_out` against 3% -- but two of the four armed waves
+timed out not at all, and every timeout falls inside one two-hour window, so this looks
+like a slow afternoon on the primary that the bridge is only suspected of worsening.
+
+Count those numbers with `trajectory.trial_directories`, never with a raw glob over
+`run.json`: a retried trial leaves its dead attempt behind as `<trial>.attempt<N>-<reason>`
+and counting those reports a wave as far bigger and far more broken than it was.
 
 What is not in doubt is which failure it covers: Harness Link falls back on *errors*,
 never on *latency*. Eleven trials burned their whole wall clock at thirty minutes each

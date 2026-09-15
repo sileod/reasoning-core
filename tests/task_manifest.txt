@@ -8,6 +8,7 @@ agreement_completion
 alias_mutation
 alias_mutation_tracking
 allen_interval_composition
+alpha_beta_cutoff_trace
 analogical_case_matching
 announcement_round_deduction
 answer_relevant_change
@@ -338,6 +339,7 @@ simpson_reversal_detection
 sir_vaccination_delta
 skip_list_search_path
 skyline_dominance_query
+skyline_rectangle_update
 smith_normal_form
 spatial_folding
 spreadsheet_evaluation

@@ -1,0 +1,548 @@
+version: 1
+name: k3_representation_specific_r1
+proposal_wave: k3_representation-specific
+defaults:
+  base_ref: 64043c3abe6e32b694ea6008cbf9b39e2cb6bb03
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: lie_bracket_hall_normal_form_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v1
+  instruction: |-
+    Author a new task from scratch: lie_bracket_hall_normal_form_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested Lie-bracket expressions in a free nilpotent Lie algebra of bounded class using bilinearity, antisymmetry, and the Jacobi identity, returning the canonical Hall-basis linear combination.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v1
+  design_choice: 'Instance format: nested bracket tree with integer coefficients, answer as canonical
+    Hall-basis expansion string with coefficients and basis elements, e.g., ''3*[X1,[X2,X3]] - 2*[X1,X3]'''
+- id: P001v2
+  hypothesis: P001
+  idea: lie_bracket_hall_normal_form_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v2
+  instruction: |-
+    Author a new task from scratch: lie_bracket_hall_normal_form_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested Lie-bracket expressions in a free nilpotent Lie algebra of bounded class using bilinearity, antisymmetry, and the Jacobi identity, returning the canonical Hall-basis linear combination.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v2
+  design_choice: 'Difficulty source: vary the number of generators (2-5) and nilpotency class (2-4), requiring
+    solvers to apply Jacobi reductions and eliminate dependent brackets to reach unique Hall form'
+- id: P001v3
+  hypothesis: P001
+  idea: lie_bracket_hall_normal_form_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v3
+  instruction: |-
+    Author a new task from scratch: lie_bracket_hall_normal_form_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested Lie-bracket expressions in a free nilpotent Lie algebra of bounded class using bilinearity, antisymmetry, and the Jacobi identity, returning the canonical Hall-basis linear combination.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/lie_bracket_hall_normal_form_v3
+- id: P002v1
+  hypothesis: P002
+  idea: stone_placement_capture_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v1
+  instruction: |-
+    Author a new task from scratch: stone_placement_capture_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Small Go positions with black/white groups and tracked liberties; one stone is added under rules that forbid or allow self-atari variants; answer is the captured stones and the liberties of each adjacent group after resolution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v1
+  design_choice: Instance boards vary in size (9x9, 13x13, 19x19) with random group shapes, but answer
+    format stays identical across sizes.
+- id: P002v2
+  hypothesis: P002
+  idea: stone_placement_capture_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v2
+  instruction: |-
+    Author a new task from scratch: stone_placement_capture_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Small Go positions with black/white groups and tracked liberties; one stone is added under rules that forbid or allow self-atari variants; answer is the captured stones and the liberties of each adjacent group after resolution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v2
+  design_choice: 'Difficulty arises from requiring legal move validation: some instances include a move
+    that is suicide (no captures and no liberties) and must be rejected, while others allow self-atari
+    if it captures.'
+- id: P002v3
+  hypothesis: P002
+  idea: stone_placement_capture_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v3
+  instruction: |-
+    Author a new task from scratch: stone_placement_capture_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Small Go positions with black/white groups and tracked liberties; one stone is added under rules that forbid or allow self-atari variants; answer is the captured stones and the liberties of each adjacent group after resolution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/stone_placement_capture_v3
+- id: P003v1
+  hypothesis: P003
+  idea: selinger_join_ordering_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v1
+  instruction: |-
+    Author a new task from scratch: selinger_join_ordering_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the optimal join order for a query graph using Selinger dynamic programming with a given cost model; answer the optimal plan cost or tree.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v1
+  design_choice: Represent the query graph as an adjacency list with cardinalities on edges, and answer
+    the minimum total cost as an integer after running Selinger DP over all subsets.
+- id: P003v2
+  hypothesis: P003
+  idea: selinger_join_ordering_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v2
+  instruction: |-
+    Author a new task from scratch: selinger_join_ordering_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the optimal join order for a query graph using Selinger dynamic programming with a given cost model; answer the optimal plan cost or tree.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v2
+  design_choice: Encode the optimal plan as a balanced parenthesized string of table names (e.g., '((A
+    B) (C D))') and require the exact tree structure, not just cost.
+- id: P003v3
+  hypothesis: P003
+  idea: selinger_join_ordering_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v3
+  instruction: |-
+    Author a new task from scratch: selinger_join_ordering_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the optimal join order for a query graph using Selinger dynamic programming with a given cost model; answer the optimal plan cost or tree.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/selinger_join_ordering_v3
+- id: P004v1
+  hypothesis: P004
+  idea: matrix_jordan_normal_form_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v1
+  instruction: |-
+    Author a new task from scratch: matrix_jordan_normal_form_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine eigenvalues and Jordan chains for small matrices over GF(p) whose characteristic polynomial splits, returning the canonical Jordan form as sorted eigenvalue and block-size data.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v1
+  design_choice: Represent the Jordan form answer as a compact canonical string per eigenvalue, e.g.,
+    'eig=2:blk=[3,1]' with eigenvalues sorted ascending and block sizes descending, forcing exact string
+    matching.
+- id: P004v2
+  hypothesis: P004
+  idea: matrix_jordan_normal_form_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v2
+  instruction: |-
+    Author a new task from scratch: matrix_jordan_normal_form_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine eigenvalues and Jordan chains for small matrices over GF(p) whose characteristic polynomial splits, returning the canonical Jordan form as sorted eigenvalue and block-size data.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v2
+  design_choice: Vary difficulty by choosing matrices with a single eigenvalue but different Jordan block
+    partitions (e.g., [4], [3,1], [2,2]) versus multiple eigenvalues, requiring solvers to compute chains
+    and sort blocks correctly.
+- id: P004v3
+  hypothesis: P004
+  idea: matrix_jordan_normal_form_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v3
+  instruction: |-
+    Author a new task from scratch: matrix_jordan_normal_form_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine eigenvalues and Jordan chains for small matrices over GF(p) whose characteristic polynomial splits, returning the canonical Jordan form as sorted eigenvalue and block-size data.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/matrix_jordan_normal_form_v3
+- id: P005v1
+  hypothesis: P005
+  idea: elliptic_curve_scalar_mul_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v1
+  instruction: |-
+    Author a new task from scratch: elliptic_curve_scalar_mul_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perform scalar multiplication on an elliptic curve via double-and-add; output the resulting point coordinates in affine form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v1
+  design_choice: Use fixed small prime fields (e.g., p=17, 19) with randomly chosen curve parameters and
+    scalar values, requiring manual modular arithmetic for point doubling and addition.
+- id: P005v2
+  hypothesis: P005
+  idea: elliptic_curve_scalar_mul_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v2
+  instruction: |-
+    Author a new task from scratch: elliptic_curve_scalar_mul_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perform scalar multiplication on an elliptic curve via double-and-add; output the resulting point coordinates in affine form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v2
+  design_choice: Use large random 256-bit primes and scalars, forcing the solver to implement efficient
+    modular inversion (e.g., extended Euclidean) to compute affine coordinates.
+- id: P005v3
+  hypothesis: P005
+  idea: elliptic_curve_scalar_mul_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v3
+  instruction: |-
+    Author a new task from scratch: elliptic_curve_scalar_mul_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perform scalar multiplication on an elliptic curve via double-and-add; output the resulting point coordinates in affine form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/elliptic_curve_scalar_mul_v3
+- id: P006v1
+  hypothesis: P006
+  idea: backdoor_adjustment_selection_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v1
+  instruction: |-
+    Author a new task from scratch: backdoor_adjustment_selection_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a causal DAG with named treatment and outcome plus candidate covariates such as mediators, colliders and instruments, choose a minimal valid backdoor adjustment set for effect estimation, or report that none qualifies.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v1
+  design_choice: Generate instances by fixing a template DAG family (e.g., M-bias, confounding chain)
+    and randomly permuting covariate roles, forcing the solver to identify the unique minimal set.
+- id: P006v2
+  hypothesis: P006
+  idea: backdoor_adjustment_selection_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v2
+  instruction: |-
+    Author a new task from scratch: backdoor_adjustment_selection_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a causal DAG with named treatment and outcome plus candidate covariates such as mediators, colliders and instruments, choose a minimal valid backdoor adjustment set for effect estimation, or report that none qualifies.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v2
+  design_choice: Vary the answer format between a canonical comma-separated list of covariate names (in
+    alphabetical order) and the string 'NONE', with the minimal set length ranging from 0 to 3.
+- id: P006v3
+  hypothesis: P006
+  idea: backdoor_adjustment_selection_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v3
+  instruction: |-
+    Author a new task from scratch: backdoor_adjustment_selection_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a causal DAG with named treatment and outcome plus candidate covariates such as mediators, colliders and instruments, choose a minimal valid backdoor adjustment set for effect estimation, or report that none qualifies.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/backdoor_adjustment_selection_v3
+- id: P007v1
+  hypothesis: P007
+  idea: tower_block_removal_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v1
+  instruction: |-
+    Author a new task from scratch: tower_block_removal_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Stacks of axis-aligned blocks with widths, masses, and offsets; removing or nudging one block forces upward overlap and center-of-mass support checks; answer is which blocks topple or shift and the height of the surviving stack.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v1
+  design_choice: Represent block positions as integer grid coordinates and answer with a sorted list of
+    block IDs that topple, plus the final stack height as an integer.
+- id: P007v2
+  hypothesis: P007
+  idea: tower_block_removal_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v2
+  instruction: |-
+    Author a new task from scratch: tower_block_removal_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Stacks of axis-aligned blocks with widths, masses, and offsets; removing or nudging one block forces upward overlap and center-of-mass support checks; answer is which blocks topple or shift and the height of the surviving stack.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v2
+  design_choice: Encode each block's removal effect as a canonical string of shifted block IDs and toppled
+    block IDs, with surviving height as a fraction of original height.
+- id: P007v3
+  hypothesis: P007
+  idea: tower_block_removal_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v3
+  instruction: |-
+    Author a new task from scratch: tower_block_removal_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Stacks of axis-aligned blocks with widths, masses, and offsets; removing or nudging one block forces upward overlap and center-of-mass support checks; answer is which blocks topple or shift and the height of the surviving stack.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/tower_block_removal_v3
+- id: P008v1
+  hypothesis: P008
+  idea: grid_path_count_cone_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v1
+  instruction: |-
+    Author a new task from scratch: grid_path_count_cone_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Obstacle grids under right/down, diagonal-added, or knight move sets with per-cell monotone path counts; one obstacle toggles on or off; answer is the cells whose counts change and the new count at the target corner.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v1
+  design_choice: 'Obstacle toggling: choose a cell whose removal increases target count; answer lists
+    changed cells sorted by (row,col) plus the new target count.'
+- id: P008v2
+  hypothesis: P008
+  idea: grid_path_count_cone_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v2
+  instruction: |-
+    Author a new task from scratch: grid_path_count_cone_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Obstacle grids under right/down, diagonal-added, or knight move sets with per-cell monotone path counts; one obstacle toggles on or off; answer is the cells whose counts change and the new count at the target corner.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v2
+  design_choice: 'Answer format: output a compact string of changed-cell coordinates in reading order
+    followed by the new corner count, e.g., ''2,3;4,5|17''.'
+- id: P008v3
+  hypothesis: P008
+  idea: grid_path_count_cone_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v3
+  instruction: |-
+    Author a new task from scratch: grid_path_count_cone_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Obstacle grids under right/down, diagonal-added, or knight move sets with per-cell monotone path counts; one obstacle toggles on or off; answer is the cells whose counts change and the new count at the target corner.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/grid_path_count_cone_v3
+- id: P009v1
+  hypothesis: P009
+  idea: necklace_canonical_rotation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v1
+  instruction: |-
+    Author a new task from scratch: necklace_canonical_rotation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Canonize cyclic words: for strings with repeated symbols, break the circular symmetry by reporting the lexicographically least rotation, the primitive period, and the symmetry order; vary alphabet, periodicity, and balanced runs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v1
+  design_choice: Report the canonical rotation as the lexicographically smallest rotation, breaking ties
+    by the earliest starting index, with the primitive period as the minimal period length and symmetry
+    order as length divided by period.
+- id: P009v2
+  hypothesis: P009
+  idea: necklace_canonical_rotation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v2
+  instruction: |-
+    Author a new task from scratch: necklace_canonical_rotation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Canonize cyclic words: for strings with repeated symbols, break the circular symmetry by reporting the lexicographically least rotation, the primitive period, and the symmetry order; vary alphabet, periodicity, and balanced runs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v2
+  design_choice: Report the canonical rotation as the lexicographically smallest rotation, with ties broken
+    by the smallest rotation index, and output it as a string.
+- id: P009v3
+  hypothesis: P009
+  idea: necklace_canonical_rotation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v3
+  instruction: |-
+    Author a new task from scratch: necklace_canonical_rotation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Canonize cyclic words: for strings with repeated symbols, break the circular symmetry by reporting the lexicographically least rotation, the primitive period, and the symmetry order; vary alphabet, periodicity, and balanced runs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_representation_specific_r1/necklace_canonical_rotation_v3
