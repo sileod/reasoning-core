@@ -27,6 +27,7 @@ PROVIDER_KEYS = {
     "albert": "ALBERT_API_KEY",
     "nvidia": "NVIDIA_API_KEY",
     "openrouter": "OPENROUTER_FREE_API_KEY",
+    "inferx": "INFERX_API_KEY",
 }
 REVIEW_VARS = ("TASK_SEARCH_REVIEW_ENDPOINT", "TASK_SEARCH_REVIEW_MODEL",
                "TASK_SEARCH_REVIEW_KEY_ENV")
@@ -37,6 +38,25 @@ def default_provider():
     """Which provider serves the model is a fact about a machine, not about this
     repository, so it ships empty and is set in the env file."""
     return os.environ.get("TASK_SEARCH_PROVIDER") or None
+
+
+def _provider_key(report, label, provider):
+    """One PASS/FAIL line for the credential a provider reads."""
+    key_name = PROVIDER_KEYS.get(provider)
+    if not key_name:
+        report.add(None, f"{label} ({provider})", "unknown provider, cannot guess its key",
+                   f"known providers: {', '.join(sorted(PROVIDER_KEYS))}")
+        return
+    value = os.environ.get(key_name, "")
+    report.add(bool(value), f"{label} ({provider})",
+               f"{key_name} is set" if value else f"{key_name} is unset",
+               f"source {ENV_FILE} before launching; a wave without it spends its "
+               "whole queue on harness_failed")
+
+
+def default_fallback():
+    """Which second provider answers when the first refuses, same reasoning."""
+    return os.environ.get("TASK_SEARCH_FALLBACK") or None
 
 
 class Report:
@@ -126,20 +146,18 @@ def check(provider=None, harness="opencode", live=False, timeout=60):
                "systemd-run available" if systemd else "systemd-run missing",
                "runs need --resource-limits none, which removes the memory and CPU cap")
 
-    key_name = PROVIDER_KEYS.get(provider)
     if not provider:
         report.add(None, "worker key", "no provider selected",
                    "pass --provider, or set TASK_SEARCH_PROVIDER in the env file; the "
                    "repository ships no provider default")
-    elif not key_name:
-        report.add(None, f"worker key ({provider})", "unknown provider, cannot guess its key",
-                   f"known providers: {', '.join(sorted(PROVIDER_KEYS))}")
     else:
-        worker_key = os.environ.get(key_name, "")
-        report.add(bool(worker_key), f"worker key ({provider})",
-                   f"{key_name} is set" if worker_key else f"{key_name} is unset",
-                   f"source {ENV_FILE} before launching; a wave without it spends its "
-                   "whole queue on harness_failed")
+        _provider_key(report, "worker key", provider)
+    fallback = default_fallback()
+    if fallback:
+        # Armed and unreadable is worse than not armed at all: the worker environment is
+        # an allowlist, so an unnamed fallback key is absent, and Harness Link exits
+        # before the first step of every trial instead of on the first refusal.
+        _provider_key(report, "fallback key", fallback)
 
     missing = [name for name in REVIEW_VARS if not os.environ.get(name)]
     review_key_name = os.environ.get("TASK_SEARCH_REVIEW_KEY_ENV", "")

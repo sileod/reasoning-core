@@ -31,7 +31,7 @@ from .implementation_runner import (
     run_plan,
 )
 from .sandbox import _write_json
-from .doctor import default_provider
+from .doctor import default_fallback, default_provider
 
 # The implementor that every landed wave was built with. A model name is a fact about
 # what works and belongs in the repository; which provider serves it is a fact about a
@@ -46,12 +46,31 @@ def _worker_credentials(named):
 
     `scripts/run_task_search_weekend.sh` has always passed --credential-env the name held
     in TASK_SEARCH_KEY_ENV. Reading that variable directly keeps a plain `run` working now
-    that the environment is an allowlist and an unnamed key would simply be absent.
+    that the environment is an allowlist and an unnamed key would simply be absent. The
+    variable is a list because a fallback provider reads a key of its own, and a name
+    without a comma still means what it always did.
     """
     if named:
         return list(named)
-    fallback = os.environ.get("TASK_SEARCH_KEY_ENV", "").strip()
-    return [fallback] if fallback else []
+    return [name.strip() for name
+            in os.environ.get("TASK_SEARCH_KEY_ENV", "").split(",") if name.strip()]
+
+
+def _check_fallback_credential(fallback, credential_env_names):
+    """Refuse a fallback the worker has no key for, before the wave rather than per trial.
+
+    The worker's environment is an allowlist, so a fallback provider whose key is not
+    named is simply absent and Harness Link exits before the trial's first step -- the
+    whole wave lost to the switch that was meant to save it.
+    """
+    if not fallback:
+        return
+    unset = [name for name in credential_env_names if not os.environ.get(name)]
+    if len(credential_env_names) < 2 or unset:
+        raise SystemExit(
+            f"--fallback {fallback} needs its own credential: name it with"
+            " --credential-env alongside the primary's"
+            + (f" (not set: {', '.join(unset)})" if unset else ""))
 
 
 def _archive_path(repo_root, name):
@@ -226,6 +245,11 @@ def _parser():
     )
     run.add_argument("--provider", default=default_provider(),
                      help="Harness Link provider; defaults to $TASK_SEARCH_PROVIDER")
+    run.add_argument(
+        "--fallback", default=default_fallback(),
+        help="Harness Link provider to answer with when the first one refuses, on that"
+             " provider's own default model; defaults to $TASK_SEARCH_FALLBACK. Its key"
+             " must be named with --credential-env alongside the primary's")
     run.add_argument(
         "--snapshots",
         action=argparse.BooleanOptionalAction,
@@ -513,6 +537,17 @@ def main(argv=None):
             _write_json(Path(args.output), [entry.as_dict() for entry in entries])
         return
 
+    credential_env_names = ()
+    if args.command == "run":
+        credential_env_names = _worker_credentials(args.credential_env)
+        _check_fallback_credential(args.fallback, credential_env_names)
+        if not credential_env_names:
+            print(
+                "warning: no worker credential named. The sandbox now builds the worker's"
+                " environment from an allowlist, so a provider key reaches it only when"
+                " named with --credential-env or TASK_SEARCH_KEY_ENV.",
+                file=sys.stderr,
+            )
     plan = load_plan(args.plan)
     if args.command == "check":
         print(
@@ -549,14 +584,6 @@ def main(argv=None):
             end="",
         )
     else:
-        credential_env_names = _worker_credentials(args.credential_env)
-        if not credential_env_names:
-            print(
-                "warning: no worker credential named. The sandbox now builds the worker's"
-                " environment from an allowlist, so a provider key reaches it only when"
-                " named with --credential-env or TASK_SEARCH_KEY_ENV.",
-                file=sys.stderr,
-            )
         results = run_plan(
             args.plan,
             model=args.model,
@@ -578,6 +605,7 @@ def main(argv=None):
             bwrap_bin=args.bwrap_bin,
             runs_root=args.runs_root,
             provider=args.provider,
+            fallback=args.fallback,
             resource_limit_mode=args.resource_limits,
             systemd_run_bin=args.systemd_run_bin,
             memory_max=args.memory_max,

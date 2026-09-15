@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -66,6 +67,7 @@ def generation_metadata(
     timeout_seconds=1800,
     provider_name=None,
     harness_name="opencode",
+    fallback_provider_name=None,
 ):
     settings = {
         "variant": variant,
@@ -81,6 +83,11 @@ def generation_metadata(
             "version": sandbox_version,
         },
     }
+    if fallback_provider_name:
+        # `provider_name` above then means "this one, or the fallback where it refused",
+        # and the fallback answers on its own default model. Which of the two actually
+        # served a given trial is in that trial's run.json, under launcher.
+        settings["fallback_provider"] = fallback_provider_name
     return {
         "provider_name": provider_name or model.split("/", 1)[0],
         "model_name": model,
@@ -256,6 +263,7 @@ def _prepare_harness(
     trajectory_path,
     timeout_seconds,
     agy_log_path,
+    fallback=None,
 ):
     """Build one normalized Harness Link launch plus task-search native options."""
     command = [
@@ -271,6 +279,13 @@ def _prepare_harness(
     ]
     if provider:
         command.extend(("--provider", provider))
+    if fallback:
+        # A refusal that outlasts the retry ladder ends the trial, and one saturated
+        # provider ends every trial in the wave at once. Harness Link answers the
+        # refusals from a second provider instead, on that provider's own default
+        # model -- so this buys the run at the cost of knowing, up front, which model
+        # wrote the task. --show-routing puts the answer in this trial's stderr.log.
+        command.extend(("--fallback", fallback, "--show-routing"))
     native = []
     if harness == "opencode":
         native = ["--pure", "--agent", agent, "--format", "json"]
@@ -316,6 +331,36 @@ def _prepare_harness(
     return [*command, "--", *native]
 
 
+# `--show-routing` prints one of these each time Harness Link changes which provider is
+# answering, into the trial's own stderr. The status file it also writes is per provider
+# and shared by every concurrent trial, so this is the only per-trial record of it.
+_ROUTE = re.compile(r"^\[hlink\] (primary|fallback) -> (\S+)", re.MULTILINE)
+
+
+def _launcher(hlink_version, fallback, stderr_path=None):
+    """What launched the trial, and which providers answered it when one was armed."""
+    launcher = {"name": "hlink", "version": hlink_version}
+    if fallback:
+        launcher["fallback"] = {"provider": fallback}
+        if stderr_path is not None:
+            launcher["fallback"]["routes"] = _routes_taken(stderr_path)
+    return launcher
+
+
+def _routes_taken(stderr_path):
+    """Every route this trial was served by, in the order it first used them."""
+    try:
+        text = Path(stderr_path).read_text(errors="replace")
+    except OSError:
+        return []
+    taken = []
+    for label, route in _ROUTE.findall(text):
+        entry = {"label": label, "route": route}
+        if entry not in taken:
+            taken.append(entry)
+    return taken
+
+
 def _run_trial(
     plan,
     trial,
@@ -337,6 +382,7 @@ def _run_trial(
     max_steps,
     timeout_seconds,
     provider,
+    fallback,
     resource_limits,
     validation_timeout_seconds,
     credential_env_names,
@@ -374,6 +420,7 @@ def _run_trial(
         timeout_seconds=timeout_seconds,
         provider_name=("antigravity" if harness == "agy" else provider),
         harness_name=harness,
+        fallback_provider_name=fallback,
     )
     parent_source_id = None
     if trial.parent:
@@ -460,6 +507,7 @@ def _run_trial(
         prompt=prompt,
         model=model,
         provider=provider,
+        fallback=fallback,
         agent=agent,
         variant=variant,
         config_path=space.translate(config_path) if config_path else None,
@@ -543,7 +591,7 @@ def _run_trial(
         "harness_exit_code": harness_exit_code,
         "harness_log": str(events_path),
         "steps": _step_usage(events_path, effective_max_steps),
-        "launcher": {"name": "hlink", "version": hlink_version},
+        "launcher": _launcher(hlink_version, fallback, trial_root / "stderr.log"),
         "trajectory": str(trajectory_path) if trajectory_path else None,
         "timed_out": timed_out,
         "sandbox": {"name": "bubblewrap", "version": sandbox_version},
@@ -622,6 +670,7 @@ def run_plan(
     timeout_seconds=1800,
     queue_names=(),
     provider=None,
+    fallback=None,
     resource_limit_mode="auto",
     systemd_run_bin="systemd-run",
     memory_max="8G",
@@ -706,7 +755,7 @@ def run_plan(
                 "base_commit": base_commit,
                 "model": model,
                 "harness": {"name": harness},
-                "launcher": {"name": "hlink", "version": hlink_version},
+                "launcher": _launcher(hlink_version, fallback),
                 "provider": (
                     "antigravity"
                     if harness == "agy"
@@ -798,6 +847,7 @@ def run_plan(
                 max_steps,
                 timeout_seconds,
                 provider,
+                fallback,
                 resource_limits,
                 validation_timeout_seconds,
                 tuple(credential_env_names),

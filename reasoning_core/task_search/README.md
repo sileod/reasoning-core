@@ -49,6 +49,18 @@ model selection, cwd, prompt delivery, unattended mode, and native argument forw
 Task search still owns experiment-specific permissions/configuration, step limits,
 trajectory paths, AGY writable overlays, and the outer sandbox/resource limits.
 
+`--fallback NAME` (or `TASK_SEARCH_FALLBACK`) names a second provider to answer what the
+first one refuses. A 429 is one token bucket shared by every worker in the wave, so a
+provider that saturates does not cost a trial, it costs the wave: the retry ladder waits
+ten minutes per trial and then gives up. The fallback answers on *its own* default model,
+so the trade is the run for knowing up front which model wrote the task -- the armed
+fallback is recorded in the task's `settings.fallback_provider`, and which provider each
+trial was actually served by is in its `run.json` under `launcher.fallback.routes`. Its
+key must be named too, so `--credential-env` is given twice (or `TASK_SEARCH_KEY_ENV`
+lists both, comma-separated); a fallback whose key is not named is refused before the
+wave, because unnamed it would be absent from every worker's environment and Harness Link
+would exit before the first step of every trial.
+
 `run` requires a plan and `--model`. Defaults are OpenCode, one job, 56 steps,
 and a 30-minute worker timeout. With no `--trial` or `--queue`, it runs every
 trial in the plan; use `--trial ID` for a single-task smoke run.
@@ -174,11 +186,16 @@ scripts/run_implementors.py --design-choices 2   # two named approaches + a base
 ```
 
 `--design-choices` runs the design proposer first and gives each variant its own named
-approach, as below. Provider and credential come from `TASK_SEARCH_PROVIDER` and
-`TASK_SEARCH_KEY_ENV`, so the service is not tied to one provider.
+approach, as below. Provider, fallback and credentials come from `TASK_SEARCH_PROVIDER`,
+`TASK_SEARCH_FALLBACK` and `TASK_SEARCH_KEY_ENV`, so the service is not tied to one
+provider and has no flags of its own for any of them.
 
 Attempts are counted in trials rather than plans, because a plan with three variants spends
-three implementor runs. The count is what stops an unsupervised service from spending a
+three implementor runs, and a trial counts only once it has recorded an outcome in
+`plans/outcomes/<plan>.yaml`. A plan is intent: killed between planning and running, it
+still claims its trials, and counting those as spent retired every idea in the archive and
+left the service reporting `0 proposals owed` for six days. An empty backlog now says which
+kind of empty it is. The count is what stops an unsupervised service from spending a
 night on the same failures: the five proposals with no task today have been attempted four
 to seven times each, so they are the ideas that resist implementation, not the ones nobody
 got to.

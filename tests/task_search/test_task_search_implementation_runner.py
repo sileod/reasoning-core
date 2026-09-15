@@ -345,3 +345,85 @@ def test_an_empty_backlog_says_whether_it_is_finished_or_stuck(tmp_path, monkeyp
     monkeypatch.setattr(driver, "pending", lambda root, **kwargs: [])
     assert driver.why_nothing_is_owed(
         SimpleNamespace(max_attempts=3)) == "0 proposals owed: every archived proposal has a task"
+
+
+def test_a_second_provider_answers_what_the_first_one_refuses(tmp_path):
+    """A 429 is one bucket shared by every worker in the wave, so a provider that goes
+    down does not cost one trial, it costs the wave. The retry ladder waits ten minutes
+    and then gives up; a fallback keeps the run moving instead. It answers on its own
+    default model, which is the price, so the launch also asks to be told when the route
+    changes -- into this trial's stderr, since the status file Harness Link writes is one
+    per provider and every concurrent trial shares it."""
+    from reasoning_core.task_search.implementation_runner import _launcher, _routes_taken
+
+    command = _prepare_harness(
+        "hlink", "opencode",
+        worktree=tmp_path, prompt="assignment", model="deepseek-v4-flash",
+        provider="albert", fallback="inferx", agent="worker", variant=None,
+        config_path=None, trajectory_path=None, timeout_seconds=90,
+        agy_log_path=tmp_path / "agy.log",
+    )
+
+    assert command[command.index("--fallback") + 1] == "inferx"
+    assert "--show-routing" in command
+    assert command.index("--fallback") < command.index("--"), (
+        "the flag belongs to Harness Link, not to the harness it launches")
+
+    stderr = tmp_path / "stderr.log"
+    stderr.write_text("albert: fallback enabled\n"
+                      "[hlink] primary -> albert/deepseek-v4-flash\n"
+                      "[hlink] fallback -> inferx/deepseek-v4.1-flash\n"
+                      "[hlink] fallback -> inferx/deepseek-v4.1-flash\n")
+
+    assert _routes_taken(stderr) == [
+        {"label": "primary", "route": "albert/deepseek-v4-flash"},
+        {"label": "fallback", "route": "inferx/deepseek-v4.1-flash"},
+    ]
+    assert _launcher("0.3.0", "inferx", stderr)["fallback"]["provider"] == "inferx"
+    # Absent, not empty, when no fallback was armed: a run.json without the key is a run
+    # that could only have been served by the provider it names.
+    assert "fallback" not in _launcher("0.3.0", None)
+
+
+def test_a_trial_says_it_was_allowed_to_answer_from_somewhere_else(tmp_path):
+    """`provider_name` is provenance, and with a fallback armed it means "this one, or
+    the other one where it refused". The task file keeps that admission, because the
+    metadata is written into the prompt before the run and cannot learn afterwards which
+    of the two actually served."""
+    from reasoning_core.task_search.implementation_runner import generation_metadata
+
+    armed = generation_metadata("deepseek-v4-flash", "0.3.0", "worker",
+                                provider_name="albert", fallback_provider_name="inferx")
+    alone = generation_metadata("deepseek-v4-flash", "0.3.0", "worker",
+                                provider_name="albert")
+
+    assert armed["provider_name"] == "albert"
+    assert armed["settings"]["fallback_provider"] == "inferx"
+    assert "fallback_provider" not in alone["settings"]
+
+
+def test_a_fallback_without_its_own_key_is_refused_before_the_wave_runs(tmp_path, monkeypatch):
+    """The worker's environment is an allowlist. A fallback provider reads a key of its
+    own, and unnamed it is simply absent, so Harness Link exits before the first step of
+    every trial -- the whole wave lost to the switch that was meant to save it. One
+    refusal at the top costs nothing and says what is missing."""
+    from reasoning_core.task_search import cli
+
+    monkeypatch.setenv("ALBERT_API_KEY", "x")
+    monkeypatch.delenv("INFERX_API_KEY", raising=False)
+    monkeypatch.delenv("TASK_SEARCH_KEY_ENV", raising=False)
+
+    with pytest.raises(SystemExit) as refusal:
+        cli.main(["run", str(tmp_path / "plan.yaml"), "--fallback", "inferx",
+                  "--credential-env", "ALBERT_API_KEY"])
+    assert "--credential-env" in str(refusal.value)
+
+    with pytest.raises(SystemExit) as unset:
+        cli.main(["run", str(tmp_path / "plan.yaml"), "--fallback", "inferx",
+                  "--credential-env", "ALBERT_API_KEY",
+                  "--credential-env", "INFERX_API_KEY"])
+    assert "INFERX_API_KEY" in str(unset.value)
+
+    # A name without a comma still means one credential, which is what it always meant.
+    monkeypatch.setenv("TASK_SEARCH_KEY_ENV", "ALBERT_API_KEY,INFERX_API_KEY")
+    assert cli._worker_credentials([]) == ["ALBERT_API_KEY", "INFERX_API_KEY"]
