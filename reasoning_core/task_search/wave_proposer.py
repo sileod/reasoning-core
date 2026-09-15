@@ -797,7 +797,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
     # a round did not have critic budget for means buying them again next round, from a
     # model whose cost is an hour of latency. They are reviewed first and, if the wave ends
     # with any left, archived rather than discarded.
-    pool, round_names = [], set()
+    pool, round_names, tied = [], set(), set()
     if resume:
         # Everything the interrupted attempt paid for: the proposals it accepted, the
         # ballots that rejected the others, and the candidates it generated but never had
@@ -944,6 +944,22 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                 exclusions.append(f"{proposal['name']}: {why}")
                 continue
             tally = f"{len(in_favour)}/{len(cast)}"
+            # A malformed ballot abstains rather than voting against, for the reason
+            # above -- but an abstention shrinks the panel, and on an even panel the
+            # majority rule quietly becomes unanimity: 1/2 is rejected where 2/3 would
+            # have passed. That is the same bias one level up, and it is not rare.
+            # Overnight, 102 of 264 tallied rejections were decided by two samples
+            # instead of three, 36 of them exactly split; `k3_planning-backtracking`
+            # accepted 1 of 36 with 21 of its rejections on a short panel.
+            # A split panel is not a verdict. It goes back to the pool for a full one,
+            # and stays there -- archived, replayable -- if the wave never affords it.
+            # Once only: a candidate that keeps splitting would eat a round of critic
+            # budget every time it came up.
+            if len(cast) % 2 == 0 and len(in_favour) * 2 == len(cast):
+                if _snake(proposal["name"]) not in tied:
+                    tied.add(_snake(proposal["name"]))
+                    pool.append(proposal)
+                    continue
             if len(in_favour) * 2 > len(cast) and len(accepted) >= count:
                 # The wave is already full. A candidate the critic passed is not a
                 # rejection: recording it as one wrote `verdict: novel` into `rejected`,

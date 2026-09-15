@@ -1442,3 +1442,53 @@ def test_a_resumed_wave_does_not_judge_a_pooled_candidate_it_already_settled():
     assert [row["name"] for row in wave["proposals"]] == ["already_accepted"]
     assert "genuinely_unreviewed" in (
         {row["name"] for row in wave["pool"]} | {row["name"] for row in wave["rejected"]})
+
+
+def _split_panel_client(name):
+    """A critic whose three samples come back novel, duplicate, and malformed."""
+    neighbors = [{"id": "-", "relationship": "different", "overlap": seat}
+                 for seat in ("a", "b", "c")]
+    scores = {"novelty": 5, "sft_value": 4, "feasibility": 5, "clarity": 5}
+    ballots = [
+        {"reviews": [{"proposal_id": "C001", "verdict": "novel",
+                      "nearest_neighbors": neighbors, "substantive_difference": "differs",
+                      "scores": scores, "reason": "new"}]},
+        {"reviews": [{"proposal_id": "C001", "verdict": "duplicate",
+                      "nearest_neighbors": neighbors, "substantive_difference": "...",
+                      "scores": {**scores, "novelty": 1}, "reason": "known"}]},
+        # The third sample abstains: no ballot for this candidate at all.
+        {"reviews": []},
+    ]
+
+    class Client:
+        model, provider, endpoint, reasoning_effort = "big", "fake", "http://f", None
+
+        def __init__(self):
+            self.calls, self.reviewed = [], 0
+
+        def json(self, purpose, system, user, **kwargs):
+            self.calls.append({"purpose": purpose})
+            if purpose.startswith("propose"):
+                return {"proposals": [proposal(name)]}
+            self.reviewed += 1
+            return grounded(ballots[min(self.reviewed - 1, len(ballots) - 1)], user)
+
+    return Client()
+
+
+def test_a_split_panel_is_pooled_rather_than_counted_as_a_rejection():
+    """A malformed ballot abstains instead of voting against -- but that shrinks the panel,
+    and on an even panel `favour * 2 > cast` means unanimity, so 1/2 is refused where 2/3
+    would have passed. Overnight that hit 36 candidates, and `k3_planning-backtracking`
+    accepted 1 of 36 with 21 of its rejections decided by two samples. A tie is not a
+    verdict, so it goes back to the pool, which the archive keeps and later waves replay."""
+    client = _split_panel_client("evenly_split")
+
+    wave = propose_wave(ROOT, name="split", count=1, rounds=1, client=client,
+                        critic_samples=3)
+
+    assert not wave["proposals"], "a tied panel must not accept"
+    assert not wave["rejected"], (
+        "a tied panel was recorded as a rejection, which spends the candidate's one "
+        "replay on a verdict no majority ever reached")
+    assert [row["name"] for row in wave["pool"]] == ["evenly_split"]
