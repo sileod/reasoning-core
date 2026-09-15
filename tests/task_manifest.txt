@@ -121,6 +121,7 @@ ear_clipping_triangulation
 elimination_depth_chain
 elimination_fill_in
 ellipsis_completion
+elliptic_curve_scalar_mul
 envy_cycle_fair_allocation
 equation_balancing
 equation_system
@@ -159,6 +160,7 @@ graph_planarity
 graph_successors
 gregorian_weekday
 grid_navigation
+grid_path_count_cone
 group_homomorphism_check
 groupby_aggregation
 grundy_values
@@ -194,6 +196,7 @@ ledger_reconciliation
 left_coset_identification
 lexical_scope_resolution
 lexicographic_ranking
+lie_bracket_hall_normal_form
 light_occlusion_delta
 lights_out_press_set
 lindenmayer_parallel_rewrite
@@ -212,6 +215,7 @@ markov_chain_distribution
 math_word_problem
 matrix_characteristic_polynomial
 matrix_induction
+matrix_jordan
 maximum_flow
 mealy_composition_run
 memory_allocator_trace
@@ -234,6 +238,7 @@ multistep_evidence_retrieval
 multistep_nli
 mvcc_visibility
 near_tie_map
+necklace_canonical_rotation
 nested_template_expansion
 network_reliability_factoring
 nfa_subset_construction
@@ -318,6 +323,7 @@ schensted_tableau_insertion
 schwartz_zippel_identity
 scope_explication
 scoped_instruction
+selinger_join_ordering
 semantic_paraphrase
 semantic_version_precedence
 sensitive_input_identification
@@ -346,6 +352,7 @@ spreadsheet_evaluation
 spreadsheet_formula_dependency
 spreadsheet_reference_copy
 stack_sorting_discipline
+stone_placement_capture
 stratified_datalog_evaluation
 string_transduction
 strip_fold_layer_order
@@ -374,6 +381,7 @@ top_trading_cycles
 topological_generation
 topological_layering
 topological_sort_count
+tower_block_removal
 toy_spn_cipher_rounds
 transaction_serializability
 transitive_reduction
