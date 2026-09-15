@@ -1,0 +1,311 @@
+version: 1
+name: k3_semantics_preserving_translation_r1
+proposal_wave: k3_semantics-preserving-translation
+defaults:
+  base_ref: bd5ba526a8ec77c132cbb820084ae636064e9658
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: nonstandard_base_translation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v1
+  instruction: |-
+    Author a new task from scratch: nonstandard_base_translation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate integers between decimal and redundant positional systems - balanced ternary, bases -2 and -10, and binary non-adjacent form - in both directions with growing magnitudes; answer is the exact digit string in the requested system.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v1
+  design_choice: Instances present a decimal integer and request conversion to a specified nonstandard
+    base, with the target base chosen randomly per instance from the four systems.
+- id: P001v2
+  hypothesis: P001
+  idea: nonstandard_base_translation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v2
+  instruction: |-
+    Author a new task from scratch: nonstandard_base_translation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate integers between decimal and redundant positional systems - balanced ternary, bases -2 and -10, and binary non-adjacent form - in both directions with growing magnitudes; answer is the exact digit string in the requested system.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v2
+  design_choice: Instances present a digit string in a given nonstandard base and request conversion to
+    decimal, with source base chosen per instance and digit strings generated from valid representations.
+- id: P001v3
+  hypothesis: P001
+  idea: nonstandard_base_translation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v3
+  instruction: |-
+    Author a new task from scratch: nonstandard_base_translation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate integers between decimal and redundant positional systems - balanced ternary, bases -2 and -10, and binary non-adjacent form - in both directions with growing magnitudes; answer is the exact digit string in the requested system.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/nonstandard_base_translation_v3
+- id: P002v1
+  hypothesis: P002
+  idea: utf8_encoding_translation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v1
+  instruction: |-
+    Author a new task from scratch: utf8_encoding_translation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Encode Unicode code points into UTF-8 byte sequences and decode byte sequences back into code points, spanning 1-4 byte ranges, range-boundary values, and hex or binary renderings; answer is the exact byte list or code point list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v1
+  design_choice: Present code points as hexadecimal literals with U+ prefix, requiring solvers to output
+    UTF-8 bytes in hex pairs separated by spaces.
+- id: P002v2
+  hypothesis: P002
+  idea: utf8_encoding_translation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v2
+  instruction: |-
+    Author a new task from scratch: utf8_encoding_translation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Encode Unicode code points into UTF-8 byte sequences and decode byte sequences back into code points, spanning 1-4 byte ranges, range-boundary values, and hex or binary renderings; answer is the exact byte list or code point list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v2
+  design_choice: Provide byte sequences in binary (8-bit groups) and ask for code points in decimal, mixing
+    1-4 byte lengths and boundary values.
+- id: P002v3
+  hypothesis: P002
+  idea: utf8_encoding_translation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v3
+  instruction: |-
+    Author a new task from scratch: utf8_encoding_translation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Encode Unicode code points into UTF-8 byte sequences and decode byte sequences back into code points, spanning 1-4 byte ranges, range-boundary values, and hex or binary renderings; answer is the exact byte list or code point list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/utf8_encoding_translation_v3
+- id: P003v1
+  hypothesis: P003
+  idea: debruijn_scope_translation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v1
+  instruction: |-
+    Author a new task from scratch: debruijn_scope_translation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate lambda terms between named-variable syntax and de Bruijn index form across nested binders, shadowing, and free variables, plus the inverse with fresh consistent naming; answer is the converted term with binder structure intact.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v1
+  design_choice: Answer as a canonical string with de Bruijn indices for bound variables and numbered
+    free-variable placeholders, preserving binder order.
+- id: P003v2
+  hypothesis: P003
+  idea: debruijn_scope_translation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v2
+  instruction: |-
+    Author a new task from scratch: debruijn_scope_translation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate lambda terms between named-variable syntax and de Bruijn index form across nested binders, shadowing, and free variables, plus the inverse with fresh consistent naming; answer is the converted term with binder structure intact.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v2
+  design_choice: Answer as a canonical string with named variables where each bound variable uses a fixed
+    fresh name pattern (e.g., x1, x2) and free variables keep original names.
+- id: P003v3
+  hypothesis: P003
+  idea: debruijn_scope_translation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v3
+  instruction: |-
+    Author a new task from scratch: debruijn_scope_translation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate lambda terms between named-variable syntax and de Bruijn index form across nested binders, shadowing, and free variables, plus the inverse with fresh consistent naming; answer is the converted term with binder structure intact.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/debruijn_scope_translation_v3
+- id: P004v1
+  hypothesis: P004
+  idea: simplicial_boundary_matrices_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v1
+  instruction: |-
+    Author a new task from scratch: simplicial_boundary_matrices_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate a simplicial complex to its boundary matrices over GF(2) or signed incidence form across queried dimensions, and rebuild the complex from a matrix; answer the sparse matrix or simplex list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v1
+  design_choice: Answer as a canonical sparse matrix string listing only nonzero entries with row,col:value
+    pairs, ordered by row then column.
+- id: P004v2
+  hypothesis: P004
+  idea: simplicial_boundary_matrices_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v2
+  instruction: |-
+    Author a new task from scratch: simplicial_boundary_matrices_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate a simplicial complex to its boundary matrices over GF(2) or signed incidence form across queried dimensions, and rebuild the complex from a matrix; answer the sparse matrix or simplex list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v2
+  design_choice: Answer as a list of boundary simplices (e.g., [1,2],[1,3],[2,3]) for the queried dimension,
+    omitting zero rows.
+- id: P004v3
+  hypothesis: P004
+  idea: simplicial_boundary_matrices_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v3
+  instruction: |-
+    Author a new task from scratch: simplicial_boundary_matrices_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate a simplicial complex to its boundary matrices over GF(2) or signed incidence form across queried dimensions, and rebuild the complex from a matrix; answer the sparse matrix or simplex list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/simplicial_boundary_matrices_v3
+- id: P005v1
+  hypothesis: P005
+  idea: bayesian_network_table_conversion_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v1
+  instruction: |-
+    Author a new task from scratch: bayesian_network_table_conversion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert a small Bayesian network's conditional probability tables to its full joint table and back over a fixed variable order, with exact rational entries; answer the joint rows or per-node CPTs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v1
+  design_choice: Answers are a single rational probability per queried joint row, with the query specifying
+    a partial assignment and the solver marginalizing over unlisted variables.
+- id: P005v2
+  hypothesis: P005
+  idea: bayesian_network_table_conversion_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v2
+  instruction: |-
+    Author a new task from scratch: bayesian_network_table_conversion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert a small Bayesian network's conditional probability tables to its full joint table and back over a fixed variable order, with exact rational entries; answer the joint rows or per-node CPTs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v2
+  design_choice: Answers are the full joint table as a canonical list of rationals in lexicographic variable
+    order, and the solver must reconstruct it from the CPTs without any query context.
+- id: P005v3
+  hypothesis: P005
+  idea: bayesian_network_table_conversion_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v3
+  instruction: |-
+    Author a new task from scratch: bayesian_network_table_conversion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert a small Bayesian network's conditional probability tables to its full joint table and back over a fixed variable order, with exact rational entries; answer the joint rows or per-node CPTs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_semantics_preserving_translation_r1/bayesian_network_table_conversion_v3
