@@ -650,10 +650,16 @@ def test_a_critic_batch_is_capped_so_a_truncated_reply_cannot_reject_the_tail():
     _critic_votes(critic, candidates, [], samples=1,
                   round_index=1, wave_name="capped")
 
+    # This critic reviews nothing at all, which is the collapse above in its extreme form,
+    # so every batch is re-asked its allowance of times. The split itself is what this test
+    # is about, and that is the first attempt at each batch.
+    attempts = [(call["purpose"], count) for call, count in zip(critic.calls, seen)]
+    first = [(purpose, count) for purpose, count in attempts if "-retry" not in purpose]
     assert max(seen) <= CRITIC_MAX_BATCH, f"sent a batch of {max(seen)} candidates"
-    assert sum(seen) == 30, "candidates were dropped rather than split across batches"
-    assert [c["purpose"] for c in critic.calls] == [
+    assert [purpose for purpose, _ in first] == [
         "critic-round-1-batch-1", "critic-round-1-batch-2", "critic-round-1-batch-3"]
+    assert sum(count for _, count in first) == 30, (
+        "candidates were dropped rather than split across batches")
 
 
 def test_a_rejected_proposal_keeps_its_summary_so_it_can_be_rejudged():
@@ -1574,3 +1580,48 @@ def test_a_wave_records_how_much_of_the_panel_actually_voted():
     assert [row["omitted"] for row in panels] == [0, 0, 1], (
         "the third sample returned no ballot for the candidate at all")
     assert sum(row["malformed"] for row in panels) == 0
+
+
+def _thin_batch_client(names, good_review):
+    """A critic that answers the first batch with one review and the re-seated one fully."""
+    class Client:
+        model, provider, endpoint, reasoning_effort = "big", "fake", "http://f", None
+
+        def __init__(self):
+            self.calls, self.reviewed = [], 0
+
+        def json(self, purpose, system, user, **kwargs):
+            self.calls.append({"purpose": purpose})
+            if purpose.startswith("propose"):
+                return {"proposals": [proposal(name) for name in names]}
+            self.reviewed += 1
+            seats = range(1, len(names) + 1)
+            wanted = [1] if self.reviewed == 1 else list(seats)
+            return grounded({"reviews": [{**good_review, "proposal_id": f"C{seat:03d}"}
+                                         for seat in wanted]}, user)
+
+    return Client()
+
+
+def test_a_critic_that_reviews_one_of_twelve_is_re_asked_not_believed():
+    """A sample sometimes answers a whole batch with a single review -- valid JSON, one
+    item long. Absorbed as abstentions it cost eleven candidates a voter at once, dropping
+    a three-sample panel to two, where the majority rule is unanimity. The first two waves
+    that recorded coverage saw it three times in nine calls of one wave and never in
+    another, so it is worth re-asking rather than counting."""
+    good = {"verdict": "novel",
+            "nearest_neighbors": [{"id": "-", "relationship": "different", "overlap": seat}
+                                  for seat in ("a", "b", "c")],
+            "substantive_difference": "a genuinely different operation",
+            "scores": {"novelty": 5, "sft_value": 4, "feasibility": 5, "clarity": 5},
+            "reason": "new"}
+    names = [f"candidate_{index:02d}" for index in range(12)]
+    client = _thin_batch_client(names, good)
+
+    wave = propose_wave(ROOT, name="thin", count=12, rounds=1, client=client)
+
+    purposes = [row["purpose"] for row in client.calls if "critic" in row["purpose"]]
+    assert any(purpose.endswith("-retry1") for purpose in purposes), (
+        f"the one-review answer was believed instead of re-asked: {purposes}")
+    assert len(wave["proposals"]) == 12, (
+        "the re-seated batch should carry every candidate")

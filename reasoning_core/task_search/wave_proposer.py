@@ -29,6 +29,19 @@ CRITIC_API_KEY_ENV = "ALBERT_API_KEY"
 # A small model is cheap enough to ask more than once, and three is the smallest K that
 # can disagree with itself. Two would only ever tie.
 CRITIC_SAMPLES = 3
+# A critic sample sometimes answers a whole batch with a single review. The JSON is intact
+# and the list is simply one item long, so it is not a truncation, and capping the batch at
+# twelve did not stop it -- `k3_semantics-preserving-translation` reviewed 1 of 12 three
+# times in nine calls, while `k3_representation-specific` never did it once. Absorbed as
+# abstentions it costs eleven candidates a voter at the same instant, which turns a
+# three-sample panel into a two-sample one, where the majority rule is unanimity.
+#
+# A sample skipping one candidate is a different thing and stays legitimate: the ones that
+# did look at it decide. Only the collapse is re-asked, which is why the trigger is a share
+# of a batch big enough for the shape to mean anything rather than any omission at all.
+CRITIC_MIN_COVERAGE = 0.25
+CRITIC_MIN_BATCH_TO_JUDGE_COVERAGE = 4
+CRITIC_CALL_RETRIES = 2
 # The `2/3` a rejection reason carries is the critic's tally, written below and parsed
 # back here and by `funnel`. It is the only durable record of how many samples actually
 # voted, which is the thing that decides whether the verdict was a majority at all.
@@ -732,15 +745,31 @@ def _critic_votes(critic, reviewable, catalog, *, samples,
                 else f"critic-round-{round_index}-sample-{sample}")
         for batch, start in enumerate(range(0, len(order), max_batch), 1):
             seats = order[start:start + max_batch]
-            presented = [reviewable[position] for position in seats]
             purpose = stem if len(order) <= max_batch else f"{stem}-batch-{batch}"
-            reviewed = critic.json(
-                purpose, _CRITIC_SYSTEM,
-                _critic_prompt(presented, [neighbors[position] for position in seats]))
-            reviews = reviewed.get("reviews")
-            if not isinstance(reviews, list):
-                raise ValueError("critic response requires a reviews list")
-            by_id = {review.get("proposal_id"): review for review in reviews}
+            for attempt in range(CRITIC_CALL_RETRIES + 1):
+                if attempt:
+                    # Re-seat the batch rather than re-send it. The prompt is a numbered
+                    # list judged partly against itself, so the same seating and the same
+                    # seed reproduce the same one-item answer; a different order is a
+                    # different prompt, which is the same reason the samples are shuffled
+                    # at all.
+                    random.Random(f"{wave_name}:{round_index}:{sample}:{batch}:{attempt}"
+                                  ).shuffle(seats)
+                presented = [reviewable[position] for position in seats]
+                reviewed = critic.json(
+                    f"{purpose}-retry{attempt}" if attempt else purpose, _CRITIC_SYSTEM,
+                    _critic_prompt(presented, [neighbors[position] for position in seats]))
+                reviews = reviewed.get("reviews")
+                if not isinstance(reviews, list):
+                    raise ValueError("critic response requires a reviews list")
+                by_id = {review.get("proposal_id"): review for review in reviews}
+                covered = sum(f"C{seat:03d}" in by_id
+                              for seat in range(1, len(presented) + 1))
+                if (len(presented) < CRITIC_MIN_BATCH_TO_JUDGE_COVERAGE
+                        or covered >= CRITIC_MIN_COVERAGE * len(presented)):
+                    break
+                print(f"  {purpose}: reviewed {covered} of {len(presented)}; re-seating",
+                      file=sys.stderr)
             # Candidate ids are seats in this batch, so a neighbour reference naming
             # another candidate only resolves against this batch's own seating. Catalog ids
             # are likewise only the ones this batch was shown: the critic no longer holds
