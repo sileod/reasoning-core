@@ -1,0 +1,313 @@
+version: 1
+name: k3_rule_induction_r1
+proposal_wave: k3_rule-induction
+defaults:
+  base_ref: 98e1930d0a08275e3bc4214e69e5fa0600d70284
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: tuple_generating_dependency_chase_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v1
+  instruction: |-
+    Author a new task from scratch: tuple_generating_dependency_chase_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply universal and existential tuple-generating dependencies to a small relational instance by repeatedly introducing required atoms and fresh witnesses, returning the derived atom set or a queried membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v1
+  design_choice: 'Answer format: return the full set of derived atoms as a canonical sorted list of tuples,
+    versus a membership query for a single target atom with binary yes/no.'
+- id: P001v2
+  hypothesis: P001
+  idea: tuple_generating_dependency_chase_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v2
+  instruction: |-
+    Author a new task from scratch: tuple_generating_dependency_chase_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply universal and existential tuple-generating dependencies to a small relational instance by repeatedly introducing required atoms and fresh witnesses, returning the derived atom set or a queried membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v2
+  design_choice: 'Difficulty source: fixed dependency set with varying instance size, versus fixed instance
+    with varying dependency chains that force multiple chase rounds.'
+- id: P001v3
+  hypothesis: P001
+  idea: tuple_generating_dependency_chase_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v3
+  instruction: |-
+    Author a new task from scratch: tuple_generating_dependency_chase_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply universal and existential tuple-generating dependencies to a small relational instance by repeatedly introducing required atoms and fresh witnesses, returning the derived atom set or a queried membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/tuple_generating_dependency_chase_v3
+- id: P002v1
+  hypothesis: P002
+  idea: smith_normal_form_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v1
+  instruction: |-
+    Author a new task from scratch: smith_normal_form_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce small integer matrices by exact row and column operations to diagonal Smith normal form, returning the invariant factors as the sorted diagonal tuple.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v1
+  design_choice: Vary matrix size from 2x2 to 4x4, with entries in [-9,9], and require the sorted diagonal
+    tuple of invariant factors as answer.
+- id: P002v2
+  hypothesis: P002
+  idea: smith_normal_form_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v2
+  instruction: |-
+    Author a new task from scratch: smith_normal_form_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce small integer matrices by exact row and column operations to diagonal Smith normal form, returning the invariant factors as the sorted diagonal tuple.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v2
+  design_choice: Use only 2x2 matrices with entries in [0,15], where the answer is the pair (gcd of all
+    entries, determinant divided by that gcd).
+- id: P002v3
+  hypothesis: P002
+  idea: smith_normal_form_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v3
+  instruction: |-
+    Author a new task from scratch: smith_normal_form_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce small integer matrices by exact row and column operations to diagonal Smith normal form, returning the invariant factors as the sorted diagonal tuple.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/smith_normal_form_v3
+- id: P003v1
+  hypothesis: P003
+  idea: shapley_value_marginal_contributions_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v1
+  instruction: |-
+    Author a new task from scratch: shapley_value_marginal_contributions_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      For small coalitional value functions over varied player sets and value maps, average each player's marginal contribution across all permutations to return the exact rational Shapley value vector.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v1
+  design_choice: Present the value map as a lookup table and require the solver to compute the Shapley
+    value vector as a list of reduced fractions, with player labels given as integers.
+- id: P003v2
+  hypothesis: P003
+  idea: shapley_value_marginal_contributions_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v2
+  instruction: |-
+    Author a new task from scratch: shapley_value_marginal_contributions_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      For small coalitional value functions over varied player sets and value maps, average each player's marginal contribution across all permutations to return the exact rational Shapley value vector.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v2
+  design_choice: Generate the value function from a random coalitional game and ask for the Shapley value
+    vector as a semicolon-separated list of fractions, ensuring the player set size is between 3 and 6
+    to keep permutations manageable.
+- id: P003v3
+  hypothesis: P003
+  idea: shapley_value_marginal_contributions_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v3
+  instruction: |-
+    Author a new task from scratch: shapley_value_marginal_contributions_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      For small coalitional value functions over varied player sets and value maps, average each player's marginal contribution across all permutations to return the exact rational Shapley value vector.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/shapley_value_marginal_contributions_v3
+- id: P004v1
+  hypothesis: P004
+  idea: repeating_decimal_expansion_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v1
+  instruction: |-
+    Author a new task from scratch: repeating_decimal_expansion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Carry out long division of one integer by another, detecting the first repeated remainder to split the decimal expansion into integer part, preperiod, and minimal repetend, over terminating, purely recurring, and mixed cases.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v1
+  design_choice: Answer as a single canonical string like '12.3(45)' where parentheses enclose the minimal
+    repetend, with no decimal point for integer-only results
+- id: P004v2
+  hypothesis: P004
+  idea: repeating_decimal_expansion_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v2
+  instruction: |-
+    Author a new task from scratch: repeating_decimal_expansion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Carry out long division of one integer by another, detecting the first repeated remainder to split the decimal expansion into integer part, preperiod, and minimal repetend, over terminating, purely recurring, and mixed cases.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v2
+  design_choice: 'Answer as three integers separated by commas: integer part, preperiod length, and repetend
+    length, e.g., ''12,1,2'''
+- id: P004v3
+  hypothesis: P004
+  idea: repeating_decimal_expansion_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v3
+  instruction: |-
+    Author a new task from scratch: repeating_decimal_expansion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Carry out long division of one integer by another, detecting the first repeated remainder to split the decimal expansion into integer part, preperiod, and minimal repetend, over terminating, purely recurring, and mixed cases.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/repeating_decimal_expansion_v3
+- id: P005v1
+  hypothesis: P005
+  idea: functional_graph_cycle_finding_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v1
+  instruction: |-
+    Author a new task from scratch: functional_graph_cycle_finding_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Iterate a stated function on a finite set from a given start, locating where the trajectory enters its cycle, and report the entry point, tail length, and cycle length across maps whose in-trees merge into one cycle.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v1
+  design_choice: Represent the function as an explicit table of successor values for each element, with
+    a numeric domain; the solver must parse the table and simulate iterates without any formulaic shortcut.
+- id: P005v2
+  hypothesis: P005
+  idea: functional_graph_cycle_finding_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v2
+  instruction: |-
+    Author a new task from scratch: functional_graph_cycle_finding_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Iterate a stated function on a finite set from a given start, locating where the trajectory enters its cycle, and report the entry point, tail length, and cycle length across maps whose in-trees merge into one cycle.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v2
+  design_choice: Define the function by a compact arithmetic rule (e.g., modular multiplication or polynomial)
+    over a finite range; the solver must derive the trajectory by repeated evaluation, making cycle detection
+    depend on algebraic behavior.
+- id: P005v3
+  hypothesis: P005
+  idea: functional_graph_cycle_finding_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v3
+  instruction: |-
+    Author a new task from scratch: functional_graph_cycle_finding_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Iterate a stated function on a finite set from a given start, locating where the trajectory enters its cycle, and report the entry point, tail length, and cycle length across maps whose in-trees merge into one cycle.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_rule_induction_r1/functional_graph_cycle_finding_v3

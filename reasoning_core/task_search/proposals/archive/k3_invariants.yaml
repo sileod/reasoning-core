@@ -1,0 +1,582 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_invariants
+created_at: '2026-09-14T21:35:00.445477+00:00'
+provenance:
+  kind: proposer
+  name: k3_invariants
+  received: '2026-09-14'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks that teach models to identify invariants, sufficient statistics, or conserved
+    structure. The catalog you were shown already covers the classic textbook algorithms -- sorting, gcd,
+    graph traversal, compression, scheduling, matching, parsing -- and a proposal that names one will
+    be rejected as a repeat however well it fits this brief. Reach past the standard repertoire: propose
+    structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 11
+  complete: false
+catalog:
+  sha256: 8d1b5f558e366f39a6893e247f03cfa7f92963d18a45cde1531ce26b902b1fde
+  entries: 456
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 18
+    task: 276
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  requested_model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls: []
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 89e7728b04fa37d1f02894c8725ee7ca66412e90cdf514906281f180636847be
+    response_sha256: fadb4d37e15f2567b0603def414b1a2a5f60dbf5cdc6cd13882f67828594a327
+    response_id: chatcmpl-afaad75035f918c4
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: cc1d78d1a662b0e7d19dab63ccf6ee6c697c52b291c2a50f817efaa6433e089b
+    response_sha256: 8194fe0086b573ff349fa74500103564c744e4bfe72d1197fb424e4d42b91c0f
+    response_id: chatcmpl-bac674bc4970004b
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 00f7c13ce263931af112656759f9cb39ac04ee4502528123dcc37f5ea91048f6
+    response_sha256: 3f1720a20961af39fa71c16a01c6f0f81e348900ffd5379f5d4e55cbc64087d8
+    response_id: chatcmpl-a14758c6683f83f1
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 0599182fd15163cc51d68dc050a734f8d86db33ed552a7d96cd91c65e0389558
+    response_sha256: a24851e0b92c59737e40e540605fe5450ee5968a986f2e09226064c26b8bb4c1
+    response_id: chatcmpl-a6c9b1a4ebdde7d1
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 0599182fd15163cc51d68dc050a734f8d86db33ed552a7d96cd91c65e0389558
+    response_sha256: e1c3d9fb7ac6803bda58297517a43196c53b4ea77574986987d75f5bf51dff06
+    response_id: chatcmpl-880061fee1d82a34
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: afab7066e294a109e9280b5c7cf841794957e38473a0ed70edb0a539cd076f53
+    response_sha256: 4e6992d51682fb0027657345e41555fee6c89598645941c3a79d5f8c98078ca8
+    response_id: chatcmpl-bce3e854e35161f6
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 2f9fb51c0b225b93e296e0bf22549b5023a35b4030c8e2a1138fc848b01fc947
+    response_sha256: e96873435e352556e33dad5556143e82d989413bebddb580c2624b20cdfc9195
+    response_id: chatcmpl-9544f073e6785a2f
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 2f9fb51c0b225b93e296e0bf22549b5023a35b4030c8e2a1138fc848b01fc947
+    response_sha256: 5e031a9ef495d0fc230efb9c725ffc93adac1a8484a99d7038ffbb6ad816d32d
+    response_id: chatcmpl-8273bae4c2a863cb
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 2f9fb51c0b225b93e296e0bf22549b5023a35b4030c8e2a1138fc848b01fc947
+    response_sha256: 201591735e2b42e26b2304f6cc0b921898cb7919aba521284a79aaa1e59a8476
+    response_id: chatcmpl-99c02426c687625c
+proposals:
+- name: cyk_chart_membership
+  summary: Fill the CYK recognition chart of a small Chomsky-normal-form grammar over a short terminal
+    string, returning the sorted nonterminals of a queried span cell or the total derivation count.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.strongly_connected_components.strongly_connected_components:StronglyConnectedComponents
+      relationship: different
+      overlap: SCC partitioning is graph-based, not grammar parsing.
+    - id: task:grammar:Continuation
+      relationship: adjacent
+      overlap: both use CFGs but continuation enumerates next terminals while CYK fills parse tables.
+    - id: gallery:constrained_continuation
+      relationship: adjacent
+      overlap: constrained continuation completes strings, not computes parse spans.
+    substantive_difference: CYK chart parsing computes recognition spans and nonterminal sets, distinct
+      from continuation or graph tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor fills a CYK chart or computes derivation counts.
+    votes: 3/3
+    dissent: []
+- name: prime_power_valuation
+  summary: Compute exact prime-power valuations of factorials, binomials, and double factorials via Legendre
+    floor-sums and base-p carry counts (Kummer), returning the integer exponent.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.kraft_feasibility.kraft_feasibility:KraftFeasibility
+      relationship: different
+      overlap: both compute exact integer expressions but Kraft feasibility sums powers of two while C005
+        computes p-adic valuations.
+    - id: plan:WAVE4:S39
+      relationship: adjacent
+      overlap: both involve number-theoretic computations but multiplicative orders are group-theoretic
+        while valuations are additive.
+    - id: proposal:k3_systematic-generalization:P006
+      relationship: different
+      overlap: Birkhoff decomposition is matrix-based, unrelated to prime valuations.
+    substantive_difference: Computing prime-power valuations via Legendre and Kummer theorems is a unique
+      number-theoretic operation.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor computes p-adic valuations of combinatorial expressions.
+    votes: 3/3
+    dissent: []
+- name: stack_sorting_discipline
+  summary: Route an input permutation through a single LIFO stack to emit the identity, interleaving pushes
+    and pops greedily; return whether sorting succeeds, the first blocking step, or the element emitted
+    at the k-th pop.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.ll1_predictive_parsing.ll1_predictive_parsing:LL1PredictiveParsing
+      relationship: adjacent
+      overlap: both use a stack but LL(1) parsing consumes tokens via a parse table while C004 performs
+        permutation sorting with a stack.
+    - id: gallery:shift_reduce_parsing
+      relationship: adjacent
+      overlap: both interleave push/pop operations but shift-reduce parses grammar while C004 sorts a
+        permutation.
+    - id: task:generated.wave8.missing_dimension.missing_dimension:MissingDimension
+      relationship: different
+      overlap: no meaningful overlap; different domains.
+    substantive_difference: Stack sorting of permutations with greedy push/pop is a distinct algorithmic
+      operation, not present in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor routes permutations through a stack to test identity sorting.
+    votes: 2/3
+    dissent:
+    - variant
+- name: gf2_matrix_rank
+  summary: Row-reduce a binary matrix over GF(2), reporting its rank, the pivot column set, or one nontrivial
+    kernel vector when rank-deficient, across square, tall, and wide shapes with varied density.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_systematic-generalization:P006
+      relationship: different
+      overlap: both operate on matrices but Birkhoff decomposition decomposes stochastic matrices, not
+        GF(2) rank.
+    - id: task:generated.wave8.crc_remainder.crc_remainder:CrcRemainder
+      relationship: adjacent
+      overlap: both use GF(2) arithmetic but CRC computes remainders from polynomials, not matrix rank.
+    - id: gallery:matrix_induction
+      relationship: different
+      overlap: matrix induction infers missing cells, not row-reduction.
+    substantive_difference: GF(2) matrix rank via row reduction is a linear-algebra operation distinct
+      from any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor computes the rank of a binary matrix.
+    votes: 3/3
+    dissent: []
+- name: burnside_orbit_count
+  summary: Count distinct colorings of necklaces, bracelets, or small grids under their rotation and reflection
+    groups by averaging each group element's fixed colorings over permutation cycles.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.left_coset_identification.left_coset_identification:LeftCosetIdentification
+      relationship: adjacent
+      overlap: both involve group actions but left cosets are algebraic subgroups while Burnside counts
+        orbits under symmetry.
+    - id: task:generated.wave8.finite_group_element_order.finite_group_element_order:FiniteGroupElementOrder
+      relationship: different
+      overlap: computes element orders, not orbit counts.
+    - id: task:generated.wave8.round_robin_completion.round_robin_completion:RoundRobinCompletion
+      relationship: different
+      overlap: scheduling is unrelated.
+    substantive_difference: Burnside's lemma orbit counting is a unique combinatorial group-theoretic
+      operation.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor counts colorings under symmetry via fixed points.
+    votes: 2/3
+    dissent:
+    - variant
+- name: perceptron_update_trace
+  summary: Execute perceptron mistake updates over ordered integer feature-label pairs, cycling until
+    convergence or a stated pass cap; return the final weight vector, the mistake count, or the first
+    example missed on an epoch.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.union_find_trace.union_find_trace:UnionFindTrace
+      relationship: adjacent
+      overlap: both execute iterative data-structure updates but on different operations (union-find vs.
+        perceptron weight updates).
+    - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+      relationship: adjacent
+      overlap: both trace state transitions but C003 updates a weight vector according to a learning rule.
+    - id: proposal:k3_rule-induction:P005
+      relationship: different
+      overlap: functional_graph_cycle_finding iterates a function but does not involve label-driven weight
+        updates.
+    substantive_difference: Perceptron update trace is a machine-learning training loop, distinct from
+      generic trace execution tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor executes perceptron-style mistake-driven linear separators.
+    votes: 3/3
+    dissent: []
+- name: stratified_datalog_evaluation
+  summary: Evaluate stratified Datalog with negation by ordering strata along negative dependencies and
+    saturating each to a fixed point, returning every derived fact of a queried predicate or the stratum
+    where a queried fact first appears.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_rule-induction:P001
+      relationship: adjacent
+      overlap: both infer derived facts from rules, but TGD chase introduces fresh witnesses while stratified
+        Datalog saturates with negation.
+    - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+      relationship: adjacent
+      overlap: both manage derived facts but truth maintenance handles retractions, not stratified negation.
+    - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+      relationship: different
+      overlap: LTL monitoring evaluates temporal formulas, not Datalog strata.
+    substantive_difference: Stratified Datalog evaluation with negation is a distinct declarative programming
+      computation not in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 5
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor evaluates stratified Datalog programs with negation.
+    votes: 3/3
+    dissent: []
+- name: havel_hakimi_realization
+  summary: Run the degree-sequence reduction that repeatedly attaches a maximum-degree vertex to the highest
+    remaining degrees, returning whether the sequence is graphical, the failing step with its witness,
+    or the residual multiset after k rounds.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave12.polynomial_euclidean_algorithm.polynomial_euclidean_algorithm:PolynomialEuclideanAlgorithm
+      relationship: different
+      overlap: both reduce sequences but Euclidean algorithm computes gcds, not graph realizability.
+    - id: proposal:k3_systematic-generalization:P007
+      relationship: different
+      overlap: chip-firing iterates vertex firings; Havel-Hakimi reduces degree sequences.
+    - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+      relationship: different
+      overlap: call-stack tracing is about recursion, not degree sequences.
+    substantive_difference: Havel-Hakimi graphical sequence test is a distinct combinatorial algorithm
+      not present in neighbors.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor reduces degree sequences to test graphical realizability.
+    votes: 3/3
+    dissent: []
+- name: weakest_precondition_computation
+  summary: Push a stated postcondition backward through assignments and guarded branches of small integer
+    programs, simplifying to a canonical linear predicate over the input variables.
+  id: P009
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.program_slice_dependencies.program_slice_dependencies:ProgramSliceDependencies
+      relationship: adjacent
+      overlap: both reason backward through program dependencies, but C001 computes weakest preconditions
+        with symbolic predicates whereas slice dependencies return a statement set.
+    - id: gallery:logic_derivation
+      relationship: different
+      overlap: logic_derivation produces a forward proof trace; C001 does backward symbolic computation.
+    - id: task:generated.wave10.counterfactual_replay.counterfactual_replay:CounterfactualReplay
+      relationship: different
+      overlap: counterfactual replay recomputes values; C001 computes a logical predicate.
+    substantive_difference: C001 performs backward symbolic predicate computation over programs, which
+      is not covered by any neighbor that computes forward values or sets.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Weakest precondition computation is a distinct symbolic backward reasoning operation not found
+      in the closest known tasks.
+    votes: 3/3
+    dissent: []
+- name: gnfa_state_elimination
+  summary: Reduce a generalized finite automaton to a regex by eliminating states in a stated order, composing
+    edge labels with union, concatenation, and star; return the label on a queried edge mid-process or
+    the final equivalent regex.
+  id: P010
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+      relationship: different
+      overlap: both operate on finite automata but dfa_minimization merges states while C002 eliminates
+        states to derive a regex.
+    - id: task:generated.wave9.nfa_subset_construction.nfa_subset_construction:NfaSubsetConstruction
+      relationship: adjacent
+      overlap: both transform automata but subset construction computes reachable DFA states while C002
+        composes edge labels into a regex.
+    - id: gallery:variable_elimination
+      relationship: adjacent
+      overlap: both eliminate variables/states in a systematic order but apply to different domains (equations
+        vs. automata).
+    substantive_difference: GNFA state elimination with regex composition is a distinct algorithm from
+      automaton minimization or determinization.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: The state-elimination regex construction is not present in any neighbor that only minimizes
+      or determinizes automata.
+    votes: 3/3
+    dissent: []
+- name: ordered_greedy_coloring
+  summary: Assign each vertex the smallest color unused by earlier-colored neighbors under a stated processing
+    order, returning a queried vertex's color, the number of colors used, or the full assignment across
+    varied graph shapes.
+  id: P011
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_systematic-generalization:P007
+      relationship: different
+      overlap: chip_firing also processes vertices in an order but fires based on chip counts, not color
+        assignments.
+    - id: task:generated.wave8.eulerian_status.eulerian_status:EulerianStatus
+      relationship: adjacent
+      overlap: both classify graph properties but Eulerian status concerns degrees, not coloring.
+    - id: task:generated.wave8.bridge_edges.bridge_edges:BridgeEdgesTask
+      relationship: different
+      overlap: bridge detection is about connectivity, not coloring.
+    substantive_difference: Ordered greedy coloring is a distinct graph-coloring operation not represented
+      in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor performs greedy vertex coloring with a specified order.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: pareto_frontier_selection
+  summary: Select the Pareto-maximal points of a finite point set under the product order in two or three
+    dimensions, returning the surviving frontier in canonical sorted order or the dominance count of a
+    queried point.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_systematic-generalization:P004
+    relationship: same_operation
+    overlap: Both select the non-dominated set of points under a product order, returning the frontier
+      of Pareto-maximal records.
+  - id: proposal:k3_systematic-generalization:P003
+    relationship: adjacent
+    overlap: Both deal with extreme points of a set, but convex hull uses geometric ordering while Pareto
+      uses dominance.
+  - id: task:generated.wave8.poset_cover_query.poset_cover_query:PosetCoverQuery
+    relationship: different
+    overlap: poset covers are about covering relations, not dominance.
+  reason: 0/3 samples judged it novel; Identical to the skyline dominance query operation in the catalog.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: matrix_characteristic_polynomial
+  summary: Compute the exact characteristic polynomial of a small integer matrix from traces of matrix
+    powers (Faddeev-LeVerrier), returning the integer coefficient vector in canonical order.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.polynomial_euclidean_algorithm.polynomial_euclidean_algorithm:PolynomialEuclideanAlgorithm
+    relationship: variant
+    overlap: 'Exact symbolic polynomial arithmetic over integers: both compute canonical integer-coefficient
+      polynomial outputs (gcd vs characteristic polynomial) via repeated exact operations (division/Euclidean
+      vs trace/Faddeev-LeVerrier).'
+  - id: task:generated.wave9.poly_euclid.poly_euclid_algorithm:PolyEuclid
+    relationship: variant
+    overlap: Both perform exact polynomial computations over fields/integers producing a canonical polynomial
+      output in coefficient-vector form.
+  - id: proposal:k3_invariants:P002
+    relationship: adjacent
+    overlap: Both compute an exact integer-valued invariant from a structured input via number-theoretic
+      or algebraic formulas; outputs are integers/vectors, but the core operations (Legendre sums vs trace
+      recurrences) differ.
+  reason: 1/2 samples judged it novel; Faddeev-LeVerrier is a distinct algebraic algorithm, but its exact-output
+    and polynomial-coefficient regime closely matches existing polynomial arithmetic tasks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 1/2
+- name: radix_sort_pass_state
+  summary: 'Execute LSD radix sorting as stable counting passes over fixed-width keys: build per-digit
+    histograms and prefix offsets, place keys stably, and return the array order after a queried pass
+    or one key''s position within it.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+    relationship: variant
+    overlap: 'Both execute a stable placement algorithm over arrays with repeated keys: counting/histogram
+      placement vs. probing with a step. Both return the final slot or position of a queried key, using
+      explicit pointer arithmetic. The core operation is deterministic array mutation under a rule, differing
+      only in placement rule and output query type.'
+  - id: proposal:k3_systematic-generalization:P005
+    relationship: adjacent
+    overlap: 'Both perform a sequence of stable placement steps over ordered items (digits vs. fold layers)
+      and report a position or order at a queried step. Yet the operations differ: counting-based distribution
+      vs. geometric fold transition. Shared only in output structure and step-wise execution.'
+  - id: task:generated.wave8.fd_attribute_closure.fd_attribute_closure:AttributeClosure
+    relationship: different
+    overlap: 'No shared procedure: radix pass builds histograms and prefix sums, whereas closure iterates
+      functional dependencies until fixpoint. Both are deterministic iterative algorithms with exact outputs
+      but different state updates and termination conditions.'
+  reason: Radix sort pass is a stable placement variant of open addressing slot placement, sharing the
+    same array-mutation-and-query regime.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/1
+- name: ranking_discordance_count
+  summary: Count discordant pairs between two total rankings of the same labeled items given in either
+    order, returning the inversion count or the sorted list of discordant pairs across near-sorted, reversed,
+    and shuffled profiles.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.answer_relevant_change.answer_relevant_change:AnswerRelevantChange
+    relationship: variant
+    overlap: Both compare two total orders of the same labeled items. C002 counts discordant pairs (inversions)
+      or lists them; AnswerRelevantChange identifies labels whose relative rank changes after a correction.
+      To get C002's discordant pairs, given the original and corrected rankings one can run the same pairwise
+      relative-order comparison used to detect rank changes; the only output difference is aggregating
+      all inversions versus filtering to changed labels.
+  - id: task:generated.wave8.group_homomorphism_check.group_homomorphism_check:GroupHomomorphismCheck
+    relationship: different
+    overlap: Both count structural violations between two algebraic/ordered structures, but GroupHomomorphismCheck
+      counts failures of the homomorphism condition on pairs of group elements while C002 counts pairwise
+      violations of transitivity between two rankings; the underlying check is different.
+  - id: task:generated.wave8.strongly_connected_component.strongly_connected_component:StronglyConnectedComponent
+    relationship: different
+    overlap: Both output sorted lists of related items, but SCC finds reachability-equivalent node sets
+      in a graph, whereas C002 lists discordant pairs between two total orders; no shared operation.
+  reason: 1/3 samples judged it novel; The core operation of comparing all ordered pairs between two rankings
+    to find relative-order changes is identical to AnswerRelevantChange; the proposal just changes the
+    output regime from filtered changed labels to the full set of discordant pairs or their count.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: lagrange_finite_field_evaluation
+  summary: Given points with distinct x-coordinates over a small prime field, evaluate the unique interpolating
+    polynomial at a queried point by exact modular Lagrange accumulation, returning the field element
+    value; point count and field vary.
+  verdict: novel
+  nearest_neighbors:
+  - id: plan:WAVE1:S8
+    relationship: adjacent
+    overlap: Both perform arithmetic in a small finite field, but S8 covers polynomial ring operations
+      generally (addition) while C001 computes a unique interpolating polynomial's value at a point via
+      Lagrange basis.
+  - id: proposal:k3_invariants:P002
+    relationship: different
+    overlap: Both compute integer exponents/values from arithmetic structure, but P002 counts p-adic valuations
+      using Legendre sums while C001 evaluates a polynomial by modular interpolation; the operations share
+      no procedure.
+  - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+    relationship: different
+    overlap: Both return exact numeric values, but rounding pipeline applies fixed-point truncation/rounding
+      rules while C001 evaluates a polynomial via Lagrange interpolation; no shared cognitive operation.
+  reason: 1/3 samples judged it novel; No neighbor performs interpolation-based evaluation over a finite
+    field; the closest is generic polynomial arithmetic that does not cover the Lagrange reconstruction
+    operation.
+  scores:
+    novelty: 5
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+pool:
+- name: comparator_network_execution
+  summary: Apply a stated sequence of compare-exchange comparators to an integer array, each sorting its
+    two positions, returning the final array, the state after the first k comparators, or the final position
+    of a queried element.
+- name: convex_hull_construction
+  summary: Compute the convex hull of a small integer lattice point set via orientation tests, discarding
+    collinear boundary points, and return the hull vertices in canonical counterclockwise order from the
+    lexicographically lowest point.
+- name: shapley_value_computation
+  summary: Enumerate player permutations of a small coalitional game given by a subset-to-value table,
+    sum each player's marginal contribution, and return every Shapley value as a reduced fraction.
+- name: linear_extension_count
+  summary: Count the linear extensions of a small poset given by cover relations, branching over currently-minimal
+    elements; answer is the exact number of valid topological orders.
+- name: agglomerative_merge_trace
+  summary: Run bottom-up agglomerative clustering over a small integer distance matrix under single, complete,
+    or average linkage with a stated tie order, returning ordered merge pairs or the partition at a queried
+    merge step.
+- name: bpe_merge_trace
+  summary: 'Iterate byte-pair merging over short token sequences: recount adjacent-pair frequencies, merge
+    the top pair under a fixed tie-break, returning the sequence after k rounds, the pair merged at round
+    t, or the final vocabulary.'
+- name: arithmetic_coding_interval
+  summary: Narrow a rational interval through successive cumulative-distribution slices, one per message
+    symbol, or invert the process to recover symbols from a target fraction; return the final reduced
+    endpoints or the decoded symbol sequence.
+- name: planar_face_tracing
+  summary: Trace faces of a combinatorially embedded planar graph by following its rotation system from
+    stated directed edges, returning the boundary walk of a queried face, the multiset of face lengths,
+    or the resulting genus.

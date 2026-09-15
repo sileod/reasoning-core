@@ -1,0 +1,1005 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_novel-composition
+created_at: '2026-09-15T03:15:19.392511+00:00'
+provenance:
+  kind: proposer
+  name: k3_novel-composition
+  received: '2026-09-15'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks with familiar atomic operations but novel compositions of those operations.
+    The catalog you were shown already covers the classic textbook algorithms -- sorting, gcd, graph traversal,
+    compression, scheduling, matching, parsing -- and a proposal that names one will be rejected as a
+    repeat however well it fits this brief. Reach past the standard repertoire: propose structures the
+    catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 8
+  complete: false
+catalog:
+  sha256: 669cf731d72f98a031c651fd22fb0c1d11082a7094f60bbc7bd8c27ca229a709
+  entries: 522
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 67
+    task: 293
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  requested_model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: moonshotai/kimi-k3
+    provider: integrate.nvidia
+    request_sha256: 85823e40246a36daa6df246d97d628862b4046358f9338a3102c1170aef3e048
+    response_sha256: dff55ebc72f657410bc1ab579142b081893209b1eb44ee610998771efdd243c9
+    response_id: chatcmpl-6afcc286-68c6-4b61-a92b-6d498aa2e9be
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 40a7581aedfbf0fcfc12824388dddf38b2fbd7fa5c42f495c3426cf77a640e5a
+    response_sha256: 67c05e2c95afe9e397609c5701ad107093d2e1d9fb4eadfec6bd9eaf37ea5df0
+    response_id: chatcmpl-a367432146ec5801
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: cbe9a838a1759d5c10e64cee6e5928019d3df863f2a76054ed971ab3479f27a4
+    response_sha256: 4be3383b4b5aa61f28ba65206b4f8d36800ec328f25f714331e32d51f8c621a6
+    response_id: chatcmpl-b60b94eefe8f0d3b
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8ffdfdb1da1e29b2c68ed061f302e5bfeca08efc3dd61245c31fc5b2bc5ac14a
+    response_sha256: 2e896ef0d525328e66b6c9e0ac7ba9cf10922ff79f29a4053db73c42dd40669b
+    response_id: chatcmpl-9ee09f1c9a1c5a2c
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 354f1a3a628860a840817f002768ca5fddbf055b278efecc2ccec1bcfa4269b0
+    response_sha256: 671a60fc2c55cd3decd93560c5c5193cbdd1b43d7638365aab9ebd6aaf9aed0f
+    response_id: chatcmpl-abbab6a7f7d2ea06
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 7ff07960e3abd3ad5e5c6a964f9e0c4a9bbd1908194580d7beba3e929883ddd3
+    response_sha256: ce2971a4d8476270d77abfaa63c8a45c43220635f94e4567c0c08ed3b66ebd3a
+    response_id: chatcmpl-b38eb288d33690b7
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 3b13b4811fa3ce02378405c8eb3ecc134ddfcde3138a7fb27444599b3b0c78fc
+    response_sha256: d689391023442d726304d76559b45f1cc566f63278b77d19783b0fd4b63dea5e
+    response_id: chatcmpl-97baa7ca1d472aa4
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1b58ee6bfd67ced755a68496018431adc47abbf40c0f9d187319b83efa6664de
+    response_sha256: a1a287dbd83bf61e213422c0ec3ac46ef221d2248f0707d2e4d2801056378d26
+    response_id: chatcmpl-87be78529e92bb49
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: e8889ef0280785a6152468bf554247df49ff7385f34d6936a9c649d9c361b5b0
+    response_sha256: 5a95c68cc7ba01c6ba299dcffec5d111cd4d917daddc086e8b052f04e151a400
+    response_id: chatcmpl-95560e7f46349c59
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8803cca7a762feefc064c873c9943f47da9e37d0c6d65ac538137baf07349d32
+    response_sha256: 7678afb601aa621cd2adf315080d5af2b3a7985ecc6686a79cdc10c5a7f44a53
+    response_id: chatcmpl-a0da560fa44543aa
+proposals:
+- name: session_type_projection
+  summary: Project a global multiparty session type onto a participant endpoint, check duality, and output
+    the local type or error.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.two_phase_commit_trace.two_phase_commit_trace:TwoPhaseCommitTrace
+      relationship: adjacent
+      overlap: Both involve distributed protocols, but two-phase commit is about transaction commitment,
+        not session type projection.
+    - id: task:generated.wave9.version_vector_causality.version_vector_causality:VersionVectorCausality
+      relationship: adjacent
+      overlap: Both track distributed state, but vector clocks track event ordering, not communication
+        protocols.
+    - id: task:generated.wave9.access_control_evaluation.access_control_policy_evaluation:AccessControlEvaluation
+      relationship: adjacent
+      overlap: Both involve projecting global policies onto participants, but access control is about
+        permissions, not session types.
+    substantive_difference: Projecting global multiparty session types onto endpoints and checking duality
+      is a distinct type-theoretic operation not present in the catalog.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 5
+    reason: Session type projection is a novel type-theoretic operation without a catalog analog.
+    votes: 1/1
+    dissent: []
+- name: factor_graph_marginal
+  summary: Compute exact single-variable marginal in a discrete factor graph by variable elimination or
+    belief propagation; ranges over tree and loopy topologies, factor arities, and evidence configurations;
+    answer is the marginal probability table.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+      relationship: adjacent
+      overlap: Both compute probabilities in probabilistic graphical models; Bayesian conditioning returns
+        a posterior fraction, while factor graph marginal returns a full probability table.
+    - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+      relationship: adjacent
+      overlap: Both compute results from a finite joint distribution, but conditional expectation averages,
+        not marginalizes.
+    - id: proposal:k3_uncertainty:P005
+      relationship: adjacent
+      overlap: Both compute exact probabilities over networks, but network reliability is about failures,
+        not factor graph marginals.
+    substantive_difference: Variable elimination or belief propagation on a factor graph to output a full
+      marginal table is a distinct probabilistic inference operation not in the catalog.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Factor graph marginal computation via VE/BP is not covered by Bayesian conditioning which
+      only gives a single posterior fraction.
+    votes: 1/1
+    dissent: []
+- name: loop_invariant_check
+  summary: Verify whether a candidate loop invariant is inductive and implies the postcondition for a
+    while loop with linear arithmetic; ranges over invariant strength, loop complexity, and counterexample
+    types; answer is valid or a violating state.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave12.termination_ranking_function.termination_ranking_function:TerminationRankingFunction
+      relationship: adjacent
+      overlap: Both reason about loop properties via linear arithmetic, but one synthesizes ranking functions,
+        the other checks invariants; different operations.
+    - id: task:generated.k3_invariants_r1.weakest_precondition_computation.weakest_precondition_computation:WeakestPreconditionComputation
+      relationship: adjacent
+      overlap: Both compute predicates over program states, but one derives preconditions, the other checks
+        inductive invariants; distinct.
+    - id: proposal:k3_counterfactual:P002
+      relationship: different
+      overlap: No overlap.
+    substantive_difference: Verifying invariant inductiveness and postcondition implication is a distinct
+      verification task not present in neighbors that generate invariants or ranking functions.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: No known neighbor checks an invariant's inductiveness; this is a new verification operation.
+    votes: 2/3
+    dissent:
+    - variant
+- name: topological_sort_count
+  summary: Count linear extensions of a finite poset or DAG using recursive decomposition or dynamic programming
+    over ideals; ranges over width, height, series-parallel structure, and diamond patterns; answer is
+    the exact count.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.topological_generation.topological_generation:TopologicalGeneration
+      relationship: adjacent
+      overlap: both operate on DAGs and use topological rounds, but the candidate counts all linear extensions
+        via ideal DP while the neighbor returns the round of a single node under zero-indegree removal.
+    - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+      relationship: adjacent
+      overlap: both involve topological orderings of DAGs, but the candidate counts all extensions exactly,
+        while the neighbor returns a single layering/order under a tie rule.
+    - id: proposal:k3_uncertainty:P005
+      relationship: adjacent
+      overlap: both perform exact counting via recursion/factorization to an integer answer, but on entirely
+        different structures (DAG extensions vs network reliability).
+    substantive_difference: 'C004''s core operation is exact counting of linear extensions (a #P-complete
+      count) with a DP over ideals, which no neighbor performs: the topological tasks only output a single
+      order, and the reliability task counts different objects.'
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: The exact-count operation for linear extensions is not present in any neighbor; the DAG tasks
+      only produce one order, not the full set count.
+    votes: 2/3
+    dissent:
+    - variant
+- name: schensted_tableau_insertion
+  summary: Insert a word's symbols one at a time into a row-sorted tableau, bumping the smallest larger
+    entry down to the next row on collision; answers are the final tableau rows or a single insertion's
+    bump path.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_shortcuts-fail:P010
+      relationship: adjacent
+      overlap: both maintain a structured tableau and apply operations row-wise, but stabilizer tableaux
+        use Pauli gates while Schensted uses row bumping
+    - id: proposal:k3_counterfactual:P001
+      relationship: adjacent
+      overlap: both process data structures with queries, but wavelet tree and Schensted tableau are fundamentally
+        different
+    - id: gallery:sequential_induction
+      relationship: adjacent
+      overlap: both involve maintaining a canonical representation, but one is a row-sorted tableau and
+        the other a polynomial DSL
+    substantive_difference: Schensted insertion is a unique tableaux algorithm for words, not captured
+      by any existing task.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: A distinct combinatorial algorithm with no close match.
+    votes: 1/1
+    dissent: []
+- name: polygon_area_point_location
+  summary: 'Over simple polygons given as integer vertex lists: accumulate the shoelace cross-sum for
+    signed area and classify query points by ray-crossing parity; answers are the doubled area or inside/outside/on-boundary.'
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:planar_geometry_relations
+      relationship: adjacent
+      overlap: both involve geometry queries but point-in-polygon and area are not covered by planar_geometry_relations
+    - id: proposal:k3_shortcuts-fail:P011
+      relationship: adjacent
+      overlap: both operate on planar structures, but one is about embedding and faces, the other about
+        point location and area
+    - id: proposal:k3_dependence-relevance:P001
+      relationship: adjacent
+      overlap: both deal with polygons, but triangulation is a different operation from shoelace and ray
+        casting
+    substantive_difference: Combines shoelace area computation with ray-casting point-in-polygon classification,
+      a distinct computational geometry task not present in the catalog.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: A new operation on polygons, distinct from existing gallery tasks.
+    votes: 1/1
+    dissent: []
+- name: toy_spn_cipher_rounds
+  summary: 'Run a toy substitution-permutation cipher on small blocks: xor the round key, map nibbles
+    through the given s-box, and permute bit positions over the stated rounds; answers are the ciphertext
+    or an intermediate round state.'
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:rule_switching
+      relationship: adjacent
+      overlap: both apply a sequence of operations that change meaning based on context, but SPN uses
+        fixed rounds of substitution-permutation while rule_switching changes opcode meanings across modes
+    - id: proposal:k3_shortcuts-fail:P010
+      relationship: adjacent
+      overlap: both process a bit/state vector through a sequence of deterministic gates/operations, but
+        the operations and state representation are entirely different
+    - id: gallery:string_transduction
+      relationship: adjacent
+      overlap: both apply a deterministic transformation to a string, but SPN involves key mixing, s-box,
+        permutation, whereas string_transduction includes Caesar cipher and rotation
+    substantive_difference: SPN cipher rounds combine XOR, substitution, and permutation in a specific
+      algorithmic pipeline, a distinctive cryptographic operation not present in neighboring tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: A clean, well-specified cryptographic simulation with no direct duplicate in the catalog.
+    votes: 1/1
+    dissent: []
+- name: bresenham_midpoint_rasterization
+  summary: Rasterize integer-endpoint segments by the midpoint error-term rule, stepping the major axis
+    and conditionally the minor across varied octants; answers are the ordered lattice points or the point
+    at a queried step.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+      relationship: adjacent
+      overlap: both process geometric entities but sweeps over intervals vs. Bresenham rasterization on
+        integer lattice
+    - id: proposal:k3_dependence-relevance:P001
+      relationship: adjacent
+      overlap: both are computational geometry but triangulation vs. line rasterization
+    - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+      relationship: adjacent
+      overlap: both involve exact arithmetic but in completely different contexts
+    substantive_difference: Bresenham's line algorithm is a classic integer-only rasterization technique
+      with midpoint error accumulation, absent from the catalog.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: A well-known computational geometry operation not previously covered.
+    votes: 1/1
+    dissent: []
+rejected:
+- name: circulation_feasibility_check
+  summary: Determine feasible circulation existence in networks with edge bounds and node demands via
+    flow reduction; ranges over demand patterns, bound tightness, and component structure; answer is feasible
+    or infeasible.
+  verdict: novel
+  nearest_neighbors:
+  - id: plan:WAVE1:S12
+    relationship: different
+    overlap: Maximum flow computes a flow value, whereas circulation feasibility checks existence with
+      demands.
+  - id: task:generated.wave8.conflict_serializability.conflict_serializability:ConflictSerializability
+    relationship: adjacent
+    overlap: Both involve constraint satisfaction on directed structures, but serializability is about
+      transactions.
+  - id: task:generated.wave12.transaction_serializability.transaction_serializability:TransactionSerializability
+    relationship: adjacent
+    overlap: Both check feasibility conditions on networks/transactions, but the operation is different.
+  reason: 0/2 samples judged it novel; Circulation feasibility is not in the catalog as a flow-reduction
+    problem.
+  scores:
+    novelty: 5
+    sft_value: 3
+    feasibility: 4
+    clarity: 5
+  votes: 0/2
+- name: fair_division_protocol
+  summary: Execute cut-and-choose (Dubins-Spanier), Even-Paz halving, or Selfridge-Conway for 3 agents,
+    output envy-free allocation.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_shortcuts-fail:P005
+    relationship: same_operation
+    overlap: Both allocate items among agents with valuations to achieve envy-freeness; candidates differ
+      in the algorithm (cut-and-choose vs envy cycles) but the core operation is envy-free allocation.
+  - id: proposal:k3_counterfactual:P005
+    relationship: variant
+    overlap: Both divide goods among agents with valuations producing allocations; adjusted winner redivide
+      is a different fair-division algorithm but the core operation is dividing divisible goods fairly.
+  - id: task:generated.wave8.buddy_allocator.buddy_allocator:BuddyAllocator
+    relationship: adjacent
+    overlap: Both involve dividing a resource (goods vs memory) among parties; buddy allocator divides
+      memory blocks, not valuations.
+  reason: Fair division with envy-freeness is already present in the catalog, so this is a variant with
+    a different algorithm.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: ctl_state_labeling
+  summary: 'Evaluate CTL formulas over tiny Kripke structures bottom-up: EX/AX predecessor sets, EU least
+    fixed points, EG greatest fixed points with nested modalities; answer the state set satisfying each
+    subformula.'
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:code_analysis
+    relationship: same_operation
+    overlap: Both evaluate CTL temporal formulas on finite-state systems; code_analysis handles Python-like
+      programs while this candidate uses Kripke structures.
+  - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+    relationship: variant
+    overlap: Both evaluate temporal logic formulas (LTL vs CTL) over finite traces/models; the operation
+      is model checking with fixed-point semantics.
+  - id: proposal:k3_uncertainty:P002
+    relationship: adjacent
+    overlap: Both evaluate modal logic on Kripke models, but knowledge logic uses epistemic relations,
+      not CTL operators.
+  reason: 0/2 samples judged it novel; CTL model checking exists in the gallery; Kripke structures are
+    a cosmetic change.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/2
+- name: streaming_hyperloglog_merge
+  summary: Merge HyperLogLog sketches from distributed streams, estimate union cardinality, and verify
+    merge commutativity across register arrays.
+  verdict: novel
+  nearest_neighbors:
+  - id: plan:WAVE1:S4
+    relationship: different
+    overlap: Ledger reconciliation is about financial reconciliation, not cardinality estimation.
+  - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+    relationship: adjacent
+    overlap: Both involve merging structures (intervals vs sketches) to compute a union metric, but interval
+      sweep merges numeric intervals, not probabilistic cardinality sketches.
+  - id: gallery:set_expression
+    relationship: adjacent
+    overlap: Both compute union cardinalities, but set expression uses explicit sets while HLL merges
+      probabilistic sketches.
+  reason: No catalog task computes hyperloglog merges or probabilistic cardinality estimation, making
+    this novel.
+  scores:
+    novelty: 5
+    sft_value: 3
+    feasibility: 4
+    clarity: 5
+  votes: 0/1
+- name: bisimulation_refinement
+  summary: Given a finite labeled transition system, compute the coarsest bisimulation partition via iterative
+    partition refinement and output the block identifier for a queried state.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+    relationship: same_operation
+    overlap: Both compute the coarsest partition of states that are equivalent under a transition system;
+      DFA minimization uses Moore refinement, bisimulation uses the same refinement for LTS.
+  - id: proposal:k3_shortcuts-fail:P007
+    relationship: variant
+    overlap: Both compute stable partitions of states via iterative refinement; color refinement is on
+      graphs, bisimulation on LTS with branching.
+  - id: task:generated.wave8.fd_attribute_closure.fd_attribute_closure:AttributeClosure
+    relationship: adjacent
+    overlap: 'Both compute closures but on different structures: functional dependencies vs transition
+      systems.'
+  reason: Partition refinement for bisimulation is a variant of DFA minimization already in the catalog.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: dnf_model_count
+  summary: Count satisfying assignments of a Boolean formula in DNF or small CNF via inclusion-exclusion
+    or component decomposition; ranges over clause overlap structures, variable counts, and formula classes;
+    answer is the exact model count.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_shortcuts-fail:P009
+    relationship: same_operation
+    overlap: Both count satisfying assignments of Boolean formulas; robdd_reduction_trace computes a canonical
+      representation leading to a model count, while dnf_model_count directly counts via inclusion-exclusion.
+  - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+    relationship: adjacent
+    overlap: Both evaluate Boolean formulas over finite domains, but finite_model_quantifiers evaluates
+      first-order quantifiers, not counting models.
+  - id: proposal:k3_counterfactual:P006
+    relationship: adjacent
+    overlap: Both work with Boolean networks, but one counts satisfying assignments and the other simulates
+      state transitions.
+  reason: Model counting is already present via BDD construction; DNF-specific counting is a variant.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: symbolic_execution_path_condition
+  summary: Given a straight-line program with symbolic inputs and conditional branches, generate the path
+    condition for a target program point under a deterministic path exploration order and output the simplified
+    constraint.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_invariants_r1.weakest_precondition_computation.weakest_precondition_computation:WeakestPreconditionComputation
+    relationship: same_operation
+    overlap: Both derive logical conditions from straight-line programs with assignments and branches;
+      WP computes postconditions, symbolic execution computes path conditions.
+  - id: task:generated.wave12.reaching_definitions.reaching_definitions:ReachingDefinitions
+    relationship: adjacent
+    overlap: Both analyze program paths, but reaching definitions tracks assignments, not logical constraints.
+  - id: gallery:controlled_code_execution
+    relationship: adjacent
+    overlap: Both involve executing Python programs, but controlled_code_execution does not generate path
+      conditions.
+  reason: Path condition generation is a variant of the existing weakest precondition task.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: gale_shapley_matching_trace
+  summary: Given strict preference lists for two equal-sized agent sets, trace the Gale-Shapley deferred
+    acceptance algorithm from a specified proposing side and output the final matching or a queried agent's
+    partner.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.top_trading_cycles.top_trading_cycles:TopTradingCycles
+    relationship: same_operation
+    overlap: Both run a matching algorithm on strict preferences to produce a stable or efficient matching;
+      Gale-Shapley and TTC are both market design algorithms.
+  - id: task:generated.wave9.bipartite_matching.bipartite_matching:BipartiteMatching
+    relationship: variant
+    overlap: Both compute matchings between two sets, but Gale-Shapley produces a stable marriage, not
+      a maximum matching.
+  - id: proposal:k3_shortcuts-fail:P005
+    relationship: adjacent
+    overlap: Both involve agents with preferences, but envy-free allocation is not a matching algorithm.
+  reason: Stable matching via deferred acceptance is a variant of the matching algorithms already present.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: critical_pair_completion
+  summary: Generate all critical pairs from a term rewrite system under a reduction order and test local
+    confluence; ranges over rule arities, overlap patterns, and order types; answer is the critical pair
+    set or confluent.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:rewrite_system
+    relationship: same_operation
+    overlap: Both work with term rewrite systems; rewrite_system normalizes terms, while critical_pair_completion
+      generates critical pairs and checks confluence.
+  - id: task:math_scratch:MathScratchCoreSelect
+    relationship: variant
+    overlap: Both involve rewriting systems; one selects rules to prove equivalence, the other checks
+      confluence, but both operate on rewrite rules.
+  - id: task:generated.wave9.critical_path_analysis.critical_path_analysis:CriticalPathAnalysis
+    relationship: adjacent
+    overlap: 'Both involve ''critical'' concepts but in different domains: rewrite systems vs project
+      scheduling.'
+  reason: Rewrite system operations already exist in the gallery; critical pair computation is a variant.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 5
+  votes: 0/1
+- name: vcg_auction_outcome
+  summary: Compute VCG allocation and payments for single-minded or additive bidders over combinatorial
+    items, output winner set and payment vector.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_counterfactual:P004
+    relationship: same_operation
+    overlap: Both compute VCG allocation and pivotal payments for combinatorial auctions with single-minded
+      bidders.
+  - id: proposal:k3_counterfactual:P005
+    relationship: adjacent
+    overlap: Both are auction/division mechanisms, but adjusted winner is a fair division protocol, not
+      VCG.
+  - id: proposal:k3_shortcuts-fail:P005
+    relationship: adjacent
+    overlap: Both allocate items among agents, but envy-free allocation is not VCG.
+  reason: This is a direct duplicate of an existing proposal with the same operation and output.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: variable_elimination_marginals
+  summary: 'Compute exact marginals in small factor-graph instances under a given elimination order: multiply
+    factors, sum variables out over exact rationals, normalize; answer the query variable''s marginal
+    table.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_novel-composition:P002
+    relationship: same_operation
+    overlap: both compute exact single-variable marginal probabilities in discrete factor graphs via variable
+      elimination or belief propagation over the same topologies (tree and loopy), factor arities, and
+      evidence configurations, outputting the marginal table.
+  - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+    relationship: variant
+    overlap: both compute exact posterior probability tables in discrete probabilistic graphical models;
+      the neighbor uses Bayes nets with CPTs and observed evidence, while the candidate uses factor graphs
+      with a given elimination order, a difference in representation only.
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: adjacent
+    overlap: both compute expectations/marginals over finite joint distributions, but the neighbor computes
+      conditional expectations of a variable, not a full marginal table.
+  reason: 0/2 samples judged it novel; C009 is an exact duplicate of the existing proposal factor_graph_marginal
+    (P002), differing only in phrasing.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: linkage_clustering_dendrogram
+  summary: Merge clusters bottom-up over small point sets or distance matrices using single, complete,
+    average, or Ward linkage with fixed tie-breaking; answer the ordered merge sequence with heights or
+    a k-cluster cut.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_dependence-relevance:P004
+    relationship: same_operation
+    overlap: both perform bottom-up agglomerative clustering on small distance matrices using single/complete/average/WPGMA
+      linkage, returning ordered merge sequences with heights or a cut partition; identical operation
+      and output.
+  - id: task:generated.wave9.hierarchical_rollup.hierarchical_rollup:HierarchicalRollup
+    relationship: adjacent
+    overlap: both perform hierarchical aggregation, but the candidate works on distance matrices with
+      linkage rules, whereas the neighbor aggregates values through explicit parent-child hierarchies.
+  - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+    relationship: adjacent
+    overlap: both process ordered structures to compute merged partitions, but the candidate does agglomerative
+      clustering while the neighbor does interval sweeps over endpoints.
+  reason: 0/2 samples judged it novel; C003 is a near-verbatim duplicate of proposal P004, named 'agglomerative_linkage_merge',
+    differing only in the proposal name.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: discrete_event_queue_simulation
+  summary: 'Run a multi-server event simulation from arrival and service-time streams: process the earliest
+    event, start queued service, schedule departures; vary server counts and tie rules; answer each departure
+    time.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+    relationship: same_operation
+    overlap: both run a discrete-event simulation from a queue of timestamped events, processing earliest
+      events, scheduling new events, and returning queried results; the candidate adds multi-server details
+      and departure-time output, but the core event-queue processing is identical.
+  - id: task:generated.wave9.round_robin_scheduling.round_robin_scheduling:RoundRobinScheduling
+    relationship: variant
+    overlap: both simulate scheduling of processes with arrivals, service times, and completion events;
+      the neighbor uses round-robin quantum while the candidate uses a multi-server queue, a shared simulation
+      operation.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: adjacent
+    overlap: both handle event-driven transitions, but the neighbor is a finite-state machine with guards/timeouts,
+      not a queue-based server system.
+  reason: 0/3 samples judged it novel; The discrete-event simulation operation is already fully present
+    in event_queue_simulation; adding server counts is a surface parameter change.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: left_coset_partition
+  summary: Given a small finite group as a Cayley table or permutation generators and a subgroup by its
+    generators, close the subgroup and partition the group into left cosets; answer the sorted partition
+    and index.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.left_coset_identification.left_coset_identification:LeftCosetIdentification
+    relationship: variant
+    overlap: both compute left cosets of a subgroup in a finite group; the neighbor restricts to cyclic
+      groups given by mod-n residues, while the candidate generalizes to arbitrary finite groups given
+      by Cayley table or permutation generators.
+  - id: proposal:k3_shortcuts-fail:P006
+    relationship: adjacent
+    overlap: both involve cosets of a subgroup, but the neighbor enumerates cosets in a finitely presented
+      group by completing a table, whereas the candidate closes a subgroup from generators and partitions
+      a finite group.
+  - id: task:generated.wave8.finite_group_element_order.finite_group_element_order:FiniteGroupElementOrder
+    relationship: adjacent
+    overlap: both operate on finite groups with subgroup/order computations, but the neighbor computes
+      the order of an element, not cosets.
+  reason: 0/3 samples judged it novel; The operation is the same coset computation, only the group representation
+    is broadened from Z_n to Cayley tables/permutation groups.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: system_f_type_inference
+  summary: Given a System F term with explicit type abstractions and applications, reconstruct its principal
+    type through bidirectional type checking and output the type in normalized form with explicit forall
+    quantifiers.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.manual_high_value_80_r1.hindley_milner_inference.hindley_milner_inference:HindleyMilnerInference
+    relationship: variant
+    overlap: both perform bidirectional type inference for lambda terms with let-bound polymorphism, reconstructing
+      a principal type with explicit forall quantifiers; the difference is the input language (System
+      F vs simply-typed lambda with let) and the output formatting.
+  - id: task:generated.wave3.principal_type.s28_principal_type:PrincipalType
+    relationship: same_operation
+    overlap: identical principal type inference for lambda terms.
+  - id: task:generated.wave8.lexical_scope_resolution.lexical_scope_resolution:LexicalScopeResolution
+    relationship: different
+    overlap: lexical scope resolution is name binding, not type inference; no shared procedure.
+  reason: 0/3 samples judged it novel; The operation is the same principal type inference as the HM task
+    and the principal_type task, differing only in the lambda calculus dialect and output formatting.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: min_cost_flow_augmentation
+  summary: Given a capacitated directed graph with edge costs, a feasible flow, and residual network,
+    trace one iteration of the successive shortest path algorithm using reduced costs and output the augmenting
+    path or the updated flow value.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.maximum_flow.maximum_flow:MaximumFlow
+    relationship: variant
+    overlap: both use augmenting-path algorithms on capacitated directed graphs; the neighbor computes
+      the final maximum flow value via Edmonds-Karp, while the candidate traces a single iteration of
+      successive shortest paths on the residual network with reduced costs.
+  - id: proposal:k3_verification-repair:P008
+    relationship: adjacent
+    overlap: both use shortest-path computations on graphs with weights/capacities, but the neighbor computes
+      betweenness centrality via BFS, not min-cost flow augmentation.
+  - id: gallery:graph_pathfinding
+    relationship: adjacent
+    overlap: both find paths in graphs, but the candidate integrates residual networks and reduced costs
+      for min-cost flows, not generic shortest paths.
+  reason: 0/3 samples judged it novel; The core operation is the same augmenting-path technique on residual
+    networks already in maximum_flow, with the added reduced-cost criterion.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: graph_coloring_witness
+  summary: Produce a proper k-coloring or certify impossibility for small graphs; ranges over graph families
+    (cycles, trees, bipartite, random), k values, and constraint tightness; answer is coloring map or
+    none.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_invariants_r1.ordered_greedy_coloring.ordered_greedy_coloring:OrderedGreedyColoring
+    relationship: variant
+    overlap: both produce a vertex coloring by a greedy method with a specified order; the candidate aims
+      for a proper k-coloring or none, while the neighbor always assigns the smallest feasible color and
+      returns the full assignment.
+  - id: proposal:k3_shortcuts-fail:P007
+    relationship: adjacent
+    overlap: both are graph algorithms producing a coloring/partition over vertices, but the neighbor
+      uses color refinement (Weisfeiler-Lehman) while the candidate performs graph coloring under constraints.
+  - id: task:generated.wave8.graph_planarity.graph_planarity:GraphPlanarity
+    relationship: adjacent
+    overlap: both are graph property problems, but the candidate produces a k-coloring while the neighbor
+      decides planarity via genus; no shared operation.
+  reason: 0/3 samples judged it novel; Both proposals assign colors to vertices of small graphs following
+    an order; the only change is the return format and an explicit k bound.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: matching_augmentation_path
+  summary: Find an augmenting path or confirm maximality for a given matching in general graphs, including
+    blossom contraction steps; ranges over matching sizes, blossom nesting, and graph density; answer
+    is vertex sequence or maximal.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.bipartite_matching.bipartite_matching:BipartiteMatching
+    relationship: same_operation
+    overlap: both find augmenting paths for matchings in graphs and return either a matching-improving
+      path or a maximal matching; the only difference is that the candidate extends from bipartite to
+      general graphs with blossom handling.
+  - id: task:generated.wave9.maximum_flow.maximum_flow:MaximumFlow
+    relationship: variant
+    overlap: both use augmenting-path algorithms to improve a feasible solution to an optimal one; the
+      flow version uses residual edges, the matching version uses alternating paths, a known algorithmic
+      duality.
+  - id: proposal:k3_shortcuts-fail:P007
+    relationship: adjacent
+    overlap: both are graph algorithms that refine partitions, but the neighbor uses color refinement
+      while the candidate performs matching augmentation.
+  reason: 0/3 samples judged it novel; The augmenting-path matching operation is already present in the
+    bipartite_matching task; the candidate only generalizes the graph class.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: ltl_path_satisfaction
+  summary: Check whether all paths in a finite Kripke structure satisfy an LTL formula using automata-theoretic
+    or tableau reasoning; ranges over safety, liveness, and fairness patterns; answer is satisfied or
+    counterexample trace.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+    relationship: same_operation
+    overlap: both evaluate LTL formulas (next, eventually, always, until) against a model; the neighbor
+      checks satisfaction points on a finite trace, and the candidate checks all paths in a Kripke structure,
+      both requiring the same LTL evaluation semantics.
+  - id: gallery:code_analysis
+    relationship: variant
+    overlap: both analyze temporal properties of finite-state systems; the neighbor covers CTL formulas
+      over toy programs, while the candidate covers LTL over Kripke structures, a closely related model-checking
+      operation.
+  - id: task:generated.wave12.linearizability_check.linearizability_check:LinearizabilityCheck
+    relationship: adjacent
+    overlap: both are formal verification checks over systems, but the neighbor checks concurrency linearizability,
+      not temporal logic satisfaction.
+  reason: 0/3 samples judged it novel; The operation is the same LTL evaluation over finite models; the
+    candidate only moves from a single trace to universal path quantification.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: stable_matching_with_ties
+  summary: Compute a weakly stable matching for bipartite preferences with ties and incomplete lists via
+    iterative proposal and tie-breaking; ranges over tie density, list completeness, and side imbalance;
+    answer is the matching pairs.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.bipartite_matching.bipartite_matching:BipartiteMatching
+    relationship: variant
+    overlap: Both construct a matching via iterative proposals/augmenting paths; C006 adds ties and incomplete
+      lists, but the stable matching operation is an extension of the maximum matching concept, not distinct.
+  - id: proposal:k3_novel-composition:P002
+    relationship: adjacent
+    overlap: Both involve iterative assignment and stability, but one is for graphical models, the other
+      for matching; no shared procedure.
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: different
+    overlap: No overlap besides both being tabular.
+  reason: 1/3 samples judged it novel; This is a parameter extension of matching with ties, not a new
+    cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: prufer_sequence_codec
+  summary: Encode labeled trees into Prufer sequences by repeatedly detaching the smallest-labeled leaf,
+    and decode a sequence back into its edge set; vary tree shape and labeling; answers are the code word
+    or the recovered edge list.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_uncertainty:P001
+    relationship: variant
+    overlap: "Both encode/decode labeled trees via Pr\xFCfer sequences using smallest-leaf removal and\
+      \ code-driven reattachment, returning code entries, parent queries, or edge sets."
+  - id: task:generated.wave0.n10_tree_reconstruction.tree_reconstruction:TreeReconstruction
+    relationship: adjacent
+    overlap: "Both deal with tree representations and reconstruction, but the neighbor uses traversal\
+      \ pairs (preorder/inorder) while this candidate uses Pr\xFCfer coding."
+  - id: proposal:k3_shortcuts-fail:P004
+    relationship: different
+    overlap: "Both involve trees and edge lists, but neighbor reconstructs additive weighted trees from\
+      \ distance matrices, not Pr\xFCfer coding."
+  reason: "C001 is a cosmetic re-implementation of an existing Pr\xFCfer code task with the same core\
+    \ procedure and answer formats."
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: lehmer_code_rank_unrank
+  summary: Convert permutations to Lehmer codes and factorial-base ranks by counting, at each position,
+    how many smaller symbols remain unused, and invert the process; answers are the code, the rank, or
+    the rebuilt permutation.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_uncertainty:P001
+    relationship: adjacent
+    overlap: both are bijective encodings between combinatorial objects and sequences, but one for trees
+      and the other for permutations
+  - id: task:generated.wave3.lexicographic_ranking.lexicographic_ranking:LexicographicRanking
+    relationship: variant
+    overlap: both rank permutations lexicographically, but Lehmer code uses factorial number system whereas
+      the existing task might use a different algorithm
+  - id: plan:WAVE3:S32
+    relationship: adjacent
+    overlap: explicitly plan to add lexicographic ranking of permutations, making this proposal a direct
+      implementation of that plan
+  reason: Ranking permutations via Lehmer code is a specific variant of existing ranking tasks.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: subset_zeta_mobius_transform
+  verdict: invalid
+  summary: Given a value for every subset of a small ground set, compute the subset-sum zeta transform
+    by layered additions over bit positions or invert it by alternating subtraction; answers are transformed
+    values at queried masks.
+  closest_id: null
+  reason: no critic sample returned a usable ballot
+- name: chipfiring_stabilization_trace
+  verdict: invalid
+  summary: Stabilize chip piles on a small grid or graph by repeatedly firing overloaded vertices that
+    pass one chip to each neighbor until nothing can fire; answers are the final loads and each vertex's
+    firing count.
+  closest_id: null
+  reason: no critic sample returned a usable ballot
+- name: functional_graph_orbit_profile
+  verdict: invalid
+  summary: Iterate an explicit self-map on a finite set from queried start states, decomposing each orbit
+    into tail and cycle; answers are tail length, cycle length, the k-th iterate, or shared-cycle membership
+    of two states.
+  closest_id: null
+  reason: no critic sample returned a usable ballot
+- name: page_replacement_simulation
+  summary: Simulate a reference string through a small frame buffer under FIFO, LRU, or optimal replacement
+    policies, tracking hits and evictions; answers are the fault count, final frame contents, or the victim
+    at a queried reference.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: variant
+    overlap: both simulate frame/buffer replacement policies (FIFO, LRU, LFU) with hits, misses, evictions,
+      and final state; difference is only in 'page' vs 'cache' terminology and adding optimal policy
+  - id: task:generated.wave8.clock_page_replacement.clock_page_replacement:ClockPageReplacement
+    relationship: variant
+    overlap: both simulate page replacement but clock uses reference bits while proposal includes FIFO/LRU/optimal
+  - id: task:generated.wave9.round_robin_scheduling.round_robin_scheduling:RoundRobinScheduling
+    relationship: adjacent
+    overlap: both simulate a deterministic resource management process, but one is for pages and the other
+      for processes
+  reason: A variant of existing cache/page replacement simulation with an added policy.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+- name: ranked_ballot_tabulation
+  summary: Tabulate ranked ballots by tallying first preferences, eliminating the weakest candidate and
+    transferring those votes under a stated tie order; answers are the round tallies, the elimination
+    order, or the winner.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.instant_runoff_winner.instant_runoff_winner:InstantRunoffWinner
+    relationship: same_operation
+    overlap: 'Both run instant-runoff voting: tally first preferences, eliminate weakest with tie-break,
+      transfer votes, and output winner; C012 adds round tallies and elimination order as output variants.'
+  - id: task:generated.wave8.borda_winner.borda_winner:BordaWinner
+    relationship: adjacent
+    overlap: Both are ranked voting systems, but Borda uses weights rather than elimination.
+  - id: task:generated.wave8.approval_voting_winner.approval_voting_winner:ApprovalVotingWinner
+    relationship: different
+    overlap: Approval voting is non-ranked, not same operation.
+  reason: Same IRV elimination algorithm as existing instant_runoff_winner with extra reporting.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/1
+- name: subtraction_game_grundy_values
+  summary: Compute nim-values for one-pile subtraction games by recursing over legal heap reductions and
+    taking mex of option values; answers are the value at a queried heap size, P/N status, or a winning
+    first move.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave3.grundy_values.grundy_values:GrundyValues
+    relationship: variant
+    overlap: computing Sprague-Grundy values for impartial combinatorial games via mex recursion, differing
+      only in the game description (one-pile subtraction with restricted moves vs. general heaps)
+  - id: gallery:game_best_move
+    relationship: variant
+    overlap: both evaluate game states to find winning moves using recursive minimax/grundy logic on finite
+      games
+  - id: task:generated.wave8.paxos_chosen_value.paxos_chosen_value:PaxosChosenValue
+    relationship: adjacent
+    overlap: both output a state after applying a deterministic iterative rule (voting/elimination) but
+      in completely different domains
+  reason: Essentially a parameterization of the existing grundy_values task.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 5
+    clarity: 5
+  votes: 0/1
+pool: []

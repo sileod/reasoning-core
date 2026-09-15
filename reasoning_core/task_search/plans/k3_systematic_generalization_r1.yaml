@@ -1,0 +1,487 @@
+version: 1
+name: k3_systematic_generalization_r1
+proposal_wave: k3_systematic-generalization
+defaults:
+  base_ref: 7ad7c9678957a5319eb7b58206ffa5e70d876778
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  v2:
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  v3:
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  pilot:
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+trials:
+- id: P002v1
+  hypothesis: P002
+  idea: permutation_pattern_witness_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v1
+  instruction: |-
+    Author a new task from scratch: permutation_pattern_witness_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given two permutations, decide whether the first contains the second as a pattern and return the lexicographically smallest set of indices realizing it, or NONE.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v1
+  design_choice: Encode the answer as a comma-separated list of 1-based indices in ascending order, or
+    the literal string NONE.
+- id: P002v2
+  hypothesis: P002
+  idea: permutation_pattern_witness_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v2
+  instruction: |-
+    Author a new task from scratch: permutation_pattern_witness_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given two permutations, decide whether the first contains the second as a pattern and return the lexicographically smallest set of indices realizing it, or NONE.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v2
+  design_choice: Generate instances where the pattern length is exactly half the text length, forcing
+    a search over many candidate windows.
+- id: P002v3
+  hypothesis: P002
+  idea: permutation_pattern_witness_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v3
+  instruction: |-
+    Author a new task from scratch: permutation_pattern_witness_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given two permutations, decide whether the first contains the second as a pattern and return the lexicographically smallest set of indices realizing it, or NONE.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/permutation_pattern_witness_v3
+- id: P003v1
+  hypothesis: P003
+  idea: convex_hull_ordering_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v1
+  instruction: |-
+    Author a new task from scratch: convex_hull_ordering_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact rational convex hull of finite planar point sets with collinearities, returning the canonical counterclockwise list of extreme points or whether a queried segment is a hull edge.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v1
+  design_choice: 'Answer format: return the full ordered hull vertex list as a compact string like ''0,0;2,0;2,1;0,1''
+    for all instances, with no query variant.'
+- id: P003v2
+  hypothesis: P003
+  idea: convex_hull_ordering_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v2
+  instruction: |-
+    Author a new task from scratch: convex_hull_ordering_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact rational convex hull of finite planar point sets with collinearities, returning the canonical counterclockwise list of extreme points or whether a queried segment is a hull edge.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v2
+  design_choice: 'Answer format: for each instance, emit a yes/no answer to a given segment query, where
+    the segment endpoints are part of the input, and the hull list is not required.'
+- id: P003v3
+  hypothesis: P003
+  idea: convex_hull_ordering_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v3
+  instruction: |-
+    Author a new task from scratch: convex_hull_ordering_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact rational convex hull of finite planar point sets with collinearities, returning the canonical counterclockwise list of extreme points or whether a queried segment is a hull edge.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/convex_hull_ordering_v3
+- id: P004v1
+  hypothesis: P004
+  idea: skyline_dominance_query_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v1
+  instruction: |-
+    Author a new task from scratch: skyline_dominance_query_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given records with numeric attributes and a per-dimension minimize or maximize preference, return sorted labels of records not dominated by any other, over correlated and anticorrelated distributions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v1
+  design_choice: Use exactly 2 attributes per record, with preferences set to maximize both, so dominance
+    is strict Pareto; answer is the sorted labels of the nondominated frontier.
+- id: P004v2
+  hypothesis: P004
+  idea: skyline_dominance_query_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v2
+  instruction: |-
+    Author a new task from scratch: skyline_dominance_query_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given records with numeric attributes and a per-dimension minimize or maximize preference, return sorted labels of records not dominated by any other, over correlated and anticorrelated distributions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v2
+  design_choice: Use 3 attributes with mixed minimize/maximize preferences per dimension, so dominance
+    requires all comparisons; answer is labels sorted lexicographically by attribute values.
+- id: P004v3
+  hypothesis: P004
+  idea: skyline_dominance_query_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v3
+  instruction: |-
+    Author a new task from scratch: skyline_dominance_query_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given records with numeric attributes and a per-dimension minimize or maximize preference, return sorted labels of records not dominated by any other, over correlated and anticorrelated distributions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/skyline_dominance_query_v3
+- id: P005v1
+  hypothesis: P005
+  idea: strip_fold_layer_order_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v1
+  instruction: |-
+    Author a new task from scratch: strip_fold_layer_order_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply a signed mountain/valley fold sequence to a one-dimensional strip of labeled segments, maintaining orientation and layer order, and return the top-to-bottom segment order in a queried stack.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v1
+  design_choice: Represent the strip as a list of segment labels, apply folds by reversing and flipping
+    sublists, and output the final top-to-bottom labels as a comma-separated string.
+- id: P005v2
+  hypothesis: P005
+  idea: strip_fold_layer_order_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v2
+  instruction: |-
+    Author a new task from scratch: strip_fold_layer_order_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply a signed mountain/valley fold sequence to a one-dimensional strip of labeled segments, maintaining orientation and layer order, and return the top-to-bottom segment order in a queried stack.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v2
+  design_choice: Model each segment with an orientation bit and layer index; folds reverse the segment
+    order and toggle orientation; answer is the ordered list of labels at the queried position.
+- id: P005v3
+  hypothesis: P005
+  idea: strip_fold_layer_order_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v3
+  instruction: |-
+    Author a new task from scratch: strip_fold_layer_order_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply a signed mountain/valley fold sequence to a one-dimensional strip of labeled segments, maintaining orientation and layer order, and return the top-to-bottom segment order in a queried stack.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/strip_fold_layer_order_v3
+- id: P006v1
+  hypothesis: P006
+  idea: birkhoff_decomposition_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v1
+  instruction: |-
+    Author a new task from scratch: birkhoff_decomposition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decompose small rational doubly stochastic matrices into a canonical weighted sum of permutation matrices by repeatedly subtracting minimum-cycle residuals, returning the permutation index sequence and coefficients.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v1
+  design_choice: Generate instances by starting from a random permutation sum, then add rational noise
+    and round to enforce row/column sums, so the decomposition has known ground truth.
+- id: P006v2
+  hypothesis: P006
+  idea: birkhoff_decomposition_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v2
+  instruction: |-
+    Author a new task from scratch: birkhoff_decomposition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decompose small rational doubly stochastic matrices into a canonical weighted sum of permutation matrices by repeatedly subtracting minimum-cycle residuals, returning the permutation index sequence and coefficients.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v2
+  design_choice: Vary the matrix size and coefficient sparsity, forcing solvers to handle cases with many
+    small permutation weights versus few dominant ones.
+- id: P006v3
+  hypothesis: P006
+  idea: birkhoff_decomposition_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v3
+  instruction: |-
+    Author a new task from scratch: birkhoff_decomposition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decompose small rational doubly stochastic matrices into a canonical weighted sum of permutation matrices by repeatedly subtracting minimum-cycle residuals, returning the permutation index sequence and coefficients.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/birkhoff_decomposition_v3
+- id: P007v1
+  hypothesis: P007
+  idea: chip_firing_stabilization_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v1
+  instruction: |-
+    Author a new task from scratch: chip_firing_stabilization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Stabilize chip configurations on undirected graphs by firing overloaded vertices (chips to each neighbor) under sequential orders; return the stable vector, per-vertex firing tally, or prefix legality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v1
+  design_choice: 'Answer form: return only the final stable chip count vector, with per-vertex totals
+    omitted to force full stabilization computation.'
+- id: P007v2
+  hypothesis: P007
+  idea: chip_firing_stabilization_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v2
+  instruction: |-
+    Author a new task from scratch: chip_firing_stabilization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Stabilize chip configurations on undirected graphs by firing overloaded vertices (chips to each neighbor) under sequential orders; return the stable vector, per-vertex firing tally, or prefix legality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v2
+  design_choice: 'Answer form: return the firing tally vector (number of times each vertex fires) alongside
+    the stable vector, requiring tracking of each fire event.'
+- id: P007v3
+  hypothesis: P007
+  idea: chip_firing_stabilization_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v3
+  instruction: |-
+    Author a new task from scratch: chip_firing_stabilization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Stabilize chip configurations on undirected graphs by firing overloaded vertices (chips to each neighbor) under sequential orders; return the stable vector, per-vertex firing tally, or prefix legality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/chip_firing_stabilization_v3
+- id: P008v1
+  hypothesis: P008
+  idea: concurrent_edit_rebase_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v1
+  instruction: |-
+    Author a new task from scratch: concurrent_edit_rebase_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rebase concurrent insert/delete operations against each other over an indexed buffer across priority and type combinations, returning the transformed position and range or an explicit no-op.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v1
+  design_choice: Represent the buffer as a list of character tokens with explicit sentinel positions,
+    where edits are given as (start, length, text) and the answer is the new (start, length) after resolving
+    conflicts.
+- id: P008v2
+  hypothesis: P008
+  idea: concurrent_edit_rebase_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v2
+  instruction: |-
+    Author a new task from scratch: concurrent_edit_rebase_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rebase concurrent insert/delete operations against each other over an indexed buffer across priority and type combinations, returning the transformed position and range or an explicit no-op.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v2
+  design_choice: Use a coordinate system based on line and column numbers, with edits described by (line,
+    col, lines, cols) and the answer as the transformed line-col range or a canonical no-op string.
+- id: P008v3
+  hypothesis: P008
+  idea: concurrent_edit_rebase_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v3
+  instruction: |-
+    Author a new task from scratch: concurrent_edit_rebase_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rebase concurrent insert/delete operations against each other over an indexed buffer across priority and type combinations, returning the transformed position and range or an explicit no-op.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/concurrent_edit_rebase_v3
+- id: P009v1
+  hypothesis: P009
+  idea: dempster_shafer_combination_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v1
+  instruction: |-
+    Author a new task from scratch: dempster_shafer_combination_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine two mass assignments over a small hypothesis frame by intersecting focal sets pairwise and pooling products, normalizing or reporting conflict per stated variant; return the resulting masses.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v1
+  design_choice: Frame size fixed at 3 hypotheses, with focal sets drawn from all nonempty subsets and
+    masses as integer fractions summing to 1.
+- id: P009v2
+  hypothesis: P009
+  idea: dempster_shafer_combination_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v2
+  instruction: |-
+    Author a new task from scratch: dempster_shafer_combination_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine two mass assignments over a small hypothesis frame by intersecting focal sets pairwise and pooling products, normalizing or reporting conflict per stated variant; return the resulting masses.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v2
+  design_choice: Variant A returns normalized masses; variant B returns the unnormalized conflict mass
+    as a reduced fraction, with frame size varying per instance.
+- id: P009v3
+  hypothesis: P009
+  idea: dempster_shafer_combination_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v3
+  instruction: |-
+    Author a new task from scratch: dempster_shafer_combination_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine two mass assignments over a small hypothesis frame by intersecting focal sets pairwise and pooling products, normalizing or reporting conflict per stated variant; return the resulting masses.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_systematic_generalization_r1/dempster_shafer_combination_v3

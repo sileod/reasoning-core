@@ -1,0 +1,619 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_verification-repair
+created_at: '2026-09-15T01:09:27.046699+00:00'
+provenance:
+  kind: proposer
+  name: k3_verification-repair
+  received: '2026-09-15'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks requiring verification, error localization, and repair. The catalog you were
+    shown already covers the classic textbook algorithms -- sorting, gcd, graph traversal, compression,
+    scheduling, matching, parsing -- and a proposal that names one will be rejected as a repeat however
+    well it fits this brief. Reach past the standard repertoire: propose structures the catalog does not
+    have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 12
+  complete: true
+catalog:
+  sha256: 53535ba98c463db867df47f35d1d1bff2068a85e5733a36a70e135e942d458cd
+  entries: 487
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 43
+    task: 282
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  requested_model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls: []
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 113ec93f876938326c89eda4ec6258159bc84733d6c06cfb57688006c190fec9
+    response_sha256: 82609ac3540b83ed92830668c4f57e9e547c7c4d2e1d42c3c44e6eb6426b530e
+    response_id: chatcmpl-a890e77b38b57508
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 0f954cf0f5a4e6ef4683e407ef04dbc02d83ba4460eadbf251bf2ee4877d51db
+    response_sha256: fc7e14b39c179f7d180010b1867eafff3ff5bdb2d9a88b9c795bc6033a1fdfea
+    response_id: chatcmpl-941f783cc2c9cc87
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: b4586245920364e75037f250648f98c37caf2fa42a32e0ed992e3720379e11dd
+    response_sha256: e1d2d9e85ac2ad1171539b75a61d96b6b519c466979c4dff53e2968a75d37ee7
+    response_id: chatcmpl-80bef8e2b6e39dae
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1234a109fec810f51463c39837b37a6b8ee901cf55848cbd193187b836f1e46c
+    response_sha256: 1fc285381dcbaddd1f798be08cbe8b313641f802da4cda0cb001715e6a79e064
+    response_id: chatcmpl-b6a01f995a7974d6
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 66bee96174eb79161c77ebdbe4b6a6c3ecb3e5069015abfe0238a7e71b07013a
+    response_sha256: 8b5ea1743cd9c40dfc50566a3eff02073665c76250ec42fe4235922ff49bbede
+    response_id: chatcmpl-b6fbe3e767182bd2
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 07338f70894ef7d11f545a471a2b289be55b2cca49d7eb5baae786cca369f4a2
+    response_sha256: c888303a861bd0dad68b507a0641e22a4b445ae590c8161af9cea82740cd0b41
+    response_id: chatcmpl-82b1076656af0156
+proposals:
+- name: lz77_tokenization
+  summary: Greedily parse a string into (offset, length, next-symbol) LZ77 triples under a stated search-window
+    size, emitting the full token stream; alphabet size, window size, and repeat density vary.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.prefix_code_decode.prefix_code_decode:PrefixCodeDecode
+      relationship: different
+      overlap: Both handle compressed string encodings, but prefix-code decoding uses a fixed codebook,
+        not greedy matching with a window.
+    - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+      relationship: different
+      overlap: Both involve search over a state (slots vs window), but one is for hashing, the other for
+        string compression.
+    - id: proposal:k3_counterfactual:P002
+      relationship: different
+      overlap: Both process strings incrementally with suffix/backtracking, but palindromic tree counts
+        substrings, not LZ77 tokens.
+    substantive_difference: Greedy longest-match LZ77 parsing is a distinct compression algorithm not
+      in the known tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: 'Novel: LZ77 tokenization is a specific compression method with no adjacent counterpart in
+      the library.'
+    votes: 3/3
+    dissent: []
+- name: euler_tour_intervals
+  summary: Compute DFS entry and exit stamps over a rooted tree so each subtree becomes a contiguous interval,
+    then answer ancestry checks or return subtree member sets using only the stamps.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_uncertainty:P001
+      relationship: different
+      overlap: "Both work with trees and produce node orders, but Pr\xFCfer codes give a bijection to\
+        \ sequences, not DFS entry/exit stamps."
+    - id: task:generated.wave9.articulation_bridges.articulation_bridges:ArticulationBridges
+      relationship: adjacent
+      overlap: Both use DFS on trees/graphs to derive intervals or low-link values, but here the purpose
+        is subtree intervals, not connectivity.
+    - id: task:generated.wave8.eulerian_status.eulerian_status:EulerianStatus
+      relationship: different
+      overlap: Both involve Eulerian concepts, but eulerian_status checks trails, not DFS tour intervals.
+    substantive_difference: Computing Euler tour intervals to map subtrees to contiguous ranges and then
+      answer ancestry is a specific technique not present in the library.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: 'Novel: DFS entry/exit stamps for subtree interval queries is a distinct algorithmic transformation.'
+    votes: 3/3
+    dissent: []
+- name: misra_gries_counters
+  summary: 'Maintain k-minus-one cancellation counters: increment on a hit, occupy an empty slot, or decrement
+    all on a miss; return the final counter map, including the majority-vote case with verification.'
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.instant_runoff_winner.instant_runoff_winner:InstantRunoffWinner
+      relationship: different
+      overlap: Both involve counting and elimination, but IRV is for ranked ballots while Misra-Gries
+        is for finding frequent items in a stream.
+    - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+      relationship: different
+      overlap: Groupby aggregation computes sums/counts by key, not continual counter cancellation.
+    - id: proposal:k3_invariants:P006
+      relationship: different
+      overlap: Perceptron updates adjust weights, not maintain frequency counters.
+    substantive_difference: Misra-Gries uses a distinct counter maintenance algorithm (increment, occupy
+      empty slot, or decrement all) to approximate frequent items, which no neighbor performs.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: No existing task implements the Misra-Gries counter algorithm; it is a novel data streaming
+      procedure.
+    votes: 2/2
+    dissent: []
+- name: pipeline_hazard_trace
+  summary: Clock an in-order five-stage pipeline over instruction lists with register dependencies under
+    stated forwarding rules, returning total issue cycles, or which instruction stalls and where.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+      relationship: different
+      overlap: Both simulate execution traces, but call stack is about recursion frames, not instruction-level
+        pipeline stalls.
+    - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+      relationship: different
+      overlap: Both follow a stateful sequence of events, but protocol trace uses guards/timeouts, not
+        hardware pipeline forwarding.
+    - id: task:generated.wave9.critical_path_analysis.critical_path_analysis:CriticalPathAnalysis
+      relationship: adjacent
+      overlap: Both deal with timing/dependencies, but critical path is in precedence networks, not instruction
+        cycles.
+    substantive_difference: Simulating a five-stage pipeline with forwarding and stalls is a specialized
+      hardware execution model not present in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 5
+      feasibility: 4
+      clarity: 4
+    reason: 'Unique operation: clocking an in-order pipeline with hazards is absent from the existing
+      procedural catalog.'
+    votes: 3/3
+    dissent: []
+- name: simplex_pivot_execution
+  summary: Run primal simplex on tiny standard-form LPs with a stated pivot rule and minimum-ratio tests,
+    keeping exact rational tableaux, and returning the optimal value, pivot count, or an unboundedness
+    flag.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+      relationship: different
+      overlap: Both involve exact stepwise arithmetic, but rounding pipeline applies fixed conversion
+        rules, not simplex pivoting over constraint systems.
+    - id: task:generated.wave9.query_plan_execution.query_plan_execution:QueryPlanExecution
+      relationship: different
+      overlap: Both execute a sequence of operations on tables, but query plans use relational operators,
+        not linear programming pivoting.
+    - id: proposal:k3_counterfactual:P004
+      relationship: different
+      overlap: Both compute payoffs/costs from coalition subsets, but VCG handles auction winners not
+        LP tableaux.
+    substantive_difference: Executing the simplex algorithm with exact rational tableaux and pivot rules
+      is a distinct optimization procedure not present in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Genuinely novel operation: running primal simplex on tiny LPs is absent from the known library.'
+    votes: 3/3
+    dissent: []
+- name: elimination_fill_in
+  summary: Eliminate vertices in a stated order, making each current neighborhood a clique by added fill
+    edges; answer with the fill edge list, its size, or the largest clique any elimination step forms.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+      relationship: different
+      overlap: Both repeatedly remove vertices but topological layering removes zero-indegree nodes without
+        adding edges, while elimination fill-in adds edges to make cliques.
+    - id: proposal:k3_invariants:P010
+      relationship: adjacent
+      overlap: Both involve sequential elimination with composition, but GNFA state elimination composes
+        regex labels while elimination fill-in adds graph edges.
+    - id: proposal:k3_uncertainty:P008
+      relationship: different
+      overlap: Iterated dominance elimination removes dominated strategies in games, not graph vertices
+        with clique completion.
+    substantive_difference: Elimination fill-in is a graph transformation where eliminating a vertex causes
+      its neighborhood to become a clique, a specific edge-addition process not found in other elimination
+      tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: No existing task performs the clique-completion elimination procedure; it is a novel graph
+      algorithm.
+    votes: 2/3
+    dissent:
+    - variant
+- name: arithmetic_coding_intervals
+  summary: 'Narrow and invert exact rational coding intervals against a cumulative symbol distribution:
+    encode a short word to its final [lo,hi) endpoints, or decode a target rational back into its symbol
+    sequence.'
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+      relationship: different
+      overlap: Both operate on rational intervals, but one propagates through arithmetic operations while
+        the other narrows intervals based on cumulative symbol probabilities.
+    - id: task:generated.wave9.abstract_interval_analysis.abstract_interval_analysis:AbstractIntervalAnalysis
+      relationship: adjacent
+      overlap: Both involve intervals and encoded states, but abstract interpretation is for program analysis,
+        arithmetic coding is for data compression.
+    - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+      relationship: different
+      overlap: Interval sweep computes overlaps/merges, not encoding/decoding using probability ranges.
+    substantive_difference: Arithmetic coding involves sequentially narrowing a rational interval based
+      on a cumulative distribution, and inverting that process to decode, which is fundamentally different
+      from interval arithmetic or abstract interpretation.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: No existing task performs arithmetic coding; the interval narrowing and inversion is a unique
+      operation.
+    votes: 2/3
+    dissent:
+    - variant
+- name: shortest_path_betweenness
+  summary: From each source, layer an unweighted graph by BFS and count shortest paths, then accumulate
+    pair dependencies back down the search DAG, returning one node's exact betweenness as a rational.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:graph_pathfinding
+      relationship: adjacent
+      overlap: Both operate on graphs and compute path-related metrics, but pathfinding returns a single
+        path or cost while betweenness computes a centrality measure across all pairs.
+    - id: task:generated.wave9.articulation_bridges.articulation_bridges:ArticulationBridges
+      relationship: different
+      overlap: Articulation/bridges find critical nodes/edges while betweenness counts all shortest paths
+        and accumulates pair dependencies.
+    - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+      relationship: different
+      overlap: Transitive reduction removes redundant edges in a DAG; betweenness centrality is a quantitative
+        measure, not an edge reduction.
+    substantive_difference: Shortest-path betweenness requires BFS from every source, counting all shortest
+      paths, and propagating dependencies, a computational procedure not present in single-pathfinding
+      or connectivity tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Betweenness centrality is a distinct algorithmic workflow from existing graph tasks on paths
+      and connectivity.
+    votes: 2/3
+    dissent:
+    - variant
+- name: mealy_composition_run
+  summary: Pipe one Mealy machine's emitted word into a second machine over a shared output/input alphabet,
+    tracking each machine's state and emission table, returning the final cascaded output word and state
+    pair.
+  id: P009
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+      relationship: adjacent
+      overlap: Both compose transformations, but one composes geometric frames, the other composes Mealy
+        machines; different formalisms and outputs.
+    - id: task:generated.wave9.query_plan_execution.query_plan_execution:QueryPlanExecution
+      relationship: adjacent
+      overlap: Both execute composed pipelines of operators, but one is relational-algebra, the other
+        cascaded finite-state transducers.
+    - id: proposal:k3_verification-repair:P004
+      relationship: different
+      overlap: Both trace execution steps, but pipeline hazard trace simulates CPU stages, not finite-state
+        transducers.
+    substantive_difference: Cascading two Mealy machines by feeding outputs to inputs is a novel composition
+      operation absent from the catalog's automata and pipeline tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: No neighbor performs cascaded Mealy composition; this is a distinct automata-theoretic operation.
+    votes: 3/3
+    dissent: []
+- name: tree_reroot_distances
+  summary: Accumulate subtree distance sums on a rooted tree, then reroot along every edge with shift
+    updates, returning each node's (or a queried node's) total distance to all others.
+  id: P010
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_verification-repair:P002
+      name: euler_tour_intervals
+      relationship: different
+      overlap: Both compute subtree information via DFS, but rerooting uses distance sums and shift updates,
+        not entry/exit stamps.
+    - id: task:generated.wave0.n10_tree_reconstruction.tree_reconstruction:TreeReconstruction
+      relationship: different
+      overlap: Tree reconstruction recovers topology from traversals, while rerooting computes distances;
+        no shared operation.
+    - id: proposal:k3_verification-repair:P008
+      name: shortest_path_betweenness
+      relationship: adjacent
+      overlap: Both compute distance sums over graphs (tree vs. general), but betweenness uses BFS layering
+        and dependency accumulation, not subtree DP with shift updates.
+    substantive_difference: The operation is a two-pass tree DP with rerooting shift updates, distinct
+      from traversal-based or BFS methods in the neighbors.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Rerooting distance sums is a novel algorithmic pattern not present in the catalog.
+    votes: 2/3
+    dissent:
+    - variant
+- name: cellular_automaton_step
+  summary: Advance a one-dimensional elementary cellular automaton under a stated rule number and boundary
+    convention for several synchronous steps, returning a queried row string, cell state, or live-cell
+    count.
+  id: P011
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave0.n04_finite_automaton_execution.n04_finite_automaton_execution:FiniteAutomatonExecution
+      relationship: adjacent
+      overlap: Both simulate discrete state-based systems, but one uses automaton transitions, the other
+        uses CA rules with synchronous neighborhood update.
+    - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+      relationship: adjacent
+      overlap: Both step through discrete-time simulations, but one uses priority event queues, the other
+        synchronous parallel cell rewrites.
+    - id: proposal:k3_invariants:P010
+      relationship: different
+      overlap: Both involve transition rules on graphs/automata, but CA uses a uniform local rule over
+        a grid, GNFA elimination is state-based regex construction.
+    substantive_difference: Elementary cellular automaton synchronous update with rule number and boundary
+      handling is a distinct dynamical system not represented in the catalog.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: No existing neighbor executes a 1D cellular automaton; the operation is genuinely different
+      from automata and queue simulation.
+    votes: 2/3
+    dissent:
+    - variant
+- name: lindenmayer_parallel_rewrite
+  summary: Expand an L-system by replacing every symbol simultaneously for a stated number of steps over
+    mixed constant/rewriting productions, returning the bounded result string or the count of a queried
+    symbol.
+  id: P012
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_verification-repair:P001
+      relationship: different
+      overlap: Both process strings, but LZ77 compresses via greedy lookback, L-systems expand via parallel
+        rewriting; distinct operations.
+    - id: proposal:k3_counterfactual:P002
+      relationship: different
+      overlap: Both grow symbolic structures (palindromic tree vs. L-system strings), but one uses suffix
+        links, the other parallel context-free productions.
+    - id: task:math_scratch:MathScratchEntailment
+      relationship: different
+      overlap: Both use rewrite systems, but one simplifies expressions via term rewriting, the other
+        expands strings via parallel replacement.
+    substantive_difference: Parallel L-system rewriting is a distinct generative operation not covered
+      by the catalog's string processing or rewrite tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: No neighbor implements synchronous parallel rewriting of a string; the operation is genuinely
+      new.
+    votes: 3/3
+    dissent: []
+rejected:
+- name: grid_transform_induction
+  summary: "Infer the transform mapping demo grid pairs\xE2\x80\x94rotation, reflection, gravity fall,\
+    \ border recolor, symmetry completion\xE2\x80\x94then apply it to a new colored grid, returning the\
+    \ resulting rows."
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:pattern_induction
+    relationship: same_operation
+    overlap: Infer a transformation rule from examples and apply to new input, outputting predicted structure.
+  - id: gallery:matrix_induction
+    relationship: variant
+    overlap: Infer a rule over grids/matrices from examples and predict missing/transformed cells.
+  - id: proposal:k3_counterfactual:P008
+    relationship: adjacent
+    overlap: Both manipulate grids and output transformed states, but P008 uses light propagation rather
+      than inferring a transform.
+  reason: 1/3 samples judged it novel; Repeats the well-known pattern/matrix induction operation with
+    a different set of transform types.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: pareto_frontier_maintenance
+  summary: Maintain the undominated skyline as multi-attribute tuples arrive in stated order or are probed,
+    returning the sorted maximal set, or a queried point's status with a dominating witness.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_systematic-generalization:P004
+    relationship: same_operation
+    overlap: Both compute the skyline (set of non-dominated points) over multi-attribute points and return
+      sorted labels.
+  - id: task:generated.wave9.access_control_evaluation.access_control_policy_evaluation:AccessControlEvaluation
+    relationship: adjacent
+    overlap: Both resolve dominance/precedence among items, but access control uses permissions, not numeric
+      attributes.
+  - id: task:generated.wave8.poset_cover_query.poset_cover_query:PosetCoverQuery
+    relationship: adjacent
+    overlap: Both involve partial order and maximal elements, but covers are direct successors, not dominance
+      frontier.
+  reason: 0/3 samples judged it novel; Exact duplicate of existing skyline_dominance_query with only dynamic
+    arrival of points added.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: swing_power_indices
+  summary: For a weighted voting game (weights plus quota), enumerate coalitions and permutations to count
+    each player's swings and pivots, returning Banzhaf or Shapley power as exact counts or reduced fractions.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_rule_induction_r1.shapley_value_marginal_contributions.shapley_value_marginal_contributions:ShapleyValueMarginalContributions
+    relationship: same_operation
+    overlap: Both compute Shapley values (power indices) by averaging marginal contributions over permutations/coalitions.
+  - id: task:generated.wave8.approval_voting_winner.approval_voting_winner:ApprovalVotingWinner
+    relationship: adjacent
+    overlap: Both count votes/coalitions over a set of voters, but approval voting picks a winner, not
+      power indices.
+  - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+    relationship: different
+    overlap: Both produce exact probabilities/fractions, but Bayesian conditioning uses CPTs, not weighted
+      voting.
+  reason: 0/3 samples judged it novel; Reuses Shapley value over permutations to compute voting power;
+    a parameterization of an existing task.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: lagrange_interpolation
+  summary: Recover the unique low-degree polynomial through stated prime-field points via Lagrange basis
+    sums, returning its value at a query point, a missing share, or disagreement among points.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_uncertainty:P006
+    relationship: same_operation
+    overlap: Both recover a polynomial in a prime field from shares using Lagrange interpolation and evaluate
+      at points.
+  - id: task:generated.wave9.causal_intervention.causal_intervention:CausalIntervention
+    relationship: different
+    overlap: Both involve parameterized models, but causal intervention truncates mechanisms, not interpolation.
+  - id: gallery:function_manipulation
+    relationship: adjacent
+    overlap: Both handle polynomial evaluation, but gallery covers general symbolic manipulation, not
+      Lagrange basis sums.
+  reason: '0/3 samples judged it novel; Exact duplicate: both recover a low-degree polynomial via Lagrange
+    coefficients over given points.'
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: operator_algebra_induction
+  summary: Infer a hidden binary operator from input-output examples covering modular, digitwise, and
+    min/max families, then evaluate nested bracketed expressions built from it, returning the integer
+    result.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:matrix_induction
+    relationship: variant
+    overlap: Both infer a hidden rule from examples and apply it; matrix_induction fills missing matrix
+      cells while operator_algebra_induction finds a binary operator, but the inference-then-apply structure
+      is the same.
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both are sequence-rule induction; operator_algebra adds evaluation of nested expressions,
+      but the core induction from examples is shared.
+  - id: task:regex:RegexInduction
+    relationship: adjacent
+    overlap: Both infer a rule from example sets, but one produces a regex over strings, the other a binary
+      operator over integers; different families.
+  reason: 1/3 samples judged it novel; The infer-operator-then-evaluate pattern is common in induction
+    tasks; this is a parameterization of existing induction operations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: stack_permutation_feasibility
+  summary: Judge whether a demanded output order is reachable by interleaving pushes from an ordered input
+    with pops that emit it, returning the full push/pop trace or the first unproducible symbol.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_invariants:P003
+    relationship: variant
+    overlap: Both simulate a single LIFO stack with push/pop interleaving to produce a sequence; stack_sorting_discipline
+      outputs identity while stack_permutation_feasibility outputs an arbitrary permutation.
+  - id: task:generated.wave9.ll1_predictive_parsing.ll1_predictive_parsing:LL1PredictiveParsing
+    relationship: different
+    overlap: Both use a stack, but LL(1) parsing uses a parse table and grammar productions, not input-order
+      permutations.
+  - id: task:generated.wave12.transaction_serializability.transaction_serializability:TransactionSerializability
+    relationship: adjacent
+    overlap: 'Both involve ordering constraints but on different structures: stack permutations vs. conflict-graph
+      serial orders.'
+  reason: 0/3 samples judged it novel; Directly extends an existing stack-permutation operation by allowing
+    non-identity output.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+pool:
+- name: cyk_chart_parsing
+  summary: Fill the CYK recognition chart for a small Chomsky-normal-form grammar by combining span splits
+    into nonterminal sets, returning the sorted contents of a queried span cell or the accept/reject verdict.
+- name: greedy_vertex_coloring
+  summary: Color an undirected graph in a stated vertex order or by saturation-first priority, assigning
+    each vertex the least color unused by already-placed neighbors; return a queried color or the count.
+- name: morphological_rule_induction
+  summary: 'Infer a synthetic language''s inflection rules from stem/inflected pairs: ordered conditional
+    suffixing, vowel mutation, and consonant assimilation; apply the rule chain to new stems and return
+    the exact words.'
+- name: transducer_state_induction
+  summary: "Infer a symbol-driven transducer's latent state logic from input/output traces\xE2\x80\x94\
+    outputs hinge on toggles, mod-k counters, or last-seen markers\xE2\x80\x94and return the output string\
+    \ for a fresh input sequence."
+- name: dag_merge_bases
+  summary: Compute upward ancestor closures of two nodes in a DAG, intersect them, and filter out any
+    common ancestor reachable from another, returning the sorted maximal merge-base nodes.
+- name: finite_difference_extrapolation
+  summary: Given an integer sequence stated to follow a degree-d polynomial, stack successive difference
+    rows until constant, returning an extrapolated later term, a needed new row, or the entry breaking
+    the pattern.

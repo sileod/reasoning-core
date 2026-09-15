@@ -1,0 +1,665 @@
+version: 1
+name: k3_invariants_r1
+proposal_wave: k3_invariants
+defaults:
+  base_ref: 98e1930d0a08275e3bc4214e69e5fa0600d70284
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: cyk_chart_membership_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v1
+  instruction: |-
+    Author a new task from scratch: cyk_chart_membership_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Fill the CYK recognition chart of a small Chomsky-normal-form grammar over a short terminal string, returning the sorted nonterminals of a queried span cell or the total derivation count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v1
+  design_choice: Query a fixed span (e.g., middle cell) and return its nonterminal set, with difficulty
+    from grammar ambiguity and span length.
+- id: P001v2
+  hypothesis: P001
+  idea: cyk_chart_membership_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v2
+  instruction: |-
+    Author a new task from scratch: cyk_chart_membership_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Fill the CYK recognition chart of a small Chomsky-normal-form grammar over a short terminal string, returning the sorted nonterminals of a queried span cell or the total derivation count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v2
+  design_choice: Return the total number of distinct parse trees for the whole string, requiring dynamic-programming
+    counting over the full chart.
+- id: P001v3
+  hypothesis: P001
+  idea: cyk_chart_membership_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v3
+  instruction: |-
+    Author a new task from scratch: cyk_chart_membership_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Fill the CYK recognition chart of a small Chomsky-normal-form grammar over a short terminal string, returning the sorted nonterminals of a queried span cell or the total derivation count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/cyk_chart_membership_v3
+- id: P002v1
+  hypothesis: P002
+  idea: prime_power_valuation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v1
+  instruction: |-
+    Author a new task from scratch: prime_power_valuation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact prime-power valuations of factorials, binomials, and double factorials via Legendre floor-sums and base-p carry counts (Kummer), returning the integer exponent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v1
+  design_choice: Present expressions in symbolic form like n! / (k! (n-k)!) and ask for the p-adic exponent,
+    requiring the solver to identify binomial structure before applying Kummer's theorem.
+- id: P002v2
+  hypothesis: P002
+  idea: prime_power_valuation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v2
+  instruction: |-
+    Author a new task from scratch: prime_power_valuation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact prime-power valuations of factorials, binomials, and double factorials via Legendre floor-sums and base-p carry counts (Kummer), returning the integer exponent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v2
+  design_choice: Ask for the exponent in the prime factorization of a double factorial n!!, where the
+    parity of n determines whether to sum floor(n/p^i) or floor((n-1)/p^i) terms, testing care about the
+    definition.
+- id: P002v3
+  hypothesis: P002
+  idea: prime_power_valuation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v3
+  instruction: |-
+    Author a new task from scratch: prime_power_valuation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact prime-power valuations of factorials, binomials, and double factorials via Legendre floor-sums and base-p carry counts (Kummer), returning the integer exponent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/prime_power_valuation_v3
+- id: P003v1
+  hypothesis: P003
+  idea: stack_sorting_discipline_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v1
+  instruction: |-
+    Author a new task from scratch: stack_sorting_discipline_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Route an input permutation through a single LIFO stack to emit the identity, interleaving pushes and pops greedily; return whether sorting succeeds, the first blocking step, or the element emitted at the k-th pop.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v1
+  design_choice: Return 'yes' if the permutation is stack-sortable under the greedy algorithm, otherwise
+    return the first index where a pop would emit a non-minimal element.
+- id: P003v2
+  hypothesis: P003
+  idea: stack_sorting_discipline_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v2
+  instruction: |-
+    Author a new task from scratch: stack_sorting_discipline_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Route an input permutation through a single LIFO stack to emit the identity, interleaving pushes and pops greedily; return whether sorting succeeds, the first blocking step, or the element emitted at the k-th pop.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v2
+  design_choice: Return the element popped at the k-th pop, but if the stack becomes blocked before k
+    pops, return the blocked value instead.
+- id: P003v3
+  hypothesis: P003
+  idea: stack_sorting_discipline_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v3
+  instruction: |-
+    Author a new task from scratch: stack_sorting_discipline_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Route an input permutation through a single LIFO stack to emit the identity, interleaving pushes and pops greedily; return whether sorting succeeds, the first blocking step, or the element emitted at the k-th pop.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/stack_sorting_discipline_v3
+- id: P004v1
+  hypothesis: P004
+  idea: gf2_matrix_rank_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v1
+  instruction: |-
+    Author a new task from scratch: gf2_matrix_rank_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Row-reduce a binary matrix over GF(2), reporting its rank, the pivot column set, or one nontrivial kernel vector when rank-deficient, across square, tall, and wide shapes with varied density.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v1
+  design_choice: Report only the rank as an integer, with matrix size and density randomized to ensure
+    answer variability across all shapes.
+- id: P004v2
+  hypothesis: P004
+  idea: gf2_matrix_rank_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v2
+  instruction: |-
+    Author a new task from scratch: gf2_matrix_rank_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Row-reduce a binary matrix over GF(2), reporting its rank, the pivot column set, or one nontrivial kernel vector when rank-deficient, across square, tall, and wide shapes with varied density.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v2
+  design_choice: Report the pivot column set as a sorted comma-separated list of indices (e.g., '0,2,5'),
+    with rank implied; ensure different ranks occur by controlling density.
+- id: P004v3
+  hypothesis: P004
+  idea: gf2_matrix_rank_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v3
+  instruction: |-
+    Author a new task from scratch: gf2_matrix_rank_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Row-reduce a binary matrix over GF(2), reporting its rank, the pivot column set, or one nontrivial kernel vector when rank-deficient, across square, tall, and wide shapes with varied density.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/gf2_matrix_rank_v3
+- id: P005v1
+  hypothesis: P005
+  idea: burnside_orbit_count_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v1
+  instruction: |-
+    Author a new task from scratch: burnside_orbit_count_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count distinct colorings of necklaces, bracelets, or small grids under their rotation and reflection groups by averaging each group element's fixed colorings over permutation cycles.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v1
+  design_choice: Vary the object type among necklaces, bracelets, and rectangular grids, with each instance
+    specifying the group and size, and require the answer as an integer count.
+- id: P005v2
+  hypothesis: P005
+  idea: burnside_orbit_count_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v2
+  instruction: |-
+    Author a new task from scratch: burnside_orbit_count_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count distinct colorings of necklaces, bracelets, or small grids under their rotation and reflection groups by averaging each group element's fixed colorings over permutation cycles.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v2
+  design_choice: Present the group as a list of permutations in cycle notation, and require the solver
+    to compute the cycle index and apply it to a given color count, outputting a simplified fraction.
+- id: P005v3
+  hypothesis: P005
+  idea: burnside_orbit_count_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v3
+  instruction: |-
+    Author a new task from scratch: burnside_orbit_count_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count distinct colorings of necklaces, bracelets, or small grids under their rotation and reflection groups by averaging each group element's fixed colorings over permutation cycles.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/burnside_orbit_count_v3
+- id: P006v1
+  hypothesis: P006
+  idea: perceptron_update_trace_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v1
+  instruction: |-
+    Author a new task from scratch: perceptron_update_trace_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute perceptron mistake updates over ordered integer feature-label pairs, cycling until convergence or a stated pass cap; return the final weight vector, the mistake count, or the first example missed on an epoch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v1
+  design_choice: Return only the final weight vector after a fixed number of passes, with answers as comma-separated
+    integers.
+- id: P006v2
+  hypothesis: P006
+  idea: perceptron_update_trace_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v2
+  instruction: |-
+    Author a new task from scratch: perceptron_update_trace_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute perceptron mistake updates over ordered integer feature-label pairs, cycling until convergence or a stated pass cap; return the final weight vector, the mistake count, or the first example missed on an epoch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v2
+  design_choice: Return the first example index (0-based) that causes a mistake in the final epoch, or
+    -1 if none.
+- id: P006v3
+  hypothesis: P006
+  idea: perceptron_update_trace_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v3
+  instruction: |-
+    Author a new task from scratch: perceptron_update_trace_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute perceptron mistake updates over ordered integer feature-label pairs, cycling until convergence or a stated pass cap; return the final weight vector, the mistake count, or the first example missed on an epoch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/perceptron_update_trace_v3
+- id: P007v1
+  hypothesis: P007
+  idea: stratified_datalog_evaluation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: stratified_datalog_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate stratified Datalog with negation by ordering strata along negative dependencies and saturating each to a fixed point, returning every derived fact of a queried predicate or the stratum where a queried fact first appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v1
+  design_choice: 'Answer form: return the full set of derived facts for a queried predicate as a canonical
+    sorted list of ground atoms, versus return only the stratum number where a specific queried fact first
+    appears.'
+- id: P007v2
+  hypothesis: P007
+  idea: stratified_datalog_evaluation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: stratified_datalog_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate stratified Datalog with negation by ordering strata along negative dependencies and saturating each to a fixed point, returning every derived fact of a queried predicate or the stratum where a queried fact first appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v2
+  design_choice: 'Difficulty source: use cyclic positive dependencies within a stratum to force iterative
+    saturation, versus use only acyclic positive rules so each stratum completes in one pass.'
+- id: P007v3
+  hypothesis: P007
+  idea: stratified_datalog_evaluation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: stratified_datalog_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate stratified Datalog with negation by ordering strata along negative dependencies and saturating each to a fixed point, returning every derived fact of a queried predicate or the stratum where a queried fact first appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/stratified_datalog_evaluation_v3
+- id: P008v1
+  hypothesis: P008
+  idea: havel_hakimi_realization_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v1
+  instruction: |-
+    Author a new task from scratch: havel_hakimi_realization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run the degree-sequence reduction that repeatedly attaches a maximum-degree vertex to the highest remaining degrees, returning whether the sequence is graphical, the failing step with its witness, or the residual multiset after k rounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v1
+  design_choice: 'Witness form: for a failing step, return the sorted residual degrees plus the index
+    of the vertex that cannot be satisfied, rather than the full adjacency list.'
+- id: P008v2
+  hypothesis: P008
+  idea: havel_hakimi_realization_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v2
+  instruction: |-
+    Author a new task from scratch: havel_hakimi_realization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run the degree-sequence reduction that repeatedly attaches a maximum-degree vertex to the highest remaining degrees, returning whether the sequence is graphical, the failing step with its witness, or the residual multiset after k rounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v2
+  design_choice: 'Residual representation: after k rounds, output the multiset of remaining degrees as
+    a comma-separated sorted list, not a count vector.'
+- id: P008v3
+  hypothesis: P008
+  idea: havel_hakimi_realization_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v3
+  instruction: |-
+    Author a new task from scratch: havel_hakimi_realization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run the degree-sequence reduction that repeatedly attaches a maximum-degree vertex to the highest remaining degrees, returning whether the sequence is graphical, the failing step with its witness, or the residual multiset after k rounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/havel_hakimi_realization_v3
+- id: P009v1
+  hypothesis: P009
+  idea: weakest_precondition_computation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v1
+  instruction: |-
+    Author a new task from scratch: weakest_precondition_computation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Push a stated postcondition backward through assignments and guarded branches of small integer programs, simplifying to a canonical linear predicate over the input variables.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v1
+  design_choice: Represent the program as a straight-line sequence of assignment statements only, with
+    no branches, so the weakest precondition is computed by substitution in reverse order and simplified
+    to a canonical linear inequality.
+- id: P009v2
+  hypothesis: P009
+  idea: weakest_precondition_computation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v2
+  instruction: |-
+    Author a new task from scratch: weakest_precondition_computation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Push a stated postcondition backward through assignments and guarded branches of small integer programs, simplifying to a canonical linear predicate over the input variables.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v2
+  design_choice: Include guarded conditional branches (if-else) where each branch may assign different
+    linear expressions, requiring the weakest precondition to be a conjunction of implications or a max/min
+    of linear predicates over the input variables.
+- id: P009v3
+  hypothesis: P009
+  idea: weakest_precondition_computation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v3
+  instruction: |-
+    Author a new task from scratch: weakest_precondition_computation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Push a stated postcondition backward through assignments and guarded branches of small integer programs, simplifying to a canonical linear predicate over the input variables.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/weakest_precondition_computation_v3
+- id: P010v1
+  hypothesis: P010
+  idea: gnfa_state_elimination_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v1
+  instruction: |-
+    Author a new task from scratch: gnfa_state_elimination_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce a generalized finite automaton to a regex by eliminating states in a stated order, composing edge labels with union, concatenation, and star; return the label on a queried edge mid-process or the final equivalent regex.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v1
+  design_choice: Queried edge label is returned as a canonical regex string using only |, *, and parentheses,
+    with explicit grouping for every concatenation.
+- id: P010v2
+  hypothesis: P010
+  idea: gnfa_state_elimination_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v2
+  instruction: |-
+    Author a new task from scratch: gnfa_state_elimination_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce a generalized finite automaton to a regex by eliminating states in a stated order, composing edge labels with union, concatenation, and star; return the label on a queried edge mid-process or the final equivalent regex.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v2
+  design_choice: The final regex is required to be a minimal-length equivalent, so solvers must simplify
+    unions and stars beyond the raw elimination steps.
+- id: P010v3
+  hypothesis: P010
+  idea: gnfa_state_elimination_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v3
+  instruction: |-
+    Author a new task from scratch: gnfa_state_elimination_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce a generalized finite automaton to a regex by eliminating states in a stated order, composing edge labels with union, concatenation, and star; return the label on a queried edge mid-process or the final equivalent regex.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/gnfa_state_elimination_v3
+- id: P011v1
+  hypothesis: P011
+  idea: ordered_greedy_coloring_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v1
+  instruction: |-
+    Author a new task from scratch: ordered_greedy_coloring_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign each vertex the smallest color unused by earlier-colored neighbors under a stated processing order, returning a queried vertex's color, the number of colors used, or the full assignment across varied graph shapes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v1
+  design_choice: Vary difficulty by making the processing order a random permutation of vertices versus
+    a structured order (e.g., BFS or degree-descending), forcing solvers to track order-dependent coloring.
+- id: P011v2
+  hypothesis: P011
+  idea: ordered_greedy_coloring_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v2
+  instruction: |-
+    Author a new task from scratch: ordered_greedy_coloring_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign each vertex the smallest color unused by earlier-colored neighbors under a stated processing order, returning a queried vertex's color, the number of colors used, or the full assignment across varied graph shapes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v2
+  design_choice: 'Vary the queried output: sometimes ask for a single vertex''s color, sometimes the total
+    color count, sometimes the full assignment, with instances generated from different graph families
+    (paths, cycles, trees, grids).'
+- id: P011v3
+  hypothesis: P011
+  idea: ordered_greedy_coloring_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v3
+  instruction: |-
+    Author a new task from scratch: ordered_greedy_coloring_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign each vertex the smallest color unused by earlier-colored neighbors under a stated processing order, returning a queried vertex's color, the number of colors used, or the full assignment across varied graph shapes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_invariants_r1/ordered_greedy_coloring_v3

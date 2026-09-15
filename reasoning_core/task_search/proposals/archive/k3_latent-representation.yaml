@@ -1,0 +1,912 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_latent-representation
+created_at: '2026-09-10T21:12:25.605058+00:00'
+provenance:
+  kind: proposer
+  name: k3_latent-representation
+  received: '2026-09-10'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks that teach abstraction: problems where identifying the right latent representation
+    makes the solution simple. The catalog you were shown already covers the classic textbook algorithms
+    -- sorting, gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that
+    names one will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 1
+  complete: false
+catalog:
+  sha256: b61dbaae4499dd76d6d2a5d426317521f31a2825dd8edf4f04d56082c82c4bdb
+  entries: 441
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 4
+    task: 275
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-1
+    request_sha256: f799ea3605a76b03eac30322752d380b9b1e31424dfa3bc49762b7056baf8eca
+    response_sha256: 0d72a4c6f5bacf5d7aca80a4e2575b3fb99bc11ad1cafb2c502103112f6fdedb
+    response_id: chatcmpl-9ddf48cb-8a2a-48df-868b-0116cc9383c1
+  - purpose: propose-round-2
+    request_sha256: 41e327e701b372918e4fc38e7d4b4a1984272efd0115261380e6ee4adbda3f89
+    response_sha256: 1380141a0fc68ee68586d8165d892d816b158fe630f162373a1c9b5c869d4453
+    response_id: chatcmpl-06d9314d-1529-43b9-a578-7de0ba739d9d
+  - purpose: propose-round-3
+    request_sha256: 591171ff343b67c21840f418c03a5ab6aa23738652ec0e1453f706e75489ebba
+    response_sha256: 0d61c4d5e6f9341838adf46d4c2e457d4cbde56b25ea8f07a848b5e8d154b2a2
+    response_id: chatcmpl-fa16534e-6fac-4cf6-a908-c56dec06ed8d
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    request_sha256: 4356c7c0f8d9aea8fa62ab548e317d0f7966571aacaf10b809d653802b52adfb
+    response_sha256: 2e1f7e26eda2bc8ed2de4994b537a3238ed9e1e2f15247574b993eac1aa5e6d2
+    response_id: chatcmpl-8a541eb8403da7db
+  - purpose: critic-round-1-sample-2
+    request_sha256: f4f210420f3831d060b8af02f35bf3b1a7d404621258aec470b53bc2eaed36f8
+    response_sha256: f7d36a9576edaa5e81f308a1893fd10e1c6d5ef1c49f5dbba5756e49d5243360
+    response_id: chatcmpl-a494c91cc65dd619
+  - purpose: critic-round-1-sample-3
+    request_sha256: b39d34ee45e6d172d69e02d5333c15a7d89f60241e0892fd8f872f76c41b95e1
+    response_sha256: 0320025e33e53ef5cefb82381033354d4e3b10b6440fe2602d39945532cc47a1
+    response_id: chatcmpl-82ebed59d78a9e6c
+  - purpose: critic-round-2-sample-1
+    request_sha256: b456725a971ee31523f3c3469e51fe91de5d373b014298611b2140b780fd579c
+    response_sha256: 5ad4e35c662d9386accace8a1a0fbf817d72231e697c73d40bafa1883cb3213d
+    response_id: chatcmpl-be2baaa63dde6cdc
+  - purpose: critic-round-2-sample-2
+    request_sha256: f9ff68582c233cc1cbb4d4efc76a669c8a4dbd133f05dbac77f5da082c4b84a8
+    response_sha256: 432892c3d7f610692344c7906b77dd5e9edff2a37318b02fdfa4271ec231d697
+    response_id: chatcmpl-a10bc022757f3dee
+  - purpose: critic-round-2-sample-3
+    request_sha256: 7471b5609693a3e22eae4418c9036bf2af2714849243e8e82990f513649ef7ae
+    response_sha256: 6e69556513b5b87e479fb9fcf0cce6e5483c862b668b205d613f2d7691464b92
+    response_id: chatcmpl-beb7f1ee906406f0
+  - purpose: critic-round-3-sample-1
+    request_sha256: 933eabc017d61922fa77c97d11ec06c57a946631a387f743a068f7a295eb7c22
+    response_sha256: 29c1ef40767b4693c66de61e939037c91a154284f249f90926a506e3bbaf16ad
+    response_id: chatcmpl-81712ff870ebe789
+  - purpose: critic-round-3-sample-2
+    request_sha256: 377793280444f530c6ea013b64dff463d690d0c222af74c5bf7eb20ef419c933
+    response_sha256: fe074efc360446f118221a64d76adae0566ecc1d3d94e63306c5c9d817a9df35
+    response_id: chatcmpl-b80fd6fb8ee15f5c
+  - purpose: critic-round-3-sample-3
+    request_sha256: a724b63bd7ad9b50fc515ceb64539c74c9c55b24ef4596582fc2138a465152b3
+    response_sha256: c115fa2cae0d24f936a591e15944e9253cc068f876cd279abbd7968499565e89
+    response_id: chatcmpl-9c2a6634c4b4980b
+proposals:
+- name: subset_zeta_transform
+  summary: Given integer values on all subsets of a small universe, compute the upward zeta or Mobius
+    transform over the subset lattice and report the transformed value at each queried subset.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.hierarchical_rollup.hierarchical_rollup:HierarchicalRollup
+      relationship: adjacent
+      overlap: aggregating values over a lattice/hierarchy
+    - id: task:generated.wave9.pivot_unpivot_transform.pivot_unpivot_transform:PivotUnpivotTransform
+      relationship: different
+      overlap: data transform over structured sets
+    - id: task:generated.wave8.pattern_match_exhaustiveness.pattern_match_exhaustiveness:PatternMatchExhaustiveness
+      relationship: different
+      overlap: counting over combinatorial structures
+    substantive_difference: Subset zeta/Mobius transform is a specific linear transform over the subset
+      lattice, not present in the catalog; it requires a distinct operation of summing over supersets/subsets.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: A subset lattice transform is a clearly defined algebraic operation absent from existing catalog
+      tasks and distinct in its per-subset aggregate computation.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: symmetry_orbit_counting
+  summary: Count distinct colorings of beads, bracelets, or grid corners under a stated rotation-reflection
+    group by summing the fixed colorings of each symmetry's cycle decomposition; answer is one integer.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.left_coset_identification.left_coset_identification:LeftCosetIdentification
+    relationship: adjacent
+    overlap: counting via group symmetries / orbits and cosets
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: different
+    overlap: 'group actions: rotations/reflections'
+  - id: task:generated.wave8.group_homomorphism_check.group_homomorphism_check:GroupHomomorphismCheck
+    relationship: different
+    overlap: group theory computations
+  reason: 0/3 samples judged it novel; Counting distinct colorings under symmetry via Burnside is a classical
+    orbit-counting technique, adjacent to existing group tasks but not explicitly represented; still a
+    known operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: finite_difference_extension
+  summary: Given consecutive integer evaluations of an unknown polynomial of stated degree, extend its
+    forward-difference table and report the values at queried later indices.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:sequential_induction
+    relationship: same_operation
+    overlap: extrapolating polynomial sequences from finite differences / polynomial DSL inference
+  - id: plan:WAVE1:S5
+    name: add_n_th_term_evaluation_for_a_stated_recurrence
+    relationship: variant
+    overlap: evaluating later terms from a stated recurrence / differences
+  - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+    relationship: different
+    overlap: exact numerical computation following a prescribed pipeline
+  reason: 0/3 samples judged it novel; Finite-difference polynomial extension is a known sequential-induction/recurrence-evaluation
+    operation with only a surface change in representation.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: prufer_coding
+  summary: Encode a labeled tree as its Prufer sequence or decode a sequence back into edges by repeatedly
+    stripping or attaching the smallest available leaf; answer is the code word or the edge list.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.prefix_code_decode.prefix_code_decode:PrefixCodeDecode
+    relationship: variant
+    overlap: encode/decode a structured object (tree vs code) using a canonical procedure
+  - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+    relationship: different
+    overlap: transforming a graph/tree to a canonical edge representation
+  - id: task:generated.wave8.fenwick_prefix_nodes.fenwick_prefix_nodes:FenwickPrefixNodes
+    relationship: different
+    overlap: iterative canonical tree-related procedures on labels
+  reason: 0/3 samples judged it novel; Prufer coding is a classic encoding/decoding operation, similar
+    to other code/decode tasks but adding a different combinatorial object (trees vs strings); still a
+    known operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: functional_graph_rho
+  summary: 'Under an explicit self-map on a finite set, decompose an orbit into tail and cycle: report
+    the loop-entry node, the tail length, the cycle length, or the first node where two given orbits meet.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.wait_for_deadlock.wait_for_deadlock:WaitForDeadlock
+    relationship: variant
+    overlap: cycle detection and reporting on directed graphs
+  - id: task:generated.wave8.topological_generation.topological_generation:TopologicalGeneration
+    relationship: variant
+    overlap: graph iteration / traversal with deterministic round or component output
+  - id: task:generated.wave8.finite_group_element_order.finite_group_element_order:FiniteGroupElementOrder
+    relationship: different
+    overlap: iterating a function/operation until returning to a state
+  reason: 0/3 samples judged it novel; The operation is deterministic cycle detection on a functional
+    graph, already present in wait-for-deadlock and iteration tasks; no new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: dual_number_evaluation
+  summary: Evaluate a rational expression in dual numbers at an exact rational point, propagating the
+    infinitesimal part through sums, products, and quotients; answer is the exact value and derivative
+    pair.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+    relationship: variant
+    overlap: exact symbolic arithmetic propagation with a pairing (value + error)
+  - id: task:generated.wave9.abstract_interval_analysis.abstract_interval_analysis:AbstractIntervalAnalysis
+    relationship: variant
+    overlap: abstract domain evaluation (intervals vs dual numbers)
+  - id: task:generated.wave9.causal_intervention.causal_intervention:CausalIntervention
+    relationship: different
+    overlap: propagate through a structured model
+  reason: 0/3 samples judged it novel; Dual-number evaluation is an instance of abstract domain propagation
+    already present in interval arithmetic tasks; only the specific abstract domain changes.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: misra_gries_summary
+  summary: Execute Misra-Gries with a stated counter budget over a symbol stream (increment, place, decrement-all,
+    evict), then report the final counter table and whether a queried symbol can be the majority.
+  verdict: variant
+  nearest_neighbors: []
+  reason: 0/3 samples judged it novel; critic did not return three valid catalog neighbors; Misra-Gries
+    is a deterministic counter-management procedure akin to grouped aggregation and allocation; the specific
+    eviction step is a surface variant.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: gf2_matroid_rank
+  summary: Given binary vectors read as a matroid over GF(2), report each queried subset's rank from pivot-counting
+    elimination, the size of a largest independent subset, or a shortest dependent subset witness.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.polynomial_euclidean_algorithm.polynomial_euclidean_algorithm:PolynomialEuclideanAlgorithm
+    relationship: variant
+    overlap: linear algebra over a finite field with pivot-based reductions
+  - id: task:generated.wave8.union_find_representative.union_find_representative:UnionFindRepresentative
+    relationship: different
+    overlap: maintaining independent sets and rank queries
+  - id: task:generated.wave8.lossless_binary_decomposition.lossless_binary_decomposition:LosslessBinaryDecomposition
+    relationship: different
+    overlap: algebraic criteria and dependency witnesses
+  reason: 0/3 samples judged it novel; Matroid rank over GF(2) is a linear-algebra over GF(2) operation
+    already represented by polynomial Euclidean and similar finite-field tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: rotation_map_faces
+  summary: Given a graph with a cyclic order of incident edges at every vertex, trace faces by advancing
+    each directed half-edge along its rotation; answer is the face count or a queried face's boundary
+    walk.
+  verdict: novel
+  nearest_neighbors: []
+  reason: 1/3 samples judged it novel; critic did not return three valid catalog neighbors; Rotation-system
+    face tracing is a novel graph algorithm not present in the catalog, with a clear exact operation and
+    feasible oracle.
+  scores:
+    novelty: 5
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: stack_sorting_trace
+  summary: Simulate greedy stack-sorting of a permutation under the stack discipline; report the resulting
+    output permutation, whether it is fully sorted, or the first element that cannot be emitted in order.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.memory_allocator_trace.memory_allocator_trace:MemoryAllocatorTrace
+    relationship: variant
+    overlap: simulating a stack/discipline with explicit rules and trace output
+  - id: task:generated.wave9.ll1_predictive_parsing.ll1_predictive_parsing:LL1PredictiveParsing
+    relationship: variant
+    overlap: stack-based deterministic procedure with trace/failure output
+  - id: task:generated.wave9.round_robin_scheduling.round_robin_scheduling:RoundRobinScheduling
+    relationship: different
+    overlap: simulation of deterministic process with query outputs
+  reason: 0/3 samples judged it novel; It is a deterministic stack simulation, directly comparable to
+    existing stack/process simulation tasks; no new cognitive operation.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: crdt_join_evaluation
+  summary: Merge replica states of stated CRDTs (grow-only and observed-remove sets, last-writer-wins
+    registers, PN counters) by their lattice joins, then answer a membership, count, or value query on
+    the merged result.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.configuration_precedence_resolution.configuration_precedence_resolution:ConfigurationPrecedenceResolution
+    relationship: variant
+    overlap: merging multiple layers/replicas with precedence rules
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: variant
+    overlap: merging records/keys with exact aggregation
+  - id: task:generated.wave9.access_control_evaluation.access_control_policy_evaluation:AccessControlEvaluation
+    relationship: different
+    overlap: resolving inherited/group/precedence rules
+  reason: 0/3 samples judged it novel; The operation is deterministic merging under precedence/lattice
+    rules, already covered by several merge-resolution tasks; CRDT naming is only a new domain.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: graph_coloring_count
+  summary: Count proper k-colorings of a small graph exactly by inclusion-exclusion over its edge subsets,
+    accumulating signed k-to-the-component-count terms; answer is the integer total at a queried k.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave3.regular_language_counting.s36_regular_language_counting:RegularLanguageCounting
+    relationship: adjacent
+    overlap: counting finite combinatorial objects via inclusion-exclusion / generating functions
+  - id: task:generated.wave8.core_number.core_number:CoreNumber
+    relationship: different
+    overlap: graph-theoretic queried output on undirected graphs
+  - id: task:generated.wave8.bridge_edges.bridge_edges:BridgeEdgesTask
+    relationship: different
+    overlap: undirected graph edge-subset property computation
+  reason: 0/3 samples judged it novel; Counting graph colorings by inclusion-exclusion is a familiar combinatorial-counting
+    operation that adds a new symbolic-counting procedural skill not covered by existing graph tasks or
+    basic counting tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: ordered_bdd_reduction
+  summary: Reduce Boolean functions to the canonical ordered BDD under a stated variable order (merge
+    isomorphic subgraphs, remove redundant tests); answer its node count or model count.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:lambda_reduction
+    relationship: same_operation
+    overlap: Both reduce a structured expression to a canonical normal form via repeated rewrites (beta
+      reduction vs. BDD merge-eliminate).
+  - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+    relationship: variant
+    overlap: Canonical minimized automaton via partition refinement vs. canonical decision diagram.
+  - id: task:generated.wave9.strongly_connected_components.strongly_connected_components:StronglyConnectedComponents
+    relationship: different
+    overlap: Different graph decomposition.
+  reason: 1/3 samples judged it novel; Canonical rewriting is well-established; BDDs are just another
+    canonical data structure.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: quadratic_form_inertia
+  summary: Diagonalize a symmetric integer matrix by congruent (LDL-transpose) elimination; report its
+    Sylvester inertia as counts of positive, negative, and zero pivots or a definiteness verdict.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: gallery:variable_elimination
+    relationship: same_operation
+    overlap: Both perform deterministic elimination on linear/symmetric systems and report compact residual/inertia-like
+      outcome.
+  - id: plan:WAVE0:M8
+    relationship: same_operation
+    overlap: Explicit elimination depth to quotient; here LDL elimination for inertia.
+  - id: task:generated.wave8.finite_group_inverse.finite_group_inverse:FiniteGroupInverse
+    relationship: different
+    overlap: Uses group tables and inverse lookup, no elimination.
+  reason: 1/3 samples judged it novel; Computed by ordinary elimination and triplet counting; no new cognitive
+    operation beyond existing variable-elimination gallery and deletion-depth plans.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: floor_quotient_blocks
+  summary: 'Exploit the few distinct values of floor(n/i): answer the number of distinct quotients over
+    i=1..n, exact sums of floor(n/i) over index ranges, or the span of a queried constant-quotient block.'
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_latent-representation:P001
+    relationship: same_operation
+    overlap: Both exploit integer identities over index ranges (floor-sum blocks vs. subset-lattice transforms)
+      with exact compact answers.
+  - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+    relationship: variant
+    overlap: Computes exact floor/quotient integer quantities.
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: adjacent
+    overlap: Sums over index groups/blocks.
+  reason: 0/3 samples judged it novel; Floor[n/i] blocks provide a new micro-skill, but the cognitive
+    operation is exact integer block aggregation already present in zeta transforms and rounding pipelines.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: ferrers_diagram_operations
+  summary: 'Operate on Ferrers diagrams of integer partitions: form the conjugate partition by transposition,
+    compute hook lengths of cells, and count standard Young tableaux via the hook-length formula.'
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:arithmetics
+    relationship: same_operation
+    overlap: Compositional exact arithmetic on structured numeric objects (partitions/hook lengths versus
+      scalar/vector arithmetic).
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: adjacent
+    overlap: Exact aggregation over structured groups/cells (hook lengths are cell-wise products).
+  - id: task:generated.wave9.query_plan_execution.query_plan_execution:QueryPlanExecution
+    relationship: different
+    overlap: Runs operator pipelines over relations; different domain.
+  reason: 0/3 samples judged it novel; Integer partition combinatorics is a new surface for the existing
+    compositional/combinatorial-counting cluster, but it is still variant of known exact counting and
+    table operations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: skyline_layer_peeling
+  summary: Under componentwise dominance of 2D points, extract the skyline antichain and repeatedly peel
+    remaining layers; answer a queried point's layer index or the content of a queried layer.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+    relationship: same_operation
+    overlap: Both perform ordered sweeps/peeling over 1D/2D dominance structures, returning layers or
+      merged coverage.
+  - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+    relationship: variant
+    overlap: Repeatedly peels off layers (zero-indegree vs. skyline) and reports query layers.
+  - id: task:generated.wave6.deadline_dropping.s65_deadline_dropping:DeadlineDropping
+    relationship: adjacent
+    overlap: Peels/selects items by a deadline criterion, different domain.
+  reason: 1/3 samples judged it novel; Peeling antichains is the same layer-peeling operation as topological
+    layering and interval sweeps.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: ordinal_cnf_arithmetic
+  summary: 'Compute with ordinals in Cantor normal form: addition absorbing smaller-order terms plus multiplication;
+    answer the result''s canonical exponent-coefficient list or compare two given forms.'
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:arithmetics
+    relationship: same_operation
+    overlap: Compositional arithmetic over structured numbers (Cantor normal form vs. scalar rationals).
+  - id: task:generated.wave3.linear_recurrence.s34_linear_recurrences:LinearRecurrence
+    relationship: adjacent
+    overlap: Uses recurrence/algebraic structure over extended numeric objects.
+  - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+    relationship: different
+    overlap: Different numeric domain with intervals.
+  reason: 1/3 samples judged it novel; This is a new number system but the cognitive operation is the
+    known compositional arithmetic/rewriting.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: wavelet_tree_queries
+  summary: Answer rank, select, and range-quantile queries on a symbol sequence by descending its wavelet
+    tree/matrix through bit partitions; report the requested count, position, or value.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_latent-representation:P001
+    relationship: same_operation
+    overlap: Both recursively partition a sequence/array into bit-structured indices to answer range/rank
+      queries (wavelet tree vs. subset zeta transform).
+  - id: task:generated.wave8.union_find_representative.union_find_representative:UnionFindRepresentative
+    relationship: adjacent
+    overlap: Both follow deterministic index/root paths across levels, returning a rank/representative.
+  - id: task:generated.wave8.poset_cover_query.poset_cover_query:PosetCoverQuery
+    relationship: different
+    overlap: Partial-order cover query, no bit partitions.
+  reason: 0/3 samples judged it novel; The wavelet tree is a specialized range-query variant of existing
+    bit/subset partition transforms.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: morton_order_navigation
+  summary: 'Interleave coordinate bits into Z-order (Morton) indices over small grids: convert between
+    cell coordinates and curve index, and answer the curve order, neighbor index, or rank of a queried
+    cell.'
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:grid_navigation
+    relationship: variant
+    overlap: core is navigating/spatial indexing over a grid; Morton order is a coordinate-to-index mapping
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: adjacent
+    overlap: spatial coordinate transformation with queries on transformed coordinates
+  - id: task:generated.wave8.binary_search_probes.binary_search_probes:BinarySearchProbes
+    relationship: different
+    overlap: both require trace/probe style reasoning over a canonical structure
+  reason: 1/3 samples judged it novel; Morton ordering is a cosmetic spatial indexing variant of grid
+    navigation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: canonical_quadtree_queries
+  summary: 'Represent binary grids as canonical quadtrees by recursively merging uniform quadrants: count
+    tree nodes or black cells, test the color at a coordinate, or merge two trees under union/intersection.'
+  verdict: variant
+  nearest_neighbors:
+  - id: plan:WAVE5:S52
+    relationship: same_operation
+    overlap: Canonical tree naming/compression to compare two descriptions; quadtrees are exactly recursive
+      canonical tree forms of grids.
+  - id: task:generated.wave5.tree_canonical_form.s52_tree_canonical_form:TreeCanonicalForm
+    relationship: variant
+    overlap: Canonical tree form over rooted trees vs. quadtree merging.
+  - id: task:generated.wave8.union_find_representative.union_find_representative:UnionFindRepresentative
+    relationship: adjacent
+    overlap: Canonical representative for merged groups, but over flat sets.
+  reason: 0/3 samples judged it novel; Canonical tree compression is already planned; quadtree is a two-dimensional
+    alphabet change.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: power_sum_fingerprint
+  summary: 'Fingerprint multisets by their power sums p_1..p_k: locate the first differing power sum between
+    two given multisets, or recover an unknown multiset from its power sums over a stated prime field.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave4.multiplicative_order.s39_multiplicative_order:MultiplicativeOrder
+    relationship: same_operation
+    overlap: Identifies/reconstructs via integer exponent/residue characteristics in a prime field.
+  - id: task:generated.wave8.fd_attribute_closure.fd_attribute_closure:AttributeClosure
+    relationship: variant
+    overlap: Computes closures/fingerprints through iterative/moment characteristics.
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: adjacent
+    overlap: Sums/moments over multisets/partitions.
+  reason: 0/3 samples judged it novel; Power-sum moments over prime fields are a specialized parameterization
+    of known arithmetic/order and closure reasoning.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: linear_extension_counting
+  summary: Count the linear extensions of a partial order by dynamic programming over its lattice of down-sets;
+    answer the exact extension count, with trees handled by their hook-length product formula.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.argumentation_grounded_extension.argumentation_grounded_extension:ArgumentationGroundedExtension
+    relationship: same_operation
+    overlap: Fixed-point iterative computation over a structured discrete relation (grounded extension
+      of argumentation graphs vs. counting linear extensions of posets via iterative DP). Both involve
+      repeated propagation to a closure/least fixed point.
+  - id: task:generated.wave3.regular_language_counting.s36_regular_language_counting:RegularLanguageCounting
+    relationship: variant
+    overlap: Exact counting of structural objects (regular language strings vs. linear extensions) by
+      combinatorial DP.
+  - id: task:generated.wave3.linear_recurrence.s34_linear_recurrences:LinearRecurrence
+    relationship: adjacent
+    overlap: Uses exact counting with closed-form/hook-length-style formulas versus recurrence evaluation.
+  reason: 0/3 samples judged it novel; Counts of hidden structures via iterative DP are common, and the
+    argumentation fixed-point neighbor and counting neighbors make this a variant of known counting/closure
+    operations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: residue_class_covering
+  summary: Given residue classes a_i mod m_i, decide whether their union covers every integer by checking
+    one full lcm-period; answer the smallest uncovered residue or confirmation of covering.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.pattern_match_exhaustiveness.pattern_match_exhaustiveness:PatternMatchExhaustiveness
+    relationship: same_operation
+    overlap: 'Coverage-with-witness: deciding whether a set of patterns/residues covers all objects and
+      returning a missing witness.'
+  - id: task:generated.manual_high_value_80_r1.modular_constraint_solver.modular_constraint_solver:ModularConstraintSolver
+    relationship: variant
+    overlap: Union and interaction of residue classes mod different moduli.
+  - id: task:generated.wave8.quorum_intersection.quorum_intersection:QuorumIntersection
+    relationship: different
+    overlap: Different numeric coverage/intersection question.
+  reason: 1/3 samples judged it novel; The lint-style coverage/witness check and modular arithmetic both
+    exist; combining them is a parameter change.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: cellular_automaton_evolution
+  summary: Evolve elementary 1D rules (0-255) and life-like B/S 2D rules on finite cyclic or bounded grids
+    for a stated number of synchronous steps, returning a queried cell, row, or live-cell count.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+    relationship: variant
+    overlap: discrete synchronous update of cell/grid state over steps
+  - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+    relationship: variant
+    overlap: deterministic state update of a finite grid/table with queried final location
+  - id: task:generated.wave9.round_robin_scheduling.round_robin_scheduling:RoundRobinScheduling
+    relationship: variant
+    overlap: step-by-step simulation of a deterministic process with a queried state or result
+  reason: 0/3 samples judged it novel; A known synchronous-language simulation operation applied to a
+    new hash/grid domain, with same operation and output regime.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: chip_firing_stabilization
+  summary: Topple overfull vertices of a chip configuration on a small undirected graph, with or without
+    a sink, until no vertex can fire, returning the stable chip vector or each vertex's total toppling
+    count.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:fixpoint_iteration
+    name: fixpoint_iteration
+    relationship: variant
+    overlap: iteratively apply a local rule until a stable fixed point
+  - id: task:generated.wave8.wait_for_deadlock.wait_for_deadlock:WaitForDeadlock
+    relationship: variant
+    overlap: graph algorithm iterating until no change and returning a graph-property set
+  - id: task:generated.wave9.union_find_trace.union_find_trace:UnionFindTrace
+    relationship: adjacent
+    overlap: stateful algorithm on a graph/forest with repeated updates
+  reason: 0/3 samples judged it novel; Known fixed-point iteration operation with a different local update
+    rule on graphs.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: palindromic_tree_counts
+  summary: Grow a string's palindromic tree symbol by symbol via longest-suffix links, returning the number
+    of distinct palindromic substrings, their occurrence counts, or the longest palindromic suffix at
+    a queried position.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.suffix_array_rank.suffix_array_rank:SuffixRank
+    relationship: variant
+    overlap: string indexing structure whose construction/query returns ranked or structural information
+  - id: task:generated.wave8.trie_unique_prefix.trie_unique_prefix:TrieUniquePrefix
+    relationship: variant
+    overlap: building a string-tree index and returning a queried structural property
+  - id: task:generated.wave9.union_find_trace.union_find_trace:UnionFindTrace
+    relationship: adjacent
+    overlap: tree-like data structure with link traversal and state queries
+  reason: 0/3 samples judged it novel; Known string index construction/query operation with a different
+    underlying data structure.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: lindenmayer_morphism_iteration
+  summary: Iterate a parallel string morphism (L-system) for n generations without materializing the word,
+    returning the k-th symbol or per-letter counts by recursive descent over productions with memoized
+    growth lengths.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave3.linear_recurrence.s34_linear_recurrences:LinearRecurrence
+    relationship: variant
+    overlap: iterate a deterministic production rule n steps and return k-th element or per-symbol counts
+  - id: gallery:graph_successors
+    name: graph_successors
+    relationship: variant
+    overlap: compute k-th descendant in an iterated functional structure
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: adjacent
+    overlap: trace dependencies through a symbol-expansion DAG
+  reason: 0/3 samples judged it novel; Known iterative-production operation replaced with an L-system
+    rule set.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: fitch_parsimony_score
+  summary: Run the Fitch bottom-up pass over rooted trees with state-labeled leaves (intersect child sets,
+    else union at cost one), returning the minimal change count and the optimal state set at a queried
+    node.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: variant
+    overlap: bottom-up pass over a rooted tree combining child states and returning a quantity at a queried
+      node
+  - id: task:generated.wave9.union_find_trace.union_find_trace:UnionFindTrace
+    relationship: variant
+    overlap: tree-based merging with state sets and deterministic tie-breaking
+  - id: task:generated.wave9.minimum_spanning_tree.minimum_spanning_tree:MinimumSpanningTree
+    relationship: adjacent
+    overlap: tree algorithm with a bottom-up combine/merge and exact optimization criterion
+  reason: 1/3 samples judged it novel; A known bottom-up tree propagation operation with a different combine
+    rule.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: formal_concept_enumeration
+  summary: Enumerate formal concepts of a small object-attribute incidence table via the closure operator
+    in lectic order, returning the concept count, the k-th concept's intent and extent, or the closure
+    of a queried attribute set.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.fd_attribute_closure.fd_attribute_closure:AttributeClosure
+    relationship: variant
+    overlap: compute closures of attribute sets over a formal system and enumerate/query canonical closed
+      sets
+  - id: task:generated.wave9.argumentation_grounded_extension.argumentation_grounded_extension:ArgumentationGroundedExtension
+    relationship: variant
+    overlap: iteratively compute a closure/fixed-point of a monotone operator and return a set
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: different
+    overlap: uses structural enumeration but not closure operators
+  reason: 0/3 samples judged it novel; Known closure-operators-and-enumeration operation applied to object-attribute
+    incidence tables.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: bresenham_raster_trace
+  summary: Rasterize line segments (all octants) and circles with exact integer error-term updates, returning
+    the ordered pixel list, the pixel chosen at a queried step, or the decision value at a queried row.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+    relationship: variant
+    overlap: executing exact integer arithmetic updates step-by-step and returning a queried intermediate
+      or final value
+  - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+    relationship: variant
+    overlap: trace a deterministic recursive process and return a value at a queried step
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: adjacent
+    overlap: discrete coordinate tracking with queried state
+  reason: 0/3 samples judged it novel; Known integer-state trace operation applied to rasterization coordinates.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: egyptian_fraction_expansion
+  summary: Expand a positive rational into distinct unit fractions by the greedy ceiling rule, returning
+    the denominator sequence or its k-th term, and judge whether a proposed unit-fraction list is an exact
+    distinct expansion.
+  verdict: variant
+  nearest_neighbors:
+  - id: plan:WAVE6:S61
+    name: continued_fraction_expansion_of_a_rational_number
+    relationship: variant
+    overlap: expand a rational into a canonical sequence by an iterative ceiling/floor rule
+  - id: task:generated.wave8.kraft_feasibility.kraft_feasibility:KraftFeasibility
+    relationship: adjacent
+    overlap: exact rational sums and fractional arithmetic
+  - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+    relationship: adjacent
+    overlap: exact arithmetic with a canonical output sequence
+  reason: 0/3 samples judged it novel; Same rational expansion operation as continued fractions with a
+    different representation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: cuckoo_hash_placement
+  summary: Insert keys into a two-table cuckoo hash under stated hash functions, kicking occupants along
+    the alternation chain within a fixed budget; return the inserted key's final slot, the kick chain,
+    or a cycle failure.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+    relationship: variant
+    overlap: insertion into a deterministic hash structure with a queried final slot
+  - id: task:generated.wave8.set_associative_cache.set_associative_cache:SetAssociativeCache
+    relationship: variant
+    overlap: deterministic placement/eviction in a finite associative structure
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: variant
+    overlap: stateful data structure insertion with eviction chains and final state queries
+  reason: 0/3 samples judged it novel; Known open-addressing placement task with a parameter change from
+    linear to cuckoo probing.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: delaunay_flip_trace
+  summary: Test the edges of a given triangulation of points in general position with the exact in-circle
+    predicate, always flipping the smallest failing edge; return the flip sequence or the final Delaunay
+    edge set.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: adjacent
+    overlap: discrete geometric transformations (rotation vs. triangulation flips) with exact predicates
+  - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+    relationship: different
+    overlap: graph edge-set manipulation (reduction vs. flipping) with exact state tracking
+  - id: task:generated.wave8.wait_for_deadlock.wait_for_deadlock:WaitForDeadlock
+    relationship: different
+    overlap: graph cycle detection (deadlock vs. legal flip termination) with exact output sets
+  reason: 1/3 samples judged it novel; The in-circle predicate and flip rule are new, but the cognitive
+    operation of executing an exact geometric state-machine over point sets is a variant of known trace
+    tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: berlekamp_massey_synthesis
+  summary: Synthesize the shortest linear recurrence generating a given GF(2) or GF(p) sequence by the
+    Berlekamp-Massey discrepancy pass, returning the linear complexity, connection-polynomial coefficients,
+    or the next predicted symbols.
+  verdict: novel
+  nearest_neighbors:
+  - id: plan:WAVE0:M1
+    relationship: different
+    overlap: sequence synthesis (witness string vs. linear recurrence predictor)
+  - id: task:generated.wave3.linear_recurrence.s34_linear_recurrences:LinearRecurrence
+    relationship: variant
+    overlap: linear recurrence generation and evaluation, but not synthesis
+  - id: task:generated.wave9.minimum_spanning_tree.minimum_spanning_tree:MinimumSpanningTree
+    relationship: different
+    overlap: algorithmic construction with exact outputs
+  reason: 1/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Berlekamp-Massey
+    synthesis is a distinct exact algorithm with clear oracle and unique cognitive operation.
+  scores:
+    novelty: 4
+    sft_value: 5
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: de_bruijn_sequence_construction
+  summary: Construct the de Bruijn sequence of a stated alphabet size and order by concatenating its Lyndon
+    factors in lexicographic order, returning a queried symbol, the position of a given n-window, or the
+    factor list.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:pattern_induction
+    name: pattern_induction
+    relationship: variant
+    overlap: generate a cyclic sequence from a rule and query a symbol or window
+  - id: task:generated.wave8.prefix_code_decode.prefix_code_decode:PrefixCodeDecode
+    relationship: adjacent
+    overlap: sequence construction/parsing over an alphabet
+  - id: task:generated.wave4.burrows_wheeler.burrows_wheeler:BurrowsWheeler
+    relationship: adjacent
+    overlap: constructing a string transformation and querying positions/factors
+  reason: 0/3 samples judged it novel; Known string/sequence construction task with a different rule for
+    generating the sequence.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3

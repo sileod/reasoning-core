@@ -1,0 +1,1063 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_rule-induction
+created_at: '2026-09-14T21:31:57.375846+00:00'
+provenance:
+  kind: proposer
+  name: k3_rule-induction
+  received: '2026-09-14'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks that teach models to infer latent rules from demonstrations and apply them
+    to new cases. The catalog you were shown already covers the classic textbook algorithms -- sorting,
+    gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that names one
+    will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 5
+  complete: false
+catalog:
+  sha256: 1521583ae10e8ecc7e40d6cfe6ed23ecc14f7772aa10374435305ca8b46f5e65
+  entries: 451
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 13
+    task: 276
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  requested_model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: moonshotai/kimi-k3
+    provider: integrate.nvidia
+    request_sha256: 9394911ef183caa4daa5666617b840b81a37e5b4d2b7745d8655acfb52490dc1
+    response_sha256: f446d87935e55fed263a460bdf8e6a7d44600d0ac8bca4183054b874d01da3db
+    response_id: chatcmpl-85edaf9c-e6c6-4f4f-9c03-1496dbafe3c8
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: dbfb2555846da8eabab4163d752c2a032dd447aec6aaceac95cc754435c59516
+    response_sha256: 33d9b82482e2744f34fc439d141944440cf0caee072378b58c4caf2cd345cadc
+    response_id: chatcmpl-9f1660c1150db4c4
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 378edb42a2166f3c0c7b0ed669335735e55781c552edb4fba459cd8e692b29a5
+    response_sha256: 4eff1e1f95dec2015321386a4b02d2b6003176dcf5ad0468d498542bf8b1e819
+    response_id: chatcmpl-9de460f8670999ad
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 945fc31b49aa256189a90a9f13cbade2216eaee5dbb44a929eb108cf999b6ada
+    response_sha256: f170dfc913aa274481cb25f1dbd69448a073cd5c965c7a4b4954108190f0f25d
+    response_id: chatcmpl-88132cc0086a9892
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: b3aea8a6b3b6cdcd0eaa05052f85f463da943470ae1acfb8d73374a86672077b
+    response_sha256: b0b609e914ccb8b2a494063c98504ba451cb50cb1f8e36c6142ddaa95b89e6a7
+    response_id: chatcmpl-b0038fe49f13a4cc
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 3ae8ececc27e9d59af14c3524125d57afe03494f162e1e291589af6820e531dd
+    response_sha256: 234133afa0cb5b9c027e639a3dcb5a9b8e178f089d09c15cedd20ba39ce52dd1
+    response_id: chatcmpl-9d085b1bbe630b5b
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c6842ebee6005d710529c7c24eda725dea97598d5ef9ef83b8ca6d1fc46985fb
+    response_sha256: 7ea97842e792a77fd2d53d599bf729a6351dde67fc68565341efe1f96e19fa32
+    response_id: chatcmpl-9c5b0b6b2983fec6
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d4965761e03095d18e132f319d466d72d11b1901c2f6224a894148a36ef66508
+    response_sha256: 7fa6d03b6e341227988be130678b5e678c1f123e5b195750e04eedf07a8628b9
+    response_id: chatcmpl-8065c3c5b0640a32
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: f5f0125c6ce0a9e4f2330870876fd955028cc5e94aa8e253fcdb3f0a475b8d78
+    response_sha256: d4f351683af4a2ad8cb99b15c29b635e2558a8931a54af9d197594583f8b9e08
+    response_id: chatcmpl-bf62567b6814a927
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 355ed0da4378899ace9ff1bfb582395e29cfa1b6734e9c75fd808984b8fa1944
+    response_sha256: 900c624bcee80406ab51821d82efca75d81342331132c672ecac6a41d6b83578
+    response_id: chatcmpl-bd3178cb868fbbad
+proposals:
+- name: tuple_generating_dependency_chase
+  summary: Apply universal and existential tuple-generating dependencies to a small relational instance
+    by repeatedly introducing required atoms and fresh witnesses, returning the derived atom set or a
+    queried membership.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.program_slice_dependencies.program_slice_dependencies:ProgramSliceDependencies
+      relationship: adjacent
+      overlap: Both follow dependencies (program forward/backward vs chase with TGDs) but C008 is a logical
+        rule application with fresh witness creation, a fundamentally different mechanism.
+    - id: proposal:k3_systematic-generalization:P009
+      relationship: different
+      overlap: Both are formal systems but one is Datalog-style chase and the other is evidence combination.
+    - id: task:generated.wave9.deadlock_detection.deadlock_detection:DeadlockDetection
+      relationship: different
+      overlap: Both handle resource/atom dependencies, but deadlock_detection uses a wait-for graph, not
+        rule-based derivation.
+    substantive_difference: 'The TGD chase is a unique operation: it repeatedly applies logical rules
+      with universal/existential quantification and fresh constant introduction. No existing task performs
+      such rule-based knowledge base completion, making this novel. The coverage spec (which TGDs and
+      instance) is precise.'
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: The TGD chase is a distinct logic-based inference operation not present in the catalog.
+    votes: 2/3
+    dissent:
+    - variant
+- name: smith_normal_form
+  summary: Reduce small integer matrices by exact row and column operations to diagonal Smith normal form,
+    returning the invariant factors as the sorted diagonal tuple.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_systematic-generalization:P006
+      relationship: adjacent
+      overlap: 'Both reduce matrices to canonical forms (doubly stochastic to permutation sum vs. integer
+        to diagonal), but the operations differ: subtract cycle residuals vs. row/column operations over
+        integers.'
+    - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+      relationship: adjacent
+      overlap: Both produce canonical forms, but one is over automata partitions and the other over integer
+        matrices; distinct domains and operations.
+    - id: gallery:lambda_reduction
+      relationship: different
+      overlap: Lambda reduction to normal form is a term rewrite, not matrix diagonalization.
+    substantive_difference: Smith normal form computation via exact row/column operations and gcd steps
+      is a distinct algebraic operation not present in the neighbors.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: The gcd-based row/column reduction to diagonal form is a novel operation relative to existing
+      matrix decompositions.
+    votes: 2/3
+    dissent:
+    - variant
+- name: shapley_value_marginal_contributions
+  summary: For small coalitional value functions over varied player sets and value maps, average each
+    player's marginal contribution across all permutations to return the exact rational Shapley value
+    vector.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+      relationship: adjacent
+      overlap: Both compute averages over distributions (posterior vs. marginal contributions), but Shapley
+        averages over permutations of players, a distinct combinatorial operation.
+    - id: proposal:k3_systematic-generalization:P009
+      relationship: adjacent
+      overlap: Both combine contributions over subsets (focal sets vs. coalitions) but with different
+        aggregation rules (Dempster-Shafer vs. permutation averaging).
+    - id: task:generated.wave9.markov_chain_distribution.markov_chain_distribution:MarkovChainDistribution
+      relationship: different
+      overlap: Markov chain propagates probabilities through steps; Shapley averages over permutations
+        of a value function, unrelated operations.
+    substantive_difference: The operation is permutation-wise averaging of marginal contributions, a unique
+      enumeration that is not covered by Bayesian conditioning or Dempster-Shafer.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Shapley value computation is a distinct combinatorial operation of averaging over permutations,
+      not present in neighbors.
+    votes: 2/3
+    dissent:
+    - variant
+- name: repeating_decimal_expansion
+  summary: Carry out long division of one integer by another, detecting the first repeated remainder to
+    split the decimal expansion into integer part, preperiod, and minimal repetend, over terminating,
+    purely recurring, and mixed cases.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: plan:WAVE6:S61
+      relationship: different
+      overlap: Both involve rational number representations, but one is continued-fraction expansion and
+        the other is decimal long division with cycle detection; distinct expansion algorithms.
+    - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+      relationship: adjacent
+      overlap: Both deal with exact rational arithmetic, but interval arithmetic computes endpoints of
+        operations while this carries long division with remainder cycle detection.
+    - id: gallery:parsing_derivation
+      relationship: different
+      overlap: No shared operation; one is number expansion, the other is grammar derivation.
+    substantive_difference: The core operation is long division with repeated-remainder detection to extract
+      the repetend, which is not present in the neighbors; it is a specific algorithmic procedure for
+      decimal expansion.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: The operation of detecting cycle in remainders during decimal expansion is distinct from rational
+      arithmetic and continued fractions.
+    votes: 2/3
+    dissent:
+    - variant
+- name: functional_graph_cycle_finding
+  summary: Iterate a stated function on a finite set from a given start, locating where the trajectory
+    enters its cycle, and report the entry point, tail length, and cycle length across maps whose in-trees
+    merge into one cycle.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.finite_group_element_order.finite_group_element_order:FiniteGroupElementOrder
+      relationship: adjacent
+      overlap: Both iterate a function (group operation vs. arbitrary map) to find cycle/order, but one
+        is algebraic with Cayley tables and the other is generic functional graphs; operations differ
+        in setting.
+    - id: task:generated.wave8.wait_for_deadlock.wait_for_deadlock:WaitForDeadlock
+      relationship: adjacent
+      overlap: Both find cycles in directed graphs (wait-for vs. functional graph), but deadlock detection
+        finds cycles in a wait-for graph, while this iterates a functional map from a start, distinct
+        graph traversal.
+    - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+      relationship: different
+      overlap: Temporal logic evaluates formulas over traces, not cycle detection in functional graphs.
+    substantive_difference: The operation is specifically detecting the entry into a cycle of a functional
+      mapping, a fundamental graph algorithm not present in the neighbors.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Functional graph cycle finding is a distinct algorithmic pattern not covered by group order
+      or deadlock detection.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: lz77_factorization
+  summary: Factor a string by greedy longest-match LZ77 parsing with self-overlapping matches allowed
+    inside a stated window, returning the factor count, the k-th (offset,length,char) triple, or the reconstructed
+    string from given factors.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.packet_fragment_reassembly.packet_fragment_reassembly:PacketFragmentReassembly
+    relationship: same_operation
+    overlap: Both involve decomposing a sequence into fragments (LZ77 factors vs packet fragments) and
+      reassembling them; LZ77 factorization includes pattern matching against a history buffer, a specific
+      form of dictionary encoding.
+  - id: task:generated.wave9.diff_patch_application.diff_patch_application:DiffPatchApplication
+    relationship: adjacent
+    overlap: Both handle sequence transformations, but diff_patch applies edits from a patch while LZ77
+      constructs factors from a dictionary.
+  - id: gallery:regex_following
+    relationship: different
+    overlap: Regex following produces strings matching a pattern; LZ77 factors a string into substrings,
+      fundamentally different.
+  reason: 1/3 samples judged it novel; LZ77 factorization is a known algorithmic operation with comparable
+    existing tasks in the catalog.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: cycle_basis_construction
+  summary: Build a canonical spanning-tree fundamental cycle basis on varied connected undirected graphs,
+    outputting each cycle as sorted edge indices for a queried tree edge or the whole basis.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.minimum_spanning_tree.minimum_spanning_tree:MinimumSpanningTree
+    relationship: same_operation
+    overlap: Both compute a canonical spanning tree (MST vs plain spanning tree) and then extract graph
+      components (tree edges vs fundamental cycles). The cognitive operation is finding a spanning tree
+      and using it to decompose the graph; fundamental cycles are a direct by-product of any spanning
+      tree.
+  - id: task:generated.wave9.articulation_bridges.articulation_bridges:ArticulationBridges
+    relationship: adjacent
+    overlap: Both are graph algorithms producing canonical edge sets, but articulation_bridges identifies
+      bridges via low-link, while cycle_basis uses a spanning tree to form cycles.
+  - id: task:generated.wave8.bridge_edges.bridge_edges:BridgeEdgesTask
+    relationship: different
+    overlap: Both output edge sets in undirected graphs, but one enumerates bridges and the other computes
+      cycles.
+  reason: 1/3 samples judged it novel; Cycle basis generation is a direct derivation from the spanning
+    tree already computed in MST tasks; no new cognitive operation.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: mdp_policy_evaluation
+  summary: Evaluate a fixed policy in small Markov decision processes by solving exact rational Bellman
+    equations over stochastic transitions and rewards, returning a queried state's discounted or average
+    value.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.probability_tree_marginal.probability_tree_marginal:ProbabilityTreeMarginal
+    relationship: same_operation
+    overlap: 'Both evaluate sequential Markov processes with rational probabilities: probability_tree_marginal
+      computes horizon probabilities via tree branching, while C006 evaluates a policy by solving Bellman
+      equations for state values. Both involve transition dynamics and exact rational arithmetic.'
+  - id: task:generated.wave9.hidden_state_filtering.hidden_state_filtering:HiddenStateFiltering
+    relationship: adjacent
+    overlap: Both perform inference in Markov models, but hidden_state_filtering does sum-product filtering
+      over observations, while C006 evaluates fixed policies.
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: different
+    overlap: Both compute rational expectations, but conditional_expectation conditions on events in a
+      finite joint distribution, while C006 solves Bellman equations with rewards.
+  reason: 0/3 samples judged it novel; MDP evaluation is already present via probability_tree_marginal
+    and hidden_state_filtering; this is a cosmetic variant with reward/discount.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: boolean_function_sensitivity
+  summary: Given an explicit Boolean truth table and a named input, flip each input bit separately and
+    count the resulting output flips; return the queried point's sensitivity or the maximum-sensitivity
+    input.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+    relationship: same_operation
+    overlap: 'Both involve flipping or probing individual components and observing a resulting state:
+      open_addressing probes slots to insert keys, while C012 flips input bits to observe output changes.
+      Both are deterministic procedures counting or identifying a specific position (slot vs maximum-sensitive
+      input).'
+  - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+    relationship: adjacent
+    overlap: Both compute a deterministic effect of perturbations (rounding vs bit flips) on a value.
+  - id: task:generated.wave12.linearizability_check.linearizability_check:LinearizabilityCheck
+    relationship: different
+    overlap: Boolean queries on histories vs Boolean function sensitivity; different domains.
+  reason: 0/2 samples judged it novel; Bit flips and counting output changes is a common perturbation
+    pattern, already seen in open_addressing_slot.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/2
+- name: young_diagram_operation
+  summary: Apply valid box insertions, removals, conjugation, or hook-length queries to integer partitions
+    represented as Young diagrams, returning the resulting partition, conjugate rows, or queried hook
+    length.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.diff_patch_application.diff_patch_application:DiffPatchApplication
+    relationship: same_operation
+    overlap: Both apply a series of transformations (insertions/removals) to a sequence; Young diagram
+      operations (add/remove boxes) are analogous to edit operations on partitions. Both maintain a canonical
+      state and output the resulting sequence.
+  - id: task:generated.wave9.strongly_connected_components.strongly_connected_components:StronglyConnectedComponents
+    relationship: adjacent
+    overlap: Both involve decomposing structures, but SCC uses graph traversals while C009 manipulates
+      integer partitions.
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: different
+    overlap: Only share the 'exact' nature of the output, not the operation.
+  reason: 0/3 samples judged it novel; Young diagram operations reduce to standard edit operations on
+    partitions, resembling diff_patch application.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: trace_monoid_foata_normal_form
+  summary: Given an alphabet with commuting independent pairs and a finite word, compute the Foata normal
+    form of its trace by greedily grouping maximal available letters into layers, returning the layered
+    block sequence.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+    relationship: adjacent
+    overlap: Both compute canonical forms of formal language objects (traces vs DFAs), but DFA minimization
+      merges states while Foata normal form groups commuting letters into layers.
+  - id: task:generated.wave9.grammar_first_follow.grammar_first_follow:GrammarFirstFollow
+    relationship: different
+    overlap: Both involve formal language concepts, but one computes sets over grammar symbols and the
+      other processes traces.
+  - id: task:generated.wave8.fd_attribute_closure.fd_attribute_closure:AttributeClosure
+    relationship: adjacent
+    overlap: Both are closure-like operations, but attribute closure iteratively adds attributes while
+      Foata normal form layers independent letters.
+  reason: 1/3 samples judged it novel; The Foata normal form is a unique operation on traces, not covered
+    by any neighbor.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: minimal_absent_substring
+  summary: Find and return the lexicographically smallest word absent as a substring from the input word
+    over a stated alphabet, varying alphabet size and input length.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.wave8.trie_unique_prefix.trie_unique_prefix:TrieUniquePrefix
+    relationship: adjacent
+    overlap: Both find shortest prefixes or substrings, but trie_unique_prefix finds a prefix unique among
+      a set, while minimal_absent_substring finds a string absent from a single word.
+  - id: task:generated.manual_high_value_80_r1.minimal_unsat_core.minimal_unsat_core:MinimalUnsatCore
+    relationship: different
+    overlap: Both involve lexicographically smallest canonical solutions, but one is over unsatisfiable
+      cores and the other over absent substrings.
+  - id: gallery:set_missing_element
+    relationship: different
+    overlap: Missing element in a set vs missing substring in a word; operations differ in the search
+      space (combinatorial vs string).
+  reason: 1/3 samples judged it novel; No neighbor computes absent substrings; this is a fresh string
+    combinatorics operation.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: critical_pair_generation
+  summary: Unify the left-hand side of one rewrite rule into a non-variable subterm of another, apply
+    the mated substitution to both right-hand sides, and return the directed critical pair of terms or
+    an empty result when no overlap exists.
+  verdict: novel
+  nearest_neighbors:
+  - id: gallery:unification_entailment
+    relationship: adjacent
+    overlap: Both involve unification, but unification_entailment checks if an equality is implied by
+      a most general unifier, C010 constructs critical pairs through overlapping rewrite rules; different
+      end products.
+  - id: task:math_scratch:MathScratchEntailment
+    relationship: adjacent
+    overlap: Both deal with symbolic rewrite systems, but math_scratch decides equivalence by normalization,
+      C010 generates critical pairs; distinct operations.
+  - id: task:generated.wave12.three_way_merge_resolution.three_way_merge_resolution:ThreeWayMergeResolution
+    relationship: different
+    overlap: Three-way merge resolves text conflicts, C010 unifies terms for critical pairs; no shared
+      operation.
+  reason: 1/2 samples judged it novel; Critical pair construction is a novel procedural skill lacking
+    in existing tasks.
+  scores:
+    novelty: 5
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/2
+- name: elementary_cellular_automaton
+  summary: Advance a one-dimensional binary lattice under a stated elementary rule with fixed or wrap-around
+    boundary, returning the full row after k steps or the state of a queried cell across varied widths,
+    seeds, and step counts.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+    relationship: same_operation
+    overlap: 'Both simulate a deterministic sequence of states: open_addressing probes slots according
+      to a rule, while C011 advances a cellular automaton according to a rule. Both return the state or
+      a queried index, with varied initial conditions and step counts.'
+  - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+    relationship: adjacent
+    overlap: Both are discrete-time simulations, but event_queue has priority queues, while C011 uses
+      a fixed local transition rule.
+  - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+    relationship: different
+    overlap: Trace of recursion vs trace of cellular automaton; different state spaces.
+  reason: 1/3 samples judged it novel; Cellular automaton stepping is just another deterministic iterative
+    simulation, comparable to open_addressing_slot.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: degree_sequence_realization
+  summary: From varied graphical and non-graphical integer sequences, repeatedly remove a largest degree
+    and decrement that many next-largest degrees, returning the canonical residual multiset or the first
+    violated degree.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+    relationship: same_operation
+    overlap: Both iteratively remove elements with maximum property (largest degree vs zero-indegree)
+      and decrement others, producing a sequence of removals; Havel-Hakimi is a greedy elimination process
+      analogous to topological layering.
+  - id: task:generated.wave12.polynomial_euclidean_algorithm.polynomial_euclidean_algorithm:PolynomialEuclideanAlgorithm
+    relationship: adjacent
+    overlap: Both involve iterative remainder/decrement processes, but one on polynomials and the other
+      on degree sequences.
+  - id: task:generated.wave9.grammar_first_follow.grammar_first_follow:GrammarFirstFollow
+    relationship: different
+    overlap: Both use iterative fixed-point processes, but on different structures (graphs vs grammars).
+  reason: 1/3 samples judged it novel; The Havel-Hakimi algorithm is a known greedy elimination; the neighbor
+    topological_layering captures the same iterative removal pattern.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: lattice_path_bijection
+  summary: Convert among Dyck-path encodings (binary word, area sequence, and ballot height sequence)
+    through deterministic bijections, returning the requested encoding for a queried path.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.wave8.lattice_join_meet.lattice_join_meet:LatticeJoinMeet
+    relationship: adjacent
+    overlap: Both deal with lattice structures, but C002 transforms Dyck paths via bijections between
+      encodings, while lattice_join_meet computes meet/join on divisibility lattices.
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: different
+    overlap: Both involve transformations between representations, but C002 uses combinatorial bijections
+      on Dyck words, while coordinate_frame_composition composes geometric frame changes.
+  - id: task:generated.wave12.three_way_merge_resolution.three_way_merge_resolution:ThreeWayMergeResolution
+    relationship: different
+    overlap: Both output canonical forms of sequences, but C002 encodes lattice paths while merge resolution
+      edits text.
+  reason: 0/2 samples judged it novel; The specific bijections between Dyck path encodings are not covered
+    by any existing task; they require understanding of Catalan combinatorics.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: interval_graph_coloring
+  summary: Color intervals with a minimum number of colors via left-endpoint sweep and deterministic tie-breaking,
+    returning the queried interval's assigned color or the sorted set of intervals sharing its color.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+    relationship: variant
+    overlap: Both use left-endpoint sweeps over intervals to assign properties (overlap/coverage vs. colors);
+      the sweep operation is identical, only the output (color assignment vs. overlap counts) differs.
+  - id: proposal:k3_systematic-generalization:P003
+    relationship: adjacent
+    overlap: Both compute structural properties via sweeps/orderings (convex hull vs. coloring), but they
+      operate on different objects (points vs. intervals) and different algorithms.
+  - id: task:generated.wave9.minimum_spanning_tree.minimum_spanning_tree:MinimumSpanningTree
+    relationship: adjacent
+    overlap: Both are greedy algorithms on discrete structures, but one on intervals and one on graphs
+      with distinct selection rules.
+  reason: 0/3 samples judged it novel; Interval coloring reuses the same left-endpoint sweep as interval_sweep;
+    only the output changes.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: word_segmentation_dictionary
+  summary: Segment an unspaced lowercase string into known dictionary words by a deterministic left-to-right
+    longest-prefix rule, returning the canonical token split or the starting index of the first unmatched
+    substring.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.routing_longest_prefix.routing_longest_prefix:RoutingLongestPrefix
+    relationship: variant
+    overlap: Both apply a deterministic longest-prefix rule; one on IP/binary prefixes, the other on dictionary
+      words. The core matching and selection operation is the same.
+  - id: task:grammar:Parsing
+    relationship: adjacent
+    overlap: Both segment token sequences (words vs. grammar symbols), but parsing uses grammar productions
+      while this uses dictionary longest-prefix, distinct operations.
+  - id: task:generated.wave8.suffix_array_rank.suffix_array_rank:SuffixRank
+    relationship: adjacent
+    overlap: Both process string suffixes/prefixes, but suffix rank sorts suffixes lexicographically,
+      not segment by dictionary matching.
+  reason: 1/3 samples judged it novel; Longest-prefix matching is a known operation; moving from IP prefixes
+    to dictionary words is a domain change, not a new algorithm.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: interval_graph_dominating_set
+  summary: Find a minimum dominating set of intervals by a right-endpoint sweep with deterministic tie-breaking,
+    returning the sorted interval indices in the dominating set or the dominating count.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+    relationship: variant
+    overlap: Both operate on interval sets and use left/right endpoint sweeps to compute structural properties
+      (overlap vs. dominating set). The sweep machinery and interval input are shared, only the output
+      property differs.
+  - id: plan:WAVE6:S59
+    relationship: adjacent
+    overlap: 'Both involve interval covering problems: point stabbing vs. dominating set; both are combinatorial
+      optimization over intervals but with distinct objectives.'
+  - id: task:generated.wave9.minimum_spanning_tree.minimum_spanning_tree:MinimumSpanningTree
+    relationship: adjacent
+    overlap: Both are greedy deterministic optimizations on discrete structures (intervals vs. graphs);
+      the operations differ (sweep vs. edge selection).
+  reason: 0/2 samples judged it novel; Right-endpoint sweep to find a minimum dominating set is a cosmetic
+    variant of the existing interval_sweep operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: perfect_elimination_order
+  summary: Compute a perfect elimination ordering of an undirected graph by selecting simplicial vertices
+    under a deterministic tie rule, returning the ordering or the sorted first non-simplicial vertex set.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.articulation_vertices.articulation_vertices:ArticulationVertices
+    relationship: adjacent
+    overlap: Both work on undirected graphs and identify special vertices (articulation vs. simplicial),
+      but articulation is a connectivity property, while simplicial is a neighborhood property; distinct
+      operations.
+  - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+    relationship: variant
+    overlap: Both iteratively remove vertices based on a local property (zero indegree vs. being simplicial)
+      and produce an ordering; the removal rule differs but the iterative removal and ordering structure
+      is the same.
+  - id: task:generated.wave9.minimum_spanning_tree.minimum_spanning_tree:MinimumSpanningTree
+    relationship: adjacent
+    overlap: Both are graph algorithms with deterministic tie-breaking but one finds MST edges and the
+      other an elimination ordering; no shared procedure.
+  reason: 1/3 samples judged it novel; Perfect elimination order is a variant of the iterative removal
+    ordering seen in topological layering, only with a different vertex selection property.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: lyndon_factorization
+  summary: Partition words over arbitrary ordered alphabets into the canonical nonincreasing Lyndon factor
+    sequence under the given order, returning factor boundaries or joined factors.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.strongly_connected_components.strongly_connected_components:StronglyConnectedComponents
+    relationship: adjacent
+    overlap: Both partition a combinatorial object into canonical components (Lyndon factors vs. SCCs)
+      but apply different algorithms and output different canonical forms.
+  - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+    relationship: adjacent
+    overlap: Both produce canonical partitions (of strings vs. automaton states) but via unrelated procedures.
+  - id: task:generated.wave8.c3_linearization.c3_linearization:C3Linearization
+    relationship: adjacent
+    overlap: Both compute a canonical ordering (factor sequence vs. MRO) from an input, but on different
+      domains with different algorithms.
+  reason: 1/3 samples judged it novel; Variant of string factorization producing a canonical partition,
+    with no direct neighbor sharing the same algorithm but sharing the operation of forming canonical
+    components.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 3
+  votes: 1/3
+- name: permutation_inversion_count
+  summary: Count inversions of permutations over varied labels and partial orders by comparing each pair
+    of positions against the stated order, returning the integer count or the canonical inverted pair
+    list.
+  verdict: variant
+  nearest_neighbors:
+  - id: plan:WAVE0:N6
+    relationship: variant
+    overlap: The plan explicitly includes permutation inversion as part of permutation operations; this
+      proposes the same inversion counting, just with a different label or output format.
+  - id: proposal:k3_systematic-generalization:P002
+    relationship: adjacent
+    overlap: Both analyze relative order in permutations (inversions vs. pattern containment), but one
+      counts pairwise violations and the other finds a pattern occurrence, distinct sub-operations.
+  - id: task:generated.wave8.finite_group_inverse.finite_group_inverse:FiniteGroupInverse
+    relationship: different
+    overlap: Finite group inverse is an algebraic operation on groups, not a combinatorial count of inversions
+      in permutations.
+  reason: 0/3 samples judged it novel; The plan already lists permutation inversion, so this is a duplicate
+    of an existing planned operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: bitvector_rank_select
+  summary: Process binary strings with explicit indices and queries, computing prefix one-counts and positions
+    of the k-th one, returning exact integer answers for each rank/select operation over varied lengths
+    and query mixes.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.kmp_prefix_value.kmp_prefix_value:KmpPrefixValue
+    relationship: variant
+    overlap: 'Both process a string and answer queries about prefixes: KMP computes prefix-function values
+      while rank/select computes on-bit counts, both are prefix-query operations on binary/string data.'
+  - id: task:generated.wave8.suffix_array_rank.suffix_array_rank:SuffixRank
+    relationship: adjacent
+    overlap: Both rank positions of characters in a string (suffix rank vs. rank of one-bits) but use
+      different structures.
+  - id: task:generated.wave8.binary_search_probes.binary_search_probes:BinarySearchProbes
+    relationship: adjacent
+    overlap: Both dice a sequence to answer index-based queries, but one uses binary search and the other
+      rank/select on bits.
+  reason: 1/3 samples judged it novel; Variant of prefix-query operations found in KMP prefix value and
+    suffix array rank.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: deferred_acceptance_matching
+  summary: Run deferred acceptance on two equal-sized sides with complete strict preference lists and
+    a stated proposing side, tracking offers, holds, and rejections to stability, returning a queried
+    participant's partner or the full matching.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.top_trading_cycles.top_trading_cycles:TopTradingCycles
+    relationship: variant
+    overlap: Both run an allocation algorithm on agents with preferences and produce a matching; TTC uses
+      cycles while deferred acceptance uses offers/rejections, but the shared operation is matching with
+      preferences.
+  - id: task:generated.wave9.bipartite_matching.bipartite_matching:BipartiteMatching
+    relationship: adjacent
+    overlap: Both find a matching in bipartite structures, but one is maximum cardinality via augmenting
+      paths and the other is stable matching via deferred acceptance; distinct objectives.
+  - id: task:generated.wave10.correction_aware_summary.correction_aware_summary:CorrectionAwareSummary
+    relationship: adjacent
+    overlap: Both track commitments/offers and their updates, but one is a protocol simulation and the
+      other is a text summary; operations differ.
+  reason: 1/3 samples judged it novel; Stable matching via deferred acceptance is a variant of the existing
+    preference-based matching operation (TTC).
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: operator_algebra_induction
+  summary: Infer a hidden binary operator from input-output examples covering modular, digitwise, and
+    min/max families, then evaluate nested bracketed expressions built from it, returning the integer
+    result.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a hidden rule from examples and apply it to new instances; operator inference
+      over arithmetic families is a parameter-restricted pattern induction.
+  - id: gallery:matrix_induction
+    relationship: variant
+    overlap: Both induce a function from examples under a certified finite rule family; operator induction
+      is function induction over binary operators.
+  - id: gallery:sequential_induction
+    relationship: adjacent
+    overlap: Both involve induction over a bounded DSL, but sequential targets recurrences rather than
+      operators.
+  reason: 0/3 samples judged it novel; Same rule-induction operation as pattern/matrix/sequential induction,
+    only in an arithmetic operator domain.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: morphological_rule_induction
+  summary: 'Infer a synthetic language''s inflection rules from stem/inflected pairs: ordered conditional
+    suffixing, vowel mutation, and consonant assimilation; apply the rule chain to new stems and return
+    the exact words.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.novel_word_application.novel_word_application:NovelWordApplication
+    relationship: variant
+    overlap: Both apply invented-language morphological rules to new words; the candidate adds inference
+      of those rules from examples.
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer string transformation rules from examples and apply to new strings; morphology
+      is a rule family.
+  - id: task:regex:RegexInduction
+    relationship: adjacent
+    overlap: Both induce a string-rewriting rule from examples, but regex is classification while morphology
+      is transduction.
+  reason: 0/3 samples judged it novel; Morphological rule induction is a variant of novel_word_application
+    and string transduction induction.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: grid_transform_induction
+  summary: "Infer the transform mapping demo grid pairs\xE2\x80\x94rotation, reflection, gravity fall,\
+    \ border recolor, symmetry completion\xE2\x80\x94then apply it to a new colored grid, returning the\
+    \ resulting rows."
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a transformation from examples and apply it to new inputs; grid transforms are
+      a specific rule family.
+  - id: gallery:grid_navigation
+    relationship: adjacent
+    overlap: Both involve grids and spatial relations, but grid navigation infers coordinates while this
+      infers transformations.
+  - id: gallery:matrix_induction
+    relationship: variant
+    overlap: Both infer a mapping from structured examples; grid transform induction is a matrix-cell
+      rule induction.
+  reason: 0/3 samples judged it novel; Grid transform induction is a cosmetic restyling of pattern/matrix
+    induction.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: transducer_state_induction
+  summary: "Infer a symbol-driven transducer's latent state logic from input/output traces\xE2\x80\x94\
+    outputs hinge on toggles, mod-k counters, or last-seen markers\xE2\x80\x94and return the output string\
+    \ for a fresh input sequence."
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:rule_switching
+    relationship: variant
+    overlap: Both track symbolic state while interpreting a symbol sequence under hidden rules; transducer
+      inference is rule-switching with state families.
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a rule from traces/examples and apply it to new sequences; latent transducer is
+      a stateful rule induction.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: adjacent
+    overlap: Both execute state machines, but protocol trace gives transitions explicitly while the candidate
+      infers them.
+  reason: 0/3 samples judged it novel; Latent state inference is a stateful form of rule induction, overlapping
+    with rule_switching and pattern_induction.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: container_discipline_inference
+  summary: "Infer which container discipline explains an interleaved insert/remove log\xE2\x80\x94stack,\
+    \ queue, bounded overwrite buffer, keyed priority\xE2\x80\x94then continue the log, returning the\
+    \ exact sequence of removed items."
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a rule from sequences/examples and predict continuation; container discipline
+      is a rule family over insert/remove logs.
+  - id: proposal:k3_systematic-generalization:P008
+    relationship: adjacent
+    overlap: Both handle concurrent edits/insert-remove operations, but rebase transforms positions rather
+      than inferring discipline.
+  - id: task:generated.wave9.serializability.transaction_serializability:Serializability
+    relationship: different
+    overlap: Serializability builds precedence graphs, not container behaviors.
+  reason: 1/3 samples judged it novel; Container discipline inference is a pattern-induction instance
+    over known stack/queue behaviors.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: apportionment_rule_inference
+  summary: "Infer the apportionment rule behind vote-to-seat examples\xE2\x80\x94largest remainder or\
+    \ divisor ladders with varying steps\xE2\x80\x94then allocate seats for a fresh tally, returning the\
+    \ integer seat vector."
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.dhondt_apportionment.dhondt_apportionment:DhondtApportionment
+    relationship: variant
+    overlap: Both allocate seats under a divisor rule; the candidate infers which divisor/largest-remainder
+      rule instead of fixing D'Hondt.
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a rule from examples and apply to new data; apportionment-rule inference is a
+      parameterized instance.
+  - id: task:generated.wave8.approval_voting_winner.approval_voting_winner:ApprovalVotingWinner
+    relationship: adjacent
+    overlap: Both are social-choice computations, but approval is not apportionment.
+  reason: 0/3 samples judged it novel; Apportionment rule inference is a parameterized variant of existing
+    seat-allocation tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: positional_voting_inference
+  summary: "Infer the positional scoring weights behind ranked-ballot outcomes\xE2\x80\x94plurality, Borda-like,\
+    \ and veto-style weightings over candidate orderings\xE2\x80\x94then return the winner of a fresh\
+    \ ballot profile."
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.borda_winner.borda_winner:BordaWinner
+    relationship: variant
+    overlap: Both compute a positional voting outcome from ranked ballots; the candidate infers weights
+      instead of using fixed Borda, making it a parameterized variant.
+  - id: task:generated.wave8.approval_voting_winner.approval_voting_winner:ApprovalVotingWinner
+    relationship: adjacent
+    overlap: Both are voting rule computations, but approval is not positional and the operation differs.
+  - id: task:generated.wave8.instant_runoff_winner.instant_runoff_winner:InstantRunoffWinner
+    relationship: different
+    overlap: IRV uses elimination and transfer, not positional scoring.
+  reason: 0/3 samples judged it novel; Positional voting inference is a parameterized version of existing
+    Borda/scoring winner tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: checksum_scheme_inference
+  summary: "Infer a check-digit scheme\xE2\x80\x94position weights, modulus, and symbol alphabet\xE2\x80\
+    \x94from batches of valid codes, then return the check character that completes each fresh partial\
+    \ code."
+  verdict: variant
+  nearest_neighbors:
+  - id: task:regex:RegexInduction
+    relationship: variant
+    overlap: Both induce a rule family from positive/negative examples and apply it to new inputs; checksum
+      inference is a rule-induction instance with algebraic members.
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a symbolic rule from examples and apply it to complete a new instance; checksum
+      is a pattern-induction with arithmetic constraints.
+  - id: task:generated.wave8.crc_remainder.crc_remainder:CrcRemainder
+    relationship: adjacent
+    overlap: Both involve check-digit/remainder computations but CRC is given the generator, not inducing
+      the scheme.
+  reason: 1/3 samples judged it novel; Infers a parameterized arithmetic rule from examples, same operation
+    as existing pattern/rule induction.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: subtraction_game_inference
+  summary: Infer the permitted subtraction set from demonstrations of legal and illegal heap moves, then
+    analyze fresh heap sizes by backward induction, returning a winning take amount or NONE.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:game_forced_win
+    relationship: variant
+    overlap: Both analyze a finite game to determine winning moves via backward induction; the candidate
+      adds inference of the subtraction set from examples.
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a hidden rule from examples; here the rule is a legal move set, then game analysis
+      is applied.
+  - id: task:regex:RegexInduction
+    relationship: adjacent
+    overlap: Both induce a rule from positive/negative examples, but regex targets language classification
+      instead of game states.
+  reason: 0/3 samples judged it novel; Infers a legal-move set then applies standard game backward induction,
+    both previously known operations.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: substitution_cipher_induction
+  summary: "Infer a substitution mapping from paired plaintext/ciphertext samples\xE2\x80\x94letter-level\
+    \ ciphers or word-level codebooks\xE2\x80\x94then decode fresh ciphertext, returning the recovered\
+    \ plaintext."
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.prefix_code_decode.prefix_code_decode:PrefixCodeDecode
+    relationship: variant
+    overlap: Both decode sequences using a mapping induced/derived from examples; substitution cipher
+      is a codebook with fixed-length codes.
+  - id: gallery:string_transduction
+    relationship: variant
+    overlap: Both apply string transductions; substitution inference is a learned transposition.
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a symbolic mapping from examples and apply to new strings.
+  reason: 0/3 samples judged it novel; Substitution cipher induction is a variant of codebook/string transduction
+    induction.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: robot_command_semantics
+  summary: "Infer each command symbol's effect\xE2\x80\x94turns, steps, longer strides\xE2\x80\x94from\
+    \ demo programs paired with final grid poses, then run a fresh program and return the robot's final\
+    \ position and heading."
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:grid_navigation
+    relationship: variant
+    overlap: Both track position/heading in a grid from actions; the candidate infers actions from demos
+      instead of given semantics.
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer a rule from examples and apply to a fresh program; command semantics is a domain-specific
+      rule induction.
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: adjacent
+    overlap: Both track orientation under transformations, but different dimensions and without inference.
+  reason: 0/3 samples judged it novel; Robot command semantics inference is a combination of grid navigation
+    and rule induction, both existing.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: vessel_capacity_inference
+  summary: Infer hidden vessel capacities from pour logs whose clamped outcomes reveal each limit, then
+    simulate further pour sequences under the deduced capacities, returning the final level of every vessel.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: Both infer hidden parameters from observed behavior and apply them; capacities are parameters
+      inferred from pour logs.
+  - id: task:generated.wave9.reaching_defs.reaching_definitions:ReachingDefs
+    relationship: adjacent
+    overlap: both propagate state through operations, but different domains (capacities vs. definitions).
+  - id: gallery:grid_navigation
+    relationship: adjacent
+    overlap: Both infer hidden attributes from observations, but over different structures.
+  reason: 0/3 samples judged it novel; Capacity inference from logs is rule-induction over physical constraints,
+    not a new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+pool: []

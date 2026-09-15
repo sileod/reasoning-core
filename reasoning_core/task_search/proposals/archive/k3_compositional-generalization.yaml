@@ -1,0 +1,885 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_compositional-generalization
+created_at: '2026-09-10T16:42:50.161070+00:00'
+provenance:
+  kind: proposer
+  name: k3_compositional-generalization
+  received: '2026-09-10'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: procedural tasks that would improve compositional generalization in language models
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 1
+  complete: false
+catalog:
+  sha256: 18ffc1a05fd9a5be4886826d83f1171bb8a45868ab8ec3e4a90b8cfbcebcf5ab
+  entries: 440
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 8
+    task: 270
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-1
+    request_sha256: ae6310909ccdd1129c624322358c10b21cc03a92bc4cda6da2d067fdae3707ba
+    response_sha256: 109d7c15a25e31c41b8c97fad9419bbdab6fe8801b0c49454062303a5246682a
+    response_id: chatcmpl-48ddddfc-5ed3-4c73-bc56-7a5b67de804b
+  - purpose: propose-round-2
+    request_sha256: df31d6eca37dd0aa91424849fdc3cb17864911cb657fd5d48652ff72cc5cdf77
+    response_sha256: abb386ec1740ae2333240f39e6f423e6853fb70d59204d3a91d6266e0281bbd2
+    response_id: chatcmpl-c1fad0b4-bd35-49d0-874e-08323404c1eb
+  - purpose: propose-round-3
+    request_sha256: 847d2d1e0b57c7cdd42d785d1e7e7dc10e0a7864d4299edbd84810cae26fc9f7
+    response_sha256: dc895afb1a1245ad96c54bd96a73a3c96d37a742cd49b6e77a7cc9c9c574ce67
+    response_id: chatcmpl-aab0c4c9-7ea3-4560-82d2-6777ed061711
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    request_sha256: 8c0b4ca5339b4196dde2bca76bc902788576ab6f13e8d696f1357445ee4774b4
+    response_sha256: f2dcf141f1b35f21110cf5be72bc271f13f842064e54b8ba73b3a70373a76859
+    response_id: chatcmpl-bd972bf99326de35
+  - purpose: critic-round-1-sample-2
+    request_sha256: 9c2947b747bd7455a2d930e0433388d3cb15fa5adf5d37f7367c8a6d07a03b2d
+    response_sha256: d8b27b0c1462b1876b56349599f24e62e0459502ebc45753d19cfdfd0aa5acb0
+    response_id: chatcmpl-8491493c66702714
+  - purpose: critic-round-1-sample-3
+    request_sha256: c02800b0182053aa4a3f4b84da5efdba32afee76635c99d9dbdc962d6ef9d730
+    response_sha256: d760fb9c4e32f3be8fdc024013610459dbf49bbcd78ed6d4ad8d9c43304317e3
+    response_id: chatcmpl-8b4c00ce09598a5d
+  - purpose: critic-round-2-sample-1
+    request_sha256: 0e7cfa79d6ff3cfa65f711d66c4adf414bf3d253f2ebb25fa49986e32cb4cd23
+    response_sha256: b755aa8892a669b2b2e84a3fa747e3fe3dedf092f5acea03203a445b8791d7d0
+    response_id: chatcmpl-b93937a32a3e4d2f
+  - purpose: critic-round-2-sample-2
+    request_sha256: fac97f42b5b6ad9da4e49567f6456b69405097be5d0f2a84501d6b1e4ca7aede
+    response_sha256: 6098f671d8fc7bc94768e47059150b6b2644b0350bab222fc2ebd0fbe67b1206
+    response_id: chatcmpl-95fa8a379606eae4
+  - purpose: critic-round-2-sample-3
+    request_sha256: 51b54c3d3be9cdc92f2bc1b7fd71de6d40225a6ae42d0164fec14aab9b01d36b
+    response_sha256: 38764e9fc4fad86052c20f8c8ef13b39a788f14388a67b9cf4d5192eddb2e99a
+    response_id: chatcmpl-814f5c55d25fcff9
+  - purpose: critic-round-3-sample-1
+    request_sha256: 6eb10169b82d30545e7a704344459bd86a1064ce25456c3866725372bce278c2
+    response_sha256: 3b7fa2cdfbf428bcc2cdd5d13392dfaa0b2f853072c70cd31a4b654d6462cddf
+    response_id: chatcmpl-af0d879476ada742
+  - purpose: critic-round-3-sample-2
+    request_sha256: 11d536090bc5ebc6fd1eb49be52fc117dc4688e94e7c87baa7bb59414be53075
+    response_sha256: 09b0628dc5b7d85f299d5173d358b3d240f117ac89b6c5cbb20e231eda79c4fb
+    response_id: chatcmpl-94a85fa9c06b3eb1
+  - purpose: critic-round-3-sample-3
+    request_sha256: 933be68603ce53359f9fab18aab6f08539ce8e9995c871ef32b173bdc6609d25
+    response_sha256: 9870844cc376c5520b7e89c3f76f9c1bda20810a922bac57eb96173068ed9d04
+    response_id: chatcmpl-b58543ea0a11bf7c
+proposals:
+- name: arc_consistency_reduction
+  summary: Propagate binary allowed-pair constraints over small finite domains until arc-consistent, returning
+    every variable's surviving sorted domain or the variable where wipeout occurs.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.modular_constraint.modular_constraint_solver:ModularConstraint
+      relationship: different
+      overlap: constraint satisfaction and consistency
+    - id: task:generated.wave9.nfa_subset_construction.nfa_subset_construction:NfaSubsetConstruction
+      relationship: adjacent
+      overlap: iterative closure/fixpoint computation
+    - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+      relationship: different
+      overlap: binary relation propagation
+    substantive_difference: Binary allowed-pair arc consistency is a distinct constraint propagation operation
+      not present in the catalog; the closest constraints use modular or boolean domains, not binarized
+      relations over finite domains.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Arc-consistency over explicit allowed-pair domains is a novel constraint-propagation operation
+      with clear oracle and SFT signal.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: deferred_acceptance_matching
+  summary: Run deferred acceptance on two equal-sized sides with complete strict preference lists and
+    a stated proposing side, tracking offers, holds, and rejections to stability, returning a queried
+    participant's partner or the full matching.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.top_trading_cycles.top_trading_cycles:TopTradingCycles
+    relationship: same_operation
+    overlap: stable matching / assignment with strict preferences using iterative proposal and rejection
+      cycles
+  - id: task:generated.wave9.bipartite_matching.bipartite_matching:BipartiteMatching
+    relationship: variant
+    overlap: constructs canonical pairing/allocation between two sides under order rules
+  - id: task:generated.wave8.approval_voting_winner.approval_voting_winner:ApprovalVotingWinner
+    relationship: adjacent
+    overlap: preference aggregation with deterministic tie-breaking and rounds
+  reason: 0/3 samples judged it novel; Another variant of the iterative preference-matching/fixed-point
+    family.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: lz77_factorization
+  summary: Factor a string by greedy longest-match LZ77 parsing with self-overlapping matches allowed
+    inside a stated window, returning the factor count, the k-th (offset,length,char) triple, or the reconstructed
+    string from given factors.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.packet_fragment_reassembly.packet_fragment_reassembly:PacketFragmentReassembly
+    relationship: same_operation
+    overlap: greedy parsing/reassembly of a string from overlapping repeated substrings with a window/offset
+      model
+  - id: task:generated.wave8.suffix_array_rank.suffix_array_rank:SuffixRank
+    relationship: adjacent
+    overlap: string self-overlap reasoning using suffix structure
+  - id: gallery:regex_following
+    relationship: different
+    overlap: string generation under finite constraints
+  reason: 0/3 samples judged it novel; Known compression-encoding operation with the same greedy matching
+    cognitive primitive as packet reassembly.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: repeating_decimal_expansion
+  summary: Carry out long division of one integer by another, detecting the first repeated remainder to
+    split the decimal expansion into integer part, preperiod, and minimal repetend, over terminating,
+    purely recurring, and mixed cases.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+    relationship: same_operation
+    overlap: exact rational arithmetic on division-related rational operations with degenerate cases
+  - id: plan:WAVE6:S61
+    name: continued_fraction_expansion_of_a_rational_number
+    relationship: variant
+    overlap: algorithmically related exact representation of rational numbers through arithmetic division
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: adjacent
+    overlap: procedural repeated aggregation on integer inputs
+  reason: 0/3 samples judged it novel; Same exact rational arithmetic domain only with a different output
+    representation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: functional_graph_cycle_finding
+  summary: Iterate a stated function on a finite set from a given start, locating where the trajectory
+    enters its cycle, and report the entry point, tail length, and cycle length across maps whose in-trees
+    merge into one cycle.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.finite_group_element_order.finite_group_element_order:FiniteGroupElementOrder
+    relationship: same_operation
+    overlap: iterate a function/repeated operation from a start until cycling/repeating to identify cycle
+      length and entry
+  - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+    relationship: variant
+    overlap: trace repeated function application on a finite state space with termination and cycle detection
+  - id: gallery:graph_successors
+    relationship: same_operation
+    overlap: find successor sequences in functional digraphs and detect cycle/tail structure
+  reason: 0/3 samples judged it novel; Standard functional-graph cycle finding, an existing primitive.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: elementary_cellular_automaton
+  summary: Advance a one-dimensional binary lattice under a stated elementary rule with fixed or wrap-around
+    boundary, returning the full row after k steps or the state of a queried cell across varied widths,
+    seeds, and step counts.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: same_operation
+    overlap: deterministic state update over a discrete lattice/cell under local rules and boundary conditions
+  - id: task:generated.wave0.n04_finite_automaton_execution.n04_finite_automaton_execution:FiniteAutomatonExecution
+    relationship: variant
+    overlap: step-by-step execution of local transition rules on a finite state array
+  - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+    relationship: different
+    overlap: time-step simulation but with heterogeneous scheduling rather than uniform local update
+  reason: 0/3 samples judged it novel; Essentially a uniform cellular automaton execution already covered
+    by finite automaton and 3D orientation-execution families.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: comparator_network_execution
+  summary: Apply a stated sequence of compare-exchange comparators to an integer array, each sorting its
+    two positions, returning the final array, the state after the first k comparators, or the final position
+    of a queried element.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.query_plan_execution.query_plan_execution:QueryPlanExecution
+    relationship: same_operation
+    overlap: executing a sequence of deterministic sorting/comparison operations on a list of integer
+      values
+  - id: gallery:code_execution
+    relationship: variant
+    overlap: trace a controlled sequence of imperative mutations on program state
+  - id: task:generated.wave8.poset_cover_query.poset_cover_query:PosetCoverQuery
+    relationship: adjacent
+    overlap: computes partial-order-like comparisons on elements
+  reason: 0/3 samples judged it novel; Another deterministic mutation-execution primitive; no new cognitive
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: lagrange_finite_field_evaluation
+  summary: Given points with distinct x-coordinates over a small prime field, evaluate the unique interpolating
+    polynomial at a queried point by exact modular Lagrange accumulation, returning the field element
+    value; point count and field vary.
+  verdict: variant
+  nearest_neighbors:
+  - id: plan:WAVE1:S8
+    name: add_polynomial_arithmetic_over_a_small_finite_field
+    relationship: same_operation
+    overlap: constructs and evaluates polynomial objects over a small finite field by modular arithmetic
+  - id: task:generated.wave4.multiplicative_order.s39_multiplicative_order:MultiplicativeOrder
+    relationship: variant
+    overlap: performs modular exponentiation and inversion over prime modulus
+  - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+    relationship: different
+    overlap: numeric computation with exact intermediate pipeline
+  reason: 0/3 samples judged it novel; A specific finite-field polynomial procedure, not a new cognitive
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: gf2_matrix_rank
+  summary: Row-reduce a binary matrix over GF(2), reporting its rank, the pivot column set, or one nontrivial
+    kernel vector when rank-deficient, across square, tall, and wide shapes with varied density.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.crc_remainder.crc_remainder:CrcRemainder
+    relationship: same_operation
+    overlap: exact computation over GF(2) bit-vectors using division/reduction
+  - id: gallery:equation_system
+    relationship: variant
+    overlap: row reduction / rank determination in linear algebra
+  - id: task:generated.wave8.lossless_binary_decomposition.lossless_binary_decomposition:LosslessBinaryDecomposition
+    relationship: adjacent
+    overlap: boolean-vector reasoning over a small basis
+  reason: 1/3 samples judged it novel; Rank via Gaussian elimination is a classic algorithm already represented
+    by algebra/GF(2) tasks.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: convex_hull_construction
+  summary: Compute the convex hull of a small integer lattice point set via orientation tests, discarding
+    collinear boundary points, and return the hull vertices in canonical counterclockwise order from the
+    lexicographically lowest point.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:planar_geometry_relations
+    relationship: same_operation
+    overlap: computes geometric properties of point sets using orientation and collinearity tests
+  - id: task:generated.wave9.articulation_bridges.articulation_bridges:ArticulationBridges
+    relationship: adjacent
+    overlap: identifying extremal/canonical structural elements of a geometric or graph object
+  - id: gallery:equation_system
+    relationship: different
+    overlap: uses numeric coordinates but no hull structure
+  reason: 0/3 samples judged it novel; Another classical geometry algorithm with no novel cognitive operation
+    beyond existing planar-geometry primitives.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: ranking_discordance_count
+  summary: Count discordant pairs between two total rankings of the same labeled items given in either
+    order, returning the inversion count or the sorted list of discordant pairs across near-sorted, reversed,
+    and shuffled profiles.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.answer_relevant_change.answer_relevant_change:AnswerRelevantChange
+    relationship: same_operation
+    overlap: counts ordering changes between two ranked lists of labeled items
+  - id: task:generated.wave12.instruction_priority.instruction_priority:InstructionPriority
+    relationship: adjacent
+    overlap: comparing relative order and priority constraints on items
+  - id: task:set_operations:CountElements
+    relationship: different
+    overlap: count-type output but on different structured input space
+  reason: 0/3 samples judged it novel; Cosmetic presentation of Kendall tau / inversion counting already
+    represented by rank-change detection.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: ordered_greedy_coloring
+  summary: Assign each vertex the smallest color unused by earlier-colored neighbors under a stated processing
+    order, returning a queried vertex's color, the number of colors used, or the full assignment across
+    varied graph shapes.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.poset_cover_query.poset_cover_query:PosetCoverQuery
+    relationship: same_operation
+    overlap: assigning labels/colors to elements according to local ordering constraints under a stated
+      traversal order
+  - id: task:generated.wave9.critical_path_analysis.critical_path_analysis:CriticalPathAnalysis
+    relationship: adjacent
+    overlap: processing graph elements in an order-dependent manner with local constraints
+  - id: gallery:graph_pathfinding
+    relationship: different
+    overlap: graph traversal but without local color constraint
+  reason: 0/3 samples judged it novel; Standard greedy local assignment already covered by ordered poset/graph
+    processing tasks.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: pareto_frontier_selection
+  summary: Select the Pareto-maximal points of a finite point set under the product order in two or three
+    dimensions, returning the surviving frontier in canonical sorted order or the dominance count of a
+    queried point.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.poset_cover_query.poset_cover_query:PosetCoverQuery
+    relationship: same_operation
+    overlap: selecting maximal elements under a partial order / dominance relation
+  - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+    relationship: variant
+    overlap: scanning points/intervals under a dominance order to identify frontier elements
+  - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+    relationship: adjacent
+    overlap: identifying non-dominated / essential elements in a DAG partial order
+  reason: 0/3 samples judged it novel; Product-order maxima selection is a direct instance of poset maximality.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: cyk_chart_membership
+  summary: Fill the CYK recognition chart of a small Chomsky-normal-form grammar over a short terminal
+    string, returning the sorted nonterminals of a queried span cell or the total derivation count.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:grammar:Continuation
+    relationship: variant
+    overlap: CFG string membership/recognition
+  - id: task:grammar:Parsing
+    relationship: variant
+    overlap: CFG parsing/chart construction
+  - id: task:generated.wave9.nfa_subset_construction.nfa_subset_construction:NfaSubsetConstruction
+    relationship: adjacent
+    overlap: automata/grammar state construction
+  reason: 1/3 samples judged it novel; CYK is a standard parsing operation covered by existing grammar
+    tasks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: weakest_precondition_computation
+  summary: Push a stated postcondition backward through assignments and guarded branches of small integer
+    programs, simplifying to a canonical linear predicate over the input variables.
+  verdict: variant
+  nearest_neighbors: []
+  reason: 0/3 samples judged it novel; critic did not return three valid catalog neighbors; WP computation
+    is a known backward program-analysis variant.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: prime_power_valuation
+  summary: Compute exact prime-power valuations of factorials, binomials, and double factorials via Legendre
+    floor-sums and base-p carry counts (Kummer), returning the integer exponent.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.kraft_feasibility.kraft_feasibility:KraftFeasibility
+    relationship: different
+    overlap: combinatorial number theory via summations
+  - id: task:generated.wave8.generated_subgroup_membership.generated_subgroup_membership:GeneratedSubgroupMembership
+    relationship: adjacent
+    overlap: number-theoretic exponent/carry computation
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: different
+    overlap: integer arithmetic over factorials/combinatorics
+  reason: 0/3 samples judged it novel; Counting prime exponents in factorials is a standard number-theoretic
+    variant of existing modular/exponent tasks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: maximal_munch_tokenization
+  summary: Lex a string under an ordered table of keyword, identifier, number, and punctuation patterns
+    by longest-match with rule-priority ties, returning the token-type sequence or first failure offset.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.routing_longest_prefix.routing_longest_prefix:RoutingLongestPrefix
+    relationship: variant
+    overlap: longest-match prefix selection with tie rules
+  - id: task:generated.wave8.prefix_code_decode.prefix_code_decode:PrefixCodeDecode
+    relationship: variant
+    overlap: tokenization/decoding by prefix matching
+  - id: task:generated.wave9.diff_patch_application.diff_patch_application:DiffPatchApplication
+    relationship: different
+    overlap: sequential text/token processing
+  reason: 0/3 samples judged it novel; Maximal munch is a routine lexical variant of longest-prefix matching.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: ordered_bdd_reduction
+  summary: Reduce small Boolean functions under a stated variable order to canonical ordered BDDs by Shannon
+    cofactoring, isomorphic-node merging, and redundant-test elimination; return node count or output
+    value under a queried assignment.
+  verdict: novel
+  nearest_neighbors: []
+  reason: 1/3 samples judged it novel; critic did not return three valid catalog neighbors; Ordered BDD
+    reduction is a distinct canonical structure-reduction operation, not a variant of automata or graph
+    partitioning.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: shapley_value_computation
+  summary: Enumerate player permutations of a small coalitional game given by a subset-to-value table,
+    sum each player's marginal contribution, and return every Shapley value as a reduced fraction.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: variant
+    overlap: enumeration/averaging over combinations with rational outputs
+  - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+    relationship: adjacent
+    overlap: exact rational distributional expectation
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: different
+    overlap: partition and aggregate
+  reason: 1/3 samples judged it novel; Shapley values are a variant of combinatorial averaging already
+    covered by rational distributional tasks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: linear_extension_count
+  summary: Count the linear extensions of a small poset given by cover relations, branching over currently-minimal
+    elements; answer is the exact number of valid topological orders.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.poset_cover_query.poset_cover_query:PosetCoverQuery
+    relationship: variant
+    overlap: poset structure and cover relation reasoning
+  - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+    relationship: adjacent
+    overlap: topological order computation and minimal element selection
+  - id: task:generated.wave8.c3_linearization.c3_linearization:C3Linearization
+    relationship: different
+    overlap: partial-order resolution in class hierarchies
+  reason: 0/3 samples judged it novel; Counting valid topological orders of a poset is a known adjacent
+    operation, not a new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: burnside_orbit_count
+  summary: Count distinct colorings of necklaces, bracelets, or small grids under their rotation and reflection
+    groups by averaging each group element's fixed colorings over permutation cycles.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.left_coset_identification.left_coset_identification:LeftCosetIdentification
+    relationship: adjacent
+    overlap: group action and orbit/coset enumeration
+  - id: task:generated.wave8.finite_group_element_order.finite_group_element_order:FiniteGroupElementOrder
+    relationship: adjacent
+    overlap: group-theoretic cycle counting
+  - id: task:generated.wave8.kraft_feasibility.kraft_feasibility:KraftFeasibility
+    relationship: different
+    overlap: combinatorial counting via cycles
+  reason: 1/3 samples judged it novel; Burnside orbit counting is a known group-theoretic counting variant.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: agglomerative_merge_trace
+  summary: Run bottom-up agglomerative clustering over a small integer distance matrix under single, complete,
+    or average linkage with a stated tie order, returning ordered merge pairs or the partition at a queried
+    merge step.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.union_find_trace.union_find_trace:UnionFindTrace
+    relationship: variant
+    overlap: bottom-up merge trace with canonical outputs
+  - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+    relationship: adjacent
+    overlap: round-based greedy removal/merging with tie rules
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: adjacent
+    overlap: stateful algorithm trace with tie-breaking
+  reason: 0/3 samples judged it novel; Agglomerative merge tracing is a known trace operation variant.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: perceptron_update_trace
+  summary: Execute perceptron mistake updates over ordered integer feature-label pairs, cycling until
+    convergence or a stated pass cap; return the final weight vector, the mistake count, or the first
+    example missed on an epoch.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.union_find_trace.union_find_trace:UnionFindTrace
+    relationship: variant
+    overlap: iterative update trace with final state and mistake counting
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: adjacent
+    overlap: deterministic state updates with tie rules and outcome reporting
+  - id: task:generated.wave9.packet_fragment_reassembly.packet_fragment_reassembly:PacketFragmentReassembly
+    relationship: different
+    overlap: ordered sequential update over discrete items
+  reason: 0/3 samples judged it novel; Perceptron tracing is another deterministic iterative state-trace
+    variant without novel cognitive structure.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: matrix_characteristic_polynomial
+  summary: Compute the exact characteristic polynomial of a small integer matrix from traces of matrix
+    powers (Faddeev-LeVerrier), returning the integer coefficient vector in canonical order.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.polynomial_euclidean_algorithm.polynomial_euclidean_algorithm:PolynomialEuclideanAlgorithm
+    relationship: variant
+    overlap: exact polynomial/matrix algebra coefficient vectors
+  - id: task:generated.wave9.poly_euclid.poly_euclid_algorithm:PolyEuclid
+    relationship: variant
+    overlap: exact polynomial operations and canonical output
+  - id: task:math_scratch:MathScratchNormalize
+    relationship: adjacent
+    overlap: canonical symbolic algebra normal forms
+  reason: 0/3 samples judged it novel; Characteristic polynomial is a routine linear-algebra computation
+    adjacent to existing polynomial tasks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: bpe_merge_trace
+  summary: 'Iterate byte-pair merging over short token sequences: recount adjacent-pair frequencies, merge
+    the top pair under a fixed tie-break, returning the sequence after k rounds, the pair merged at round
+    t, or the final vocabulary.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: same_operation
+    overlap: iteratively update a working set (cache/sequence) based on frequencies and tie-breaking,
+      reporting state after each step
+  - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+    relationship: adjacent
+    overlap: iterative selection of a top element under a stated tie rule and returning per-round removal
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: different
+    overlap: tracking derived items through transformations, but not frequency-based merging
+  reason: 1/3 samples judged it novel; The merge-by-frequency trace is essentially a cache-replacement-like
+    iterative process with a different data structure.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: stratified_datalog_evaluation
+  summary: Evaluate stratified Datalog with negation by ordering strata along negative dependencies and
+    saturating each to a fixed point, returning every derived fact of a queried predicate or the stratum
+    where a queried fact first appears.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: adjacent
+    overlap: Derivation of facts through multiple rules
+  - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+    relationship: variant
+    overlap: Fixed-point derivation with support and negation
+  - id: task:generated.wave9.argumentation_grounded_extension.argumentation_grounded_extension:ArgumentationGroundedExtension
+    relationship: adjacent
+    overlap: Iterative attack/defense fixed point with queried facts
+  reason: 0/3 samples judged it novel; Variant of rule-based fixed-point derivation tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: gnfa_state_elimination
+  summary: Reduce a generalized finite automaton to a regex by eliminating states in a stated order, composing
+    edge labels with union, concatenation, and star; return the label on a queried edge mid-process or
+    the final equivalent regex.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.nfa_subset_construction.nfa_subset_construction:NfaSubsetConstruction
+    relationship: adjacent
+    overlap: Finite automaton transformation
+  - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+    relationship: adjacent
+    overlap: Automaton state reduction
+  - id: gallery:regex_reasoning
+    relationship: different
+    overlap: Regular expressions and automata
+  reason: 0/3 samples judged it novel; Variant of known automaton transformation tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: radix_sort_pass_state
+  summary: 'Execute LSD radix sorting as stable counting passes over fixed-width keys: build per-digit
+    histograms and prefix offsets, place keys stably, and return the array order after a queried pass
+    or one key''s position within it.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+    relationship: variant
+    overlap: Deterministic multi-pass placement/state update with exact query output
+  - id: task:generated.wave8.suffix_array_rank.suffix_array_rank:SuffixRank
+    relationship: adjacent
+    overlap: Exact string algorithm with positional/array output
+  - id: task:generated.wave8.binary_search_probes.binary_search_probes:BinarySearchProbes
+    relationship: different
+    overlap: Deterministic algorithmic trace but different domain
+  reason: 0/3 samples judged it novel; Cosmetic variant of existing deterministic algorithmic trace tasks
+    with array-state output.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: sandpile_stabilization
+  summary: Stabilize sandpile chip configurations on small graphs by firing over-threshold vertices to
+    their neighbors until quiescent, returning the final configuration, the firing count of a queried
+    vertex, or the total number of firings.
+  verdict: novel
+  nearest_neighbors: []
+  reason: 0/3 samples judged it novel; critic did not return three valid catalog neighbors; Novel discrete
+    dynamical system simulation, distinct from known iterative processes.
+  scores:
+    novelty: 5
+    sft_value: 4
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: bankers_safety_sequence
+  summary: Given allocations, maximum claims, and an available vector, repeatedly select the lowest-index
+    process whose remaining need fits and reclaim its resources, returning the safe completion order or
+    the first process that blocks.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.deadlock_detection.deadlock_detection:DeadlockDetection
+    relationship: variant
+    overlap: Resource allocation, safety/sequence determination
+  - id: task:generated.wave9.memory_allocator_trace.memory_allocator_trace:MemoryAllocatorTrace
+    relationship: adjacent
+    overlap: Resource state simulation with allocation/reclamation
+  - id: task:generated.wave8.top_trading_cycles.top_trading_cycles:TopTradingCycles
+    relationship: different
+    overlap: Algorithmic allocation with output of assigned item
+  reason: 0/3 samples judged it novel; Variant of resource-allocation/safety simulation, adjacent to deadlock
+    detection.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: stack_sorting_discipline
+  summary: Route an input permutation through a single LIFO stack to emit the identity, interleaving pushes
+    and pops greedily; return whether sorting succeeds, the first blocking step, or the element emitted
+    at the k-th pop.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:shift_reduce_parsing
+    relationship: variant
+    overlap: Stack-based parsing/processing with decision steps
+  - id: task:generated.wave9.ll1_predictive_parsing.ll1_predictive_parsing:LL1PredictiveParsing
+    relationship: variant
+    overlap: Stack-based deterministic parsing trace
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: different
+    overlap: Sequential process with push/pop-like operations
+  reason: 0/3 samples judged it novel; Variant of stack-based deterministic processing tasks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: arithmetic_coding_interval
+  summary: Narrow a rational interval through successive cumulative-distribution slices, one per message
+    symbol, or invert the process to recover symbols from a target fraction; return the final reduced
+    endpoints or the decoded symbol sequence.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+    relationship: variant
+    overlap: Rational interval propagation and endpoint output
+  - id: task:generated.wave8.prefix_code_decode.prefix_code_decode:PrefixCodeDecode
+    relationship: adjacent
+    overlap: Coding scheme decode with symbol sequence output
+  - id: task:generated.wave9.abstract_interval_analysis.abstract_interval_analysis:AbstractIntervalAnalysis
+    relationship: adjacent
+    overlap: Interval-state propagation through steps
+  reason: 0/3 samples judged it novel; Variant of interval propagation / coding tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: planar_face_tracing
+  summary: Trace faces of a combinatorially embedded planar graph by following its rotation system from
+    stated directed edges, returning the boundary walk of a queried face, the multiset of face lengths,
+    or the resulting genus.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:planar_geometry_relations
+    relationship: adjacent
+    overlap: planar graph/geometry domain, face traversal and boundary queries
+  - id: task:generated.wave9.articulation_bridges.articulation_bridges:ArticulationBridges
+    relationship: different
+    overlap: graph structure queries, but operation differs (DFS low-link vs rotation-system walk)
+  - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+    relationship: different
+    overlap: trace-like execution on a graph of nodes, but object is calls not faces
+  reason: 1/3 samples judged it novel; The rotation-system face traversal is a new combinatorial operation
+    not present in the catalog, even though it shares surface 'graph' and 'trace' language with known
+    tasks.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 3
+    clarity: 4
+  votes: 1/3
+- name: havel_hakimi_realization
+  summary: Run the degree-sequence reduction that repeatedly attaches a maximum-degree vertex to the highest
+    remaining degrees, returning whether the sequence is graphical, the failing step with its witness,
+    or the residual multiset after k rounds.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+    relationship: variant
+    overlap: Repeated extraction/removal rounds with deterministic tie-break
+  - id: task:generated.wave9.minimum_spanning_tree.minimum_spanning_tree:MinimumSpanningTree
+    relationship: adjacent
+    overlap: Greedy graph construction with sorted output
+  - id: task:generated.wave8.union_find_representative.union_find_representative:UnionFindRepresentative
+    relationship: different
+    overlap: Graph algorithm execution with representative query
+  reason: 0/3 samples judged it novel; Variant of greedy reduction/removal algorithms already in catalog.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: manacher_palindrome_radii
+  summary: Compute palindrome radii around every center of a string using mirror reuse against a moving
+    right boundary, returning the full radius array, the radius at a queried center, or the span of the
+    longest palindrome.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.kmp_prefix_value.kmp_prefix_value:KmpPrefixValue
+    relationship: variant
+    overlap: String algorithm with array output (prefix/radius)
+  - id: task:generated.wave8.suffix_array_rank.suffix_array_rank:SuffixRank
+    relationship: adjacent
+    overlap: String indexing / rank computation
+  - id: task:generated.wave8.fenwick_prefix_nodes.fenwick_prefix_nodes:FenwickPrefixNodes
+    relationship: different
+    overlap: Array algorithm with index visitation trace
+  reason: 0/3 samples judged it novel; Variant of known string-algorithm array-output tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: tree_axis_navigation
+  summary: Evaluate chained axis steps (child, parent, descendant, ancestor, following- and preceding-sibling,
+    with positional filters) from a stated context node over ordered labeled trees, returning the sorted
+    ids of all reached nodes.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.dominator_analysis.dominator_analysis:DominatorAnalysis
+    relationship: adjacent
+    overlap: Tree/graph traversal with queried node relations
+  - id: task:generated.wave9.hierarchical_rollup.hierarchical_rollup:HierarchicalRollup
+    relationship: adjacent
+    overlap: Hierarchical structure navigation and aggregation
+  - id: gallery:grid_navigation
+    relationship: different
+    overlap: Navigation of discrete structures
+  reason: 0/3 samples judged it novel; Known tree navigation/query operation, varying axis vocabulary
+    only.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
