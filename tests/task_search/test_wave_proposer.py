@@ -1520,3 +1520,38 @@ def test_a_tied_panel_does_not_spend_the_one_second_chance(tmp_path):
     assert "tied_then_judged" in offered, (
         "one real verdict is one strike, so the idea still has a chance left")
     assert "judged_twice" not in offered, "two real verdicts still retire an idea"
+
+
+def test_a_retry_is_a_different_sample_and_not_the_same_one_again(monkeypatch):
+    """The parse retry exists because a reply that is not JSON is as transient as a 502 --
+    `same prompt, same model, another sample`. With the seed pinned it was the same sample:
+    an identical request returns an identical malformed object, so `k3_surface-invariance`
+    re-fetched one four times over seven minutes and lost the brief anyway. The retry seed
+    is derived from the base one, so a rerun still reproduces the whole ladder."""
+    seeds = []
+
+    class Response:
+        status_code = 200
+
+        def __init__(self, text):
+            self._payload = {"id": "gen", "choices": [{"message": {"content": text}}]}
+            self.content = json.dumps(self._payload).encode()
+
+        def json(self):
+            return self._payload
+
+        def raise_for_status(self):
+            return None
+
+    def post(url, **kwargs):
+        seeds.append(kwargs["json"]["seed"])
+        # Malformed until the seed actually changes, which is the whole point.
+        return Response('{"ok": true}' if len(seeds) > 1 else '{"ok": ,}')
+
+    monkeypatch.setattr("reasoning_core.task_search.chat.requests.post", post)
+    monkeypatch.setattr("reasoning_core.task_search.chat.time.sleep", lambda _: None)
+
+    client = ChatClient(model="m", endpoint="http://x", api_key="k", stream=False, seed=7)
+
+    assert client.json("probe", "s", "u") == {"ok": True}
+    assert seeds == [7, 8], f"the retry re-sent the same seed: {seeds}"

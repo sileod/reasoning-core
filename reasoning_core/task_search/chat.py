@@ -206,6 +206,14 @@ class ChatClient:
         response_bytes = b""
         for attempt, backoff in enumerate(RETRY_BACKOFF):
             last = attempt == len(RETRY_BACKOFF) - 1
+            # The retries below call themselves another sample, and with a pinned seed
+            # they were not: the same prompt and the same seed reproduce the same reply,
+            # so a malformed object was re-fetched identically four times and the wave
+            # died anyway. `k3_surface-invariance` spent seven minutes doing exactly that
+            # and lost the brief. Derived from the base seed rather than random, so a
+            # rerun still reproduces the whole ladder.
+            if attempt and self.seed is not None:
+                body["seed"] = self.seed + attempt
             response = requests.post(
                 self.endpoint,
                 headers=headers,
