@@ -200,6 +200,11 @@ def render_implementor_prompt(
         (
             "Gates worth knowing before you write, because they are the ones trials lose on:",
             "",
+            "- The contract checks generation headroom at levels 0 and 6. Keep level 0",
+            "  as simple as possible while preserving structural variety; preserve that",
+            "  variety at level 6 with compact prompts and efficient generation. Vary",
+            "  problem structure, not merely labels or wording. Both endpoints must",
+            "  stay within 2048 prompt tokens, 3 seconds per example and 1 second on average.",
             "- `gameability` measures constant-guess reward on label-balanced samples and",
             "  gates the excess over the 1/k floor for k distinct answers, with ceiling 0.4.",
             "  A balanced binary task is allowed; a level with only one answer fails.",

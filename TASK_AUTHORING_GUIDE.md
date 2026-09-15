@@ -92,6 +92,10 @@ Design rules for `apply_difficulty(level)`:
 Rough reference:
 Level 0 should be as simple as possible while ensuring diversity (for example in a task where we generate graphs for shortest path prediction, 3 nodes are not enough because the combinatorics run out quickly)
 Level 5 should be tough even for large LLMs.
+Level 6 must retain structural variety while generating efficiently with compact prompts.
+Landing and difficulty-tuning verification check levels 0 and 6 against a 2048-token
+prompt ceiling, a 3-second per-example limit, and a 1-second average generation limit.
+These checks establish usable headroom; evaluation measures the actual difficulty curve.
 
 ## Reasoning-Core Philosophy
 1. External libraries first:
