@@ -1,0 +1,910 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_semantics-preserving-translation
+created_at: '2026-09-15T06:22:12.593011+00:00'
+provenance:
+  kind: proposer
+  name: k3_semantics-preserving-translation
+  received: '2026-09-15'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks requiring translation between two representations while preserving exact semantics.
+    The catalog you were shown already covers the classic textbook algorithms -- sorting, gcd, graph traversal,
+    compression, scheduling, matching, parsing -- and a proposal that names one will be rejected as a
+    repeat however well it fits this brief. Reach past the standard repertoire: propose structures the
+    catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 5
+  complete: false
+catalog:
+  sha256: b9d5680df6b7523a995fd277e69f868e2eed09442296c2ded1b9bf6c921ff979
+  entries: 554
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 90
+    task: 302
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  requested_model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-2
+    model: moonshotai/kimi-k3
+    provider: integrate.nvidia
+    request_sha256: 7765f9a052e8269632ecb4c7b705351fbe1d627487aefe10401648c26a635e03
+    response_sha256: d108c302c3f0933d6257d6f404ae5278a401268f1441d9ef24ad82d6a3c033fc
+    response_id: chatcmpl-678b124f-d6a4-4cd8-ad3e-6de28cc95dba
+  - purpose: propose-round-3
+    model: moonshotai/kimi-k3
+    provider: integrate.nvidia
+    request_sha256: 0c5904dea0159525101f5bea78e4ed83879e4545b95beca1879fc2f1dfdbe8f4
+    response_sha256: 815aecf9f5fdd1dbf2e3e8d433eea620cc232c49423d51b3c03919155426db58
+    response_id: chatcmpl-50a535d9-6f78-4626-b3b9-a2d767283697
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 07e66892ae4b55dfd65f76f8c3162d80d2bdafbcbb68ee37d95f6f4c2f9d4067
+    response_sha256: 04c8ff187ba9189983f474d9eab7c4841bd798657466f05ba1a82c4ff4bb842e
+    response_id: chatcmpl-93c1fce04df113ff
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 42931baaacd4b2d211ef8ea7e804d491bfc971b1188cabcd496fbb2225ff288d
+    response_sha256: cd6bc882e667d7973feb83f42b107246709a390522649c8d69c116c69b641d5b
+    response_id: chatcmpl-80d22e3bfdb4b124
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 3a01e14ec9df60f4184843a4ef612d3436a335ba4a3861625af6510c1231caf2
+    response_sha256: 9b04e41243291875f05924d7cdfb6ada1d7fc43d0e55946df70b747c8baf0a2a
+    response_id: chatcmpl-920275fbb36aba4d
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: b6dbea9aa8d49317ecf51012cd539a3693f8f551711cf1dd6f1856af59a091d8
+    response_sha256: 06df88679fddcecb5f8d6bba604dfaf1fce39d27d3b2918e68f9470ffb793b2e
+    response_id: chatcmpl-9ccf8d54e188dd05
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 0d3dc19b27557dc85d09595fda22e817e60ef1a1221b51bc290ccb630a5bec37
+    response_sha256: 2b43ece6d293bf717994ce485130b198be0860e3b5df46e7f83f0665c18640e6
+    response_id: chatcmpl-be56a79854c66ed3
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: a18117e88bd4e3ed0d6379027947f49d90457c49da9eb50984f0f228b6e38cfc
+    response_sha256: 407e069f23f6a3802abff05a0c6c595392514354c40bbc85c4dcc985416a97f8
+    response_id: chatcmpl-9075710a70e708eb
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 9a181fb58717cd9aa8d340876c9652c071c169fe430bc82fddcb8936de28404b
+    response_sha256: 97ac583125525648de7a70a8f03a55afbcfaedef96bb132cd86e8fa3c4085ec9
+    response_id: chatcmpl-a8afdf10e74d8836
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: e08cd1ffeec9afbbab9995f6811e2c51c4db31e12cac1021bc775744a9d447c9
+    response_sha256: 85f0dbcaea8120a6aec77034f71d2cb77ac7bd73c42b23a5504cfdbe1978b231
+    response_id: chatcmpl-80f13a8622add76e
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d889ba1fb0a464d065601321e0e8914df066d5f9f95069d2a0427fe1073edef1
+    response_sha256: 7439153e752d407b291d26aa704224a5649572325a079b4d976065cd92e98163
+    response_id: chatcmpl-b72f2156f8b0eaed
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 11
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 11
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 11
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 2
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 1
+proposals:
+- name: nonstandard_base_translation
+  summary: Translate integers between decimal and redundant positional systems - balanced ternary, bases
+    -2 and -10, and binary non-adjacent form - in both directions with growing magnitudes; answer is the
+    exact digit string in the requested system.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_novel-composition:P008
+      relationship: adjacent
+      overlap: both involve converting between representations of integer or geometric quantities, but
+        Bresenham rasterization maps coordinates to pixel steps while nonstandard-base translation maps
+        integer values to digit strings in redundant bases
+    - id: task:generated.k3_rule_induction_r1.repeating_decimal_expansion.repeating_decimal_expansion:RepeatingDecimalExpansion
+      relationship: adjacent
+      overlap: both convert between integer/rational values and a positional digit representation, but
+        repeating decimals handle fractional parts and repetends while nonstandard bases cover balanced/negative
+        bases with signed digits
+    - id: task:generated.wave8.virtual_address_translation.virtual_address_translation:VirtualAddressTranslation
+      relationship: adjacent
+      overlap: both translate between numeric address representations and multi-field formats, but virtual
+        address translation splits bits into page-table fields while nonstandard bases use digit weights
+        and signed bases
+    substantive_difference: Handles bidirectional conversion between integers and non-standard positional
+      systems (balanced ternary, negative base, non-adjacent form) with digits possibly negative or with
+      signed weights, a distinct representation-translation operation.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Converting between decimal and non-standard bases like balanced ternary or negabinary is a
+      novel representation-translation task not seen in the neighbors.
+    votes: 2/2
+    dissent: []
+- name: utf8_encoding_translation
+  summary: Encode Unicode code points into UTF-8 byte sequences and decode byte sequences back into code
+    points, spanning 1-4 byte ranges, range-boundary values, and hex or binary renderings; answer is the
+    exact byte list or code point list.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.prefix_code_decode.prefix_code_decode:PrefixCodeDecode
+      relationship: adjacent
+      overlap: both involve encoding/decoding between a symbolic sequence and a binary/bit representation,
+        but prefix codes use a codebook of variable-length codewords while UTF-8 follows a fixed multibyte
+        length pattern with continuation bytes
+    - id: proposal:k3_verification-repair:P007
+      relationship: adjacent
+      overlap: both perform exact encoding and decoding between a symbol sequence and a numerical interval
+        or byte stream, but arithmetic coding uses cumulative probabilities and rational intervals, not
+        character encoding standards
+    - id: proposal:k3_verification-repair:P003
+      relationship: adjacent
+      overlap: both process strings with a mapping between symbols and bit patterns, but checksum inference
+        learns a scheme from examples while UTF-8 is a fixed standardized encoding
+    substantive_difference: Unlike codebook-based prefix codes or arithmetic coding, UTF-8's encoding
+      is defined by fixed byte-length classes and continuation-byte patterns for Unicode code points,
+      a distinct cognitive operation of mapping scalar values to multibyte sequences and back.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: UTF-8 encoding/decoding is a distinct standardized byte-oriented operation, not covered by
+      existing variable-length code tasks or arithmetic coding.
+    votes: 2/2
+    dissent: []
+- name: debruijn_scope_translation
+  summary: Translate lambda terms between named-variable syntax and de Bruijn index form across nested
+    binders, shadowing, and free variables, plus the inverse with fresh consistent naming; answer is the
+    converted term with binder structure intact.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:lambda_reduction
+      relationship: adjacent
+      overlap: both manipulate lambda terms, but lambda reduction applies beta-reduction while this proposal
+        converts between named and de Bruijn index syntax preserving binder structure
+    - id: task:generated.wave8.lexical_scope_resolution.lexical_scope_resolution:LexicalScopeResolution
+      relationship: adjacent
+      overlap: both deal with variable binding and scoping, but lexical scope resolution resolves a name
+        to its declaration in nested scopes while this proposal rewrites the entire term into an index-based
+        notation
+    - id: task:generated.manual_high_value_80_r1.hindley_milner_inference.hindley_milner_inference:HindleyMilnerInference
+      relationship: adjacent
+      overlap: both involve lambda terms and binding structure, but type inference assigns types while
+        this proposal changes the syntactic representation of variables
+    substantive_difference: The operation is a pure syntactic transformation between named variables and
+      de Bruijn indices, handling shadowing and free variables, which is distinct from reduction, scope
+      resolution, or type inference.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Converting lambda terms between named and de Bruijn representation is a distinct syntactic
+      translation not covered by existing lambda or scope tasks.
+    votes: 2/2
+    dissent: []
+- name: simplicial_boundary_matrices
+  summary: Translate a simplicial complex to its boundary matrices over GF(2) or signed incidence form
+    across queried dimensions, and rebuild the complex from a matrix; answer the sparse matrix or simplex
+    list.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_invariants_r1.gf2_matrix_rank.gf2_matrix_rank:GF2MatrixRank
+      relationship: adjacent
+      overlap: Both involve GF(2) matrices, but rank computation vs. constructing boundary matrices are
+        different operations.
+    - id: task:generated.k3_rule_induction_r1.smith_normal_form.smith_normal_form:SmithNormalForm
+      relationship: adjacent
+      overlap: Both use matrix transformations but Smith normal form is over integers, not boundary incidence.
+    - id: proposal:k3_novel-composition:P006
+      relationship: different
+      overlap: Polygon area and point location are geometric, not algebraic topology.
+    substantive_difference: Constructs boundary matrices and recovers complexes, a distinct algebraic-topology
+      operation not seen in catalog.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: translating simplicial complexes to/from boundary matrices with sparse matrix output.'
+    votes: 1/1
+    dissent: []
+- name: bayesian_network_table_conversion
+  summary: Convert a small Bayesian network's conditional probability tables to its full joint table and
+    back over a fixed variable order, with exact rational entries; answer the joint rows or per-node CPTs.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+      relationship: adjacent
+      overlap: both use conditional probability tables to compute probabilities, but the neighbor computes
+        posteriors given evidence while this proposal converts CPTs into a full joint table and back
+    - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+      relationship: adjacent
+      overlap: both deal with joint probability distributions, but probability trees evaluate event probabilities
+        through branching processes while this proposal uses Bayesian network structure to build a full
+        joint table
+    - id: proposal:k3_uncertainty:P005
+      relationship: adjacent
+      overlap: both compute exact probabilities from component parameters, but network reliability evaluates
+        s-t connectivity under failures while this proposal expands a Bayesian network into a joint distribution
+    substantive_difference: The operation is converting between CPTs and a full joint table, a structural
+      representation translation specific to Bayesian networks, distinct from posterior computation or
+      marginalization.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 5
+    reason: Bayesian network CPT-to-joint conversion is a distinct representation transformation not covered
+      by existing probability tasks.
+    votes: 1/1
+    dissent: []
+rejected:
+- name: string_rewrite_normalization
+  summary: 'Apply an ordered string-rewrite system: repeatedly fire the earliest rule whose pattern occurs,
+    at its leftmost site, until nothing matches, over erasing, swapping and overlapping rule families;
+    answer the irreducible word.'
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:rewrite_system
+    relationship: variant
+    overlap: Both normalize strings by applying rewrite rules to irreducible form.
+  - id: proposal:k3_representation-transfer:P007
+    relationship: adjacent
+    overlap: Both involve rewrite rules, but one normalizes, other finds overlaps.
+  - id: task:generated.wave9.routing_longest_prefix.routing_longest_prefix:RoutingLongestPrefix
+    relationship: different
+    overlap: No overlap.
+  reason: Same string-rewrite normalization as gallery rewrite_system.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/1
+- name: unordered_tree_canonization
+  summary: Encode rooted and free trees bottom-up into canonical strings, then group a batch of trees
+    by isomorphism or pick a class representative; vary labeling, child ordering, and symmetric shapes.
+  verdict: variant
+  nearest_neighbors:
+  - id: plan:WAVE5:S52
+    relationship: variant
+    overlap: Both canonicalize rooted trees; this also handles free trees and isomorphism grouping.
+  - id: task:generated.wave5.tree_canonical_form.s52_tree_canonical_form:TreeCanonicalForm
+    relationship: variant
+    overlap: Both produce canonical tree form; this extends to free trees and batching.
+  - id: proposal:k3_representation-specific:P009
+    relationship: adjacent
+    overlap: Both canonicalize structures with symmetry, but strings vs trees.
+  reason: 0/2 samples judged it novel; Same canonical tree encoding as known plan/task.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/2
+- name: color_refinement_partitioning
+  summary: Recolor vertex-colored graphs round by round, hashing each vertex's multiset of neighbor colors
+    until the partition stabilizes, across discrete, regular, and near-isomorphic instances; answer the
+    stable color classes.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_shortcuts-fail:P007
+    relationship: same_operation
+    overlap: Both recolor vertices by neighbor color multisets until stable and output stable partition.
+  - id: task:generated.k3_invariants_r1.ordered_greedy_coloring.ordered_greedy_coloring:OrderedGreedyColoring
+    relationship: adjacent
+    overlap: 'Both color graphs but different: greedy vs refinement.'
+  - id: task:generated.k3_systematic_generalization_r1.chip_firing_stabilization.chip_firing_stabilization:ChipFiringStabilization
+    relationship: different
+    overlap: No overlap.
+  reason: 0/2 samples judged it novel; Duplicate of color_refinement_signature.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 3
+  votes: 0/2
+- name: core_number_peeling
+  summary: Peel a graph by repeatedly deleting a smallest-degree vertex (ties by smallest id), across
+    cliques, trees, layered and random graphs, recording degree at removal; answer the per-vertex core
+    numbers.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.core_number.core_number:CoreNumber
+    relationship: variant
+    overlap: Both compute core numbers via degree peeling; this outputs all vertices while known queries
+      one.
+  - id: proposal:k3_shortcuts-fail:P007
+    relationship: adjacent
+    overlap: 'Both iteratively refine by degrees/colors, but different: cores vs color refinement.'
+  - id: task:generated.k3_invariants_r1.havel_hakimi_realization.havel_hakimi_realization:HavelHakimiRealization
+    relationship: different
+    overlap: 'Different: degree sequence realization vs core peeling.'
+  reason: 0/3 samples judged it novel; Same core number computation as existing task.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: datalog_fixed_point_derivation
+  summary: 'Evaluate negation-free Datalog bottom-up: apply linear and nonlinear recursive rules (transitivity,
+    multi-join, filtered derivations) over small fact bases until saturation; answer the sorted set of
+    derived facts.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_invariants_r1.stratified_datalog_evaluation.stratified_datalog_evaluation:StratifiedDatalogEvaluation
+    relationship: variant
+    overlap: Both evaluate Datalog rules to fixed point and return all derived ground facts as sorted
+      list.
+  - id: gallery:fixpoint_iteration
+    relationship: variant
+    overlap: Both compute least fixpoint of monotone propagation rules over finite sets.
+  - id: proposal:k3_novel-composition:P008
+    relationship: different
+    overlap: 'Different domain: rasterization vs logic.'
+  reason: 0/2 samples judged it novel; Same fixed-point derivation operation as existing Datalog evaluation
+    tasks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/2
+- name: vertex_elimination_fill_edges
+  summary: 'Simulate the elimination game for a given vertex ordering: each step links the surviving neighbors
+    of the removed vertex, over trees, grids, chordal-like and sparse random graphs; answer the fill edge
+    set and max clique size.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_verification-repair:P006
+    relationship: same_operation
+    overlap: Both eliminate vertices in given order, adding fill edges to make neighborhoods cliques,
+      answer fill edges and max clique.
+  - id: task:generated.k3_invariants_r1.ordered_greedy_coloring.ordered_greedy_coloring:OrderedGreedyColoring
+    relationship: adjacent
+    overlap: Both process vertices in order, but one adds edges while the other assigns colors.
+  - id: task:generated.wave9.topological_layering.topological_layering:TopologicalLayering
+    relationship: different
+    overlap: 'Different: DAG removal vs undirected elimination.'
+  reason: 0/2 samples judged it novel; Exact duplicate of known elimination_fill_in operation.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 3
+  votes: 0/2
+- name: register_need_labeling
+  summary: Assign each expression-tree node the registers needed to evaluate it, choosing operand order
+    at commutative nodes, over mixed unary/binary trees with varied leaf costs; answer the per-node and
+    root register counts.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_shortcuts-fail:P012
+    relationship: same_operation
+    overlap: Both compute Ershov numbers on expression trees with commutative operand ordering to minimize
+      registers.
+  - id: plan:WAVE2:S22
+    relationship: same_operation
+    overlap: Both label expression trees with register pressure counts.
+  - id: task:generated.wave0.n10_tree_reconstruction.tree_reconstruction:TreeReconstruction
+    relationship: different
+    overlap: 'No overlap: traversal reconstruction vs register allocation.'
+  reason: 0/2 samples judged it novel; Exact same operation as known Ershov numbering task.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 3
+  votes: 0/2
+- name: modal_model_checking
+  summary: Evaluate modal formulas with nested diamond, box, and until operators over finite Kripke models
+    built with cycles, dead ends, and symmetric layouts; answer the sorted worlds where the formula holds.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_uncertainty:P002
+    relationship: variant
+    overlap: Both evaluate modal formulas over Kripke models, returning world sets where formula holds.
+  - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+    relationship: adjacent
+    overlap: Both evaluate temporal/modal logic on states, but one uses traces and other Kripke frames.
+  - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+    relationship: different
+    overlap: First-order vs modal logic.
+  reason: 0/2 samples judged it novel; Same Kripke model checking as known proposal.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/2
+- name: candidate_key_enumeration
+  summary: Given attributes and functional dependencies with redundant and trivial members, use attribute
+    closure to enumerate all candidate keys from single-attribute to wide composites; answer the sorted
+    minimal key sets.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.candidate_key_minimality.candidate_key_minimality:CandidateKeyMinimality
+    relationship: variant
+    overlap: Both use attribute closure to determine candidate keys; this enumerates all while known classifies
+      one set.
+  - id: task:generated.wave8.fd_attribute_closure.fd_attribute_closure:AttributeClosure
+    relationship: variant
+    overlap: Both compute attribute closures under FDs; one answers closure, the other uses closure for
+      key enumeration.
+  - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+    relationship: different
+    overlap: No overlap.
+  reason: 0/2 samples judged it novel; Builds on known FD closure operations to enumerate keys, not novel
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 3
+  votes: 0/2
+- name: rotation_system_face_tracing
+  summary: Trace face boundary walks from a combinatorial map given as cyclic edge orders at each vertex,
+    or rebuild those rotations from the faces; answer the dart-labeled face cycles or reconstructed rotations.
+  verdict: duplicate
+  closest_id: proposal:k3_shortcuts-fail:P011
+  reason: exact catalog name collision with proposal:k3_shortcuts-fail:P011
+- name: truth_table_to_normal_form
+  summary: 'Synthesize exact boolean normal forms from truth tables over named variables: emit the sum-of-minterms
+    DNF, product-of-maxterms CNF, or sorted minterm and maxterm index lists as the answer.'
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_representation-specific:P001
+    relationship: variant
+    overlap: Both convert a representation to a canonical normal form (truth table to DNF/CNF vs. Lie
+      bracket to Hall basis).
+  - id: task:math_scratch:MathScratchNormalize
+    relationship: same_operation
+    overlap: Both rewrite expressions to canonical normal forms using algebraic rules.
+  - id: proposal:k3_representation-specific:P004
+    relationship: adjacent
+    overlap: Both compute canonical forms but over different algebraic structures.
+  reason: 0/2 samples judged it novel; It is a routine boolean normal-form computation, essentially a
+    special case of existing canonical-form synthesis tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/2
+- name: bracket_upset_propagation
+  summary: Single-elimination brackets with seeds, byes, and recorded results; one recorded match outcome
+    flips, re-pairing its winners' path; answer is every later match whose participants or winner changes,
+    plus the new champion.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.counterfactual_replay.counterfactual_replay:CounterfactualReplay
+    relationship: same_operation
+    overlap: Change one upstream event and recompute downstream effects through a deterministic dependency
+      chain, reporting all changed downstream values.
+  - id: proposal:k3_counterfactual:P004
+    relationship: variant
+    overlap: Edit one input (bid or match result) and recompute the full outcome (allocation/payments
+      or bracket/winner), identifying which entities change.
+  - id: proposal:k3_representation-specific:P008
+    relationship: adjacent
+    overlap: Both involve a single localized toggle/change and reporting the set of cells/entities whose
+      computed state changes.
+  reason: 1/3 samples judged it novel; The core operation is the same counterfactual propagation already
+    formalized in CounterfactualReplay and VCG, with only domain-specific mechanics changed.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: symmetric_polynomial_to_elementary
+  summary: Expand symmetric polynomials over Q given as monomial symmetric functions, power sums, or mixtures
+    into the canonical elementary-symmetric-polynomial expansion by repeated leading-term elimination.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_representation-transfer:P003
+    relationship: variant
+    overlap: 'Both compute canonical polynomial forms from alternate representations: characteristic polynomial
+      from traces vs. elementary symmetric expansion from power sums.'
+  - id: task:generated.k3_rule_induction_r1.smith_normal_form.smith_normal_form:SmithNormalForm
+    relationship: same_operation
+    overlap: Both perform iterative row/column operations with a fixed reduction order to reach a canonical
+      normal form (Smith diagonal vs. elementary-symmetric expansion).
+  - id: proposal:k3_representation-transfer:P008
+    relationship: adjacent
+    overlap: Both canonicalize an algebraic object via a defined reduction algorithm, but over different
+      structures.
+  reason: 1/2 samples judged it novel; The essence is the same iterative canonicalization via leading-term
+    elimination found in Smith normal form and polynomial GCD.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/2
+- name: free_group_word_reduction
+  summary: Reduce words in free-group generators and inverses, with powers and conjugated subwords, by
+    iterated cancellation to the canonical reduced word; variants request the cyclically reduced form.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_representation-specific:P009
+    relationship: variant
+    overlap: 'Both canonicalize strings under algebraic relations: necklace rotation for cyclic equivalence,
+      free-group reduction for cancellation; both output a canonical reduced form.'
+  - id: gallery:lambda_reduction
+    relationship: same_operation
+    overlap: Both iteratively apply algebraic rewrite rules (beta/eta reduction vs. inverse-cancellation)
+      until no more rules apply, reaching a normal form.
+  - id: proposal:k3_representation-transfer:P008
+    relationship: adjacent
+    overlap: Both reduce a representation to a canonical normal form, but over different structures (pitch-class
+      vs. free group).
+  reason: 1/2 samples judged it novel; Iterated cancellation to a canonical word is a textbook example
+    of generic rewrite-normalization, not a new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/2
+- name: graph_representation_translation
+  summary: Translate graphs among adjacency matrix, incidence matrix, weighted edge list, and adjacency-map
+    forms over directed or undirected simple graphs and multigraphs; answer the requested target form.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.wave9.articulation_bridges.articulation_bridges:ArticulationBridges
+    relationship: different
+    overlap: Both reason on graphs, but one translates representations while the other computes structural
+      properties.
+  - id: proposal:k3_representation-transfer:P006
+    relationship: adjacent
+    overlap: Both convert between representations of spatial/graph data, but Morton coding is bit-interleaving
+      while graph translation is adjacency/edge-list reshaping.
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: different
+    overlap: One performs representation translation, the other composes geometric transformations.
+  reason: 0/2 samples judged it novel; No neighbor performs direct graph representation translation; the
+    operation is genuinely new and easily defined.
+  scores:
+    novelty: 5
+    sft_value: 2
+    feasibility: 4
+    clarity: 5
+  votes: 0/2
+- name: colexicographic_subset_ranking
+  summary: Rank and unrank k-subsets of an n-set against colexicographic order through the combinatorial
+    number system; the answer is the exact integer rank or the subset at a queried position.
+  verdict: variant
+  nearest_neighbors:
+  - id: plan:WAVE3:S32
+    relationship: same_operation
+    overlap: Both perform ranking/unranking in lexicographic-type orders, but this one uses colex order
+      over subsets.
+  - id: task:generated.wave3.lexicographic_ranking.lexicographic_ranking:LexicographicRanking
+    relationship: same_operation
+    overlap: Both rank combinatorial objects (permutations/multisets vs. subsets) using a canonical order.
+  - id: proposal:k3_counterfactual:P001
+    relationship: adjacent
+    overlap: Both manipulate combinatorial representations (wavelet tree for sequences vs. combinatorial
+      number system for subsets).
+  reason: 0/2 samples judged it novel; It is the same ranking/unranking operation applied to a different
+    combinatorial family with a different order.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/2
+- name: polynomial_form_conversion
+  summary: Convert univariate polynomials among factored integer-root form, dense monomial coefficient
+    lists, and Newton divided-difference form over supplied nodes; answers are exact rational coefficient
+    vectors.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_representation-transfer:P003
+    relationship: same_operation
+    overlap: 'Both convert polynomials between representations: characteristic polynomial from matrix
+      traces vs. general polynomial from factored/divided-difference forms.'
+  - id: task:generated.wave9.poly_euclid.poly_euclid_algorithm:PolyEuclid
+    relationship: different
+    overlap: One performs representation conversion, the other computes GCD.
+  - id: task:generated.wave9.pivot_unpivot_transform.pivot_unpivot_transform:PivotUnpivotTransform
+    relationship: adjacent
+    overlap: Both reshape data between equivalent forms, but over different data types (polynomials vs.
+      records).
+  reason: 0/2 samples judged it novel; It's another polynomial conversion task, differing only in the
+    particular input/output forms.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/2
+- name: permutation_notation_translation
+  summary: Translate permutations among one-line notation, disjoint-cycle form, inversion sequences and
+    Lehmer codes, and lexicographic ranks, preserving the same permutation exactly across every queried
+    direction.
+  verdict: variant
+  nearest_neighbors:
+  - id: plan:WAVE2:S19
+    relationship: same_operation
+    overlap: 'Both transform permutations between notations: the plan covers cycle-notation composition,
+      and this proposal converts between one-line, cycles, Lehmer codes, and ranks.'
+  - id: proposal:k3_uncertainty:P001
+    relationship: adjacent
+    overlap: Both translate between combinatorial representations of the same object (trees vs. permutations),
+      using rank/unrank-like processes.
+  - id: plan:WAVE3:S32
+    relationship: same_operation
+    overlap: Both perform lexicographic ranking/unranking of permutations.
+  reason: 0/2 samples judged it novel; The core is just converting between standard permutation forms,
+    which is a known operation in existing plans.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/2
+- name: piecewise_linear_hinge_translation
+  summary: Convert continuous piecewise-linear functions between breakpoint lists (knots with values)
+    and expansions in shifted hinge functions with exact rational slopes, both directions over few-knot
+    instances; answer is the equivalent alternate parameter list.
+  verdict: invalid
+  closest_id: null
+  reason: summary must be 40-240 characters, got 252
+- name: unit_definition_translation
+  summary: Using a supplied chain of named-unit definitions, convert a quantity between composite named-unit
+    expressions and canonical base-unit form or a requested named target, tracking unit-exponent vectors
+    and exact rational factors; answer is value plus unit.
+  verdict: invalid
+  closest_id: null
+  reason: summary must be 40-240 characters, got 253
+- name: partition_frobenius_translation
+  summary: Translate integer partitions between the weakly decreasing parts list and Frobenius diagonal
+    coordinates, optionally via the Durfee square decomposition, both directions over varied part counts;
+    answer is the matching coordinate pair or parts list.
+  verdict: invalid
+  closest_id: null
+  reason: summary must be 40-240 characters, got 248
+- name: sparse_matrix_format_translation
+  summary: Convert a small integer matrix among dense row listings, coordinate triples, and compressed-sparse-row
+    arrays (values, column indices, row pointers), both directions over varied shapes and sparsity; answer
+    is the exact equivalent array description.
+  verdict: invalid
+  closest_id: null
+  reason: summary must be 40-240 characters, got 248
+- name: calendar_epoch_translation
+  summary: Convert one civil instant among Gregorian date, ISO week-date, day-of-year ordinal, Julian
+    day number, and UTC epoch-second forms across leap and common years; answer expresses the same instant
+    in the requested representation.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.gregorian_weekday.gregorian_weekday:GregorianWeekday
+    relationship: variant
+    overlap: both convert between a Gregorian date and another temporal representation (weekday vs various
+      civil formats), requiring leap-year and day-count arithmetic
+  - id: task:generated.wave12.calendar_recurrence_execution.calendar_recurrence_execution:CalendarRecurrenceExecution
+    relationship: adjacent
+    overlap: both handle calendar dates and durations, but recurrence generates future dates from rules
+      while this proposal translates among existing date representations
+  - id: task:generated.wave8.cron_next_fire.cron_next_fire:CronNextFire
+    relationship: adjacent
+    overlap: both compute dates/timestamps from calendar fields, but cron execution finds the next match
+      while this proposal converts between civil and epoch representations
+  reason: 0/2 samples judged it novel; Calendar epoch translation is a variant of existing Gregorian date
+    conversion, adding output formats but using the same date arithmetic operations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/2
+- name: extensive_form_to_bimatrix
+  summary: Enumerate both players' pure strategies in a small extensive-form game tree, with optional
+    chance nodes resolved by expectation, and answer the induced normal-form payoff bimatrix in canonical
+    strategy order.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_uncertainty:P008
+    relationship: variant
+    overlap: Both convert game representations; iterative dominance elimination reduces bimatrix games
+      while this expands extensive-form into bimatrix, but both output payoff matrices/surviving strategies.
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: adjacent
+    overlap: Both involve tree-structured decision processes, but probability trees compute probabilities
+      while this enumerates strategies.
+  - id: proposal:k3_counterfactual:P004
+    relationship: adjacent
+    overlap: Both evaluate game-like strategic situations but VCG focuses on auctions, not extensive-form
+      conversion.
+  reason: 1/2 samples judged it novel; Variation of game-form conversion; dominance elimination is a known
+    neighbor.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/2
+- name: mealy_moore_machine_conversion
+  summary: Convert Mealy machines to equivalent Moore machines and back, splitting states so every input-output
+    trace is preserved across varied alphabets; answer the converted transition/output table.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_verification-repair:P009
+    relationship: variant
+    overlap: Both involve Mealy machines; this converts between Mealy and Moore while the known one composes
+      Mealy machines.
+  - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+    relationship: adjacent
+    overlap: Both manipulate finite automata, but minimization partitions states while conversion changes
+      output representation.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: different
+    overlap: Protocol tracing executes transitions, not representation conversion.
+  reason: 1/2 samples judged it novel; Variant of known Mealy machine operations, differing in direction
+    but same core automaton machinery.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/2
+- name: hilbert_curve_index_translation
+  summary: Map cell coordinates on a 2^k grid to their distance along a recursive Hilbert or Morton curve
+    and invert a curve distance back to coordinates, growing in order k and quadrant-rotation state; answer
+    is the paired index or cell.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_representation-transfer:P006
+    relationship: variant
+    overlap: Both convert between cell coordinates and space-filling curve indices, differing only in
+      curve type (Hilbert vs Morton).
+  - id: proposal:k3_shortcuts-fail:P011
+    relationship: adjacent
+    overlap: Both involve planar embeddings but different structures (faces vs space-filling curves).
+  - id: task:generated.wave8.left_coset_identification.left_coset_identification:LeftCosetIdentification
+    relationship: different
+    overlap: Group theory coset identification is unrelated to geometric indexing.
+  reason: Known space-filling curve conversion with parameter change from Morton to Hilbert.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/1
+- name: prufer_sequence_translation
+  summary: "Translate bidirectionally between a Pr\xC3\xBCfer sequence over n labels and the sorted edge\
+    \ list of the unique labeled tree it encodes, spanning starlike, pathlike, and high-degree shapes;\
+    \ answer is the matching sequence or edge list."
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_uncertainty:P001
+    relationship: same_operation
+    overlap: "Both translate between labeled trees and Pr\xFCfer codes using the same bijection: forward\
+      \ code generation by deleting the smallest leaf and recording its neighbor, and inverse edge reconstruction\
+      \ by degree counts and attachment rules; outputs are the same code/edge list."
+  - id: proposal:k3_counterfactual:P001
+    relationship: adjacent
+    overlap: "Both perform bijective transformations between a structured object and a sequence, but with\
+      \ different objects and algorithms (wavelet tree vs. Pr\xFCfer)."
+  - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+    relationship: adjacent
+    overlap: "Both output sorted edge lists from a graph-derived object, but the underlying operation\
+      \ is different (Pr\xFCfer translation vs. transitive reduction)."
+  reason: 0/3 samples judged it novel; Identical bijection and outputs as the existing prufer_code_roundtrip,
+    differing only in shape coverage.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: repeating_decimal_translation
+  summary: Convert between a reduced fraction p/q and its decimal expansion with the repetend marked (pure
+    and mixed cycles, varied periods, negative values) and invert a given repeating-decimal string back
+    to lowest terms.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_rule_induction_r1.repeating_decimal_expansion.repeating_decimal_expansion:RepeatingDecimalExpansion
+    relationship: same_operation
+    overlap: both perform bidirectional conversion between a reduced fraction and its decimal expansion
+      with repetend marking, using long division to find the minimal repetend and identifying mixed/pure
+      cycles
+  - id: proposal:k3_verification-repair:P007
+    relationship: adjacent
+    overlap: both deal with exact rational representations, but arithmetic coding uses cumulative distributions
+      and intervals instead of decimal expansion
+  - id: proposal:k3_uncertainty:P001
+    relationship: adjacent
+    overlap: "both involve round-tripping an object and a sequence, but one is Pr\xFCfer codes for trees\
+      \ and the other is decimal representations of rationals"
+  reason: 0/2 samples judged it novel; The candidate is a duplicate of the existing repeating decimal
+    expansion task, differing only in adding the reverse conversion.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/2
+pool:
+- name: recurrence_generating_function
+  summary: Translate linear constant-coefficient recurrences with initial values into rational ordinary
+    generating functions and back, answering the exact numerator and denominator polynomial coefficient
+    lists.
+- name: mealy_moore_machine_translation
+  summary: Translate a finite transducer between Mealy form (outputs on transitions) and Moore form (outputs
+    on states), both directions over varied alphabets, state counts, and output tables; answer is the
+    full equivalent transition/output table.
+- name: partial_fraction_decomposition
+  summary: Decompose proper rational functions into partial fractions over distinct and repeated linear
+    or given irreducible quadratic factors, answering the exact per-term rational coefficients.

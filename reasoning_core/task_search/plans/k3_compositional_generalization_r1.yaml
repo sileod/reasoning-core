@@ -1,0 +1,33 @@
+version: 1
+name: k3_compositional_generalization_r1
+proposal_wave: k3_compositional-generalization
+defaults:
+  base_ref: e43c154688ca8e9a46c3495b1bac063474cd83ea
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  pilot:
+  - P001v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: arc_consistency_reduction (draw 1 of 1)
+  changes: new task in reasoning_core/tasks/generated/k3_compositional_generalization_r1/arc_consistency_reduction
+  instruction: |-
+    Author a new task from scratch: arc_consistency_reduction.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate binary allowed-pair constraints over small finite domains until arc-consistent, returning every variable's surviving sorted domain or the variable where wipeout occurs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_compositional_generalization_r1/arc_consistency_reduction
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_compositional_generalization_r1/arc_consistency_reduction

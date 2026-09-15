@@ -1,0 +1,34 @@
+version: 1
+name: ns_mini2
+proposal_wave: UNBUILT
+defaults:
+  base_ref: e3b85dfa12903651eaf9643673e163800d03fd2b
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  ab:
+  - P022v1
+trials:
+- id: P022v1
+  hypothesis: manual_high_value_80:minimal_unsat_core
+  idea: minimal_unsat_core_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/wave12/minimal_unsat_core_v1
+  instruction: "Author a new task from scratch: minimal_unsat_core_v1.\n\nCover exactly\
+    \ this, and put this line -- adapted to what you actually build -- in the class\
+    \ `summary`:\n\n  Find the lexicographically canonical subset-minimal inconsistent\
+    \ subset of small Boolean or finite-domain constraints.\n\nEvery decision the\
+    \ summary does not fix is yours: instance family, generator, verifier, difficulty\
+    \ scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices\
+    \ you believe produce the best training data.\n\nAUTHORING_RULES.md lists the\
+    \ checks generate_entry must perform and the failure modes that sank earlier waves\
+    \ -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/wave12/minimal_unsat_core_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib
+    reasoning_core/tasks/generated/wave12/minimal_unsat_core_v1
+  design_choice: Use Boolean clauses only, with answer as the sorted clause indices
+    forming the unique minimal core.

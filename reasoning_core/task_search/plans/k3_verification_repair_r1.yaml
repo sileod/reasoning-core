@@ -1,0 +1,719 @@
+version: 1
+name: k3_verification_repair_r1
+proposal_wave: k3_verification-repair
+defaults:
+  base_ref: 3eefb204be1bed83e5198cd40bec392f28e981b9
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  - P012v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  - P012v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  - P012v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: lz77_tokenization_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v1
+  instruction: |-
+    Author a new task from scratch: lz77_tokenization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Greedily parse a string into (offset, length, next-symbol) LZ77 triples under a stated search-window size, emitting the full token stream; alphabet size, window size, and repeat density vary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v1
+  design_choice: Encode answers as semicolon-separated triples with offset:length:char, e.g. '0:0:a;1:2:b;0:0:c'.
+- id: P001v2
+  hypothesis: P001
+  idea: lz77_tokenization_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v2
+  instruction: |-
+    Author a new task from scratch: lz77_tokenization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Greedily parse a string into (offset, length, next-symbol) LZ77 triples under a stated search-window size, emitting the full token stream; alphabet size, window size, and repeat density vary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v2
+  design_choice: Use a fixed-width binary encoding where each triple is three integers (offset, length,
+    char) concatenated with spaces.
+- id: P001v3
+  hypothesis: P001
+  idea: lz77_tokenization_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v3
+  instruction: |-
+    Author a new task from scratch: lz77_tokenization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Greedily parse a string into (offset, length, next-symbol) LZ77 triples under a stated search-window size, emitting the full token stream; alphabet size, window size, and repeat density vary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/lz77_tokenization_v3
+- id: P002v1
+  hypothesis: P002
+  idea: euler_tour_intervals_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v1
+  instruction: |-
+    Author a new task from scratch: euler_tour_intervals_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute DFS entry and exit stamps over a rooted tree so each subtree becomes a contiguous interval, then answer ancestry checks or return subtree member sets using only the stamps.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v1
+  design_choice: Answers are yes/no ancestry queries, with trees generated so depth and branching make
+    both outcomes equally frequent.
+- id: P002v2
+  hypothesis: P002
+  idea: euler_tour_intervals_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v2
+  instruction: |-
+    Author a new task from scratch: euler_tour_intervals_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute DFS entry and exit stamps over a rooted tree so each subtree becomes a contiguous interval, then answer ancestry checks or return subtree member sets using only the stamps.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v2
+  design_choice: Answers are canonical interval strings like '[l,r]' for every node, with randomized tree
+    shapes ensuring varied intervals.
+- id: P002v3
+  hypothesis: P002
+  idea: euler_tour_intervals_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v3
+  instruction: |-
+    Author a new task from scratch: euler_tour_intervals_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute DFS entry and exit stamps over a rooted tree so each subtree becomes a contiguous interval, then answer ancestry checks or return subtree member sets using only the stamps.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/euler_tour_intervals_v3
+- id: P003v1
+  hypothesis: P003
+  idea: misra_gries_counters_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v1
+  instruction: |-
+    Author a new task from scratch: misra_gries_counters_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain k-minus-one cancellation counters: increment on a hit, occupy an empty slot, or decrement all on a miss; return the final counter map, including the majority-vote case with verification.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v1
+  design_choice: Vary sequence length and alphabet size across instances; require exact final counter
+    map as a canonical sorted string of key:value pairs.
+- id: P003v2
+  hypothesis: P003
+  idea: misra_gries_counters_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v2
+  instruction: |-
+    Author a new task from scratch: misra_gries_counters_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain k-minus-one cancellation counters: increment on a hit, occupy an empty slot, or decrement all on a miss; return the final counter map, including the majority-vote case with verification.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v2
+  design_choice: Present the stream as a list of single-character symbols; answer is the counter map after
+    processing, with ties broken by lexicographic key order.
+- id: P003v3
+  hypothesis: P003
+  idea: misra_gries_counters_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v3
+  instruction: |-
+    Author a new task from scratch: misra_gries_counters_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain k-minus-one cancellation counters: increment on a hit, occupy an empty slot, or decrement all on a miss; return the final counter map, including the majority-vote case with verification.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/misra_gries_counters_v3
+- id: P004v1
+  hypothesis: P004
+  idea: pipeline_hazard_trace_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v1
+  instruction: |-
+    Author a new task from scratch: pipeline_hazard_trace_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Clock an in-order five-stage pipeline over instruction lists with register dependencies under stated forwarding rules, returning total issue cycles, or which instruction stalls and where.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v1
+  design_choice: Answer is the total stall cycles as an integer, with forwarding rules given textually
+    and dependencies spread across all five stages.
+- id: P004v2
+  hypothesis: P004
+  idea: pipeline_hazard_trace_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v2
+  instruction: |-
+    Author a new task from scratch: pipeline_hazard_trace_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Clock an in-order five-stage pipeline over instruction lists with register dependencies under stated forwarding rules, returning total issue cycles, or which instruction stalls and where.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v2
+  design_choice: Answer is a compact string of stall-stage codes (e.g., 'ID,EX') for each stalling instruction,
+    with forwarding only from EX/MEM and MEM/WB.
+- id: P004v3
+  hypothesis: P004
+  idea: pipeline_hazard_trace_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v3
+  instruction: |-
+    Author a new task from scratch: pipeline_hazard_trace_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Clock an in-order five-stage pipeline over instruction lists with register dependencies under stated forwarding rules, returning total issue cycles, or which instruction stalls and where.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/pipeline_hazard_trace_v3
+- id: P005v1
+  hypothesis: P005
+  idea: simplex_pivot_execution_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v1
+  instruction: |-
+    Author a new task from scratch: simplex_pivot_execution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run primal simplex on tiny standard-form LPs with a stated pivot rule and minimum-ratio tests, keeping exact rational tableaux, and returning the optimal value, pivot count, or an unboundedness flag.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v1
+  design_choice: Generate instances by fixing a random feasible basis and reverse-engineering the tableau
+    so the stated pivot rule's first pivot is predetermined, making the pivot count vary with tie-breaking
+    choices.
+- id: P005v2
+  hypothesis: P005
+  idea: simplex_pivot_execution_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v2
+  instruction: |-
+    Author a new task from scratch: simplex_pivot_execution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run primal simplex on tiny standard-form LPs with a stated pivot rule and minimum-ratio tests, keeping exact rational tableaux, and returning the optimal value, pivot count, or an unboundedness flag.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v2
+  design_choice: Return the answer as a canonical string of the form 'optimal <value> <pivot_count>' or
+    'unbounded <pivot_count>' where the pivot count is measured by the number of minimum-ratio tests performed,
+    not tableau updates.
+- id: P005v3
+  hypothesis: P005
+  idea: simplex_pivot_execution_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v3
+  instruction: |-
+    Author a new task from scratch: simplex_pivot_execution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run primal simplex on tiny standard-form LPs with a stated pivot rule and minimum-ratio tests, keeping exact rational tableaux, and returning the optimal value, pivot count, or an unboundedness flag.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/simplex_pivot_execution_v3
+- id: P006v1
+  hypothesis: P006
+  idea: elimination_fill_in_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v1
+  instruction: |-
+    Author a new task from scratch: elimination_fill_in_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Eliminate vertices in a stated order, making each current neighborhood a clique by added fill edges; answer with the fill edge list, its size, or the largest clique any elimination step forms.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v1
+  design_choice: Present the elimination order in the prompt; solver must compute and list all added fill
+    edges as canonical unordered pairs.
+- id: P006v2
+  hypothesis: P006
+  idea: elimination_fill_in_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v2
+  instruction: |-
+    Author a new task from scratch: elimination_fill_in_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Eliminate vertices in a stated order, making each current neighborhood a clique by added fill edges; answer with the fill edge list, its size, or the largest clique any elimination step forms.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v2
+  design_choice: Give a partial order or precedence constraints instead of a full order; solver must find
+    a valid full order that minimizes fill size.
+- id: P006v3
+  hypothesis: P006
+  idea: elimination_fill_in_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v3
+  instruction: |-
+    Author a new task from scratch: elimination_fill_in_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Eliminate vertices in a stated order, making each current neighborhood a clique by added fill edges; answer with the fill edge list, its size, or the largest clique any elimination step forms.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/elimination_fill_in_v3
+- id: P007v1
+  hypothesis: P007
+  idea: arithmetic_coding_intervals_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v1
+  instruction: |-
+    Author a new task from scratch: arithmetic_coding_intervals_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Narrow and invert exact rational coding intervals against a cumulative symbol distribution: encode a short word to its final [lo,hi) endpoints, or decode a target rational back into its symbol sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v1
+  design_choice: "Choice 1: Use a fixed alphabet of 3 symbols with probabilities 1/2,1/3,1/6; encode words\
+    \ of length 3\u20135, ask for endpoints as reduced fractions."
+- id: P007v2
+  hypothesis: P007
+  idea: arithmetic_coding_intervals_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v2
+  instruction: |-
+    Author a new task from scratch: arithmetic_coding_intervals_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Narrow and invert exact rational coding intervals against a cumulative symbol distribution: encode a short word to its final [lo,hi) endpoints, or decode a target rational back into its symbol sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v2
+  design_choice: "Choice 2: Use a 4-symbol alphabet with unequal prime-denominator probabilities; decode\
+    \ a given rational midpoint back to a 4\u20136 symbol word, requiring exact interval inversion."
+- id: P007v3
+  hypothesis: P007
+  idea: arithmetic_coding_intervals_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v3
+  instruction: |-
+    Author a new task from scratch: arithmetic_coding_intervals_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Narrow and invert exact rational coding intervals against a cumulative symbol distribution: encode a short word to its final [lo,hi) endpoints, or decode a target rational back into its symbol sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/arithmetic_coding_intervals_v3
+- id: P008v1
+  hypothesis: P008
+  idea: shortest_path_betweenness_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v1
+  instruction: |-
+    Author a new task from scratch: shortest_path_betweenness_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From each source, layer an unweighted graph by BFS and count shortest paths, then accumulate pair dependencies back down the search DAG, returning one node's exact betweenness as a rational.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v1
+  design_choice: Vary the queried node among all vertices, including leaves, centers, and articulation
+    points, with graph sizes from 6 to 20 nodes.
+- id: P008v2
+  hypothesis: P008
+  idea: shortest_path_betweenness_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v2
+  instruction: |-
+    Author a new task from scratch: shortest_path_betweenness_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From each source, layer an unweighted graph by BFS and count shortest paths, then accumulate pair dependencies back down the search DAG, returning one node's exact betweenness as a rational.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v2
+  design_choice: Generate graphs with a single source-sink pair and compute the betweenness of a fixed
+    intermediate node, using weighted edges to force unique shortest paths.
+- id: P008v3
+  hypothesis: P008
+  idea: shortest_path_betweenness_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v3
+  instruction: |-
+    Author a new task from scratch: shortest_path_betweenness_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From each source, layer an unweighted graph by BFS and count shortest paths, then accumulate pair dependencies back down the search DAG, returning one node's exact betweenness as a rational.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/shortest_path_betweenness_v3
+- id: P009v1
+  hypothesis: P009
+  idea: mealy_composition_run_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v1
+  instruction: |-
+    Author a new task from scratch: mealy_composition_run_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pipe one Mealy machine's emitted word into a second machine over a shared output/input alphabet, tracking each machine's state and emission table, returning the final cascaded output word and state pair.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v1
+  design_choice: Represent machines as explicit transition tables mapping (state, symbol) to (next state,
+    output symbol), with instances given as two tables and an input word.
+- id: P009v2
+  hypothesis: P009
+  idea: mealy_composition_run_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v2
+  instruction: |-
+    Author a new task from scratch: mealy_composition_run_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pipe one Mealy machine's emitted word into a second machine over a shared output/input alphabet, tracking each machine's state and emission table, returning the final cascaded output word and state pair.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v2
+  design_choice: Represent machines as compact regular-expression-like pattern rules over the alphabet,
+    where each rule maps a pattern to a replacement symbol and state transition.
+- id: P009v3
+  hypothesis: P009
+  idea: mealy_composition_run_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v3
+  instruction: |-
+    Author a new task from scratch: mealy_composition_run_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pipe one Mealy machine's emitted word into a second machine over a shared output/input alphabet, tracking each machine's state and emission table, returning the final cascaded output word and state pair.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/mealy_composition_run_v3
+- id: P010v1
+  hypothesis: P010
+  idea: tree_reroot_distances_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v1
+  instruction: |-
+    Author a new task from scratch: tree_reroot_distances_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate subtree distance sums on a rooted tree, then reroot along every edge with shift updates, returning each node's (or a queried node's) total distance to all others.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v1
+  design_choice: Return per-node total distances as a list of integers ordered by node index, with a balanced
+    binary tree so all answers are distinct.
+- id: P010v2
+  hypothesis: P010
+  idea: tree_reroot_distances_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v2
+  instruction: |-
+    Author a new task from scratch: tree_reroot_distances_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate subtree distance sums on a rooted tree, then reroot along every edge with shift updates, returning each node's (or a queried node's) total distance to all others.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v2
+  design_choice: Return only the rerooted total distance for a single queried node, with the query node
+    chosen uniformly at random per instance, and the answer is that integer.
+- id: P010v3
+  hypothesis: P010
+  idea: tree_reroot_distances_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v3
+  instruction: |-
+    Author a new task from scratch: tree_reroot_distances_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate subtree distance sums on a rooted tree, then reroot along every edge with shift updates, returning each node's (or a queried node's) total distance to all others.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/tree_reroot_distances_v3
+- id: P011v1
+  hypothesis: P011
+  idea: cellular_automaton_step_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v1
+  instruction: |-
+    Author a new task from scratch: cellular_automaton_step_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Advance a one-dimensional elementary cellular automaton under a stated rule number and boundary convention for several synchronous steps, returning a queried row string, cell state, or live-cell count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v1
+  design_choice: Vary the queried output among the full final row, a single cell's state at a specified
+    position, and the total live-cell count, with the query type stated in the prompt.
+- id: P011v2
+  hypothesis: P011
+  idea: cellular_automaton_step_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v2
+  instruction: |-
+    Author a new task from scratch: cellular_automaton_step_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Advance a one-dimensional elementary cellular automaton under a stated rule number and boundary convention for several synchronous steps, returning a queried row string, cell state, or live-cell count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v2
+  design_choice: Use random initial rows with a fixed length, but derive the rule number from a hash of
+    the initial row so each instance has a unique rule and boundary condition.
+- id: P011v3
+  hypothesis: P011
+  idea: cellular_automaton_step_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v3
+  instruction: |-
+    Author a new task from scratch: cellular_automaton_step_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Advance a one-dimensional elementary cellular automaton under a stated rule number and boundary convention for several synchronous steps, returning a queried row string, cell state, or live-cell count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/cellular_automaton_step_v3
+- id: P012v1
+  hypothesis: P012
+  idea: lindenmayer_parallel_rewrite_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v1
+  instruction: |-
+    Author a new task from scratch: lindenmayer_parallel_rewrite_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand an L-system by replacing every symbol simultaneously for a stated number of steps over mixed constant/rewriting productions, returning the bounded result string or the count of a queried symbol.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v1
+  design_choice: Use deterministic productions where each nonterminal maps to a fixed string, and ask
+    for the exact final string after N steps.
+- id: P012v2
+  hypothesis: P012
+  idea: lindenmayer_parallel_rewrite_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v2
+  instruction: |-
+    Author a new task from scratch: lindenmayer_parallel_rewrite_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand an L-system by replacing every symbol simultaneously for a stated number of steps over mixed constant/rewriting productions, returning the bounded result string or the count of a queried symbol.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v2
+  design_choice: Use probabilistic productions with weighted alternatives, and ask for the count of a
+    queried symbol in the final string.
+- id: P012v3
+  hypothesis: P012
+  idea: lindenmayer_parallel_rewrite_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v3
+  instruction: |-
+    Author a new task from scratch: lindenmayer_parallel_rewrite_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand an L-system by replacing every symbol simultaneously for a stated number of steps over mixed constant/rewriting productions, returning the bounded result string or the count of a queried symbol.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_verification_repair_r1/lindenmayer_parallel_rewrite_v3

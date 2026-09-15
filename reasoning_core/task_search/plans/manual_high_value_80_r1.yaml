@@ -1,0 +1,109 @@
+version: 1
+name: manual_high_value_80_r1
+proposal_wave: manual_high_value_80
+defaults:
+  base_ref: 891dc4603e901292efba1445d3c2932806ce09fe
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P022v1
+  - P024v1
+  - P033v1
+  - P051v1
+  - P061v1
+  pilot:
+  - P022v1
+  - P024v1
+  - P033v1
+  - P051v1
+  - P061v1
+trials:
+- id: P022v1
+  hypothesis: HV-022
+  idea: hindley_milner_inference (draw 1 of 1)
+  changes: new task in reasoning_core/tasks/generated/manual_high_value_80_r1/hindley_milner_inference
+  instruction: |-
+    Author a new task from scratch: hindley_milner_inference.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer principal types for small functional expressions with application, abstraction, tuples, and let-polymorphism, returning a canonical type.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/manual_high_value_80_r1/hindley_milner_inference
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/manual_high_value_80_r1/hindley_milner_inference
+- id: P024v1
+  hypothesis: HV-024
+  idea: exception_control_flow (draw 1 of 1)
+  changes: new task in reasoning_core/tasks/generated/manual_high_value_80_r1/exception_control_flow
+  instruction: |-
+    Author a new task from scratch: exception_control_flow.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute nested try, handler, finally, return, and raise semantics with state mutation, returning the final value or uncaught exception.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/manual_high_value_80_r1/exception_control_flow
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/manual_high_value_80_r1/exception_control_flow
+- id: P033v1
+  hypothesis: HV-033
+  idea: window_function_execution (draw 1 of 1)
+  changes: new task in reasoning_core/tasks/generated/manual_high_value_80_r1/window_function_execution
+  instruction: |-
+    Author a new task from scratch: window_function_execution.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute partitioned ordered running totals, ranks, lag or lead values, or bounded-window aggregates for a queried table row.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/manual_high_value_80_r1/window_function_execution
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/manual_high_value_80_r1/window_function_execution
+- id: P051v1
+  hypothesis: HV-051
+  idea: minimal_unsat_core (draw 1 of 1)
+  changes: new task in reasoning_core/tasks/generated/manual_high_value_80_r1/minimal_unsat_core
+  instruction: |-
+    Author a new task from scratch: minimal_unsat_core.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the lexicographically canonical subset-minimal inconsistent subset of small Boolean or finite-domain constraints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/manual_high_value_80_r1/minimal_unsat_core
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/manual_high_value_80_r1/minimal_unsat_core
+- id: P061v1
+  hypothesis: HV-061
+  idea: modular_constraint_solver (draw 1 of 1)
+  changes: new task in reasoning_core/tasks/generated/manual_high_value_80_r1/modular_constraint_solver
+  instruction: |-
+    Author a new task from scratch: modular_constraint_solver.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine modular congruence constraints including non-coprime moduli, returning inconsistency or the canonical residue and modulus solution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/manual_high_value_80_r1/modular_constraint_solver
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/manual_high_value_80_r1/modular_constraint_solver
