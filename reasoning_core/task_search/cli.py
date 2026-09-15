@@ -25,7 +25,11 @@ from .wave_proposer import (
     DEFAULT_MODEL,
 )
 from .plan import _frozen_module_drift, _plan_problems, load_plan
-from .implementation_runner import _repo_root, run_plan
+from .implementation_runner import (
+    DEFAULT_TRANSIENT_RETRIES,
+    _repo_root,
+    run_plan,
+)
 from .sandbox import _write_json
 from .doctor import default_provider
 
@@ -257,7 +261,9 @@ def _parser():
         help="how hard the worker is told to hurry; recorded in generation metadata so waves stay comparable",
     )
     run.add_argument("--timeout-seconds", type=int, default=1800)
-    run.add_argument("--transient-retries", type=int, default=2)
+    run.add_argument(
+        "--transient-retries", type=int, default=DEFAULT_TRANSIENT_RETRIES
+    )
     run.add_argument("--retry-backoff-seconds", type=int, default=30)
     run.add_argument("--validation-timeout-seconds", type=int, default=300)
     run.add_argument("--hlink-bin", default="hlink")

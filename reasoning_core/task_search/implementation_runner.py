@@ -565,6 +565,13 @@ _RETRY_CEILING_SECONDS = 600
 # them into the same saturated minute and spends a retry for nothing. This keeps the
 # expected wait and spreads the arrivals.
 _RETRY_JITTER = (0.5, 1.5)
+# Two retries climb to about ninety seconds, so the ten-minute ceiling above was never
+# reachable and the ladder gave up inside the same saturated minute it started in. Four
+# reaches roughly four minutes on the last rung; sixteen of the thirty-three trials in
+# `k3_invariants_r1` were refused at least once and the three that ran out of retries are
+# the whole of that wave's harness failures. The waiting totals about seven minutes, which
+# is small beside five runs of a trial that is itself allowed thirty.
+DEFAULT_TRANSIENT_RETRIES = 4
 
 
 def _retry_delay(backoff_seconds, provider_retries):
@@ -622,7 +629,7 @@ def run_plan(
     validation_timeout_seconds=300,
     credential_env_names=(),
     pace=DEFAULT_PACE,
-    transient_retries=2,
+    transient_retries=DEFAULT_TRANSIENT_RETRIES,
     retry_backoff_seconds=30,
     snapshots=False,
 ):

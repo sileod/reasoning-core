@@ -295,3 +295,25 @@ def test_a_pass_retires_only_a_bounded_number_of_spent_runs(tmp_path, monkeypatc
     assert len(spent) == driver.RETIRE_PER_PASS
     assert [directory.name for directory in spent] == sorted(
         directory.name for directory in spent), "the oldest runs must go first"
+
+
+def test_the_retry_ladder_reaches_the_ceiling_it_documents(monkeypatch):
+    """`_RETRY_CEILING_SECONDS` is ten minutes because a provider 429 is one bucket shared
+    by the whole wave and the wait has to outlast its refill window. A budget of two never
+    climbed past about ninety seconds, so every retry woke into the same saturated minute
+    and the ceiling described a regime the runner could not reach."""
+    from reasoning_core.task_search.implementation_runner import (
+        DEFAULT_TRANSIENT_RETRIES,
+        _RETRY_CEILING_SECONDS,
+        _retry_delay,
+    )
+
+    monkeypatch.setattr(random, "uniform", lambda low, high: 1.0)
+    ladder = [_retry_delay(30, attempt)
+              for attempt in range(1, DEFAULT_TRANSIENT_RETRIES + 1)]
+
+    assert ladder == sorted(ladder), "the wait must grow with each refusal"
+    assert max(ladder) >= 240, (
+        f"the last rung waits {max(ladder)}s, which is inside a per-minute quota window")
+    assert sum(ladder) < _RETRY_CEILING_SECONDS + 1800, (
+        "waiting must stay small beside the trials it protects")
