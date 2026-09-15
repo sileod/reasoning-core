@@ -7,6 +7,7 @@ agglomerative_linkage_merge
 agreement_completion
 alias_mutation
 alias_mutation_tracking
+allen_interval_composition
 analogical_case_matching
 announcement_round_deduction
 answer_relevant_change
@@ -86,6 +87,7 @@ counterfactual_replay
 counterfactual_twin_model
 counterfeit_weighing_deduction
 crc_remainder
+critical_pair_generation
 critical_path
 critical_path_analysis
 cron_next_fire
@@ -111,6 +113,7 @@ diff_patch_application
 dimensional_analysis
 dimensional_consistency
 distinguishing_witness
+distributed_snapshot_recording
 dominator_analysis
 dynamic_programming
 ear_clipping_triangulation
@@ -139,6 +142,7 @@ finite_model_quantifiers
 finite_relation_properties
 firewall_rule_shadowing
 fixpoint_iteration
+floor_quotient_blocks
 flow_path_decomposition
 function_manipulation
 game_best_move
@@ -205,6 +209,7 @@ lyndon_factorization_duval
 lz77_tokenization
 markov_chain_distribution
 math_word_problem
+matrix_characteristic_polynomial
 matrix_induction
 maximum_flow
 mealy_composition_run
@@ -219,6 +224,7 @@ misra_gries_counters
 missing_dimension
 modular_constraint
 modular_constraint_solver
+morton_order_navigation
 most_probable_evidence
 most_probable_outcome
 multiplicative_order
@@ -249,6 +255,7 @@ petri_conflict_pair
 petri_enabled_transitions
 pickup_delivery_route_search
 pipeline_hazard_trace
+pitch_class_prime_normal_forms
 pivot_unpivot_transform
 planar_geometry_relations
 planning
@@ -368,6 +375,7 @@ topological_sort_count
 toy_spn_cipher_rounds
 transaction_serializability
 transitive_reduction
+tree_axis_navigation
 tree_canonical_form
 tree_reconstruction
 tree_reroot_distances

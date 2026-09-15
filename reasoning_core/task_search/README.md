@@ -61,14 +61,20 @@ lists both, comma-separated); a fallback whose key is not named is refused befor
 wave, because unnamed it would be absent from every worker's environment and Harness Link
 would exit before the first step of every trial.
 
-**Measure before arming it.** A fallback makes Harness Link route every request through a
-local LiteLLM bridge, including the requests that never fall back, and on this machine
-that cost far more than it returned: in 78 trials over three waves it rescued 3, while two
-of those waves came back 29% and 31% `timed_out` against roughly 0% in the 480 trials
-before them, and two trials died outright on `LiteLLM bridge did not become HTTP-ready`.
-It also only fires on *errors*: a primary that answers slowly rather than refusing burns
-each trial's whole wall clock with the fallback sitting idle, which is what those timeouts
-were. Arm it when a provider is refusing outright, which is the case it wins.
+**Measure before arming it**, and read the measurement carefully. A fallback makes Harness
+Link route every request through a local LiteLLM bridge, including the requests that never
+fall back. Over 107 trials in four waves it rescued 3 (two of which then failed
+validation) and killed 2 outright on `LiteLLM bridge did not become HTTP-ready`, which is
+the only cost directly attributable to it. Two of those waves also came back 29% and 31%
+`timed_out` against roughly 0% in the 480 trials before them -- but the other two armed
+waves timed out not at all, and the timeouts fall inside one two-hour window, so they look
+like a slow afternoon on the primary that the bridge is merely suspected of worsening.
+
+What is not in doubt is which failure it covers: Harness Link falls back on *errors*,
+never on *latency*. Eleven trials burned their whole wall clock at thirty minutes each
+while a healthy fallback sat idle, and the `primary` in every one of their
+`launcher.fallback.routes` is how that was diagnosed. Arm it for a provider that refuses
+outright; a provider that answers slowly is not the case it wins.
 
 `run` requires a plan and `--model`. Defaults are OpenCode, one job, 56 steps,
 and a 30-minute worker timeout. With no `--trial` or `--queue`, it runs every
