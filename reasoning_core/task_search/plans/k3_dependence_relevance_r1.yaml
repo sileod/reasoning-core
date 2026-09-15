@@ -1,0 +1,306 @@
+version: 1
+name: k3_dependence_relevance_r1
+proposal_wave: k3_dependence-relevance
+defaults:
+  base_ref: 97b690014a78a526f3e4cd71e793d3ffe0956592
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: ear_clipping_triangulation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v1
+  instruction: |-
+    Author a new task from scratch: ear_clipping_triangulation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Triangulate simple polygons by repeatedly cutting the lexicographically first valid ear under a stated convexity test, tolerating collinear vertices; return the ordered ear list and resulting diagonals.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v1
+  design_choice: Represent polygon vertices as integer coordinates and compute ear validity via orientation
+    signs, with collinear ears allowed only if they are strictly convex under a tolerance-free sign test.
+- id: P001v2
+  hypothesis: P001
+  idea: ear_clipping_triangulation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v2
+  instruction: |-
+    Author a new task from scratch: ear_clipping_triangulation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Triangulate simple polygons by repeatedly cutting the lexicographically first valid ear under a stated convexity test, tolerating collinear vertices; return the ordered ear list and resulting diagonals.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v2
+  design_choice: Return the answer as a list of diagonals encoded by vertex indices in the order they
+    are cut, with each diagonal given as a pair of indices (i,j) in canonical ascending order.
+- id: P001v3
+  hypothesis: P001
+  idea: ear_clipping_triangulation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v3
+  instruction: |-
+    Author a new task from scratch: ear_clipping_triangulation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Triangulate simple polygons by repeatedly cutting the lexicographically first valid ear under a stated convexity test, tolerating collinear vertices; return the ordered ear list and resulting diagonals.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/ear_clipping_triangulation_v3
+- id: P002v1
+  hypothesis: P002
+  idea: binary_morphology_passes_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v1
+  instruction: |-
+    Author a new task from scratch: binary_morphology_passes_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose binary-morphology passes (erode, dilate, open, close, hit-miss) with chosen structuring elements and border handling; return the resulting cell set, counts, or queried cell states.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v1
+  design_choice: Answer as a canonical list of occupied cell coordinates after all passes, sorted lexicographically.
+- id: P002v2
+  hypothesis: P002
+  idea: binary_morphology_passes_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v2
+  instruction: |-
+    Author a new task from scratch: binary_morphology_passes_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose binary-morphology passes (erode, dilate, open, close, hit-miss) with chosen structuring elements and border handling; return the resulting cell set, counts, or queried cell states.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v2
+  design_choice: Answer as a single integer count of foreground cells in the final image.
+- id: P002v3
+  hypothesis: P002
+  idea: binary_morphology_passes_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v3
+  instruction: |-
+    Author a new task from scratch: binary_morphology_passes_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose binary-morphology passes (erode, dilate, open, close, hit-miss) with chosen structuring elements and border handling; return the resulting cell set, counts, or queried cell states.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/binary_morphology_passes_v3
+- id: P003v1
+  hypothesis: P003
+  idea: checksum_scheme_inference_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v1
+  instruction: "Author a new task from scratch: checksum_scheme_inference_v1.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Infer a check-digit\
+    \ scheme\xE2\x80\x94position weights, modulus, and symbol alphabet\xE2\x80\x94from batches of valid\
+    \ codes, then return the check character that completes each fresh partial code.\n\nEvery decision\
+    \ the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt\
+    \ wording and answer format. Other trials in this wave are implementing the same summary independently\
+    \ and are not coordinating with you. Make the choices you believe produce the best training data.\n\
+    \nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank\
+    \ earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v1
+  design_choice: Vary modulus among 7, 9, 11, and 13, with weights cycling from 1 upward; solver must
+    test each modulus to fit the batch.
+- id: P003v2
+  hypothesis: P003
+  idea: checksum_scheme_inference_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v2
+  instruction: "Author a new task from scratch: checksum_scheme_inference_v2.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Infer a check-digit\
+    \ scheme\xE2\x80\x94position weights, modulus, and symbol alphabet\xE2\x80\x94from batches of valid\
+    \ codes, then return the check character that completes each fresh partial code.\n\nEvery decision\
+    \ the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt\
+    \ wording and answer format. Other trials in this wave are implementing the same summary independently\
+    \ and are not coordinating with you. Make the choices you believe produce the best training data.\n\
+    \nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank\
+    \ earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v2
+  design_choice: Use alphabet of letters and digits (e.g., base32) where check symbol is computed modulo
+    alphabet size; solver must infer alphabet order from valid examples.
+- id: P003v3
+  hypothesis: P003
+  idea: checksum_scheme_inference_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v3
+  instruction: "Author a new task from scratch: checksum_scheme_inference_v3.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Infer a check-digit\
+    \ scheme\xE2\x80\x94position weights, modulus, and symbol alphabet\xE2\x80\x94from batches of valid\
+    \ codes, then return the check character that completes each fresh partial code.\n\nEvery decision\
+    \ the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt\
+    \ wording and answer format. Other trials in this wave are implementing the same summary independently\
+    \ and are not coordinating with you. Make the choices you believe produce the best training data.\n\
+    \nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank\
+    \ earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/checksum_scheme_inference_v3
+- id: P004v1
+  hypothesis: P004
+  idea: agglomerative_linkage_merge_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v1
+  instruction: |-
+    Author a new task from scratch: agglomerative_linkage_merge_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Agglomerate a small distance matrix by repeatedly merging the closest pair and recomputing linkage (single/complete/average/WPGMA) exactly; return the merge list with levels or the partition at a cut.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v1
+  design_choice: Answer as a list of merge tuples (i,j,height) with cluster labels assigned by smallest
+    original index, and require fractional heights as reduced fractions.
+- id: P004v2
+  hypothesis: P004
+  idea: agglomerative_linkage_merge_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v2
+  instruction: |-
+    Author a new task from scratch: agglomerative_linkage_merge_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Agglomerate a small distance matrix by repeatedly merging the closest pair and recomputing linkage (single/complete/average/WPGMA) exactly; return the merge list with levels or the partition at a cut.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v2
+  design_choice: Answer as the final flat partition at a given cut level, outputting cluster labels as
+    a canonical integer string ordered by original indices.
+- id: P004v3
+  hypothesis: P004
+  idea: agglomerative_linkage_merge_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v3
+  instruction: |-
+    Author a new task from scratch: agglomerative_linkage_merge_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Agglomerate a small distance matrix by repeatedly merging the closest pair and recomputing linkage (single/complete/average/WPGMA) exactly; return the merge list with levels or the partition at a cut.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/agglomerative_linkage_merge_v3
+- id: P005v1
+  hypothesis: P005
+  idea: simpson_reversal_detection_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v1
+  instruction: |-
+    Author a new task from scratch: simpson_reversal_detection_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given small integer contingency tables, pooled and per stratum, compute stratum-specific and overall rates, compare association directions, and decide whether Simpson reversal occurs, naming the conditioning variable responsible.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v1
+  design_choice: Present tables with per-stratum rates already computed, and require the solver to only
+    compare direction signs and output the responsible stratum variable name.
+- id: P005v2
+  hypothesis: P005
+  idea: simpson_reversal_detection_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v2
+  instruction: |-
+    Author a new task from scratch: simpson_reversal_detection_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given small integer contingency tables, pooled and per stratum, compute stratum-specific and overall rates, compare association directions, and decide whether Simpson reversal occurs, naming the conditioning variable responsible.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v2
+  design_choice: Provide raw counts only; the solver must compute both pooled and stratum-specific rates,
+    then detect reversal and identify the conditioning variable via a canonical answer string.
+- id: P005v3
+  hypothesis: P005
+  idea: simpson_reversal_detection_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v3
+  instruction: |-
+    Author a new task from scratch: simpson_reversal_detection_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given small integer contingency tables, pooled and per stratum, compute stratum-specific and overall rates, compare association directions, and decide whether Simpson reversal occurs, naming the conditioning variable responsible.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_dependence_relevance_r1/simpson_reversal_detection_v3
