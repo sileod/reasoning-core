@@ -14,6 +14,7 @@ unsupervised service spends a night on the same five failures.
 """
 from collections import Counter
 from dataclasses import dataclass
+import ast
 import itertools
 from pathlib import Path
 import re
@@ -43,6 +44,42 @@ def comparison_key(name):
 def implemented(repo_root):
     """Comparison keys for every task in the package, generated ones included."""
     return frozenset(comparison_key(entry.name) for entry in _task_entries(repo_root))
+
+
+def landed_proposals(repo_root):
+    """`(plan directory, proposal id)` for every generated task that names its proposal.
+
+    A landed task is named by the module the implementor wrote, not by the proposal that
+    asked for it: `regular_expression_derivative` shipped as `reg_exp_derivative`, and
+    matching on the name alone therefore said the proposal was still owed. It would have
+    been built again every night, forever, against a task that already exists.
+
+    `TASK_META["hypothesis"]` carries the proposal id and the plan directory carries the
+    wave, which together identify it whatever the implementor chose to call the class.
+    """
+    root = Path(repo_root) / "reasoning_core" / "tasks" / "generated"
+    found = set()
+    for path in sorted(root.rglob("*.py")) if root.is_dir() else ():
+        relative = path.relative_to(root)
+        if len(relative.parts) < 2 or path.name.startswith(("_", "test_", "generate_")):
+            continue
+        try:
+            tree = ast.parse(path.read_text(), filename=str(path))
+        except (SyntaxError, OSError):
+            continue
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Assign)
+                    and any(getattr(target, "id", "") == "TASK_META"
+                            for target in node.targets)):
+                continue
+            try:
+                meta = ast.literal_eval(node.value)
+            except ValueError:
+                continue
+            marker = str((meta or {}).get("hypothesis") or "").strip()
+            if marker:
+                found.add((relative.parts[0], marker))
+    return frozenset(found)
 
 
 def attempted(repo_root):
@@ -99,21 +136,27 @@ class Pending:
     attempts: int
 
 
-def unimplemented(wave, repo_root, *, max_attempts=None, built=None, tried=None):
+def unimplemented(wave, repo_root, *, max_attempts=None, built=None, tried=None,
+                  landed=None):
     """The proposals in one loaded wave that no task implements yet.
 
     `max_attempts` drops the ideas already tried that many times or more; None keeps them.
-    `built` and `tried` let a caller sweeping many waves scan the package once.
+    `built`, `tried` and `landed` let a caller sweeping many waves scan the package once.
     """
     built = implemented(repo_root) if built is None else built
     tried = attempted(repo_root) if tried is None else tried
+    landed = landed_proposals(repo_root) if landed is None else landed
+    # A landed task carries the name its implementor chose, which is often not the name
+    # the proposal used, so matching on names alone leaves the proposal owed forever.
+    shipped = {marker for plan, marker in landed
+               if plan.startswith(_snake(wave.get("name") or "\0") + "_r")}
     rows = []
     for proposal in wave.get("proposals") or ():
         name = _snake(proposal.get("name"))
         if not name:
             continue
         key = comparison_key(name)
-        if key in built:
+        if key in built or str(proposal.get("id") or "\0") in shipped:
             continue
         attempts = tried.get(key, 0)
         if max_attempts is not None and attempts >= max_attempts:

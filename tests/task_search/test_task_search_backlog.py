@@ -126,3 +126,24 @@ def test_rounds_skip_the_plans_a_wave_already_has(tmp_path):
     root = _repo(tmp_path, plans=[("w_r1", ["a"]), ("w_r2", ["b"])])
     assert backlog.next_round(root, "w") == 3
     assert backlog.next_round(root, "other") == 1
+
+
+def test_a_landed_task_covers_its_proposal_under_whatever_name_it_chose(tmp_path):
+    """A landed task is named by the module the implementor wrote, not by the proposal
+    that asked for it: regular_expression_derivative shipped as reg_exp_derivative. Matched
+    on names alone the proposal stayed owed, so the pipeline would rebuild it every night
+    against a task that already exists."""
+    module = (tmp_path / "reasoning_core" / "tasks" / "generated"
+              / "k3_systematic_generalization_r1" / "reg_exp_derivative")
+    module.mkdir(parents=True)
+    (module / "reg_exp_derivative.py").write_text(
+        "TASK_META = {'hypothesis': 'P001', 'idea': 'regular_expression_derivative'}\n"
+        "class RegExpDerivative(Task):\n    pass\n")
+    wave = {"name": "k3_systematic-generalization",
+            "proposals": [{"id": "P001", "name": "regular_expression_derivative",
+                           "summary": "s"},
+                          {"id": "P002", "name": "something_else", "summary": "s"}]}
+
+    owed = [name for _, name, _ in backlog.unimplemented(wave, tmp_path)]
+
+    assert owed == ["something_else"], "a renamed landed task left its proposal owed"
