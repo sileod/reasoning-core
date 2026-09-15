@@ -705,7 +705,7 @@ def _review_verdict(review, candidate_id, allowed_neighbor_ids):
 
 
 def _critic_votes(critic, reviewable, catalog, *, samples,
-                  round_index, wave_name, max_batch=CRITIC_MAX_BATCH):
+                  round_index, wave_name, max_batch=CRITIC_MAX_BATCH, ledger=None):
     """Ask the critic `samples` times, shuffling the candidates for each one.
 
     One flash review is a noisy gate, and the two errors are not symmetric: a wrong
@@ -749,16 +749,31 @@ def _critic_votes(critic, reviewable, catalog, *, samples,
                         for entry in neighbors[position]}
                        | {f"candidate:C{seat:03d}"
                           for seat in range(1, len(presented) + 1)})
+            omitted = malformed = 0
             for seat, position in enumerate(seats, 1):
                 candidate_id = f"C{seat:03d}"
                 review = by_id.get(candidate_id)
-                votes[position].append(
-                    None if not review
-                    else _review_verdict(review, candidate_id, allowed))
+                ballot = (None if not review
+                          else _review_verdict(review, candidate_id, allowed))
+                votes[position].append(ballot)
+                if ballot is None:
+                    omitted += 1
+                elif not ballot["neighbors_valid"]:
+                    malformed += 1
+            # Both ways a sample can abstain, recorded per call. Abstentions shrink the
+            # panel, and a panel too small to hold a majority is what a tie is made of --
+            # 102 of 264 tallied rejections in one night, at a rate that ran from 0% of a
+            # wave to 95% of one with the same batch size throughout. Nothing on record
+            # could say why, because nothing counted this.
+            if ledger is not None:
+                ledger.append({"purpose": purpose, "presented": len(seats),
+                               "omitted": omitted, "malformed": malformed})
             # A sample over a full catalog takes minutes, and a caller that prints only a
             # final tally is silent for as long as every sample takes together -- long
             # enough that a run killed near the end reports nothing at all.
-            print(f"  {purpose}: {len(seats)} reviewed", file=sys.stderr)
+            abstained = "".join([f", {omitted} omitted" if omitted else "",
+                                 f", {malformed} malformed" if malformed else ""])
+            print(f"  {purpose}: {len(seats)} reviewed{abstained}", file=sys.stderr)
     return votes
 
 
@@ -820,6 +835,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
     # model whose cost is an hour of latency. They are reviewed first and, if the wave ends
     # with any left, archived rather than discarded.
     pool, round_names, tied = [], set(), set()
+    panels = []
     if resume:
         # Everything the interrupted attempt paid for: the proposals it accepted, the
         # ballots that rejected the others, and the candidates it generated but never had
@@ -884,6 +900,10 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                 "reasoning_effort": getattr(critic, "reasoning_effort", None),
                 "shared_with_generator": critic is client,
                 "calls": [] if critic is client else list(critic.calls),
+                # Per call: how many candidates the sample left out, and how many it
+                # answered without three usable neighbours. Both are abstentions, and an
+                # abstention is what shrinks a panel below a majority.
+                "panels": list(panels),
             },
             "proposals": accepted,
             "rejected": rejected,
@@ -943,7 +963,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
         pool = [proposal for proposal in pool if id(proposal) not in chosen]
         votes = _critic_votes(critic, reviewable, catalog,
                               samples=critic_samples, round_index=round_index,
-                              wave_name=name)
+                              wave_name=name, ledger=panels)
         for proposal, ballots in zip(reviewable, votes):
             # A ballot that names no three real neighbours is a critic that did not do the
             # job, not a critic that found a duplicate, and it abstains for exactly the

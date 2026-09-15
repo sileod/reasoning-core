@@ -1555,3 +1555,22 @@ def test_a_retry_is_a_different_sample_and_not_the_same_one_again(monkeypatch):
 
     assert client.json("probe", "s", "u") == {"ok": True}
     assert seeds == [7, 8], f"the retry re-sent the same seed: {seeds}"
+
+
+def test_a_wave_records_how_much_of_the_panel_actually_voted():
+    """Short panels ran from 0% of a wave's rejections to 95% of another's with the same
+    batch size throughout, and nothing on record could say why -- the archive kept a hash
+    of each critic response and no count of what it left out. A tie is made of abstentions,
+    so the abstentions are the thing to count."""
+    client = _split_panel_client("evenly_split")
+
+    wave = propose_wave(ROOT, name="counted", count=1, rounds=1, client=client,
+                        critic_samples=3)
+
+    panels = wave["review"]["panels"]
+    assert [row["purpose"] for row in panels] == [
+        f"critic-round-1-sample-{sample}" for sample in (1, 2, 3)]
+    assert all(row["presented"] == 1 for row in panels)
+    assert [row["omitted"] for row in panels] == [0, 0, 1], (
+        "the third sample returned no ballot for the candidate at all")
+    assert sum(row["malformed"] for row in panels) == 0
