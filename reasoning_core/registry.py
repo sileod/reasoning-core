@@ -177,10 +177,23 @@ class _PrettyLazy:
     @property
     def _resolved(self):
         if self._obj is None:
-            self._obj = _lazy_loader(self.name, self.module_name, self.class_name)
+            try:
+                self._obj = _lazy_loader(self.name, self.module_name, self.class_name)
+            except AttributeError as error:
+                # An AttributeError escaping the import would reach __getattr__ as a MISSING
+                # `_resolved`, which resolves `_resolved` again: infinite recursion, reported as
+                # "RecursionError in __subclasscheck__" with no mention of the task or the real
+                # cause. Observed when a task module hit `networkx.utils.configs` on a networkx too
+                # old to have it -- the import error was recoverable, the recursion was not.
+                raise ImportError(f"task {self.name!r} failed to import from "
+                                  f"{self.module_name!r}: {error}") from error
         return self._obj
 
     def __getattr__(self, attr):
+        if attr.startswith("_"):
+            # Never proxy our own internals: doing so turns any missing attribute during
+            # construction or unpickling into the same unbounded recursion.
+            raise AttributeError(attr)
         return getattr(self._resolved, attr)
 
     def __call__(self, *args, **kwargs):
