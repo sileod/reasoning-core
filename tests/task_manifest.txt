@@ -1,6 +1,7 @@
 abstract_interval_analysis
 access_control_evaluation
 access_control_policy_evaluation
+additive_tree_reconstruction
 adjusted_winner_redivide
 agglomerative_linkage_merge
 agreement_completion
@@ -54,6 +55,7 @@ code_analysis
 code_execution
 code_runnability
 coin_selection
+color_refinement_signature
 combinatorics_formula
 concurrent_edit_rebase
 conditional_expectation
@@ -114,14 +116,18 @@ ear_clipping_triangulation
 elimination_depth_chain
 elimination_fill_in
 ellipsis_completion
+envy_cycle_fair_allocation
 equation_balancing
 equation_system
+ershov_register_numbering
 euler_tour_intervals
 eulerian_status
 event_order_reconstruction
 event_queue_simulation
+exact_cover_selection
 exact_rounding_pipeline
 expected_utility_choice
+face_tracing
 fd_attribute_closure
 fenwick_prefix_nodes
 filesystem_path_resolution
@@ -182,6 +188,7 @@ left_coset_identification
 lexical_scope_resolution
 lexicographic_ranking
 light_occlusion_delta
+lights_out_press_set
 lindenmayer_parallel_rewrite
 linear_recurrence
 linearizability_check
@@ -191,6 +198,7 @@ logic_qa
 longest_prefix_route
 lossless_binary_decomposition
 lossless_summary
+lyndon_factorization_duval
 lz77_tokenization
 markov_chain_distribution
 math_word_problem
@@ -200,6 +208,7 @@ mealy_composition_run
 memory_allocator_trace
 metamath_core_select
 metamath_entailment
+minesweeper_definite_cells
 minimal_edit
 minimal_unsat_core
 minimum_spanning_tree
@@ -284,6 +293,7 @@ repeating_decimal_expansion
 request_revision
 resistor_networks
 rewrite_system
+robdd_reduction_trace
 round_robin_completion
 round_robin_scheduling
 routing_longest_prefix

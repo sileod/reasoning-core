@@ -1,0 +1,1033 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_formal-semantics
+created_at: '2026-09-15T11:08:18.838279+00:00'
+provenance:
+  kind: proposer
+  name: k3_formal-semantics
+  received: '2026-09-15'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks targeting formal semantics and compositional interpretation of language. The
+    catalog you were shown already covers the classic textbook algorithms -- sorting, gcd, graph traversal,
+    compression, scheduling, matching, parsing -- and a proposal that names one will be rejected as a
+    repeat however well it fits this brief. Reach past the standard repertoire: propose structures the
+    catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 8
+  complete: false
+catalog:
+  sha256: c2dfbd09b863912a633e8ce14d5024b5c38974dde8d90239d897ca6119dd300f
+  entries: 586
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 93
+    task: 331
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  requested_model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: moonshotai/kimi-k3
+    provider: integrate.nvidia
+    request_sha256: dd4721fe25fea898d9bf99f78b12a108b62d152ca48889a36bd9841f251612b9
+    response_sha256: e6b33c28268c530d6fb7b95a0fc7b5703005d6fdd24026b4977e21c50dc2bf21
+    response_id: chatcmpl-7515caab-9e99-43cb-b1c3-da3224ec4b60
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 55466c0cd7a60d4e10869d926f571c5abbc3ae3b0f157395ad6bf66684c3bfe8
+    response_sha256: f53b7e44c3c78a3d5d1231d87799f1bb4528b08649c7555b74020fea9cca8cde
+    response_id: chatcmpl-b7bd04a964db3388
+  - purpose: critic-round-1-sample-1-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 68c6bc445f10300f5384e574b5dacfcaa689e7df9b70d1a5278b9cf68d99ec8c
+    response_sha256: 3f4fc74809dc77e878594d69b8964cbf4289ff3cce225f64eafa16b2c7ccaa58
+    response_id: chatcmpl-af9764aed5f214f2
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c09c01d0fdc5cceefea5b4db300d2d53b0a2020861fc8b04e8d4eeb32aae104d
+    response_sha256: df1bdcd94e079d2cd27eb399206999713816c7ec096a91be3d097587fe9d9633
+    response_id: chatcmpl-abc0a5764375c0a0
+  - purpose: critic-round-1-sample-2-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 111ce468da1b9607afc7a5561cca759b448f6af41301c6a7fe29fc6c7ba0d7ff
+    response_sha256: 3798f2957767cba92070e006b754f93a7c39f91f634f79b275005001157f22aa
+    response_id: chatcmpl-bb885b30e4a07f0a
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 5dc0670453ad55edb86c20098a043e168221f779aed87abd2af647dc5184af70
+    response_sha256: 4a66cba0a0f2a115b2b906b4b6d6356869bb0bb7731e45398a877dedc6530180
+    response_id: chatcmpl-8c9a68b3c9f73dce
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 01fda03f6deafb4877472a69c6ea165db3035b21ee2e5fa04f9928890f701dae
+    response_sha256: 2ac39839285f6a015a378cfa491dfba3ec26a0d775db9db593c4c143392a42f6
+    response_id: chatcmpl-bb3322866f1e573d
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 93069609483b2adf087599eda2f0d56f77836891f83c80d3e68b6ebfe449a2a9
+    response_sha256: 792e75a2a961980c72e6bd08a4b9b697cf6013417facbe6728a54e1c81701c56
+    response_id: chatcmpl-9606da54af60822c
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: cbf5888b542fd48792f9b0d2656fa7750002e42dc9282958b92b67db80ee7597
+    response_sha256: a626755a19cf08a642078e162e0cda35732885d7678d41f0257705c850de37b4
+    response_id: chatcmpl-b0c807c90f250ad9
+  - purpose: critic-round-2-sample-3-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 132d43aa27c6dcee0a1cb37622ab2e1cffc7d6015df40eff16661effc19da283
+    response_sha256: bddcc35c8c2cd5ed96622294ea8e3154fe411d36c6e3018aec2998e4656eaf08
+    response_id: chatcmpl-be203602021ffca6
+  - purpose: critic-round-2-sample-3-retry2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: b0d7bee8175b0cb3a49d31db3d4b6875b29a07ae0b97605fea5a903b45ebb4b7
+    response_sha256: e94e743c75b9ea0a52787322f3e788236900aaf6860647ae988d49e1fa264eab
+    response_id: chatcmpl-ae5aecf310910b8f
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 112a4d6cc8581216e4aacb88eb9cac11045e237abf03e0052aa56d37569ce0dd
+    response_sha256: a6b99f7cb9f75d29af0b943768261fbd019ca02f760bb856bc43739ef84789d4
+    response_id: chatcmpl-b245e2d0e4701dda
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: f1f245144a1e08507f6c0a68b4ceef4899ac1904e39d29a4e5006733f44adeba
+    response_sha256: 79439357fcbe36f2286d80b303c6b2e49805af9469de9297930826c56bebde91
+    response_id: chatcmpl-854f47b513726622
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: eb43ee87192ebbd6b5975bbe87b7b19cab2e914e6a25b22c4820e72ac4cacf89
+    response_sha256: 7936d458f54e1227d85fdb885bef6b857e3d842885defef5e8582d35cddaf5d8
+    response_id: chatcmpl-82628a0300ae3450
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 3
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 5
+  - purpose: critic-round-3-sample-1
+    presented: 11
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 11
+    omitted: 0
+    malformed: 5
+  - purpose: critic-round-3-sample-3
+    presented: 11
+    omitted: 0
+    malformed: 1
+proposals:
+- name: event_driven_gate_simulation
+  summary: 'Event-simulate a gate netlist with input waveforms and per-gate transport or inertial delays:
+    process the time-ordered queue, cancel stale pulses; vary fanout and reconvergent paths; answer the
+    timed output waveform and glitch list.'
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+      relationship: adjacent
+      overlap: Both process a time-ordered event queue, but one is general discrete-event simulation and
+        the other is specifically gate-level logic with transport/inertial delays and pulse cancellation.
+    - id: task:generated.k3_counterfactual_r1.boolean_network_knockout.boolean_network_knockout:BooleanNetworkKnockout
+      relationship: adjacent
+      overlap: Both simulate digital circuits/networks, but one uses synchronous updates and the other
+        uses event-driven timing with delays.
+    - id: task:generated.wave9.round_robin_scheduling.round_robin_scheduling:RoundRobinScheduling
+      relationship: different
+      overlap: One is gate-level timing simulation, the other is CPU scheduling; no shared operation.
+    substantive_difference: Event-driven simulation with transport/inertial delays and glitch cancellation
+      is a distinct operation not covered by general event queues or synchronous Boolean networks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Genuinely new simulation mode with specific timing semantics and glitch detection.
+    votes: 2/3
+    dissent:
+    - variant
+- name: lsm_level_compaction_trace
+  summary: 'Feed puts and deletes into an LSM store: memtable flushes create sorted runs; size-tiered
+    or leveled compactions merge runs, dropping shadowed versions and tombstones; answer final per-level
+    run contents and lookup results.'
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_dynamic-structures:P006
+      relationship: adjacent
+      overlap: 'Both maintain data structures under incremental updates (LSM runs vs. lazy segment tree)
+        but operations differ: segment tree does range updates, LSM merges sorted runs and drops shadowed
+        versions.'
+    - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+      relationship: adjacent
+      overlap: Both track how data flows and versions may be dropped, but data lineage traces through
+        pipelines while LSM manages storage hierarchies.
+    - id: task:generated.wave9.memory_allocator_trace.memory_allocator_trace:MemoryAllocatorTrace
+      relationship: adjacent
+      overlap: Both simulate storage management with compaction/coalescing, but allocator handles memory
+        blocks, not keyed sorted runs.
+    substantive_difference: LSM compaction with memtable flushes, size-tiered merging, and tombstone dropping
+      is a distinct storage structure not present in neighbors.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Novel storage hierarchy compaction logic not covered by existing tasks.
+    votes: 2/3
+    dissent:
+    - variant
+- name: natural_deduction_line_audit
+  summary: Verify natural-deduction proofs line by line against introduction and elimination rules, tracking
+    assumption scope and discharge; answers are the first unjustified line, a missing rule citation, or
+    a final validity verdict.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:logic_derivation
+      relationship: adjacent
+      overlap: Logic derivation produces a proof trace, but natural deduction audit checks rule applications
+        line-by-line with scope tracking.
+    - id: proposal:k3_novel-composition:P003
+      relationship: adjacent
+      overlap: Loop invariant verification checks a candidate invariant, but not natural deduction steps.
+    - id: task:logic_semantics:LogicNLI
+      relationship: different
+      overlap: LogicNLI does automated theorem proving, not line-by-line proof audit.
+    substantive_difference: Natural deduction line audit verifies each step against inference rules with
+      assumption scope and discharge, a distinct proof-checking operation.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: line-by-line natural deduction proof audit is distinct from proof generation or invariant
+      verification.'
+    votes: 3/3
+    dissent: []
+- name: generalized_quantifier_truth
+  summary: Evaluate sentences whose determiners relate sets (most, more than half, exactly n, all but
+    one, few) against small models, covering stacked, negated, and compared determiners; answers are truth
+    values or which listed sentences hold.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+      relationship: adjacent
+      overlap: Both evaluate quantifiers over finite models, but finite_model uses standard EXISTS/ALL,
+        while this uses generalized determiners (most, all but one) with set relations.
+    - id: gallery:set_expression
+      relationship: adjacent
+      overlap: Both relate sets, but set_expression evaluates union/intersection, not quantifier truth.
+    - id: proposal:k3_dynamic-structures:P005
+      relationship: different
+      overlap: Line crossing scheduling is geometric, not quantifier-based.
+    substantive_difference: Generalized quantifier semantics (most, more than half, exactly n) require
+      cardinality comparisons between sets, a distinct cognitive operation from first-order quantifier
+      evaluation.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: generalized quantifier truth with set cardinalities, distinct from first-order quantifiers.'
+    votes: 3/3
+    dissent: []
+- name: presupposition_projection
+  summary: Project presuppositions from factive and definite triggers through embeddings (negation, conditionals,
+    modals, disjunction, attitudes) via filtering and local satisfaction; answers are the surviving set
+    or a verdict on one trigger.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave10.presupposition_repair.presupposition_repair:PresuppositionRepair
+      relationship: adjacent
+      overlap: Both deal with presupposition, but repair corrects a false premise with arithmetic, whereas
+        projection computes surviving presuppositions under embeddings.
+    - id: task:generated.wave10.semantic_paraphrase.semantic_paraphrase:SemanticParaphrase
+      relationship: adjacent
+      overlap: Both operate on natural language with controlled polarity/negation, but paraphrase preserves
+        meaning while projection filters presuppositions.
+    - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+      relationship: different
+      overlap: Truth maintenance tracks justifications for facts, not presupposition filtering under logical
+        embedding.
+    substantive_difference: Presupposition projection involves a precise semantic filtering algorithm
+      (Heim-style) that is distinct from repair, paraphrase, or truth maintenance.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel procedure: compute surviving presuppositions under embeddings, distinct from repair/paraphrase.'
+    votes: 2/2
+    dissent: []
+- name: dynamic_discourse_evaluation
+  summary: 'Evaluate discourses with dynamic threading: indefinites extend assignment sets while negation,
+    implication, and disjunction are tests blocking export; answers are assignment sets, anaphor-accessibility
+    verdicts, or satisfiability.'
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave11.scope_explication.scope_explication:ScopeExplication
+      relationship: adjacent
+      overlap: Both handle quantifier scope, but scope explication rewrites readings; dynamic discourse
+        threads assignments through negation/implication.
+    - id: proposal:k3_semantics-preserving-translation:P003
+      relationship: different
+      overlap: De Bruijn translation changes variable syntax, not assignment threading.
+    - id: proposal:k3_novel-composition:P001
+      relationship: different
+      overlap: Session types are about process communication, not natural language discourse.
+    substantive_difference: Dynamic discourse evaluation updates assignment sets with tests for negation/implication,
+      a distinct incremental semantics.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: dynamic threading of assignments with test semantics, different from scope rewriting.'
+    votes: 2/2
+    dissent: []
+- name: ccg_category_combination
+  summary: Combine CCG slash categories along a token sequence via application, composition, and type-raising
+    from a small lexicon; answers are the derived category, the rule licensing a queried span, or whether
+    a target category is derivable.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.strongly_connected_components.strongly_connected_components:StronglyConnectedComponents
+      relationship: different
+      overlap: SCC computes graph partitions; CCG combines syntactic categories.
+    - id: task:generated.k3_invariants_r1.cyk_chart_membership.cyk_chart_membership:CykChartMembership
+      relationship: adjacent
+      overlap: Both parse with a grammar, but CYK uses CFG chart filling, CCG uses slash-category combination.
+    - id: gallery:parsing_derivation
+      relationship: adjacent
+      overlap: Both derive parse structures, but CCG uses a different rule system (application/composition/type-raising).
+    substantive_difference: CCG category combination is a distinct grammar formalism with slash categories
+      and type-raising, not present in catalog.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: CCG combination rules are distinct from CFG parsing and graph algorithms.'
+    votes: 3/3
+    dissent: []
+- name: tag_adjunction_derivation
+  summary: Grow tree-adjoining-grammar derivations by substituting initial trees at frontier nodes and
+    adjoining auxiliary trees at category-matching nodes; answers are the derived yield, the next legal
+    operation, or a validity verdict.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:parsing_derivation
+      relationship: adjacent
+      overlap: Both produce derivation structures, but parsing_derivation uses CFG productions, while
+        TAG uses substitution and adjunction of trees.
+    - id: task:generated.wave9.ll1_predictive_parsing.ll1_predictive_parsing:LL1PredictiveParsing
+      relationship: adjacent
+      overlap: Both are grammar-driven parsing, but LL(1) uses a parse table, TAG uses tree rewriting.
+    - id: proposal:k3_hierarchical-recursive:P006
+      relationship: different
+      overlap: Decision tree induction is about splitting data, not derivations.
+    substantive_difference: Tree-adjoining grammar derivation with substitution and adjunction is a distinct
+      parsing formalism not in the catalog.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: TAG derivation with adjunction is a genuinely new parsing operation.'
+    votes: 1/1
+    dissent: []
+rejected:
+- name: rotation_rebalance_bst_trace
+  summary: Insert and access key sequences under AVL height repair, splay zig/zig-zag promotion, or scapegoat
+    subtree rebuild rules; choose the triggered single or double rotation at each violation and answer
+    the final tree shape or rotation count.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_dynamic-structures:P008
+    relationship: adjacent
+    overlap: Both involve tree structures, but one rebalances via rotations, the other counts pattern
+      embeddings.
+  - id: task:generated.k3_counterfactual_r1.wavelet_tree_queries.wavelet_tree_queries:WaveletTreeQueries
+    relationship: adjacent
+    overlap: Both maintain tree data structures, but wavelet tree is static and answers rank/select, not
+      dynamic rebalancing.
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: adjacent
+    overlap: Both involve insertion with eviction/promotion (BST rebalancing vs. cache eviction) but different
+      mechanisms.
+  reason: 0/3 samples judged it novel; Although tree maintenance, specific rotation logic is distinct
+    from existing tasks.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: freelist_allocator_split_coalesce
+  summary: 'Run a malloc/free stream against an explicit free-list arena: first-fit or best-fit search,
+    block splitting with minimum remainder, coalescing adjacent free blocks; answer each allocation address
+    plus the final free-list layout.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.memory_allocator_trace.memory_allocator_trace:MemoryAllocatorTrace
+    relationship: same_operation
+    overlap: Both simulate first-fit or best-fit allocation, free, splitting, and coalescing, returning
+      allocation addresses or final block layout. Identical procedure.
+  - id: task:generated.wave8.buddy_allocator.buddy_allocator:BuddyAllocator
+    relationship: variant
+    overlap: Both are memory allocators with splitting and coalescing, but buddy uses power-of-two sizes
+      and buddy merging while this uses free-list with arbitrary sizes.
+  - id: proposal:k3_representation-specific:P003
+    relationship: adjacent
+    overlap: Both manage resources (memory vs. joins) with allocation heuristics, but different domains.
+  reason: 0/3 samples judged it novel; Direct duplicate of memory_allocator_trace.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 1
+  votes: 0/3
+- name: history_stack_undo_redo_trace
+  summary: Replay sessions of do, undo, and redo over command logs or visited-page stacks where any new
+    action truncates the redo branch; answer the currently active state description and which entries
+    remain live, undone, or redoable.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+    relationship: same_operation
+    overlap: Both track stack states (call stack vs. undo/redo stack) with push/pop operations and return
+      current active element. Undo/redo adds redo branch truncation but core stack traversal is identical.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: adjacent
+    overlap: Both process state-changing sequences, but one is an FSM with guards, the other an undo/redo
+      history.
+  - id: task:generated.k3_systematic_generalization_r1.concurrent_edit_rebase.concurrent_edit_rebase:ConcurrentEditRebase
+    relationship: adjacent
+    overlap: Both handle edit sequences and version states, but rebase transforms positions vs. undo/redo
+      history.
+  reason: 1/3 samples judged it novel; Generic stack simulation already covered by call_stack_trace.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 2
+  votes: 1/3
+- name: cellular_automaton_row_evolution
+  summary: Advance elementary Wolfram rules and Life-like birth/survival neighborhoods from stated seeds
+    over fixed or wrapped borders for given step counts; answer a requested later row, the live-cell total,
+    or whether a target cell is alive.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_verification_repair_r1.cellular_automaton_step.cellular_automaton_step:CellularAutomatonStep
+    relationship: same_operation
+    overlap: Both advance a one-dimensional cellular automaton under a stated rule and boundary for a
+      number of steps, returning a later row or live-cell count. This adds Life-like 2D rules but same
+      synchronous update logic.
+  - id: proposal:k3_dependence-relevance:P002
+    relationship: adjacent
+    overlap: Both apply local neighborhood transformations on grids (cellular automata vs. morphology),
+      but different rules (birth/survival vs. structuring elements).
+  - id: task:generated.wave0.n04_finite_automaton_execution.n04_finite_automaton_execution:FiniteAutomatonExecution
+    relationship: adjacent
+    overlap: Both process states over steps, but one is a 1D CA, the other an NFA.
+  reason: 0/3 samples judged it novel; Same cellular automaton simulation with different rule families.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: chip_firing_stabilization_trace
+  summary: Topple overloaded vertices in graph chip configurations under degree-threshold rules, with
+    or without an absorbing sink and fired serially or in parallel rounds; answer the firing-count vector
+    and the final stable configuration.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.chip_firing_stabilization.chip_firing_stabilization:ChipFiringStabilization
+    relationship: same_operation
+    overlap: 'Both simulate chip-firing on graphs: firing a vertex sends one chip to each neighbor, continuing
+      until stable; both can return firing counts or stable configuration, differing only in details like
+      serial/parallel firing and sink presence.'
+  - id: task:generated.wave8.wait_for_deadlock.wait_for_deadlock:WaitForDeadlock
+    relationship: adjacent
+    overlap: 'Both involve graph-based iterative processes (chip-firing vs. deadlock cycles) but different
+      operations: chip-firing redistributes chips, wait-for detects cycles.'
+  - id: task:generated.k3_invariants_r1.havel_hakimi_realization.havel_hakimi_realization:HavelHakimiRealization
+    relationship: adjacent
+    overlap: Both are iterative graph reduction/algorithms with exact outcome; Havel-Hakimi reduces degree
+      sequences, chip-firing topples vertices.
+  reason: 0/3 samples judged it novel; Exact same chip-firing stabilization algorithm with only superficial
+    parameter changes.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: region_quadtree_split_trace
+  summary: 'Insert integer-grid points into a capacity-limited region quadtree: full quadrants split and
+    redistribute occupants under fixed boundary rules; vary clustering and capacity; answer the final
+    leaf regions with their points.'
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_hierarchical-recursive:P005
+    relationship: same_operation
+    overlap: Both construct quadtrees by recursive splitting and merging quadrants, outputting the nested
+      structure; one is region-based merging and the other is point-insertion with capacity splitting.
+  - id: proposal:k3_hierarchical-recursive:P003
+    relationship: different
+    overlap: One builds a spatial quadtree, the other expands recursion trees; no shared operation.
+  - id: task:generated.wave9.memory_allocator_trace.memory_allocator_trace:MemoryAllocatorTrace
+    relationship: adjacent
+    overlap: Both involve splitting and merging regions/blocks, but one is spatial partitioning and the
+      other is memory allocation.
+  reason: 0/2 samples judged it novel; Same quadtree construction operation, changing from region merging
+    to point insertion.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: open_addressing_probe_trace
+  summary: Place key streams into hash tables by linear, quadratic, or double-hashing probe walks, with
+    tombstoned deletions and rehash-on-load rebuilds; answer each key's final slot, its probe length,
+    or the slot map after a chosen rehash.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+    relationship: same_operation
+    overlap: Both place keys into an open-addressing hash table using a probe sequence (linear, quadratic,
+      or double hashing) and output final slot or probe length. The only additions are tombstone deletions
+      and rehash rebuilds.
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: adjacent
+    overlap: Both simulate placement/eviction with tie rules, but open addressing is a probe-based hash
+      table while caches evict by recency/frequency.
+  - id: task:generated.wave9.union_find_trace.union_find_trace:UnionFindTrace
+    relationship: adjacent
+    overlap: Both maintain data structures under incremental operations, but open addressing inserts/finds
+      with probes and tombstones.
+  reason: 0/3 samples judged it novel; Same probe-based insertion algorithm with extra deletion/rebuild
+    modes.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: obdd_reduction_fixpoint_trace
+  summary: Reduce binary decision trees under a fixed variable order by repeatedly merging isomorphic
+    subgraphs and deleting redundant test nodes until no rule applies; answer per-level node counts and
+    the size of the canonical reduced diagram.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_shortcuts-fail:P009
+    relationship: same_operation
+    overlap: Both construct the reduced ordered BDD of a boolean function under a fixed variable order,
+      merging isomorphic nodes and deleting redundant tests, returning canonical size or ITE structure.
+      The only differences are the input representation (tree vs. function) and output specifics (per-level
+      counts).
+  - id: task:generated.k3_invariants_r1.gf2_matrix_rank.gf2_matrix_rank:GF2MatrixRank
+    relationship: adjacent
+    overlap: Both reduce a structure to a canonical normal form (BDD vs. RREF) but different procedures.
+  - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+    relationship: adjacent
+    overlap: Both produce a canonical reduced structure (transitive reduction vs. reduced BDD) using removal
+      rules.
+  reason: 0/3 samples judged it novel; Identical to existing robdd_reduction_trace proposal apart from
+    output detail.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 2
+  votes: 0/3
+- name: style_cascade_resolution
+  summary: Compute effective styles on nested element trees by matching tag, class, and id selectors,
+    comparing specificity then source order, and inheriting unset properties; answer is one element's
+    value for a queried property.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.lexical_scope_resolution.lexical_scope_resolution:LexicalScopeResolution
+    relationship: same_operation
+    overlap: Both resolve a property (declaration vs. style) by traversing nested scopes (lexical blocks
+      vs. DOM tree) and applying precedence rules (shadowing vs. specificity/source order).
+  - id: task:generated.wave9.closure_capture_resolution.closure_capture_resolution:ClosureCaptureResolution
+    relationship: variant
+    overlap: Both resolve a value by following lexical/environment chains; style cascade adds selector
+      specificity, but underlying scope-lookup operation is shared.
+  - id: task:generated.wave12.three_way_merge_resolution.three_way_merge_resolution:ThreeWayMergeResolution
+    relationship: adjacent
+    overlap: Both resolve conflicting contributions by applying precedence rules (specificity vs. merge
+      conflict detection), but on different inputs (style trees vs. sequences).
+  - id: proposal:k3_hierarchical-recursive:P006
+    relationship: adjacent
+    overlap: Both recursively process trees (CSS nesting vs. decision tree), but core operation is different.
+  reason: 0/3 samples judged it novel; Same scope-resolution operation as lexical_scope_resolution, with
+    CSS surface details (specificity, inheritance) as parameter changes.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: tree_reroot_aggregates
+  summary: Compute for every node of a weighted tree the sum of distances to all other nodes, via an upward
+    subtree pass then a downward reroot pass; vary branching and edge weights; answer is the per-node
+    totals.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_verification_repair_r1.tree_reroot_distances.tree_reroot_distances:TreeRerootDistances
+    relationship: same_operation
+    overlap: Both compute distance sums to all other nodes via upward subtree pass then downward reroot,
+      with exact shift updates; only difference is candidate outputs per-node totals while existing returns
+      one queried node.
+  - id: proposal:k3_relational-structures:P004
+    relationship: variant
+    overlap: Both perform bottom-up DP on trees, but tree_subset_counting counts combinatorial subsets,
+      not distance sums.
+  - id: task:generated.wave0.n10_tree_reconstruction.tree_reconstruction:TreeReconstruction
+    relationship: different
+    overlap: Tree reconstruction recovers a tree structure from traversals; reroot aggregates compute
+      sums.
+  - id: proposal:k3_hierarchical-recursive:P003
+    relationship: adjacent
+    overlap: Both sum quantities over a tree, but recursion-tree analysis sums work in a call tree, not
+      distance sums.
+  reason: 0/2 samples judged it novel; Same reroot distance-sum operation as tree_reroot_distances; full
+    output is a superficial change.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: skip_list_search_trace
+  summary: Search a skip list with given node tower heights, moving right while the next key stays under
+    target then dropping a level; queries mix present and absent keys; answer is the ordered sequence
+    of keys inspected.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave8.skip_list_search_path.skip_list_search_path:SkipListSearchPath
+    relationship: same_operation
+    overlap: Given skip-list keys with tower heights and a target, both output visited keys in search
+      order; candidate adds absent keys but that is already within the existing task's input range.
+  - id: task:generated.k3_counterfactual_r1.consistent_hash_ring_churn.consistent_hash_ring_churn:ConsistentHashRingChurn
+    relationship: adjacent
+    overlap: Both search in a leveled structure (skip list vs. ring), but operations differ.
+  - id: task:generated.wave8.open_addressing_slot.open_addressing_slot:OpenAddressingSlot
+    relationship: different
+    overlap: Open addressing probes in a hash table; skip list is a linked structure.
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: different
+    overlap: Lineage tracing is a relational query, not a skip-list search.
+  reason: 0/2 samples judged it novel; Same skip-list search path operation as existing skip_list_search_path.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/2
+- name: spreadsheet_cell_evaluation
+  summary: Evaluate grid cells holding constants or formulas with references, rectangular ranges inside
+    aggregates, and dependency chains, detecting cycles and propagating errors; answer is the queried
+    cell values in order.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave9.spreadsheet_formula_dependency.spreadsheet_formula_dependency:SpreadsheetFormulaDependency
+    relationship: same_operation
+    overlap: Both evaluate spreadsheet formulas with references, ranges, and dependency chains, returning
+      queried cell values.
+  - id: task:generated.wave4.spreadsheet_evaluation.spreadsheet_evaluation:SpreadsheetEvaluation
+    relationship: same_operation
+    overlap: Both evaluate spreadsheet cell formulas with references and detect cycles, producing cell
+      values.
+  - id: plan:WAVE4:S44
+    relationship: same_operation
+    overlap: Stated as adding spreadsheet formula evaluation with references and dependency cycles, identical
+      to candidate.
+  - id: task:generated.k3_invariants_r1.stratified_datalog_evaluation.stratified_datalog_evaluation:StratifiedDatalogEvaluation
+    relationship: adjacent
+    overlap: Both evaluate directed dependency graphs with cycle handling, but one is formulas and the
+      other is Datalog.
+  reason: 0/2 samples judged it novel; Exact same operation as spreadsheet_formula_dependency and spreadsheet_evaluation.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: piece_table_edit_trace
+  summary: Apply insert/delete streams to a piece table over original and append buffers, forcing mid-piece
+    splits and cross-piece deletions; answer is the final ordered piece list as (buffer, offset, length)
+    triples.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.concurrent_edit_rebase.concurrent_edit_rebase:ConcurrentEditRebase
+    relationship: same_operation
+    overlap: Both apply insertion and deletion operations to a sequence, tracking positions and handling
+      splits/merges, producing an updated sequence or final state.
+  - id: task:generated.wave9.alias_mutation.alias_mutation_tracking:AliasMutation
+    relationship: variant
+    overlap: Both manipulate mutable data structures (lists/arrays), applying updates and reading final
+      values, differing in representation (piece table vs. list).
+  - id: proposal:k3_formal-semantics:P002
+    relationship: adjacent
+    overlap: Both apply operations (insert/delete vs. puts/deletes) to a data structure with merging and
+      final state extraction; core data structure differs.
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: different
+    overlap: Data lineage tracks record flow through relational operators; piece table edits are direct
+      sequence manipulations.
+  reason: "1/3 samples judged it novel; The core operation\u2014applying insert/delete streams and tracking\
+    \ positions\u2014is already captured by concurrent_edit_rebase; piece table is a representation detail."
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: linear_scan_register_allocation
+  summary: 'Build live intervals from a def/use listing, then run linear-scan allocation under a fixed
+    register count: expire finished intervals, evict the farthest-ending one under pressure; answer each
+    variable''s register-or-spill outcome.'
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.wave12.linearizability_check.linearizability_check:LinearizabilityCheck
+    relationship: adjacent
+    overlap: Both deal with intervals and resource allocation, but linearizability checks concurrency,
+      linear-scan assigns registers.
+  - id: task:generated.wave9.memory_allocator_trace.memory_allocator_trace:MemoryAllocatorTrace
+    relationship: adjacent
+    overlap: Both allocate resources (memory blocks vs. registers) with eviction/coalescing, but linear-scan
+      uses live intervals and farthest-end eviction.
+  - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+    relationship: different
+    overlap: Interval arithmetic computes ranges, not allocation.
+  - id: proposal:k3_global-over-greedy:P001
+    relationship: different
+    overlap: Sparse table RMQ is for range queries, not allocation.
+  reason: 0/3 samples judged it novel; No existing task performs linear-scan register allocation with
+    live-interval expiration and farthest-end eviction; only superficially similar to interval-based tasks.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: weisfeiler_lehman_color_refinement
+  summary: 'Refine vertex colors on a labeled graph round by round: recolor from the sorted multiset of
+    neighbor colors until the partition stabilizes; vary symmetry and regular structure; answer per-round
+    color histograms and the stable partition.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_shortcuts-fail:P007
+    relationship: same_operation
+    overlap: Both refine vertex colors by multiset of neighbor colors until stabilization, outputting
+      the stable partition (candidate adds per-round histograms, a minor output addition).
+  - id: task:generated.k3_invariants_r1.ordered_greedy_coloring.ordered_greedy_coloring:OrderedGreedyColoring
+    relationship: different
+    overlap: Greedy coloring assigns colors; WL refinement iteratively recolors, a different algorithm.
+  - id: gallery:equation_system
+    relationship: different
+    overlap: Equation solving unrelated to graph coloring.
+  - id: task:generated.k3_invariants_r1.gnfa_state_elimination.gnfa_state_elimination:GnfaStateElimination
+    relationship: different
+    overlap: State elimination composes labels; WL refines colors.
+  reason: 0/2 samples judged it novel; Same operation as color_refinement_signature; additional histogram
+    output is cosmetic.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: ring_membership_key_migration
+  summary: Place nodes and keys at given ring positions; joins and leaves move each affected key range
+    to its successor, with varied replica and vnode counts; answer the migrated keys per churn event and
+    the final ownership map.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_counterfactual_r1.consistent_hash_ring_churn.consistent_hash_ring_churn:ConsistentHashRingChurn
+    relationship: same_operation
+    overlap: Both place nodes and keys on a ring, process joins/leaves, and output which ranges move and
+      final ownership; candidate adds replica/vnode counts but that is a parameter extension.
+  - id: task:generated.wave9.alias_mutation.alias_mutation_tracking:AliasMutation
+    relationship: different
+    overlap: Alias mutation tracks pointer aliases, not ring ownership.
+  - id: task:generated.wave12.schema_migration_execution.schema_migration_execution:SchemaMigrationExecution
+    relationship: different
+    overlap: Schema migration transforms JSON records, not ring keys.
+  - id: task:generated.wave8.heap_key_update.heap_key_update:HeapKeyUpdate
+    relationship: different
+    overlap: Heap update moves elements, not ring churn.
+  reason: 0/3 samples judged it novel; Same consistent-hash ring churn operation as existing task, with
+    extra parameters on top.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: vector_clock_event_ordering
+  summary: Assign timestamps across multi-process event logs with local steps, sends, and element-wise
+    receive merges over forked timelines; answer named events' clock vectors and classify queried event
+    pairs as causally ordered or concurrent.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.version_vector_causality.version_vector_causality:VersionVectorCausality
+    relationship: same_operation
+    overlap: Both simulate multi-process events with local steps and sends/receives using element-wise
+      merge of vector clocks, computing final vector-clock values and causal order.
+  - id: task:generated.wave8.lamport_clock.lamport_clock:LamportClock
+    relationship: variant
+    overlap: Both compute causal timestamps using happens-before; vector clocks are a richer variant of
+      Lamport clocks with element-wise comparison.
+  - id: task:generated.wave8.vector_clock_order.vector_clock_order:VectorClockOrder
+    relationship: same_operation
+    overlap: Both classify causal order from vector timestamps; candidate additionally computes timestamps
+      from events, but classification is identical.
+  - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+    relationship: different
+    overlap: LTL monitoring is logical over traces, not clock-based causality.
+  reason: 0/2 samples judged it novel; Same vector-clock simulation as version_vector_causality and same
+    classification as vector_clock_order.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: cache_policy_eviction_trace
+  summary: Step reference strings through LRU recency stacks, LFU counters with age tie-breaks, FIFO order,
+    and Clock second-chance hand movement in fixed-size caches; answer resident key set, hit/miss totals,
+    and eviction order.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave9.cache_replacement_trace.cache_replacement_trace:CacheReplacementTrace
+    relationship: same_operation
+    overlap: Both simulate LRU, LFU, FIFO, and Clock policies on reference strings, returning hits/misses
+      and final cache state; candidate adds eviction order but that is also covered by existing task's
+      return options.
+  - id: task:generated.wave8.set_associative_cache.set_associative_cache:SetAssociativeCache
+    relationship: variant
+    overlap: Both implement LRU/FIFO caching, but set-associative adds sets and ways; candidate covers
+      direct-mapped only.
+  - id: task:generated.wave8.clock_page_replacement.clock_page_replacement:ClockPageReplacement
+    relationship: same_operation
+    overlap: Both implement Clock second-chance replacement with hand movement, outputting eviction decisions.
+  - id: task:generated.wave9.memory_allocator_trace.memory_allocator_trace:MemoryAllocatorTrace
+    relationship: different
+    overlap: Allocator handles first/best-fit, not eviction policies.
+  reason: 0/3 samples judged it novel; Same multi-policy cache simulation as cache_replacement_trace,
+    with Clock already covered by clock_page_replacement.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: free_group_word_reduction
+  summary: Reduce words in free-group generators and inverses, with powers and conjugated subwords, by
+    iterated cancellation to the canonical reduced word; variants request the cyclically reduced form.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_representation-transfer:P008
+    relationship: variant
+    overlap: 'Both reduce to a canonical form via cancellations (free group vs. pitch-class set) but operations
+      differ: word reduction cancels adjacent generator-inverse pairs; prime form applies transposition/inversion.'
+  - id: task:generated.k3_invariants_r1.gnfa_state_elimination.gnfa_state_elimination:GnfaStateElimination
+    relationship: adjacent
+    overlap: Both reduce symbolic expressions to canonical form, but GNFA composes regex labels, free
+      group cancels word symbols.
+  - id: proposal:k3_hierarchical-recursive:P004
+    relationship: different
+    overlap: Partial fraction decomposition is algebraic manipulation, not free group word reduction.
+  - id: task:generated.wave12.three_way_merge_resolution.three_way_merge_resolution:ThreeWayMergeResolution
+    relationship: different
+    overlap: Three-way merge deals with sequence merging, not group theory.
+  reason: 1/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; No neighbor
+    performs the specific operation of reducing words in a free group by canceling adjacent inverse pairs;
+    only superficial overlap with other canonical-form tasks.
+  scores:
+    novelty: 5
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: versioned_array_fork_reads
+  summary: Maintain a persistent array where writes fork new versions from named parents along copy-on-write
+    paths; interleave writes and reads addressed by (version, index); answer every read plus the final
+    version tree.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.mvcc_visibility.mvcc_visibility:MVCCVisibility
+    relationship: same_operation
+    overlap: Both maintain versioned data (arrays vs. rows) and answer reads by (version, index) using
+      copy-on-write or timestamp visibility; final version tree is an extra output.
+  - id: task:generated.wave9.quorum_read_write_resolution.quorum_read_write_resolution:QuorumReadWriteResolution
+    relationship: variant
+    overlap: Both handle versioned writes and reads with different versions, but quorum uses replication
+      while candidate uses copy-on-write; core is versioned read resolution.
+  - id: task:generated.wave9.version_vector_causality.version_vector_causality:VersionVectorCausality
+    relationship: adjacent
+    overlap: Both use versioning and merging, but vector clocks track causality, not array values.
+  - id: task:generated.wave12.linearizability_check.linearizability_check:LinearizabilityCheck
+    relationship: different
+    overlap: Linearizability is about concurrent history, not versioned arrays.
+  reason: 1/2 samples judged it novel; Similar versioned-read resolution as MVCC_visibility, with a different
+    versioning mechanism (copy-on-write vs. timestamps) and added tree output.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/2
+- name: allen_interval_composition
+  summary: Compose Allen interval relations through event networks via the composition table and path
+    intersection; answers are the strongest entailed relation for a queried pair, the refined relation
+    set on each edge, or an inconsistency report.
+  verdict: duplicate
+  closest_id: proposal:k3_representation-transfer:P002
+  reason: exact catalog name collision with proposal:k3_representation-transfer:P002
+- name: capture_avoiding_beta_normalization
+  summary: Reduce untyped lambda terms under normal-order or applicative-order strategies with capture-avoiding
+    substitution and alpha-renaming over shadowed binders; answers are the normal form, step count, or
+    divergence.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:lambda_reduction
+    relationship: same_operation
+    overlap: Both reduce lambda terms to normal form with beta-reduction and renaming; the proposal adds
+      strategy (normal/applicative order) but the core operation is identical.
+  - id: proposal:k3_semantics-preserving-translation:P003
+    relationship: different
+    overlap: De Bruijn translation changes variable syntax, not beta-reduction.
+  - id: proposal:k3_dynamic-structures:P003
+    relationship: different
+    overlap: Transformation semigroups compose maps, not lambda terms.
+  reason: '0/3 samples judged it novel; Variant: same lambda reduction as gallery:lambda_reduction, only
+    strategy and divergence mode added.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: hindley_milner_principal_typing
+  summary: Infer principal types for ML-style terms with lambda, application, let-polymorphism, and data
+    constructors, via unification and let-generalization; answers are the inferred scheme or the subterm
+    where unification clashes.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.manual_high_value_80_r1.hindley_milner_inference.hindley_milner_inference:HindleyMilnerInference
+    relationship: same_operation
+    overlap: Both infer principal types for lambda terms with let-polymorphism via unification and generalization;
+      identical operation.
+  - id: plan:WAVE0:N3
+    relationship: same_operation
+    overlap: Plan to add principal type inference for lambda terms; same operation.
+  - id: task:generated.wave8.nominal_subtyping.nominal_subtyping:NominalSubtyping
+    relationship: different
+    overlap: Nominal subtyping checks subtype relations, not type inference.
+  reason: '0/3 samples judged it novel; Duplicate: identical to existing hindley_milner_inference task.'
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: fol_model_satisfaction
+  summary: Evaluate first-order formulas on small finite models with alternating quantifiers, functions,
+    and equality; answers are truth under an assignment, satisfying tuples for an open formula, or whether
+    two formulas agree on the model.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+    relationship: same_operation
+    overlap: Both evaluate first-order formulas over a finite model with domain, functions, and relations;
+      the proposal adds equality and open formulas, but the core evaluation is the same.
+  - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+    relationship: different
+    overlap: Temporal logic monitors over traces, not static first-order models.
+  - id: gallery:constraint_satisfaction
+    relationship: different
+    overlap: CSP solving is about finding assignments, not evaluating a fixed model.
+  reason: '0/3 samples judged it novel; Variant: first-order model evaluation is identical to finite_model_quantifiers,
+    only with equality and extra queries.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+pool:
+- name: sld_resolution_substitutions
+  summary: Execute SLD resolution over Horn-clause programs with renaming-apart, occurs-check unification,
+    and depth-first backtracking through clause order; answers are the ordered answer substitutions or
+    the first failing goal.
+- name: binding_theory_antecedent_licensing
+  summary: For bracketed structures containing pronouns, reflexives, and R-expressions, apply c-command,
+    locality, and disjointness constraints; answers are licensed antecedent sets, verdicts on proposed
+    coindexings, or the violated principle.
