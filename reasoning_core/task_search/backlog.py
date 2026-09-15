@@ -2,9 +2,13 @@
 
 Three directories already answer this between them, so the backlog needs no state of its
 own and has none to go stale: the proposal archive says what was asked for,
-`reasoning_core/tasks` says what exists, and the plans say what was already attempted.
-A service implementing the backlog reads those three, and can be interrupted at any point
-because the same three directories say where it stopped.
+`reasoning_core/tasks` says what exists, and the plans say what was attempted -- but only
+alongside `plans/outcomes`, which says which of those attempts actually ran. A plan on its
+own is intent, and reading intent as history is how this stalled for six days: killed
+waves left trials that never launched, their ideas were counted out of budget, and the
+service reported `0 proposals owed` while the backlog was full. A service implementing the
+backlog reads those directories, and can be interrupted at any point because they say
+where it stopped.
 
 The attempt count is the half that is easy to leave out and expensive to miss. Every
 proposal with no task is not equally owed: as of this writing the five unimplemented ones
@@ -16,6 +20,7 @@ from collections import Counter
 from dataclasses import dataclass
 import ast
 import itertools
+import os
 from pathlib import Path
 import re
 
@@ -82,11 +87,63 @@ def landed_proposals(repo_root):
     return frozenset(found)
 
 
+def outcomes(repo_root, plan_name):
+    """Trial ids this plan actually spent a run on, or None if it never recorded any.
+
+    A plan is a statement of intent. It says nothing about what happened, and for six days
+    that silence read as failure: a wave planned and then killed -- by a restart, a quota
+    wall, an interrupt -- left trials on disk that had never launched, `attempted` counted
+    them against the idea's budget, and the service reported `0 proposals owed` every
+    fifteen minutes while the backlog was full. Nothing was broken loudly enough to notice.
+
+    `None` rather than an empty set when there is no record, because the two mean opposite
+    things: a plan from before this file existed was probably run, while a plan with an
+    empty record demonstrably was not.
+    """
+    path = (Path(repo_root) / "reasoning_core" / "task_search" / "plans" / "outcomes"
+            / f"{plan_name}.yaml")
+    if not path.is_file():
+        return None
+    try:
+        return set(yaml.safe_load(path.read_text()) or {})
+    except yaml.YAMLError:
+        return None
+
+
+def record_outcomes(repo_root, plan_name, results):
+    """Merge `{trial id: status}` into this plan's durable record of what ran.
+
+    Merged rather than replaced: a plan can be run more than once, in pieces, and what a
+    later run does not cover is still spent. Kept beside the plans but in their own
+    directory, because `attempted` globs `*.yaml` there and `next_round` globs
+    `<wave>_r*.yaml` -- a sibling file would be read as a plan and would take a round
+    number with it.
+    """
+    directory = Path(repo_root) / "reasoning_core" / "task_search" / "plans" / "outcomes"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{plan_name}.yaml"
+    known = {}
+    if path.is_file():
+        try:
+            known = yaml.safe_load(path.read_text()) or {}
+        except yaml.YAMLError:
+            known = {}
+    known.update({str(trial): str(status) for trial, status in results.items()})
+    temporary = path.with_suffix(".yaml.tmp")
+    temporary.write_text(yaml.safe_dump(known, sort_keys=True))
+    os.replace(temporary, path)
+    return known
+
+
 def attempted(repo_root):
-    """Comparison key -> how many plan trials have already tried to build it.
+    """Comparison key -> how many implementor runs have already been spent on it.
 
     Counted in trials rather than plans because a plan with three variants spends three
     implementor runs on the idea, and the budget being protected is implementor runs.
+
+    A trial only counts once it has an outcome. Plans written before outcomes were
+    recorded have no record and keep the old, conservative reading -- every trial counts --
+    so fixing this cannot reopen a year of ideas that genuinely were tried.
     """
     root = Path(repo_root) / "reasoning_core" / "task_search" / "plans"
     counts = Counter()
@@ -95,7 +152,10 @@ def attempted(repo_root):
             plan = yaml.safe_load(path.read_text()) or {}
         except yaml.YAMLError:
             continue
+        ran = outcomes(repo_root, str(plan.get("name") or path.stem))
         for trial in plan.get("trials", ()):
+            if ran is not None and str(trial.get("id") or "") not in ran:
+                continue
             # `idea` is "<task name> (draw 2 of 3)", and the task name is what the
             # proposal was called before the variant suffix was appended.
             idea = str(trial.get("idea", "")).split(" (", 1)[0]

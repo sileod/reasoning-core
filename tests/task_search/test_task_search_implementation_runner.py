@@ -317,3 +317,31 @@ def test_the_retry_ladder_reaches_the_ceiling_it_documents(monkeypatch):
         f"the last rung waits {max(ladder)}s, which is inside a per-minute quota window")
     assert sum(ladder) < _RETRY_CEILING_SECONDS + 1800, (
         "waiting must stay small beside the trials it protects")
+
+
+def test_an_empty_backlog_says_whether_it_is_finished_or_stuck(tmp_path, monkeypatch):
+    """`0 proposals owed` was printed four times an hour for six days while the archive
+    held ninety unimplemented proposals: every one of them had been counted out of budget
+    by plan trials that never ran. The line an idle pipeline prints and the line a blind
+    one prints have to be different sentences, or the stall is invisible."""
+    import importlib.util
+    from types import SimpleNamespace
+
+    spec = importlib.util.spec_from_file_location(
+        "run_implementors", Path(__file__).parents[2] / "scripts" / "run_implementors.py")
+    driver = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(driver)
+
+    held_back = [SimpleNamespace(name=f"idea_{index}") for index in range(90)]
+    monkeypatch.setattr(driver, "pending", lambda root, **kwargs: list(held_back))
+
+    stuck = driver.why_nothing_is_owed(SimpleNamespace(max_attempts=3))
+    assert "90" in stuck and "--max-attempts 3" in stuck
+    assert "outcomes" in stuck, "the sentence must say where to look"
+
+    # Without a cap nothing can be held back by one, so the quiet reading is the true one.
+    assert "no attempt cap" in driver.why_nothing_is_owed(SimpleNamespace(max_attempts=0))
+
+    monkeypatch.setattr(driver, "pending", lambda root, **kwargs: [])
+    assert driver.why_nothing_is_owed(
+        SimpleNamespace(max_attempts=3)) == "0 proposals owed: every archived proposal has a task"

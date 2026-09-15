@@ -147,3 +147,58 @@ def test_a_landed_task_covers_its_proposal_under_whatever_name_it_chose(tmp_path
     owed = [name for _, name, _ in backlog.unimplemented(wave, tmp_path)]
 
     assert owed == ["something_else"], "a renamed landed task left its proposal owed"
+
+
+def test_a_plan_whose_trials_never_ran_does_not_spend_the_idea_s_budget(tmp_path):
+    """The failure this cost six days to find. A wave is planned, the service is killed
+    before the run -- restart, quota wall, interrupt -- and the plan stays on disk claiming
+    three trials that never launched. Counted as attempts they retire the idea, and with
+    every idea retired the service reports `0 proposals owed` four times an hour while the
+    archive is full. Nothing is broken loudly enough to look at."""
+    _repo(tmp_path, plans=[("brief_r1", ["owed_idea", "owed_idea", "owed_idea"])],
+          archives=[("brief", ["owed_idea"])])
+    backlog.record_outcomes(tmp_path, "brief_r1", {"P001v1": "harness_failed"})
+
+    counts = backlog.attempted(tmp_path)
+
+    assert counts[backlog.comparison_key("owed_idea")] == 1, (
+        "only the trial that produced an outcome was actually spent")
+    assert [row.name for row in backlog.pending(tmp_path, max_attempts=3)] == ["owed_idea"]
+
+
+def test_a_plan_from_before_outcomes_were_recorded_still_counts_every_trial(tmp_path):
+    """Plans predating the record have no record, and an empty one would mean the opposite
+    of a missing one. Reading a missing record as `nothing ran` would reopen every idea the
+    pipeline has ever tried and failed, which is a worse failure than the one being fixed.
+    """
+    _repo(tmp_path, plans=[("brief_r1", ["tired_idea", "tired_idea", "tired_idea"])],
+          archives=[("brief", ["tired_idea"])])
+
+    assert backlog.attempted(tmp_path)[backlog.comparison_key("tired_idea")] == 3
+    assert backlog.pending(tmp_path, max_attempts=3) == []
+
+
+def test_outcomes_merge_across_runs_rather_than_replacing(tmp_path):
+    """A plan can be run more than once and in pieces -- a retry queue, a resumed wave --
+    and what a later run does not cover was still spent by an earlier one."""
+    (tmp_path / "reasoning_core" / "task_search" / "plans").mkdir(parents=True)
+
+    backlog.record_outcomes(tmp_path, "brief_r1", {"P001v1": "success"})
+    merged = backlog.record_outcomes(tmp_path, "brief_r1", {"P002v1": "validation_failed"})
+
+    assert merged == {"P001v1": "success", "P002v1": "validation_failed"}
+    assert backlog.outcomes(tmp_path, "brief_r1") == {"P001v1", "P002v1"}
+
+
+def test_the_outcomes_record_is_not_mistaken_for_a_plan(tmp_path):
+    """`attempted` globs `*.yaml` in the plans directory and `next_round` globs
+    `<wave>_r*.yaml` there. A sibling `brief_r1.outcomes.yaml` would be read as a plan and
+    would take round 1's number with it, so the record lives in its own directory."""
+    _repo(tmp_path, plans=[("brief_r1", ["an_idea"])], archives=[("brief", ["an_idea"])])
+    backlog.record_outcomes(tmp_path, "brief_r1", {"P001v1": "success"})
+
+    plans = sorted(path.name for path in
+                   (tmp_path / "reasoning_core" / "task_search" / "plans").glob("*.yaml"))
+
+    assert plans == ["brief_r1.yaml"], f"the record was left where plans are read: {plans}"
+    assert backlog.next_round(tmp_path, "brief") == 2

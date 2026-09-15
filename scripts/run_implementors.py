@@ -153,6 +153,26 @@ def waves_owed(arguments):
                    in pending(ROOT, max_attempts=arguments.max_attempts or None))
 
 
+def why_nothing_is_owed(arguments):
+    """The sentence to print instead of a bare zero, when the backlog comes back empty.
+
+    `0 proposals owed` is the same line whether the pipeline has finished its work or has
+    stopped being able to see it, and for six days in September it was the second: every
+    idea had been counted out of budget by plan trials that never ran, and the service
+    said the reassuring thing four times an hour while the archive was full. An idle
+    pipeline and a stalled one must not print the same line.
+    """
+    if not arguments.max_attempts:
+        return "0 proposals owed and no attempt cap in force: the archive is implemented"
+    blocked = len(pending(ROOT))
+    if not blocked:
+        return "0 proposals owed: every archived proposal has a task"
+    return (f"0 proposals owed, but {blocked} proposals have no task and are held back by"
+            f" --max-attempts {arguments.max_attempts}. Either they genuinely resist"
+            f" implementation, or their attempts were never spent -- check"
+            f" reasoning_core/task_search/plans/outcomes for the plans that claim them")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--design-choices", type=int, default=2,
@@ -194,8 +214,11 @@ def main():
                   f" worktrees older than {arguments.keep_runs_days}d", flush=True)
         owed = waves_owed(arguments)
         total = sum(owed.values())
-        print(f"{time.strftime('%H:%M')} {total} proposals owed across"
-              f" {len(owed)} waves", flush=True)
+        if total:
+            print(f"{time.strftime('%H:%M')} {total} proposals owed across"
+                  f" {len(owed)} waves", flush=True)
+        else:
+            print(f"{time.strftime('%H:%M')} {why_nothing_is_owed(arguments)}", flush=True)
         for wave, count in owed.items():
             print(f"  {wave}: {count}", flush=True)
             if implement(arguments, wave, arguments.log_dir):

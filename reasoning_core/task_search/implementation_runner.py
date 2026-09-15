@@ -24,6 +24,7 @@ from .implementor_prompt import (
     _selfcheck_command,
     render_implementor_prompt,
 )
+from .backlog import record_outcomes
 from .plan import _frozen_module_drift, _plan_problems, _select_trials, load_plan
 from . import namespace
 from .sandbox import (
@@ -826,4 +827,11 @@ def run_plan(
                 }
             results.append(result)
             write_summary()
+    # What actually ran, kept where the backlog can find it after this run tree is
+    # retired. Without it a plan is only a statement of intent, and the backlog cannot
+    # tell a trial that failed from one that never launched.
+    if results:
+        record_outcomes(repo_root, plan.name,
+                        {row["trial_id"]: row.get("status") or "unknown"
+                         for row in results})
     return sorted(results, key=lambda item: item["trial_id"])
