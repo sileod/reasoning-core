@@ -72,7 +72,7 @@ SCALES = {
     "1B":   {"model": "allenai/OLMo-1B-0724-hf",
              "revision": "d7cbab742d80589e714b1a2d7f838dcd21cbe143",
              # 2e-5, the rate its 54 shipped std cells were measured at. Not a preference: see above.
-             "std_lr": 2e-5, "batch_size": 2, "gradient_accumulation_steps": 2,
+             "std_lr": 2e-5, "tail_lr": 5e-6, "batch_size": 2, "gradient_accumulation_steps": 2,
              # Tuned 2026-09-09 over {5e-6, 1e-5, 2e-5} x 300 steps, seed 43. 1e-5 and 2e-5 end on
              # top of each other (loss 1.192 vs 1.194, min 0.420 vs 0.428) and BOTH hump at step 88
              # -- that hump is the seed-43 data order, not instability. The separator is the gradient
@@ -89,15 +89,39 @@ DEFAULT_SCALES = ("360M", "1B")
 
 
 def learning_rate(protocol, scale):
-    """The rate for this protocol AT THIS SCALE.
+    """The rate for this protocol AT THIS SCALE: measured where a sweep exists, derived otherwise.
 
-    The 75-step protocols run a constant rate behind a short ramp. Linear decay from peak p to 0
-    over T steps integrates to p*T/2, so a constant p/2 matches the same total update budget -- the
-    same derivation that produced 5e-5 against 360M's 1e-4 linear, applied per scale rather than
-    frozen at one. Derived, not swept.
+    The derivation: the 75-step protocols run a constant rate behind a short ramp, and linear decay
+    from peak p to 0 over T steps integrates to p*T/2, so a constant p/2 matches the same total
+    update budget. That is where 360M's 5e-5 comes from, and 336 measured cells corroborate it --
+    they average +14.6 external gain against a main-mixture tax of +0.4, i.e. essentially no
+    displacement.
+
+    At 1B the same derivation gives 1e-5 and is WRONG, measured 2026-09-15 on the two anchor tasks.
+    The anchor pool is fixed, so the same two tasks at five rates differ only by the rate -- no draw
+    noise, no task selection:
+
+        LR      metamath_core_select    program_synthesis   main tax (mean of the two)
+        2e-6         +17.81                  +3.95              +0.18
+        5e-6         +17.90                  +1.34              -1.26
+        1e-5         +12.62                  -2.22              -3.14   <- the derived value
+        2e-5          -5.94                 -45.67              -4.07
+        5e-5        -108.29                 (+11.46 at tax -17.70, an arm that blew up)
+
+    Degradation is monotone from 5e-6 up, which is why the first 25 1B cells came back mostly
+    negative and looked like a scale inversion of the 360M ranking. It is not: it is this.
+
+    5e-6 rather than 2e-6 because the pair PLATEAUS between them (+17.90 vs +17.81 on the anchor
+    that carries signal) rather than continuing to climb, so the low end is not simply washing the
+    measurement out toward zero -- and 5e-6 keeps the wider anchor spread (16.6 vs 13.9, against
+    12.2 for the 360M reference), which is the thing a per-task ranking actually spends.
+
+    A scale with a `tail_lr` has been swept; one without it is running the derivation.
     """
-    std_lr = SCALES[scale]["std_lr"]
-    return std_lr if protocol == "std" else std_lr / 2
+    if protocol == "std":
+        return SCALES[scale]["std_lr"]
+    measured = SCALES[scale].get("tail_lr")
+    return measured if measured is not None else SCALES[scale]["std_lr"] / 2
 
 
 def available(protocol, scale):
