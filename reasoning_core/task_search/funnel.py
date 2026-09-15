@@ -20,12 +20,9 @@ from pathlib import Path
 
 import yaml
 
-from .trajectory import read, trial_directories
-
-# `12/36` in a rejection reason is the critic's tally, written by `wave_proposer` when a
-# wave used more than one sample. It is the only durable record of how many samples
-# actually voted, which is the thing that turned out to matter.
-TALLY = re.compile(r"(\d+)\s*/\s*(\d+)\s+samples judged it novel")
+from .trajectory import trial_directories
+# The tally format belongs to the module that writes it.
+from .wave_proposer import TALLY
 # `generate_samples_P003v1.py` beside a landed task names the trial that won it. The
 # module the implementor wrote can be called anything, but this filename cannot.
 WINNER = re.compile(r"^generate_samples_(P\d+v\d+)\.py$")

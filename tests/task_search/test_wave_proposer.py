@@ -1492,3 +1492,31 @@ def test_a_split_panel_is_pooled_rather_than_counted_as_a_rejection():
         "a tied panel was recorded as a rejection, which spends the candidate's one "
         "replay on a verdict no majority ever reached")
     assert [row["name"] for row in wave["pool"]] == ["evenly_split"]
+
+
+def test_a_tied_panel_does_not_spend_the_one_second_chance(tmp_path):
+    """A tie is not a verdict, so it must not count toward the two-strikes rule either.
+    It did: of the 34 candidates a split panel refused, 28 had been replayed into a second
+    wave, refused by a second short panel, and retired for good -- both times by a gate
+    that could not have reached a majority. A real verdict on either pass still counts."""
+    _archive(tmp_path, "first", [
+        {"name": "tied_then_tied", "summary": SUMMARY,
+         "reason": "1/2 samples judged it novel; unclear"},
+        {"name": "tied_then_judged", "summary": SUMMARY,
+         "reason": "1/2 samples judged it novel; unclear"},
+        {"name": "judged_twice", "summary": SUMMARY,
+         "reason": "0/3 samples judged it novel; known"}])
+    _archive(tmp_path, "replay", [
+        {"name": "tied_then_tied", "summary": SUMMARY,
+         "reason": "1/2 samples judged it novel; still unclear"},
+        {"name": "tied_then_judged", "summary": SUMMARY,
+         "reason": "0/3 samples judged it novel; known"},
+        {"name": "judged_twice", "summary": SUMMARY,
+         "reason": "1/3 samples judged it novel; still known"}])
+
+    offered = [row["name"] for row in unspent_candidates(tmp_path)]
+
+    assert "tied_then_tied" in offered, "two ties are not two judgements"
+    assert "tied_then_judged" in offered, (
+        "one real verdict is one strike, so the idea still has a chance left")
+    assert "judged_twice" not in offered, "two real verdicts still retire an idea"

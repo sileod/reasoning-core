@@ -29,6 +29,23 @@ CRITIC_API_KEY_ENV = "ALBERT_API_KEY"
 # A small model is cheap enough to ask more than once, and three is the smallest K that
 # can disagree with itself. Two would only ever tie.
 CRITIC_SAMPLES = 3
+# The `2/3` a rejection reason carries is the critic's tally, written below and parsed
+# back here and by `funnel`. It is the only durable record of how many samples actually
+# voted, which is the thing that decides whether the verdict was a majority at all.
+TALLY = re.compile(r"(\d+)\s*/\s*(\d+)\s+samples judged it novel")
+
+
+def split_verdict(row):
+    """True when a rejection was an even panel with no majority either way.
+
+    Such a verdict is not one. It is now pooled rather than recorded, but the archives
+    already hold hundreds written before that, and they must not go on counting.
+    """
+    match = TALLY.search(str((row or {}).get("reason") or ""))
+    if not match:
+        return False
+    in_favour, cast = int(match.group(1)), int(match.group(2))
+    return cast % 2 == 0 and in_favour * 2 == cast
 DEFAULT_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
 DEFAULT_API_KEY_ENV = "NVIDIA_API_KEY"
 # One call should carry a whole wave: these are big models, and they are better used in
@@ -238,7 +255,12 @@ def unspent_candidates(repo_root, catalog=(), limit=None):
             continue
         pooled.extend(data.get("pool", ()))
         turned_down.extend(data.get("rejected", ()))
-    judged = Counter(_snake(row.get("name")) for row in turned_down)
+    # A tied panel does not spend the one second chance, for the same reason it no longer
+    # counts as a rejection: nobody reached a verdict. Of the 34 candidates a split panel
+    # refused, 28 had already been replayed into a second wave, tied again, and were
+    # retired for good -- by a gate that was miscounting both times.
+    judged = Counter(_snake(row.get("name"))
+                     for row in turned_down if not split_verdict(row))
     found, seen = [], set()
     for row in (*pooled, *turned_down):
         candidate = {"name": _snake(row.get("name")),
