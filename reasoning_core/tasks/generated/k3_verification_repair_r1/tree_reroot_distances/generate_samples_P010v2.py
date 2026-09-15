@@ -1,0 +1,43 @@
+import random
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from tree_reroot_distances import TreeRerootDistances
+
+random.seed(1211525277)
+
+task = TreeRerootDistances()
+out_path = Path(__file__).with_name("samples_P010v2.md")
+
+lines = []
+lines.append("# Samples for P010v2: tree_reroot_distances")
+lines.append("")
+lines.append("Assigned design choice: " + task.design_choice)
+lines.append("")
+lines.append("Each example shows the generated prompt verbatim and its gold answer.")
+lines.append("")
+
+for level in (0, 2, 5):
+    lines.append(f"## Level {level}")
+    lines.append("")
+    random.seed(1211525277 + level)
+    shown = 0
+    while shown < 2:
+        task.config.set_level(level)
+        x = task.generate_example()
+        prompt = task.render_prompt(x.metadata)
+        lines.append(f"**Example {shown + 1}**")
+        lines.append("")
+        lines.append("Prompt:")
+        lines.append("")
+        for line in prompt.split("\n"):
+            lines.append("    " + line)
+        lines.append("")
+        lines.append(f"Answer: {x.answer}")
+        lines.append("")
+        shown += 1
+
+out_path.write_text("\n".join(lines))
+print("wrote", out_path)

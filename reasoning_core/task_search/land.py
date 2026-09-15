@@ -223,6 +223,27 @@ def landable(wave_root, plan_path):
     return chosen
 
 
+MANIFEST = Path("tests") / "task_manifest.txt"
+
+
+def record_in_manifest(names):
+    """Add landed tasks to the manifest of registered tasks, and say what changed.
+
+    `_discover_tasks` rglobs the tasks tree, so the set of registered tasks is whatever
+    is on disk; `tests/test_task_manifest.py` exists to make it a deliberate list
+    instead, and says the manifest is updated in the same commit as the task. A landing
+    pass is that commit, and doing it by hand meant the test spent weeks red, which is
+    the same as not having it.
+    """
+    if not names or not MANIFEST.is_file():
+        return ()
+    known = set(MANIFEST.read_text().split())
+    added = sorted(set(names) - known)
+    if added:
+        MANIFEST.write_text("\n".join(sorted(known | set(names))) + "\n")
+    return tuple(added)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("wave", type=Path, help="a runs/<arm>/<wave> directory")
@@ -287,6 +308,10 @@ def main(argv=None):
         CLAIMED[name] = module
         landed.append(_record(name, row, plan_trial, target))
 
+    if args.apply:
+        recorded = record_in_manifest([row["name"] for row in landed])
+        if recorded:
+            print(f"manifest      {len(recorded)} added to {MANIFEST}")
     for row in landed:
         print(f"{'landed' if args.apply else 'would land':<12} {row['name']:<46} {row['trial']}")
     for row in skipped:

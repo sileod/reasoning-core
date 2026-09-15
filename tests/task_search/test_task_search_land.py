@@ -23,3 +23,28 @@ def test_landing_records_the_assignment_from_the_plan_not_the_worktree():
     assert guided["guided"] is True
     assert baseline["design_choice"] == ""
     assert baseline["guided"] is False, "an unguided baseline must be tellable from a task"
+
+
+def test_a_landing_pass_adds_what_it_landed_to_the_manifest(tmp_path, monkeypatch):
+    """`_discover_tasks` rglobs the tasks tree, so the registered set is whatever is on
+    disk and `tests/task_manifest.txt` is what makes it a deliberate list instead. Its
+    test says the manifest is updated in the same commit as the task; leaving that to
+    hand meant 184 landed tasks drifted out of it and the test was red for weeks, which
+    is the same as not having the test at all."""
+    from reasoning_core.task_search import land
+
+    manifest = tmp_path / "task_manifest.txt"
+    manifest.write_text("already_here\nzebra_task\n")
+    monkeypatch.setattr(land, "MANIFEST", manifest)
+
+    added = land.record_in_manifest(["new_task", "already_here"])
+
+    assert added == ("new_task",), "only what was not already registered is reported"
+    assert manifest.read_text().split() == ["already_here", "new_task", "zebra_task"], (
+        "the manifest stays sorted, so a landing pass is a small readable diff")
+
+    # Landing nothing new must not rewrite the file: a no-op pass that dirties the tree
+    # is a pass someone has to review.
+    before = manifest.stat().st_mtime_ns
+    assert land.record_in_manifest(["new_task"]) == ()
+    assert manifest.stat().st_mtime_ns == before
