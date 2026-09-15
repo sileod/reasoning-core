@@ -1,0 +1,483 @@
+version: 1
+name: k3_uncertainty_r1
+proposal_wave: k3_uncertainty
+defaults:
+  base_ref: a5438795ae7fcad0106b48a115456cc64a3540d4
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: prufer_code_roundtrip_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v1
+  instruction: "Author a new task from scratch: prufer_code_roundtrip_v1.\n\nCover exactly this, and put\
+    \ this line -- adapted to what you actually build -- in the class `summary`:\n\n  Translate between\
+    \ labeled trees and Pr\xC3\xBCfer codes by repeated smallest-leaf removal or by code-driven reattachment,\
+    \ returning a queried code entry, the parent of a queried vertex, or the rebuilt edge set.\n\nEvery\
+    \ decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling,\
+    \ prompt wording and answer format. Other trials in this wave are implementing the same summary independently\
+    \ and are not coordinating with you. Make the choices you believe produce the best training data.\n\
+    \nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank\
+    \ earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v1
+  design_choice: "Queried output is a single integer: the i-th Pr\xFCfer code entry for a given tree,\
+    \ with vertices labeled 1..n."
+- id: P001v2
+  hypothesis: P001
+  idea: prufer_code_roundtrip_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v2
+  instruction: "Author a new task from scratch: prufer_code_roundtrip_v2.\n\nCover exactly this, and put\
+    \ this line -- adapted to what you actually build -- in the class `summary`:\n\n  Translate between\
+    \ labeled trees and Pr\xC3\xBCfer codes by repeated smallest-leaf removal or by code-driven reattachment,\
+    \ returning a queried code entry, the parent of a queried vertex, or the rebuilt edge set.\n\nEvery\
+    \ decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling,\
+    \ prompt wording and answer format. Other trials in this wave are implementing the same summary independently\
+    \ and are not coordinating with you. Make the choices you believe produce the best training data.\n\
+    \nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank\
+    \ earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v2
+  design_choice: Queried output is a canonical edge-list string (e.g., "1-2,2-3") for the tree rebuilt
+    from a given code.
+- id: P001v3
+  hypothesis: P001
+  idea: prufer_code_roundtrip_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v3
+  instruction: "Author a new task from scratch: prufer_code_roundtrip_v3.\n\nCover exactly this, and put\
+    \ this line -- adapted to what you actually build -- in the class `summary`:\n\n  Translate between\
+    \ labeled trees and Pr\xC3\xBCfer codes by repeated smallest-leaf removal or by code-driven reattachment,\
+    \ returning a queried code entry, the parent of a queried vertex, or the rebuilt edge set.\n\nEvery\
+    \ decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling,\
+    \ prompt wording and answer format. Other trials in this wave are implementing the same summary independently\
+    \ and are not coordinating with you. Make the choices you believe produce the best training data.\n\
+    \nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank\
+    \ earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/prufer_code_roundtrip_v3
+- id: P002v1
+  hypothesis: P002
+  idea: kripke_knowledge_evaluation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v1
+  instruction: "Author a new task from scratch: kripke_knowledge_evaluation_v1.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Evaluate\
+    \ nested knowledge claims on a given possible-worlds model \xE2\x80\x94 worlds, an atom valuation,\
+    \ and each agent's indistinguishability links; queries nest one agent's knowledge inside another's\
+    \ and answers are booleans or world sets.\n\nEvery decision the summary does not fix is yours: instance\
+    \ family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials\
+    \ in this wave are implementing the same summary independently and are not coordinating with you.\
+    \ Make the choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks\
+    \ generate_entry must perform and the failure modes that sank earlier waves -- read it before writing\
+    \ code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v1
+  design_choice: Queries ask whether agent A knows that agent B knows a proposition, with answers restricted
+    to true/false only.
+- id: P002v2
+  hypothesis: P002
+  idea: kripke_knowledge_evaluation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v2
+  instruction: "Author a new task from scratch: kripke_knowledge_evaluation_v2.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Evaluate\
+    \ nested knowledge claims on a given possible-worlds model \xE2\x80\x94 worlds, an atom valuation,\
+    \ and each agent's indistinguishability links; queries nest one agent's knowledge inside another's\
+    \ and answers are booleans or world sets.\n\nEvery decision the summary does not fix is yours: instance\
+    \ family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials\
+    \ in this wave are implementing the same summary independently and are not coordinating with you.\
+    \ Make the choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks\
+    \ generate_entry must perform and the failure modes that sank earlier waves -- read it before writing\
+    \ code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v2
+  design_choice: Queries ask for the set of worlds where agent A knows that agent B knows a given atom,
+    requiring output as a canonical sorted list of world indices.
+- id: P002v3
+  hypothesis: P002
+  idea: kripke_knowledge_evaluation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v3
+  instruction: "Author a new task from scratch: kripke_knowledge_evaluation_v3.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Evaluate\
+    \ nested knowledge claims on a given possible-worlds model \xE2\x80\x94 worlds, an atom valuation,\
+    \ and each agent's indistinguishability links; queries nest one agent's knowledge inside another's\
+    \ and answers are booleans or world sets.\n\nEvery decision the summary does not fix is yours: instance\
+    \ family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials\
+    \ in this wave are implementing the same summary independently and are not coordinating with you.\
+    \ Make the choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks\
+    \ generate_entry must perform and the failure modes that sank earlier waves -- read it before writing\
+    \ code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/kripke_knowledge_evaluation_v3
+- id: P003v1
+  hypothesis: P003
+  idea: announcement_round_deduction_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v1
+  instruction: |-
+    Author a new task from scratch: announcement_round_deduction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate public rounds in which every agent who still cannot name their own unseen attribute says so at once; eliminate inconsistent worlds after each round and answer who deduces their attribute on which round.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v1
+  design_choice: Attribute domains are fixed small sets of 2-4 values each, and each agent privately sees
+    all other agents' attributes but not their own, with worlds enumerated as full assignments.
+- id: P003v2
+  hypothesis: P003
+  idea: announcement_round_deduction_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v2
+  instruction: |-
+    Author a new task from scratch: announcement_round_deduction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate public rounds in which every agent who still cannot name their own unseen attribute says so at once; eliminate inconsistent worlds after each round and answer who deduces their attribute on which round.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v2
+  design_choice: Each agent's announcement is a public yes/no signal, and a solver must output a mapping
+    from round number to the subset of agents who first deduce their attribute in that round.
+- id: P003v3
+  hypothesis: P003
+  idea: announcement_round_deduction_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v3
+  instruction: |-
+    Author a new task from scratch: announcement_round_deduction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate public rounds in which every agent who still cannot name their own unseen attribute says so at once; eliminate inconsistent worlds after each round and answer who deduces their attribute on which round.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/announcement_round_deduction_v3
+- id: P004v1
+  hypothesis: P004
+  idea: counterfeit_weighing_deduction_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v1
+  instruction: |-
+    Author a new task from scratch: counterfeit_weighing_deduction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Intersect the candidate sets left by each recorded balance-scale outcome: one coin among the suspects is heavier or lighter, pans may tip either way or stay level; answer the guilty coin and sense or the remaining candidates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v1
+  design_choice: Encode suspects as integer coin IDs and answers as canonical strings like '7H' or '5L',
+    with balanced trials producing a single remaining candidate.
+- id: P004v2
+  hypothesis: P004
+  idea: counterfeit_weighing_deduction_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v2
+  instruction: |-
+    Author a new task from scratch: counterfeit_weighing_deduction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Intersect the candidate sets left by each recorded balance-scale outcome: one coin among the suspects is heavier or lighter, pans may tip either way or stay level; answer the guilty coin and sense or the remaining candidates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v2
+  design_choice: Use 3 outcomes per weighing (left, right, balance) and require the solver to output the
+    full candidate set as a sorted list of coin-sense pairs when multiple remain.
+- id: P004v3
+  hypothesis: P004
+  idea: counterfeit_weighing_deduction_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v3
+  instruction: |-
+    Author a new task from scratch: counterfeit_weighing_deduction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Intersect the candidate sets left by each recorded balance-scale outcome: one coin among the suspects is heavier or lighter, pans may tip either way or stay level; answer the guilty coin and sense or the remaining candidates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/counterfeit_weighing_deduction_v3
+- id: P005v1
+  hypothesis: P005
+  idea: network_reliability_factoring_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v1
+  instruction: |-
+    Author a new task from scratch: network_reliability_factoring_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact probability a source reaches its sink when components fail independently at given rates: collapse series-parallel pairs, factor on a keystone component, and recurse over both cases to report the network reliability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v1
+  design_choice: Represent each component as an ordered pair (failure probability, success probability)
+    and combine series/parallel reductions using exact rational arithmetic to avoid floating-point drift.
+- id: P005v2
+  hypothesis: P005
+  idea: network_reliability_factoring_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v2
+  instruction: |-
+    Author a new task from scratch: network_reliability_factoring_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact probability a source reaches its sink when components fail independently at given rates: collapse series-parallel pairs, factor on a keystone component, and recurse over both cases to report the network reliability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v2
+  design_choice: Return the reliability as a reduced fraction of the form numerator/denominator, with
+    the denominator being the product of all component success probabilities.
+- id: P005v3
+  hypothesis: P005
+  idea: network_reliability_factoring_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v3
+  instruction: |-
+    Author a new task from scratch: network_reliability_factoring_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the exact probability a source reaches its sink when components fail independently at given rates: collapse series-parallel pairs, factor on a keystone component, and recurse over both cases to report the network reliability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/network_reliability_factoring_v3
+- id: P006v1
+  hypothesis: P006
+  idea: threshold_share_reconstruction_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v1
+  instruction: |-
+    Author a new task from scratch: threshold_share_reconstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover the constant term of a hidden polynomial mod a small prime from k of n shares: weight each presented share by its Lagrange coefficient at zero and sum; share sets meet or exceed the threshold.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v1
+  design_choice: Vary the prime among a fixed small set (e.g., 7, 11, 13) and present shares as integers
+    in [0,p-1]; answer is the integer constant term.
+- id: P006v2
+  hypothesis: P006
+  idea: threshold_share_reconstruction_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v2
+  instruction: |-
+    Author a new task from scratch: threshold_share_reconstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover the constant term of a hidden polynomial mod a small prime from k of n shares: weight each presented share by its Lagrange coefficient at zero and sum; share sets meet or exceed the threshold.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v2
+  design_choice: Vary the prime among a fixed small set (e.g., 5, 7, 11) and present shares as integers
+    in [0,p-1], with the answer being the constant term as an integer.
+- id: P006v3
+  hypothesis: P006
+  idea: threshold_share_reconstruction_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v3
+  instruction: |-
+    Author a new task from scratch: threshold_share_reconstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover the constant term of a hidden polynomial mod a small prime from k of n shares: weight each presented share by its Lagrange coefficient at zero and sum; share sets meet or exceed the threshold.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/threshold_share_reconstruction_v3
+- id: P007v1
+  hypothesis: P007
+  idea: censored_survival_estimate_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v1
+  instruction: |-
+    Author a new task from scratch: censored_survival_estimate_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Walk an ordered timeline of events and withdrawals, maintaining the at-risk count; at each event time multiply the running estimate by the survived fraction, answering the product-limit survival probability at a queried time.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v1
+  design_choice: Present event and censoring times as integer day offsets; ask for survival probability
+    as a reduced fraction at a query time, with answer format 'numerator/denominator'.
+- id: P007v2
+  hypothesis: P007
+  idea: censored_survival_estimate_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v2
+  instruction: |-
+    Author a new task from scratch: censored_survival_estimate_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Walk an ordered timeline of events and withdrawals, maintaining the at-risk count; at each event time multiply the running estimate by the survived fraction, answering the product-limit survival probability at a queried time.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v2
+  design_choice: "Use small event/censor counts (\u22646) and ask for the cumulative product of survived\
+    \ fractions as a simplified whole-number ratio string, e.g., '3/8'."
+- id: P007v3
+  hypothesis: P007
+  idea: censored_survival_estimate_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v3
+  instruction: |-
+    Author a new task from scratch: censored_survival_estimate_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Walk an ordered timeline of events and withdrawals, maintaining the at-risk count; at each event time multiply the running estimate by the survived fraction, answering the product-limit survival probability at a queried time.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/censored_survival_estimate_v3
+- id: P008v1
+  hypothesis: P008
+  idea: iterated_dominance_elimination_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v1
+  instruction: |-
+    Author a new task from scratch: iterated_dominance_elimination_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce two-player bimatrix games by repeated deletion of strictly dominated pure strategies on either side, re-scanning after each removal since new dominances emerge, until a fixpoint; answer both players' surviving strategy sets.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v1
+  design_choice: Generate games where dominance chains are long and interleaved, requiring multiple re-scans
+    across both players to reach the fixpoint, with answer sets of varying sizes.
+- id: P008v2
+  hypothesis: P008
+  idea: iterated_dominance_elimination_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v2
+  instruction: |-
+    Author a new task from scratch: iterated_dominance_elimination_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce two-player bimatrix games by repeated deletion of strictly dominated pure strategies on either side, re-scanning after each removal since new dominances emerge, until a fixpoint; answer both players' surviving strategy sets.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v2
+  design_choice: Present the game as a payoff matrix with symbolic strategy labels (e.g., A1, B2) and
+    require the answer as two sorted lists of surviving labels, e.g., 'A1,A3' and 'B2'.
+- id: P008v3
+  hypothesis: P008
+  idea: iterated_dominance_elimination_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v3
+  instruction: |-
+    Author a new task from scratch: iterated_dominance_elimination_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce two-player bimatrix games by repeated deletion of strictly dominated pure strategies on either side, re-scanning after each removal since new dominances emerge, until a fixpoint; answer both players' surviving strategy sets.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_uncertainty_r1/iterated_dominance_elimination_v3
