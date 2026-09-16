@@ -130,6 +130,7 @@ diagnostic_test_selection
 diff_patch_application
 dimensional_analysis
 dimensional_consistency
+direct_inverse_inflection
 distinguishing_witness
 distributed_snapshot_recording
 dominator_analysis
@@ -159,6 +160,7 @@ face_tracing
 fd_attribute_closure
 fenwick_prefix_nodes
 filesystem_path_resolution
+filler_gap_licensing_v2
 finite_automaton_execution
 finite_group_element_order
 finite_group_inverse
@@ -262,6 +264,7 @@ minimal_unsat_core
 minimum_spanning_tree
 misra_gries_counters
 missing_dimension
+modal_negation_equivalence
 modular_constraint
 modular_constraint_solver
 morton_order_navigation
@@ -278,6 +281,7 @@ nested_template_expansion
 network_reliability_factoring
 nfa_subset_construction
 noisy_channel_recovery
+nominal_compound_relation
 nominal_subtyping
 nonstandard_base_translation
 novel_word_application
@@ -447,6 +451,7 @@ tree_pattern_occurrence_count
 tree_reconstruction
 tree_reroot_distances
 tree_subset_counting
+tree_transducer_run
 trie_unique_prefix
 truth_maintenance_revision
 tuple_generating_dependency_chase
