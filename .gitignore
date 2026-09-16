@@ -144,3 +144,9 @@ scripts/g5k_influence_gaps.py
 # long as they are left running. Workspace state, and the reason `git status` stays quiet
 # while a service is working.
 /runs/
+
+# A proposal wave checkpoints to <wave>.yaml.partial so an interrupted run resumes
+# where it stopped, and deletes it once the archive is written. It is live state,
+# not a record: one was swept into a commit by a directory-wide `git add` and the
+# next wave to finish deleted it out from under the repository.
+reasoning_core/task_search/proposals/archive/*.yaml.partial
