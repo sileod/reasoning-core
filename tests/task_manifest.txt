@@ -123,6 +123,7 @@ dimensional_consistency
 distinguishing_witness
 distributed_snapshot_recording
 dominator_analysis
+dynamic_discourse_evaluation
 dynamic_programming
 ear_clipping_triangulation
 elimination_depth_chain
@@ -135,6 +136,7 @@ equation_system
 ershov_register_numbering
 euler_tour_intervals
 eulerian_status
+event_driven_gate_simulation
 event_order_reconstruction
 event_queue_simulation
 exact_cover_selection
@@ -158,6 +160,7 @@ formal_concept_closure
 function_manipulation
 game_best_move
 game_forced_win
+generalized_quantifier_truth
 generated_subgroup_membership
 generic_variance_subtyping
 gf2_matrix_rank
@@ -222,6 +225,7 @@ longest_prefix_route
 loop_invariant_check
 lossless_binary_decomposition
 lossless_summary
+lsm_level_compaction_trace
 lyndon_factorization_duval
 lz77_tokenization
 markov_chain_distribution
@@ -291,6 +295,7 @@ poset_cover_query
 posix_acl_permission
 pragmatic_reference_generation
 prefix_code_decode
+presupposition_projection
 presupposition_repair
 prime_power_valuation
 principal_type
@@ -391,6 +396,7 @@ syntax_error_detection
 table_equivalence
 table_qa
 table_statistics
+tag_adjunction_derivation
 take_grant_rights_derivation
 temporal_logic_monitoring
 temporal_perspective

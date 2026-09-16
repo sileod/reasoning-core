@@ -1,0 +1,1079 @@
+format_version: 1
+kind: sft_task_proposals
+name: k3_operations-research
+created_at: '2026-09-16T04:06:41.707002+00:00'
+provenance:
+  kind: proposer
+  name: k3_operations-research
+  received: '2026-09-16'
+  source: moonshotai/kimi-k3 via integrate.nvidia
+  brief: 'procedural tasks inspired by operations research: scheduling, allocation, optimization, matching,
+    and constraint propagation. The catalog you were shown already covers the classic textbook algorithms
+    -- sorting, gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that
+    names one will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 12
+  complete: true
+catalog:
+  sha256: 014397bd7eb19f74b1bc65144b0ffd185c047ac29a78986582b0e0d6ef0bab36
+  entries: 679
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 113
+    task: 404
+generation:
+  provider: integrate.nvidia
+  model: moonshotai/kimi-k3
+  requested_model: moonshotai/kimi-k3
+  endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-1
+    model: moonshotai/kimi-k3
+    provider: integrate.nvidia
+    request_sha256: 723988e723538102b604331b37bd39cdcb3ee26cc38b496225072dd17bf13ef6
+    response_sha256: a8cf23e394d2d0ca1f6e9f3e36a8208e017ddafdd2868cad2f4523ec65ee5542
+    response_id: chatcmpl-53873e92-5df0-420c-824a-4df6bf7de250
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: bff3b95fde4177a6b6e2a4c0d3304894b90857b205bfebec0bd623c7c0aa0fa5
+    response_sha256: 8bd26b3227e54edd81214ac5c2cdb11b4d9e1a72321edf8eb14348acbea8c108
+    response_id: chatcmpl-ba5db01ef787336d
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: bcafa2696b2d471c1a5faef97fd5c7836258e3b2a9490b992310b3569daad046
+    response_sha256: c1a1660cacf3a2381e01f4e207c84180e59df028bec4733c918b9ca9620f359e
+    response_id: chatcmpl-b6e8edf731b42736
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 14e4f1ac6bbadbfbe2ddd01be3aaea7576bab322c682291088d3330bfd441d8c
+    response_sha256: 0f55f2583a31e813fbb64b4a3582fa4f3033cfa96d6ecefc92105572ac4d62ca
+    response_id: chatcmpl-8b0997c24a71ea87
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: dc0ecead5ba9e8d38b0e945a0d4385a77921269fe5aeb230da8cd5e915823626
+    response_sha256: 7fae3079bc7a7abf13ec06dcb86ac85af8844afae3ed143d8b5d881f1d7c03ae
+    response_id: chatcmpl-b7b34e6f2e75f362
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 54bfcaa7bb66c94104f6268e4736f0722a4318860c58478d1efde4e31aaa3c60
+    response_sha256: cd096cd64b78a1da5d4e6b67fa33a374f9dc7d71c6963de4b0a80095e4b603d8
+    response_id: chatcmpl-bd219315a90eb380
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 54bfcaa7bb66c94104f6268e4736f0722a4318860c58478d1efde4e31aaa3c60
+    response_sha256: 4f8ee5b31ec967b4eaa350635f439692adcb3b1ebac004b6a63e80f6f43c5566
+    response_id: chatcmpl-aa6a963a54bdf0f8
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 2
+  - purpose: critic-round-2-sample-1
+    presented: 2
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 2
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 2
+    omitted: 1
+    malformed: 0
+proposals:
+- name: dpll_clause_search
+  summary: 'Drive DPLL over small CNF instances: propagate unit clauses, collapse pure literals, branch
+    with backtracking; answer a satisfying assignment, the literals in decision order, an UNSAT verdict,
+    or the first conflicting clause.'
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_scope-and-binding:P002
+      relationship: adjacent
+      overlap: Both perform backtracking search with unification/resolution, but SLD is goal-directed
+        and uses unification; DPLL is on clauses with unit propagation and pure literal elimination.
+    - id: proposal:k3_formal-logic:P008
+      relationship: adjacent
+      overlap: Both search for satisfiability/derivations, but one is grammar ambiguity, the other propositional
+        SAT.
+    - id: task:generated.k3_planning_backtracking_r1.pickup_delivery_route_search.pickup_delivery_route_search:PickupDeliveryRouteSearch
+      relationship: adjacent
+      overlap: Both backtrack to find feasible assignments, but one is NP-hard route planning with capacities,
+        the other is DPLL over Boolean variables.
+    substantive_difference: DPLL with unit propagation, pure literals, and chronological backtracking
+      is a specific SAT-solving algorithm not present in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: No neighbor implements DPLL for propositional satisfiability; adjacent tasks are resolution,
+      grammar search, or planning.
+    votes: 2/3
+    dissent:
+    - novel
+- name: prenex_skolem_clause_form
+  summary: Convert a first-order formula to clause form through negation normal form, prenex rearrangement,
+    arity-correct Skolemization, and distribution; answer the final clause set or the Skolem term introduced
+    for a given quantifier.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave11.scope_explication.scope_explication:ScopeExplication
+      relationship: adjacent
+      overlap: Both rearrange logical quantifier scope, but one is a text rewriting disambiguation while
+        the other is a syntactic transformation to clausal normal form with Skolemization.
+    - id: task:logic_semantics:LogicFormalization
+      relationship: adjacent
+      overlap: Both deal with first-order formulas, but formalization is translating natural language,
+        not normalizing an existing formula.
+    - id: proposal:k3_scope-and-binding:P002
+      relationship: adjacent
+      overlap: Both process first-order/Horn formulas, but SLD resolution operates on clauses and returns
+        substitutions, while this transforms formulas into clause form.
+    substantive_difference: The cognitive operation is the mechanical conversion of a formula through
+      NNF, prenex normalization, and arity-aware Skolemization into clause form, none of which the neighbors
+      perform.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Formula-to-clause (prenex/Skolem) is a distinct syntactic transformation not found among the
+      closest known proposals.
+    votes: 2/3
+    dissent:
+    - novel
+- name: mrp_gross_to_net_explosion
+  summary: 'Explode multi-level bills of material: net gross requirements against on-hand and scheduled
+    receipts, shift by lead time, apply the stated lot rule; answers are the planned-order releases or
+    one item''s release plan.'
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.hierarchical_rollup.hierarchical_rollup:HierarchicalRollup
+      relationship: different
+      overlap: Both aggregate values through a hierarchy, but MRP explodes BOMs level-by-level with netting,
+        lead-time shifting, and lot sizing, which is a distinct operations research procedure.
+    - id: task:generated.k3_hierarchical_recursive_r1.recursion_tree_cost_analysis.recursion_tree_cost_analysis:RecursionTreeCostAnalysis
+      relationship: adjacent
+      overlap: Both expand a tree and compute per-node quantities, but MRP applies inventory netting and
+        lot-sizing rules rather than summing recurrence work terms.
+    - id: task:generated.wave8.round_robin_completion.round_robin_completion:RoundRobinCompletion
+      relationship: different
+      overlap: Both simulate sequential processes with rules over time, but MRP is a multi-level inventory
+        explosion, not a scheduling simulation.
+    substantive_difference: MRP is a deterministic multi-level inventory explosion combining BOM traversal,
+      gross-to-net calculations, lead-time offsets, and lot-sizing rules; no known task in the library
+      combines these components.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: No known task performs multi-level BOM explosion with inventory netting and lot sizing as
+      a unified exact procedure.
+    votes: 2/2
+    dissent: []
+- name: nested_fare_protection_levels
+  summary: 'Set nested booking limits for fare classes sharing a cabin: walk each demand table to the
+    fractile where expected marginal revenue meets the next fare down; answers are the nested protection
+    levels or one class''s availability.'
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_counterfactual_r1.adjusted_winner_redivide.adjusted_winner_redivide:AdjustedWinnerRedivide
+      relationship: different
+      overlap: Both allocate limited resources to agents using thresholds, but adjusted_winner uses ratio-based
+        equalization, not fractile-based revenue management.
+    - id: task:generated.wave8.top_trading_cycles.top_trading_cycles:TopTradingCycles
+      relationship: adjacent
+      overlap: Both allocate items among agents via algorithmic rules, but TTC is a cycle-based exchange,
+        not a demand-table fractile optimization.
+    - id: proposal:k3_dynamic-structures:P006
+      relationship: different
+      overlap: Segment tree is a data structure, not pricing.
+    substantive_difference: Nested fare protection uses expected marginal revenue fractiles and nested
+      booking limits, a distinct revenue management procedure not present in the library.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: No known task computes nested booking limits via fractile-based expected marginal revenue
+      analysis.
+    votes: 2/3
+    dissent:
+    - variant
+- name: dynamic_lot_sizing_plan
+  summary: 'Plan production over a horizon with setup and holding costs: a forward pass weighs producing
+    now against carrying stock from an earlier setup; answers are production periods, minimal cost, or
+    stock crossing a given boundary.'
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_controlled-nli:P005
+      name: centering_transition_tracking
+      relationship: different
+      overlap: centering tracks discourse centers, not production planning
+    - id: gallery:dynamic_programming
+      name: dynamic_programming
+      relationship: adjacent
+      overlap: both use dynamic programming but one is inventory lot sizing with setup/holding costs,
+        the other is generic max-sum
+    - id: task:generated.wave8.round_robin_completion.round_robin_completion:RoundRobinCompletion
+      relationship: adjacent
+      overlap: both schedule over time but one is production lot sizing and the other is round-robin process
+        scheduling
+    substantive_difference: Dynamic lot sizing's forward pass weighing setup vs. holding costs is a distinct
+      inventory-optimization operation not present in discourse tracking or generic DP.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Novel lot-sizing optimization with setup/holding trade-off, distinct from discourse and scheduling
+      operations.
+    votes: 1/1
+    dissent: []
+- name: maxmin_waterfilling_allocation
+  summary: 'Share a scarce divisible resource by raising unsatisfied claims toward one level until caps
+    or supply bind: freeze saturated claims and re-level the remainder; answers are the allocation vector
+    or each claim''s freezing level.'
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_counterfactual_r1.adjusted_winner_redivide.adjusted_winner_redivide:AdjustedWinnerRedivide
+      relationship: different
+      overlap: Both divide divisible goods but adjusted_winner equalizes points via ratio transfers, while
+        waterfilling levels claims up to caps.
+    - id: task:generated.k3_shortcuts_fail_r1.envy_cycle_fair_allocation.envy_cycle_fair_allocation:EnvyCycleFairAllocation
+      relationship: adjacent
+      overlap: Both allocate resources fairly but one is indivisible goods via cycles, the other is a
+        continuous level-filling procedure.
+    - id: task:generated.wave9.rate_limit_token_bucket.rate_limit_token_bucket:RateLimitTokenBucket
+      relationship: different
+      overlap: Token bucket is queuing control, not fair allocation.
+    substantive_difference: Max-min waterfilling is a distinct convex allocation procedure (leveling claims
+      until saturation) with no library equivalent.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Waterfilling via frozen saturated claims is a unique algorithmic operation.
+    votes: 2/2
+    dissent: []
+- name: penalty_recomputed_transport_assignment
+  summary: Recompute row/column two-smallest-cost penalties each round, commit the largest-penalty line
+    to saturating its cheapest cell until exhaustion; answers are the allocation map, total cost, or the
+    final degenerate cell.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_hierarchical_recursive_r1.decision_tree_induction.decision_tree_induction:DecisionTreeInduction
+      relationship: adjacent
+      overlap: 'Both are greedy algorithms that repeatedly select a row/column or attribute based on computed
+        scores: decision tree picks max info gain; Vogel''s approximation picks max penalty. The operations
+        differ in the scoring and the domain (classification vs transportation).'
+    - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+      relationship: different
+      overlap: Only both involve aggregation over rows/columns; groupby partitions and aggregates, Vogel's
+        computes penalties per row/column.
+    - id: proposal:k3_algorithms-and-data-structures:P003
+      name: distance_based_belief_merge
+      relationship: different
+      overlap: Only both use costs/distance in a greedy procedure; belief merge scores assignments, Vogel's
+        allocates to cheapest cells.
+    substantive_difference: 'The operation is Vogel''s Approximation Method for transportation problems:
+      compute row/column two-smallest-cost penalties, commit to the largest-penalty line''s cheapest cell,
+      saturate supply/demand. This is a distinct greedy allocation algorithm.'
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Vogel's approximation is not represented in any neighbor; it is a distinct cost-based allocation
+      heuristic.
+    votes: 2/3
+    dissent:
+    - novel
+- name: mrp_order_release_explosion
+  summary: Explode multilevel BOM demand through lead-time offsets, on-hand/receipt netting and lot-for-lot,
+    fixed, or period-quantity rules; answers are planned order releases, ending inventories, or first
+    shortage period.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.rate_limit_token_bucket.rate_limit_token_bucket:RateLimitTokenBucket
+      relationship: adjacent
+      overlap: 'Both simulate inventory/consumption over time: token bucket refills and consumes tokens;
+        MRP nets demand against on-hand receipts with lead time offsets. But MRP explosion has multi-level
+        BOM structure and lot-sizing rules, which are absent in token bucket.'
+    - id: task:generated.wave8.round_robin_completion.round_robin_completion:RoundRobinCompletion
+      relationship: different
+      overlap: Both are time-sequenced process simulations; round-robin CPU scheduling has no BOM explosion
+        or lot-size rules.
+    - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+      relationship: different
+      overlap: Only both are discrete-event simulations; MRP explosion uses lead-time offset and netting,
+        event queue uses dynamic event handlers.
+    substantive_difference: "The operation is multi-level BOM explosion with lead-time offsets, on-hand/receipt\
+      \ netting, and lot-sizing rules, producing planned order releases and inventory trajectories \u2014\
+      \ not present in any neighbor."
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: The cognitive operation is a specialized supply-chain planning calculation with a unique combination
+      of BOM recursion and lot sizing.
+    votes: 2/2
+    dissent: []
+- name: tiered_price_lot_clipping
+  summary: For stepped unit prices, form each tier's unconstrained economic lot, clip into its price interval,
+    and compare total costs at surviving tiers and breakpoints; answers are optimal lot size, total cost,
+    and the losing breakpoints.
+  id: P009
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_hierarchical_recursive_r1.decision_tree_induction.decision_tree_induction:DecisionTreeInduction
+      relationship: adjacent
+      overlap: 'Both use greedy selection among alternatives based on computed scores: decision tree picks
+        max info gain per node; tiered price lot clipping evaluates unconstrained lot sizes clipped to
+        intervals and compares costs. But the core operation (price-break lot sizing) is different.'
+    - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+      relationship: different
+      overlap: Only both involve exact numerical computations with discrete decisions; no shared operation.
+    - id: task:generated.k3_invariants_r1.ordered_greedy_coloring.ordered_greedy_coloring:OrderedGreedyColoring
+      relationship: different
+      overlap: Both are greedy deterministic computations, but coloring assigns smallest colors, whereas
+        price lot clipping computes economic order quantities per tier.
+    substantive_difference: 'The operation is a price-break lot sizing heuristic: for each tier, compute
+      unconstrained lot size, clip to the interval, and compare total costs at clip points and breakpoints
+      to select the optimum. This is distinct from any neighbor.'
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: The proposal captures a distinct inventory-management calculation not represented in any closest
+      known neighbor.
+    votes: 2/3
+    dissent:
+    - novel
+- name: pivot_rotation_fixture_building
+  summary: Rotate all but one team around a fixed pivot to emit round pairings, set venues by position
+    parity, optionally mirror rounds for a double season; answers are a round's pairings, a team's home/away
+    string, and break count.
+  id: P010
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_shortcuts-fail:P011
+      name: rotation_system_face_tracing
+      relationship: adjacent
+      overlap: 'Both involve deterministic round-robin permutations: face tracing walks darts by a next-edge
+        rule; fixture building rotates teams around a pivot. The operations differ (permutation generation
+        vs face enumeration).'
+    - id: task:generated.wave9.round_robin_scheduling.round_robin_scheduling:RoundRobinScheduling
+      relationship: different
+      overlap: Only both have 'round robin' in name; scheduling is CPU time-slicing, fixture building
+        generates sports pairings.
+    - id: task:generated.k3_counterfactual_r1.consistent_hash_ring_churn.consistent_hash_ring_churn:ConsistentHashRingChurn
+      relationship: different
+      overlap: Only both are deterministic simulations of discrete systems with positions/ordering; no
+        shared operation.
+    substantive_difference: The operation is generating round-robin tournament schedules by rotating teams
+      around a fixed pivot and setting venues by position parity; this combinatorial schedule generation
+      is distinct from face tracing or CPU scheduling.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Round-robin fixture building with home/away parity and break counting is a novel combinatorial
+      construction task.
+    votes: 2/3
+    dissent:
+    - novel
+- name: savings_ordered_route_merging
+  summary: Merge single-stop routes by descending depot savings under capacity, joining only at route
+    ends and flipping orientation as needed; answers are the final routes, total distance, or which profitable
+    merge was blocked first.
+  id: P011
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_dependence_relevance_r1.agglomerative_linkage_merge.agglomerative_linkage_merge:AgglomerativeLinkageMerge
+      relationship: adjacent
+      overlap: 'Both iteratively merge elements/clusters based on distance/savings: agglomerative merges
+        closest clusters; savings algorithm merges routes by largest depot savings under capacity. The
+        operations differ: cluster linkage vs vehicle routing savings.'
+    - id: task:generated.k3_planning_backtracking_r1.pickup_delivery_route_search.pickup_delivery_route_search:PickupDeliveryRouteSearch
+      relationship: different
+      overlap: Both involve routing, but pickup-delivery finds shortest feasible order by search; savings
+        algorithm is a greedy merge heuristic.
+    - id: proposal:k3_algorithms-and-data-structures:P003
+      name: distance_based_belief_merge
+      relationship: different
+      overlap: Both merge items based on distance/savings, but belief merging aggregates models by distance,
+        not vehicle routing.
+    substantive_difference: 'The operation is the Clarke-Wright savings algorithm for vehicle routing:
+      compute depot savings, sort, merge routes by largest savings under capacity and orientation constraints,
+      producing final routes. This is distinct from agglomerative clustering or shortest-path search.'
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: The savings-based route merging heuristic is a novel vehicle routing operation not present
+      in the neighbors.
+    votes: 2/2
+    dissent: []
+- name: unary_resource_edge_finding
+  summary: 'Propagate load on a unary resource: from release dates, deadlines and durations, run overload
+    and edge-finding passes that tighten time windows; answers are a task''s tightened bound or the subset
+    forcing an update.'
+  id: P012
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_operations-research:P008
+      relationship: adjacent
+      overlap: Both propagate quantities subject to time or resource constraints, but C001 uses a specific
+        constraint-propagation algorithm on unary resources (edge-finding) while MRP explodes demand through
+        lead times and lot sizing rules.
+    - id: proposal:k3_rule-induction:P005
+      relationship: different
+      overlap: Both iterate a deterministic process on a finite set, but C001 applies iterative time-window
+        tightening on jobs, whereas functional graph cycle finding locates entry into a cycle under function
+        iteration.
+    - id: proposal:k3_operations-research:P011
+      relationship: different
+      overlap: Both operate on resource-constrained scheduling, but C001 uses edge-finding to tighten
+        time windows, while route merging constructs vehicle routes by savings and capacity checks.
+    substantive_difference: C001 implements a specialized constraint propagation technique (overload and
+      edge-finding) to deduce feasible time windows on a unary resource, a distinct algorithmic procedure
+      not found in any nearest neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: This is a new constraint-propagation operation beyond existing neighbors, with clear modes
+      and exact oracles.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: closure_frame_chronicle
+  summary: Interpret nested functions whose captures bind shared frames or copy bindings, with later rebinding
+    and delayed calls; answer queried values, which closure sees an update, or which frame changes last.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.closure_capture_resolution.closure_capture_resolution:ClosureCaptureResolution
+    relationship: same_operation
+    overlap: Both track closures that capture lexical variables, then observe the captured value after
+      later rebinding and delayed invocation, reporting what each closure sees.
+  - id: proposal:k3_language-implementation:P001
+    relationship: adjacent
+    overlap: Both handle suspended execution frames with mutable bindings and re-entry, but generator
+      frames are resumed explicitly via protocol while closures are immutable capture frames unless redone.
+  - id: proposal:k3_controlled-nli:P003
+    relationship: different
+    overlap: Only superficial use of 'frames'; one is language semantics and the other is natural language
+      spatial reasoning.
+  reason: 0/3 samples judged it novel; The core operation of tracking captured bindings through closure
+    creation and rebinding is the same as closure_capture_resolution; sharing/copy is a parameter.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: automaton_word_counting
+  summary: Count the words an automaton accepts at a given length by subset dynamic programming over transition
+    tables, including epsilon-NFAs and products of two machines; answer an exact count at one length or
+    totals across a range.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.nfa_subset_construction.nfa_subset_construction:NfaSubsetConstruction
+    relationship: adjacent
+    overlap: both process NFAs but one determinizes, the other counts accepted words via DP.
+  - id: task:generated.k3_relational_structures_r1.tree_subset_counting.tree_subset_counting_dp:TreeSubsetCounting
+    relationship: adjacent
+    overlap: counting via DP, but over trees vs. automata.
+  - id: task:generated.k3_novel_composition_r1.topological_sort_count.topological_sort_count:TopologicalSortCount
+    relationship: adjacent
+    overlap: counting combinatorial objects via DP; different structures.
+  reason: 1/3 samples judged it novel; DP over automaton states is a standard extension, not a new operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: timestamp_ordering_execution
+  summary: 'Execute basic timestamp ordering over interleaved transaction read/write streams: maintain
+    per-item read and write timestamps, restart stale operations and apply Thomas''s write rule; answers
+    are surviving operations or the first restart.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.linearizability_check.linearizability_check:LinearizabilityCheck
+    relationship: variant
+    overlap: resolve interleaved transaction read/write operations under concurrency control; both determine
+      which operations survive or are restarted under consistency rules.
+  - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+    relationship: adjacent
+    overlap: process timestamped events with scheduling rules; distinct domain (event queues vs. transactions)
+      and output regimes.
+  - id: task:generated.wave8.lamport_clock.lamport_clock:LamportClock
+    relationship: adjacent
+    overlap: involves timestamps and ordering, but Lamport clock computes causal timestamps rather than
+      deciding visibility/restarts.
+  reason: 1/3 samples judged it novel; Overlaps with linearizability checking in the operation of resolving
+    interleaved transactions, only adding timestamp-specific mechanics.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: exception_dispatch_trace
+  summary: 'Propagate throws through nested try/catch/finally with typed handlers, rethrows and returns:
+    unwind frames, run each finally during unwind, resume after the matching catch; answers are the catching
+    handler or the finally execution order.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:UNBUILT:P015
+    relationship: same_operation
+    overlap: Both execute nested try/catch/finally semantics with typed handlers, rethrows, and returns,
+      reporting the matching handler or final value/uncaught exception during unwinding.
+  - id: proposal:k3_language-implementation:P001
+    relationship: adjacent
+    overlap: Both handle control flow through frames, but one is exception unwinding and the other is
+      generator resumption.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: adjacent
+    overlap: Both are state-transition traces, but one processes abstract events and the other exception
+      dispatch.
+  reason: 0/3 samples judged it novel; The same exception-unwinding semantics are already specified in
+    UNBUILT:P015; this is a duplicate.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: datalog_least_model
+  summary: Evaluate a Datalog program bottom-up over given base facts, firing rules with satisfied bodies
+    until the derived set stabilizes; answer the least model, whether a goal fact is derived, or the round
+    a queried fact first appears.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_invariants_r1.stratified_datalog_evaluation.stratified_datalog_evaluation:StratifiedDatalogEvaluation
+    relationship: same_operation
+    overlap: Both evaluate Datalog programs by bottom-up saturation until a fixed point, deriving ground
+      facts from base facts, with the answer being the set of derived facts or membership of a queried
+      fact.
+  - id: task:generated.wave9.program_slice_dependencies.program_slice_dependencies:ProgramSliceDependencies
+    relationship: adjacent
+    overlap: Both involve a fixed-point closure over dependencies from a queried target, but slicing is
+      backward-only and does not use rule firing.
+  - id: gallery:multistep_abduction
+    relationship: adjacent
+    overlap: Both involve deriving facts from rules and base facts, but abduction is inverse (missing
+      premises to reach a goal) and one-shot, not a full fixed point.
+  reason: 0/3 samples judged it novel; The bottom-up fixed-point derivation of a Datalog program is exactly
+    the existing stratified Datalog evaluation task, so this is a variant with minor added output modes.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: dfa_partition_minimization
+  summary: Refine a DFA's state partition by transition signatures until stable, over machines with dead
+    or unreachable states; answer the equivalence classes, the minimized table, or a shortest distinguishing
+    word for a queried pair.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+    relationship: same_operation
+    overlap: Both compute Moore partition refinement over DFAs, merging states by their transition signatures
+      and outputting the canonical partition.
+  - id: task:generated.k3_shortcuts_fail_r1.color_refinement_signature.color_refinement_signature:ColorRefinementSignature
+    relationship: adjacent
+    overlap: Both refine a partition by neighbor signatures, but color refinement operates on undirected
+      graphs and does not distinguish accepting states.
+  - id: task:generated.wave9.nfa_subset_construction.nfa_subset_construction:NfaSubsetConstruction
+    relationship: adjacent
+    overlap: Both transform automata into a canonical form, but subset construction determinizes, it does
+      not merge equivalent states.
+  reason: 0/3 samples judged it novel; This is the exact same Moore partition-refinement minimization
+    as the existing dfa_minimization task.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: link_symbol_resolution
+  summary: 'Resolve symbols across objects and archives: strong definitions beat weak, commons merge,
+    archive members are pulled only to satisfy undefined names in scan order; answers are each reference''s
+    defining module or the unresolved set.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_language-implementation:P004
+    relationship: same_operation
+    overlap: 'Both define the linker algorithm: process object files and archives in scan order, resolve
+      strong/weak/common symbol definitions, extract archive members only to satisfy unresolved references,
+      and output the defining module per reference or the unresolved set.'
+  - id: task:generated.wave8.lexical_scope_resolution.lexical_scope_resolution:LexicalScopeResolution
+    relationship: adjacent
+    overlap: Both resolve identifier/reference to its defining declaration, but one is a static lexical
+      scope and the other a link-time flat symbol table with archive extraction.
+  - id: gallery:coreference
+    relationship: different
+    overlap: Resolving references by collapsing candidates into equivalence classes is a surface metaphor;
+      no shared solver.
+  reason: 0/3 samples judged it novel; This is the same linker symbol resolution operation already proposed
+    as archive_symbol_binding_order, with the same answer modes.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: snapshot_visibility_window
+  summary: Construct versioned rows from begin, read, write, commit, and abort events with snapshot cuts,
+    commit order, retries, and write-write collisions; answer visible key versions or the first forced
+    restart.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:external:P033
+    relationship: same_operation
+    overlap: Both construct versioned rows from transaction begin/read/write/commit/abort events and answer
+      which version is visible to a queried snapshot using commit order.
+  - id: task:generated.wave8.mvcc_visibility.mvcc_visibility:MVCCVisibility
+    relationship: same_operation
+    overlap: Given transaction timestamps and row versions, output the version visible to a queried snapshot;
+      the proposal adds retries and collisions but the core visibility computation is identical.
+  - id: task:generated.wave9.serializability.transaction_serializability:Serializability
+    relationship: adjacent
+    overlap: Both reason about transaction interleavings, but serializability checks history equivalence,
+      not row visibility.
+  reason: 0/3 samples judged it novel; Snapshot-visible version computation is already the MVCCVisibility
+    task and the same external proposal; the added retries are surface details.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: channel_protocol_residues
+  summary: Advance send, receive, choose, offer, delegate, recurse, and close actions over typed channels
+    among interleaved participants; answer residual endpoint protocols, who may move, or first protocol
+    break.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_novel_composition_r1.session_type_projection.session_type_projection:SessionTypeProjection
+    relationship: same_operation
+    overlap: 'Both manipulate multiparty session types: the projection builds an endpoint protocol from
+      a global type, while this proposal advances a choreography by actions and tracks residual protocols,
+      both using session-type syntax (send/recv/select/offer/recursion).'
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: adjacent
+    overlap: Both drive state machines through events, but one is a generic labeled transition system,
+      the other session types with channel endpoints.
+  - id: proposal:k3_formal-logic:P002
+    relationship: adjacent
+    overlap: Both track resource/ownership states as linear protocols, but one is borrowing/ownership,
+      the other session typing.
+  reason: 0/3 samples judged it novel; Advancing a session type by participant actions is the same cognitive
+    operation as projecting/simulating session types, just in a dynamic direction.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: ordered_pattern_coverage
+  summary: Drive scrutinees through ordered constructor patterns with aliases, ranges, wildcards, or-branches,
+    and guards, tracking residual spaces; answer selected arm, first redundant arm, or uncovered constructors.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.pattern_match_exhaustiveness.pattern_match_exhaustiveness:PatternMatchExhaustiveness
+    relationship: same_operation
+    overlap: Both inspect a finite algebraic datatype, analyze pattern clauses for constructor coverage
+      and redundancy, and answer uncovered constructors or redundancy.
+  - id: proposal:k3_language-implementation:P006
+    relationship: adjacent
+    overlap: Both order-dependent pattern/constructor processing in a language semantics, but initialization
+      is about field init order, not exhaustive coverage.
+  - id: proposal:k3_dynamic-structures:P008
+    relationship: adjacent
+    overlap: Both match structured patterns, but tree pattern matching counts occurrences of a fixed pattern,
+      not residual space coverage over constructors.
+  reason: 0/3 samples judged it novel; The pattern-coverage operation is the same as pattern_match_exhaustiveness,
+    only with richer pattern syntax and additional answer modes.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: shadow_price_range_analysis
+  summary: At a small linear program's optimal corner, solve the binding duals for shadow prices and ratio-test
+    right-hand-side movement ranges; answers are the price vector, an allowable-change limit, or the re-priced
+    optimum.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+    relationship: different
+    overlap: transitive reduction is about graph edges, not LP duals
+  - id: proposal:k3_representation-specific:P006
+    name: backdoor_adjustment_selection
+    relationship: different
+    overlap: backdoor adjustment is causal inference, not LP sensitivity
+  - id: task:generated.k3_counterfactual_r1.vcg_pivotal_payments.vcg_pivotal_payments:VcgPivotalPayments
+    relationship: adjacent
+    overlap: both compute prices and allocations but one is auction theory, the other is LP shadow prices
+  reason: 1/3 samples judged it novel; Variant of linear programming duality and sensitivity analysis,
+    a well-known operation not novel in this library.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: divisor_apportionment_rounds
+  summary: 'Apportion seats under named divisor rules (Jefferson, Webster, Huntington-Hill): form quotients
+    from population and seats held, award the next seat to the largest quotient; answers are final seat
+    counts or a stated round''s winner.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.dhondt_apportionment.dhondt_apportionment:DhondtApportionment
+    relationship: variant
+    overlap: Both allocate seats via largest-quotient divisor rules; this generalizes D'Hondt to Jefferson,
+      Webster, and Huntington-Hill variants.
+  - id: task:generated.wave8.approval_voting_winner.approval_voting_winner:ApprovalVotingWinner
+    relationship: adjacent
+    overlap: Both tally votes/counts to assign winners, but apportionment uses quotient rules across parties,
+      not approval ballots.
+  - id: task:generated.k3_counterfactual_r1.adjusted_winner_redivide.adjusted_winner_redivide:AdjustedWinnerRedivide
+    relationship: different
+    overlap: Adjusted winner divides goods, not legislative seats.
+  reason: 0/2 samples judged it novel; The divisor apportionment procedure is a known variant of D'Hondt
+    apportionment.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/2
+- name: finite_horizon_bellman_backup
+  summary: 'Run finite-horizon dynamic programming over small stochastic systems: sweep backward, scoring
+    actions by reward plus expected discounted successor value; answers are a state''s value, its chosen
+    action, or the full policy.'
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:dynamic_programming
+    relationship: variant
+    overlap: Both evaluate a dynamic program over a state space, but the gallery's DP reconstructs an
+      optimal state sequence while this proposal performs a backward sweep over stochastic actions to
+      compute values and policies.
+  - id: task:generated.wave12.probability_tree_marginal.probability_tree_marginal:ProbabilityTreeMarginal
+    relationship: adjacent
+    overlap: Both propagate probabilities over a decision tree/horizon, but probability_tree_marginal
+      computes a marginal probability path, not a value-optimal policy.
+  - id: task:generated.k3_relational_structures_r1.tree_subset_counting.tree_subset_counting_dp:TreeSubsetCounting
+    relationship: different
+    overlap: Both use a bottom-up DP, but tree_subset_counting counts combinatorial structures on a tree,
+      not optimizes a stochastic decision process.
+  reason: 0/2 samples judged it novel; The backward-sweep value iteration is a direct re-parameterization
+    of the existing dynamic_programming task.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/2
+- name: pattern_clause_analysis
+  summary: Run ordered constructor patterns, nested with or-branches and guards, under first-match semantics,
+    then audit for shadowed rows and uncovered constructor sets; answers are the firing clause with bindings
+    or the missing cases.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.pattern_match_exhaustiveness.pattern_match_exhaustiveness:PatternMatchExhaustiveness
+    relationship: variant
+    overlap: Both analyze constructor pattern coverage; this extends exhaustiveness to shadowed rows and
+      firing clauses with bindings.
+  - id: proposal:k3_scope-and-binding:P002
+    relationship: adjacent
+    overlap: Both match against structural clauses with bindings, but SLD resolution is unification-based
+      backtracking, not first-match pattern selection.
+  - id: proposal:k3_operations-research:P001
+    relationship: different
+    overlap: DPLL is boolean satisfiability, not pattern matching.
+  reason: 0/2 samples judged it novel; It is a superset of the known pattern_match_exhaustiveness task
+    with additional auditing features.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: generator_resume_state_trace
+  summary: Advance generators through yield, send, delegation, return, and close steps while preserving
+    their suspended locals; report the emitted sequence, a queried suspended state, or the eventual return.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_language-implementation:P001
+    relationship: same_operation
+    overlap: Both trace generator execution across yield, send, delegation, and close semantics, preserving
+      suspended state and reporting emissions and final returns.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: adjacent
+    overlap: Both execute stateful control flow, but protocol state machine uses event transitions and
+      guards, not generator yields.
+  - id: proposal:k3_paraphrase-equivalence:P002
+    relationship: different
+    overlap: Tree transducers are not generators.
+  reason: 0/2 samples judged it novel; This is a verbatim duplicate of existing proposal k3_language-implementation:P001.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/2
+- name: lindley_wait_propagation
+  summary: 'Propagate waits through a single-server queue via the Lindley recursion over arrival and service
+    sequences: carry each wait forward, marking busy periods; answers are a queried wait, busy-period
+    spans, or peak backlog.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.round_robin_scheduling.round_robin_scheduling:RoundRobinScheduling
+    relationship: variant
+    overlap: Both propagate waiting times in a queue; Lindley recursion is a closed-form for the same
+      G/G/1 wait computation as round-robin scheduling.
+  - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+    relationship: variant
+    overlap: Both simulate a queue with arrivals and service; the Lindley recursion is a specific implementation
+      of the same wait propagation.
+  - id: proposal:k3_formal-semantics:P001
+    relationship: different
+    overlap: Both handle event sequences but one is for gate delays, the other for queue waits.
+  reason: 1/3 samples judged it novel; Lindley recursion is a variant of existing queue delay computation,
+    not a distinct cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: finite_structure_satisfaction
+  summary: 'Evaluate first-order formulas over finite structures given as a domain plus tables: nested
+    quantifiers, equality, Boolean connectives; answer a sentence''s truth, tuples satisfying an open
+    formula, or an existential witness.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+    relationship: same_operation
+    overlap: Both evaluate nested first-order formulas with EXISTS/ALL quantifiers over a finite domain
+      with tables; both return truth, witness, or satisfying tuples. The proposal extends to open formulas
+      and arbitrary tables, but the core operation (finite model checking of FO formulas) is identical.
+  - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+    relationship: different
+    overlap: Only both are model-checking; temporal logic evaluates formulas over traces, while FO model
+      checking is over static structures with quantifiers.
+  - id: proposal:k3_formal-semantics:P004
+    name: generalized_quantifier_truth
+    relationship: adjacent
+    overlap: Both evaluate quantified sentences over finite models, but generalized quantifiers (most,
+      few) are not standard first-order quantifiers; the proposal uses FO quantifiers only.
+  reason: 0/3 samples judged it novel; This is a cosmetic and size variant of the existing finite model
+    quantifier task, with same operation and output types.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: positional_weight_station_packing
+  summary: Sum each task's own time plus all successors', sort by positional weight, pack tasks into stations
+    greedily while precedence and cycle time allow; answers are station rosters, idle totals, and the
+    resulting balance delay.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.critical_path_analysis.critical_path_analysis:CriticalPathAnalysis
+    relationship: variant
+    overlap: Both compute times based on precedence; C004 extends to positional weights and station packing,
+      but the core scheduling calculation is similar.
+  - id: plan:WAVE6:S62
+    relationship: adjacent
+    overlap: Weighted interval scheduling focuses on choosing jobs, not packing into stations with precedence;
+      different output.
+  - id: task:generated.k3_representation_specific_r1.tower_block_removal.tower_block_removal:TowerBlockRemoval
+    relationship: different
+    overlap: No shared operation; tower removal is physical stability, not scheduling.
+  reason: 1/3 samples judged it novel; The greedy packing heuristic is a new surface, but it reuses the
+    same precedence/time computation as critical path analysis.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: coalition_share_margin_enumeration
+  summary: 'Divide a coalition''s value by averaging marginal contributions: enumerate member orderings,
+    charge each entrant the jump in coalition worth it causes, total and divide; answers are one member''s
+    share or the raw contribution sums.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_rule_induction_r1.shapley_value_marginal_contributions.shapley_value_marginal_contributions:ShapleyValueMarginalContributions
+    relationship: same_operation
+    overlap: Both enumerate all permutations of players, compute each player's marginal contribution as
+      the change in coalition value when they join, and average/sum these across permutations. The proposal
+      also averages, and the output is individual shares or contribution sums. Identical operation.
+  - id: task:generated.wave9.groupby_aggregation.groupby_aggregation:GroupbyAggregation
+    relationship: different
+    overlap: Only both involve aggregation; groupby partitions rows and aggregates with sum/count, while
+      Shapley averages marginal contributions over permutations.
+  - id: task:generated.k3_dependence_relevance_r1.agglomerative_linkage_merge.agglomerative_linkage_merge:AgglomerativeLinkageMerge
+    relationship: different
+    overlap: Both iteratively merge elements, but one merges clusters by linkage, the other enumerates
+      permutations to compute marginals.
+  reason: 0/3 samples judged it novel; Duplicate of the existing Shapley value marginal contributions
+    task; surface changes in output format do not alter the operation.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: cumulative_edge_bound_tightening
+  summary: 'Apply edge finding to interval tasks sharing one resource: sum subset energies over earliest-start/latest-end
+    windows, tighten bounds, or prove overload; answers are tightened windows, certifying subsets, or
+    the clash found.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+    relationship: variant
+    overlap: Both operate on intervals and compute derived quantities; C002 adds energy constraints and
+      edge-finding pruning to the same interval data structure.
+  - id: task:generated.wave9.abstract_interval_analysis.abstract_interval_analysis:AbstractIntervalAnalysis
+    relationship: variant
+    overlap: Both propagate intervals through constraints; C002 generalizes to resource cumulative logic,
+      but the interval propagation operation is shared.
+  - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+    relationship: adjacent
+    overlap: Both handle interval arithmetic but one is continuous numeric intervals, the other discrete
+      scheduling intervals with resource energy.
+  reason: 1/3 samples judged it novel; Cumulative edge finding is an interval propagation variant on the
+    same underlying interval operation as existing tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: facility_member_swap_descent
+  summary: From a chosen facility set, evaluate every member-out/candidate-in swap's exact change in nearest-facility
+    distance, apply the best improving swap, repeat to local optimum; answers are swap sequence, final
+    set, and cost.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_operations-research:P011
+    relationship: different
+    overlap: Both use iterative local improvement, but P011 merges routes by a descending savings rule
+      with capacity constraints, producing route polygons, while C001 swaps facility members one at a
+      time to minimize nearest-facility distance, producing a swap sequence and final set.
+  - id: proposal:k3_operations-research:P007
+    relationship: different
+    overlap: Both involve assignment optimization, but P007 applies Vogel's penalty rule for transportation
+      allocation with cost matrix, whereas C001 performs greedy best-improvement swapping on facility
+      sets with distance metric.
+  - id: proposal:k3_dynamic-structures:P005
+    relationship: different
+    overlap: Both trace a sequence of swaps, but P005 replays line-crossing events as adjacent swaps to
+      produce a permutation, whereas C001 evaluates every member-out/candidate-in swap's exact cost change
+      and greedily chooses the best improving swap until local optimum.
+  reason: '0/2 samples judged it novel; Operationally new: greedy best-improving swap descent on facility
+    sets with exact nearest-distance updates and swap sequence output.'
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+pool:
+- name: window_frame_cell_evaluation
+  summary: Evaluate row-valued queries over partitions and ordered keys using lag/lead, rank, and running
+    or range frames with ties and null policy; report values at queried cells or a row's frame membership.
+- name: sequent_proof_search
+  summary: Search for a propositional sequent-calculus derivation, applying invertible rules freely and
+    branching on disjunctive ones; answer derivability, a countermodel valuation from an open leaf, or
+    the leaf count of the finished tree.
+- name: transportation_potential_pricing
+  summary: 'Work a supply-demand shipping plan: derive row and column potentials from the occupied cells,
+    price the empty ones, then shift flow around the best cell''s loop; answers are reduced costs, the
+    loop route, or cost after stated pivots.'
+- name: reduced_matrix_tour_branching
+  summary: 'Branch-and-bound small tours on reduced matrices: subtract row/column minima, rank zeros by
+    penalty, branch on the top zero, re-reduce and prune; answers are optimal tour value, branch order,
+    or best live lower bound.'
+- name: binary_weight_incidence_reordering
+  summary: Treat incidence matrix rows then columns as binary numbers, sort by decreasing weight, and
+    iterate until stable, revealing machine cells; answers are final row/column permutations, block count,
+    or exceptional-bit count.
+- name: externality_priced_bundle_awards
+  summary: Enumerate disjoint bundle awards over small bid sets, pick the welfare-maximizing one, and
+    set each winner's payment to the welfare lost by deleting its bid; answers are winners, payments,
+    or the excluded-bidder externality.
+- name: reorder_point_lag_pipeline_replay
+  summary: 'Replay demands against a reorder point with lead-time pipeline: fire orders as inventory position
+    crosses, receive after the lag, and carry backlogs; answers are order dates/sizes, stockout periods,
+    or ending service level.'
+- name: integer_branch_and_bound_trace
+  summary: 'Explore small integer programs under a stated branching rule: bound nodes by fractional relaxation,
+    prune by bound or infeasibility, update the incumbent; answers are visit order, first pruned node,
+    or final incumbent value.'
