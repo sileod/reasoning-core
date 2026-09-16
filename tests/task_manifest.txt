@@ -21,6 +21,8 @@ arithmetic_coding_intervals
 arithmetics
 articulation_bridges
 articulation_vertices
+aspectual_class_entailment
+attribute_grammar_evaluation
 b_tree_promoted_key
 backtracking_search
 bayesian_conditioning
@@ -181,12 +183,14 @@ group_homomorphism_check
 groupby_aggregation
 grundy_values
 havel_hakimi_realization
+head_splicing_round_closure
 heap_key_update
 heap_simulation
 hereditary_base_rewrite
 hidden_state_filtering
 hierarchical_rollup
 hindley_milner_inference
+hyperedge_replacement_derivation
 incremental_build_rebuild_set
 incremental_interpretation
 info_seeking
@@ -233,6 +237,7 @@ lossless_summary
 lsm_level_compaction_trace
 lyndon_factorization_duval
 lz77_tokenization
+markov_algorithm
 markov_chain_distribution
 math_word_problem
 matrix_characteristic_polynomial

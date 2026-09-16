@@ -64,11 +64,18 @@ would exit before the first step of every trial.
 **Measure before arming it**, and read the measurement carefully. A fallback makes Harness
 Link route every request through a local LiteLLM bridge, including the requests that never
 fall back. Over 99 trials in four waves it rescued 3 (two of which then failed validation)
-and killed 2 outright on `LiteLLM bridge did not become HTTP-ready`, which is the only
-cost directly attributable to it. Those waves also ran 60% successful against 74% over the
-321 trials before them, and 18% `timed_out` against 3% -- but two of the four armed waves
-timed out not at all, and every timeout falls inside one two-hour window, so this looks
-like a slow afternoon on the primary that the bridge is only suspected of worsening.
+and killed 2 outright on `LiteLLM bridge did not become HTTP-ready`. That is the whole
+case against it, and it is thin -- roughly break-even, which is why it ships off.
+
+It is *not* the reason waves time out. That is the clock:
+
+    07-15 UTC   28 timed out of 150 trials   (19%)
+    15-07 UTC    4 timed out of 351 trials   ( 1%)
+
+Trials are nineteen times likelier to burn their full wall clock during the working day,
+armed or disarmed -- the first disarmed daytime wave timed out at 21% after six clean
+nights. Blaming the bridge for this took three passes to stop doing; a provider under
+load and a change you just made look identical from inside one wave.
 
 Count those numbers with `trajectory.trial_directories`, never with a raw glob over
 `run.json`: a retried trial leaves its dead attempt behind as `<trial>.attempt<N>-<reason>`

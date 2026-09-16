@@ -1,0 +1,486 @@
+version: 1
+name: k3_synthetic_grammars_r1
+proposal_wave: k3_synthetic-grammars
+defaults:
+  base_ref: ecd176bdc60fdbd65570b0265cea240158cd6abe
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: aspectual_class_entailment_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v1
+  instruction: |-
+    Author a new task from scratch: aspectual_class_entailment_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify event predicates as state, activity, accomplishment, or achievement using in/for-adverbial, progressive-entailment, and stop-test diagnostics, then verdict the licensed inferences; answers are the class plus those verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v1
+  design_choice: Use single-sentence predicates with explicit adverbial/progressive/stop-test probes,
+    answer as class plus three yes/no verdicts in fixed order.
+- id: P001v2
+  hypothesis: P001
+  idea: aspectual_class_entailment_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v2
+  instruction: |-
+    Author a new task from scratch: aspectual_class_entailment_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify event predicates as state, activity, accomplishment, or achievement using in/for-adverbial, progressive-entailment, and stop-test diagnostics, then verdict the licensed inferences; answers are the class plus those verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v2
+  design_choice: Present a short discourse context where the predicate appears, and require the class
+    plus a single aggregate verdict on whether all licensed inferences hold.
+- id: P001v3
+  hypothesis: P001
+  idea: aspectual_class_entailment_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v3
+  instruction: |-
+    Author a new task from scratch: aspectual_class_entailment_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify event predicates as state, activity, accomplishment, or achievement using in/for-adverbial, progressive-entailment, and stop-test diagnostics, then verdict the licensed inferences; answers are the class plus those verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/aspectual_class_entailment_v3
+- id: P002v1
+  hypothesis: P002
+  idea: head_splicing_round_closure_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v1
+  instruction: |-
+    Author a new task from scratch: head_splicing_round_closure_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run rounds of Head splicing over a starter string set: match paired site patterns in two strings, cut and exchange flanks, pool recombinants; answer the sorted new strings after k rounds or a target-membership verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v1
+  design_choice: Site patterns are fixed-length palindromic pairs; instances vary only in starter strings
+    and round count, with answer as sorted recombinants.
+- id: P002v2
+  hypothesis: P002
+  idea: head_splicing_round_closure_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v2
+  instruction: |-
+    Author a new task from scratch: head_splicing_round_closure_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run rounds of Head splicing over a starter string set: match paired site patterns in two strings, cut and exchange flanks, pool recombinants; answer the sorted new strings after k rounds or a target-membership verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v2
+  design_choice: Sites are variable-length with degenerate bases; answer is yes/no whether a given target
+    string appears after k rounds.
+- id: P002v3
+  hypothesis: P002
+  idea: head_splicing_round_closure_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v3
+  instruction: |-
+    Author a new task from scratch: head_splicing_round_closure_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Run rounds of Head splicing over a starter string set: match paired site patterns in two strings, cut and exchange flanks, pool recombinants; answer the sorted new strings after k rounds or a target-membership verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/head_splicing_round_closure_v3
+- id: P003v1
+  hypothesis: P003
+  idea: trace_monoid_canonization_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v1
+  instruction: |-
+    Author a new task from scratch: trace_monoid_canonization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Canonize words under partial commutation: from a stated commutation relation, bubble independent adjacent pairs to a canonical word or strip Foata layers; answer the canonical word, the layer list, or the class size.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v1
+  design_choice: 'Answer format varies: output the canonical word, a space-separated list of Foata layers,
+    or an integer class size, chosen per instance.'
+- id: P003v2
+  hypothesis: P003
+  idea: trace_monoid_canonization_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v2
+  instruction: |-
+    Author a new task from scratch: trace_monoid_canonization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Canonize words under partial commutation: from a stated commutation relation, bubble independent adjacent pairs to a canonical word or strip Foata layers; answer the canonical word, the layer list, or the class size.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v2
+  design_choice: 'Difficulty source varies: instances either require only adjacent swaps of independent
+    letters, or require full Foata normal form reconstruction.'
+- id: P003v3
+  hypothesis: P003
+  idea: trace_monoid_canonization_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v3
+  instruction: |-
+    Author a new task from scratch: trace_monoid_canonization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Canonize words under partial commutation: from a stated commutation relation, bubble independent adjacent pairs to a canonical word or strip Foata layers; answer the canonical word, the layer list, or the class size.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/trace_monoid_canonization_v3
+- id: P004v1
+  hypothesis: P004
+  idea: markov_algorithm_execution_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v1
+  instruction: |-
+    Author a new task from scratch: markov_algorithm_execution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a Markov algorithm: apply the first matching rule at the leftmost match, restart from the top, halt on a dot-rule or no match; answer the final word, step count, or cycle verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v1
+  design_choice: 'Choose output: final word only, step count only, or a canonical cycle verdict string
+    like ''CYCLE'' when no halt occurs.'
+- id: P004v2
+  hypothesis: P004
+  idea: markov_algorithm_execution_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v2
+  instruction: |-
+    Author a new task from scratch: markov_algorithm_execution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a Markov algorithm: apply the first matching rule at the leftmost match, restart from the top, halt on a dot-rule or no match; answer the final word, step count, or cycle verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v2
+  design_choice: Vary difficulty by rule count (2-8), alphabet size (2-4 symbols), and word length (3-12),
+    with rules including substitutions, deletions, and insertions.
+- id: P004v3
+  hypothesis: P004
+  idea: markov_algorithm_execution_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v3
+  instruction: |-
+    Author a new task from scratch: markov_algorithm_execution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a Markov algorithm: apply the first matching rule at the leftmost match, restart from the top, halt on a dot-rule or no match; answer the final word, step count, or cycle verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/markov_algorithm_execution_v3
+- id: P005v1
+  hypothesis: P005
+  idea: attribute_grammar_evaluation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: attribute_grammar_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decorate a given parse tree with a small attribute grammar: synthesized and inherited equations over arithmetic, Boolean, and string domains; answer a queried node's attribute or a safe evaluation order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v1
+  design_choice: Queried attribute is a single integer, and the tree is generated so that all intermediate
+    values are non-negative and fit in 8 bits, ensuring deterministic arithmetic.
+- id: P005v2
+  hypothesis: P005
+  idea: attribute_grammar_evaluation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: attribute_grammar_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decorate a given parse tree with a small attribute grammar: synthesized and inherited equations over arithmetic, Boolean, and string domains; answer a queried node's attribute or a safe evaluation order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v2
+  design_choice: Answer is a safe evaluation order as a comma-separated list of node IDs, where the grammar
+    has both synthesized and inherited attributes creating multiple valid orders.
+- id: P005v3
+  hypothesis: P005
+  idea: attribute_grammar_evaluation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: attribute_grammar_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decorate a given parse tree with a small attribute grammar: synthesized and inherited equations over arithmetic, Boolean, and string domains; answer a queried node's attribute or a safe evaluation order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/attribute_grammar_evaluation_v3
+- id: P006v1
+  hypothesis: P006
+  idea: hyperedge_replacement_derivation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v1
+  instruction: |-
+    Author a new task from scratch: hyperedge_replacement_derivation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a hyperedge-replacement derivation: replace each addressed nonterminal edge with its production's graph, gluing tentacles at attachment points; answer the final edge list, degree sequence, or port count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v1
+  design_choice: Choose answer as the sorted list of final edges (source,target,label) with labels from
+    a fixed alphabet, so solvers must track identity across replacements.
+- id: P006v2
+  hypothesis: P006
+  idea: hyperedge_replacement_derivation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v2
+  instruction: |-
+    Author a new task from scratch: hyperedge_replacement_derivation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a hyperedge-replacement derivation: replace each addressed nonterminal edge with its production's graph, gluing tentacles at attachment points; answer the final edge list, degree sequence, or port count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v2
+  design_choice: Choose answer as the degree sequence of the final graph sorted nondecreasingly, so solvers
+    need only count incident edges, not edge identities.
+- id: P006v3
+  hypothesis: P006
+  idea: hyperedge_replacement_derivation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v3
+  instruction: |-
+    Author a new task from scratch: hyperedge_replacement_derivation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a hyperedge-replacement derivation: replace each addressed nonterminal edge with its production's graph, gluing tentacles at attachment points; answer the final edge list, degree sequence, or port count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/hyperedge_replacement_derivation_v3
+- id: P007v1
+  hypothesis: P007
+  idea: post_tag_system_evolution_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v1
+  instruction: |-
+    Author a new task from scratch: post_tag_system_evolution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate Post tag systems: delete the first m symbols, append the production keyed by the consumed head symbol; vary m, alphabet, and productions; answer the word after k steps, halting outcome, or steps-to-halt.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v1
+  design_choice: 'Choose the query mode: ask for the exact word after k steps, the halting outcome (yes/no),
+    or the number of steps to halt, with instances drawn from all three modes in a single level.'
+- id: P007v2
+  hypothesis: P007
+  idea: post_tag_system_evolution_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v2
+  instruction: |-
+    Author a new task from scratch: post_tag_system_evolution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate Post tag systems: delete the first m symbols, append the production keyed by the consumed head symbol; vary m, alphabet, and productions; answer the word after k steps, halting outcome, or steps-to-halt.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v2
+  design_choice: Fix m=2 and a binary alphabet, but make productions length 2 or 3, so the word length
+    changes non-uniformly, requiring careful simulation rather than trivial pattern matching.
+- id: P007v3
+  hypothesis: P007
+  idea: post_tag_system_evolution_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v3
+  instruction: |-
+    Author a new task from scratch: post_tag_system_evolution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate Post tag systems: delete the first m symbols, append the production keyed by the consumed head symbol; vary m, alphabet, and productions; answer the word after k steps, halting outcome, or steps-to-halt.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/post_tag_system_evolution_v3
+- id: P008v1
+  hypothesis: P008
+  idea: word_equation_solving_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v1
+  instruction: |-
+    Author a new task from scratch: word_equation_solving_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve word equations over concatenation: align constant-and-variable sides, propagate end-symbol and length constraints to bind variables; answers are the unique substitution, all solutions under a length cap, or a contradiction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v1
+  design_choice: 'Instance form: variable sides are single variables vs. concatenations of multiple variables,
+    forcing multi-step decomposition'
+- id: P008v2
+  hypothesis: P008
+  idea: word_equation_solving_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v2
+  instruction: |-
+    Author a new task from scratch: word_equation_solving_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve word equations over concatenation: align constant-and-variable sides, propagate end-symbol and length constraints to bind variables; answers are the unique substitution, all solutions under a length cap, or a contradiction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v2
+  design_choice: 'Answer format: return the substitution as a canonical list of ''var=word'' pairs in
+    sorted order, or return ''none'' for contradiction'
+- id: P008v3
+  hypothesis: P008
+  idea: word_equation_solving_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v3
+  instruction: |-
+    Author a new task from scratch: word_equation_solving_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve word equations over concatenation: align constant-and-variable sides, propagate end-symbol and length constraints to bind variables; answers are the unique substitution, all solutions under a length cap, or a contradiction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_synthetic_grammars_r1/word_equation_solving_v3
