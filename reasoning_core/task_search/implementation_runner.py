@@ -164,7 +164,8 @@ def opencode_permissions(trial):
         "glob": "allow",
         "grep": "allow",
         "list": "allow",
-        # Path-scoped edit globs are unreliable in OpenCode 1.18.20. The
+        # Path-scoped edit globs were unreliable in OpenCode 1.18.20 and this has not
+        # been retested since; every run now records the version it actually ran. The
         # bubblewrap mount namespace is the write boundary; this permission
         # lets edit tools operate inside that boundary.
         "edit": "allow",
@@ -337,6 +338,33 @@ def _prepare_harness(
 _ROUTE = re.compile(r"^\[hlink\] (primary|fallback) -> (\S+)", re.MULTILINE)
 
 
+# The harness binary Harness Link launches for each of its names, so a run can record
+# which build of it wrote the task. `run.json` pinned the plan, the prompt, the commit,
+# the sandbox and hlink itself, and left the one program that does the writing unpinned
+# at `harness_version: null` -- while a comment in this package still described OpenCode
+# 1.18.20 and the machine had moved to 1.18.30.
+_HARNESS_BINARY = {"opencode": "opencode", "mini": "mini", "agy": "agy"}
+
+
+def _harness_version(harness):
+    """What the harness calls itself, or None when it will not say."""
+    binary = shutil.which(_HARNESS_BINARY.get(harness, ""))
+    if not binary:
+        return None
+    try:
+        # Not check_output: mini prints its version and then exits 2 complaining about a
+        # missing task, so a non-zero status here is not an absent version.
+        reported = subprocess.run(
+            [binary, "--version"], capture_output=True, text=True, timeout=60)
+    except (subprocess.SubprocessError, OSError):
+        return None
+    first = (reported.stdout or reported.stderr or "").strip().splitlines()
+    if not first:
+        return None
+    # mini answers in a sentence, opencode and agy in a bare number.
+    return first[0].strip().rstrip(".").split()[-1] or None
+
+
 def _launcher(hlink_version, fallback, stderr_path=None):
     """What launched the trial, and which providers answered it when one was armed."""
     launcher = {"name": "hlink", "version": hlink_version}
@@ -373,6 +401,7 @@ def _run_trial(
     variant,
     hlink_bin,
     hlink_version,
+    harness_version,
     base_seed,
     forward_seed,
     temperature,
@@ -408,7 +437,7 @@ def _run_trial(
     effective_max_steps = None if harness == "agy" else max_steps
     generation = generation_metadata(
         model,
-        None,
+        harness_version,
         generation_agent,
         variant,
         requested_seed=requested_seed,
@@ -716,6 +745,7 @@ def run_plan(
     hlink_version = subprocess.check_output(
         [resolved_hlink, "--version"], text=True
     ).strip()
+    harness_version = _harness_version(harness)
     hlink_help = subprocess.check_output(
         [resolved_hlink, "--help"], text=True, stderr=subprocess.STDOUT
     )
@@ -754,7 +784,7 @@ def run_plan(
                 "queues": list(queue_names),
                 "base_commit": base_commit,
                 "model": model,
-                "harness": {"name": harness},
+                "harness": {"name": harness, "version": harness_version},
                 "launcher": _launcher(hlink_version, fallback),
                 "provider": (
                     "antigravity"
@@ -838,6 +868,7 @@ def run_plan(
                 variant,
                 resolved_hlink,
                 hlink_version,
+                harness_version,
                 seed,
                 forward_seed,
                 temperature,

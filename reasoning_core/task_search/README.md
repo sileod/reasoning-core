@@ -101,6 +101,24 @@ an incrementally updated `summary.json`. See `BABYSITTING.md` for safe monitorin
 The runner prints the artifact directory at startup. Custom `--runs-root` paths
 must be outside `/tmp` and `/run`, which are hidden by the sandbox.
 
+## What a run pins
+
+Every trial writes a `run.json` that names what it ran under, so a result can be argued
+with rather than trusted: `base_commit` and `plan_sha256` (the plan as loaded, hashed at
+load so an edit mid-wave cannot restamp earlier trials), `prompt_sha256` for the prompt
+the worker actually got, `generation` for the model, provider, agent, requested seed and
+whether it was forwarded, `launcher` for the Harness Link build, `harness_version` for
+the harness build under it, `sandbox` for Bubblewrap, `resource_limits`, and
+`scrubbed_credential_env_names` for what the worker was allowed to see.
+
+That makes a wave **replayable**, not **deterministic**. Nothing here makes a provider
+return the same tokens twice: the seed is forwarded where the harness supports it, and
+the rest is the model's. What is reproducible is the setup -- the same commit, plan,
+prompt and budget -- and what is reproducible *exactly* is the gate: a proposal wave
+archives the candidates it turned down along with the catalog it judged them against, so
+`propose --replay N` re-judges them verbatim and a change to the critic can be measured
+rather than asserted.
+
 ## Before you launch
 
 ```bash

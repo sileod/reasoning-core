@@ -427,3 +427,33 @@ def test_a_fallback_without_its_own_key_is_refused_before_the_wave_runs(tmp_path
     # A name without a comma still means one credential, which is what it always meant.
     monkeypatch.setenv("TASK_SEARCH_KEY_ENV", "ALBERT_API_KEY,INFERX_API_KEY")
     assert cli._worker_credentials([]) == ["ALBERT_API_KEY", "INFERX_API_KEY"]
+
+
+def test_a_run_records_which_build_of_the_harness_wrote_the_task(monkeypatch):
+    """run.json pinned the plan, the prompt, the commit, the sandbox and hlink itself,
+    and left `harness_version: null` -- the one program that actually writes the task was
+    the only thing unrecorded. It drifts: a comment in this package still described
+    OpenCode 1.18.20 while the machine had moved to 1.18.30."""
+    from reasoning_core.task_search import implementation_runner as runner
+
+    monkeypatch.setattr(runner.shutil, "which", lambda binary: f"/bin/{binary}")
+
+    def fake_run(command, **kwargs):
+        # mini prints its version and then exits 2 over the task it was not given, so a
+        # non-zero status is not the same as having no version to report.
+        answers = {"/bin/opencode": ("1.18.30\n", "", 0),
+                   "/bin/mini": ("This is mini-swe-agent version 2.4.6.\nmore\n", "", 2),
+                   "/bin/agy": ("", "1.2.2\n", 0)}
+        out, err, code = answers[command[0]]
+        return types.SimpleNamespace(stdout=out, stderr=err, returncode=code)
+
+    monkeypatch.setattr(runner.subprocess, "run", fake_run)
+
+    assert runner._harness_version("opencode") == "1.18.30"
+    assert runner._harness_version("mini") == "2.4.6", "the version out of a sentence"
+    assert runner._harness_version("agy") == "1.2.2", "read from stderr when that is where"
+
+    # A harness that is not installed or will not answer leaves the field null rather than
+    # failing the run: an unrecorded version is worth less than a wave.
+    monkeypatch.setattr(runner.shutil, "which", lambda binary: None)
+    assert runner._harness_version("opencode") is None
