@@ -194,6 +194,15 @@ def _parser():
         default=1,
         help="independent implementations to run per proposal (different seeds)",
     )
+    build.add_argument(
+        "--draws",
+        type=int,
+        default=1,
+        help="generators to ask for per variant. Variants ask whether one approach beats"
+             " another; draws ask what the same approach produces twice, and with one"
+             " draw a losing variant is either a worse approach or an unlucky sample and"
+             " the wave cannot say which",
+    )
     build.add_argument("--base-ref", default="HEAD")
     build.add_argument("--output")
     build.add_argument("--context-file", action="append", default=[])
@@ -216,7 +225,9 @@ def _parser():
         type=int,
         default=0,
         help="with --skip-implemented, also leave out ideas already tried this many"
-             " times across all plans; 0 keeps them however often they have failed",
+             " rounds across all plans; 0 keeps them however often they have failed. A"
+             " round is one plan that ran the idea, whatever its fan-out, so asking for"
+             " more variants or draws does not spend an idea's budget faster",
     )
     build.add_argument("--design-model", default=DESIGN_MODEL)
     build.add_argument("--design-endpoint", default=DESIGN_ENDPOINT)
@@ -488,6 +499,7 @@ def main(argv=None):
             design_choices=design_choices,
             base_ref=base_ref,
             variants=args.variants,
+            draws=args.draws,
             context_files=tuple(args.context_file) or DEFAULT_CONTEXT_FILES,
         )
         output = (

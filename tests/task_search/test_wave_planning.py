@@ -102,3 +102,39 @@ def test_a_plan_name_must_be_an_importable_package_segment():
 def test_plan_generation_refuses_a_wave_that_is_not_a_proposal_wave():
     with pytest.raises(ValueError, match="proposal wave"):
         build_plan({"kind": "search_plan", "proposals": []}, name="wave9")
+
+
+def test_draws_and_variants_are_different_questions():
+    """A variant asks whether this approach beats that one; a draw asks what the same
+    approach produces twice. With one draw of each the two are inseparable, so a losing
+    variant is either a worse approach or an unlucky sample and the wave cannot say
+    which -- which is the whole comparison the design choices were paid for."""
+    plan = build_plan(wave(count=1), name="wave9", variants=2, draws=3,
+                      design_choices={"P001": ("grammar first", "table first")})
+
+    assert [trial["id"] for trial in plan["trials"]] == [
+        "P001v1d1", "P001v1d2", "P001v1d3", "P001v2d1", "P001v2d2", "P001v2d3"]
+    assert len({trial["owned_path"] for trial in plan["trials"]}) == 6, (
+        "every draw needs its own directory or they overwrite each other")
+    # Draws of one variant carry that variant's guidance: they differ by sampling alone.
+    first = [trial["design_choice"] for trial in plan["trials"][:3]]
+    assert first == ["grammar first"] * 3
+    assert plan["queues"]["v2"] == ["P001v2d1", "P001v2d2", "P001v2d3"]
+
+
+def test_one_draw_leaves_every_name_exactly_as_it_was():
+    """The default has to be invisible: hundreds of landed tasks and every plan on disk
+    are named under the old scheme, and a suffix that appears when nobody asked for it
+    would make the backlog read them as different ideas."""
+    unchanged = build_plan(wave(count=1), name="wave9", variants=3, draws=1)
+
+    assert [trial["id"] for trial in unchanged["trials"]] == [
+        "P001v1", "P001v2", "P001v3"]
+    assert unchanged["trials"][0]["owned_path"].endswith("alpha_task_v1")
+    assert build_plan(wave(count=1), name="wave9", variants=1, draws=1
+                      )["trials"][0]["owned_path"].endswith("/alpha_task")
+
+
+def test_a_plan_refuses_a_draw_count_that_asks_for_nothing():
+    with pytest.raises(ValueError, match="draws must be positive"):
+        build_plan(wave(count=1), name="wave9", variants=1, draws=0)

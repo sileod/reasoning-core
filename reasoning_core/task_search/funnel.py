@@ -25,7 +25,10 @@ from .trajectory import trial_directories
 from .wave_proposer import TALLY
 # `generate_samples_P003v1.py` beside a landed task names the trial that won it. The
 # module the implementor wrote can be called anything, but this filename cannot.
-WINNER = re.compile(r"^generate_samples_(P\d+v\d+)\.py$")
+WINNER = re.compile(r"^generate_samples_(P\d+v\d+(?:d\d+)?)\.py$")
+# The arm is the variant, not the draw: `P001v2d3` is the third generator asked for
+# from arm v2, and folding its draws together is the point of asking for several.
+ARM = re.compile(r"v(\d+)(?:d\d+)?$")
 
 
 def _archives(repo_root):
@@ -124,7 +127,10 @@ def arm_report(repo_root, runs_root=None):
                         status = json.loads(record.read_text()).get("status") or "unknown"
                     except (ValueError, OSError):
                         continue
-                    arm = f"v{trial.name.split('v')[-1]}"
+                    seen_arm = ARM.search(trial.name)
+                    if not seen_arm:
+                        continue
+                    arm = f"v{seen_arm.group(1)}"
                     outcomes.setdefault(arm, Counter())[status] += 1
                     guided[arm] = guidance[key] is not None
 
@@ -137,7 +143,10 @@ def arm_report(repo_root, runs_root=None):
             continue
         key = (relative.parts[0], match.group(1))
         if key in guidance:
-            arm = f"v{match.group(1).split('v')[-1]}"
+            landed_arm = ARM.search(match.group(1))
+            if not landed_arm:
+                continue
+            arm = f"v{landed_arm.group(1)}"
             won[arm] += 1
             guided.setdefault(arm, guidance[key] is not None)
 

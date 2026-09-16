@@ -1,0 +1,659 @@
+version: 1
+name: k3_parsing_and_agreement_r1
+proposal_wave: k3_parsing-and-agreement
+defaults:
+  base_ref: f2a5cc71ffef040405cc57ff449f963026a583d0
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: cayley_table_evaluation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: cayley_table_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invented binary operations given as Cayley tables over small carrier sets: evaluate nested terms, solve one-unknown equations, and pick out identity or absorbing elements; answers are single elements or short element lists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v1
+  design_choice: Vary difficulty by increasing term depth from 1 to 5 and by mixing binary operators with
+    different table symmetries (commutative vs non-commutative).
+- id: P001v2
+  hypothesis: P001
+  idea: cayley_table_evaluation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: cayley_table_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invented binary operations given as Cayley tables over small carrier sets: evaluate nested terms, solve one-unknown equations, and pick out identity or absorbing elements; answers are single elements or short element lists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v2
+  design_choice: Generate equations with one unknown variable appearing multiple times; require solving
+    via backtracking over all carrier elements, ensuring unique solution.
+- id: P001v3
+  hypothesis: P001
+  idea: cayley_table_evaluation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: cayley_table_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invented binary operations given as Cayley tables over small carrier sets: evaluate nested terms, solve one-unknown equations, and pick out identity or absorbing elements; answers are single elements or short element lists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/cayley_table_evaluation_v3
+- id: P002v1
+  hypothesis: P002
+  idea: concatenative_stack_evaluation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: concatenative_stack_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute concatenative programs: literals and primitives push and shuffle a stack while defined words expand in place at each call; modes ask for the final stack, the stack top after a nested call, or which word first underflows.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v1
+  design_choice: Represent literals as integers only, with primitives limited to dup, swap, and drop,
+    so arithmetic is absent and difficulty lies purely in stack manipulation and word expansion.
+- id: P002v2
+  hypothesis: P002
+  idea: concatenative_stack_evaluation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: concatenative_stack_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute concatenative programs: literals and primitives push and shuffle a stack while defined words expand in place at each call; modes ask for the final stack, the stack top after a nested call, or which word first underflows.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v2
+  design_choice: Use a fixed set of named primitives (e.g., add, sub, mul) that pop operands and push
+    results, making the final stack depend on both data values and control flow of word calls.
+- id: P002v3
+  hypothesis: P002
+  idea: concatenative_stack_evaluation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: concatenative_stack_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute concatenative programs: literals and primitives push and shuffle a stack while defined words expand in place at each call; modes ask for the final stack, the stack top after a nested call, or which word first underflows.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/concatenative_stack_evaluation_v3
+- id: P003v1
+  hypothesis: P003
+  idea: polarity_item_licensing_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v1
+  instruction: "Author a new task from scratch: polarity_item_licensing_v1.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Judge whether\
+    \ a polarity item is licensed in its environment\xE2\x80\x94clause-mate negation, only, few, questions,\
+    \ conditionals, comparatives, adversative predicates\xE2\x80\x94and name the licensor or return unlicensed.\n\
+    \nEvery decision the summary does not fix is yours: instance family, generator, verifier, difficulty\
+    \ scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary\
+    \ independently and are not coordinating with you. Make the choices you believe produce the best training\
+    \ data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that\
+    \ sank earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v1
+  design_choice: 'Answer format: a single token from a fixed vocabulary of licensor names (e.g., ''negation'',
+    ''only'', ''few'', ''question'', ''conditional'', ''comparative'', ''adversative'', ''unlicensed''),
+    with each instance requiring exactly one label.'
+- id: P003v2
+  hypothesis: P003
+  idea: polarity_item_licensing_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v2
+  instruction: "Author a new task from scratch: polarity_item_licensing_v2.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Judge whether\
+    \ a polarity item is licensed in its environment\xE2\x80\x94clause-mate negation, only, few, questions,\
+    \ conditionals, comparatives, adversative predicates\xE2\x80\x94and name the licensor or return unlicensed.\n\
+    \nEvery decision the summary does not fix is yours: instance family, generator, verifier, difficulty\
+    \ scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary\
+    \ independently and are not coordinating with you. Make the choices you believe produce the best training\
+    \ data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that\
+    \ sank earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v2
+  design_choice: 'Instance type: present the target polarity item in a minimal sentence pair (licensed
+    vs. unlicensed) and ask for the licensor only when licensed, else return the literal string ''unlicensed''.'
+- id: P003v3
+  hypothesis: P003
+  idea: polarity_item_licensing_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v3
+  instruction: "Author a new task from scratch: polarity_item_licensing_v3.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Judge whether\
+    \ a polarity item is licensed in its environment\xE2\x80\x94clause-mate negation, only, few, questions,\
+    \ conditionals, comparatives, adversative predicates\xE2\x80\x94and name the licensor or return unlicensed.\n\
+    \nEvery decision the summary does not fix is yours: instance family, generator, verifier, difficulty\
+    \ scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary\
+    \ independently and are not coordinating with you. Make the choices you believe produce the best training\
+    \ data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that\
+    \ sank earlier waves -- read it before writing code, and treat it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/polarity_item_licensing_v3
+- id: P004v1
+  hypothesis: P004
+  idea: counter_machine_trace_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v1
+  instruction: |-
+    Author a new task from scratch: counter_machine_trace_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Trace counter-machine programs where registers increment, decrement, and jump-if-zero through labeled lines; modes ask for a named register's value at halt, the total step count, or one register's value trace across the run.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v1
+  design_choice: Instances present programs as plain text with labels and instructions; solvers must parse
+    the syntax before simulating, so difficulty lies in both parsing and execution.
+- id: P004v2
+  hypothesis: P004
+  idea: counter_machine_trace_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v2
+  instruction: |-
+    Author a new task from scratch: counter_machine_trace_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Trace counter-machine programs where registers increment, decrement, and jump-if-zero through labeled lines; modes ask for a named register's value at halt, the total step count, or one register's value trace across the run.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v2
+  design_choice: Instances present programs as structured lists (e.g., register names, operations, jump
+    targets); solvers skip parsing and focus purely on control-flow simulation and state tracking.
+- id: P004v3
+  hypothesis: P004
+  idea: counter_machine_trace_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v3
+  instruction: |-
+    Author a new task from scratch: counter_machine_trace_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Trace counter-machine programs where registers increment, decrement, and jump-if-zero through labeled lines; modes ask for a named register's value at halt, the total step count, or one register's value trace across the run.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/counter_machine_trace_v3
+- id: P005v1
+  hypothesis: P005
+  idea: ellipsis_reconstruction_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v1
+  instruction: "Author a new task from scratch: ellipsis_reconstruction_v1.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Expand elided\
+    \ material under a named ellipsis\xE2\x80\x94VP-ellipsis with strict or sloppy pronoun rebinding,\
+    \ gapping, right-node-raising, sluicing\xE2\x80\x94copying antecedent structure; answer the reconstructed\
+    \ clause or shared remnant.\n\nEvery decision the summary does not fix is yours: instance family,\
+    \ generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this\
+    \ wave are implementing the same summary independently and are not coordinating with you. Make the\
+    \ choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry\
+    \ must perform and the failure modes that sank earlier waves -- read it before writing code, and treat\
+    \ it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v1
+  design_choice: Answer is a canonical ellipsis-expanded clause string with pronouns resolved to explicit
+    antecedents (e.g., 'John likes Mary; Bill does too' -> 'Bill likes Mary').
+- id: P005v2
+  hypothesis: P005
+  idea: ellipsis_reconstruction_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v2
+  instruction: "Author a new task from scratch: ellipsis_reconstruction_v2.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Expand elided\
+    \ material under a named ellipsis\xE2\x80\x94VP-ellipsis with strict or sloppy pronoun rebinding,\
+    \ gapping, right-node-raising, sluicing\xE2\x80\x94copying antecedent structure; answer the reconstructed\
+    \ clause or shared remnant.\n\nEvery decision the summary does not fix is yours: instance family,\
+    \ generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this\
+    \ wave are implementing the same summary independently and are not coordinating with you. Make the\
+    \ choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry\
+    \ must perform and the failure modes that sank earlier waves -- read it before writing code, and treat\
+    \ it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v2
+  design_choice: Answer is a labeled bracketing of the reconstructed tree, where each elided node is marked
+    with the copied antecedent's lexical content and index bindings.
+- id: P005v3
+  hypothesis: P005
+  idea: ellipsis_reconstruction_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v3
+  instruction: "Author a new task from scratch: ellipsis_reconstruction_v3.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Expand elided\
+    \ material under a named ellipsis\xE2\x80\x94VP-ellipsis with strict or sloppy pronoun rebinding,\
+    \ gapping, right-node-raising, sluicing\xE2\x80\x94copying antecedent structure; answer the reconstructed\
+    \ clause or shared remnant.\n\nEvery decision the summary does not fix is yours: instance family,\
+    \ generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this\
+    \ wave are implementing the same summary independently and are not coordinating with you. Make the\
+    \ choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry\
+    \ must perform and the failure modes that sank earlier waves -- read it before writing code, and treat\
+    \ it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/ellipsis_reconstruction_v3
+- id: P006v1
+  hypothesis: P006
+  idea: inversion_trigger_linearization_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v1
+  instruction: "Author a new task from scratch: inversion_trigger_linearization_v1.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Reserialize\
+    \ clauses around order triggers\xE2\x80\x94fronted negatives and only/so-phrases with auxiliary inversion\
+    \ and do-support, verb-second after topicalization, extraposition of heavy phrases; answer the resulting\
+    \ sentence.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v1
+  design_choice: Generate a sentence with a fronted negative adverbial, then ask the solver to output
+    the uninverted paraphrase using do-support, with the answer being the exact canonical clause.
+- id: P006v2
+  hypothesis: P006
+  idea: inversion_trigger_linearization_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v2
+  instruction: "Author a new task from scratch: inversion_trigger_linearization_v2.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Reserialize\
+    \ clauses around order triggers\xE2\x80\x94fronted negatives and only/so-phrases with auxiliary inversion\
+    \ and do-support, verb-second after topicalization, extraposition of heavy phrases; answer the resulting\
+    \ sentence.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v2
+  design_choice: Provide a topicalized object with verb-second inversion and ask for the full reordered
+    sentence, where the answer is the base SVO order with the topic moved to subject position.
+- id: P006v3
+  hypothesis: P006
+  idea: inversion_trigger_linearization_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v3
+  instruction: "Author a new task from scratch: inversion_trigger_linearization_v3.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Reserialize\
+    \ clauses around order triggers\xE2\x80\x94fronted negatives and only/so-phrases with auxiliary inversion\
+    \ and do-support, verb-second after topicalization, extraposition of heavy phrases; answer the resulting\
+    \ sentence.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/inversion_trigger_linearization_v3
+- id: P007v1
+  hypothesis: P007
+  idea: vowel_harmony_spreading_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v1
+  instruction: |-
+    Author a new task from scratch: vowel_harmony_spreading_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Spread harmony features (backness, round, ATR) from trigger vowels across affix chains, with opaque blockers and transparent neutrals in root-controlled and dominant-recessive systems; answers give the surface melody or mark disharmony.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v1
+  design_choice: Answer as a canonical string of vowel symbols (e.g., 'a-u-i') for the fully harmonized
+    affix sequence, or the literal token 'DISHARMONY' when an opaque blocker prevents spreading.
+- id: P007v2
+  hypothesis: P007
+  idea: vowel_harmony_spreading_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v2
+  instruction: |-
+    Author a new task from scratch: vowel_harmony_spreading_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Spread harmony features (backness, round, ATR) from trigger vowels across affix chains, with opaque blockers and transparent neutrals in root-controlled and dominant-recessive systems; answers give the surface melody or mark disharmony.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v2
+  design_choice: For each affix position, output a fixed-length binary vector (e.g., '1-0-1') indicating
+    which of the three features (backness, round, ATR) spread there, with 'X' for blocked positions.
+- id: P007v3
+  hypothesis: P007
+  idea: vowel_harmony_spreading_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v3
+  instruction: |-
+    Author a new task from scratch: vowel_harmony_spreading_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Spread harmony features (backness, round, ATR) from trigger vowels across affix chains, with opaque blockers and transparent neutrals in root-controlled and dominant-recessive systems; answers give the surface melody or mark disharmony.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/vowel_harmony_spreading_v3
+- id: P008v1
+  hypothesis: P008
+  idea: constituency_dependency_conversion_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v1
+  instruction: |-
+    Author a new task from scratch: constituency_dependency_conversion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert constituency trees into bilexical dependencies: percolate lexical heads with a head-rule table, label arcs by grammatical function; answers are the full arc set or the governor and dependents of a queried token.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v1
+  design_choice: "Head percolation uses a fixed table of nonterminal-specific rules (e.g., NP\u2192N,\
+    \ VP\u2192V) versus a trainable/learned head-finder model that varies across instances."
+- id: P008v2
+  hypothesis: P008
+  idea: constituency_dependency_conversion_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v2
+  instruction: |-
+    Author a new task from scratch: constituency_dependency_conversion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert constituency trees into bilexical dependencies: percolate lexical heads with a head-rule table, label arcs by grammatical function; answers are the full arc set or the governor and dependents of a queried token.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v2
+  design_choice: Answer format is the complete set of labeled dependency arcs for the whole tree versus
+    a single queried token's governor and dependents, with the query token chosen randomly.
+- id: P008v3
+  hypothesis: P008
+  idea: constituency_dependency_conversion_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v3
+  instruction: |-
+    Author a new task from scratch: constituency_dependency_conversion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert constituency trees into bilexical dependencies: percolate lexical heads with a head-rule table, label arcs by grammatical function; answers are the full arc set or the governor and dependents of a queried token.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/constituency_dependency_conversion_v3
+- id: P009v1
+  hypothesis: P009
+  idea: clitic_cluster_placement_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v1
+  instruction: |-
+    Author a new task from scratch: clitic_cluster_placement_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Template-order a clitic cluster by person and case hierarchies, then place it at second position, on the finite verb, or raised past restructuring verbs; answers give the ordered cluster string and its clausal host.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v1
+  design_choice: Vary the clitic cluster length (2-4 clitics) and require the answer to include the full
+    ordered cluster plus the host verb's surface form.
+- id: P009v2
+  hypothesis: P009
+  idea: clitic_cluster_placement_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v2
+  instruction: |-
+    Author a new task from scratch: clitic_cluster_placement_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Template-order a clitic cluster by person and case hierarchies, then place it at second position, on the finite verb, or raised past restructuring verbs; answers give the ordered cluster string and its clausal host.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v2
+  design_choice: Generate instances with either a finite main verb or a restructuring verb+infinitive;
+    require choosing the correct host and giving the cluster in canonical person-case order.
+- id: P009v3
+  hypothesis: P009
+  idea: clitic_cluster_placement_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v3
+  instruction: |-
+    Author a new task from scratch: clitic_cluster_placement_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Template-order a clitic cluster by person and case hierarchies, then place it at second position, on the finite verb, or raised past restructuring verbs; answers give the ordered cluster string and its clausal host.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/clitic_cluster_placement_v3
+- id: P010v1
+  hypothesis: P010
+  idea: thematic_role_linking_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v1
+  instruction: |-
+    Author a new task from scratch: thematic_role_linking_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Map overt arguments onto a verb's ordered thematic grid across active, passive, dative-shift, locative and causative realizations with oblique-marked and implicit roles; answers give each argument's role or a queried role's filler.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v1
+  design_choice: 'Answer format: output a compact role sequence for all overt arguments in canonical order,
+    e.g., ''AGENT THEME LOCATION'', with obliques marked by their preposition in parentheses.'
+- id: P010v2
+  hypothesis: P010
+  idea: thematic_role_linking_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v2
+  instruction: |-
+    Author a new task from scratch: thematic_role_linking_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Map overt arguments onto a verb's ordered thematic grid across active, passive, dative-shift, locative and causative realizations with oblique-marked and implicit roles; answers give each argument's role or a queried role's filler.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v2
+  design_choice: 'Answer format: given a queried role (e.g., ''recipient''), output the surface case form
+    of its filler (e.g., ''to the girl'' or ''the girl''), requiring role-to-argument mapping.'
+- id: P010v3
+  hypothesis: P010
+  idea: thematic_role_linking_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v3
+  instruction: |-
+    Author a new task from scratch: thematic_role_linking_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Map overt arguments onto a verb's ordered thematic grid across active, passive, dative-shift, locative and causative realizations with oblique-marked and implicit roles; answers give each argument's role or a queried role's filler.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/thematic_role_linking_v3
+- id: P011v1
+  hypothesis: P011
+  idea: case_government_assignment_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v1
+  instruction: |-
+    Author a new task from scratch: case_government_assignment_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign case to nominals from lexical frames and clause structure: structural nominative/accusative, quirky case, adposition government, aspect split ergativity, differential object marking; answers map each NP to its case.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v1
+  design_choice: Each instance gives a sentence with NPs indexed, and the answer is a list of case labels
+    (NOM, ACC, DAT, GEN, INS, LOC) in NP order, with quirky cases drawn from a fixed inventory.
+- id: P011v2
+  hypothesis: P011
+  idea: case_government_assignment_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v2
+  instruction: |-
+    Author a new task from scratch: case_government_assignment_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign case to nominals from lexical frames and clause structure: structural nominative/accusative, quirky case, adposition government, aspect split ergativity, differential object marking; answers map each NP to its case.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v2
+  design_choice: Instances present a clause plus a set of candidate case assignments (one per NP), and
+    the solver must select the single correct assignment from a small set of alternatives, with distractors
+    differing in one NP's case.
+- id: P011v3
+  hypothesis: P011
+  idea: case_government_assignment_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v3
+  instruction: |-
+    Author a new task from scratch: case_government_assignment_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign case to nominals from lexical frames and clause structure: structural nominative/accusative, quirky case, adposition government, aspect split ergativity, differential object marking; answers map each NP to its case.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_parsing_and_agreement_r1/case_government_assignment_v3

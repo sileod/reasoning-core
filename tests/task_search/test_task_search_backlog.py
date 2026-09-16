@@ -58,18 +58,21 @@ def test_a_proposal_with_a_task_is_not_owed(tmp_path):
     assert [row.name for row in backlog.pending(root)] == ["minimal_unsat_core"]
 
 
-def test_attempts_are_counted_in_trials_across_every_plan(tmp_path):
+def test_attempts_are_counted_in_rounds_across_every_plan(tmp_path):
+    """One plan is one attempt however wide it fanned out. Counted in trials, the fan-out
+    set the budget: a wave of two variants spent two of an idea's three chances before it
+    had been tried twice."""
     root = _repo(tmp_path, archives=[("w", ["minimal_unsat_core"])], plans=[
-        ("wave1", ["minimal_unsat_core_v1 (draw 1 of 2)",
-                   "minimal_unsat_core_v2 (draw 2 of 2)"]),
-        ("wave2", ["minimal_unsat_core (draw 1 of 1)"])])
-    assert backlog.attempted(root)[backlog.comparison_key("minimal_unsat_core")] == 3
-    assert [row.attempts for row in backlog.pending(root)] == [3]
+        ("wave1", ["minimal_unsat_core_v1 (variant 1 of 2)",
+                   "minimal_unsat_core_v2 (variant 2 of 2)"]),
+        ("wave2", ["minimal_unsat_core (variant 1 of 1)"])])
+    assert backlog.attempted(root)[backlog.comparison_key("minimal_unsat_core")] == 2
+    assert [row.attempts for row in backlog.pending(root)] == [2]
 
 
 def test_an_idea_out_of_attempts_stops_being_offered(tmp_path):
     root = _repo(tmp_path, archives=[("w", ["minimal_unsat_core"])],
-                 plans=[("wave1", ["minimal_unsat_core (draw 1 of 1)"])])
+                 plans=[("wave1", ["minimal_unsat_core (variant 1 of 1)"])])
     assert len(backlog.pending(root, max_attempts=None)) == 1
     assert len(backlog.pending(root, max_attempts=2)) == 1
     assert backlog.pending(root, max_attempts=1) == []
@@ -97,7 +100,7 @@ def test_plan_skipping_implemented_leaves_the_archive_alone(tmp_path, monkeypatc
                         lambda path, plan: built.update(plan))
     cli.main(["plan", str(archive), "--name", "w_r1", "--skip-implemented"])
 
-    assert [trial["idea"] for trial in built["trials"]] == ["still_owed (draw 1 of 1)"]
+    assert [trial["idea"] for trial in built["trials"]] == ["still_owed (variant 1 of 1)"]
     assert archive.read_text() == before
     assert "1 of 2 proposals already implemented" in capsys.readouterr().out
 
@@ -174,8 +177,8 @@ def test_a_plan_from_before_outcomes_were_recorded_still_counts_every_trial(tmp_
     _repo(tmp_path, plans=[("brief_r1", ["tired_idea", "tired_idea", "tired_idea"])],
           archives=[("brief", ["tired_idea"])])
 
-    assert backlog.attempted(tmp_path)[backlog.comparison_key("tired_idea")] == 3
-    assert backlog.pending(tmp_path, max_attempts=3) == []
+    assert backlog.attempted(tmp_path)[backlog.comparison_key("tired_idea")] == 1
+    assert backlog.pending(tmp_path, max_attempts=1) == []
 
 
 def test_outcomes_merge_across_runs_rather_than_replacing(tmp_path):
@@ -202,3 +205,49 @@ def test_the_outcomes_record_is_not_mistaken_for_a_plan(tmp_path):
 
     assert plans == ["brief_r1.yaml"], f"the record was left where plans are read: {plans}"
     assert backlog.next_round(tmp_path, "brief") == 2
+
+
+def test_a_wave_spends_one_attempt_however_wide_it_fans_out(tmp_path):
+    """The retry budget and the fan-out were the same number, which meant the fan-out
+    silently set the budget: two design choices and a baseline made one wave cost three
+    attempts, so `--max-attempts 3` retired every idea after a single wave, and asking
+    for draws on top would have retired it partway through the first one. How many
+    chances an idea deserves and how many generators a wave asks for are different
+    questions."""
+    _repo(tmp_path, plans=[("brief_r1", ["wide_idea", "wide_idea", "wide_idea"])],
+          archives=[("brief", ["wide_idea"])])
+    backlog.record_outcomes(tmp_path, "brief_r1", {"P001v1": "answers_impossible",
+                                                   "P002v1": "answers_impossible",
+                                                   "P003v1": "answers_impossible"})
+
+    assert backlog.attempted(tmp_path)[backlog.comparison_key("wide_idea")] == 1
+
+    # Still owed after that wave, and still owed after the second: three rounds is three
+    # waves now, not one wave counted three times.
+    assert [row.name for row in backlog.pending(tmp_path, max_attempts=3)] == ["wide_idea"]
+
+
+def test_rounds_accumulate_across_plans(tmp_path):
+    """One plan is one attempt, so the budget is spent by coming back, which is what it
+    was always meant to measure."""
+    _repo(tmp_path,
+          plans=[("brief_r1", ["tired_idea", "tired_idea"]),
+                 ("brief_r2", ["tired_idea", "tired_idea"]),
+                 ("brief_r3", ["tired_idea", "tired_idea"])],
+          archives=[("brief", ["tired_idea"])])
+    for round_number in (1, 2, 3):
+        backlog.record_outcomes(tmp_path, f"brief_r{round_number}",
+                                {"P001v1": "answers_impossible",
+                                 "P002v1": "validation_failed"})
+
+    assert backlog.attempted(tmp_path)[backlog.comparison_key("tired_idea")] == 3
+    assert backlog.pending(tmp_path, max_attempts=3) == []
+    assert [row.name for row in backlog.pending(tmp_path, max_attempts=4)] == ["tired_idea"]
+
+
+def test_a_draw_suffix_is_the_same_idea_as_its_variant(tmp_path):
+    """`alpha_v2d3` is the third generator asked for from the second approach to alpha.
+    Read as a separate idea it would be owed forever and never counted as attempted."""
+    assert backlog.VARIANT_SUFFIX.sub("", "alpha_v2d3") == "alpha"
+    assert backlog.VARIANT_SUFFIX.sub("", "alpha_v2") == "alpha"
+    assert backlog.VARIANT_SUFFIX.sub("", "alpha") == "alpha"

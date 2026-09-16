@@ -3,10 +3,16 @@
 A proposal is one line, so one proposal does not determine one implementation -- it leaves
 the instance family, the generator, the verifier and the difficulty ladder open on purpose.
 Rather than pretending a proposer can settle those on paper, this fans one proposal out into
-`variants` independent trials carrying the identical instruction. The runner derives each
-trial's seed from sha256(base_seed:trial_id), so identical instructions land on different
-sampling and the wave produces several honest attempts at the same summary. Validation then
-says which attempts survived, which is evidence rather than speculation.
+`variants` independent trials carrying the identical instruction, each optionally drawn
+`draws` times. The runner derives each trial's seed from sha256(base_seed:trial_id), so
+identical instructions land on different sampling and the wave produces several honest
+attempts at the same summary. Validation then says which attempts survived, which is
+evidence rather than speculation.
+
+The two numbers answer different questions and are deliberately separate knobs. Variants
+ask whether one approach beats another; draws ask what a single approach produces twice.
+Neither is the retry budget: that is `--max-attempts`, counted in rounds, so asking for
+more generators does not quietly spend an idea's last chance.
 
 Plan generation stays a separate command from proposal generation: proposals are reviewed by
 a person before any model is paid to implement them.
@@ -48,7 +54,7 @@ def _instruction(task_name, summary):
     )
 
 
-def build_plan(wave, *, name, base_ref="HEAD", variants=1,
+def build_plan(wave, *, name, base_ref="HEAD", variants=1, draws=1,
                context_files=DEFAULT_CONTEXT_FILES, design_choices=None):
     """Build a task-search plan running every proposal in `wave` `variants` times.
 
@@ -59,6 +65,12 @@ def build_plan(wave, *, name, base_ref="HEAD", variants=1,
     An empty approach in that tuple is the baseline: that variant is implemented from the
     summary alone, with no design guidance. Without it a wave measures which named approach
     won and never whether naming one helped at all.
+
+    `draws` is how many generators to ask for per variant, which is a different question
+    from how many variants there are: variants ask whether *this* approach beats that one,
+    draws ask what the same approach produces twice. With one draw the two are impossible
+    to tell apart, so a losing variant is either a worse approach or an unlucky sample and
+    the wave cannot say which.
     """
     if not isinstance(wave, dict) or wave.get("kind") != "sft_task_proposals":
         raise ValueError("expected an SFT proposal wave")
@@ -68,6 +80,8 @@ def build_plan(wave, *, name, base_ref="HEAD", variants=1,
         raise ValueError("plan name must be a lowercase Python identifier")
     if variants < 1:
         raise ValueError("variants must be positive")
+    if draws < 1:
+        raise ValueError("draws must be positive")
     proposals = wave.get("proposals") or []
     if not proposals:
         raise ValueError("proposal wave has no accepted proposals")
@@ -88,24 +102,33 @@ def build_plan(wave, *, name, base_ref="HEAD", variants=1,
                 f" for {variants} variants: they have to match"
             )
         for index in range(1, variants + 1):
-            task_name = f"{base_name}_v{index}" if variants > 1 else base_name
-            trial_id = f"{proposal.get('id', base_name)}v{index}"
-            owned_path = f"reasoning_core/tasks/generated/{name}/{task_name}"
-            trials.append({
-                "id": trial_id,
-                "hypothesis": str((proposal.get("novelty") or {}).get("origin_id", "")
-                                  or proposal.get("id", "")),
-                "idea": (f"{task_name} (draw {index} of {variants}"
-                     + (", unguided baseline" if choices and not choices[index - 1] else "")
-                     + ")"),
-                "changes": f"new task in {owned_path}",
-                "instruction": _instruction(task_name, summary),
-                "owned_path": owned_path,
-                "validation": [VALIDATION_COMMAND.format(owned_path=owned_path)],
-                **({"design_choice": choices[index - 1]}
-                   if choices and choices[index - 1] else {}),
-            })
-            queues[f"v{index}"].append(trial_id)
+            for draw in range(1, draws + 1):
+                # The suffix is what tells two trials apart on disk, so it carries both
+                # numbers whenever both vary: `_v2d3` is the third generator asked for
+                # from the second approach. One draw keeps the name a wave has always had.
+                suffix = (f"v{index}" if variants > 1 else "") + (
+                    f"d{draw}" if draws > 1 else "")
+                task_name = f"{base_name}_{suffix}" if suffix else base_name
+                trial_id = f"{proposal.get('id', base_name)}v{index}" + (
+                    f"d{draw}" if draws > 1 else "")
+                owned_path = f"reasoning_core/tasks/generated/{name}/{task_name}"
+                trials.append({
+                    "id": trial_id,
+                    "hypothesis": str((proposal.get("novelty") or {}).get("origin_id", "")
+                                      or proposal.get("id", "")),
+                    "idea": (f"{task_name} (variant {index} of {variants}"
+                         + (f", draw {draw} of {draws}" if draws > 1 else "")
+                         + (", unguided baseline"
+                            if choices and not choices[index - 1] else "")
+                         + ")"),
+                    "changes": f"new task in {owned_path}",
+                    "instruction": _instruction(task_name, summary),
+                    "owned_path": owned_path,
+                    "validation": [VALIDATION_COMMAND.format(owned_path=owned_path)],
+                    **({"design_choice": choices[index - 1]}
+                       if choices and choices[index - 1] else {}),
+                })
+                queues[f"v{index}"].append(trial_id)
     # One cheap draw to run first: the same six proposals every time, so a smoke run of two
     # waves is comparable and a broken harness costs six trials instead of the whole wave.
     queues["pilot"] = queues["v1"][:PILOT_SIZE]

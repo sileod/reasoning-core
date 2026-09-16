@@ -230,16 +230,31 @@ scripts/run_implementors.py --design-choices 2   # two named approaches + a base
 ```
 
 `--design-choices` runs the design proposer first and gives each variant its own named
-approach, as below. Provider, fallback and credentials come from `TASK_SEARCH_PROVIDER`,
+approach, as below. `--draws N` then asks each approach for N generators instead of one,
+which is what separates a worse approach from an unlucky sample; it costs its multiple in
+wall clock and, on a free provider, nothing else. Provider, fallback and credentials come from `TASK_SEARCH_PROVIDER`,
 `TASK_SEARCH_FALLBACK` and `TASK_SEARCH_KEY_ENV`, so the service is not tied to one
 provider and has no flags of its own for any of them.
 
-Attempts are counted in trials rather than plans, because a plan with three variants spends
-three implementor runs, and a trial counts only once it has recorded an outcome in
-`plans/outcomes/<plan>.yaml`. A plan is intent: killed between planning and running, it
-still claims its trials, and counting those as spent retired every idea in the archive and
-left the service reporting `0 proposals owed` for six days. An empty backlog now says which
-kind of empty it is. The count is what stops an unsupervised service from spending a
+Three numbers decide how much work one idea gets, and they are deliberately three:
+
+| knob | question it answers |
+|---|---|
+| `--variants` / `--design-choices` | does this approach beat that one? |
+| `--draws` | what does the same approach produce twice? |
+| `--max-attempts` | how many more times is this idea worth trying? |
+
+Attempts are counted in **rounds** -- one plan that ran the idea, whatever its fan-out.
+They used to be counted in trials, which made the fan-out set the retry budget without
+saying so: two design choices and a baseline spent three trials, so the service's
+`--max-attempts 3` retired every idea after a single wave, and asking for draws on top
+would have retired one partway through its first. Moving to rounds reopened 34 ideas that
+had been tried exactly once.
+
+A trial counts only once it has recorded an outcome in `plans/outcomes/<plan>.yaml`. A
+plan is intent: killed between planning and running, it still claims its trials, and
+counting those as spent retired every idea in the archive and left the service reporting
+`0 proposals owed` for six days. An empty backlog now says which kind of empty it is. The count is what stops an unsupervised service from spending a
 night on the same failures: the five proposals with no task today have been attempted four
 to seven times each, so they are the ideas that resist implementation, not the ones nobody
 got to.

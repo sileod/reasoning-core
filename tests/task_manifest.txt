@@ -52,13 +52,16 @@ candidate_key_minimality
 canonical_huffman
 canonical_huffman_code
 cartesian_tree_construction
+case_government_assignment
 causal_identification
 causal_intervention
+cayley_table_evaluation
 cellular_automaton_step
 censored_survival_estimate
 checksum_scheme_inference
 chip_firing_stabilization
 clarification_question
+clitic_cluster_placement
 clock_page_replacement
 closure_capture_resolution
 code_analysis
@@ -80,6 +83,7 @@ conjunctive_logic_qa
 consensus_log_commit
 consistent_distributed_cut
 consistent_hash_ring_churn
+constituency_dependency_conversion
 constrained_continuation
 constraint_satisfaction
 continued_fraction
@@ -91,6 +95,7 @@ core_number
 coreference
 correction_aware_summary
 count_elements
+counter_machine_trace
 counterfactual_replay
 counterfactual_twin_model
 counterfeit_weighing_deduction
@@ -134,6 +139,7 @@ ear_clipping_triangulation
 elimination_depth_chain
 elimination_fill_in
 ellipsis_completion
+ellipsis_reconstruction
 elliptic_curve_scalar_mul
 embedded_question_answerhood
 envy_cycle_fair_allocation
@@ -202,6 +208,7 @@ instruction_priority
 interval_nesting_forest
 interval_stabbing
 interval_sweep
+inversion_trigger_linearization
 iterated_dominance_elimination
 kinship_relation_resolution
 kmp_prefix_value
@@ -297,6 +304,7 @@ pivot_unpivot_transform
 planar_geometry_relations
 planning
 plural_predication_readings
+polarity_item_licensing
 policy_determination
 poly_euclid
 polynomial_euclidean_algorithm
@@ -416,6 +424,7 @@ temporal_logic_monitoring
 temporal_perspective
 term_unification
 termination_ranking_function
+thematic_role_linking
 three_dimensional_orientation
 three_valued_logic_propagation
 three_way_merge
@@ -457,6 +466,7 @@ version_vector_causality
 virtual_address_translation
 virtual_method_dispatch
 voting_rules
+vowel_harmony_spreading
 wait_for_deadlock
 wavelet_tree_queries
 weakest_precondition_computation

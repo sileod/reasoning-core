@@ -31,7 +31,7 @@ from .wave_proposer import _snake, _task_entries
 
 # `wave8` fans one proposal into `strongly_connected_component_v1` and `_v2`; the idea
 # they are drafts of is the name without the suffix.
-VARIANT_SUFFIX = re.compile(r"_v\d+$")
+VARIANT_SUFFIX = re.compile(r"_v\d+(?:d\d+)?$")
 
 
 def comparison_key(name):
@@ -136,14 +136,20 @@ def record_outcomes(repo_root, plan_name, results):
 
 
 def attempted(repo_root):
-    """Comparison key -> how many implementor runs have already been spent on it.
+    """Comparison key -> how many rounds have already been spent on it.
 
-    Counted in trials rather than plans because a plan with three variants spends three
-    implementor runs on the idea, and the budget being protected is implementor runs.
+    A round is one plan that actually ran the idea, however many trials it spent doing
+    so. Counting trials instead made the retry budget move whenever the fan-out changed:
+    with two design choices and a baseline, one wave spent three trials and
+    `--max-attempts 3` retired the idea after a single wave -- and asking for more
+    generators per approach would have retired it in the middle of the first one. The
+    number of attempts an idea is worth and the number of generators a wave asks for are
+    separate questions, so they are separate numbers.
 
     A trial only counts once it has an outcome. Plans written before outcomes were
-    recorded have no record and keep the old, conservative reading -- every trial counts --
-    so fixing this cannot reopen a year of ideas that genuinely were tried.
+    recorded have no record and keep the old, conservative reading -- every trial counts
+    as having run -- so fixing this cannot reopen a year of ideas that genuinely were
+    tried.
     """
     root = Path(repo_root) / "reasoning_core" / "task_search" / "plans"
     counts = Counter()
@@ -153,15 +159,17 @@ def attempted(repo_root):
         except yaml.YAMLError:
             continue
         ran = outcomes(repo_root, str(plan.get("name") or path.stem))
+        spent = set()
         for trial in plan.get("trials", ()):
             if ran is not None and str(trial.get("id") or "") not in ran:
                 continue
-            # `idea` is "<task name> (draw 2 of 3)", and the task name is what the
+            # `idea` is "<task name> (variant 2 of 3)", and the task name is what the
             # proposal was called before the variant suffix was appended.
             idea = str(trial.get("idea", "")).split(" (", 1)[0]
             name = _snake(idea) or _snake(Path(str(trial.get("owned_path", ""))).name)
             if name:
-                counts[comparison_key(VARIANT_SUFFIX.sub("", name))] += 1
+                spent.add(comparison_key(VARIANT_SUFFIX.sub("", name)))
+        counts.update(spent)
     return counts
 
 

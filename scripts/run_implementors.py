@@ -94,6 +94,8 @@ def steps(arguments, wave, name):
              "--variants", str(variants)]
     if arguments.design_choices:
         build += ["--design-choices", str(arguments.design_choices)]
+    if arguments.draws > 1:
+        build += ["--draws", str(arguments.draws)]
     run = [sys.executable, "-m", "reasoning_core.task_search", "run", str(plan_path),
            "--harness", arguments.harness, "--jobs", str(arguments.jobs),
            "--max-steps", str(arguments.max_steps),
@@ -179,6 +181,11 @@ def main():
                         help="named approaches to implement per proposal; each proposal"
                              " also gets one unguided baseline variant, so K here is K+1"
                              " implementations. 0 implements the summary alone")
+    parser.add_argument("--draws", type=int, default=1,
+                        help="generators per variant. The wave asks each approach for"
+                             " this many, which is what tells a worse approach apart"
+                             " from an unlucky sample; costs its multiple in wall clock"
+                             " and nothing else on a free provider")
     parser.add_argument("--max-attempts", type=int, default=3,
                         help="stop offering an idea once this many plan trials have"
                              " tried it; 0 retries forever")

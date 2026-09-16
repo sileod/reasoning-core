@@ -53,7 +53,9 @@ AUDIT_BUDGET_SECONDS = 600
 # provider, and a triage pass is not urgent. One call every few seconds keeps it under
 # the limit without the retry machinery having to get involved.
 REVIEW_PAUSE_SECONDS = 4
-DRAFT_SUFFIX = re.compile(r"v\d+$")
+# `P001v2` is the second variant and `P001v2d3` its third draw; both are drafts of
+# proposal P001, and land groups by proposal to pick one winner from all of them.
+DRAFT_SUFFIX = re.compile(r"v\d+(?:d\d+)?$")
 
 
 def _read_cache(path):
