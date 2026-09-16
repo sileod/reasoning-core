@@ -26,7 +26,10 @@ from . import embedding
 PROVIDER_KEYS = {
     "albert": "ALBERT_API_KEY",
     "nvidia": "NVIDIA_API_KEY",
-    "openrouter": "OPENROUTER_FREE_API_KEY",
+    # The slug is Harness Link's, and Harness Link's OpenRouter provider reads the
+    # unsuffixed name. The pipeline sets that name to the *free* key, because the paid
+    # one must never be spent here; see ~/.config/reasoning_core/env.
+    "orfree": "OPENROUTER_API_KEY",
     "inferx": "INFERX_API_KEY",
 }
 REVIEW_VARS = ("TASK_SEARCH_REVIEW_ENDPOINT", "TASK_SEARCH_REVIEW_MODEL",

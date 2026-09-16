@@ -84,6 +84,10 @@ def main():
         help="comma-separated credential variables to share round-robin, so one key's"
              " quota does not cap the run")
     parser.add_argument(
+        "--endpoint", default="",
+        help="chat-completions URL for the proposer, when --model names a model the"
+             " CLI's default provider does not serve; empty leaves the CLI default")
+    parser.add_argument(
         "--passes", type=int, default=3,
         help="sweep the unarchived briefs this many times; a wave that fails writes no"
              " archive, so a later pass retries it")
@@ -184,6 +188,8 @@ def sweep_once(arguments, pending):
             command += ["--model", arguments.model]
         if arguments.api_key_env:
             command += ["--api-key-env", arguments.api_key_env]
+        if arguments.endpoint:
+            command += ["--endpoint", arguments.endpoint]
         if arguments.replay:
             command += ["--replay", str(arguments.replay)]
         if arguments.dry_run:
