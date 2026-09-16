@@ -46,6 +46,7 @@ call_stack_trace
 candidate_key_minimality
 canonical_huffman
 canonical_huffman_code
+cartesian_tree_construction
 causal_identification
 causal_intervention
 cellular_automaton_step
@@ -150,6 +151,7 @@ firewall_rule_shadowing
 fixpoint_iteration
 floor_quotient_blocks
 flow_path_decomposition
+formal_concept_closure
 function_manipulation
 game_best_move
 game_forced_win
@@ -187,6 +189,7 @@ interval_nesting_forest
 interval_stabbing
 interval_sweep
 iterated_dominance_elimination
+kinship_relation_resolution
 kmp_prefix_value
 kraft_feasibility
 kripke_knowledge_evaluation
@@ -224,6 +227,7 @@ matrix_induction
 matrix_jordan
 maximum_flow
 mealy_composition_run
+mealy_moore_machine_conversion
 memory_allocator_trace
 metamath_core_select
 metamath_entailment
@@ -258,6 +262,7 @@ ordered_greedy_coloring
 overload_resolution
 packet_fragment_reassembly
 palindromic_tree_counts
+pareto_frontier_layers
 parsing_derivation
 partial_fraction_decomposition
 pattern_induction
@@ -373,12 +378,14 @@ strongly_connected_components
 struct_layout_alignment
 subset_zeta_transform
 suffix_array_rank
+symbolic_differentiation
 symmetric_poly_to_elementary
 syndrome_decoding
 syntax_error_detection
 table_equivalence
 table_qa
 table_statistics
+take_grant_rights_derivation
 temporal_logic_monitoring
 temporal_perspective
 term_unification
@@ -402,6 +409,7 @@ tree_axis_navigation
 tree_canonical_form
 tree_reconstruction
 tree_reroot_distances
+tree_subset_counting
 trie_unique_prefix
 truth_maintenance_revision
 tuple_generating_dependency_chase
