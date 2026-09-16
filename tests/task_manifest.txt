@@ -103,6 +103,7 @@ de_bruijn_scope_translation
 deadline_dropping
 deadline_scheduling
 deadlock_detection
+decision_tree_induction
 defeasible_conflict_depth
 defeasible_nli
 deictic_reanchoring
@@ -135,6 +136,7 @@ event_queue_simulation
 exact_cover_selection
 exact_rounding_pipeline
 expected_utility_choice
+extensive_form_to_bimatrix
 face_tracing
 fd_attribute_closure
 fenwick_prefix_nodes
@@ -169,6 +171,7 @@ grundy_values
 havel_hakimi_realization
 heap_key_update
 heap_simulation
+hereditary_base_rewrite
 hidden_state_filtering
 hierarchical_rollup
 hindley_milner_inference
@@ -180,6 +183,7 @@ instant_runoff_winner
 instruction_boundary
 instruction_data_boundary
 instruction_priority
+interval_nesting_forest
 interval_stabbing
 interval_sweep
 iterated_dominance_elimination
@@ -255,6 +259,7 @@ overload_resolution
 packet_fragment_reassembly
 palindromic_tree_counts
 parsing_derivation
+partial_fraction_decomposition
 pattern_induction
 pattern_match_exhaustiveness
 paxos_chosen_value
@@ -271,6 +276,7 @@ planning
 policy_determination
 poly_euclid
 polynomial_euclidean_algorithm
+polynomial_expansion
 polynomial_gcd
 poset_cover_query
 posix_acl_permission
@@ -288,6 +294,7 @@ program_synthesis
 protected_span_transformation
 protocol_state_machine_trace
 prufer_code_roundtrip
+quadtree_region_construction
 qualitative_causal_reasoning
 qualitative_reasoning
 query_plan_execution
@@ -300,6 +307,7 @@ rational_interval_arithmetic
 rational_plane_geometry
 reaching_definitions
 reaching_defs
+recursion_tree_cost_analysis
 red_black_black_height
 ref_gen
 reference_tracking
@@ -365,6 +373,7 @@ strongly_connected_components
 struct_layout_alignment
 subset_zeta_transform
 suffix_array_rank
+symmetric_poly_to_elementary
 syndrome_decoding
 syntax_error_detection
 table_equivalence
