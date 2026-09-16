@@ -2,6 +2,7 @@ abstract_interval_analysis
 access_control_evaluation
 access_control_policy_evaluation
 additive_tree_reconstruction
+adjective_inference_modes
 adjusted_winner_redivide
 agglomerative_linkage_merge
 agreement_completion
@@ -12,6 +13,7 @@ alpha_beta_cutoff_trace
 analogical_case_matching
 announcement_round_deduction
 answer_relevant_change
+antecedent_binding_legality
 approval_voting_winner
 arc_consistency_reduction
 argumentation_grounded_extension
@@ -104,6 +106,7 @@ dag_arithmetics
 data_lineage_trace
 dataflow_liveness
 de_bruijn_scope_translation
+de_re_de_dicto_evaluation
 deadline_dropping
 deadline_scheduling
 deadlock_detection
@@ -130,6 +133,7 @@ elimination_depth_chain
 elimination_fill_in
 ellipsis_completion
 elliptic_curve_scalar_mul
+embedded_question_answerhood
 envy_cycle_fair_allocation
 equation_balancing
 equation_system
@@ -217,6 +221,7 @@ lights_out_press_set
 lindenmayer_parallel_rewrite
 line_cross_swap_schedulev2
 linear_recurrence
+linear_scan_register_allocation
 linearizability_check
 ll1_predictive_parsing
 logic_derivation
@@ -286,6 +291,7 @@ pitch_class_prime_normal_forms
 pivot_unpivot_transform
 planar_geometry_relations
 planning
+plural_predication_readings
 policy_determination
 poly_euclid
 polynomial_euclidean_algorithm
@@ -311,6 +317,7 @@ prufer_code_roundtrip
 quadtree_region_construction
 qualitative_causal_reasoning
 qualitative_reasoning
+quantifier_dependency_strategy
 query_plan_execution
 question_generation
 quorum_intersection
@@ -340,6 +347,7 @@ round_robin_completion
 round_robin_scheduling
 routing_longest_prefix
 rule_switching
+scalar_alternative_exclusion
 schedule_recoverability
 schema_bound_query
 schema_migration_execution
@@ -373,6 +381,7 @@ sir_vaccination_delta
 skip_list_search_path
 skyline_dominance_query
 skyline_rectangle_update
+sld_resolution
 smith_normal_form
 spatial_folding
 spreadsheet_evaluation

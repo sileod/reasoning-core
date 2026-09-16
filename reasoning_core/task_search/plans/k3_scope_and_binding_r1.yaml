@@ -1,0 +1,545 @@
+version: 1
+name: k3_scope_and_binding_r1
+proposal_wave: k3_scope-and-binding
+defaults:
+  base_ref: 875600d2aa69926d3c4b9be184aab4bd8e7da309
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: adjective_inference_modes_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v1
+  instruction: |-
+    Author a new task from scratch: adjective_inference_modes_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine each adjective's mode (intersective, subsective, privative: red car, skillful surgeon, fake diamond) then verdict which inferences survive: adjective drop, noun swap, and conjunct split.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v1
+  design_choice: Present adjectives as isolated phrases with no context, requiring mode classification
+    from world knowledge alone, and answer as a 3-bit binary string for the three inferences.
+- id: P001v2
+  hypothesis: P001
+  idea: adjective_inference_modes_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v2
+  instruction: |-
+    Author a new task from scratch: adjective_inference_modes_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine each adjective's mode (intersective, subsective, privative: red car, skillful surgeon, fake diamond) then verdict which inferences survive: adjective drop, noun swap, and conjunct split.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v2
+  design_choice: Provide two short sentences per item, one using the adjective attributively and one predicatively,
+    and require a single canonical letter (I/S/P) plus a 3-bit string for inference survival.
+- id: P001v3
+  hypothesis: P001
+  idea: adjective_inference_modes_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v3
+  instruction: |-
+    Author a new task from scratch: adjective_inference_modes_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine each adjective's mode (intersective, subsective, privative: red car, skillful surgeon, fake diamond) then verdict which inferences survive: adjective drop, noun swap, and conjunct split.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/adjective_inference_modes_v3
+- id: P002v1
+  hypothesis: P002
+  idea: sld_resolution_substitutions_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v1
+  instruction: |-
+    Author a new task from scratch: sld_resolution_substitutions_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute SLD resolution over Horn-clause programs with renaming-apart, occurs-check unification, and depth-first backtracking through clause order; answers are the ordered answer substitutions or the first failing goal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v1
+  design_choice: 'Answer format: return a canonical list of substitutions as ordered pairs of variable
+    names and terms, or the string ''FAIL'' when the goal fails.'
+- id: P002v2
+  hypothesis: P002
+  idea: sld_resolution_substitutions_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v2
+  instruction: |-
+    Author a new task from scratch: sld_resolution_substitutions_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute SLD resolution over Horn-clause programs with renaming-apart, occurs-check unification, and depth-first backtracking through clause order; answers are the ordered answer substitutions or the first failing goal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v2
+  design_choice: 'Difficulty source: include recursive clauses with repeated variables that force occurs-check
+    failures on some branches, testing correct backtracking order.'
+- id: P002v3
+  hypothesis: P002
+  idea: sld_resolution_substitutions_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v3
+  instruction: |-
+    Author a new task from scratch: sld_resolution_substitutions_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute SLD resolution over Horn-clause programs with renaming-apart, occurs-check unification, and depth-first backtracking through clause order; answers are the ordered answer substitutions or the first failing goal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/sld_resolution_substitutions_v3
+- id: P003v1
+  hypothesis: P003
+  idea: de_re_de_dicto_evaluation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: de_re_de_dicto_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate belief reports over a listed world table, resolving de re readings (keyed to the actual referent) against de dicto readings (keyed to the agent's description), with quantifying-in cases; answers are per-reading verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v1
+  design_choice: 'Answer format: per-reading verdicts as a canonical string of two letters, e.g., ''TR''
+    for de re true / de dicto false, with balanced distribution across the four possible pairs.'
+- id: P003v2
+  hypothesis: P003
+  idea: de_re_de_dicto_evaluation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: de_re_de_dicto_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate belief reports over a listed world table, resolving de re readings (keyed to the actual referent) against de dicto readings (keyed to the agent's description), with quantifying-in cases; answers are per-reading verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v2
+  design_choice: 'Instance construction: generate worlds from a fixed set of named individuals with one
+    alias per individual, so de re/de dicto divergence arises only from alias mismatches, not from empty
+    descriptions.'
+- id: P003v3
+  hypothesis: P003
+  idea: de_re_de_dicto_evaluation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: de_re_de_dicto_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate belief reports over a listed world table, resolving de re readings (keyed to the actual referent) against de dicto readings (keyed to the agent's description), with quantifying-in cases; answers are per-reading verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/de_re_de_dicto_evaluation_v3
+- id: P004v1
+  hypothesis: P004
+  idea: linear_scan_register_allocation_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v1
+  instruction: |-
+    Author a new task from scratch: linear_scan_register_allocation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Build live intervals from a def/use listing, then run linear-scan allocation under a fixed register count: expire finished intervals, evict the farthest-ending one under pressure; answer each variable's register-or-spill outcome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v1
+  design_choice: Represent each variable's def/use positions as sparse integer coordinates in a single
+    basic block, with the answer formatted as a compact sequence of register numbers or 'S' for spill.
+- id: P004v2
+  hypothesis: P004
+  idea: linear_scan_register_allocation_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v2
+  instruction: |-
+    Author a new task from scratch: linear_scan_register_allocation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Build live intervals from a def/use listing, then run linear-scan allocation under a fixed register count: expire finished intervals, evict the farthest-ending one under pressure; answer each variable's register-or-spill outcome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v2
+  design_choice: Make the def/use listing a sequence of instruction indices across multiple blocks, and
+    require the solver to output the final assignment as a canonical string like 'v0:r2,v1:S,v2:r1'.
+- id: P004v3
+  hypothesis: P004
+  idea: linear_scan_register_allocation_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v3
+  instruction: |-
+    Author a new task from scratch: linear_scan_register_allocation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Build live intervals from a def/use listing, then run linear-scan allocation under a fixed register count: expire finished intervals, evict the farthest-ending one under pressure; answer each variable's register-or-spill outcome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/linear_scan_register_allocation_v3
+- id: P005v1
+  hypothesis: P005
+  idea: quantifier_dependency_strategy_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v1
+  instruction: |-
+    Author a new task from scratch: quantifier_dependency_strategy_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve quantifier-dependence games on small domains covering linear, dependent-choice, branching and slashed-independence prefixes; determine the winner and output the strategy as per-universal choice functions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v1
+  design_choice: Strategy output as a table mapping each universal variable assignment to the existential's
+    chosen value, with winner determined by evaluating the formula over that table.
+- id: P005v2
+  hypothesis: P005
+  idea: quantifier_dependency_strategy_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v2
+  instruction: |-
+    Author a new task from scratch: quantifier_dependency_strategy_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve quantifier-dependence games on small domains covering linear, dependent-choice, branching and slashed-independence prefixes; determine the winner and output the strategy as per-universal choice functions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v2
+  design_choice: Strategy output as a sequence of conditional rules (if universal values then existential
+    choices), and the answer includes both the winner and the rule list in a canonical sorted order.
+- id: P005v3
+  hypothesis: P005
+  idea: quantifier_dependency_strategy_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v3
+  instruction: |-
+    Author a new task from scratch: quantifier_dependency_strategy_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve quantifier-dependence games on small domains covering linear, dependent-choice, branching and slashed-independence prefixes; determine the winner and output the strategy as per-universal choice functions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/quantifier_dependency_strategy_v3
+- id: P006v1
+  hypothesis: P006
+  idea: scalar_alternative_exclusion_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v1
+  instruction: |-
+    Author a new task from scratch: scalar_alternative_exclusion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive scalar implicatures over ordered scales (some/all, or/and, numerals, possibility modals): exclude stronger alternatives consistent with stated speaker knowledge; answer is the surviving alternative set or a verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v1
+  design_choice: Present a sentence with a scalar term and a stated knowledge constraint; answer is the
+    canonical list of stronger alternatives excluded, sorted alphabetically.
+- id: P006v2
+  hypothesis: P006
+  idea: scalar_alternative_exclusion_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v2
+  instruction: |-
+    Author a new task from scratch: scalar_alternative_exclusion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive scalar implicatures over ordered scales (some/all, or/and, numerals, possibility modals): exclude stronger alternatives consistent with stated speaker knowledge; answer is the surviving alternative set or a verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v2
+  design_choice: Give a set of candidate stronger alternatives and a speaker-knowledge fact; answer is
+    the yes/no verdict on whether the given alternative is excluded.
+- id: P006v3
+  hypothesis: P006
+  idea: scalar_alternative_exclusion_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v3
+  instruction: |-
+    Author a new task from scratch: scalar_alternative_exclusion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive scalar implicatures over ordered scales (some/all, or/and, numerals, possibility modals): exclude stronger alternatives consistent with stated speaker knowledge; answer is the surviving alternative set or a verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/scalar_alternative_exclusion_v3
+- id: P007v1
+  hypothesis: P007
+  idea: antecedent_binding_legality_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v1
+  instruction: |-
+    Author a new task from scratch: antecedent_binding_legality_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Judge coindexed pronoun, reflexive, reciprocal, and R-expression pairs for locality, c-command, crossover, and reconstruction constraints; answers are licensed-or-blocked verdicts per pair or the full set of legal antecedents.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v1
+  design_choice: 'Answer format: per-pair binary verdicts (licensed/blocked) for a fixed list of candidate
+    antecedents, with balanced answer distribution enforced across trials.'
+- id: P007v2
+  hypothesis: P007
+  idea: antecedent_binding_legality_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v2
+  instruction: |-
+    Author a new task from scratch: antecedent_binding_legality_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Judge coindexed pronoun, reflexive, reciprocal, and R-expression pairs for locality, c-command, crossover, and reconstruction constraints; answers are licensed-or-blocked verdicts per pair or the full set of legal antecedents.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v2
+  design_choice: 'Answer format: output the full set of legal antecedents as a sorted list of indices
+    (e.g., [1,3]) for each sentence, with varying set sizes across items.'
+- id: P007v3
+  hypothesis: P007
+  idea: antecedent_binding_legality_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v3
+  instruction: |-
+    Author a new task from scratch: antecedent_binding_legality_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Judge coindexed pronoun, reflexive, reciprocal, and R-expression pairs for locality, c-command, crossover, and reconstruction constraints; answers are licensed-or-blocked verdicts per pair or the full set of legal antecedents.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/antecedent_binding_legality_v3
+- id: P008v1
+  hypothesis: P008
+  idea: embedded_question_answerhood_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v1
+  instruction: |-
+    Author a new task from scratch: embedded_question_answerhood_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute answer sets for wh-questions and judge ascriptions of them: exhaustive vs mention-some under know/tell/wonder, pair-list readings with multiple wh; answers are the set or an ascription verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v1
+  design_choice: Represent answers as canonical sorted lists of entity names, with exhaustive vs mention-some
+    judged by set equality to the full domain or a subset.
+- id: P008v2
+  hypothesis: P008
+  idea: embedded_question_answerhood_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v2
+  instruction: |-
+    Author a new task from scratch: embedded_question_answerhood_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute answer sets for wh-questions and judge ascriptions of them: exhaustive vs mention-some under know/tell/wonder, pair-list readings with multiple wh; answers are the set or an ascription verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v2
+  design_choice: 'Use a verdict-only format: output one of ''exhaustive'', ''mention-some'', or ''pair-list''
+    for each given ascription, with no explicit answer set.'
+- id: P008v3
+  hypothesis: P008
+  idea: embedded_question_answerhood_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v3
+  instruction: |-
+    Author a new task from scratch: embedded_question_answerhood_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute answer sets for wh-questions and judge ascriptions of them: exhaustive vs mention-some under know/tell/wonder, pair-list readings with multiple wh; answers are the set or an ascription verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/embedded_question_answerhood_v3
+- id: P009v1
+  hypothesis: P009
+  idea: plural_predication_readings_v1 (draw 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v1
+  instruction: |-
+    Author a new task from scratch: plural_predication_readings_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify plural predications over atom-sum models as distributive, collective, or cumulative, using forcing and neutral predicates/adverbs (gather, each, respectively); answers are the available readings or per-reading truth verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v1
+  design_choice: Vary the number of atoms in the model (2, 3, or 4) and the predicate arity (unary or
+    binary), with truth verdicts for each reading given as a canonical triple of 0/1s.
+- id: P009v2
+  hypothesis: P009
+  idea: plural_predication_readings_v2 (draw 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v2
+  instruction: |-
+    Author a new task from scratch: plural_predication_readings_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify plural predications over atom-sum models as distributive, collective, or cumulative, using forcing and neutral predicates/adverbs (gather, each, respectively); answers are the available readings or per-reading truth verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v2
+  design_choice: Present a single sentence with a forcing adverb (e.g., 'together', 'each') and a neutral
+    predicate, and ask for the full set of available readings as a compact string like 'D,C' or 'D,C,Cu'.
+- id: P009v3
+  hypothesis: P009
+  idea: plural_predication_readings_v3 (draw 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v3
+  instruction: |-
+    Author a new task from scratch: plural_predication_readings_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify plural predications over atom-sum models as distributive, collective, or cumulative, using forcing and neutral predicates/adverbs (gather, each, respectively); answers are the available readings or per-reading truth verdicts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scope_and_binding_r1/plural_predication_readings_v3
