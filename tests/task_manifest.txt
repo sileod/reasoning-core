@@ -33,6 +33,7 @@ bloom_filter_membership
 boolean_network_knockout
 boolean_propagation_search
 borda_winner
+bottom_up_tree_automaton_run
 bresenham_midpoint_rasterization
 bridge_edges
 buddy_allocator
@@ -90,10 +91,12 @@ counterfactual_replay
 counterfactual_twin_model
 counterfeit_weighing_deduction
 crc_remainder
+crdt_gossip_state_trace
 critical_pair_generation
 critical_path
 critical_path_analysis
 cron_next_fire
+ctl_fixpoint_model_checking
 cycle_finder
 cyk_chart_membership
 d_separation
@@ -209,6 +212,7 @@ lie_bracket_hall_normal_form
 light_occlusion_delta
 lights_out_press_set
 lindenmayer_parallel_rewrite
+line_cross_swap_schedulev2
 linear_recurrence
 linearizability_check
 ll1_predictive_parsing
@@ -339,6 +343,7 @@ schensted_tableau_insertion
 schwartz_zippel_identity
 scope_explication
 scoped_instruction
+segment_tree_lazy_propagation
 selinger_join_ordering
 semantic_paraphrase
 semantic_version_precedence
@@ -378,6 +383,7 @@ strongly_connected_components
 struct_layout_alignment
 subset_zeta_transform
 suffix_array_rank
+suffix_automaton_growth_trace
 symbolic_differentiation
 symmetric_poly_to_elementary
 syndrome_decoding
@@ -404,9 +410,11 @@ topological_sort_count
 tower_block_removal
 toy_spn_cipher_rounds
 transaction_serializability
+transformation_semigroup_closure
 transitive_reduction
 tree_axis_navigation
 tree_canonical_form
+tree_pattern_occurrence_count
 tree_reconstruction
 tree_reroot_distances
 tree_subset_counting
