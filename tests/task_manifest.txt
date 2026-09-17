@@ -24,6 +24,7 @@ articulation_vertices
 aspectual_class_entailment
 attribute_grammar_evaluation
 b_tree_promoted_key
+backdoor_adjustment_selection
 backtracking_search
 bayesian_conditioning
 bayesian_network_table_conversion
@@ -58,6 +59,7 @@ causal_intervention
 cayley_table_evaluation
 cellular_automaton_step
 censored_survival_estimate
+centering_transition_tracking
 checksum_scheme_inference
 chip_firing_stabilization
 clarification_question
@@ -70,12 +72,14 @@ code_runnability
 coin_selection
 color_refinement_signature
 combinatorics_formula
+compound_cue_weight_updates
 concurrent_edit_rebase
 conditional_expectation
 conditional_probability
 conditional_response_contract
 condorcet_winner
 configuration_precedence_resolution
+conflict_response_selection
 conflict_serializability
 congruence_closure
 congruence_system
@@ -94,6 +98,7 @@ coordinate_frame_composition
 core_number
 coreference
 correction_aware_summary
+coset_enumeration_index
 count_elements
 counter_machine_trace
 counterfactual_replay
@@ -101,6 +106,7 @@ counterfactual_twin_model
 counterfeit_weighing_deduction
 crc_remainder
 crdt_gossip_state_trace
+criterion_shift_detection
 critical_pair_generation
 critical_path
 critical_path_analysis
@@ -120,6 +126,8 @@ deadlock_detection
 decision_tree_induction
 defeasible_conflict_depth
 defeasible_nli
+definitional_unfolding_subsumption
+degree_construction_equivalence
 deictic_reanchoring
 delaunay_flip_trace
 dempster_shafer_combination
@@ -128,12 +136,14 @@ dfa_minimization
 dhondt_apportionment
 diagnostic_test_selection
 diff_patch_application
+difference_array2_d
 dimensional_analysis
 dimensional_consistency
 direct_inverse_inflection
 distinguishing_witness
 distributed_snapshot_recording
 dominator_analysis
+dot_type_copredication
 dynamic_discourse_evaluation
 dynamic_programming
 ear_clipping_triangulation
@@ -152,15 +162,19 @@ eulerian_status
 event_driven_gate_simulation
 event_order_reconstruction
 event_queue_simulation
+evidential_felicity_verdicts
 exact_cover_selection
 exact_rounding_pipeline
+exact_verifier_set_evaluation
 expected_utility_choice
 extensive_form_to_bimatrix
 face_tracing
+factor_graph_marginal
+fairy_piece_attack_sets
 fd_attribute_closure
 fenwick_prefix_nodes
 filesystem_path_resolution
-filler_gap_licensing_v2
+filler_gap_licensing
 finite_automaton_execution
 finite_group_element_order
 finite_group_inverse
@@ -201,6 +215,7 @@ hindley_milner_inference
 hyperedge_replacement_derivation
 incremental_build_rebuild_set
 incremental_interpretation
+indexical_context_shifting
 info_seeking
 information_seeking
 instant_runoff_winner
@@ -255,6 +270,7 @@ matrix_jordan
 maximum_flow
 mealy_composition_run
 mealy_moore_machine_conversion
+melodic_transposition_spelling
 memory_allocator_trace
 metamath_core_select
 metamath_entailment
@@ -401,9 +417,12 @@ skyline_rectangle_update
 sld_resolution
 smith_normal_form
 spatial_folding
+spatial_frame_relation_verdicts
+speaker_role_consistency
 spreadsheet_evaluation
 spreadsheet_formula_dependency
 spreadsheet_reference_copy
+stabilizer_tableau_simulation
 stack_sorting_discipline
 stone_placement_capture
 stratified_datalog_evaluation
@@ -442,6 +461,7 @@ topological_layering
 topological_sort_count
 tower_block_removal
 toy_spn_cipher_rounds
+trace_monoid_canonization
 transaction_serializability
 transformation_semigroup_closure
 transitive_reduction
@@ -452,6 +472,7 @@ tree_reconstruction
 tree_reroot_distances
 tree_subset_counting
 tree_transducer_run
+trick_taking_adjudication
 trie_unique_prefix
 truth_maintenance_revision
 tuple_generating_dependency_chase
@@ -475,6 +496,7 @@ vowel_harmony_spreading
 wait_for_deadlock
 wavelet_tree_queries
 weakest_precondition_computation
+weight_sensitive_stress_parse
 window_function
 window_function_execution
 word_problem_distractors

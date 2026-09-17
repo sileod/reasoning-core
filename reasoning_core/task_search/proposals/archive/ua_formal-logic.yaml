@@ -1,0 +1,783 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_formal-logic
+created_at: '2026-09-17T06:54:13.355478+00:00'
+provenance:
+  kind: proposer
+  name: ua_formal-logic
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks inspired by formal logic, model theory, proof theory, automata, and formal
+    languages. The catalog you were shown already covers the classic textbook algorithms -- sorting, gcd,
+    graph traversal, compression, scheduling, matching, parsing -- and a proposal that names one will
+    be rejected as a repeat however well it fits this brief. Reach past the standard repertoire: propose
+    structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 12
+  complete: true
+catalog:
+  sha256: e9225b4ec76886ab8604b28cb5a944ccc5859b97145ccf306b5002b2573bbf52
+  entries: 949
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 334
+    task: 453
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-2
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: ca57ce47c24e75d0be3450390af294e5f7719c839235f8d53e730497cef11d10
+    response_sha256: 9e9b85eeb7fbba1859ea84af9a0797311963492becce041d2f2bc7af1287ff49
+    response_id: gen-1789627746-BZDKGUBHE6x8sNPKGFg3
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8675dde1b2460ec59b80b9cc6bf46d699d332f65ea737b4c4cc654e745822339
+    response_sha256: d9e370b102585bbe1b62e44d85869dc9ec238e73c914af4dd2a58a5de6753da8
+    response_id: chatcmpl-874cb932a61a4ee6
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: be1c753c2f0148d6c4abfdbafe03ca4a5ea872d2eb1138f4a093f7f6b5fe07e5
+    response_sha256: 5c9348ab008784aa0cec7214161a3df36ffe6eca4e9a3bd3493b77c2a5737a9e
+    response_id: chatcmpl-b613b7ba5fa390fe
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1371e759e28a9f8292d964e9a97bbf4a5db90a403fab99aeedb8494995bebece
+    response_sha256: 82244468010ef9ea080800b437a37b73682a57eb6e8d94a4d173ceee541402e0
+    response_id: chatcmpl-9edae0ec6eb43ce3
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 62558e545681fa6a2fd98d04347fc10c4eed903409e5d8da5247e73b88dc1630
+    response_sha256: 35d959fd4462f203f588a2a027c5ee4acaec952bef1aa0f7334aa007eb761850
+    response_id: chatcmpl-9def783397c98767
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: cfb619a8f27b7ffa07fe26dc1dae79948167c530890de4000d12de02ddda0930
+    response_sha256: 90cb396b2a16922adb8dd5d9464125089fdd38186f46c85d863049ec522f5a86
+    response_id: chatcmpl-b50db06af297b78d
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: adaf0c013669329900333e73e0fa6fbb1d39d4c117341cf9a31fae2485488a05
+    response_sha256: 22be9710cb76d5211dd1cd8d584d2c1505f03e1e1966da661d724fdcc5effcec
+    response_id: chatcmpl-88a37a1fb05d33e1
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: antichain_progress_completion
+  summary: Track progress frontiers in partially ordered timestamp spaces through advances, forks, and
+    joins; determine which queried times are complete because no frontier element can still precede them.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_relational_structures_r1.pareto_frontier_layers.pareto_frontier_layers:ParetoFrontierLayers
+      relationship: adjacent
+      overlap: Both involve frontiers in partial orders, but Pareto layers strip nondominated points,
+        while C009 tracks progress against a frontier and completeness.
+    - id: proposal:k3_scientific-reasoning:P007
+      relationship: adjacent
+      overlap: Both track sequential progress with boundary crossings, but sequential analysis tests hypotheses,
+        not completion of timestamp spaces.
+    - id: task:generated.wave9.interval_sweep.interval_sweep:IntervalSweep
+      relationship: different
+      overlap: Interval sweep computes overlaps and unions, unrelated to progress frontiers.
+    substantive_difference: C009 introduces the operation of tracking progress frontiers in partially
+      ordered timestamps, determining completeness based on frontier absence of predecessors - not found
+      in Pareto front stripping or interval sweeps.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Antichain progress completion is a novel partial-order property distinct from frontier layer
+      extraction.
+    votes: 2/3
+    dissent:
+    - novel
+- name: layered_interval_exposure
+  summary: Maintain visible values beneath prioritized interval layers through activation, removal, and
+    priority changes; reveal covered layers when higher ones disappear and return maximal constant visible
+    spans.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_incremental-recomputation:P008
+      relationship: adjacent
+      overlap: Both handle intervals and visibility, but rounded_display_consistency recovers latent values
+        from rounded displays, while C003 maintains layered visibility under priority changes.
+    - id: task:generated.wave9.abstract_interval_analysis.abstract_interval_analysis:AbstractIntervalAnalysis
+      relationship: adjacent
+      overlap: Both process interval layers, but abstract interpretation evaluates expression semantics,
+        whereas C003 tracks visible spans under prioritized layers.
+    - id: proposal:ua_surface-invariance:P001
+      relationship: different
+      overlap: No shared operation; gated motion exposure accumulates physical exposure, unrelated to
+        interval layer visibility.
+    substantive_difference: C003's operation of maintaining visible values beneath prioritized interval
+      layers through activation and priority changes, revealing covered layers, is a distinct dynamic
+      visibility problem not found in interval analysis or display consistency tasks.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Layered interval exposure with priority changes is a new cognitive operation, though the interval
+      element is familiar from other domains.
+    votes: 2/3
+    dissent:
+    - novel
+- name: affine_view_aliasing
+  summary: Compose slicing, transposition, reversal, and broadcasting over strided array views; determine
+    whether selected views share storage and return a shared address, overlap count, or disjointness.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_invariants:P006
+      relationship: adjacent
+      overlap: Both involve linear structure and identifiability, but nuisance contrast identifiability
+        eliminates nuisance parameters, not array storage overlap.
+    - id: task:generated.k3_shortcuts_fail_r1.exact_cover_selection.exact_cover_selection:ExactCoverSelection
+      relationship: different
+      overlap: Exact cover selection requires subset covering; unrelated to array view storage or aliasing.
+    - id: task:generated.wave10.counterfactual_replay.counterfactual_replay:CounterfactualReplay
+      relationship: different
+      overlap: Counterfactual replay recomputes downstream effects, not array indexing.
+    substantive_difference: C005 introduces the operation of composing array views (slicing, transpose,
+      reversal, broadcasting) and determining storage overlap - a distinct aliasing detection problem,
+      not present in linear identifiability or exact cover.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Affine view aliasing is a novel operation combining array view composition with storage overlap
+      analysis.
+    votes: 2/3
+    dissent:
+    - novel
+- name: density_window_rebalancing
+  summary: Maintain ordered records in a gapped array under insertions and deletions; select the smallest
+    enclosing window satisfying stated density bounds and redistribute records; return repaired positions.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_counterfactual:P007
+      relationship: adjacent
+      overlap: Both perform interventions on tables, but C002 rebalances a gapped array under density
+        constraints while P007 reverses pooled comparisons within strata.
+    - id: proposal:ua_formal-semantics:P001
+      relationship: adjacent
+      overlap: Both maintain density through structural changes, but mesh remapping integrates overlaps
+        whereas C002 selects windows and redistributes records.
+    - id: task:generated.wave9.ledger_reconciliation.ledger_reconciliation:LedgerReconciliation
+      relationship: different
+      overlap: Ledger reconciliation tracks ordered financial transactions; unrelated to gapped array
+        density rebalancing.
+    substantive_difference: 'C002 introduces a new operation: maintain an ordered sequence in a gapped
+      array with density bounds, selecting the smallest enclosing window for rebalancing after insertions
+      and deletions. This is distinct from stratified table reversals, mesh remapping, or ledger reconciliation.'
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Density-window rebalancing in a gapped array is not present in any nearest neighbor; it is
+      a genuinely different data-structure operation.
+    votes: 2/3
+    dissent:
+    - variant
+- name: leaky_evidence_commitment
+  summary: Accumulate signed evidence with stated leakage, starting bias, and absorbing decision bounds;
+    vary interruptions, changing bounds, and opposing evidence bursts; answer the committed choice and
+    stopping time.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_uncertainty:P005
+      relationship: adjacent
+      overlap: Both involve decision-making with evidence and commitment, but strategic commitment optimization
+        chooses actions for payoff, while C011 accumulates evidence with leakage to a bound.
+    - id: proposal:ua_novel-composition:P005
+      relationship: different
+      overlap: No shared operation; consensus cut minimum partitions valuations, not evidence accumulation.
+    - id: proposal:k3_controlled-nli:P001
+      relationship: different
+      overlap: No shared operation; implicative inference evaluates entailment, not accumulation.
+    substantive_difference: C011's leaky evidence accumulation with absorbing bounds and changing bounds
+      is a distinct stochastic process not present in decision optimization or entailment tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Leaky evidence commitment is a novel sequential evidence-accumulation procedure with leakage
+      and bounds.
+    votes: 2/3
+    dissent:
+    - novel
+- name: online_nondeterminism_resolution
+  summary: Determine whether an automaton's nondeterminism can be resolved from input prefixes using bounded
+    memory while preserving its accepted language; vary safety, Buchi, and parity acceptance, returning
+    existence.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave0.n04_finite_automaton_execution.n04_finite_automaton_execution:FiniteAutomatonExecution
+      relationship: adjacent
+      overlap: both run automata, but FiniteAutomatonExecution follows NFA transitions; C008 asks whether
+        nondeterminism can be resolved online with bounded memory, a different decision problem
+    - id: task:generated.k3_dynamic_structures_r1.bottom_up_tree_automaton_run.bottom_up_tree_automaton_run:BottomUpTreeAutomatonRun
+      relationship: different
+      overlap: 'different automata types and goals: tree automaton run vs. online determinization existence'
+    - id: proposal:ua_invariants:P001
+      relationship: different
+      overlap: 'different domains: electrical networks vs. automata'
+    substantive_difference: Determining existence of a bounded-memory online resolver for nondeterministic
+      automata (related to determinization and game theory) is a novel meta-problem not present in ordinary
+      automaton execution tasks.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: the decision problem about online resolutions of automata is qualitatively different
+      from executing an automaton on a word.'
+    votes: 3/3
+    dissent: []
+- name: hereditary_typed_substitution
+  summary: Substitute normal terms into typed normal forms, immediately reducing redexes created by replacement;
+    range over nested functions, products, and projections, returning the resulting beta-normal term.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:lambda_reduction
+      relationship: adjacent
+      overlap: both reduce expressions to a normal form via substitution, but C001 specializes in typed
+        substitution with immediate beta-redex creation, while lambda_reduction is general untyped
+    - id: proposal:ua_compositional-generalization:P010
+      relationship: different
+      overlap: 'different domains: C001 deals with typed lambda calculus substitution, fermionic_normal_ordering
+        with anticommutation algebra; share only normalization'
+    - id: task:generated.k3_hierarchical_recursive_r1.hereditary_base_rewrite.hereditary_base_rewrite:HereditaryBaseRewrite
+      relationship: adjacent
+      overlap: both recursively rewrite expressions, but hereditary_base_rewrite works on base-b numerals,
+        while C001 works on typed lambda terms
+    substantive_difference: C001 implements type-directed hereditary substitution ensuring termination,
+      a distinct algorithm not present in any known neighbor; other tasks are untyped or use external
+      rewrite systems.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: 'Novel cognitive operation: typed hereditary substitution is a specific and valuable capability
+      not covered by any existing normalize or equation-solving task.'
+    votes: 3/3
+    dissent: []
+- name: resolution_interpolant_extraction
+  summary: Propagate partial interpolants through partitioned resolution refutations with shared and private
+    atoms, using supplied extraction rules; return a queried node's interpolant as a truth table.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_latent-representation:P005
+      relationship: adjacent
+      overlap: both involve propagating information through nested structures (resolution refutations
+        vs. forests), but C004's operation is logical interpolation, P005's is renormalization
+    - id: proposal:k3_language-implementation:P007
+      relationship: adjacent
+      overlap: both propagate a quantity through a tree (interpolant vs. cardinality), but C004 uses resolution
+        rules, P007 uses histogram estimates
+    - id: proposal:ua_global-over-greedy:P011
+      relationship: different
+      overlap: 'different fields: C004 is proof theory, P011 is representation theory; no shared operation'
+    substantive_difference: Resolution interpolant extraction is a specific proof-theoretic technique
+      (Craig interpolation) not covered by any other task; it requires managing shared/private variables
+      in proofs.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel and useful: extracting interpolants from resolution proofs is a distinct operation
+      with no existing analog.'
+    votes: 3/3
+    dissent: []
+- name: finite_order_gap_elimination
+  summary: Eliminate quantified variables from formulas over finite linear orders by reasoning about endpoint
+    and inter-variable gaps; return an equivalent condition on the free variables' order and gap sizes.
+  id: P009
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:variable_elimination
+      name: variable_elimination
+      relationship: adjacent
+      overlap: Both eliminate variables, but C007 does so in finite linear orders with order/gap constraints,
+        whereas the gallery handles linear equations algebraically.
+    - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+      name: finite_model_quantifiers
+      relationship: adjacent
+      overlap: Both involve quantifiers over finite models, but C007 eliminates them into explicit gap
+        conditions, not just evaluating truth.
+    - id: task:generated.k3_invariants_r1.gnfa_state_elimination.gnfa_state_elimination:GnfaStateElimination
+      name: gnfa_state_elimination
+      relationship: different
+      overlap: GNFA state elimination is about automata, not logic.
+    substantive_difference: C007's quantifier elimination over finite linear orders yielding gap-order
+      conditions is a novel logical operation not present in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 3
+      clarity: 3
+    reason: Quantifier elimination in finite orders with gap reasoning is a distinct operation.
+    votes: 2/3
+    dissent:
+    - variant
+- name: bounded_model_amalgamation
+  summary: Combine finite relational structures over a shared embedded substructure while preserving embeddings
+    and supplied universal constraints; return the smallest permitted amalgam size or nonexistence within
+    a bound.
+  id: P010
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_counterfactual:P003
+      relationship: different
+      overlap: 'different structures: C003 is about amalgamating relational structures under constraints,
+        P003 about composing relations via wiring; both are model-theoretic, but the operation and output
+        differ'
+    - id: proposal:ua_state-tracking:P008
+      relationship: adjacent
+      overlap: both combine partial specifications and seek consistency, but C003 works with arbitrary
+        relational structures and embeddings, P008 with probability tables
+    - id: proposal:ua_planning-backtracking:P001
+      relationship: different
+      overlap: C003 has no geometric or mechanical content; P001 is about adding bars to frameworks, a
+        different operation
+    substantive_difference: "Bounded model amalgamation is a model-theoretic computation (Fra\xEFss\xE9\
+      \ limit) not present in any known neighbor; it deals with amalgams and universal constraints, distinct\
+      \ from existing constraint solving or relation composition."
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 3
+      clarity: 3
+    reason: 'Novel operation: constructing amalgams of finite relational structures is a specific and
+      non-trivial model-theoretic task with no close existing variant.'
+    votes: 3/3
+    dissent: []
+- name: team_semantics_evaluation
+  summary: Evaluate formulas over sets of assignments using dependence, inclusion, independence, split
+    disjunction, and quantified team extension; return satisfaction under the specified strict or lax
+    semantics.
+  id: P011
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_shortcuts-fail:P007
+      relationship: adjacent
+      overlap: both evaluate formulas over sets of valuations (teams vs. heaps), but heap_extension_truth
+        uses separating logic, while team_semantics uses dependence and inclusion atoms
+    - id: proposal:ua_formal-semantics:P004
+      relationship: adjacent
+      overlap: both involve quantifying over witnesses, but witness_uniformity_semantics is about independence
+        in existential quantifiers, not team semantics
+    - id: task:generated.k3_formal_semantics_r1.dynamic_discourse_evaluation.dynamic_discourse_evaluation:DynamicDiscourseEvaluation
+      relationship: different
+      overlap: dynamic discourse evaluates updates on assignment sets, but not with dependence/independence
+        atoms
+    substantive_difference: Team semantics with dependence, inclusion, and independence atoms is a specific
+      logic of dependencies not present in any known task; it requires evaluating satisfaction over teams
+      of assignments, distinct from dynamic semantics or separating logic.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: evaluation in team semantics is a distinct logical operation not covered by existing
+      formula-evaluation tasks.'
+    votes: 3/3
+    dissent: []
+- name: nominal_equation_solving
+  summary: Solve equations between terms with atom binders, suspended permutations, and freshness constraints
+    modulo alpha-equivalence; return inconsistency or the principal substitution and residual freshness
+    conditions.
+  id: P012
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_synthetic-grammars:P008
+      relationship: adjacent
+      overlap: both solve equations between symbolic expressions, but word_equation_solving operates on
+        strings via concatenation, while C005 deals with nominal terms with binders and permutations
+    - id: proposal:ua_scope-and-binding:P001
+      relationship: adjacent
+      overlap: both handle binding and scope, but monotonicity_context_signatures propagates polarity,
+        not solving equations
+    - id: gallery:equation_system
+      relationship: different
+      overlap: equation_system is about linear equations over numbers, C005 about nominal algebra; no
+        common operation
+    substantive_difference: Nominal unification with freshness constraints is a specialized algorithm
+      for terms with binders, not provided by any existing task; word equations or standard systems are
+      not the same.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: nominal unification is a distinct, non-trivial operation with no close variant in
+      the catalog.'
+    votes: 3/3
+    dissent: []
+rejected:
+- name: cue_competition_credit_assignment
+  summary: Redistribute prediction error among jointly presented cues under stated learning rates; vary
+    compound training, blocking, extinction, and outcome reversals; answer learned cue strengths or probe
+    predictions.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_cognitive-psychology:P008
+    relationship: same_operation
+    overlap: Both run error-correction learning rules over compound cue combinations to compute cue strengths
+      and probe predictions
+  - id: proposal:ua_cognitive-psychology:P003
+    relationship: adjacent
+    overlap: Both involve cognitive psychology but one is about decision bounds, the other cue learning
+  - id: proposal:ua_inference-modes:P010
+    relationship: adjacent
+    overlap: Both infer latent factors (preferences vs cue strengths) from observed choices
+  reason: 1/3 samples judged it novel; Exact duplicate of existing proposal compound_cue_weight_updates.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: signed_join_delta_propagation
+  summary: Propagate signed record updates through joins and projections with duplicate multiplicities;
+    include interactions between simultaneous updates and consolidate cancellations; return the net output
+    changes.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_formal-logic:P006
+    relationship: same_operation
+    overlap: Both propagate changes through relational joins and aggregates, handling insertions/retractions
+      and returning deltas. C006 adds signed updates and cancellation, but the core delta propagation
+      operation is identical.
+  - id: proposal:ua_representation-specific:P003
+    relationship: variant
+    overlap: Both merge updates with duplicate handling, though one is set-based and the other relational.
+  - id: proposal:ua_scope-and-binding:P001
+    relationship: different
+    overlap: No shared operation; monotonicity signatures propagate entailment polarity, not data changes.
+  reason: 0/3 samples judged it novel; Signed delta propagation is a parameterization of streaming view
+    delta maintenance.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: checksum_bucket_peeling
+  summary: Recover signed item differences from overlapping buckets containing counts, identifier sums,
+    and checksums; repeatedly decode verified singleton buckets and subtract their contributions; return
+    recovered items or residue.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_inference-modes:P004
+    relationship: variant
+    overlap: Both peel constraints (XOR vs checksum) to recover hidden items by iteratively solving singleton
+      checks
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: Both recover items from overlapping aggregate information
+  - id: proposal:ua_state-tracking:P003
+    relationship: adjacent
+    overlap: Both extract individual items from aggregate sums
+  reason: 1/3 samples judged it novel; Checksum peeling is a parameter change of the XOR peeling operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: fractional_permission_flow
+  summary: Track fractional access rights over nested memory regions through spatial splits, share transfers,
+    and recombination; test read and write requests against ownership requirements; return legality or
+    the first violation.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_formal-logic:P002
+    relationship: same_operation
+    overlap: Both track ownership and borrow permissions with limits and transferral across nested regions.
+      C004 generalizes to fractional shares, but the same operation of tracking access rights and checking
+      legality is present.
+  - id: proposal:ua_relational-structures:P001
+    relationship: same_operation
+    overlap: Both perform resource audits with linear/affine obligations and transferral, similar to fractional
+      permission tracking.
+  - id: task:generated.wave9.memory_allocator_trace.memory_allocator_trace:MemoryAllocatorTrace
+    relationship: adjacent
+    overlap: Both involve memory segments, but allocator trace manages allocation layout, not permission
+      tracking.
+  reason: 0/3 samples judged it novel; Fractional permissions are a surface variation of known ownership
+    and resource audit tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: attentional_blink_gating
+  summary: Track target admission through an attention gate with stated consolidation and recovery rules;
+    vary distractor gaps, adjacent targets, and prolonged stimuli; answer admitted targets or the gate
+    state.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_surface-invariance:P001
+    relationship: variant
+    overlap: Both model 'gates' (attention vs shutters) that determine passage of items (targets vs light)
+      over time
+  - id: proposal:ua_inference-modes:P010
+    relationship: adjacent
+    overlap: Both involve attention but one is about preference separation, the other about temporal gating
+  - id: task:generated.wave8.set_associative_cache.set_associative_cache:SetAssociativeCache
+    relationship: adjacent
+    overlap: Both track a buffer that admits/discards items based on a policy
+  reason: 1/3 samples judged it novel; Attentional gating is a surface variant of existing gated exposure
+    operations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: interventional_cause_equivalence
+  summary: Prevention, enabling, omission and nested counterfactual clauses under stated causal mechanisms;
+    evaluate their outcome dependencies across single and joint interventions and decide semantic equivalence.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_controlled-nli:P001
+    relationship: same_operation
+    overlap: Both compute semantic equivalence of causal and factive sentences under negation and embedding;
+      C010 extends to prevention and omission but the core operation of comparing outcome dependencies
+      is the same.
+  - id: proposal:k3_algorithms-and-data-structures:P002
+    relationship: variant
+    overlap: Both determine equivalence of clauses with temporal/causal connectives; C010 adds causal
+      mechanisms but the equivalence check is shared.
+  - id: proposal:ua_novel-composition:P001
+    relationship: different
+    overlap: Robust counterfactual regret is an optimization, not semantic equivalence.
+  reason: 1/3 samples judged it novel; Interventional cause equivalence is a variant of implicative/factive
+    entailment and temporal connective equivalence.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: piece_table_provenance
+  summary: Track sequences represented by slices of original and append-only buffers through insertions,
+    deletions, and replacements; resolve final positions or ranges to their surviving source coordinates.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P010
+    relationship: variant
+    overlap: Both track the provenance/lineage of a sequence (piece table vs bitemporal records) after
+      edits
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: variant
+    overlap: Both trace which original sources contribute to a final output after transformations
+  - id: proposal:ua_parsing-and-agreement:P001
+    relationship: adjacent
+    overlap: Both track linked occurrences through transformations
+  reason: 1/3 samples judged it novel; Piece table provenance is a variant of existing lineage/provenance
+    tracking operations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: cyclic_proof_trace_acceptance
+  summary: Check cyclic proof certificates with local trace transitions and marked progress steps; determine
+    whether every infinite proof path admits an eventually following trace with infinitely many progress
+    steps.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_inference-modes:P003
+    relationship: variant
+    overlap: both deal with cyclic proofs and progress conditions, but P003 completes proof skeletons
+      while C012 checks a given certificate; both consider cycles and progress, same underlying family
+  - id: proposal:ua_invariants:P002
+    relationship: adjacent
+    overlap: both involve traces and infinity, but cyclic_trace_invariants works on matrix word identities,
+      not proof certificates
+  - id: task:generated.wave9.temporal_logic_monitoring.temporal_logic_monitoring:TemporalLogicMonitoring
+    relationship: different
+    overlap: temporal logic monitoring evaluates infinite behaviors but does not check proof certificates
+  reason: '0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Novel:
+    validating a cyclic proof certificate via trace conditions is a distinct operation, though related
+    to cyclic proof closure.'
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: perceptual_rivalry_adaptation
+  summary: Track competing percepts under stated mutual inhibition, dominance adaptation, and recovery
+    rules; vary stimulus pulses, interruptions, and asymmetric strengths; answer the dominant percept
+    or switch count.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_cognitive-psychology:P006
+    relationship: same_operation
+    overlap: 'both simulate a psychological process with competing perceptual/cognitive information and
+      adaptation: C007 tracks percepts with inhibition, P006 maps stimulus dimensions with distraction;
+      both output the dominant response'
+  - id: proposal:k3_cognitive-psychology:P008
+    relationship: variant
+    overlap: 'both model trial-wise dynamics with adaptation or learning: C007 uses mutual inhibition
+      and recovery, P008 uses error correction; both track a state and answer a final decision'
+  - id: proposal:ua_inference-modes:P009
+    relationship: different
+    overlap: no cognitive or dynamical similarity; tropical balance inference is algebraic
+  reason: '1/3 samples judged it novel; Variant: the dynamics of competing percepts with adaptation is
+    already covered by existing cognitive-psychology proposal families; only the story differs.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: content_addressed_path_rebuilding
+  summary: Apply subtree replacements to immutable shared structures, rebuilding ancestors and interning
+    equal nodes; vary aliases, repeated edits, and reversions; return resulting sharing or newly created
+    node counts.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_formal-logic:P003
+    relationship: adjacent
+    overlap: 'both involve sharing state: C011 on immutable trees, P003 on array views; but P003 asks
+      about storage overlap, C011 about structural sharing after edits'
+  - id: task:generated.wave9.alias_mutation.alias_mutation_tracking:AliasMutation
+    relationship: variant
+    overlap: both track mutable structures with aliasing, but C011 specifically uses persistent sharing
+      and interning, a different data structure operation
+  - id: proposal:ua_algorithms-and-data-structures:P005
+    relationship: adjacent
+    overlap: both maintain shared structures and answer about equality, but shared_term_congruence merges
+      terms under equalities, while C011 rebuilds paths
+  reason: '1/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Novel:
+    the specific operation of path rebuilding in immutable structures is not covered by any existing task.'
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: epistemic_announcement_update
+  summary: Restrict finite multi-agent knowledge models through truthful public announcements whose contents
+    may themselves express knowledge; return surviving worlds or the truth of a final nested knowledge
+    claim.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_dynamic-structures:P002
+    relationship: same_operation
+    overlap: 'both update epistemic states based on announcements: C002 uses public announcements possibly
+      containing knowledge, while P002 uses general event updates; both return surviving possible worlds
+      or knowledge claims'
+  - id: task:generated.k3_uncertainty_r1.kripke_knowledge_evaluation.kripke_knowledge_evaluation:KripkeKnowledgeEvaluation
+    relationship: adjacent
+    overlap: both evaluate nested knowledge formulas, but C002 includes announcements as an additional
+      update step; Kripke_evaluation only evaluates a formula without updating the model
+  - id: task:generated.k3_uncertainty_r1.announcement_round_deduction.announcement_round_deduction:AnnouncementRoundDeduction
+    relationship: adjacent
+    overlap: both involve announcements eliminating worlds, but announcement_round_deduction uses special
+      'I don't know' announcements, not general epistemic formulas
+  reason: '0/3 samples judged it novel; Variant of known epistemic event update: the core operation of
+    restricting models via announcements is already present in P002, so C002 is a parameterization.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+pool:
+- name: observed_remove_reconciliation
+  summary: Reconcile replicated sets whose additions carry unique tags and removals erase only observed
+    tags; vary concurrent re-additions, delayed exchanges, and repeated merges; return surviving members.
+- name: finite_back_and_forth_rank
+  summary: Compare finite relational structures with named tuples by extending partial isomorphisms under
+    alternating element choices; return the least distinguishing game length or survival through a given
+    bound.
+- name: dependency_quantifier_realizability
+  summary: Solve finite quantified constraints where each existential choice sees only designated universal
+    variables; vary dependency overlap and relation arity, returning realizability or a requested strategy
+    table.
+- name: intuitionistic_kripke_forcing
+  summary: Evaluate intuitionistic formulas on finite ordered worlds with persistent predicates and constant
+    or expanding domains; return forcing worlds or a verdict, respecting future-world implication and
+    quantification.
+- name: evidence_reuse_equivalence
+  summary: Compare sentences combining independent support, alternative derivations and repeated use of
+    one source; distinguish evidence identity from multiplicity and decide whether their support expressions
+    coincide.

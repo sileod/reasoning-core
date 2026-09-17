@@ -127,7 +127,7 @@ class FillerGapLicensingV2Config(Config):
 
 
 class FillerGapLicensingV2Task(Task):
-    task_name = "filler_gap_licensing_v2"
+    task_name = "filler_gap_licensing"
     summary = "Trace filler-gap dependencies: judge extractions across complex-NP, subject, adjunct, wh-, and coordinate islands, order multiple fillers by superiority, license parasitic gaps; answer the verdict and violated constraint."
     design_choice = "Present a sentence containing multiple wh-fillers and gaps, requiring the solver to output the ordered list of fillers that can be successfully linked, and the specific island constraint violated if any."
     config_cls = FillerGapLicensingV2Config

@@ -1,0 +1,311 @@
+version: 1
+name: k3_global_over_greedy_r2
+proposal_wave: k3_global-over-greedy
+defaults:
+  base_ref: 301352a38acd553ceed6a1579df9bf6a6728e2b5
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: sparse_table_rmq_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v1
+  instruction: |-
+    Author a new task from scratch: sparse_table_rmq_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given an array and range queries, build a sparse table and answer each range minimum query in O(1), breaking ties by leftmost index; arrays vary in length and value distribution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v1
+  design_choice: Vary array length from 8 to 64, values from 0 to 99, and query ranges as random subarrays;
+    answer is the index of the leftmost minimum.
+- id: P001v2
+  hypothesis: P001
+  idea: sparse_table_rmq_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v2
+  instruction: |-
+    Author a new task from scratch: sparse_table_rmq_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given an array and range queries, build a sparse table and answer each range minimum query in O(1), breaking ties by leftmost index; arrays vary in length and value distribution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v2
+  design_choice: Use arrays of length 2^n with values drawn from a skewed distribution (many duplicates),
+    and query all possible ranges; answer is the smallest index with the minimum value.
+- id: P001v3
+  hypothesis: P001
+  idea: sparse_table_rmq_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v3
+  instruction: |-
+    Author a new task from scratch: sparse_table_rmq_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given an array and range queries, build a sparse table and answer each range minimum query in O(1), breaking ties by leftmost index; arrays vary in length and value distribution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/sparse_table_rmq_v3
+- id: P002v1
+  hypothesis: P002
+  idea: heavy_light_decomposition_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v1
+  instruction: |-
+    Author a new task from scratch: heavy_light_decomposition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a tree with weighted edges and path queries, decompose via heavy-light and answer path aggregates (sum, max, min) by climbing chain heads; queries vary in endpoint depth and LCA position.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v1
+  design_choice: Vary edge weights so that one chain carries all large weights, forcing solvers to correctly
+    climb to the chain head before aggregating.
+- id: P002v2
+  hypothesis: P002
+  idea: heavy_light_decomposition_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v2
+  instruction: |-
+    Author a new task from scratch: heavy_light_decomposition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a tree with weighted edges and path queries, decompose via heavy-light and answer path aggregates (sum, max, min) by climbing chain heads; queries vary in endpoint depth and LCA position.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v2
+  design_choice: Present queries where the LCA is always one of the endpoints, testing whether solvers
+    handle degenerate paths without extra LCA logic.
+- id: P002v3
+  hypothesis: P002
+  idea: heavy_light_decomposition_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v3
+  instruction: |-
+    Author a new task from scratch: heavy_light_decomposition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a tree with weighted edges and path queries, decompose via heavy-light and answer path aggregates (sum, max, min) by climbing chain heads; queries vary in endpoint depth and LCA position.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/heavy_light_decomposition_v3
+- id: P003v1
+  hypothesis: P003
+  idea: aho_corasick_matching_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v1
+  instruction: |-
+    Author a new task from scratch: aho_corasick_matching_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a pattern set and text, build the Aho-Corasick automaton with failure links and output all match positions; patterns vary in overlap, prefix relations, and alphabet size.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v1
+  design_choice: Return matches as a canonical sorted list of 'pattern_index:start_position' strings,
+    with ties broken by pattern index.
+- id: P003v2
+  hypothesis: P003
+  idea: aho_corasick_matching_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v2
+  instruction: |-
+    Author a new task from scratch: aho_corasick_matching_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a pattern set and text, build the Aho-Corasick automaton with failure links and output all match positions; patterns vary in overlap, prefix relations, and alphabet size.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v2
+  design_choice: Present the automaton construction as a series of numbered transition/failure steps;
+    the answer is the final failure-link table in row-major order.
+- id: P003v3
+  hypothesis: P003
+  idea: aho_corasick_matching_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v3
+  instruction: |-
+    Author a new task from scratch: aho_corasick_matching_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a pattern set and text, build the Aho-Corasick automaton with failure links and output all match positions; patterns vary in overlap, prefix relations, and alphabet size.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/aho_corasick_matching_v3
+- id: P004v1
+  hypothesis: P004
+  idea: difference_array_2d_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v1
+  instruction: |-
+    Author a new task from scratch: difference_array_2d_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a 2D grid and rectangle updates or queries, apply the 2D difference array technique and output final cell values or query results; operations mix range adds and point reads.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v1
+  design_choice: Answers are the full final grid as a canonical list of row lists, with updates specified
+    as inclusive rectangle add operations.
+- id: P004v2
+  hypothesis: P004
+  idea: difference_array_2d_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v2
+  instruction: |-
+    Author a new task from scratch: difference_array_2d_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a 2D grid and rectangle updates or queries, apply the 2D difference array technique and output final cell values or query results; operations mix range adds and point reads.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v2
+  design_choice: Answers are point values at queried coordinates, with updates as rectangle adds and queries
+    interleaved in input order.
+- id: P004v3
+  hypothesis: P004
+  idea: difference_array_2d_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v3
+  instruction: |-
+    Author a new task from scratch: difference_array_2d_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a 2D grid and rectangle updates or queries, apply the 2D difference array technique and output final cell values or query results; operations mix range adds and point reads.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/difference_array_2d_v3
+- id: P005v1
+  hypothesis: P005
+  idea: sweep_line_intersection_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v1
+  instruction: |-
+    Author a new task from scratch: sweep_line_intersection_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a set of line segments in the plane, run the Bentley-Ottmann sweep line algorithm and report all intersection points or the first detected intersection; segments vary in slope, overlap, and degeneracy.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v1
+  design_choice: Report the first detected intersection point as an ordered pair of rational coordinates,
+    with segments given in non-degenerate general position to avoid ties.
+- id: P005v2
+  hypothesis: P005
+  idea: sweep_line_intersection_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v2
+  instruction: |-
+    Author a new task from scratch: sweep_line_intersection_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a set of line segments in the plane, run the Bentley-Ottmann sweep line algorithm and report all intersection points or the first detected intersection; segments vary in slope, overlap, and degeneracy.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v2
+  design_choice: Report the full ordered list of all intersection points sorted by sweep-line x-coordinate,
+    including overlapping segment endpoints as degenerate intersections.
+- id: P005v3
+  hypothesis: P005
+  idea: sweep_line_intersection_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v3
+  instruction: |-
+    Author a new task from scratch: sweep_line_intersection_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a set of line segments in the plane, run the Bentley-Ottmann sweep line algorithm and report all intersection points or the first detected intersection; segments vary in slope, overlap, and degeneracy.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_over_greedy_r2/sweep_line_intersection_v3

@@ -1,0 +1,607 @@
+version: 1
+name: k3_controlled_nli_r1
+proposal_wave: k3_controlled-nli
+defaults:
+  base_ref: ef45a76245f15de13911b5166abfa3dbf8e664e9
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: implicative_factive_inference_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v1
+  instruction: |-
+    Author a new task from scratch: implicative_factive_inference_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Implicative and factive verbs (manage, fail, remember, pretend) under negation and conditional or question embedding; compute whether the complement is entailed, denied or open; also judge equivalence with the bare assertion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v1
+  design_choice: 'Present a single sentence with an implicative/factive verb under negation and ask for
+    a three-way answer: ENTAILED, DENIED, or OPEN.'
+- id: P001v2
+  hypothesis: P001
+  idea: implicative_factive_inference_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v2
+  instruction: |-
+    Author a new task from scratch: implicative_factive_inference_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Implicative and factive verbs (manage, fail, remember, pretend) under negation and conditional or question embedding; compute whether the complement is entailed, denied or open; also judge equivalence with the bare assertion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v2
+  design_choice: Present a pair of sentences (one with the verb construction, one bare assertion) and
+    ask for a binary EQUIVALENT/NOT EQUIVALENT judgment.
+- id: P001v3
+  hypothesis: P001
+  idea: implicative_factive_inference_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v3
+  instruction: |-
+    Author a new task from scratch: implicative_factive_inference_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Implicative and factive verbs (manage, fail, remember, pretend) under negation and conditional or question embedding; compute whether the complement is entailed, denied or open; also judge equivalence with the bare assertion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/implicative_factive_inference_v3
+- id: P002v1
+  hypothesis: P002
+  idea: centering_transition_walk_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v1
+  instruction: |-
+    Author a new task from scratch: centering_transition_walk_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a stated centering algorithm over multi-sentence passages: rank forward-looking centers by the given role order, resolve each pronoun to the top accessible candidate, and report the transition label at every step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v1
+  design_choice: Use only third-person pronouns and rank centers by grammatical role order (subject >
+    object > indirect), reporting transition labels as continuations, retentions, or smooth shifts per
+    adjacent sentence pairs.
+- id: P002v2
+  hypothesis: P002
+  idea: centering_transition_walk_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v2
+  instruction: |-
+    Author a new task from scratch: centering_transition_walk_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a stated centering algorithm over multi-sentence passages: rank forward-looking centers by the given role order, resolve each pronoun to the top accessible candidate, and report the transition label at every step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v2
+  design_choice: Vary the role order across trials (e.g., object-first or indirect-first) and require
+    the solver to apply the stated order literally, producing a sequence of labels like 'C','R','S' for
+    each sentence boundary.
+- id: P002v3
+  hypothesis: P002
+  idea: centering_transition_walk_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v3
+  instruction: |-
+    Author a new task from scratch: centering_transition_walk_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a stated centering algorithm over multi-sentence passages: rank forward-looking centers by the given role order, resolve each pronoun to the top accessible candidate, and report the transition label at every step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_walk_v3
+- id: P003v1
+  hypothesis: P003
+  idea: spatial_frame_relation_verdicts_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v1
+  instruction: |-
+    Author a new task from scratch: spatial_frame_relation_verdicts_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Scenes specify objects, poses and observers; explicit rules assign intrinsic, relative or absolute frames and axes; evaluate 'left/right' and 'front/behind' claims; answer verdicts under each frame or which frames license the sentence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v1
+  design_choice: Verdicts are binary yes/no per frame, with scenes generated so each frame yields a different
+    verdict to balance the label distribution.
+- id: P003v2
+  hypothesis: P003
+  idea: spatial_frame_relation_verdicts_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v2
+  instruction: |-
+    Author a new task from scratch: spatial_frame_relation_verdicts_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Scenes specify objects, poses and observers; explicit rules assign intrinsic, relative or absolute frames and axes; evaluate 'left/right' and 'front/behind' claims; answer verdicts under each frame or which frames license the sentence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v2
+  design_choice: Answers are a canonical list of frame names (e.g., 'intrinsic,relative') that license
+    the sentence, with exactly one correct subset per instance.
+- id: P003v3
+  hypothesis: P003
+  idea: spatial_frame_relation_verdicts_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v3
+  instruction: |-
+    Author a new task from scratch: spatial_frame_relation_verdicts_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Scenes specify objects, poses and observers; explicit rules assign intrinsic, relative or absolute frames and axes; evaluate 'left/right' and 'front/behind' claims; answer verdicts under each frame or which frames license the sentence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/spatial_frame_relation_verdicts_v3
+- id: P004v1
+  hypothesis: P004
+  idea: dot_type_copredication_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v1
+  instruction: |-
+    Author a new task from scratch: dot_type_copredication_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      A lexicon gives nouns explicit dot types (paired facets) and predicates facet demands; coordinated predicates must share a selectable facet per the stated coercion rules; answer felicity, the selected facet, or the first clashing demand.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v1
+  design_choice: 'Answers are a fixed 3-way label: felicitous, coerced-facet-A, coerced-facet-B, with
+    balanced distribution enforced across instances.'
+- id: P004v2
+  hypothesis: P004
+  idea: dot_type_copredication_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v2
+  instruction: |-
+    Author a new task from scratch: dot_type_copredication_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      A lexicon gives nouns explicit dot types (paired facets) and predicates facet demands; coordinated predicates must share a selectable facet per the stated coercion rules; answer felicity, the selected facet, or the first clashing demand.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v2
+  design_choice: Each instance presents a multiple-choice set of 4 canonical facet labels (A, B, both,
+    neither); correct answer is one of these fixed strings.
+- id: P004v3
+  hypothesis: P004
+  idea: dot_type_copredication_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v3
+  instruction: |-
+    Author a new task from scratch: dot_type_copredication_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      A lexicon gives nouns explicit dot types (paired facets) and predicates facet demands; coordinated predicates must share a selectable facet per the stated coercion rules; answer felicity, the selected facet, or the first clashing demand.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/dot_type_copredication_v3
+- id: P005v1
+  hypothesis: P005
+  idea: centering_transition_tracking_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v1
+  instruction: |-
+    Author a new task from scratch: centering_transition_tracking_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track discourse centers across utterances: rank the forward-looking list by a stated obliqueness order, find the backward-looking center, and classify each move as continue, retain, or shift; answers give the transition sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v1
+  design_choice: Use a fixed template with two named entities and explicit obliqueness rankings, varying
+    only the pronoun references and verb semantics to produce deterministic transition labels.
+- id: P005v2
+  hypothesis: P005
+  idea: centering_transition_tracking_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v2
+  instruction: |-
+    Author a new task from scratch: centering_transition_tracking_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track discourse centers across utterances: rank the forward-looking list by a stated obliqueness order, find the backward-looking center, and classify each move as continue, retain, or shift; answers give the transition sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v2
+  design_choice: Generate instances from naturalistic multi-utterance dialogues, where the forward-looking
+    list order is given implicitly by grammatical role (subject > object > oblique) and the solver must
+    infer it from surface syntax.
+- id: P005v3
+  hypothesis: P005
+  idea: centering_transition_tracking_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v3
+  instruction: |-
+    Author a new task from scratch: centering_transition_tracking_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track discourse centers across utterances: rank the forward-looking list by a stated obliqueness order, find the backward-looking center, and classify each move as continue, retain, or shift; answers give the transition sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/centering_transition_tracking_v3
+- id: P006v1
+  hypothesis: P006
+  idea: weight_sensitive_stress_parse_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v1
+  instruction: |-
+    Author a new task from scratch: weight_sensitive_stress_parse_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Parse a segment string under a stated prosodic grammar: syllabify, build feet per stated direction and headedness, and place stress; answers are the stressed syllable index, the footed parse, or the first clash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v1
+  design_choice: 'Answer form varies per instance: stressed syllable index, bracketed foot string, or
+    clash index, chosen randomly with balanced distribution across levels.'
+- id: P006v2
+  hypothesis: P006
+  idea: weight_sensitive_stress_parse_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v2
+  instruction: |-
+    Author a new task from scratch: weight_sensitive_stress_parse_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Parse a segment string under a stated prosodic grammar: syllabify, build feet per stated direction and headedness, and place stress; answers are the stressed syllable index, the footed parse, or the first clash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v2
+  design_choice: 'Difficulty arises from ambiguous syllabification: input includes vowel sequences and
+    coda consonants whose syllabification is determined by a stated sonority hierarchy, not just segment
+    count.'
+- id: P006v3
+  hypothesis: P006
+  idea: weight_sensitive_stress_parse_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v3
+  instruction: |-
+    Author a new task from scratch: weight_sensitive_stress_parse_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Parse a segment string under a stated prosodic grammar: syllabify, build feet per stated direction and headedness, and place stress; answers are the stressed syllable index, the footed parse, or the first clash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/weight_sensitive_stress_parse_v3
+- id: P007v1
+  hypothesis: P007
+  idea: definitional_unfolding_subsumption_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v1
+  instruction: |-
+    Author a new task from scratch: definitional_unfolding_subsumption_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Acyclic definition boxes over stated concept and role names: unfold into nested restriction conjunctions and test subsumption between queries by structural comparison; answers are verdicts or the least defined subsumer.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v1
+  design_choice: 'Answer format: binary verdict for subsumption, with instances generated to balance yes/no
+    across a level.'
+- id: P007v2
+  hypothesis: P007
+  idea: definitional_unfolding_subsumption_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v2
+  instruction: |-
+    Author a new task from scratch: definitional_unfolding_subsumption_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Acyclic definition boxes over stated concept and role names: unfold into nested restriction conjunctions and test subsumption between queries by structural comparison; answers are verdicts or the least defined subsumer.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v2
+  design_choice: 'Answer format: the least defined subsumer as a canonical conjunction string, with names
+    sorted lexicographically.'
+- id: P007v3
+  hypothesis: P007
+  idea: definitional_unfolding_subsumption_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v3
+  instruction: |-
+    Author a new task from scratch: definitional_unfolding_subsumption_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Acyclic definition boxes over stated concept and role names: unfold into nested restriction conjunctions and test subsumption between queries by structural comparison; answers are verdicts or the least defined subsumer.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/definitional_unfolding_subsumption_v3
+- id: P008v1
+  hypothesis: P008
+  idea: exact_verifier_set_evaluation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: exact_verifier_set_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      State spaces with a given fusion table and subject-matter map: evaluate formulas by exact-verification clauses (atoms by stated relevance, conjunction by fusion, disjunction by union); return the sorted verifier set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v1
+  design_choice: "Instance format: provide the fusion table as a 2D grid of labels and the subject-matter\
+    \ map as a list of atom-to-set bindings; the formula is a parenthesized expression with \u2227 and\
+    \ \u2228."
+- id: P008v2
+  hypothesis: P008
+  idea: exact_verifier_set_evaluation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: exact_verifier_set_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      State spaces with a given fusion table and subject-matter map: evaluate formulas by exact-verification clauses (atoms by stated relevance, conjunction by fusion, disjunction by union); return the sorted verifier set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v2
+  design_choice: "Answer form: output the sorted verifier set as a comma-separated list of labels, e.g.,\
+    \ 'a,b,c', with empty set as '\u2205'."
+- id: P008v3
+  hypothesis: P008
+  idea: exact_verifier_set_evaluation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: exact_verifier_set_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      State spaces with a given fusion table and subject-matter map: evaluate formulas by exact-verification clauses (atoms by stated relevance, conjunction by fusion, disjunction by union); return the sorted verifier set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/exact_verifier_set_evaluation_v3
+- id: P009v1
+  hypothesis: P009
+  idea: speaker_role_consistency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v1
+  instruction: |-
+    Author a new task from scratch: speaker_role_consistency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Speakers make stated claims about facts and each other's roles: assign each a role from the given roster so every claim's truth equals its role's stated truth condition; answers are the full assignment or the blocking claim.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v1
+  design_choice: Role roster is fixed per instance but claims are generated from a random graph of facts,
+    so solvers must deduce roles via boolean constraint propagation rather than pattern matching.
+- id: P009v2
+  hypothesis: P009
+  idea: speaker_role_consistency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v2
+  instruction: |-
+    Author a new task from scratch: speaker_role_consistency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Speakers make stated claims about facts and each other's roles: assign each a role from the given roster so every claim's truth equals its role's stated truth condition; answers are the full assignment or the blocking claim.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v2
+  design_choice: Answers are either the full role assignment as a canonical ordered list of role names,
+    or a single claim index that proves inconsistency by direct contradiction.
+- id: P009v3
+  hypothesis: P009
+  idea: speaker_role_consistency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v3
+  instruction: |-
+    Author a new task from scratch: speaker_role_consistency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Speakers make stated claims about facts and each other's roles: assign each a role from the given roster so every claim's truth equals its role's stated truth condition; answers are the full assignment or the blocking claim.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/speaker_role_consistency_v3
+- id: P010v1
+  hypothesis: P010
+  idea: fairy_piece_attack_sets_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v1
+  instruction: "Author a new task from scratch: fairy_piece_attack_sets_v1.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Project stipulated\
+    \ fairy-piece movement \xE2\x80\x94 leapers by offset vectors, riders until blocked, hoppers needing\
+    \ a screen, locust captures \xE2\x80\x94 onto a given position; answers list a piece's legal destinations\
+    \ or every square it attacks.\n\nEvery decision the summary does not fix is yours: instance family,\
+    \ generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this\
+    \ wave are implementing the same summary independently and are not coordinating with you. Make the\
+    \ choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry\
+    \ must perform and the failure modes that sank earlier waves -- read it before writing code, and treat\
+    \ it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v1
+  design_choice: Answer as a canonical sorted list of destination coordinates in algebraic notation (e.g.,
+    'a3,b5,c6') for one specified fairy piece type and position, with board size fixed at 8x8.
+- id: P010v2
+  hypothesis: P010
+  idea: fairy_piece_attack_sets_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v2
+  instruction: "Author a new task from scratch: fairy_piece_attack_sets_v2.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Project stipulated\
+    \ fairy-piece movement \xE2\x80\x94 leapers by offset vectors, riders until blocked, hoppers needing\
+    \ a screen, locust captures \xE2\x80\x94 onto a given position; answers list a piece's legal destinations\
+    \ or every square it attacks.\n\nEvery decision the summary does not fix is yours: instance family,\
+    \ generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this\
+    \ wave are implementing the same summary independently and are not coordinating with you. Make the\
+    \ choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry\
+    \ must perform and the failure modes that sank earlier waves -- read it before writing code, and treat\
+    \ it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v2
+  design_choice: Answers are a canonical semicolon-separated list of algebraic squares (e.g., 'a1;b3;c5'),
+    sorted by file then rank, with no duplicates, and empty set as 'none'.
+- id: P010v3
+  hypothesis: P010
+  idea: fairy_piece_attack_sets_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v3
+  instruction: "Author a new task from scratch: fairy_piece_attack_sets_v3.\n\nCover exactly this, and\
+    \ put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Project stipulated\
+    \ fairy-piece movement \xE2\x80\x94 leapers by offset vectors, riders until blocked, hoppers needing\
+    \ a screen, locust captures \xE2\x80\x94 onto a given position; answers list a piece's legal destinations\
+    \ or every square it attacks.\n\nEvery decision the summary does not fix is yours: instance family,\
+    \ generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this\
+    \ wave are implementing the same summary independently and are not coordinating with you. Make the\
+    \ choices you believe produce the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry\
+    \ must perform and the failure modes that sank earlier waves -- read it before writing code, and treat\
+    \ it as part of this instruction."
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r1/fairy_piece_attack_sets_v3

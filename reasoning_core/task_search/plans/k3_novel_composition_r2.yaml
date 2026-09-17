@@ -1,0 +1,134 @@
+version: 1
+name: k3_novel_composition_r2
+proposal_wave: k3_novel-composition
+defaults:
+  base_ref: ef45a76245f15de13911b5166abfa3dbf8e664e9
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P002v1
+  - P006v1
+  v2:
+  - P002v2
+  - P006v2
+  v3:
+  - P002v3
+  - P006v3
+  pilot:
+  - P002v1
+  - P006v1
+trials:
+- id: P002v1
+  hypothesis: P002
+  idea: factor_graph_marginal_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v1
+  instruction: |-
+    Author a new task from scratch: factor_graph_marginal_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact single-variable marginal in a discrete factor graph by variable elimination or belief propagation; ranges over tree and loopy topologies, factor arities, and evidence configurations; answer is the marginal probability table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v1
+  design_choice: Answer as a canonical probability vector string like '0.25 0.75' with exact fractions,
+    e.g., '1/4 3/4', to avoid float ambiguity.
+- id: P002v2
+  hypothesis: P002
+  idea: factor_graph_marginal_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v2
+  instruction: |-
+    Author a new task from scratch: factor_graph_marginal_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact single-variable marginal in a discrete factor graph by variable elimination or belief propagation; ranges over tree and loopy topologies, factor arities, and evidence configurations; answer is the marginal probability table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v2
+  design_choice: Vary the variable ordering for elimination per instance, chosen deterministically from
+    a seeded random, to test robustness against suboptimal orderings.
+- id: P002v3
+  hypothesis: P002
+  idea: factor_graph_marginal_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v3
+  instruction: |-
+    Author a new task from scratch: factor_graph_marginal_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exact single-variable marginal in a discrete factor graph by variable elimination or belief propagation; ranges over tree and loopy topologies, factor arities, and evidence configurations; answer is the marginal probability table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r2/factor_graph_marginal_v3
+- id: P006v1
+  hypothesis: P006
+  idea: polygon_area_point_location_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v1
+  instruction: |-
+    Author a new task from scratch: polygon_area_point_location_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Over simple polygons given as integer vertex lists: accumulate the shoelace cross-sum for signed area and classify query points by ray-crossing parity; answers are the doubled area or inside/outside/on-boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v1
+  design_choice: Generate polygons with a mix of collinear edges and query points exactly on vertices/edges
+    to force boundary classification, while random points test parity.
+- id: P006v2
+  hypothesis: P006
+  idea: polygon_area_point_location_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v2
+  instruction: |-
+    Author a new task from scratch: polygon_area_point_location_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Over simple polygons given as integer vertex lists: accumulate the shoelace cross-sum for signed area and classify query points by ray-crossing parity; answers are the doubled area or inside/outside/on-boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v2
+  design_choice: Vary polygon complexity from convex to highly concave with self-touch vertices, and make
+    queries cluster near edges to stress ray-crossing tie-breaking.
+- id: P006v3
+  hypothesis: P006
+  idea: polygon_area_point_location_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v3
+  instruction: |-
+    Author a new task from scratch: polygon_area_point_location_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Over simple polygons given as integer vertex lists: accumulate the shoelace cross-sum for signed area and classify query points by ray-crossing parity; answers are the doubled area or inside/outside/on-boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_novel_composition_r2/polygon_area_point_location_v3

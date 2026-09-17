@@ -1,0 +1,913 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_shortcuts-fail
+created_at: '2026-09-16T23:53:34.878854+00:00'
+provenance:
+  kind: proposer
+  name: ua_shortcuts-fail
+  received: '2026-09-16'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks designed so common shallow heuristics systematically fail while the intended
+    reasoning procedure succeeds. The catalog you were shown already covers the classic textbook algorithms
+    -- sorting, gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that
+    names one will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 7
+  complete: false
+catalog:
+  sha256: 7d24ca397c53f62777ef822fa4c918503c269ad8b5ff749c65e465f752ae81f2
+  entries: 850
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 244
+    task: 444
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 2c32fc1e7b51c813af88b6ca2dfc1460e8b528f9c2ca745e2949af9bdac91b2e
+    response_sha256: 7d0be61929971046cfa0c61cfbdb6c825ada4add91d444d30b166e234810d23e
+    response_id: gen-1789602395-A622Odu6bR9ygPiXO0XZ
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: bdc12c0b205bb46f770be363b3833c92ff386df0792d0cbcc58b9b013985cd84
+    response_sha256: 6e9715d2159b62cfe98bf3d9d9e60bec293ea4a12547449c12110dfefd40069c
+    response_id: chatcmpl-bd422349f22aa3d0
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 687668fa5b7661788c287d83e6fd487c571294523b14877c43dcef016e2bd971
+    response_sha256: f447d15b2cbbf68deb0dbae62447f4f04b2085747d4c07cb79c9be09f2024871
+    response_id: chatcmpl-86dfe183aaa39f4b
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 06c8630aba919b0c6235bdfc819eaee5de84cbe94b0e9c361f635742dc97c745
+    response_sha256: 5dcef22eda2a22653181188372384bfb74831065586c0c44438e512ddd6361bc
+    response_id: chatcmpl-a4213c681aeb14b1
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 7b093354cd365feafcb47e15b6fad16f2e8b5a93eb8ad8dd02a29a4e64446e83
+    response_sha256: 23b84c03a4c1b41760e390c0c83ba5adbf32be57c0cad8339829c51c12d2e9a8
+    response_id: chatcmpl-a563d71753f8d4e0
+  - purpose: critic-round-2-sample-1-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: a3f9adbb08ed251117fbed8c13535a22128b47ca438609c0d815c4d77f3e2fa9
+    response_sha256: 441576bf59790daa7079c663a40ce108d6d8c0cbacd018e77a0199331a0f002b
+    response_id: chatcmpl-a50865227085465f
+  - purpose: critic-round-2-sample-1-retry2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 9c903ef713507d38a45b35142d7f469e252de46795c46b59f47744b081d049bb
+    response_sha256: 3c5d904e876336654b0bccceb28c0d6a4159e40e238b552b9af75b4d54546077
+    response_id: chatcmpl-8596d2ef0a6402a2
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d91c30cdaf7d3034f48560876977546a113f5415990e271a20d5e9c6c577ba31
+    response_sha256: e7f753ae733d35459809645516934c4d5ce10a26908dd0520fef24761c323333
+    response_id: chatcmpl-8087c7a957c05ff8
+  - purpose: critic-round-2-sample-2-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 9d8dfed464eaa03e21272d308f56a4ee0571c98f7ca193aee4d7a6955f5b485a
+    response_sha256: 9a7f63a35b5f7aeacdb5fe7a68d441bbdf1b84843642aad81c86b0de2e97ffcf
+    response_id: chatcmpl-90cdd872c10d169e
+  - purpose: critic-round-2-sample-2-retry2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d1e1c539597e54d39d02a564d4f87b19d74b964bf88094674a4b90a9186482ad
+    response_sha256: 2ec1d53ae011d8e9e2ef09ccdf70427ee2ae23c2428be12738a52d5a7bcc2d51
+    response_id: chatcmpl-a80d65c21ceb0dc2
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d7166facd98bb42d60a182fa04767466147ec62976b3732a62ece3f58dfe106e
+    response_sha256: c9de5f7a70449e8d21e1b622fc90317c27f294bda6bae3c2d44020acedb2fbac
+    response_id: chatcmpl-bb61e7f0151df513
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 5c3cc2159eeff9a194324ac561040270aec864dcd7593fc682c9f129386d5799
+    response_sha256: 3507ffbbf8a9f907cf49f1543c29ce62f63694d54fe68ed11a1b651229460ff4
+    response_id: chatcmpl-b2e91eaa3885d603
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: de04252f4b943ead9779811968f484bf1c4dfd8c85f935ea1babe7ef397cd9e3
+    response_sha256: 081a2abd17ae08b249413c60cb824bbd7237723656ca3029f4387e67f05f76dc
+    response_id: chatcmpl-89d1e1abe3a09754
+  - purpose: critic-round-3-sample-2-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 7b0e3faa1f91ed4722002569940428a76037117ac69958ca43b2b4081dcd4dee
+    response_sha256: 12adf89075271a0f71ce0dda8702231e3f92942957928c1aa317f290daa03262
+    response_id: chatcmpl-b31f78fb411fd988
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: f1af23f06c85c5beef9bb77d6d3f7389a25f347a73b67407c7f1350506fa5db0
+    response_sha256: 53d151fb0d29ce878729cefc85a2351e1143567715f081c90156393b4ce42ec2
+    response_id: chatcmpl-a067b3509df01116
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 11
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: discrete_tomographic_completion
+  summary: Recover bounded integer arrays from overlapping directional sums, masked cells, and region
+    totals, including ambiguous and inconsistent systems; answer a forced cell value, its attainable range,
+    or uniqueness.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_interacting-updates:P001
+      relationship: adjacent
+      overlap: Both are matrix completion from sums (row/column vs. directional), but C004 uses overlapping
+        directional sums and region totals with bounded integers, a different reconstruction problem.
+    - id: task:generated.k3_shortcuts_fail_r1.minesweeper_definite_cells.minesweeper_definite_cells:MinesweeperDefiniteCells
+      relationship: adjacent
+      overlap: Both involve reconstructing hidden grid values from partial clues and answering forced
+        cells/uniqueness, but the clue structure (directional sums vs. local counts) differs.
+    - id: proposal:ua_state-tracking:P003
+      relationship: adjacent
+      overlap: Both recover hidden variables from aggregate statistics, but C004 is spatial/tomographic
+        rather than moment-based.
+    substantive_difference: C004's operation is discrete tomography with overlapping directional sums,
+      masked cells, and region totals, requiring solving linear systems with integrality constraints and
+      answering uniqueness/range, which is not covered by existing binary margin realization or minesweeper
+      tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 3
+      clarity: 4
+    reason: A distinct reconstruction task from directional sums and region totals, with unique output
+      modes.
+    votes: 2/2
+    dissent: []
+- name: joint_share_information
+  summary: Analyze finite secret-sharing encoders with biased randomness, correlated shares, and missing
+    observations; answer minimal recovering coalitions or whether a coalition has perfect secrecy, partial
+    leakage, or recovery.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_state-tracking:P008
+      relationship: adjacent
+      overlap: Both involve probability distributions over variables (shares) and constraints, but C010's
+        information-theoretic secrecy/recovery criteria differ from marginal compatibility.
+    - id: proposal:ua_state-tracking:P009
+      relationship: adjacent
+      overlap: Both partition outcomes by their information content, but C010 is about secret sharing
+        rather than sufficient statistics.
+    - id: proposal:ua_planning-backtracking:P002
+      relationship: adjacent
+      overlap: Both are about transmitting information reliably under adversarial observations, but network
+        coding and secret-sharing are distinct problems.
+    substantive_difference: C010's operation of analyzing secret-sharing encoders for recovery/secrecy
+      with biased randomness and correlated shares is a distinct information-theoretic task not covered
+      by existing probability or partition tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 3
+      clarity: 4
+    reason: A novel task combining secret sharing, correlated randomness, and leakage analysis.
+    votes: 2/2
+    dissent: []
+- name: phase_change_equilibration
+  summary: Conserve enthalpy through mixtures, heat pulses, and withdrawals involving materials with distinct
+    heat capacities and latent heats; return the equilibrium temperature and queried phase fraction.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_inference-modes:P008
+      relationship: adjacent
+      overlap: both involve thermodynamics-like constraints and feasibility, but the neighbor is about
+        direction consistency, not enthalpy conservation.
+    - id: proposal:ua_uncertainty:P001
+      relationship: different
+      overlap: constraint release is mechanics, not phase change.
+    - id: task:generated.wave9.ledger_reconciliation.ledger_reconciliation:LedgerReconciliation
+      relationship: adjacent
+      overlap: both conserve totals and handle withdrawals, but the domain is financial vs thermodynamic.
+    substantive_difference: Enthalpy conservation with latent heat and phase fractions is a distinct thermodynamic
+      equilibrium calculation not covered by any known task.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Phase-change equilibration is a novel operation combining energy balance with phase transitions.
+    votes: 2/3
+    dissent:
+    - novel
+- name: interval_matrix_regularity
+  summary: Decide whether every matrix within rational entry bounds is nonsingular; vary independent and
+    shared uncertainties, answering robust regularity or the first supplied radius admitting singularity.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_global-over-greedy:P006
+      relationship: different
+      overlap: both are matrix-theoretic but the neighbor checks polynomial identities, not interval regularity.
+    - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+      relationship: adjacent
+      overlap: both deal with intervals, but the task propagates intervals through arithmetic while the
+        proposal checks a matrix property.
+    - id: task:generated.wave6.interval_stabbing.interval_stabbing:IntervalStabbing
+      relationship: different
+      overlap: interval stabbing is about geometric queries, unrelated.
+    substantive_difference: Robust nonsingularity over a box is a novel conjunction of interval analysis
+      and matrix rank.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: The operation combines interval reasoning with matrix determinants, not in the known set.
+    votes: 2/3
+    dissent:
+    - novel
+- name: nested_radical_continuation
+  summary: Continue nested square-root expressions along closed polygonal paths avoiding branch points;
+    vary shifts, nesting, and loop order; return the endpoint branch relative to the starting branch.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave3.continued_fractions.task:ContinuedFractions
+      relationship: adjacent
+      overlap: both operate on nested radical-like expressions, but the neighbor only has a summary 'continued
+        fractions' and the operation is not specified.
+    - id: gallery:constrained_continuation
+      relationship: different
+      overlap: unrelated, it is about formal grammar completion.
+    - id: proposal:ua_compositional-generalization:P012
+      relationship: different
+      overlap: iterated integrals have a shuffle algebra, not monodromy around branch points.
+    substantive_difference: Multivalued analytic continuation along loops is a distinct topological-analytic
+      operation not covered by algebraic expansions or grammar continuations.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Monodromy of nested radicals is a novel cognitive operation without close known examples.
+    votes: 2/3
+    dissent:
+    - novel
+- name: incentive_compatible_menu
+  summary: Optimize a menu of allocations and payments subject to truthful choice and voluntary participation;
+    vary multidimensional valuations, type probabilities, and allocation restrictions; answer maximum
+    expected profit.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_counterfactual_r1.vcg_pivotal_payments.vcg_pivotal_payments:VcgPivotalPayments
+      relationship: adjacent
+      overlap: both concern auctions, but VCG uses a specific payment rule, not mechanism design.
+    - id: proposal:ua_uncertainty:P005
+      relationship: adjacent
+      overlap: both involve optimization under strategic behavior, but the neighbor is about commitment
+        and the theory is different.
+    - id: proposal:ua_global-over-greedy:P009
+      relationship: different
+      overlap: both produce optimal values but for very different structures.
+    substantive_difference: Mechanism design with incentive compatibility is a novel trade-off, not just
+      computing a given payment or choosing a commitment.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Optimizing menus under truthful constraints is a distinct operation from evaluating a fixed
+      mechanism.
+    votes: 2/3
+    dissent:
+    - variant
+- name: heap_extension_truth
+  summary: Evaluate assertions on bounded heaps using points-to facts, separating conjunction, and separating
+    implication; quantify over disjoint splits and extensions to return the assertion's truth value.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+      relationship: different
+      overlap: truth maintenance tracks justifications, not heap separation logic.
+    - id: proposal:k3_non-local-structured:P004
+      relationship: adjacent
+      overlap: both use heap-like state for recursion, but nimbers are game values, not assertions.
+    - id: task:generated.wave8.heap_key_update.heap_key_update:HeapKeyUpdate
+      relationship: adjacent
+      overlap: heap suggests data structure but the neighbor is a priority queue, not separation logic.
+    substantive_difference: Evaluating separation logic formulas with separating implication over finite
+      heaps is a distinct logical operation not in the known set.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Separating conjunction/implication evaluation is novel compared to truth maintenance or heap
+      data-structure operations.
+    votes: 2/3
+    dissent:
+    - novel
+rejected:
+- name: bosonic_event_weight
+  summary: Compute exact output event weights in rational quantum multiports by combining indistinguishable
+    particle paths; vary repeated occupancies, phase cancellations and distinguishability classes.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_counterfactual:P006
+    relationship: adjacent
+    overlap: combining indistinguishable paths, but that is a different network setting, not multiports
+  - id: task:generated.k3_semantics_preserving_translation_r1.bayesian_network_table_conversion.bayesian_network_table_conversion:BayesianNetworkTableConversion
+    relationship: different
+    overlap: probability tables, but multiports are quantum interference, not Bayesian networks
+  - id: proposal:ua_invariants:P004
+    relationship: different
+    overlap: quantum states, but not interference weights
+  reason: 1/3 samples judged it novel; A novel quantum interference computation with exact rational arithmetic.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: latent_product_mixture_minimum
+  summary: Express a joint probability table as a mixture of product distributions with the fewest components;
+    vary variable arities, structural zeros, and permitted component supports; answer the minimum latent
+    cardinality or impossibility.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P008
+    relationship: adjacent
+    overlap: probability tables and joint distributions, but composition of product mixtures is a different
+      operation than marginal extension
+  - id: proposal:ua_global-over-greedy:P003
+    relationship: different
+    overlap: minimization with auxiliary feasibility, but different domains (probability mixtures vs majorization)
+  - id: proposal:ua_latent-representation:P011
+    relationship: adjacent
+    overlap: latent variable representation, but additive preferences vs mixture decomposition
+  reason: 1/3 samples judged it novel; Mixture decomposition is distinct from the neighbors' operations,
+    offering a new optimization with a precise oracle.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: phase_orthogonality_repair
+  summary: Repair root-of-unity matrices by changing unlocked entries until every pair of rows is orthogonal;
+    vary rectangular shapes, phase alphabets, and edit costs; answer minimum cost or impossibility.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_global-over-greedy:P010
+    relationship: same_operation
+    overlap: edit root-of-unity matrices to satisfy orthogonality constraints
+  - id: proposal:k3_interacting-updates:P001
+    relationship: adjacent
+    overlap: fill entries to meet row/column constraints, but with binary not phases
+  - id: proposal:ua_inference-modes:P004
+    relationship: adjacent
+    overlap: bounded edits on structured objects, but not matrix orthogonality
+  reason: 1/3 samples judged it novel; Variant of projective phase obstruction with cost-optimization.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: contextual_submodel_mass
+  summary: Extract the largest subnormalized mixture of global assignments dominated by every context-specific
+    outcome table; vary overlapping contexts, missing contexts, and outcome alphabets; answer its exact
+    mass.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.dempster_shafer_combination.dempster_shafer_combination:DempsterShaferCombination
+    relationship: same_operation
+    overlap: combine subnormalized masses on overlapping supports and extract a dominated mass
+  - id: proposal:ua_state-tracking:P008
+    relationship: adjacent
+    overlap: compatibility of probability constraints on overlapping variables
+  - id: proposal:ua_state-tracking:P002
+    relationship: adjacent
+    overlap: mass assignments from mixtures, but not with context-specific dominance
+  reason: 1/3 samples judged it novel; Variant of Dempster-Shafer combination with context-specific subnormalized
+    tables.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: euclidean_distance_completion
+  summary: Complete partial squared-distance tables in a prescribed Euclidean dimension, ranging over
+    anchored, reflected, rigid, and flexible configurations; answer realizability or a forced missing
+    distance.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_latent-structure-reconstruction:P007
+    relationship: adjacent
+    overlap: point reconstruction from distances, but that is 1D, not arbitrary dimension
+  - id: proposal:ua_inference-modes:P011
+    relationship: adjacent
+    overlap: completion, but orientations are combinatorial, not distances
+  - id: task:generated.k3_hierarchical_recursive_r1.partial_fraction_decomposition.partial_fraction_decomposition:PartialFractionDecomposition
+    relationship: different
+    overlap: no relation
+  reason: 1/3 samples judged it novel; A new Euclidean distance completion task, distinct from known ones.
+  scores:
+    novelty: 5
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: skein_state_aggregation
+  summary: Expand crossing smoothings of link diagrams and combine contributions using each complete state's
+    loop connectivity; vary crossing signs and component structure, returning a Laurent coefficient.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_reusable-operations:P004
+    relationship: same_operation
+    overlap: sum over link diagram smoothings with loop contributions
+  - id: proposal:k3_surface-invariance:P003
+    relationship: adjacent
+    overlap: trace signed Gauss codes for knot invariants
+  - id: proposal:ua_invariants:P002
+    relationship: adjacent
+    overlap: trace identities with equivalence relations
+  reason: 0/3 samples judged it novel; Directly reuses the Kauffman bracket state-sum operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: iterated_knowledge_elimination
+  summary: Update finite possible worlds after truthful public claims about knowledge, ignorance, and
+    nested knowledge under differing private observations; answer surviving worlds or an agent's final
+    knowledge.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.announcement_round_deduction.announcement_round_deduction:AnnouncementRoundDeduction
+    relationship: same_operation
+    overlap: eliminate worlds after public ignorance announcements
+  - id: task:generated.k3_uncertainty_r1.kripke_knowledge_evaluation.kripke_knowledge_evaluation:KripkeKnowledgeEvaluation
+    relationship: variant
+    overlap: nested knowledge evaluation on possible-worlds models
+  - id: proposal:ua_uncertainty:P012
+    relationship: adjacent
+    overlap: nested conditionals with world selection
+  reason: 0/3 samples judged it novel; Variant of announcement-round deduction with added nested-knowledge
+    claims.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: recursive_coalition_stability
+  summary: Find partitions immune to profitable group deviations evaluated against recursively stable
+    regroupings of outsiders; vary payoff externalities and optimistic or pessimistic expectations; answer
+    the number of stable partitions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_global-over-greedy:P002
+    relationship: same_operation
+    overlap: coalition stability with payoff constraints
+  - id: proposal:ua_state-tracking:P009
+    relationship: adjacent
+    overlap: partition outcomes by equivalence, but not stability
+  - id: proposal:ua_global-over-greedy:P011
+    relationship: different
+    overlap: no overlap
+  reason: 1/3 samples judged it novel; Variant of coalitional payoff stability with recursive evaluation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: common_compositional_factor
+  summary: Find the largest-degree polynomial that serves as an inner compositional factor of every supplied
+    polynomial; vary finite fields, translated inputs, and inseparable terms; answer the maximal degree.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.k3_hierarchical_recursive_r1.polynomial_expansion.polynomial_expansion:PolynomialExpansion
+    relationship: different
+    overlap: polynomials, but expansion is symbolic rewriting, not finding compositional factors
+  - id: task:generated.wave12.polynomial_euclidean_algorithm.polynomial_euclidean_algorithm:PolynomialEuclideanAlgorithm
+    relationship: adjacent
+    overlap: polynomial operations, but gcd computation differs from compositional factor detection
+  - id: proposal:ua_compositional-generalization:P011
+    relationship: adjacent
+    overlap: composition of series, but the factor is an inner polynomial, not a series composition
+  reason: 1/3 samples judged it novel; A novel factorization problem with clear decision rules and exact
+    output.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: glued_surface_classification
+  summary: Assemble polygonal faces through directed edge identifications, including self-gluings and
+    unpaired boundaries; answer manifold validity or the resulting components' orientability, genus, and
+    boundary counts.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: same_operation
+    overlap: sew polygonal faces by directed edge identifications and classify surfaces
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: variant
+    overlap: surface assembly with edge identifications and genus/boundary counts
+  - id: proposal:k3_shortcuts-fail:P011
+    relationship: adjacent
+    overlap: face tracing in embedded graphs, but different output
+  reason: 0/3 samples judged it novel; Duplicate of surface_seam_composition.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: algebra_isotopy_count
+  summary: Relate operation tables through separate bijections of the two input slots and the output;
+    vary partial anchors, asymmetric operations, and multiple tables sharing maps; answer the number of
+    compatible bijection triples.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_parsing_and_agreement_r1.cayley_table_evaluation.cayley_table_evaluation:CayleyTableEvaluation
+    relationship: same_operation
+    overlap: work with operation tables and solve/identity constraints
+  - id: proposal:ua_state-tracking:P011
+    relationship: adjacent
+    overlap: algebraic structure with multiple maps, but different focus
+  - id: proposal:ua_uncertainty:P010
+    relationship: adjacent
+    overlap: symmetry under permutations, but for transformations not bijections
+  reason: 1/3 samples judged it novel; Variant of Cayley table symmetry/isomorphism counting.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: synergistic_causal_interventions
+  summary: Choose minimum-cost interventions in finite structural causal systems with redundancy, inhibition,
+    and shared downstream effects; answer an optimal intervention set achieving the target across all
+    allowed contexts.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.wave9.causal_intervention.causal_intervention:CausalIntervention
+    relationship: adjacent
+    overlap: causal interventions, but that executes a given intervention, this optimizes the set
+  - id: task:generated.k3_representation_specific_r2.backdoor_adjustment_selection.backdoor_adjustment_selection:BackdoorAdjustmentSelection
+    relationship: adjacent
+    overlap: minimum cardinality selection in causal graphs, but backdoor sets are different from intervention
+      sets
+  - id: proposal:ua_uncertainty:P011
+    relationship: different
+    overlap: interventions, but factorial decomposition is not cost minimization
+  reason: 1/3 samples judged it novel; A new optimization over interventions, distinct from nearby causal
+    tasks.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: joint_marginal_extension
+  summary: Reconcile overlapping marginal and conditional probability tables, structural zeros, and symmetry
+    constraints into one joint law; answer global compatibility or a tight bound on an unobserved event.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P008
+    relationship: same_operation
+    overlap: Both reconcile overlapping probability tables to determine joint distribution compatibility
+      or bounds, with consistency/range answering.
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: adjacent
+    overlap: Both deal with probability distributions and conditional constraints, but conditional_expectation
+      computes values given a full joint, not extension.
+  - id: proposal:ua_state-tracking:P006
+    relationship: adjacent
+    overlap: Both involve multiway probability tables with structural constraints, but multiplicative_interaction_contrast
+      focuses on rescaling, not marginal extension.
+  reason: 0/2 samples judged it novel; Duplicate of marginal_extension_consistency with extra constraints.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/2
+- name: overlap_counterterm_subtraction
+  summary: Subtract poles from Laurent-valued structures through compatible forests of nested or disjoint
+    divergent parts; vary overlaps, contractions and pole orders, returning the surviving finite coefficient.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P005
+    relationship: same_operation
+    overlap: Both subtract divergent parts using nested/disjoint forests while excluding overlaps, producing
+      a finite coefficient or renormalized expression.
+  - id: proposal:ua_compositional-generalization:P011
+    relationship: adjacent
+    overlap: Both use combinatorial tree/forest structures, but rooted_tree_series_composition composes
+      series, not renormalization subtraction.
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: adjacent
+    overlap: Both are algebraic operations on formal combinatorial objects (iterated integrals vs. forests).
+  reason: 0/2 samples judged it novel; Direct duplicate of existing renormalization forest subtraction.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 3
+    clarity: 4
+  votes: 0/2
+- name: persuasion_signal_optimum
+  summary: Choose randomized disclosures that maximize sender payoff while receivers optimize posterior
+    expected utility; vary state priors, signal caps, forbidden disclosures, and tie rules; answer the
+    optimal payoff.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_uncertainty:P005
+    relationship: same_operation
+    overlap: Both choose a randomized action (signal vs. commitment) to maximize sender payoff given receiver's
+      optimal response, with tie rules and payoff-maximizing outcome.
+  - id: proposal:ua_uncertainty:P008
+    relationship: variant
+    overlap: Both compare information structures/interventions to optimize a decision-maker's expected
+      payoff under uncertainty.
+  - id: task:generated.k3_counterfactual_r1.vcg_pivotal_payments.vcg_pivotal_payments:VcgPivotalPayments
+    relationship: adjacent
+    overlap: Both are mechanism design with incentive constraints and payoff optimization, but VCG is
+      a specific auction rule rather than Bayesian persuasion.
+  reason: 0/3 samples judged it novel; Direct duplicate of strategic commitment optimization with persuasion
+    framing.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: stopped_sample_likelihood_ratio
+  summary: Compute likelihood ratios for censored urn-sampling reports with or without replacement and
+    history-dependent stopping; aggregate only draw histories consistent with both the stopping event
+    and report.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.censored_survival_estimate.censored_survival_estimate:CensoredSurvivalEstimate
+    relationship: adjacent
+    overlap: Both handle censoring in sequential data, but the neighbor uses product-limit estimation
+      for survival times while the candidate computes likelihood ratios for urn draws with stopping rules.
+  - id: proposal:ua_state-tracking:P008
+    relationship: different
+    overlap: Both combine probability tables, but one is about consistency and the other about likelihood
+      from a specific sampling process.
+  - id: proposal:k3_scientific-reasoning:P007
+    relationship: adjacent
+    overlap: Both involve sequential data and stopping conditions, but the neighbor does sequential testing
+      with boundaries, not likelihood ratio computation from partial observations.
+  reason: 1/3 samples judged it novel; The likelihood ratio from censored urn draws with stopping is not
+    present in any neighbor; it's a new operation of summing probabilities over consistent hidden histories.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: quantizer_preimage_measure
+  summary: Invert cascades of affine maps, rounding, clipping, and modular wrapping over a bounded real
+    interval; return the exact measure of inputs producing a specified output code.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.exact_rounding_pipeline.exact_rounding_pipeline:ExactRoundingPipeline
+    relationship: same_operation
+    overlap: both trace exact output values through a pipeline of rounding, clipping, and affine maps,
+      just from a forward direction.
+  - id: task:generated.k3_verification_repair_r1.arithmetic_coding_intervals.arithmetic_coding_intervals:ArithmeticCodingIntervals
+    relationship: different
+    overlap: arithmetic coding uses interval narrowing but is about encoding, not inverting quantized
+      maps.
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: both recover a preimage from constraints, but the neighbor is a linear tomography problem,
+      not a quantizer cascade.
+  reason: 0/3 samples judged it novel; Inverting a rounding pipeline is a cosmetic variant of the known
+    exact rounding task.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: periodic_spacetime_completion
+  summary: Complete partially observed space-time arrays under supplied finite local update rules and
+    spatial or temporal wraparound; answer consistency, the number of completions, or a cell value forced
+    globally.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: same_operation
+    overlap: "both complete partially observed arrays, with the neighbor using directional sums and the\
+      \ proposal using local update rules\u2014but the core completion and counting is identical."
+  - id: task:generated.wave8.round_robin_completion.round_robin_completion:RoundRobinCompletion
+    relationship: different
+    overlap: round-robin scheduling, not array completion.
+  - id: proposal:ua_state-tracking:P004
+    relationship: adjacent
+    overlap: both are about periodic arrays, but one is density equivalence, the other is completion.
+  reason: 1/3 samples judged it novel; Array completion under local rules is a variant of tomographic
+    completion.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: jump_derivative_signature
+  summary: Differentiate piecewise polynomials distributionally across internal joins, zero extensions,
+    and periodic seams; return the surviving delta-derivative coefficients after boundary cancellations.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_systematic-generalization:P006
+    relationship: same_operation
+    overlap: both differentiate piecewise polynomials and return the distributional jump derivatives.
+  - id: task:generated.k3_relational_structures_r1.symbolic_differentiation.symbolic_differentiation:SymbolicDifferentiation
+    relationship: different
+    overlap: symbolic differentiation uses algebraic rules, not distributional jumps.
+  - id: task:generated.k3_systematic_generalization_r1.reg_exp_derivative.regular_expression_derivative:RegExpDerivative
+    relationship: different
+    overlap: Brzozowski derivative is a formal language operation.
+  reason: 0/3 samples judged it novel; Closely matches distributional_jump_derivatives except for trivial
+    boundary variations.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: relay_hysteresis_memory
+  summary: Track weighted two-threshold relays through ramps, plateaus, and nested reversals, respecting
+    initial states and threshold conventions; return the final aggregate response or a relay's retained
+    state.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: same_operation
+    overlap: both track hysteresis with two thresholds and return the retained state after reversal histories.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: different
+    overlap: protocol traces are event-driven but not memory-based relays.
+  - id: task:generated.wave9.rate_limit_token_bucket.rate_limit_token_bucket:RateLimitTokenBucket
+    relationship: adjacent
+    overlap: both track accumulating state over inputs, but token buckets are not hysteretic.
+  reason: 0/3 samples judged it novel; Weighted two-threshold relays are the same cognitive operation
+    as return-point hysteresis.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: isolated_compositing_attribution
+  summary: Propagate a marked layer's contribution through nested isolated groups, clipping masks, source-over
+    blends, and erasures; return its exact coefficient in a queried final pixel.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P007
+    relationship: same_operation
+    overlap: both composite nested groups with isolation and masking, returning the resulting color and
+      coverage.
+  - id: task:generated.k3_dependence_relevance_r1.ear_clipping_triangulation.ear_clipping_triangulation:EarClippingTriangulation
+    relationship: different
+    overlap: polygon triangulation, unrelated.
+  - id: proposal:ua_state-tracking:P012
+    relationship: adjacent
+    overlap: both track pixel state through graphics operations, but the neighbor is stencil/depth, not
+      compositing.
+  reason: 0/3 samples judged it novel; Compositing operation with attribution is the same as existing
+    hierarchical knockout compositing.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: predictive_partition_optimization
+  summary: Group states of a finite stochastic process while preserving observation labels and bounding
+    within-group differences in transition probabilities to every group; answer the fewest groups or an
+    optimal partition.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P009
+    relationship: same_operation
+    overlap: 'the neighbor partitions states by likelihood vectors; the proposal partitions by transition
+      probabilities to groups. The grouping operation is the same: merge states by a statistical equivalence
+      criterion and report the minimal partition.'
+  - id: task:generated.wave9.dfa_minimization.dfa_minimization:DfaMinimization
+    relationship: adjacent
+    overlap: both minimize state partitions, but DFA minimization uses language equivalence, not transition
+      probability differences.
+  - id: proposal:ua_uncertainty:P010
+    relationship: different
+    overlap: 'different: orbit partition under symmetry, not statistical grouping.'
+  reason: 0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; This is
+    the same minimal sufficient partition operation as the neighbor with a swapped distance function.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+pool:
+- name: robust_counterfactual_regret
+  summary: Compare interventions across coupled uncertainty scenarios, measuring each loss against the
+    best alternative in that same scenario; return the minimum-worst-regret intervention or its adversarial
+    witness.
+- name: pairwise_agenda_control
+  summary: Resolve sequential pairwise elections with fixed preferences, constrained agenda positions,
+    and alternative tie rules; answer whether a designated option can win or the minimum agenda edits
+    needed.
+- name: consensus_cut_minimum
+  summary: Split a line into alternating signs so each piecewise-constant valuation has its prescribed
+    signed total; vary overlapping supports, target imbalances, and fixed endpoint signs; answer the fewest
+    cuts or impossibility.
+- name: multirate_influence_coefficient
+  summary: Trace input influence through branched cascades of rational filters, upsampling, downsampling,
+    and phase shifts; return one input sample's exact coefficient in a queried output sample.
+- name: analytic_germ_cancellation
+  summary: Propagate truncated series through nested sums, products, quotients, exponentials, and logarithms
+    with rational expansion constants; return the first surviving term through the specified order.
+- name: delimited_resumption_evaluation
+  summary: Evaluate effect handlers that discard, resume, or duplicate captured continuations across nested
+    deep and shallow handlers; return the resulting value or the first unhandled effect.
+- name: switched_capacitor_charge_transfer
+  summary: Reconcile conserved node charge with voltage constraints through capacitor reconnections, floating
+    islands, shorts, and source clamps; return a final capacitor voltage or net charge drawn from a source.

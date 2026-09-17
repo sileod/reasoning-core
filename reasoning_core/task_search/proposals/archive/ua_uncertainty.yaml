@@ -1,0 +1,730 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_uncertainty
+created_at: '2026-09-16T22:31:50.110319+00:00'
+provenance:
+  kind: proposer
+  name: ua_uncertainty
+  received: '2026-09-16'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks requiring reasoning under uncertainty or partial information. The catalog you
+    were shown already covers the classic textbook algorithms -- sorting, gcd, graph traversal, compression,
+    scheduling, matching, parsing -- and a proposal that names one will be rejected as a repeat however
+    well it fits this brief. Reach past the standard repertoire: propose structures the catalog does not
+    have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 12
+  complete: true
+catalog:
+  sha256: 5680fe6230d1066a42e923a2474121e538cfdd6eb29a843aa4ba2caad2cc5ade
+  entries: 827
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 221
+    task: 444
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls: []
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: f136c68b604111a22f160707b8f0bf6b4233cdfd218b2e839783e383469288f1
+    response_sha256: 4e8247eeddc978979b940c95d1276bc139ecc7b561d489bd50dfa7b7a6b16f35
+    response_id: chatcmpl-87a8ea32feca1f4d
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c678fb2738dd0642053563e3fd2639a94dc7c08c73fb12baadf90554cd46294e
+    response_sha256: 62f8248cdf87fcc889ae67da60fff09fa59683dfe19c344b6d49790fd6033226
+    response_id: chatcmpl-bd3cefa1e5535f26
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 56eeb78308bfbeb0107d3dd0ece0b62e0eb30fa79c7c933b11db63e64cffbb9b
+    response_sha256: dca0e5d5933d6b4ca4fad8bee72eccf725d7ac1a6742dd0e9e41ee69d95a19c3
+    response_id: chatcmpl-a198fd9aea7e4020
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 701c87ed581a46595780ae80f9a38a5d62f4f042753121cf133c77d910650eff
+    response_sha256: 7c3b8d90e1f78b22841e19dbcb4e65ba58699a2e643739409e73011b7eb4e382
+    response_id: chatcmpl-86d19d8082d68e0e
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d391da8669171f9e17974e7ddaeadf768f055382774fd62dfd8eeeb02b3206df
+    response_sha256: fbc842fbde4f0021ca3086fb0dff57d5011cf8321cb9dc5cffdde728a8a1ca5c
+    response_id: chatcmpl-b750abbc36f108a9
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 7b6c70260d605065ddd4bfe1f0c4dccfbac1d03004a02ecd7dc66682e97d22b2
+    response_sha256: 6c93dea46b2bad78688d0195615c918afc810cd1af0258b790fbe210ff093f87
+    response_id: chatcmpl-94bd4bdfd9601c9c
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 10
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 10
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 10
+    omitted: 0
+    malformed: 0
+proposals:
+- name: constraint_release_response
+  summary: Release, replace or move constraints in quadratic mechanical systems with stated loads; enforce
+    the remaining constraints and recompute minimum-energy states, returning displacement changes or released
+    reaction forces.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_representation_specific_r1.tower_block_removal.tower_block_removal:TowerBlockRemoval
+      relationship: adjacent
+      overlap: both involve mechanical systems with loads and constraints, but tower removal checks toppling;
+        this candidate computes minimum-energy states under released constraints
+    - id: proposal:ua_planning-backtracking:P001
+      relationship: adjacent
+      overlap: both involve adding constraints (braces) to mechanical frameworks, but rigidity brace design
+        aims at prescribed motions; this candidate releases constraints and recomputes displacement
+    - id: gallery:equation_system
+      relationship: different
+      overlap: linear equation solving is algebra; this candidate is about mechanical constraint release
+        with energy minimization
+    substantive_difference: The operation is constraint release/replacement in mechanical systems with
+      energy minimization, distinct from toppling or brace design.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Energy-based response to constraint changes is not covered by neighbors.
+    votes: 2/3
+    dissent:
+    - novel
+- name: diffraction_motif_abduction
+  summary: Infer hidden repeating motifs from allowed and extinguished reflections using supplied phase-addition
+    rules; vary translated copies, signed weights, and incomplete observations; answer compatible motifs.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_inference-modes:P009
+      relationship: adjacent
+      overlap: both perform abductive inference balancing constraints, but tropical balance infers exponents;
+        this candidate infers repeating motifs from reflection rules
+    - id: gallery:pattern_induction
+      relationship: adjacent
+      overlap: both infer hidden patterns, but pattern induction is symbolic sequence continuation; this
+        candidate uses phase-addition rules in diffraction
+    - id: proposal:ua_inference-modes:P010
+      relationship: different
+      overlap: menu attention abduction separates preference from consideration; diffraction motif abduction
+        infers motifs from reflections
+    substantive_difference: The operation is abducing motifs from allowed and extinguished reflections
+      via phase addition rules, a unique combination of algebraic inference and diffraction.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor addresses diffraction-based motif abduction with phase-addition constraints.
+    votes: 3/3
+    dissent: []
+- name: causal_contingency_responsibility
+  summary: Find the smallest admissible contingency making a nominated event necessary for an outcome
+    in Boolean or threshold mechanisms with redundancy and preemption; return its responsibility score
+    or noncause.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_dependence_relevance_r1.simpson_reversal_detection.simpson_reversal_detection:SimpsonReversalDetection
+      relationship: adjacent
+      overlap: both reason about contingency and responsibility but Simpson reversal detects association
+        reversal in tables; this candidate finds minimal contingency making an event necessary in Boolean/threshold
+        mechanisms with preemption
+    - id: proposal:k3_scientific-reasoning:P010
+      relationship: adjacent
+      overlap: both compute causal quantities from partial data, but partial identification brackets effects
+        via extremization over assumptions; this candidate finds minimal contingencies and responsibility
+        scores in mechanisms
+    - id: task:generated.k3_shortcuts_fail_r2.stabilizer_tableau_simulation.stabilizer_tableau_simulation:StabilizerTableauSimulation
+      relationship: different
+      overlap: 'different domains: quantum stabilizer updates vs Boolean causal mechanisms'
+    substantive_difference: The operation is specifically about minimal contingency in causal mechanisms
+      with redundancy/preemption, not simply contingency tables or structural causal model interventions.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Causal responsibility via minimal contingency is a distinct cognitive operation from the listed
+      neighbors.
+    votes: 3/3
+    dissent: []
+- name: cell_surgery_homology
+  summary: Add, excise or identify cells in finite complexes under stated boundary rules; compare binary
+    homology before and after the intervention and report changes in component, tunnel and cavity counts.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_inference-modes:P004
+      relationship: adjacent
+      overlap: both operate on cell complexes, but bounded_loop_deformation contracts loops; this candidate
+        computes homology changes after cell surgery
+    - id: proposal:ua_systematic-generalization:P011
+      relationship: adjacent
+      overlap: both track invariants through surgery on surfaces, but ribbon_surface_surgery tracks boundary/genus;
+        this candidate computes Betti numbers after cell additions/removals
+    - id: task:generated.k3_dependence_relevance_r1.binary_morphology_passes.binary_morphology_passes:BinaryMorphologyPasses
+      relationship: adjacent
+      overlap: both use binary grids and count features, but morphology passes are image processing; this
+        candidate is algebraic topology
+    substantive_difference: Explicit homology computation (components, tunnels, cavities) with cell surgery
+      is not covered by any neighbor.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Topological homology changes under cell surgery is a new cognitive operation in the catalog.
+    votes: 3/3
+    dissent: []
+- name: strategic_commitment_optimization
+  summary: Choose a binding action or lottery before another agent responds optimally in finite payoff
+    systems with stated tie rules; return the payoff-maximizing commitment or its induced outcome.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_hierarchical_recursive_r1.extensive_form_to_bimatrix.extensive_form_to_bimatrix:ExtensiveFormToBimatrix
+      relationship: adjacent
+      overlap: both involve game trees and payoffs, but extensive-form-to-bimatrix converts to normal
+        form; this candidate searches for payoff-maximizing commitments
+    - id: task:generated.k3_counterfactual_r1.vcg_pivotal_payments.vcg_pivotal_payments:VcgPivotalPayments
+      relationship: adjacent
+      overlap: both consider mechanism outcomes with payments, but VCG computes pivotal prices; this candidate
+        chooses binding commitments
+    - id: task:generated.wave9.expected_utility_choice.expected_utility_choice:ExpectedUtilityChoice
+      relationship: adjacent
+      overlap: both select actions by expected utility, but expected utility choice has no strategic response
+    substantive_difference: The operation is optimizing commitment under strategic response, distinct
+      from static expected utility or normal-form conversion.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Strategic commitment optimization is a distinct operation not found in neighbors.
+    votes: 2/3
+    dissent:
+    - variant
+- name: ballot_clone_counterfactuals
+  summary: Replace candidates with contiguous clone blocks in ranked ballots under stated elimination
+    or scoring rules; range over internal clone orders and determine which original candidates can win
+    after collapsing clone identities.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.instant_runoff_winner.instant_runoff_winner:InstantRunoffWinner
+      relationship: adjacent
+      overlap: both process ranked ballots, but instant runoff computes a winner under fixed rules; this
+        candidate explores clone counterfactuals
+    - id: task:generated.wave8.condorcet_winner.condorcet_winner:CondorcetWinner
+      relationship: adjacent
+      overlap: both use ranked ballots, but Condorcet winner checks majority beats; this candidate tests
+        clone-induced winners
+    - id: proposal:k3_operations-research:P001
+      relationship: different
+      overlap: DPLL clause search is satisfiability, not voting theory
+    substantive_difference: The operation is clone manipulation in voting systems, enabling counterfactual
+      winner determination, which is not present in the neighbors.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Clone counterfactual analysis in elections is a novel operation.
+    votes: 2/3
+    dissent:
+    - novel
+- name: settlement_departure_consistency
+  summary: Remove claimants after paying their assigned shares, then redistribute the residual estate
+    under capped, proportional, priority or hybrid rules; determine whether remaining awards change and
+    identify the affected claimants.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_state-tracking:P007
+      relationship: adjacent
+      overlap: both involve distributions and redistribution but mean-preserving spread order compares
+        distributions; this candidate removes claimants and recomputes awards under allocation rules
+    - id: proposal:k3_operations-research:P006
+      relationship: adjacent
+      overlap: both allocate divisible resources with caps and claims, but waterfilling shares a fixed
+        supply; this candidate studies departure effects on awards
+    - id: task:generated.wave10.event_order_reconstruction.event_order_reconstruction:EventOrderReconstruction
+      relationship: different
+      overlap: event order reconstruction recovers chronology from narrative; this candidate is about
+        estate settlement under allocation rules
+    substantive_difference: 'Specific operation: recompute allocations after claimant departures and identify
+      which awards change, not just allocate or compare distributions.'
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: The departure-consistency operation is absent from the closest neighbors.
+    votes: 2/3
+    dissent:
+    - novel
+- name: intervention_information_value
+  summary: Compare experiments that reveal uncertain intervention responses before a consequential choice;
+    combine likelihoods, posterior-optimal actions, and test costs to return the best experiment or its
+    net value.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_latent-representation:P008
+      relationship: adjacent
+      overlap: both compare information value of experiments, but C009 includes posterior-optimal actions
+        and costs vs channel dominance
+    - id: task:generated.wave9.expected_utility_choice.expected_utility_choice:ExpectedUtilityChoice
+      relationship: adjacent
+      overlap: both use expected utility, but C009 adds experiment selection and intervention uncertainty
+    - id: proposal:ua_uncertainty:P005
+      relationship: adjacent
+      overlap: both optimize decisions under uncertainty, but C009 is about information gathering not
+        commitment
+    substantive_difference: Combines experiment evaluation, likelihoods, posterior-optimal actions, and
+      costs to rank interventions, a unique decision-theoretic operation
+    scores:
+      novelty: 5
+      sft_value: 5
+      feasibility: 4
+      clarity: 4
+    reason: Novel integration of experimental design and intervention response in expected value computation.
+    votes: 3/3
+    dissent: []
+- name: derived_view_intervention
+  summary: Impose counterfactual changes on derived relations built from joins, exclusions and grouped
+    counts; determine the fewest base-fact edits realizing exactly those changes without collateral view
+    changes, or impossibility.
+  id: P009
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_counterfactual:P007
+      relationship: adjacent
+      overlap: both find minimal interventions to achieve view changes, but C010 is over relational views
+        vs stratified tables
+    - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+      relationship: adjacent
+      overlap: both handle derived facts and underlying changes, but C010 is about minimal base edits
+        and view constraints
+    - id: task:generated.k3_representation_transfer_r1.critical_pair_generation.critical_pair_generation:CriticalPairGeneration
+      relationship: different
+      overlap: both involve term manipulation but C010 is view maintenance via joins/counts
+    substantive_difference: 'Solves the inverse view-maintenance problem: finds minimal base-fact edits
+      to realize exact derived changes without collateral damage, a distinct optimization operation'
+    scores:
+      novelty: 4
+      sft_value: 5
+      feasibility: 4
+      clarity: 4
+    reason: Novel combination of view derivation and minimal-intervention counterfactual, with precise
+      collateral constraints.
+    votes: 2/3
+    dissent:
+    - variant
+- name: residual_symmetry_under_pinning
+  summary: Intervene on finite symmetric structures using fixed sites, distinct labels or interchangeable
+    marked sets; retain exactly the transformations respecting the intervention and report the resulting
+    orbit partition.
+  id: P010
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_uncertainty:P004
+      relationship: adjacent
+      overlap: both intervene on finite structures and report orbit/invariant changes, but C003 is symmetry
+        transformations vs homology
+    - id: proposal:ua_invariants:P008
+      relationship: different
+      overlap: transformations on configurations, but C003 focuses on symmetry orbits under pinned sets
+        vs projective invariants
+    - id: task:generated.k3_invariants_r1.gnfa_state_elimination.gnfa_state_elimination:GnfaStateElimination
+      relationship: different
+      overlap: both involve automata/transformations but C003 is about symmetry and orbits, not automaton
+        reduction
+    substantive_difference: Explicitly computes orbit partitions of finite symmetry groups after pinning
+      sites, with labels and interchangeable sets, a distinct operation from homology or automata reduction
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Orbit-partition under interventions on symmetry structures is a novel operation not covered
+      by any neighbor.
+    votes: 2/3
+    dissent:
+    - novel
+- name: factorial_intervention_interactions
+  summary: Separate joint intervention responses into baseline, individual, and higher-order interaction
+    terms across binary or multivalued factors; return a requested pure interaction or reconstruct a missing
+    response.
+  id: P011
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_state-tracking:P006
+      relationship: adjacent
+      overlap: both decompose multiway tables into interaction terms, but C008 is about intervention responses
+        and reconstruction vs invariant contrasts
+    - id: task:generated.wave9.causal_intervention.causal_intervention:CausalIntervention
+      relationship: adjacent
+      overlap: both consider joint interventions, but C008 specifically isolates interaction terms in
+        factorial designs
+    - id: proposal:ua_latent-representation:P012
+      relationship: different
+      overlap: both involve factorizing outcomes, but C008 is about intervention interactions not separable
+        transitions
+    substantive_difference: Computes higher-order interaction contrasts from joint intervention responses,
+      a distinct experiment-design operation not present in any neighbor
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Novel separation of joint intervention effects into baseline and interaction terms with exact
+      reconstruction.
+    votes: 2/3
+    dissent:
+    - variant
+- name: nested_closest_world_counterfactuals
+  summary: Evaluate nested would/might counterfactuals over world-relative closeness orders with ties
+    and impossible antecedents; return truth by selecting the closest antecedent worlds separately at
+    each scope.
+  id: P012
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: candidate:C002
+      relationship: adjacent
+      overlap: both evaluate nested counterfactual structures over finite models with possible/necessary
+        outcomes
+    - id: candidate:C006
+      relationship: adjacent
+      overlap: counterfactual semantics over possible worlds and latents, but the latter is probabilistic
+        abduction
+    - id: task:generated.k3_uncertainty_r1.kripke_knowledge_evaluation.kripke_knowledge_evaluation:KripkeKnowledgeEvaluation
+      relationship: different
+      overlap: both use possible-worlds models, but C001's counterfactual selection with closeness and
+        ties differs from epistemic knowledge nesting
+    substantive_difference: Uses world-relative closeness orders with ties and impossible antecedents
+      for nested counterfactuals, absent from any neighbor
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Novel cognitive operation of nested closest-world counterfactual selection with partial orders
+      and impossible assumptions.
+    votes: 3/3
+    dissent: []
+rejected:
+- name: sharp_null_counterfactual_imputation
+  summary: Under specified sharp treatment-effect hypotheses, impute outcomes for alternative assignments
+    across paired, blocked, or fixed-count designs; return the exact randomization tail probability.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_scientific-reasoning:P008
+    relationship: same_operation
+    overlap: Both enumerate relabelings or impute outcomes under sharp null hypotheses and return exact
+      randomization tail probabilities.
+  - id: task:generated.wave10.counterfactual_replay.counterfactual_replay:CounterfactualReplay
+    relationship: adjacent
+    overlap: both involve counterfactual outcome changes but replay recomputes deterministic dependencies;
+      this candidate uses randomization inference
+  - id: proposal:k3_scientific-reasoning:P006
+    relationship: adjacent
+    overlap: both pool effects or compute probabilities but inverse-variance pooling is about combining
+      estimates, not randomization inference
+  reason: 0/3 samples judged it novel; The core operation is exact relabeling tail-count, already present
+    in proposal k3_scientific-reasoning:P008.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: epistemic_intervention_update
+  summary: Update agents' possible-world beliefs after public, private, or misleading interventions with
+    differing observability; return the truth of a nested knowledge or belief claim in the updated state.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.kripke_knowledge_evaluation.kripke_knowledge_evaluation:KripkeKnowledgeEvaluation
+    relationship: same_operation
+    overlap: Both evaluate nested knowledge claims over Kripke possible-worlds models; updating after
+      public/private interventions is a surface addition.
+  - id: gallery:belief_tracking
+    relationship: adjacent
+    overlap: both involve belief update and knowledge claims, but belief tracking gallery tracks beliefs
+      without explicit Kripke models
+  - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+    relationship: adjacent
+    overlap: both update states after interventions, but truth maintenance is about logical support, not
+      epistemic knowledge
+  reason: '0/3 samples judged it novel; Same operation: nested knowledge evaluation on Kripke models,
+    only adding intervention updates.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: hysteretic_intervention_histories
+  summary: Compare intervention histories in coupled latching or threshold mechanisms under stated relaxation
+    rules; retain hysteretic memory and return the final state or first divergence between histories.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: same_operation
+    overlap: Both simulate hysteresis with return-point memory across intervention histories and report
+      final states or divergent branches.
+  - id: proposal:ua_counterfactual:P008
+    relationship: adjacent
+    overlap: both propagate perturbations through stateful systems, but event-time sensitivity is linear
+      sensitivity, not hysteresis memory
+  - id: task:generated.wave12.linearizability_check.linearizability_check:LinearizabilityCheck
+    relationship: different
+    overlap: linearizability checks concurrent histories vs. sequential register specs; this candidate
+      compares hysteretic histories
+  reason: 0/3 samples judged it novel; Duplicate operation with hysteresis_reversal_memory, differing
+    only in surface framing.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: sequential_policy_reweighting
+  summary: Evaluate replacement sequential policies from trajectories with known behavior probabilities;
+    accumulate history-dependent likelihood ratios and return a weighted reward estimate or identify unsupported
+    actions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P002
+    relationship: variant
+    overlap: Both evaluate policies under alternative behavioral strategies by weighting decision histories
+      with likelihood ratios, differing only in whether the query is equivalence or weighted reward estimation.
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: variant
+    overlap: Both accumulate products of conditional probabilities along branching sequential paths to
+      produce an exact probability or expectation.
+  - id: proposal:k3_scientific-reasoning:P007
+    relationship: adjacent
+    overlap: Both accumulate log-likelihood ratios sequentially, but the former is for interim analysis
+      boundaries while the latter is for policy evaluation.
+  reason: 1/3 samples judged it novel; Same history-dependent likelihood-ratio accumulation as strategy
+    realization equivalence, with an output change to reward estimation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: obligation_reparation_intervention
+  summary: Evaluate omissions, waivers and substitutions in conditional duty systems with exceptions and
+    reparations; distinguish cancelling a duty from violating it and report the obligations active after
+    each intervention.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.request_revision.request_revision:RequestRevision
+    relationship: variant
+    overlap: Both track obligations/commitments through successive interventions (omissions, waivers,
+      substitutions) and report the final active set, differing only in domain (duties vs. requests).
+  - id: task:generated.wave10.correction_aware_summary.correction_aware_summary:CorrectionAwareSummary
+    relationship: variant
+    overlap: Both process a sequence of modifications (corrections/withdrawals vs. waivers/substitutions)
+      and output the surviving stable set of commitments/obligations.
+  - id: proposal:ua_counterfactual:P007
+    relationship: adjacent
+    overlap: Both consider interventions that modify a system, but the former is about stratigraphic reordering
+      constraints while the latter is about logical duty satisfaction.
+  reason: 1/3 samples judged it novel; Cosmetic re-skinning of the same edit-tracking operation over duties
+    instead of requests.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: contextual_marginal_extension
+  summary: Determine whether overlapping local probability tables admit a common joint distribution; vary
+    parity exclusions, shared marginals, and hidden outcomes; answer compatibility or a forced event bound.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P008
+    relationship: same_operation
+    overlap: both check compatibility of overlapping probability tables and compute attainable ranges
+      of event probabilities
+  - id: proposal:ua_latent-representation:P011
+    relationship: variant
+    overlap: both infer forced relations from partial constraints, but one is over probabilities and other
+      over additive scores
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: adjacent
+    overlap: both handle joint distributions but C005 is about compatibility not conditional expectation
+  reason: 0/3 samples judged it novel; Direct duplicate of marginal_extension_consistency; added details
+    are cosmetic.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: latent_noise_counterfactual_abduction
+  summary: Infer latent disturbances from factual observations in discrete stochastic mechanisms, preserve
+    their posterior under intervention, and return an exact counterfactual outcome probability or distribution.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave9.counterfactual_twin_model.counterfactual_twin_model:CounterfactualTwinModel
+    relationship: same_operation
+    overlap: 'Both perform abduction, intervention, and prediction in structural causal models: infer
+      latent (noise) from observations, then intervene and compute counterfactual quantities. C008 adds
+      stochasticity and probabilities, but the twin network''s core operation is identical.'
+  - id: task:generated.wave10.counterfactual_replay.counterfactual_replay:CounterfactualReplay
+    relationship: adjacent
+    overlap: Both recompute outcomes after interventions, but CounterfactualReplay is deterministic integer
+      chains without latent inference.
+  - id: task:causal_reasoning:BayesianIntervention
+    relationship: adjacent
+    overlap: Both do Bayesian inference under interventions, but BayesianIntervention does not perform
+      counterfactual abduction; it computes interventional distributions directly.
+  reason: 1/3 samples judged it novel; Counterfactual abduction via twin model is identical in operation;
+    stochasticity is a parameter change, not a new operation.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: preference_separability_deduction
+  summary: Infer consequences of additive attribute preferences from comparisons of composite options;
+    vary shared attributes, tradeoff chains, ties, and incomplete rankings; answer forced comparison or
+    inconsistency.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P011
+    relationship: same_operation
+    overlap: both infer additive attribute preferences from comparisons and answer forced comparisons/inconsistency
+  - id: proposal:ua_inference-modes:P010
+    relationship: variant
+    overlap: both infer preference relations from choice data, but C007 is specifically additive separability
+      vs attention effects
+  - id: task:generated.k3_scope_and_binding_r1.scalar_alternative_exclusion.scalar_alternative_exclusion:ScalarAlternativeExclusion
+    relationship: adjacent
+    overlap: both draw logical consequences from alternatives, but C007 is about preferences not implicatures
+  reason: 0/3 samples judged it novel; Duplicate of additive_preference_representability; no new operation.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: cyclic_equilibrium_intervention
+  summary: Replace mechanisms or clamp variables in finite cyclic systems with Boolean, modular or threshold
+    rules; recompute self-consistent states and report which queried values become possible, necessary
+    or impossible.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_counterfactual_r1.boolean_network_knockout.boolean_network_knockout:BooleanNetworkKnockout
+    relationship: variant
+    overlap: both recompute attractors/self-consistent states after clamping nodes in finite cyclic systems,
+      with Boolean/threshold rules
+  - id: task:generated.wave9.causal_intervention.causal_intervention:CausalIntervention
+    relationship: variant
+    overlap: both perform interventions on finite causal models and report which outcomes become possible/necessary/impossible
+  - id: proposal:ua_uncertainty:P001
+    relationship: adjacent
+    overlap: intervention plus recomputation, but C002 is cyclic vs acyclic and uses Boolean/modular rules
+  reason: 0/3 samples judged it novel; Cyclic intervention is a useful generalization but shares the core
+    clamp-and-recompute operation with existing Boolean network and causal intervention tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: counterfactual_belief_contraction
+  summary: Retract a claim from finite belief bases by retaining maximal subsets that no longer entail
+    it; vary protected premises, retention priorities and tied repairs; answer which queried beliefs survive
+    every repair.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+    relationship: variant
+    overlap: both retract claims/facts and determine which derived beliefs survive, with priority and
+      retention mechanisms
+  - id: task:generated.wave10.request_revision.request_revision:RequestRevision
+    relationship: adjacent
+    overlap: both handle revisions/retractions of commitments, but C004 is about belief-base contraction
+      vs request fulfillment
+  - id: proposal:k3_formal-logic:P003
+    relationship: different
+    overlap: both deal with logical consequence, but C004 is about maximal subsets and survivor queries
+      not bag-joins
+  reason: 0/3 samples judged it novel; Belief contraction via maximal subsets is a variant of existing
+    truth-maintenance and revision tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+pool:
+- name: robust_counterfactual_regret
+  summary: Compare interventions across coupled uncertainty scenarios, measuring each loss against the
+    best alternative in that same scenario; return the minimum-worst-regret intervention or its adversarial
+    witness.
+- name: interventional_effect_identifiability
+  summary: Filter finite causal hypotheses by observational and experimental records, then test whether
+    an untried intervention has the same outcome across survivors; return the outcome or attainable set.

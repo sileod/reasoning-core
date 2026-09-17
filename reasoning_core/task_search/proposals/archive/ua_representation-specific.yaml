@@ -1,0 +1,1167 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_representation-specific
+created_at: '2026-09-17T01:48:51.364515+00:00'
+provenance:
+  kind: proposer
+  name: ua_representation-specific
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks over graphs, trees, strings, sets, relations, tables, programs, and symbolic
+    expressions that require representation-specific reasoning. The catalog you were shown already covers
+    the classic textbook algorithms -- sorting, gcd, graph traversal, compression, scheduling, matching,
+    parsing -- and a proposal that names one will be rejected as a repeat however well it fits this brief.
+    Reach past the standard repertoire: propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 8
+  complete: false
+catalog:
+  sha256: 99a9d607049fdd27f0326fc058ff651ea16e16bac51542e8226a86906b10f788
+  entries: 883
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 276
+    task: 445
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-2
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: e5feb1039f07c909577b462edbabbc9cd1f0438575c5ac473be7c5fcad09bc5f
+    response_sha256: cffbc9ccbc858ef84a9261c58030849195a18b6c67839468b504edb57583b8f3
+    response_id: gen-1789609114-k26q7H7sUDYITHoiVPyg
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 588dbfb17334eef6ef26a0fbbd27e1eed375b203296788036d94008c910ee8ab
+    response_sha256: face2c6f3852754e79e2f4c924992396487b38afe4474b2c73b310661b22ff0a
+    response_id: gen-1789609402-hI8mRAh8pDgsWya5Yw7B
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1e23ccb8ef9f061ffe76293bcbcb2796e8b4205a5d97b06a045e2887fc94cc45
+    response_sha256: d684baa1c8459b4d02632063a11e7ef2dc89642e2ce401804a2104c98501ba5b
+    response_id: chatcmpl-bf4114fadcba9f34
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 0d944718fc6c0b6e7833847a3ba060e31851b26675949ca55e794bd27cf42503
+    response_sha256: 227755de54d82f72a93a84df035380a9c8d2cc32251ec26964ba62c0e57bcc8f
+    response_id: chatcmpl-8b7adde8977c9be9
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 5fef4ed861daf10b940ef78fb6a65802e8945647f1e23c2a3139fae9d08101c4
+    response_sha256: 2f430b1a0bfaf280fcf436d07bb2ad66f47857f1f5dae28fa6b82aff666e9344
+    response_id: chatcmpl-b8bbfdcb1a157060
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 175a154d216eed734c6873807d8d52baf17b301273fef2d4a9e64351f64a4391
+    response_sha256: 2bfb7485de06c4746b4b2f241838dbc44e7cc41d4bfa46697675d59674940a08
+    response_id: chatcmpl-8da182e6df7db337
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 2fe3907c231b65f3ffb80d4c05dee391431f56dba5b0e2f2f954101f6e09a1c9
+    response_sha256: 83cb61c6580840a7b6c5486566ce8f538bbfb90782d2ab14594bbfef9df6aa44
+    response_id: chatcmpl-b5738b59582c87e3
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 5eba5fe26b49f2d55cb3153b15d5d655f1e9f3c4671fbec897cfe2095bdf65e1
+    response_sha256: beba750c31080861bc0dd6a6954d1ce7f31d2f368ed382d77d418d55a158323b
+    response_id: chatcmpl-908c874783935051
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 5a3e2c532b65e8b7ed73d4b0553b2f6a8bdf457035fd1268f858cb42ca281480
+    response_sha256: 38b063cab941cc6475aa332d18a2c34a23d5412826e71288b181f0da2415134b
+    response_id: chatcmpl-8b5632e00649fdf2
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 27be24be443be07ece3785aabbad1a557ab782faee0e5d616068bdc578a8b0e0
+    response_sha256: 74b81e2ec547c9f974b7a5924178a96ca0f485aaa1ac5f50065ca6b3ff77cf53
+    response_id: chatcmpl-abbc758271ccaa37
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 27f9a6c4299d77377b75b1adb15ec2bfbafcd34466411ac3d8da607c8c062de1
+    response_sha256: 5e3c40072c8c5ed3c8724c02abec051ce1415fb340b5676b5bc7f9dfbb06030c
+    response_id: chatcmpl-ba85ad639be3104a
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: local_interaction_energy_delta
+  summary: Update lattice energies after simultaneous site or interaction edits across pairwise and multisite
+    potentials; count jointly affected terms once and return changed interaction contributions and total
+    energy delta.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_global-over-greedy:P001
+      name: frustrated_interaction_ground_states
+      relationship: adjacent
+      overlap: Both compute total energy over pairwise and higher-order potentials, but ground-state minimization
+        finds minimizers while candidate computes deltas after simultaneous edits.
+    - id: proposal:ua_uncertainty:P011
+      name: factorial_intervention_interactions
+      relationship: adjacent
+      overlap: Both separate contributions from multiple factors, but factorial interaction is about response
+        decomposition, not energy updates.
+    - id: proposal:ua_invariants:P003
+      name: quadratic_energy_signature
+      relationship: adjacent
+      overlap: Both involve quadratic energy forms, but signature determines equivalence classes while
+        candidate computes deltas.
+    substantive_difference: Incremental energy delta computation with joint counting of affected terms
+      is a distinct operation from minimization or signature analysis.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: No known neighbor computes energy deltas after simultaneous site/interaction edits; closest
+      are optimization or signature tasks.
+    votes: 2/3
+    dissent:
+    - variant
+- name: paragraph_reflow_resynchronization
+  summary: Repair cached line layouts after token or width edits under wrapping, glue, and discretionary-break
+    rules; track spill and pullback until unchanged suffix alignment, returning changed lines.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.diff_patch_application.diff_patch_application:DiffPatchApplication
+      relationship: adjacent
+      overlap: Both apply edits to text or token sequences, but reflow resynchronization focuses on recalculating
+        line breaks and indentation after edits, not applying patch hunks.
+    - id: task:generated.k3_systematic_generalization_r1.concurrent_edit_rebase.concurrent_edit_rebase:ConcurrentEditRebase
+      relationship: adjacent
+      overlap: Both track changes to indexed sequences after edits, but rebase transforms edit positions
+        while reflow recomputes layout-affected lines.
+    - id: proposal:ua_incremental-recomputation:P009
+      name: dyadic_balance_patch
+      relationship: adjacent
+      overlap: Both repair a structure after local changes, but dyadic balance enforces neighbor size
+        limits while reflow handles text wrapping constraints.
+    substantive_difference: The operation is incremental re-layout of paragraphs under wrapping, glue,
+      and discretionary breaks, a distinct combinatorial task without a close known match.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: No known task performs layout reflow resynchronization; closest neighbors involve text edits
+      or structure repairs with different rules.
+    votes: 3/3
+    dissent: []
+- name: observed_remove_delta_merge
+  summary: Merge partial updates to observed-remove sets with tagged duplicate adds, causal removals,
+    delayed delivery, and replay; return changed visible memberships without reviving removed tags.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_formal-logic:P006
+      name: streaming_view_delta
+      relationship: adjacent
+      overlap: Both maintain derived sets under insertions and retractions, but streaming view handles
+        bag joins and aggregates while candidate tracks causal removal tags and replay.
+    - id: task:generated.wave9.packet_fragment_reassembly.packet_fragment_reassembly:PacketFragmentReassembly
+      relationship: adjacent
+      overlap: Both reassemble fragments with overlaps and missing rules, but packet reassembly lacks
+        causal delete semantics.
+    - id: proposal:ua_compositional-generalization:P002
+      name: composed_lens_update
+      relationship: adjacent
+      overlap: Both propagate updates through structures, but lenses are view-source transformations,
+        not conflict resolution.
+    substantive_difference: The operation is merging observed-remove sets with causal order and replay
+      protection, a distinct CRDT-like operation not matched by known tasks.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: No known task handles causal remove sets with replay and delayed delivery; closest neighbors
+      are generic deltas or reassembly.
+    votes: 2/3
+    dissent:
+    - variant
+- name: relation_residuation
+  summary: Compute the largest relation satisfying a left or right composition containment, across rectangular
+    carriers and nested converse or residual operations; return the resulting relation or queried membership.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_systematic-generalization:P009
+      relationship: adjacent
+      overlap: Both involve relations and order comparisons, but one is game values and the other is relation
+        residuation.
+    - id: task:generated.wave9.bipartite_matching.bipartite_matching:BipartiteMatching
+      relationship: adjacent
+      overlap: Both operate on relations/graphs, but one finds matchings and the other computes residuals
+        under composition.
+    - id: task:generated.wave12.relational_join_execution.relational_join_execution:RelationalJoinExecution
+      relationship: adjacent
+      overlap: Both use relation composition, but one executes joins and the other computes a maximal
+        residual relation.
+    substantive_difference: "Relation residuation (largest R such that R;S \u2286 T) is a distinct algebraic\
+      \ operation not present in any known neighbor; exact oracle clear for finite carriers."
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Novel operation of residuation in relation algebra; nearest neighbors are only adjacent in
+      using relations.
+    votes: 2/2
+    dissent: []
+- name: set_family_shattering
+  summary: Determine shattering and strong shattering for set families given by members or forbidden patterns,
+    including restrictions to smaller grounds; return the queried status or a missing trace.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_systematic_generalization_r1.permutation_pattern_witness.permutation_pattern_witness:PermutationPatternWitness
+      relationship: adjacent
+      overlap: Both decide structural containment (set shattering vs. permutation pattern) but use different
+        combinatorial definitions and output a witness or status.
+    - id: proposal:k3_multi-relation-integration:P001
+      relationship: adjacent
+      overlap: Both involve checking conditional/closure conditions on set systems, but one is shattering
+        (hitting all subsets) and the other is graph orientation via separation.
+    - id: task:generated.k3_rule_induction_r1.tuple_generating_dependency_chase.tuple_generating_dependency_chase:TupleGeneratingDependencyChase
+      relationship: different
+      overlap: 'Different operations: shattering is a combinatorial property of set families; chase applies
+        dependencies to derive atoms.'
+    substantive_difference: Shattering is a distinct combinatorial concept (all subsets realized) not
+      reducible to known neighbors; the oracle can enumerate all subsets for small ground sets and verify
+      exact shattering/strong shattering.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Novel operation (shattering/strong shattering) with clear exact oracle; nearest neighbors
+      are only adjacent.
+    votes: 3/3
+    dissent: []
+- name: tropical_corner_transfer
+  summary: Translate univariate min-plus polynomials between coefficient lists and weighted breakpoint
+    descriptions, accounting for inactive terms and affine offsets; recover a corner, slope or normalized
+    coefficient.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_representation-transfer:P008
+      relationship: adjacent
+      overlap: Both transfer between algebraic representations (polynomial vs. tropical), but one is branch
+        expansions and the other is tropical breakpoints.
+    - id: proposal:ua_inference-modes:P009
+      relationship: adjacent
+      overlap: Both involve tropical/min-plus polynomial balancing, but one infers exponents and the other
+        translates coefficient lists.
+    - id: proposal:ua_representation-transfer:P004
+      relationship: adjacent
+      overlap: Both change coordinate/representation of algebraic objects, but one is Plucker coordinates
+        and the other is tropical polynomials.
+    substantive_difference: Tropical corner transfer (weighted breakpoints of min-plus polynomials) is
+      a unique representation-specific operation not in any neighbor; exact oracle by enumerating corners.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 5
+    reason: Novel operation of translating between tropical polynomial forms and breakpoint descriptions;
+      nearest neighbors are adjacent in algebra domain.
+    votes: 3/3
+    dissent: []
+- name: partition_rim_strip_cancellation
+  summary: Remove connected rim strips containing no two-by-two square from partition diagrams in specified
+    size sequences; weight histories by strip-height parity and return their signed total.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_latent-representation:P005
+      relationship: adjacent
+      overlap: Both involve calculating signed sums over combinatorial substructures (forests vs. rim
+        strips) with parity weights, but the underlying structures and operations (renormalization subtraction
+        vs. partition rim strip removal) are distinct.
+    - id: proposal:ua_compositional-generalization:P001
+      relationship: adjacent
+      overlap: Both involve recursive reduction with memory of past states (hysteresis vs. rim strip removal),
+        but the operations are fundamentally different.
+    - id: proposal:ua_global-over-greedy:P009
+      relationship: different
+      overlap: No overlap; one is about combinatorial partitions, the other about voting weights.
+    substantive_difference: The operation of iteratively removing rim strips from partitions with parity-weighted
+      histories is not present in any listed neighbor. This is a specific algebraic combinatorics procedure
+      with a unique cognitive demand of tracking signed totals across multiple removals.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: The task introduces a novel combinatorial procedure of rim strip removal with signed accumulation,
+      not found in existing proposals.
+    votes: 2/3
+    dissent:
+    - variant
+- name: multivalued_dependency_closure
+  summary: Close finite relations under multivalued dependencies by swapping attribute blocks between
+    rows agreeing on determinants; handle interacting dependencies and return forced-row membership or
+    added-row count.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave8.fd_attribute_closure.fd_attribute_closure:AttributeClosure
+      relationship: adjacent
+      overlap: Both use dependency rules to close a set, but FD closure operates on attribute sets, while
+        MVD closure swaps tuples.
+    - id: task:generated.k3_rule_induction_r1.tuple_generating_dependency_chase.tuple_generating_dependency_chase:TupleGeneratingDependencyChase
+      relationship: adjacent
+      overlap: Both materialize consequences of dependencies, but TGDs add new tuples, while MVDs swap
+        values within existing tuples.
+    - id: task:generated.k3_relational_structures_r1.formal_concept_closure.formal_concept_closure:FormalConceptClosure
+      relationship: different
+      overlap: Both compute closures in a relational setting, but formal concept closure uses object-attribute
+        implications, not row splitting.
+    substantive_difference: C005's row-splitting closure under multivalued dependencies is a distinct
+      relational operation, not present in FD closure or TGD chase.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Novel because it uses a different dependency mechanism than the nearest neighbors (attribute
+      closure, TGD chase).
+    votes: 2/3
+    dissent:
+    - duplicate
+rejected:
+- name: stereochemical_projection_transfer
+  summary: Transfer labeled tetrahedral configurations among Fischer projections, wedge-dash drawings
+    and spatial coordinates under supplied ligand priorities; recover absolute configurations or decide
+    equivalence.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P003
+    relationship: same_operation
+    overlap: Both track tetrahedral handedness through Fischer, wedge, and spatial representations under
+      ligand exchanges and report final configuration or parity; the only difference is the query (recover
+      absolute vs. final parity).
+  - id: proposal:ua_representation-transfer:P004
+    relationship: adjacent
+    overlap: "Both translate between geometric representations and recover a configuration, but one deals\
+      \ with Pl\xFCcker coordinates and the other with tetrahedral stereochemistry."
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: adjacent
+    overlap: Both track orientations in 3D, but the former is about labeled axes and rotations while the
+      latter is about chiral centers.
+  reason: 0/2 samples judged it novel; The proposal duplicates the parity transport through Fischer/wedge/spatial
+    representations, only changing 'return final parity' to 'recover absolute configuration'.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: evidence_conflict_redistribution
+  summary: Combine evidence expressed as weighted candidate sets, ambiguous reports or compatibility tables
+    by intersecting focal sets and renormalizing conflict; return belief, plausibility or total incompatibility.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.dempster_shafer_combination.dempster_shafer_combination:DempsterShaferCombination
+    relationship: variant
+    overlap: Both combine evidence as weighted focal sets by intersecting and renormalizing conflict,
+      returning belief/plausibility or conflict mass; candidate generalizes to multiple sources and ambiguity
+      tables.
+  - id: proposal:ua_state-tracking:P008
+    name: marginal_extension_consistency
+    relationship: adjacent
+    overlap: Both combine probability/evidence tables, but marginal extension checks joint compatibility
+      rather than combining focal sets.
+  - id: task:generated.structured_extraction:EvidenceSufficiency
+    name: evidence_sufficiency
+    relationship: different
+    overlap: Only share the word 'evidence'; sufficiency is about logical sufficiency, not mass combination.
+  reason: 0/3 samples judged it novel; Direct variant of existing Dempster-Shafer combination task.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: inertial_pulse_repair
+  summary: Repair Boolean circuit waveforms after a local input-edge or gate-delay edit; propagate transitions
+    while suppressing pulses shorter than inertial delays, returning changed output transitions.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_formal_semantics_r1.event_driven_gate_simulation.event_driven_gate_simulation:EventDrivenGateSimulation
+    name: event_driven_gate_simulation
+    relationship: same_operation
+    overlap: Both propagate transitions through gate netlists with inertial delays, suppressing pulses
+      shorter than delays; candidate adds incremental repair after local edits, but the core simulation
+      is identical.
+  - id: proposal:ua_incremental-recomputation:P009
+    name: dyadic_balance_patch
+    relationship: adjacent
+    overlap: Both repair structures after local changes, but dyadic balance is for cell partitions, not
+      waveforms.
+  - id: proposal:ua_counterfactual:P008
+    name: event_time_intervention_sensitivity
+    relationship: adjacent
+    overlap: Both propagate changes through timed systems, but sensitivity focuses on derivatives while
+      candidate repairs waveforms.
+  reason: 0/3 samples judged it novel; Variant of existing event-driven gate simulation task, adding local
+    edit repair.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: capped_share_reallocation
+  summary: Revise weighted shares of a fixed pool after a weight, floor, cap, or participant changes;
+    freeze bound-hitting shares and redistribute the remainder, returning changed allocations or infeasibility.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_operations-research:P006
+    name: maxmin_waterfilling_allocation
+    relationship: same_operation
+    overlap: Both allocate a fixed resource by raising shares to a common level until caps bind, freezing
+      saturated shares and redistributing the remainder; candidate adds floors and participant changes.
+  - id: proposal:ua_uncertainty:P007
+    name: settlement_departure_consistency
+    relationship: variant
+    overlap: Both redistribute residual after removing some participants under caps and priorities, but
+      departure consistency is about estate division, not general weight changes.
+  - id: task:generated.k3_uncertainty_r1.threshold_share_reconstruction.threshold_share_reconstruction:ThresholdShareReconstruction
+    name: threshold_share_reconstruction
+    relationship: different
+    overlap: Only share 'share' as a word; threshold shares involve polynomial reconstruction, not allocation.
+  reason: 0/3 samples judged it novel; Variant of maxmin waterfilling allocation with floors and participant
+    edits.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: borrow_footprint_revalidation
+  summary: Revalidate access judgments after a borrow, move, or write is edited; track shared and exclusive
+    loans through reborrows, disjoint fields, and overlapping slices, returning changed legality judgments.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_formal-logic:P002
+    name: ownership_lifeline_transfer
+    relationship: same_operation
+    overlap: Both track borrows, moves, reborrows, disjoint fields, and slices to determine legality and
+      ownership; candidate adds revalidation after edits, but the core ownership tracking is identical.
+  - id: task:generated.wave12.alias_mutation_tracking.alias_mutation_tracking:AliasMutationTracking
+    name: alias_mutation_tracking
+    relationship: adjacent
+    overlap: Both track aliases and mutations, but alias mutation lacks borrow exclusivity and reborrow
+      rules.
+  - id: task:generated.wave10.request_revision.request_revision:RequestRevision
+    relationship: different
+    overlap: Only share the word 'revision'; request revisions are about instructions, not borrow checks.
+  reason: 0/3 samples judged it novel; Variant of existing ownership lifeline transfer task with edit
+    revalidation.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: signed_boundary_patch
+  summary: Patch oriented cell assemblies under insertion, deletion, or orientation reversal; propagate
+    signs through face identifications and self-gluings, cancel shared incidences, and return changed
+    boundary coefficients.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P006
+    relationship: same_operation
+    overlap: Both update oriented structures after local edits, propagating sign changes and recomputing
+      boundary labels; the only difference is the object (cell assemblies vs. paths) and the output (boundary
+      coefficients vs. winding labels).
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: variant
+    overlap: Both operate on oriented cell complexes and compute invariants like boundary counts or orientability
+      after gluing; the sign-propagation mechanism is shared.
+  - id: task:generated.k3_semantics_preserving_translation_r1.simplicial_boundary_matrices.simplicial_boundary_matrices:SimplicialBoundaryMatrices
+    relationship: variant
+    overlap: Both compute signed boundary representations of complexes; the patch part is just an edit,
+      but the core boundary computation is the same.
+  reason: 1/3 samples judged it novel; This duplicates winding_region_repair with a more general cell
+    complex; the sign-propagation and edit-response core is identical.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: threshold_avalanche_update
+  summary: Stabilize dissipative token lattices after local additions or threshold reductions; overloaded
+    sites redistribute fixed bundles through weighted outlets, yielding changed heights and nonzero firing
+    counts.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.chip_firing_stabilization.chip_firing_stabilization:ChipFiringStabilization
+    relationship: variant
+    overlap: Both stabilize configurations by firing overloaded nodes that distribute mass to neighbors
+      until stable; candidate uses weighted outlets and fixed bundles, chip firing uses equal chips to
+      all neighbors.
+  - id: proposal:k3_global-from-local:P008
+    name: threshold_cascade_fixpoint
+    relationship: adjacent
+    overlap: Both involve thresholds and propagation, but cascade turns nodes on by thresholds while candidate
+      redistributes tokens to reduce heights.
+  - id: proposal:ua_incremental-recomputation:P007
+    name: minimal_trigger_antichain_repair
+    relationship: adjacent
+    overlap: Both repair after threshold edits, but trigger antichain maintains sets of minimal triggers
+      while candidate redistributes tokens.
+  reason: 0/3 samples judged it novel; Variant of chip-firing stabilization with weighted redistribution
+    and dissipative rules.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: default_shadowing_repair
+  summary: Update inherited field values after editing defaults, exceptions, or parent links in acyclic
+    multi-parent structures; apply explicit specificity and tie rules, returning changed values and winning
+    sources.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.configuration_precedence_resolution.configuration_precedence_resolution:ConfigurationPrecedenceResolution
+    relationship: variant
+    overlap: Both merge multiple sources of configuration values with precedence rules and overrides,
+      returning the effective value per key; candidate adds inheritance in acyclic multi-parent structures.
+  - id: task:generated.wave9.hierarchical_rollup.hierarchical_rollup:HierarchicalRollup
+    relationship: adjacent
+    overlap: Both use parent-child hierarchies to determine values, but rollup aggregates exact values
+      bottom-up while candidate resolves inheritance and exceptions top-down.
+  - id: task:generated.wave10.scoped_instruction.scoped_instruction:ScopedInstruction
+    relationship: adjacent
+    overlap: Both apply scoped modifications to defaults, but scoped instruction handles single instructions
+      while candidate handles multi-parent inheritance defaults.
+  reason: 0/3 samples judged it novel; Variant of configuration precedence resolution with additional
+    inheritance structure.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: copy_on_write_frontier
+  summary: Apply path edits to shared nested containers with live snapshots, aliases, and reference counts;
+    preserve untouched versions and report minimal clones, retargeted links, and newly reclaimable nodes.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.alias_mutation.alias_mutation_tracking:AliasMutation
+    name: alias_mutation
+    relationship: variant
+    overlap: Both track aliases and mutations of mutable containers, but candidate adds copy-on-write
+      semantics preserving untouched versions and computing clone counts.
+  - id: proposal:ua_compositional-generalization:P002
+    name: composed_lens_update
+    relationship: adjacent
+    overlap: Both push edits through shared structures preserving other parts, but lenses are functional
+      view updates without clone counts.
+  - id: proposal:k3_formal-logic:P005
+    name: referential_action_cascade
+    relationship: adjacent
+    overlap: Both apply structural edits with dependency propagation, but foreign-key cascades lack copy-on-write
+      and reference counting.
+  reason: 1/3 samples judged it novel; Extends alias mutation with copy-on-write and reference counting,
+    but the cognitive operation of tracking aliases through mutations is known.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: occlusion_damage_repair
+  summary: Update layered scenes after a shape, clip, opacity, or depth edit; propagate changed visibility
+    through opaque and translucent overlaps and return only sample sites whose final colors change.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P006
+    relationship: same_operation
+    overlap: Both propagate the effect of edits through a spatial structure and return only regions whose
+      status changes.
+  - id: task:generated.k3_counterfactual_r1.light_occlusion_delta.light_occlusion_delta_task:LightOcclusionDelta
+    relationship: variant
+    overlap: Both update visibility/occlusion after inserting/removing occluders and return changed cells
+      or sample sites.
+  - id: proposal:ua_representation-specific:P003
+    relationship: adjacent
+    overlap: Both maintain a set of observable states under edits, but one is visibility compositing and
+      the other is observed-remove semantics.
+  reason: 1/3 samples judged it novel; Variant of known occlusion-update task; same incremental visibility
+    propagation with parameter changes.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: join_provenance_polynomials
+  summary: Propagate symbolic row annotations through selection, projection, joins, self-joins, and union;
+    combine alternative derivations additively and joint witnesses multiplicatively to recover output
+    provenance.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_representation-transfer:P002
+    relationship: adjacent
+    overlap: Both combine items via joins/meets, but one is symbolic provenance polynomials and the other
+      is geometric meet/join.
+  - id: task:generated.k3_relational_structures_r1.symbolic_differentiation.symbolic_differentiation:SymbolicDifferentiation
+    relationship: adjacent
+    overlap: Both propagate symbolic expressions through algebraic operations, but one is differentiation
+      rules and the other is provenance polynomials.
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: same_operation
+    overlap: Both trace how output rows depend on input rows through joins/selections, combining derivations
+      additively/multiplicatively.
+  reason: 0/3 samples judged it novel; Duplicate of data lineage trace; same operation and output regime.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: algebraic_effect_resumption
+  summary: Evaluate programs with nested deep or shallow effect handlers whose clauses discard, resume,
+    or duplicate continuations; track handler scope across resumptions and return the resulting value
+    and event trace.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_language-implementation:P001
+    relationship: same_operation
+    overlap: Both execute control-flow with continuations/resumptions and track nested scope, but one
+      has effect handlers with clauses and the other generators.
+  - id: proposal:UNBUILT:P015
+    relationship: adjacent
+    overlap: Both involve exceptional control flow and handler semantics, but one is effect handlers with
+      resumption while the other is try/catch/finally.
+  - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+    relationship: adjacent
+    overlap: Both trace nested calls, but one is effect handlers with continuation capture and the other
+      is simple recursion tracking.
+  reason: 0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Novel operation
+    of effect handlers with delimited continuations; nearest generator task is only adjacent in control-flow
+    structure.
+  scores:
+    novelty: 5
+    sft_value: 4
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: permutation_interval_inflation
+  summary: Expand nested permutation blocks whose parent ranks determine block value ranges and whose
+    children determine internal order; vary block sizes and nesting, returning the expanded permutation
+    or a queried image.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_hierarchical_recursive_r1.interval_nesting_forest.interval_nesting_forest:IntervalNestingForest
+    relationship: same_operation
+    overlap: Both expand nested intervals into a concrete permutation/order, using parent-child relationships
+      to determine values/ranks.
+  - id: proposal:ua_compositional-generalization:P005
+    relationship: variant
+    overlap: Both expand nested templates/blocks into a flat structure, with inner blocks determining
+      order.
+  - id: task:generated.wave9.nested_template_expansion.nested_template_expansion:NestedTemplateExpansion
+    relationship: adjacent
+    overlap: Both expand nested structures with substitution rules, but one is text-template and the other
+      is numeric permutation blocks.
+  reason: 1/3 samples judged it novel; Variant of interval nesting expansion; same hierarchical expansion
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: word_shuffle_coefficients
+  summary: Compute word multiplicities in nested concatenation and shuffle expressions over letters and
+    finite word sums, including repeated symbols and empty words; return the coefficient of a queried
+    word.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: same_operation
+    overlap: Both compute coefficients of shuffle products of ordered sequences/words by interleaving
+      and summing multiplicities.
+  - id: proposal:ua_compositional-generalization:P010
+    relationship: variant
+    overlap: Both normalize products of operators/words by algebraic identities and return coefficients.
+  - id: proposal:ua_state-tracking:P003
+    relationship: adjacent
+    overlap: Both compute combinatorial sums of products, but one is word shuffle and the other is moment
+      extraction.
+  reason: 0/3 samples judged it novel; Variant of known shuffle expansion; same operation of computing
+    coefficients under shuffle interleaving.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: outer_join_null_compensation
+  summary: Maintain bag-valued outer joins after row insertions, deletions, or key edits; track duplicate
+    matches and zero-match crossings across chained joins, returning inserted and retracted result rows.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.relational_join_execution.relational_join_execution:RelationalJoinExecution
+    relationship: same_operation
+    overlap: Both execute outer joins with NULL compensation and return projected/aggregated result rows.
+  - id: proposal:k3_formal-logic:P003
+    relationship: variant
+    overlap: Both evaluate bag joins with NULL/unknown semantics and preserve duplicates.
+  - id: task:generated.wave9.relational_join.relational_join:RelationalJoin
+    relationship: adjacent
+    overlap: Both perform joins on keyed relations, but one is outer-join with nulls and the other is
+      inner/outer variants.
+  reason: 0/3 samples judged it novel; Variant of known outer join execution; same operation with added
+    delta tracking.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: hysteretic_trace_repair
+  summary: Repair relay-bank traces after editing an input sample or threshold; distinct activation and
+    release thresholds preserve memory, and answers identify changed switching events and final relay
+    states.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: same_operation
+    overlap: Both involve hysteresis with distinct activation/release thresholds and memory of past states,
+      updating outputs after input changes.
+  - id: proposal:ua_incremental-recomputation:P007
+    relationship: variant
+    overlap: Both repair a system after threshold/input edits, reporting changed outputs; one is monotone
+      triggers, the other is relay hysteresis.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: adjacent
+    overlap: Both execute stateful transitions with guards, but one is protocol events and the other is
+      relay hysteresis.
+  reason: 1/3 samples judged it novel; Variant of known hysteresis operation; same core operation of state-dependent
+    thresholds.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: splice_anchor_rebasing
+  summary: Rebase point and range anchors through insertions, deletions, replacements, and moves with
+    endpoint affinity and deleted-anchor rules; return only anchors whose positions or attachment states
+    change.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-specific:P002
+    relationship: same_operation
+    overlap: Both maintain a structured object (anchors/line layouts) and rebase positions after edits,
+      returning only changed entities.
+  - id: proposal:ua_incremental-recomputation:P006
+    relationship: variant
+    overlap: Both update classifications/anchors after geometric edits, but one is on winding labels and
+      the other on coordinate anchors.
+  - id: proposal:k3_latent-structure-reconstruction:P005
+    relationship: adjacent
+    overlap: Both involve shifting/repositioning elements, but one is reconstruction from noisy copies
+      while the other is deterministic rebasing.
+  reason: 1/3 samples judged it novel; Cosmetic variant of known incremental rebasing operations; same
+    core operation of reindexing after edits.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: exterior_algebra_reduction
+  summary: Reduce symbolic expressions containing wedge products, linear combinations, and covector contractions;
+    account for graded signs and repeated-basis annihilation, returning coefficients of ordered basis
+    blades.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-transfer:P002
+    relationship: same_operation
+    overlap: Both manipulate exterior algebra objects (wedge products, meet/join) to obtain a canonical
+      blade representation.
+  - id: proposal:ua_compositional-generalization:P010
+    relationship: variant
+    overlap: Both simplify products of graded operators (wedge/fermionic) using antisymmetry and contractions.
+  - id: task:generated.k3_relational_structures_r1.symbolic_differentiation.symbolic_differentiation:SymbolicDifferentiation
+    relationship: adjacent
+    overlap: Both reduce symbolic expressions by rules, but one is exterior algebra and the other is calculus
+      differentiation.
+  reason: 0/3 samples judged it novel; Variant of known exterior algebra operation; same symbolic reduction
+    with minor parameter changes.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: staged_code_reduction
+  summary: Evaluate staged expressions with nested quotation, level-matched escapes, and code execution;
+    track cross-stage bindings and return the resulting code tree, value, or staging violation.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:set_expression
+    relationship: adjacent
+    overlap: Both evaluate nested expressions with a defined evaluation order, but set expressions do
+      not involve staging or escapes.
+  - id: proposal:UNBUILT:P015
+    relationship: variant
+    overlap: Both execute nested control structures (try/finally vs. quotation/escape) and return a value
+      or error state.
+  - id: gallery:code_execution
+    relationship: variant
+    overlap: Both evaluate programs with control flow, but C003 focuses on staging and quotation which
+      is a more specific operation.
+  reason: 1/3 samples judged it novel; Variant of code execution with staging-specific control flow.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: layered_occlusion_repair
+  summary: Update visible regions after inserting, moving, recoloring, or removing opaque layers over
+    discrete canvases; resolve newly exposed overlaps and return only regions whose visible label changes.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P006
+    relationship: variant
+    overlap: Both update layer/region classifications after geometric edits, returning only changed labels.
+  - id: proposal:ua_representation-specific:P003
+    relationship: adjacent
+    overlap: Both handle incremental updates with merge/repair semantics, but to different structures
+      (sets vs. geometric layers).
+  - id: task:generated.k3_counterfactual_r1.light_occlusion_delta.light_occlusion_delta_task:LightOcclusionDelta
+    relationship: variant
+    overlap: Both update visible regions after occluder changes, returning changed cells.
+  reason: 1/3 samples judged it novel; Variant of occlusion-delta update with different layer semantics.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: rooted_tree_cut_coefficients
+  summary: Expand rooted trees by edge cuts meeting each root-to-leaf path at most once; combine repeated
+    branch types and successive cuts, returning the coefficient of a specified forest-and-trunk term.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P011
+    relationship: same_operation
+    overlap: 'Both involve expanding a formal series indexed by rooted trees by summing over admissible
+      cuts (or cuts meeting each path at most once) and returning a coefficient of a specified tree term.
+      The operation is identical: cut-based tree series expansion.'
+  - id: task:generated.k3_verification_repair_r1.tree_reroot_distances.tree_reroot_distances:TreeRerootDistances
+    relationship: adjacent
+    overlap: Both operate on rooted trees, but one deals with cut coefficients and the other with distance
+      sums under rerooting. Different operations.
+  - id: proposal:ua_latent-representation:P005
+    relationship: different
+    overlap: No overlap; one is about tree series, the other about renormalization forests.
+  reason: 0/3 samples judged it novel; Duplicate of rooted_tree_series_composition, as both perform cut-based
+    tree expansion and output a target coefficient.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: virtual_alphabet_plethysm
+  summary: Evaluate symmetric expressions under nested virtual-alphabet substitution across alphabet sums,
+    differences, and products; propagate power-sum indices and return a requested expansion coefficient.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_hierarchical-recursive:P001
+    relationship: same_operation
+    overlap: Both evaluate symmetric expressions by expanding them into a canonical basis (elementary
+      symmetric polynomials) via repeated substitution and coefficient collection. The proposal's virtual-alphabet
+      substitution is just a specific instance of the same expansion operation.
+  - id: task:generated.k3_hierarchical_recursive_r1.polynomial_expansion.polynomial_expansion:PolynomialExpansion
+    relationship: variant
+    overlap: Both perform polynomial expansion with coefficient collection, though one is restricted to
+      symmetric polynomials. The core operation of expanding nested products and collecting like terms
+      is identical.
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: adjacent
+    overlap: Both shufle or expand products of formal objects, but the algebraic operations (interleaving
+      vs. substitution) differ.
+  reason: 0/3 samples judged it novel; Duplicate of symmetric_polynomial_to_elementary, as both perform
+    symmetric expansion with coefficient output.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: nested_relation_reassembly
+  summary: Reassemble nested records from linked flat tables with scoped identifiers, shared child references,
+    empty collections, and explicit sibling order; return a queried subtree or collection cardinality.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.hierarchical_rollup.hierarchical_rollup:HierarchicalRollup
+    relationship: variant
+    overlap: Both involve assembling nested records from flat tables with parent-child relationships and
+      returning a queried subtree or aggregate. The core operation of linking rows via identifiers and
+      constructing the hierarchy is the same.
+  - id: task:generated.wave9.packet_fragment_reassembly.packet_fragment_reassembly:PacketFragmentReassembly
+    relationship: adjacent
+    overlap: Both reassemble parts into a whole, but packet reassembly is about concatenating ordered
+      fragments, while C009 is about hierarchical linking with scoping. Different operations.
+  - id: proposal:ua_compositional-generalization:P005
+    relationship: different
+    overlap: No meaningful overlap; one is about nested record assembly, the other about wiring templates.
+  reason: 0/3 samples judged it novel; Variant of hierarchical rollup, differing in the style of linking
+    (scoped IDs vs. explicit parent) but same assembly operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: word_crystal_signature_actions
+  summary: Apply raising and lowering operators to words and tensor factors using ordered signature cancellation;
+    vary adjacent symbol pairs and operator compositions, returning the transformed word or zero.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P001
+    relationship: same_operation
+    overlap: Both execute crystal raising and lowering operators on words/tableaux using ordered signature
+      cancellation and return the transformed word or a zero/null result. The operation is identical;
+      only the presentation of the carrier (word vs. tableau) differs.
+  - id: proposal:ua_compositional-generalization:P010
+    relationship: adjacent
+    overlap: Both manipulate algebraic strings (words/operators) with creation/annihilation-like rules,
+      but one uses signature cancellation (crystal) and the other uses anticommutation contractions (fermionic).
+      The procedures are distinct.
+  - id: proposal:k3_cognitive-psychology:P001
+    relationship: different
+    overlap: No overlap; one is about crystal operators, the other about musical transposition.
+  reason: 0/3 samples judged it novel; The operation is identical to the existing crystal_signature_transfer
+    proposal, making this a duplicate.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: interval_exchange_induction
+  summary: Update paired label orders and lengths through successive left or right induction steps; track
+    winner-dependent reinsertion, length subtraction, and tie termination, returning the residual exchange.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: variant
+    overlap: Both expand or update an ordered combinatorial structure by interleaving or reinserting elements
+      with a designated order (integration words vs. intervals) and return a residual structure or coefficient
+      vector.
+  - id: task:generated.k3_dynamic_structures_r1.line_cross_swap_schedulev2.line_crossing_swap_schedule:LineCrossSwapSchedulev2
+    relationship: adjacent
+    overlap: Both involve iteratively swapping adjacent elements according to a deterministic order (by
+      time or by induction step) and track the order after each swap; outputs are final ordered sequences.
+  - id: proposal:ua_incremental-recomputation:P008
+    relationship: different
+    overlap: 'Shared theme of updating a structure after a change, but the core operations differ: C001
+      reorders intervals by induction, while rounded_display_consistency recovers hidden values from displayed
+      sums.'
+  reason: 1/3 samples judged it novel; The proposal is a domain-specific variant of iterated_integral_shuffle_expansion,
+    reusing the same ordered-interleaving and residual-coefficient output paradigm.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: defeat_status_reinstatement
+  summary: Revise grounded in, out, and undecided labels after attack edits; propagate defeat and reinstatement
+    through chains, cycles, and redundant attackers, returning only arguments whose labels change.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.argumentation_grounded_extension.argumentation_grounded_extension:ArgumentationGroundedExtension
+    relationship: variant
+    overlap: Both operate on abstract argumentation graphs and compute the grounded labeling (in/out/undecided)
+      via the same fixed-point iteration of attack and defense; C002 extends this by adding edits and
+      only returning changes, but the core operation is identical.
+  - id: proposal:ua_incremental-recomputation:P006
+    relationship: adjacent
+    overlap: Both are incremental-repair tasks that propagate changes through a structure and return only
+      modified labels (winding numbers vs. argument statuses). The underlying procedures (geometric orientation
+      vs. argumentation label propagation) are distinct.
+  - id: proposal:ua_global-over-greedy:P011
+    relationship: different
+    overlap: No meaningful shared operation; one is about graph labeling with attack/defense, the other
+      about representation theory decompositions.
+  reason: 0/3 samples judged it novel; This is an incremental variant of the existing argumentation grounded
+    extension task, with the same label propagation rules and only a change in output mode (changed labels
+    only).
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: graph_rewrite_gluing
+  summary: Apply interface-preserving graph rewrites at supplied matches, checking dangling edges and
+    forbidden vertex identifications before each step; return the resulting graph or the blocking elements.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P008
+    relationship: same_operation
+    overlap: Both apply graph rewriting rules with node matching, checking dangling edges and negative
+      conditions, and output the resulting graph or blocking elements. The procedure is identical; C011
+      only adds a focus on supplied matches.
+  - id: proposal:ua_reusable-operations:P005
+    relationship: adjacent
+    overlap: Both involve transformations on graphs/hypergraphs with condition checking, but GYO reduction
+      is a different algorithm from general rewriting.
+  - id: proposal:ua_counterfactual:P005
+    relationship: different
+    overlap: No overlap; one is about graph rewriting, the other about flip paths on surfaces.
+  reason: 0/3 samples judged it novel; Duplicate of graph_rewriting_system, as both apply graph rewrite
+    rules with the same preconditions and output.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: term_rewrite_residual_transport
+  summary: Transport marked redex occurrences through nested term rewrites that erase, duplicate, or permute
+    variable subtrees; distinguish surviving occurrences from newly created ones and return residual positions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P006
+    relationship: variant
+    overlap: Both transport marked items through reduction processes (loss basis vs. redex occurrences).
+  - id: proposal:ua_latent-representation:P003
+    relationship: adjacent
+    overlap: Both track parity/signs through transformations, but one is on ligands and the other on term
+      positions.
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: adjacent
+    overlap: Both reduce structures with erasure and memory, but in different domains (hysteresis vs.
+      term rewriting).
+  reason: 1/3 samples judged it novel; Variant of item transport through reduction, with term rewriting
+    specifics.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+pool:
+- name: replacement_lot_basis_transfer
+  summary: Apply supplied loss-deferral rules across partial sales, replacement windows, stock splits,
+    and repeated resales; track transferred losses through replacement lots and return recognized loss
+    or adjusted basis.
+- name: oriented_boundary_repair
+  summary: Update the signed boundary of an oriented cell assembly after cell insertion, deletion, or
+    reversal; combine shared-face contributions and return only faces whose net boundary coefficient changes.
+- name: piecewise_envelope_repair
+  summary: Repair upper or lower envelopes after inserting, deleting, or editing domain-limited affine
+    pieces; account for intersections, ties, and gaps, returning changed winner intervals and their new
+    expressions.
+- name: adaptive_partition_rebalance
+  summary: Repair rectangular subdivision meshes after local refinement or requested coarsening; enforce
+    stated neighbor depth bounds with minimal additional splits, returning changed leaves or a blocked
+    coarsening.
+- name: graph_local_complementation
+  summary: Apply sequences of neighborhood complementation, edge pivots, and vertex deletion to labeled
+    simple graphs; track changing neighborhoods and return the surviving edges or a queried adjacency.
+- name: term_residual_tracking
+  summary: Track marked node occurrences through supplied term rewrites that duplicate, erase, or relocate
+    substituted subtrees; return all surviving descendants of a mark or the origins of a queried occurrence.
+- name: divided_difference_expansion
+  summary: Apply iterated polynomial operators that subtract a variable-swapped copy and divide by the
+    variable difference; range over repeated indices, products, and sparse sums, returning the resulting
+    coefficients.
+- name: relational_lens_putback
+  summary: Propagate view insertions, deletions, and replacements backward through selection, projection,
+    and join lenses with declared keys and deletion policies; return the changed source rows.
+- name: graph_rewrite_gluing_obstructions
+  summary: Apply node-and-edge replacement rules through noninjective graph matches; detect dangling edges
+    and forbidden identifications, returning an obstruction witness or a queried surviving connection.
+- name: compositional_lens_putback
+  summary: Push view replacements backward through composed, paired, and branched lenses with retained
+    complements; preserve hidden source fields and return the updated source or the first undefined update.
+- name: simplicial_operator_normalization
+  summary: Normalize composites of dimension-indexed face and degeneracy maps using index-shift and cancellation
+    identities; return the canonical operator word or its omitted and repeated vertex indices.

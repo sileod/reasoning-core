@@ -1,0 +1,983 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_cognitive-psychology
+created_at: '2026-09-17T05:03:47.044106+00:00'
+provenance:
+  kind: proposer
+  name: ua_cognitive-psychology
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks inspired by cognitive psychology experiments, excluding tasks already represented
+    in the catalog. The catalog you were shown already covers the classic textbook algorithms -- sorting,
+    gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that names one
+    will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 5
+  complete: false
+catalog:
+  sha256: 8fd473dc92e928f99e612e52b40990a5139bb1add1aa48a4140ce1dff47d02bd
+  entries: 939
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 332
+    task: 445
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 2680ae545c38811af41e01547bba474645cd9bd1b2c04b2132b15b1f3cb8d1ce
+    response_sha256: 2333d788f1d1a9eb54f619b705b19631744eb9dcfc207dd372ade2c849e9bc0a
+    response_id: gen-1789621085-JpntmXMQVSyqml89Z3Bz
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 850969fb7c6b1857ad0651d0525a0f6e6f96862a6aebc27e9400769f71e47731
+    response_sha256: 68ff7f929c1e32fb6cc0d9edd29b438444a0f45e0172d11cebd84f300c805930
+    response_id: chatcmpl-ab2d3d0c3130df88
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 36099e1c274862006149944a15656128f6358aee83260b81210de0ca359c9afe
+    response_sha256: b2c8c3774348e2350d512b6573e3d4d2b45c2975bd7bbbe6397fcb52139b1bad
+    response_id: chatcmpl-afefcc033a38044f
+  - purpose: critic-round-1-sample-2-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 989d10a16479b3fb26f117aef4aa9eefd63604a563fd900f0f538c2d9e2dbeef
+    response_sha256: 9ab898ed544748b53a3dda54d68b9c19d43722a4c4407eece85b5d3b1c950563
+    response_id: chatcmpl-9cf1a37119d5c28f
+  - purpose: critic-round-1-sample-2-retry2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1bd63f5090b7f907f15b50dfa28a4552921fcc83734436e7690fecfb2ea6bb4f
+    response_sha256: 462fe2c000175d39ca49d08b464a667adffd64ee9c18aac4a297ca71dcf0aff6
+    response_id: chatcmpl-81272f098d00247f
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 61f24b6b83cc355ea36484a6db85e74d001a8d9e901f07a1426fb05cf57e74fb
+    response_sha256: 78393ab0220fe491eda0d828c6cb6dacdf3e2ad7085fdb49e4b1ec6a35b89d17
+    response_id: chatcmpl-962d18b8d453fbe3
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 38a0b34a8bcb3c7e80047924bd1c80281acb6f8d1f814b9825f54e28441569ef
+    response_sha256: aa38b19dd4ef9ef421cc9bf609bece82f8126e1d50565610e75353c36e8e9f59
+    response_id: chatcmpl-a666275443a7c4f4
+  - purpose: critic-round-2-sample-1-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 0cd165fc095746bdd029b4059c39962612c9faa2c1b2dc0d764f6055618d5ac7
+    response_sha256: 9407255a280078ac635f2b4eb230a753d8598739fc42e1c1c242d5e878efea48
+    response_id: chatcmpl-85aa2d47765cb668
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: bef719470ba33895d68036c71528269ebd7d2d3b41d1317a0df509d60f9c7ac3
+    response_sha256: 4ba0f7efd3a7bef6d0389446da61d32868b20473d784bf03adafc8cf1aa749ac
+    response_id: chatcmpl-a942b1608e8923d2
+  - purpose: critic-round-2-sample-2-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 505804d819b3918eff44bcea20d7e79793eec06d12ff2063e83b71a8e84d1647
+    response_sha256: 778b81b3bec3e02e058b6890c54ca0693e3e01058ec2da9220b237c5cbf321fe
+    response_id: chatcmpl-bbd4d5f76339ef26
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: f2eb6b0d2e25c3dd0ba8bccf62dd55b966b921ddb1a489fc2742bff0d0348568
+    response_sha256: fa4f17903a7285f33bc7d8b13118f29c0999c90cbc744276c4ef79589ddbdca7
+    response_id: chatcmpl-a712a0a8cf35c8e4
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 4780e3d8e12adf60ea81508c5128fe2644570f242dea4b549f32e0f9ccbafe6c
+    response_sha256: 585410528d8ad1558edeafab4a95f82dac97968a747986addfb96000639b1bf6
+    response_id: chatcmpl-97a016bf93b7f5de
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 407e384ebef19cd5b8e69b2a4d83bd1ea35f10880b7c11c9dc85b4d48fb97c01
+    response_sha256: fbed399105ae72c784f3e52a242fce2433bf1b0feff3902a86dbb8b09a1fb21e
+    response_id: chatcmpl-b64c5026786a7652
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c37c7f6c01a0de6241f15dc18cabd66f875ae4c6083e280a93b8d996ee25c27c
+    response_sha256: a490be071996d870db7b9d57938257f5a9bc5cc79f15e60180d27c6f499fce8d
+    response_id: chatcmpl-b681faf0dd573e0b
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 11
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 1
+proposals:
+- name: loss_coverage_equivalence
+  summary: Compare coverage clauses with per-item and per-occurrence deductibles, aggregate caps, exclusions
+    and limit reinstatement; decide whether reordered or regrouped descriptions yield identical payouts
+    across loss histories.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.ledger_reconciliation.ledger_reconciliation:LedgerReconciliation
+      relationship: adjacent
+      overlap: Both work with financial transactions but reconciliation tracks balances, not coverage
+        equivalence.
+    - id: proposal:ua_state-tracking:P007
+      relationship: adjacent
+      overlap: Mean preserving spread is statistical, not about payout rules.
+    - id: proposal:ua_uncertainty:P007
+      relationship: adjacent
+      overlap: Claimant redistribution is a different problem.
+    substantive_difference: Comparing insurance coverage clauses for identical payouts across loss histories
+      is a unique operation not in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: coverage clause equivalence under loss scenarios is distinct from ledger or distribution
+      tasks.'
+    votes: 2/2
+    dissent: []
+- name: question_partition_equivalence
+  summary: Polar, alternative and constituent questions over finite possible worlds, including coordinated
+    and restricted questions; compute their induced answer partitions and decide whether they ask the
+    same thing.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_paraphrase-equivalence:P003
+      relationship: adjacent
+      overlap: Both compare semantic equivalence, but questions and answer partitions are a different
+        object than focus alternatives.
+    - id: task:generated.wave12.information_seeking.information_seeking:InformationSeeking
+      relationship: adjacent
+      overlap: Information-seeking picks queries by partition but does not assess equivalence between
+        questions.
+    - id: proposal:ua_state-tracking:P009
+      relationship: adjacent
+      overlap: Likelihood partitions are statistical, not about question semantics.
+    substantive_difference: The operation of computing answer partitions of questions and comparing them
+      is not in the known neighbors; they are about focus alternatives or query selection, not question-answer
+      semantics.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Novel because it introduces question answer-set equivalence, a distinct semantic operation.
+    votes: 2/2
+    dissent: []
+- name: redundant_signal_race_bounds
+  summary: Bound redundant-target response distributions under separate-channel racing without assuming
+    independence; vary channel counts, time points, and missing probabilities; answer feasible intervals
+    or violated bounds.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_scientific-reasoning:P010
+      relationship: adjacent
+      overlap: Both compute bound intervals but one is for causal effects from contingency tables, the
+        other for response-time distributions.
+    - id: proposal:ua_invariants:P001
+      relationship: different
+      overlap: One bounds race times, the other eliminates hidden nodes in networks.
+    - id: proposal:ua_counterfactual:P004
+      relationship: different
+      overlap: One checks limit values, the other bounds redundant-target responses.
+    substantive_difference: Applies distribution-free bounds to redundant signals under race models, a
+      distinct statistical reasoning not in adjacent tasks.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: The operation of deriving bounds on response-time distributions under race models is novel
+      compared to neighbors.
+    votes: 2/3
+    dissent:
+    - variant
+- name: episodic_feature_binding_retrieval
+  summary: Retrieve feature-response bindings from prior episodes using stated overlap and recency rules;
+    vary partial repetitions, overwritten bindings, and competing episodes; answer the retrieved response
+    or conflict.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_incremental-recomputation:P008
+      relationship: different
+      overlap: Rounded display consistency is about latent recovery, not memory retrieval.
+    - id: proposal:ua_scope-and-binding:P002
+      relationship: adjacent
+      overlap: repetition_restitution_witnesses also uses past event witnessing, but in event semantics,
+        not feature bindings.
+    - id: task:generated.wave10.ellipsis_completion.ellipsis_completion:EllipsisCompletion
+      relationship: different
+      overlap: Ellipsis completion recovers omitted linguistic material, not episodic feature-response
+        bindings.
+    substantive_difference: The operation of applying stated overlap and recency rules to retrieve feature-response
+      bindings from competing episodes is a distinct memory retrieval mechanism not in the known set.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Novel episodic binding retrieval with explicit conflict resolution.
+    votes: 2/3
+    dissent:
+    - variant
+- name: visual_crowding_feature_pooling
+  summary: Recover reported target features under stated spatial pooling rules; vary eccentricity-dependent
+    neighborhoods, segmentation barriers, weighted flankers, and successive pooling stages; answer the
+    perceived feature.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_latent-structure-reconstruction:P004
+      relationship: adjacent
+      overlap: pooled_test_status_decoding decodes binary statuses from group tests; C007 decodes a perceptual
+        feature from spatial pooling, but the nature of pooling is different (visual integration vs. test
+        pooling).
+    - id: proposal:k3_scientific-reasoning:P006
+      relationship: adjacent
+      overlap: Both pool contributions (effect sizes vs. features) with weights, but the operation here
+        is on perceptual features in spatial neighborhoods.
+    - id: proposal:ua_formal-semantics:P003
+      relationship: different
+      overlap: spillage is physical tracking, not feature pooling.
+    substantive_difference: The proposal introduces a spatial pooling operation with eccentricity-dependent
+      neighborhoods and segmentation barriers, which is not found in existing abstract pooling tasks.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: A new spatial feature-integration operation with explicit neighborhood rules.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: paycheck_anaphora_instantiation
+  summary: Interpret functional anaphors by abstracting a relation from an antecedent description and
+    reapplying it to a new argument; vary possessors, nested relations, and scope, returning the selected
+    referents.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_synthetic-grammars:P001
+    relationship: same_operation
+    overlap: Both recover the relational description behind paycheck anaphora and reinstantiate it under
+      new binders, exactly the candidate's proposal.
+  - id: task:generated.k3_formal_semantics_r1.dynamic_discourse_evaluation.dynamic_discourse_evaluation:DynamicDiscourseEvaluation
+    relationship: adjacent
+    overlap: Adjacent because dynamic semantics handles anaphora but not specifically paycheck functional
+      abstraction.
+  - id: proposal:ua_scope-and-binding:P004
+    relationship: adjacent
+    overlap: Quotation/reference composition shares reference resolution but not paycheck-style abstraction.
+  reason: 0/2 samples judged it novel; Duplicate of the synthetic-grammars paycheck anaphora task, differing
+    only in surface details.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: exceptive_quantifier_equivalence
+  summary: Quantified claims using except, other than, besides and all but, with nested restrictors and
+    explicit exception semantics; compute exclusion and exhaustivity commitments and compare their truth
+    conditions.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_formal_semantics_r1.generalized_quantifier_truth.generalized_quantifier_truth:GeneralizedQuantifierTruth
+    relationship: variant
+    overlap: Both evaluate quantified sentences with determiners; C012 adds exceptive determiners and
+      equivalence, but the core is quantifier evaluation.
+  - id: proposal:ua_scope-and-binding:P005
+    relationship: adjacent
+    overlap: Exhaustification is about alternatives, not determiner semantics.
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: adjacent
+    overlap: Focus equivalence is different from quantifier truth.
+  reason: 0/2 samples judged it novel; Variant of generalized quantifier truth with exceptive determiners
+    and equivalence.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: compound_game_equivalence
+  summary: Compare verbal rules for finite partizan games using component choice, simultaneous obligations
+    and player reversal; decide whether two descriptions remain interchangeable when combined with any
+    other game.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_systematic-generalization:P009
+    relationship: same_operation
+    overlap: Both compute equivalence of finite partizan games under contextual combination; this is exactly
+      the known finite_partizan_order task.
+  - id: proposal:ua_state-tracking:P002
+    relationship: adjacent
+    overlap: Strategy realization equivalence is a different kind of equivalence (policy vs game semantics).
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: adjacent
+    overlap: Shared equivalence checking but not game-theoretic.
+  reason: 0/2 samples judged it novel; Duplicate of existing partizan game equivalence task.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/2
+- name: presupposition_filter_equivalence
+  summary: Presupposition triggers inside negation, conjunction, disjunction and conditionals under stated
+    projection rules; propagate local satisfaction conditions and compare both definedness and asserted
+    content.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_formal_semantics_r1.presupposition_projection.presupposition_projection:PresuppositionProjection
+    relationship: variant
+    overlap: Both project presuppositions through embeddings and compare definedness; C003 adds explicit
+      equivalence comparison of full contents.
+  - id: task:generated.wave10.presupposition_repair.presupposition_repair:PresuppositionRepair
+    relationship: adjacent
+    overlap: Shared presupposition activity but repair is a correction task, not projection equivalence.
+  - id: proposal:ua_formal-semantics:P010
+    relationship: adjacent
+    overlap: Content separation is different from presupposition filtering.
+  reason: 0/2 samples judged it novel; Variant of the known presupposition projection task with added
+    equivalence comparison.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/2
+- name: temporal_perspective_equivalence
+  summary: Direct and indirect reports combining tense, relative dates and shifted temporal viewpoints;
+    compose speech-time and reference-time anchors and compare the resulting constraints on event times.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_algorithms-and-data-structures:P002
+    relationship: variant
+    overlap: Both compose temporal constraints from verbal descriptions; C009 adds perspective shifting
+      but the core operation of mapping to event orderings is the same.
+  - id: task:generated.wave11.temporal_perspective.temporal_perspective:TemporalPerspective
+    relationship: adjacent
+    overlap: Directly about temporal perspective but only reports status, not equivalence.
+  - id: task:generated.wave10.event_order_reconstruction.event_order_reconstruction:EventOrderReconstruction
+    relationship: adjacent
+    overlap: Event order reconstruction is a different output.
+  reason: 0/3 samples judged it novel; Variant of temporal connective equivalence with additional viewpoint
+    composition.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: coalition_credit_equivalence
+  summary: Compare verbal credit rules expressed through marginal contributions, coalition interactions
+    and shared dividends; decide whether they allocate identical credit for every admissible coalition-value
+    table.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_rule_induction_r1.shapley_value_marginal_contributions.shapley_value_marginal_contributions:ShapleyValueMarginalContributions
+    relationship: variant
+    overlap: Both involve marginal contributions and coalition value tables; C010 compares allocation
+      rules for identity, while the known task computes Shapley values.
+  - id: proposal:ua_global-over-greedy:P002
+    relationship: adjacent
+    overlap: Stability is a different objective from allocation equivalence.
+  - id: proposal:ua_global-over-greedy:P009
+    relationship: adjacent
+    overlap: Weighted vote realization is about realizability, not equivalence.
+  reason: 0/2 samples judged it novel; Variant of Shapley value computation focused on equivalence rather
+    than value.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/2
+- name: tolerance_zone_equivalence
+  summary: Compare sentences specifying datum-relative tolerance zones, movable envelopes and shared versus
+    separate alignment; decide whether their geometric acceptance conditions admit exactly the same candidate
+    shapes.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_controlled-nli:P003
+    relationship: variant
+    overlap: Both evaluate geometric/spatial-relation claims with respect to frames/alignment, here datum-relative
+      tolerance zones vs. observer frames.
+  - id: proposal:ua_counterfactual:P004
+    relationship: variant
+    overlap: Both determine whether different descriptions admit the same set of admissible configurations/paths.
+  - id: proposal:ua_representation-transfer:P007
+    relationship: variant
+    overlap: Both relate different geometric representations (tolerance zones vs. stepped surfaces) via
+      shared constraints.
+  reason: 1/3 samples judged it novel; Known geometric-constraint equivalence operation, with surface
+    changed to tolerance zones.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: concessive_expectation_equivalence
+  summary: Although, despite, even though and contrastive but constructions against stated defaults; compose
+    nested concessions and compare their asserted content together with the expectations they mark as
+    defeated.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: variant
+    overlap: Both compute asserted content and excluded alternatives for operators with pragmatic effects
+      (focus particles vs. concessives), then compare truth-conditional equivalence.
+  - id: proposal:k3_controlled-nli:P001
+    relationship: variant
+    overlap: Both derive entailment/equivalence of sentences with implicit-expectation operators (implicatives
+      vs. concessives) under embedding and negation.
+  - id: proposal:ua_formal-semantics:P010
+    relationship: variant
+    overlap: Both separate asserted from conventional/non-at-issue content, here for concessives vs. appositives.
+  reason: 0/3 samples judged it novel; Known equivalence computation over asserted vs. alternative content
+    applied to concessive connectives.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: population_standardization_equivalence
+  summary: Compare sentences defining population-adjusted outcomes through subgroup averages, reference-population
+    weights and nested strata; decide whether they define the same estimand for every outcome table.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P002
+    relationship: variant
+    overlap: Both compare distributions/realizations under transformations (mixtures vs. population weights)
+      to decide equivalence of resulting entities.
+  - id: proposal:ua_cognitive-psychology:P001
+    relationship: variant
+    overlap: Both compare descriptions of aggregations (coverage/population) under regrouping to decide
+      if they yield identical outcomes.
+  - id: proposal:ua_state-tracking:P005
+    relationship: variant
+    overlap: Both aggregate displacement/statistics over factors to decide equivalence of observables.
+  reason: 1/3 samples judged it novel; Known aggregation-equivalence operation with only the domain of
+    population standardization changed.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: plural_cover_equivalence
+  summary: Collective, distributive and groupwise predications with explicit covers of plural entities;
+    expand nested distribution and shared participants, then compare the resulting predicate obligations.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_scope_and_binding_r1.plural_predication_readings.plural_predication_readings:PluralPredicationReadings
+    relationship: same_operation
+    overlap: Both evaluate plurality readings (collective/distributive/cumulative) over models with atoms
+      and predicates, deriving truth values for each reading.
+  - id: proposal:ua_cognitive-psychology:P001
+    relationship: variant
+    overlap: Both compare descriptions with alternative groupings/structuring to decide semantic equivalence;
+      one over plural predication readings, the other over coverage clauses.
+  - id: proposal:k3_cognitive-psychology:P004
+    relationship: variant
+    overlap: Both translate linguistic constructions to formal constraints and decide whether alternative
+      phrasings yield identical obligations/orderings.
+  reason: 0/3 samples judged it novel; Directly overlaps with existing plural_predication_readings task
+    that already classifies readings and computes truth.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: aspectual_event_profile_equivalence
+  summary: Beginning, continuing, stopping, resuming and completing clauses across nominal and verbal
+    paraphrases; compose stated phase meanings over event traces and compare the traces each sentence
+    permits.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_synthetic_grammars_r1.aspectual_class_entailment.aspectual_class_entailment:AspectualClassEntailment
+    relationship: same_operation
+    overlap: Both classify/verify aspectual properties (begin, stop, resume) using event-phase diagnostics
+      and derive entailments/equivalences.
+  - id: proposal:k3_non-local-structured:P003
+    relationship: variant
+    overlap: Both track event phases (begin, continue, stop) over time intervals to derive truth or equivalence.
+  - id: proposal:k3_algorithms-and-data-structures:P002
+    relationship: variant
+    overlap: Both coerce aspectual/temporal connectives to interval constraints and compare paraphrases.
+  reason: 0/3 samples judged it novel; Same operation as aspectual class entailment/fluent persistence,
+    just outputting trace equivalence.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: respectively_dependency_expansion
+  summary: Expand respectively constructions by pairing coordinated arguments and modifiers at their licensed
+    syntactic scopes; handle nested lists and shared constituents, returning the resulting atomic predications.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_parsing_and_agreement_r1.constituency_dependency_conversion.constituency_dependency_conversion:ConstituencyDependencyConversion
+    relationship: same_operation
+    overlap: 'Both convert syntactic structures into atomic predications/dependencies: C006 expands respectively
+      by pairing arguments, while the existing task converts constituency trees to dependencies via head
+      percolation; both output the set of atomic predications.'
+  - id: proposal:ua_paraphrase-equivalence:P002
+    relationship: adjacent
+    overlap: Both involve composition of alternatives, but one is about focus and the other about respectively
+      pairing.
+  - id: task:generated.wave9.nested_template_expansion.nested_template_expansion:NestedTemplateExpansion
+    relationship: adjacent
+    overlap: Both expand nested structures, but one is syntactic coordination and the other is template
+      substitution.
+  reason: 1/3 samples judged it novel; Duplicate of constituency-to-dependency conversion because both
+    output atomic predications from coordinated structures; respectively is a surface construction.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: counterpart_attitude_equivalence
+  summary: Belief and desire reports with names, descriptions and de re or de dicto readings; transport
+    referents through stated world-counterpart maps and compare denotations across nested attitude contexts.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_scope_and_binding_r1.de_re_de_dicto_evaluation.de_re_de_dicto_evaluation:DeReDeDictoEvaluation
+    relationship: same_operation
+    overlap: Both evaluate belief reports with de re/de dicto readings over world tables, returning per-reading
+      verdicts.
+  - id: proposal:ua_uncertainty:P012
+    relationship: variant
+    overlap: Both transport referents through world-relative maps (counterpart/closeness) in nested intensional
+      contexts.
+  - id: proposal:ua_scope-and-binding:P002
+    relationship: variant
+    overlap: Both match readings to witnesses across worlds/events in nested scope.
+  reason: 0/3 samples judged it novel; Same operation as de_re_de_dicto_evaluation, with world-counterpart
+    maps as a surface variation.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: conditional_obligation_equivalence
+  summary: Required, permitted and forbidden actions expressed through conditional, exception and unless
+    clauses; restrict explicitly ranked normative worlds and compare the resulting compliance conditions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: variant
+    overlap: Both evaluate truth-conditional equivalence of paraphrases with alternative-sensitive operators,
+      one with focus particles and the other with conditional obligations.
+  - id: proposal:k3_algorithms-and-data-structures:P002
+    relationship: variant
+    overlap: Both translate sentences with connectives/conditionals into modal/temporal constraints and
+      decide equivalence of rephrasings.
+  - id: proposal:k3_controlled-nli:P001
+    relationship: adjacent
+    overlap: Both reason about entailment/equivalence under complex embedding (conditionals, negation),
+      but cover different lexical classes.
+  reason: 0/3 samples judged it novel; Known operation of paraphrase equivalence via modal/normative constraint
+    translation, with surface changed to conditional deontic wording.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: material_frame_equivalence
+  summary: Compare sentences describing quantities attached to moving objects versus quantities sampled
+    at fixed locations; compose stated deformations and decide whether both descriptions specify the same
+    physical field.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_controlled-nli:P003
+    relationship: adjacent
+    overlap: Both reason about reference frames (material vs. spatial), but here the cognitive operation
+      involves tracking quantities under coordinate transformations, not evaluating spatial language.
+  - id: proposal:ua_state-tracking:P004
+    relationship: variant
+    overlap: Both compare descriptions of fields/quantities under transformations (translation/deformation)
+      to decide equivalence of physical observables.
+  - id: proposal:ua_state-tracking:P005
+    relationship: variant
+    overlap: Both aggregate displacement/distribution statistics over transformations to decide indistinguishability.
+  reason: 1/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Novel operation
+    of composing material vs. spatial deformation maps to decide field equivalence, distinct from language
+    frame verdicts and algebraic invariants.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: exhaustification_equivalence
+  summary: Disjunctions, numeral scales and contrastive alternatives with local or global exhaustification;
+    derive innocently excludable alternatives through nested operators and compare strengthened meanings.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_scope-and-binding:P005
+    relationship: same_operation
+    overlap: Both compute exhaustified meanings by intersecting exclusions of alternatives; local/global
+      nesting is already part of the alternative computation.
+  - id: task:generated.k3_scope_and_binding_r1.scalar_alternative_exclusion.scalar_alternative_exclusion:ScalarAlternativeExclusion
+    relationship: same_operation
+    overlap: Both derive strengthened meanings by excluding stronger alternatives under scales/disjunction,
+      returning surviving alternatives.
+  - id: proposal:ua_paraphrase-equivalence:P002
+    relationship: adjacent
+    overlap: Both compute alternative sets under operators (focus vs. scalar), but the core exhaustification
+      in the proposal is already covered by innocent_exclusion.
+  reason: 0/3 samples judged it novel; Exactly the same operation as innocent_exclusion_exhaustification
+    and scalar alternative exclusion; local/global is surface.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: shared_ownership_equivalence
+  summary: Compare sentences allocating whole, fractional and overlapping ownership claims under stated
+    composition rules; decide whether they permit exactly the same resource holdings and compatible extensions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_cognitive-psychology:P001
+    relationship: variant
+    overlap: Both compare descriptions of allocations (coverage vs. ownership) under regrouping/composition
+      to decide if they yield identical resource outcomes.
+  - id: proposal:k3_cognitive-psychology:P004
+    relationship: variant
+    overlap: Both translate quantities/claims to constraints and compare whether rephrasings have the
+      same admissible extensions.
+  - id: proposal:ua_uncertainty:P007
+    relationship: variant
+    overlap: Both investigate how allocations change under composition/restriction, here ownership vs.
+      settlement.
+  reason: '0/3 samples judged it novel; Same operation as loss_coverage_equivalence and degree_construction_equivalence:
+    decide if restructured descriptions yield identical constraints/outcomes.'
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: gapping_parallelism_recovery
+  summary: Recover omitted predicates in coordinated clauses using supplied remnant correspondences; vary
+    contrastive arguments, shared adjuncts and nested coordination; answers give the reconstructed clause.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_parsing-and-agreement:P004
+    relationship: same_operation
+    overlap: 'Recover omitted material in coordinated structures: both supply remnant correspondences
+      to reconstruct the full coordinated conjuncts, whether morphological (suspended affixes) or syntactic
+      (gapped predicates).'
+  - id: task:generated.k3_parsing_and_agreement_r1.ellipsis_reconstruction.ellipsis_reconstruction:EllipsisReconstruction
+    relationship: same_operation
+    overlap: Recover elided predicates and arguments by copying antecedent material under specified coordination/ellipsis
+      types, returning the reconstructed clause.
+  - id: task:generated.wave10.ellipsis_completion.ellipsis_completion:EllipsisCompletion
+    relationship: variant
+    overlap: Both recover omitted predicates/arguments in elliptical contexts; the difference is dialogue-based
+      resolution and numeric extraction versus syntactic remnant pairing.
+  reason: 0/3 samples judged it novel; Same operation as suspended affix reconstruction and ellipsis reconstruction,
+    just with different surface realization.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: spatial_perspective_equivalence
+  summary: Locative sentences mixing viewer-relative, object-intrinsic and absolute directions; compose
+    explicitly oriented reference frames through nested descriptions and compare the spatial relations
+    asserted.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_controlled-nli:P003
+    relationship: same_operation
+    overlap: spatial_frame_relation_verdicts already evaluates locative sentences under intrinsic, relative,
+      and absolute frames and answers which frames license a claim; C005 just adds explicit frame composition.
+  - id: proposal:k3_cognitive-psychology:P004
+    relationship: different
+    overlap: Degree constructions are about order thresholds, not spatial relations.
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: different
+    overlap: Focus particles are truthful equivalence, not spatial frame semantics.
+  reason: 0/3 samples judged it novel; Spatial perspective equivalence is a cosmetic extension of the
+    known spatial frame task.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: exemplar_similarity_generalization
+  summary: Classify novel stimuli by summed similarity to remembered exemplars; vary feature weights,
+    missing dimensions, exemplar frequencies, and similarity kernels; answer the winning category or evidence
+    margin.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_cognitive-psychology:P007
+    relationship: same_operation
+    overlap: 'Both are exemplar-based classification: C002 sums similarity to remembered exemplars, while
+      criterion_shift_detection classifies by a threshold on remembered stimulus strengths; both aggregate
+      remembered evidence to decide a category.'
+  - id: proposal:ua_inference-modes:P009
+    relationship: adjacent
+    overlap: Tropical balance inference also combines weighted contributions to decide a winner (dominant
+      terms) but in a different algebraic domain.
+  - id: proposal:ua_state-tracking:P009
+    relationship: different
+    overlap: Sufficient-partition grouping is about summarizing likelihoods, not similarity-based classification.
+  reason: 1/3 samples judged it novel; An exemplar-similarity classifier mirrors existing criterion-shift
+    and cue-weight-update tasks.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: factorial_survivor_interactions
+  summary: Compute alternating survivor contrasts across selectively altered processing channels; vary
+    channel counts, discrete latency distributions, and time windows; answer contrast values or their
+    sign pattern.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_uncertainty:P011
+    relationship: same_operation
+    overlap: Both compute alternating sums over factors to isolate interaction contrasts; factorial_intervention_interactions
+      does this for intervention responses, C011 for survivor functions in channels.
+  - id: proposal:ua_state-tracking:P006
+    relationship: same_operation
+    overlap: multiplicative_interaction_contrast also isolates irreducible interaction contrasts in multiway
+      tables.
+  - id: proposal:ua_state-tracking:P003
+    relationship: adjacent
+    overlap: collision_free_moment_extraction also cleans up sums over factors, but for moments rather
+      than contrasts.
+  reason: 1/3 samples judged it novel; Directly reuses the interaction-contrast computations from existing
+    tasks.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 3
+    clarity: 2
+  votes: 1/3
+- name: process_dissociation_routes
+  summary: Separate controlled recollection from automatic influence using inclusion and exclusion outcomes;
+    vary independent serial or parallel automatic routes and shared components; answer route probabilities
+    or feasibility.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P012
+    relationship: variant
+    overlap: Both factor observable behavior into independent component mechanisms (latent coordinates
+      vs. automatic/controlled processing routes) and test separability or recover a component, differing
+      only in the surface frame.
+  - id: proposal:ua_uncertainty:P011
+    relationship: variant
+    overlap: Both decompose a joint outcome into additive individual and higher-order interaction effects
+      and ask for a pure interaction or reconstruct a missing response; C001 merely relabels the components
+      as processing routes.
+  - id: proposal:ua_inference-modes:P010
+    relationship: different
+    overlap: "Menu attention abduction separates preference from consideration in choice data; C001 separates\
+      \ controlled from automatic processing in inclusion/exclusion outcomes\u2014distinct operations\
+      \ and outputs."
+  reason: 1/3 samples judged it novel; This is a relabeled latent decomposition task, not a novel operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 3
+  votes: 1/3
+- name: adaptive_staircase_tracking
+  summary: Update stimulus intensity from response histories under consecutive-success and failure rules;
+    vary interleaved tracks, reversal-dependent steps, and boundaries; answer the next intensity or reversal
+    estimate.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_cognitive-psychology:P007
+    relationship: same_operation
+    overlap: Both update a decision criterion/intensity based on response history; criterion_shift_detection
+      moves a threshold after errors, C009 moves stimulus intensity by reversal rules.
+  - id: proposal:k3_scientific-reasoning:P007
+    relationship: different
+    overlap: Sequential boundary crossing is about accumulating evidence, not adapting a stimulus magnitude.
+  - id: proposal:ua_state-tracking:P010
+    relationship: different
+    overlap: Capacitor tracking is physical state evolution, not adaptive testing.
+  reason: 1/3 samples judged it novel; Adaptive staircase tracking is a cosmetic change to the known criterion-shift
+    operation.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: signal_detection_criterion_transfer
+  summary: Apply likelihood-ratio decisions to discrete sensory evidence under changing priors, rewards,
+    and response costs; vary unequal evidence distributions and ties; answer accepted evidence states
+    or error rates.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_cognitive-psychology:P007
+    relationship: same_operation
+    overlap: Both map stimulus features/cues to binary decisions via a boundary; criterion_shift_detection
+      uses a moving criterion, C010 uses a static likelihood-ratio boundary.
+  - id: proposal:ua_novel-composition:P002
+    relationship: different
+    overlap: Stopped-sample likelihood ratio is about statistical inference, not sensory decision making.
+  - id: proposal:ua_uncertainty:P008
+    relationship: adjacent
+    overlap: Both account for costs/priors, but one is about decision making with sensory evidence, the
+      other about experiment choice.
+  reason: 0/3 samples judged it novel; Just another criterion-based binary classification task in a new
+    costume.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: interventional_cause_equivalence
+  summary: Prevention, enabling, omission and nested counterfactual clauses under stated causal mechanisms;
+    evaluate their outcome dependencies across single and joint interventions and decide semantic equivalence.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_algorithms-and-data-structures:P002
+    relationship: same_operation
+    overlap: Both translate natural-language causal/connective constructions into formal event dependencies
+      and then decide equivalence under interventions or aspectual changes; C012 adds omission/enabling
+      but the operation is the same mapping to outcome dependencies.
+  - id: proposal:k3_controlled-nli:P001
+    relationship: same_operation
+    overlap: Both evaluate truth conditions of constructions (implicatives/factives vs. prevention/enabling)
+      under stated mechanisms and judge semantic equivalence.
+  - id: proposal:ua_uncertainty:P009
+    relationship: different
+    overlap: Derived view intervention is about edits to base facts, not semantic equivalence.
+  reason: 1/3 samples judged it novel; Just another way to evaluate linguistic causal equivalence, already
+    handled by existing constructions.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 3
+    clarity: 2
+  votes: 1/3
+- name: oriented_boundary_equivalence
+  summary: Compare verbal descriptions of oriented patches, reversed faces, internal seams and repeated
+    layers; cancel oppositely oriented contributions and decide whether the resulting signed boundaries
+    coincide.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: adjacent
+    overlap: Both involve oriented boundaries of surfaces, but one sews patches and computes invariants,
+      the other compares verbal descriptions by cancellation.
+  - id: proposal:ua_relational-structures:P008
+    relationship: variant
+    overlap: Both compare edges in simplicial complexes, but one checks link equality, the other boundary
+      cancellation.
+  - id: proposal:ua_cognitive-psychology:P002
+    relationship: different
+    overlap: One compares question partitions, the other compares oriented boundaries.
+  reason: 1/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; The operation
+    of canceling oriented contributions in text-derived boundaries is novel relative to existing tasks.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+pool:
+- name: evidence_reuse_equivalence
+  summary: Compare sentences combining independent support, alternative derivations and repeated use of
+    one source; distinguish evidence identity from multiplicity and decide whether their support expressions
+    coincide.
+- name: cue_competition_credit_assignment
+  summary: Redistribute prediction error among jointly presented cues under stated learning rates; vary
+    compound training, blocking, extinction, and outcome reversals; answer learned cue strengths or probe
+    predictions.
+- name: attentional_blink_gating
+  summary: Track target admission through an attention gate with stated consolidation and recovery rules;
+    vary distractor gaps, adjacent targets, and prolonged stimuli; answer admitted targets or the gate
+    state.
+- name: perceptual_rivalry_adaptation
+  summary: Track competing percepts under stated mutual inhibition, dominance adaptation, and recovery
+    rules; vary stimulus pulses, interruptions, and asymmetric strengths; answer the dominant percept
+    or switch count.
+- name: leaky_evidence_commitment
+  summary: Accumulate signed evidence with stated leakage, starting bias, and absorbing decision bounds;
+    vary interruptions, changing bounds, and opposing evidence bursts; answer the committed choice and
+    stopping time.

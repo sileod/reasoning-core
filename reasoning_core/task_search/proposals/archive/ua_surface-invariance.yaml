@@ -1,0 +1,1038 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_surface-invariance
+created_at: '2026-09-17T00:48:49.678145+00:00'
+provenance:
+  kind: proposer
+  name: ua_surface-invariance
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks requiring the same abstract operation across strongly different surface representations.
+    The catalog you were shown already covers the classic textbook algorithms -- sorting, gcd, graph traversal,
+    compression, scheduling, matching, parsing -- and a proposal that names one will be rejected as a
+    repeat however well it fits this brief. Reach past the standard repertoire: propose structures the
+    catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 3
+  complete: false
+catalog:
+  sha256: 960d95cb2e2d506150eb1a1d13d04c698e6e6d8bfd38984d73e7e43b933d1b15
+  entries: 862
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 255
+    task: 445
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 12601f613393ffbdfd719ca423acb2d602878863af0b7ee8bc51de991747cf85
+    response_sha256: 54ff8f529e1e5f5fda3befad456cd42006a06fde78b85f66bf6c0fdb9caee64f
+    response_id: gen-1789605756-LDdhiYXl12ts2DbpBQb1
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 487da6ff44ef5758f162ade82b7c1a59b0a41932d781b5ec0d4431b25e4d4b06
+    response_sha256: d79a9a94c8d1c0ae9b9e7104ca37967a918ec91b96d2f2a98e0fa5fecd8b49ac
+    response_id: chatcmpl-8ed662344eb41f8f
+  - purpose: critic-round-1-sample-1-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 468e1e0a66258109b65b47699908f80a8b076e2527b099b6921d00ec57ffe422
+    response_sha256: 728438ada2cec1559d783445d1ef6f56da680ee7a7f52ec9e2ff4e66fb47fac1
+    response_id: chatcmpl-ae745d6fa1539dd6
+  - purpose: critic-round-1-sample-1-retry2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: ce258b915b748f7a9abeb5dec74aeb830e6ca060e84524ae105024118d4236ac
+    response_sha256: fed7d238816514b8559269a45118a463db5e0f586ed8418d31a219ff5fa0327c
+    response_id: chatcmpl-a4413ba82511850d
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 62a47dd8b3d8483793360c2e523a3844f6db4ceec20487fbcdb1fc172530b9a1
+    response_sha256: 4e8398674bf843b90abb5527d552af05441aa186b960d4dac1a835d5f07868c4
+    response_id: chatcmpl-b858e61b12070e51
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 200aaa6d727c1094504752716670357249930e73d49b66eb8b1b7d01bf9b1326
+    response_sha256: 71548419541d680288c70021e5b05aeb19500983c104d733cd536fbba256f019
+    response_id: chatcmpl-8fa2b493d48bdd78
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8783e61e938940d0924947720ffeb0f1528c65f8f59ee877d44d73c749689b8c
+    response_sha256: edea8633a1abcea6b29a655be31d8e979c9824a95d6f0f5b97cae25bb8828780
+    response_id: chatcmpl-ad34984639cdf0ad
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: b3ba0fae76e46c0af63d37dd777dbb1eda378de3a5c3854402144a2bffc1cef0
+    response_sha256: 45d93a6d1af38e932df53430f3be56710c3db81ee635e89747d102392eb2b677
+    response_id: chatcmpl-a8f3d0ed70350da0
+  - purpose: critic-round-2-sample-2-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: a916965b3410f832ee0a973a5c94ba2a04c9464d5dd7f5f6b18b2163c1e081c7
+    response_sha256: aba46cbf88e3399c7c4c45e74c58981256815928e555b66210815f669e45a752
+    response_id: chatcmpl-81a08bdf4e9660c2
+  - purpose: critic-round-2-sample-2-retry2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d6dcc938da087a8d2df4d7fb0d0a052cdc4e4001a1b747fd3ceafd45a51d94f4
+    response_sha256: f72ff9e2dfbcc7b2210386519205f2399acc6677ebc125d1636746108fac21e4
+    response_id: chatcmpl-ac510456063036e8
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d157c946cfa59f0a84f82d0e1630c49c9d2c4e57d7cf6c4186920d0286d06201
+    response_sha256: 1a8a2ef74fb255382676c2a354125f42f96482b3f3e5d7ce7c8d3efaebee264b
+    response_id: chatcmpl-b897a731e4d74b2d
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: f42e3be70b51fbe5c578350d40dc57b6da232e0b97b255e4ecd20e358242e43e
+    response_sha256: 81ad6f1b4d00c42b1025fb27a4e1b14ddf5322d1525bd59794f99f1d4b981ce8
+    response_id: chatcmpl-b866abf7ac708a2c
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 9164228184d242e38b36ce741cfa8484ccea96c184b6ea5240a03d0d3ae09fc9
+    response_sha256: 1405709c35ccb2951c07fe70d79c376491d4aed01a6322065d54e71df5762e30
+    response_id: chatcmpl-938bc9526da0ba9e
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: dab289d46cb7503dbf7d5a861dadfd9fc26ca85fb19eab458cbcb848d2e541b9
+    response_sha256: 5b8f7cfa2e525b6e34bd9094d96630b1336e238af9c054b690b0fbcc753786eb
+    response_id: chatcmpl-8eebb7d2b92d4657
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 3
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 1
+proposals:
+- name: gated_motion_exposure
+  summary: Accumulate exposure along piecewise-linear motion through spatial windows and periodic shutters,
+    including serial gates and dwell intervals; return total exposure or the position where a dose threshold
+    is reached.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_scientific-reasoning:P007
+      relationship: adjacent
+      overlap: Both accumulate a quantity over time with thresholds and boundaries, but the former is
+        statistical and the latter is physical exposure.
+    - id: proposal:ua_counterfactual:P008
+      relationship: adjacent
+      overlap: Both involve piecewise-linear paths with events, but one is about sensitivity analysis,
+        the other about dose accumulation.
+    - id: task:generated.k3_uncertainty_r1.censored_survival_estimate.censored_survival_estimate:CensoredSurvivalEstimate
+      relationship: adjacent
+      overlap: Both walk timelines with events, but survival estimation uses a different mathematical
+        structure.
+    substantive_difference: No neighbor shares the specific operation of integrating exposure along a
+      moving point through windows and shutters; it's a distinct combination of geometry and temporal
+      gating with a threshold search.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: While it resembles general accumulation, the spatial-temporal gating and threshold location
+      make it a genuinely new operation.
+    votes: 2/3
+    dissent:
+    - variant
+- name: local_blowup_strict_transform
+  summary: Across implicit curves, parametrized branches and chart-substitution diagrams, lift a marked
+    singularity through successive blowups while removing exceptional factors; return the strict transform
+    and multiplicity.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_uncertainty:P010
+      relationship: different
+      overlap: Symmetry under pinning is about group actions, not blowups; only abstract 'modify structure'
+        overlap.
+    - id: proposal:ua_state-tracking:P001
+      relationship: different
+      overlap: Stabilizer entropy uses algebra on Pauli generators; no overlap with geometric blowups.
+    - id: proposal:ua_latent-representation:P005
+      relationship: adjacent
+      overlap: Both involve algebraic manipulation of quantities to remove substructures, but renormalization
+        forests are about counterterms, not geometric strict transforms.
+    substantive_difference: No neighbor shares the operation of lifting singularities through blowups
+      and extracting strict transforms; this is a distinct algebraic-geometric procedure absent from the
+      catalog.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 3
+      clarity: 4
+    reason: C003 proposes a combinatorially specifiable blowup algorithm for curves that is not represented
+      in any nearest neighbor.
+    votes: 3/3
+    dissent: []
+- name: quantum_outcome_coarsening
+  summary: For quantum instruments given by branch operators, ancilla interactions or measurement trees,
+    distinguish forgotten outcomes from coherently merged paths; return the conditional state or a queried
+    probability.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_invariants:P004
+      relationship: adjacent
+      overlap: Both deal with quantum states, but one for local sufficiency, one for measurement outcomes.
+    - id: proposal:ua_counterfactual:P006
+      relationship: adjacent
+      overlap: Both involve coherent vs incoherent paths, but one for detectors, one for instruments.
+    - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+      relationship: adjacent
+      overlap: Both compute probabilities from branching processes, but one classical vs quantum.
+    substantive_difference: Quantum instrument outcome coarsening is a distinct operation combining partial
+      traces and measurement theory, not in neighbors.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Novel quantum mechanical operation with clear distinctions.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: pedal_capture_note_lifetimes
+  summary: Determine sounding-note lifetimes from key and pedal events; combine sustain release, selective
+    sostenuto capture, repeated strikes, and explicit simultaneous-event priorities, returning releases
+    or active notes.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.closure_capture_resolution.closure_capture_resolution:ClosureCaptureResolution
+    relationship: variant
+    overlap: Both track when a resource (note/lexical variable) is captured or released by events (key/pedal
+      vs. closure creation/rebinding), returning which are active or captured.
+  - id: proposal:k3_language-implementation:P001
+    relationship: adjacent
+    overlap: Both deal with resumptions/captures, but one is musical, the other is generator execution.
+  - id: proposal:k3_non-local-structured:P003
+    relationship: adjacent
+    overlap: Both track fluents over time, but one is about holding intervals, the other about note lifetimes.
+  reason: 0/3 samples judged it novel; Same capture-and-release tracking as closure_capture_resolution,
+    just with pianos instead of code.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: differential_shaft_propagation
+  summary: Propagate exact rotations through external and internal gear meshes, shared shafts, planetary
+    carriers, and clutch locks; return queried shaft motion or identify incompatible imposed rotations.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: variant
+    overlap: Both compose rotational transformations (via frames or gear meshes) and return the resulting
+      motion/rotation of a queried element, with constraints on compatibility.
+  - id: proposal:ua_latent-representation:P002
+    relationship: adjacent
+    overlap: Both propagate quantities through composed maps, but one deals with differential forms, the
+      other with mechanical rotations.
+  - id: proposal:k3_operations-research:P010
+    relationship: adjacent
+    overlap: Both involve rotational arrangements and pairings, but one is sports scheduling, the other
+      mechanical transmission.
+  reason: 0/3 samples judged it novel; Mechanical rotation composition is a surface change from coordinate-frame
+    rotations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: live_loop_ancestry
+  summary: Track stitch ancestry through knitting, slipping, yarnovers, paired decreases, cable swaps,
+    and short-row turns; return the source-loop multiplicities or newly introduced loops contributing
+    to a queried stitch.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P003
+    relationship: variant
+    overlap: Both track the ancestry of individual units (stitches vs. chromatid segments) through a structured
+      sequence of operations that combine, split, and swap units, returning which source units contribute
+      to a query unit.
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: variant
+    overlap: Both trace contributing source entities to a queried output through a chain of transformations,
+      returning multiplicities or contributing source ids.
+  - id: proposal:k3_latent-structure-reconstruction:P006
+    relationship: adjacent
+    overlap: Shared tree-based ancestry reconstruction, but one propagates states, the other tracks physical
+      stitch contributions.
+  reason: 0/3 samples judged it novel; Same ancestry-tracing operation as chromatid_segment_ancestry and
+    data_lineage_trace, just with fabric operations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: analytic_germ_cancellation
+  summary: Propagate truncated series through nested sums, products, quotients, exponentials, and logarithms
+    with rational expansion constants; return the first surviving term through the specified order.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_systematic-generalization:P010
+    relationship: same_operation
+    overlap: Both propagate truncated series through nested sums/products/quotients/exponentials/logs
+      and find the first surviving term (cancellation order), returning coefficient and exponent.
+  - id: proposal:k3_inference-modes:P006
+    relationship: variant
+    overlap: Both perform formal power series arithmetic and extract a coefficient or first nonzero term,
+      but the latter does not specifically handle cancellation order in nested analytic functions.
+  - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+    relationship: adjacent
+    overlap: Both propagate exact quantities through operations, but intervals vs. series.
+  reason: 0/3 samples judged it novel; Exact duplicate of existing proposal on asymptotic cancellation.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: strided_view_alias_execution
+  summary: Execute reads and writes through array views with offsets, signed strides, and repeated addresses;
+    vary snapshot versus sequential assignment and overlapping views, returning queried cells.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.schema_migration_execution.schema_migration_execution:SchemaMigrationExecution
+    relationship: adjacent
+    overlap: Both execute a sequence of reading/writing operations on structured data, but schema migration
+      uses rename/split/merge on records, not strided array views.
+  - id: proposal:k3_language-implementation:P003
+    relationship: adjacent
+    overlap: Both execute programs with mutable state and sequential dependencies, but phi_sensitive_ssa
+      is control-flow, not array indexing.
+  - id: proposal:k3_parsing-and-agreement:P002
+    relationship: different
+    overlap: Concatenative stack evaluation is stack-based, not array-based.
+  reason: 0/2 samples judged it novel; The strided-view execution is a specialized form of state-tracking
+    with aliasing, not a fundamentally new operation.
+  scores:
+    novelty: 3
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: pulse_deadtime_cascades
+  summary: Propagate timestamped pulses through cascaded detectors with fixed delays, veto gates, and
+    dead intervals; vary whether blocked pulses extend deadtime, returning accepted timestamps or counts.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_formal_semantics_r1.event_driven_gate_simulation.event_driven_gate_simulation:EventDrivenGateSimulation
+    relationship: variant
+    overlap: Both process timestamped events with delays and veto/deadtime logic (inertial delays cancel
+      pulses), and report the accepted output events/timestamps.
+  - id: task:generated.wave9.event_queue_simulation.event_queue_simulation:EventQueueSimulation
+    relationship: variant
+    overlap: Both execute timestamped discrete events with scheduling and state changes, returning final
+      states or accepted events.
+  - id: task:generated.wave9.rate_limit_token_bucket.rate_limit_token_bucket:RateLimitTokenBucket
+    relationship: adjacent
+    overlap: Both process timestamped requests with rejection/acceptance rules, but token bucket is about
+      rate limiting, not deadtime.
+  reason: 0/3 samples judged it novel; Deadtime is just a special case of event-driven simulation with
+    delay-induced blocking.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: multirate_influence_coefficient
+  summary: Trace input influence through branched cascades of rational filters, upsampling, downsampling,
+    and phase shifts; return one input sample's exact coefficient in a queried output sample.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+    relationship: variant
+    overlap: Both trace the contribution of inputs to a queried output through a sequence of transformations
+      (filters, joins, aggregations, arithmetic ops vs. cascaded filters, resampling, phase shifts), returning
+      exact contributing sources or coefficients.
+  - id: task:generated.wave10.counterfactual_replay.counterfactual_replay:CounterfactualReplay
+    relationship: adjacent
+    overlap: Both propagate effects through dependency chains, but one changes an event and recomputes
+      downstream, the other traces a single input's influence.
+  - id: proposal:ua_novel-composition:P003
+    relationship: adjacent
+    overlap: Both invert cascades of operations, but one inverts to find input measure, the other traces
+      forward to get a coefficient.
+  reason: 1/3 samples judged it novel; Same lineage-tracing operation as DataLineageTrace, just with signal-processing
+    primitives instead of relational ops.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: switched_capacitor_charge_transfer
+  summary: Reconcile conserved node charge with voltage constraints through capacitor reconnections, floating
+    islands, shorts, and source clamps; return a final capacitor voltage or net charge drawn from a source.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P010
+    relationship: same_operation
+    overlap: Both conserve charge on floating conductors and determine final capacitor voltages from reconnections
+      and clamping, with exact integer/rational arithmetic.
+  - id: proposal:ua_invariants:P001
+    relationship: adjacent
+    overlap: Both handle electrical networks, but one focuses on charge conservation, the other on network
+      reduction.
+  - id: proposal:ua_compositional-generalization:P005
+    relationship: adjacent
+    overlap: Both involve connecting terminals, but one is about wiring templates, the other about charge
+      balance.
+  reason: 0/3 samples judged it novel; Exact duplicate of existing proposal P010.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: delimited_resumption_evaluation
+  summary: Evaluate effect handlers that discard, resume, or duplicate captured continuations across nested
+    deep and shallow handlers; return the resulting value or the first unhandled effect.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:UNBUILT:P015
+    relationship: variant
+    overlap: Both evaluate control-flow constructs that can abandon, resume, or duplicate execution context;
+      but the former is exception-based with finally, the latter is effect-handler based with delimited
+      continuations.
+  - id: proposal:k3_language-implementation:P001
+    relationship: adjacent
+    overlap: Both suspend/resume computations, but one is for generators, the other for effect handlers.
+  - id: proposal:k3_parsing-and-agreement:P002
+    relationship: adjacent
+    overlap: Both execute programs with explicit control flow, but one is stack-based and the other is
+      handler-based.
+  reason: 1/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; While related
+    to exception control flow, the ability to duplicate/resume continuations creates genuinely new semantics
+    and a different cognitive operation.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: buoyancy_layer_alignment
+  summary: Balance segmented prismatic bodies across immiscible fluid layers, varying cross-sections,
+    ballast, and flooded versus sealed cavities; return equilibrium waterlines, submerged fractions, or
+    sinking outcomes.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_novel-composition:P005
+    relationship: same_operation
+    overlap: Both balance piecewise-constant quantities across segments with constraints and find equilibrium
+      (cuts vs. equilibrium waterlines). Both solve a system of linear equations from segment-wise properties.
+  - id: proposal:ua_global-over-greedy:P005
+    relationship: adjacent
+    overlap: Both involve physical equilibrium, but unilateral_contact_equilibrium deals with contacts/friction,
+      not fluid layers.
+  - id: gallery:equation_system
+    relationship: different
+    overlap: C011 has domain-specific buoyancy constraints, gallery equation_system is generic linear
+      systems.
+  reason: 1/3 samples judged it novel; C011 is a physics-flavored variant of an existing piecewise balancing
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: staff_accidental_transport
+  summary: Resolve written and sounding pitches across key changes, measure-local accidentals, ties, octave
+    marks, and transposing instruments; return queried pitches or the spelling required after transposition.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_cognitive-psychology:P001
+    relationship: same_operation
+    overlap: Both resolve pitches/accidentals and apply transposition under key signatures and spelling
+      rules; C005 adds octave marks and transposing instruments, but the core operation is identical.
+  - id: task:generated.k3_representation_transfer_r1.pitch_class_prime_normal_forms.pitch_class_prime_normal_forms:PitchClassPrimeNormalForms
+    relationship: different
+    overlap: C005 transforms pitches with context; this task reduces pitch-class sets to prime forms,
+      a distinct combinatorial operation.
+  - id: proposal:ua_latent-representation:P003
+    relationship: adjacent
+    overlap: Both track orientation/configuration, but C005 is about musical pitches, stereochemical_parity_transport
+      about chiral centers.
+  reason: 0/3 samples judged it novel; C005 is a cosmetic extension of an existing transposition/spelling
+    task.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: residual_diffusion_quantization
+  summary: Quantize arrays while distributing each rounding residual to later cells; vary scan direction,
+    diffusion weights, clipping order, and boundary loss, returning queried outputs or residuals.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_novel-composition:P003
+    relationship: same_operation
+    overlap: Both apply rounding/quantization with residual distribution in a cascade; quantizer_preimage_measure
+      inverts such cascades to measure preimages, while C010 propagates residuals forward. Core is quantizer
+      with rounding and clipping.
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: Both involve arrays with constraints and cell updates, but tomographic completion recovers
+      from sums, not quantization residuals.
+  - id: proposal:k3_global-over-greedy:P004
+    relationship: different
+    overlap: DifferenceArray2D applies range adds, not quantization with residual diffusion.
+  reason: 1/3 samples judged it novel; C010 is a forward variant of an existing quantizer operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: sewn_surface_classification
+  summary: Sew polygon edges using directed pairings and unpaired borders; track vertex neighborhoods
+    and boundary circuits across sheets, returning surface type or the first nonmanifold vertex.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: same_operation
+    overlap: Both sew polygon edges with directed pairings and unpaired borders, track vertex/boundary
+      structure, and return surface type or boundary count. C008 adds nonmanifold detection but the operation
+      is identical.
+  - id: task:generated.k3_shortcuts_fail_r1.face_tracing.rotation_system_face_tracing:FaceTracing
+    relationship: adjacent
+    overlap: Both trace boundaries in embedded surfaces, but face_tracing enumerates faces in a planar
+      embedding without classifying genus/orientability.
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: different
+    overlap: ribbon_surface_surgery involves band attachments and vertex splits, not just sewing edges.
+  reason: 0/3 samples judged it novel; C008 duplicates the existing surface-sewing operation with minor
+    additions.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: dead_volume_flush_composition
+  summary: Track labeled fluid through mixed reservoirs and unmixed tubing during withdrawals, partial
+    flushes, reversals, and valve changes; return collected composition, residual contents, or displaced
+    volume.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P006
+    relationship: same_operation
+    overlap: 'Both carry quantities through partial transfers and recombinations: C006 tracks labeled
+      fluids through mixing/diluting, while wash_sale_basis_transport carries loss basis through partial
+      sales and replacements. Core operation is state-tracking with carry-forward and intermixing.'
+  - id: task:generated.k3_formal_semantics_r1.lsm_level_compaction_trace.lsm_level_compaction_trace:LsmLevelCompactionTrace
+    relationship: adjacent
+    overlap: Both track content through merging/deletion, but C006 deals with fluid mixing whereas LSM
+      tracks key-value versions.
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: different
+    overlap: C006 tracks physical fluid state; coordinate frames are geometric transformations.
+  reason: 1/3 samples judged it novel; C006 reuses an existing carry-forward state-tracking operation
+    in a new domain.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: joint_marginal_extension
+  summary: Reconcile overlapping marginal and conditional probability tables, structural zeros, and symmetry
+    constraints into one joint law; answer global compatibility or a tight bound on an unobserved event.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P008
+    relationship: same_operation
+    overlap: Both combine overlapping marginal/conditional probability tables on subsets and ask for global
+      consistency or attainable range of an unreported event probability. C003 adds structural zeros and
+      symmetry, but these are natural parameter extensions.
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: adjacent
+    overlap: Both manipulate finite joint distributions, but C003 checks consistency/extensions from partial
+      tables, while this task computes conditional expectations from a full joint.
+  - id: proposal:ua_shortcuts-fail:P002
+    relationship: different
+    overlap: C003 works with probability tables; secret-sharing analyzes coalitions and leakage, not marginal
+      constraints.
+  reason: 0/3 samples judged it novel; C003 is a direct duplicate of marginal_extension_consistency, adding
+    cosmetic adversarial constraints.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: treaty_loss_waterfalls
+  summary: Pass ordered losses through nested deductibles, occurrence limits, aggregate caps, and paid
+    reinstatements; vary shared and separate coverage pools, returning allocated recoveries and remaining
+    coverage.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P006
+    relationship: same_operation
+    overlap: Both carry losses/recoveries through layered limits, deductibles, and caps with ordering;
+      wash_sale_basis_transport similarly allocates loss basis across replacements and limits. Core is
+      sequential allocation with carry-forward.
+  - id: task:generated.wave9.ledger_reconciliation.ledger_reconciliation:LedgerReconciliation
+    relationship: adjacent
+    overlap: Both apply ordered financial transactions/allocations, but ledger_reconciliation uses debits/credits,
+      not insurance layers.
+  - id: proposal:ua_uncertainty:P007
+    relationship: different
+    overlap: C012 is loss allocation, settlement_departure_consistency redistributes estates among claimants.
+  reason: 0/3 samples judged it novel; C012 reuses a known carry-forward allocation operation with insurance
+    terminology.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: tile_seam_frame_transport
+  summary: Carry points and headings along specified routes across tiled charts with rotated, reflected,
+    shifted, or rescaled seam identifications; return terminal coordinates or the frame transformation
+    around a loop.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: same_operation
+    overlap: Both compose coordinate transformations (rotation, reflection, scaling, translation) across
+      frames and track a point/heading; C009 adds rescaled seam identifications and loop closure, but
+      the core is frame composition.
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: adjacent
+    overlap: Both use seam identifications, but surface_seam_composition classifies topology, not transport
+      of points.
+  - id: proposal:ua_latent-representation:P002
+    relationship: different
+    overlap: C009 on points/headings; differential_form_pullback transports forms by Jacobian/wedge, a
+      more advanced operation.
+  reason: 0/3 samples judged it novel; C009 reuses the frame-composition operation with tile/seam context.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: unilateral_support_equilibrium
+  summary: Resolve which gapped, compression-only supports engage beneath a loaded rigid bar; vary support
+    stiffnesses, heights, and load positions, returning active contacts and their reaction forces.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_global-over-greedy:P005
+    relationship: same_operation
+    overlap: Both determine active contacts/reactions in rigid-body equilibrium with unilateral supports;
+      C001 is a single-rigid-bar subset of this more general operation.
+  - id: task:generated.k3_representation_specific_r1.tower_block_removal.tower_block_removal:TowerBlockRemoval
+    relationship: adjacent
+    overlap: Both check support conditions under vertical loads, but C001 uses continuous reaction equilibrium
+      whereas tower_block_removal uses center-of-mass block logic.
+  - id: proposal:ua_uncertainty:P001
+    relationship: different
+    overlap: C001 solves a static feasibility/reaction problem; constraint_release_response computes energy-minimal
+      displacement changes after constraint edits.
+  reason: 0/3 samples judged it novel; C001 duplicates the core operation of unilateral_contact_equilibrium,
+    merely restricted to one bar.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: staged_pool_detection_likelihood
+  summary: Evaluate pooled screening with finite inventories, overlapping pools, imperfect tests, and
+    outcome-dependent retesting; return the likelihood of an observation sequence or a queried item's
+    posterior status.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_latent-structure-reconstruction:P004
+    relationship: same_operation
+    overlap: Both perform pooling-based inference to deduce item status from pooled test outcomes, using
+      combinatorial constraints on positives. C002 adds test imperfection and retesting, but the underlying
+      decoding operation is identical.
+  - id: task:generated.wave9.hidden_state_filtering.hidden_state_filtering:HiddenStateFiltering
+    relationship: adjacent
+    overlap: Both compute posterior probabilities over hidden states, but C002 uses pooled tests with
+      imperfect results, whereas this task uses Markov chain filtering.
+  - id: proposal:ua_state-tracking:P009
+    relationship: adjacent
+    overlap: Both deal with likelihoods and posteriors, but C002 is a specific pooling model, not a general
+      sufficient-partition problem.
+  reason: 0/3 samples judged it novel; C002 extends an existing pooled-test operation with probabilistic
+    noise; not a genuinely different inference.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: boundary_extension_stencil_cascades
+  summary: Apply successive local weighted stencils with periodic, reflected, fixed, or clamped boundaries;
+    vary shrinking domains, downsampling, and boundary reapplication, returning selected final samples.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P004
+    relationship: same_operation
+    overlap: Both apply fixed-width local stencils/weights on grids (here periodic density, there boundary
+      stencils) and compute resulting values. C004 adds boundary modes and downsampling, but the core
+      operation (convolution with local weight pattern) is the same.
+  - id: proposal:ua_state-tracking:P012
+    relationship: adjacent
+    overlap: Both apply local pixel/fragment operations with state updates, but stencil_depth_compositing
+      is about depth/stencil tests, not stencil convolution.
+  - id: proposal:k3_inference-modes:P002
+    relationship: different
+    overlap: C004 is deterministic local updates; linear_extension_counting is combinatorial counting
+      on posets.
+  reason: 1/3 samples judged it novel; C004 adds boundary variants to an existing stencil-application
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: fracture_redistribution_cascades
+  summary: Apply load increments to elements that break above individual limits and redistribute their
+    loads; vary sharing weights and simultaneous break sets, returning survivors or the failure wave of
+    an element.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_operations-research:P012
+    relationship: same_operation
+    overlap: 'Both iteratively propagate load/requirements through constraints, breaking and redistributing:
+      fracture_redistribution_cascades breaks elements and shares load; unary_resource_edge_finding tightens
+      windows via overload propagation. Core is iterative propagation with redistribution decisions.'
+  - id: proposal:ua_counterfactual:P008
+    relationship: adjacent
+    overlap: Both involve perturbations and propagation of effects, but C007 is deterministic load redistribution,
+      while event_time_intervention_sensitivity computes sensitivities.
+  - id: proposal:ua_uncertainty:P001
+    relationship: different
+    overlap: C007 cascades failures/loads; constraint_release_response recomputes energy minima after
+      constraint removal, not load redistribution.
+  reason: 1/3 samples judged it novel; C007 generalizes existing propagation-based resource/load algorithms
+    to a fracture scenario.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: ordinal_limit_descent
+  summary: Execute successor removal and indexed fundamental-sequence descent on ordinals represented
+    as nested omega expressions, exponent trees or recursive limit descriptions; return the residual ordinal.
+  verdict: duplicate
+  closest_id: proposal:ua_systematic-generalization:P007
+  reason: exact catalog name collision with proposal:ua_systematic-generalization:P007
+- name: partizan_option_reduction
+  summary: Reduce finite partizan games given as option trees, asymmetric move rules or nested game expressions
+    by removing dominated options and bypassing reversible moves; return the canonical game.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_systematic-generalization:P009
+    relationship: variant
+    overlap: 'Both work with finite partizan games built from option trees: P009 compares games by recursive
+      option exclusion, while C002 reduces games by removing dominated/reversible options. Same operation
+      of simplifying partizan game expressions via option rules.'
+  - id: task:generated.k3_uncertainty_r1.iterated_dominance_elimination.iterated_dominance_elimination:IteratedDominanceElimination
+    relationship: adjacent
+    overlap: Both eliminate dominated options, but one applies to partizan games and the other to bimatrix
+      games; different structures and rules.
+  - id: proposal:ua_inference-modes:P001
+    relationship: different
+    overlap: Knockout brackets construct elimination order, not option pruning in game theory.
+  reason: 1/3 samples judged it novel; C002 is a variant of the existing partizan game task, sharing the
+    option semantics but adding a reduction-to-canonical-form step.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: scissors_angle_invariant
+  summary: "Across symbolic polyhedra, edge-angle ledgers and cut-and-reassembly descriptions, accumulate\
+    \ length\xE2\x80\x93angle tensors modulo rational multiples of pi; return the Dehn invariant or an\
+    \ obstruction to reassembly."
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_global-over-greedy:P008
+    relationship: different
+    overlap: 'The neighbor already computes scissors congruence via Dehn invariants; however, C011 proposes
+      accumulating a tensor of length-angle modulo pi and returning obstruction, which is exactly what
+      P008 does. Despite being a close neighbor, the operation is identical, so I must label it as same_operation?
+      But the instruction says to pick at least three neighbors, and I just realized C011 has a neighbor
+      that is exactly same. So I must call it duplicate? Let me re-evaluate: P008 is ''scissors_congruence_obstruction''
+      and it computes Dehn invariants. C011 says ''accumulate length-angle tensors modulo rational multiples
+      of pi; return Dehn invariant or obstruction.'' That is literally the same. So the correct verdict
+      is duplicate. I''ll set nearest neighbors accordingly.'
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: adjacent
+    overlap: Both involve polyhedra and attaching faces, but seam composition is about topology, not invariants.
+  - id: proposal:ua_invariants:P008
+    relationship: different
+    overlap: Projective invariants are unrelated to Dehn invariants.
+  reason: 0/3 samples judged it novel; C011 duplicates the existing scissors congruence obstruction proposal.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: epistemic_action_product
+  summary: Update finite belief models with partially observed actions given as event tables, information
+    partitions or announcement stories; preserve uncertainty about which event occurred and return a nested
+    belief's truth.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:belief_tracking
+    relationship: variant
+    overlap: Both track beliefs through observations and updates. C012 adds partially observed actions
+      and event tables, but the underlying update operation on belief states is the same as gallery belief
+      tracking.
+  - id: plan:WAVE0:M18
+    relationship: adjacent
+    overlap: The plan is about paired counterfactual sensitivity in belief tracking, but does not involve
+      product update with events.
+  - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+    relationship: adjacent
+    overlap: Both maintain sets of supported beliefs under updates, but TMS is about justification sets,
+      not epistemic actions.
+  reason: 0/3 samples judged it novel; C012 is a variant of the existing belief tracking task, enriching
+    the update mechanism.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: tableau_vacancy_rectification
+  summary: Rectify skew tableaux represented as filled cells, interlacing partition chains or row-offset
+    lists by propagating inner vacancies under stated slide choices; return the resulting tableau or a
+    tracked entry's cell.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_novel_composition_r1.schensted_tableau_insertion.schensted_tableau_insertion:SchenstedTableauInsertion
+    relationship: variant
+    overlap: 'Both manipulate Young tableaux by moving entries: Schensted insertion bumps entries down
+      rows, C005 slides entries through vacancies. Both are tableau reconfiguration operations with tracking
+      output.'
+  - id: proposal:ua_latent-representation:P006
+    relationship: adjacent
+    overlap: Both involve tableaux and ranking, but optimality theory tables are not Young tableaux.
+  - id: proposal:k3_multi-relation-integration:P002
+    relationship: different
+    overlap: Match-3 cascades are completely unrelated to tableau slides.
+  reason: 1/3 samples judged it novel; C005 is a variant of tableau entry manipulation, sharing the fence
+    of Young tableau operations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: partition_cumulant_conversion
+  summary: Convert moments and cumulants using unrestricted, noncrossing or interval partition expansions
+    across block-weight tables, indexed random variables and diagrammatic moments; return a queried coefficient.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P007
+    relationship: variant
+    overlap: Both convert between moments and cumulants using partition expansions; P007 is specifically
+      free cumulants (noncrossing), while C007 includes classical and interval partitions. The underlying
+      operation of partitioning indices is identical.
+  - id: proposal:ua_state-tracking:P003
+    relationship: adjacent
+    overlap: Both recover statistical quantities from aggregates, but collision-free moment extraction
+      is about sums over records, not cumulant-moment conversion.
+  - id: task:generated.wave9.bipartite_matching.bipartite_matching:BipartiteMatching
+    relationship: different
+    overlap: Unrelated graph algorithm.
+  reason: 0/3 samples judged it novel; C007 is a variant of the free-cumulant recovery task, just with
+    more partition families.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: knot_skein_expansion
+  summary: Resolve oriented links supplied as crossing diagrams, braid closures or signed traversal records
+    using skein relations and loop factors; collect cancellations and return the resulting invariant polynomial.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_reusable-operations:P004
+    relationship: variant
+    overlap: 'Both skein-based invariants of knot and link diagrams: C001 expands via skein relations
+      and loop factors; the Kauffman bracket sums over smoothings with loop factors. Same core operation
+      of reducing links by local moves and collecting polynomial answers.'
+  - id: proposal:k3_surface-invariance:P003
+    relationship: adjacent
+    overlap: Both operate on knot/link diagrams and compute link invariants, but Gauss code walk computes
+      writhe/linking numbers while C001 uses skein relations.
+  - id: task:generated.k3_hierarchical_recursive_r1.polynomial_expansion.polynomial_expansion:PolynomialExpansion
+    relationship: different
+    overlap: Polynomial expansion expands algebraic expressions, whereas C001 expands link diagrams via
+      skein relations; shared 'expansion' is only surface.
+  reason: 0/3 samples judged it novel; C001 is a direct parameter variation of the Kauffman bracket state-sum
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: replacement_lot_basis_transfer
+  summary: Apply supplied loss-deferral rules across partial sales, replacement windows, stock splits,
+    and repeated resales; track transferred losses through replacement lots and return recognized loss
+    or adjusted basis.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P006
+    relationship: same_operation
+    overlap: 'Both implement wash sale rules: track disallowed losses into replacement lots, handle partial
+      sales, overlapping windows, resales, and ordered lot selection, returning recognized loss or adjusted
+      basis. The summaries are nearly verbatim identical.'
+  - id: task:generated.wave9.ledger_reconciliation.ledger_reconciliation:LedgerReconciliation
+    relationship: adjacent
+    overlap: Both process financial events on accounts, but ledger reconciliation is about debits/credits,
+      not loss deferral rules.
+  - id: proposal:ua_uncertainty:P007
+    relationship: different
+    overlap: Estate redistribution is unrelated to tax lot accounting.
+  reason: 0/3 samples judged it novel; C009 is a direct duplicate of the existing proposal P006, with
+    no operational change.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: rounded_display_consistency
+  summary: Recover feasible latent values from linked rounded readings; vary increments, tie rules, shared
+    offsets, and sum displays, returning consistency or the tight interval for a queried quantity.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P006
+    relationship: variant
+    overlap: 'Both recover latent values from linear readings with shared offsets/nuisances: C008 handles
+      rounded readings, P006 handles drift terms. Both solve linear consistency problems with unknown
+      offsets.'
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: Both recover unknowns from aggregated measurements, but tomographic completion uses directional
+      sums and integer arrays, not rounded linear combinations.
+  - id: proposal:ua_state-tracking:P008
+    relationship: different
+    overlap: Probability table consistency is not about rounding or linear equations.
+  reason: 1/3 samples judged it novel; C008 is a variant of the nuisance-identification task, adding rounded
+    observations.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: counterfactual_noise_coupling
+  summary: Across mechanism tables, causal equations and finite-world stories, infer latent noise from
+    observations and reuse it across incompatible interventions; return a joint counterfactual probability.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.counterfactual_twin_model.counterfactual_twin_model:CounterfactualTwinModel
+    relationship: variant
+    overlap: 'Both perform abduction-intervention-prediction in causal models: C006 abducts latent noise
+      from observations and reuses it under interventions, which is exactly the twin model''s procedure
+      for deterministic SCMs.'
+  - id: task:generated.wave10.counterfactual_replay.counterfactual_replay:CounterfactualReplay
+    relationship: adjacent
+    overlap: Both compute counterfactual outcomes by altering events, but C006 specifically handles latent
+      noise sharing and joint probabilities.
+  - id: proposal:ua_uncertainty:P012
+    relationship: different
+    overlap: Nested counterfactual semantics is about modal logic, not probabilistic SCMs.
+  reason: 0/3 samples judged it novel; C006 is a variant of the counterfactual twin model, adding noise
+    inference and joint output.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+pool:
+- name: evidence_conflict_redistribution
+  summary: Combine evidence expressed as weighted candidate sets, ambiguous reports or compatibility tables
+    by intersecting focal sets and renormalizing conflict; return belief, plausibility or total incompatibility.
+- name: exterior_meet_join
+  summary: Combine projective points, lines and planes represented by coordinates, incidence blades or
+    homogeneous equations using exterior joins and regressive meets; return the resulting subspace or
+    a degeneracy label.

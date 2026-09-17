@@ -1,0 +1,1116 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_hierarchical-recursive
+created_at: '2026-09-17T02:17:15.938053+00:00'
+provenance:
+  kind: proposer
+  name: ua_hierarchical-recursive
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks involving hierarchical or recursively structured objects. The catalog you were
+    shown already covers the classic textbook algorithms -- sorting, gcd, graph traversal, compression,
+    scheduling, matching, parsing -- and a proposal that names one will be rejected as a repeat however
+    well it fits this brief. Reach past the standard repertoire: propose structures the catalog does not
+    have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 3
+  complete: false
+catalog:
+  sha256: 57ae540d9c77486ef3c5b13e21996351b6fae7d28beba27f8463450af19f7052
+  entries: 895
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 288
+    task: 445
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-2
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 0730ad1515a810099fa194737a552f99e48ccf2f369a538b26489d67544f9510
+    response_sha256: 3eca2f5abd2e75f2320d30deb17c3239aa023f19dc1939b6f5a17c5e0539b159
+    response_id: gen-1789610580-XfL7LsmDZyLSceI8LkiC
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 3fbb43c9ec71be70b25dc0534eb55564dfb417dc79d5c80baa8eb300e174b0d4
+    response_sha256: 9a4bd6caa269479418ff64aad9ce686d116b095ed24ebde6c5d82f43bec3e0fa
+    response_id: gen-1789611161-zgcGg6mYRDhuFqdJKTDk
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c1dc253be2d4beb7811e82569f1e9c2b88fe1444870f6e8759e55a5543d927c6
+    response_sha256: 03c7c556a4718e1a60986a33379aca8d2352b73c7702723c3dd88c24213727d4
+    response_id: chatcmpl-8c3ee868904f4f30
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 19a2f99d3801c0ddc16eda718c99ba920d049c97d0a4f2ccf4030e881770fe3c
+    response_sha256: 358a5a1ed2a07d0f566eeda42f288353e2567f2a104c1e855cc7a73e3fc93ed4
+    response_id: chatcmpl-8f0f9312905ad415
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 745577a3f880529a79c7b1d6124234e2a16e2de17f7d56764cffc820d0ebe8bb
+    response_sha256: 4f03144ae6b52fc7d0c4e8791f5d5d0a786d95c7c7e451f1292bd6581ddcccac
+    response_id: chatcmpl-945f91246af35587
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: afb750ef089f551c7d7c9bdc3790f0a419bb0c38403c5f2d0f8903befbf5da28
+    response_sha256: d724d15a966693678071660277be055bbcbe5dc060a88b0d67c6d1f3602c7657
+    response_id: chatcmpl-85ed3d371bfaea74
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8e75349ea099b0da8533423b5fd243be543db21e46cfc3282db8f4ee60d8b811
+    response_sha256: 52999088c19fffbd775b1c0e53439bf4235e60e2e14b2cbe3243addc8095e1d7
+    response_id: chatcmpl-89a56438bbd7512c
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 2d417fdbeb10be7e3b71118d4ff592ce3bb62a5f65b1987ad3cab3c8589365f4
+    response_sha256: f9780873c8b8059bb090906cc02bd1ec672a5db566d83bf9e72b0f4bb54ba4f9
+    response_id: chatcmpl-b9a3e94017f8d460
+  - purpose: critic-round-2-sample-3-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1ae1f61af64a2ffb0a1a51f7d3c70ced03a41c20b589445c16bad7e3058a70e3
+    response_sha256: c931de6c3ab03f19903c0600a90b45789f79d7b316a99ecfbc5c7e10ccc0efdd
+    response_id: chatcmpl-aacf1bfa66baa598
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 95a50ed24cc187cd11519c5df28cb3bdf316530e2240086992f251c6f66971c9
+    response_sha256: 42fb28e22cfc0fc5179d4e113ff085ff9f6de882a927b558bcfe06455d4b55a1
+    response_id: chatcmpl-951f3be63724760a
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 88e9059eb45a3556ee57844a6f3efc2f6667faf3f0bb01696dfcdda5b2c5c76c
+    response_sha256: 3e6a3043ae008f7a945ddd30547432c77b53b5aab61e1985d97a94155379fd6f
+    response_id: chatcmpl-9d488db33f037d0b
+  - purpose: critic-round-3-sample-2-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1e77ec693789bba4e80420742b35dd1b3d242e4daafecf1b13ce96a08bb32871
+    response_sha256: e7dccece9c52fdb7b125307811caa7d317017cfd52d442f69d11fc915e650d88
+    response_id: chatcmpl-913891476e291402
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 623d48d6b73a7e9fd704e17ff7194736bbd463d6640d444047da0b30d89656c5
+    response_sha256: 9f707b6bdf95e4d664a96d8545d20b99cdd0c71fd614afbea1315fa376927052
+    response_id: chatcmpl-8b7da6ecbbec1ebf
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: witt_ghost_coordinate_translation
+  summary: Translate truncated big or p-typical Witt coordinates to ghost components and recover integer
+    coordinates by triangular inversion; answer the vector or the first divisibility obstruction.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_representation-transfer:P004
+      relationship: different
+      overlap: Both are representation transfers but with distinct mathematical structures (Witt vectors
+        vs Plucker coordinates).
+    - id: proposal:ua_representation-specific:P006
+      relationship: different
+      overlap: Different algebraic objects (Witt coordinates vs min-plus polynomials) with no shared operation
+        beyond 'translate'.
+    - id: proposal:ua_state-tracking:P004
+      relationship: different
+      overlap: No structural overlap; one deals with periodic densities, other with Witt vectors.
+    substantive_difference: Involves triangular inversion of ghost coordinates, a specialized operation
+      not present in any neighbor; the domain is distinct and the oracle is well-defined.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Introduces a genuinely new cognitive operation with a clear exact oracle and no overlapping
+      neighbor.
+    votes: 2/3
+    dissent:
+    - variant
+- name: hierarchical_quorum_overlap
+  summary: Find the smallest intersection of two authorized coalitions in nested threshold organizations;
+    vary branch thresholds, weighted members, and shared identities; answer the minimum overlap and a
+    witnessing pair.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_global-over-greedy:P002
+      relationship: adjacent
+      overlap: Both consider overlapping coalitions with thresholds, but one seeks stable payoffs, the
+        other minimizes intersection of winning coalitions.
+    - id: task:generated.wave9.hierarchical_rollup.hierarchical_rollup:HierarchicalRollup
+      relationship: adjacent
+      overlap: Both process nested hierarchies with thresholds, but rollup aggregates values while this
+        finds an intersection of authorized sets.
+    - id: proposal:k3_latent-structure-reconstruction:P003
+      relationship: different
+      overlap: Smith set finds smallest set with defeat properties, not overlap of two winning coalitions.
+    substantive_difference: Finds the minimal intersection of two authorized coalitions in nested trees
+      with weights, a distinct combinatorial optimization problem not present in the known set.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel task: minimize overlap of threshold coalitions in hierarchical structures, with clear
+      output and no matching known operation.'
+    votes: 2/3
+    dissent:
+    - variant
+- name: nested_margin_collapse
+  summary: Resolve adjoining vertical margins across nested block boxes, including negative margins, empty
+    descendants, and border or padding barriers; determine collapsed margins and resulting block positions.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_representation_specific_r1.tower_block_removal.tower_block_removal:TowerBlockRemoval
+      relationship: adjacent
+      overlap: Both deal with nested boxes affecting layout, but tower removal is about toppling under
+        gravity, not margin collapse.
+    - id: proposal:ua_latent-representation:P007
+      relationship: adjacent
+      overlap: Both combine nested geometric structures with local changes (margins vs. opacity/knockout),
+        but the specific operation of margin collapsing is unique.
+    - id: proposal:ua_semantics-preserving-translation:P002
+      relationship: different
+      overlap: Permutation inflation expands permutations, unrelated to CSS layout.
+    substantive_difference: No known task resolves margin collapsing with negative margins and barriers;
+      a fresh operation from box layout.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: computing collapsed margins in nested blocks with negative values and barriers, a
+      specific rule set not in any neighbor.'
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: quantum_channel_representation_transfer
+  summary: Translate Kraus families into Choi matrices and exchange Choi matrices with matrix-unit action
+    tables across rectangular channels and subsystem orders; answer exact channel coefficients.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-transfer:P008
+    relationship: same_operation
+    overlap: Translate between two mathematical representation families (Kraus/Choi vs Newton branch expansions)
+      with an exact oracle for coefficients.
+  - id: proposal:ua_representation-specific:P006
+    relationship: adjacent
+    overlap: Representation transfer with coefficient recovery but different algebraic structures (min-plus
+      polynomials vs quantum channels).
+  - id: proposal:ua_representation-transfer:P004
+    relationship: adjacent
+    overlap: Transfer between representation systems with parameter variations (Grassmann charts vs Choi
+      matrices).
+  reason: 0/3 samples judged it novel; Known representation-transfer operation with a different algebraic
+    setting, not a new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: oriented_boundary_repair
+  summary: Update the signed boundary of an oriented cell assembly after cell insertion, deletion, or
+    reversal; combine shared-face contributions and return only faces whose net boundary coefficient changes.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P009
+    relationship: same_operation
+    overlap: Updating a geometric structure (cell complexes vs dyadic partitions) after local changes
+      and returning only affected faces.
+  - id: proposal:ua_incremental-recomputation:P006
+    relationship: adjacent
+    overlap: Update labels after geometric modifications but in different domains (oriented paths vs cell
+      complexes).
+  - id: proposal:ua_incremental-recomputation:P002
+    relationship: adjacent
+    overlap: Recovery of signed structures (cocircuits vs boundary coefficients) with shared-face contributions.
+  reason: 1/3 samples judged it novel; Same incremental repair operation applied to oriented cell boundaries,
+    a known pattern.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: monomial_ideal_irreducible_encoding
+  summary: Translate monomial ideals between minimal generators and irredundant intersections of pure-power
+    ideals across mixed exponents and bounded or unbounded staircases; answer the equivalent ideal data.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-specific:P006
+    relationship: same_operation
+    overlap: Translate between generator-based and intersection-based descriptions of algebraic structures
+      (monomial ideals vs min-plus polynomials).
+  - id: proposal:ua_representation-transfer:P007
+    relationship: adjacent
+    overlap: Translate between different representations of combinatorial objects, but for tilings vs
+      ideals.
+  - id: proposal:ua_state-tracking:P011
+    relationship: adjacent
+    overlap: Translate between algebraic representations, but norms vs ideals.
+  reason: 0/3 samples judged it novel; Known algebraic representation transfer; not a new operation in
+    this batch.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: terminal_payoff_replication_translation
+  summary: Translate piecewise-affine terminal payoffs into cash, forward, call, and digital holdings
+    or recover payoff segments from holdings; answer equivalent exposures preserving jumps, slopes, and
+    tails.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-specific:P006
+    relationship: same_operation
+    overlap: Translate piecewise-affine functions between coefficient and breakpoint representations (tropical
+      corners vs financial payoffs).
+  - id: proposal:ua_systematic-generalization:P006
+    relationship: adjacent
+    overlap: Handle piecewise functions with jumps and slopes but in different contexts (derivatives vs
+      holdings).
+  - id: proposal:ua_semantics-preserving-translation:P004
+    relationship: adjacent
+    overlap: Semantics-preserving translation between equivalent representations, but different domains
+      (wave vs financial).
+  reason: 0/3 samples judged it novel; Known operation of translating piecewise-affine functions into
+    canonical forms, just re-skinned for finance.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: gaussian_density_refactorization
+  summary: Translate scalar or block affine Gaussian conditionals into joint quadratic log densities and
+    refactor under a supplied variable order; answer exact parameters, preserving normalization.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P004
+    relationship: same_operation
+    overlap: Translate between local and joint density representations (Gaussian conditional vs polynomial
+      local densities) with exact parameters.
+  - id: proposal:ua_systematic-generalization:P008
+    relationship: adjacent
+    overlap: Manipulate probability densities through transformations, but pushforwards vs Gaussian refactorizations.
+  - id: task:generated.k3_hierarchical_recursive_r1.partial_fraction_decomposition.partial_fraction_decomposition:PartialFractionDecomposition
+    relationship: adjacent
+    overlap: Algebraic refactorization of functions, but rational vs Gaussian.
+  reason: 0/3 samples judged it novel; Known density refactorization operation applied to Gaussians; not
+    novel.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: angular_momentum_coupling_translation
+  summary: Translate sparse angular-momentum states between magnetic-label bases and different coupling
+    trees using supplied coupling coefficients and phase conventions; answer exact state amplitudes.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-transfer:P004
+    relationship: same_operation
+    overlap: Translate between equivalent mathematical bases (Plucker coordinates vs angular momentum
+      states) with an exact oracle for amplitudes.
+  - id: proposal:ua_representation-specific:P006
+    relationship: adjacent
+    overlap: Representation transfer between coefficient forms, but min-plus vs quantum states.
+  - id: task:generated.k3_semantics_preserving_translation_r1.utf8_encoding_translation.utf8_encoding_translation:Utf8EncodingTranslation
+    relationship: adjacent
+    overlap: Bidirectional translation between representations with exactness, but different domains.
+  reason: 0/3 samples judged it novel; Known representation-transfer operation in a physics setting; not
+    novel.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: ribbon_surface_flag_translation
+  summary: Translate cyclic vertex orders and edge twists into flag involutions and back, preserving loops,
+    parallel edges, boundary components, and nonorientable bands; answer the equivalent embedded map.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: same_operation
+    overlap: Manipulate ribbon surfaces via cyclic orders and edge twists, translating between surface
+      and combinatorial descriptions.
+  - id: proposal:k3_shortcuts-fail:P011
+    relationship: adjacent
+    overlap: Use cyclic vertex order to derive face structures, but for planar embeddings vs ribbon surfaces.
+  - id: proposal:ua_representation-transfer:P004
+    relationship: adjacent
+    overlap: Representation transfer between coordinate systems, but for Grassmann vs ribbon surfaces.
+  reason: 0/3 samples judged it novel; Variant of the known ribbon-surface representation handling, not
+    a novel cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: divided_difference_expansion
+  summary: Apply iterated polynomial operators that subtract a variable-swapped copy and divide by the
+    variable difference; range over repeated indices, products, and sparse sums, returning the resulting
+    coefficients.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: same_operation
+    overlap: Expand products/operators using combinatorial rules (shuffle vs divided difference) returning
+      exact coefficients.
+  - id: proposal:k3_state-tracking:P008
+    relationship: adjacent
+    overlap: Apply iterative operators to polynomials (forward differences vs divided differences), but
+      different operators.
+  - id: task:generated.k3_hierarchical_recursive_r1.polynomial_expansion.polynomial_expansion:PolynomialExpansion
+    relationship: adjacent
+    overlap: Polynomial manipulation and coefficient extraction, but standard expansion vs operator application.
+  reason: 1/3 samples judged it novel; Known polynomial operator application; variant of expansion tasks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: term_residual_tracking
+  summary: Track marked node occurrences through supplied term rewrites that duplicate, erase, or relocate
+    substituted subtrees; return all surviving descendants of a mark or the origins of a queried occurrence.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.alias_mutation_tracking.alias_mutation_tracking:AliasMutationTracking
+    relationship: same_operation
+    overlap: Track references through mutations (aliases vs term rewrites) and report affected descendants
+      or origins.
+  - id: proposal:ua_compositional-generalization:P003
+    relationship: adjacent
+    overlap: Track marked entities through transformations, but in genetic vs term-rewrite domains.
+  - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+    relationship: adjacent
+    overlap: Track items through recursive procedures, but for call stacks vs term rewriting.
+  reason: 1/3 samples judged it novel; Same reference-tracking operation applied to a new data structure
+    (terms).
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: oriented_matroid_representation_transfer
+  summary: Translate oriented matroids between sign-anchored chirotopes and signed circuits across ranks,
+    loops, parallel elements, and vanishing minors; answer the equivalent orientation data.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P002
+    relationship: same_operation
+    overlap: Translate between oriented matroid representations (chirotopes vs signed circuits) with exact
+      oracle.
+  - id: proposal:ua_representation-transfer:P004
+    relationship: adjacent
+    overlap: Representation transfer between geometric structures, but Grassmann vs oriented matroids.
+  - id: proposal:ua_representation-specific:P006
+    relationship: adjacent
+    overlap: Representation transfer with coefficient recovery, different mathematical objects.
+  reason: 0/3 samples judged it novel; Duplicate of the known oriented matroid representation operations.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: interval_exchange_induction
+  summary: Update paired label orders and lengths through successive left or right induction steps; track
+    winner-dependent reinsertion, length subtraction, and tie termination, returning the residual exchange.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_dynamic_structures_r1.line_cross_swap_schedulev2.line_crossing_swap_schedule:LineCrossSwapSchedulev2
+    relationship: same_operation
+    overlap: Iteratively update orderings by length comparisons and swaps, returning the residual state.
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: adjacent
+    overlap: Apply iterative expansion rules, but on different structures (integrals vs intervals).
+  - id: proposal:ua_incremental-recomputation:P008
+    relationship: adjacent
+    overlap: Update a system based on incremental changes, but between intervals and displays.
+  reason: 1/3 samples judged it novel; Variant of dynamic swap/update tasks with no new cognitive structure.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: nested_transaction_unwinding
+  summary: Resolve nested transaction histories with savepoints, child commits, ancestor aborts, and durable
+    side effects; determine which writes survive or which stored values are restored after unwinding.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_language-implementation:P001
+    relationship: same_operation
+    overlap: 'Both unwind nested control structures with aborts and restores: generator_reentry_trace
+      handles yield-from delegation, sent values, closes, and mutable frames, while C005 handles nested
+      transactions with savepoints, child commits, and ancestor aborts. The operation of managing nested
+      scopes and determining surviving effects is the same.'
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: same_operation
+    overlap: 'Both reduce nested histories under reversal/abort: hysteresis_reversal_memory closes nested
+      excursions and erases enclosed extrema; nested_transaction_unwinding aborts ancestor transactions
+      and restores writes. Both track which deeper state survives after outer-rollback.'
+  - id: proposal:k3_language-implementation:P008
+    relationship: adjacent
+    overlap: Both involve recovery/rollback but ARIES handles crash recovery with logs and checkpoints,
+      while C005 handles transaction nesting without logging.
+  reason: 1/3 samples judged it novel; Same nested-rollback operation as generator_reentry_trace and hysteresis_reversal_memory,
+    only displaced to a transaction domain.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: partizan_game_canonicalization
+  summary: Reduce finite partizan game trees by eliminating dominated options and bypassing reversible
+    moves, including numeric and incomparable subgames; recover the canonical game or surviving root options.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_systematic-generalization:P009
+    relationship: same_operation
+    overlap: 'Both operate on finite partizan games: finite_partizan_order compares games via recursive
+      option exclusion; canonicalization reduces games by eliminating dominated options and reversing
+      reversible moves. The shared operation is recursive game comparison and reduction using dominance/reversibility.'
+  - id: task:generated.k3_uncertainty_r1.iterated_dominance_elimination.iterated_dominance_elimination:IteratedDominanceElimination
+    relationship: adjacent
+    overlap: Iterated dominance elimination removes dominated strategies in games, but it works on normal-form
+      payoff matrices, not on game trees, and does not handle reversibility.
+  - id: task:generated.k3_invariants_r1.weakest_precondition_computation.weakest_precondition_computation:WeakestPreconditionComputation
+    relationship: different
+    overlap: Weakest precondition computes logical predicates, unrelated to game reduction.
+  reason: 0/2 samples judged it novel; Same game-tree reduction and comparison operation as finite_partizan_order
+    with added dominance elimination, making it a variant.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/2
+- name: layer_group_compositing
+  summary: Composite nested image-layer groups with masks, group opacity, isolated or pass-through blending,
+    and knockout behavior; determine the resulting pixel color and opacity or a selected group's contribution.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P007
+    relationship: same_operation
+    overlap: Both composite nested paint groups with opacity, masks, isolation, and knockout rules, returning
+      resulting color and coverage.
+  - id: proposal:ua_state-tracking:P012
+    relationship: adjacent
+    overlap: Both compose rendering state (masks/opacity vs. stencil/depth) and return pixel state, but
+      the operations differ.
+  - id: proposal:ua_shortcuts-fail:P002
+    relationship: different
+    overlap: Secret sharing is unrelated to image compositing.
+  reason: 0/3 samples judged it novel; This is a cosmetic variant of the existing layer-group compositing
+    proposal.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: partition_core_quotient_translation
+  summary: Translate integer partitions between row lengths and modulus-indexed cores with quotient partitions
+    through abacus runner splitting and charge recovery; answer the equivalent partition data.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P003
+    relationship: same_operation
+    overlap: Both translate partitions, beta sets, and abaci into core-and-quotient data, returning core
+      and quotient components.
+  - id: proposal:ua_representation-transfer:P008
+    relationship: different
+    overlap: Newton-Puiseux deals with algebraic curves, not partitions.
+  - id: proposal:ua_representation-transfer:P004
+    relationship: different
+    overlap: "Pl\xFCcker charts concern subspaces, not partitions."
+  reason: 0/3 samples judged it novel; This is a duplicate of the abacus_partition_transfer proposal.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: recursive_path_order_comparison
+  summary: Compare term trees under symbol precedence and argument status, combining subterm dominance
+    with lexicographic or multiset extensions; determine whether terms are greater, less, equivalent,
+    or incomparable.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P006
+    relationship: same_operation
+    overlap: 'Both compare objects via a recursive order: OT tableau ranking compares violation vectors
+      under constraint ranking with ties; C008 compares term trees via recursive path order with symbol
+      precedence. Both use a well-founded recursive comparison to determine greater/less/equal/incomparable.'
+  - id: proposal:ua_latent-representation:P008
+    relationship: same_operation
+    overlap: 'Both compare channels/preferences for dominance or equivalence: experiment_garbling_order
+      tests information dominance via stochastic transforms; C008 tests term dominance via recursive path
+      order. The operation of deciding order/equivalence between two structured objects is shared.'
+  - id: proposal:ua_latent-representation:P011
+    relationship: adjacent
+    overlap: Additive preference representability also compares options but uses additive utility, not
+      recursive tree order.
+  reason: 1/3 samples judged it novel; Same recursive-order comparison operation as OT tableau and garbling
+    order, differing only in the structure being compared.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: fold_stack_punch_pullback
+  summary: Trace punches backward through nested paper folds, varying fold direction, partial flaps, layer
+    selection, and repeated folds; determine the original-sheet locations and multiplicities of resulting
+    holes.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: gallery:spatial_folding
+    relationship: same_operation
+    overlap: Both trace hole positions through folding and punching on a square grid, answering original
+      locations and multiplicities.
+  - id: proposal:ua_counterfactual:P003
+    relationship: different
+    overlap: Quantum interference is unrelated to paper folding.
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: different
+    overlap: Iterated integrals are not a folding operation.
+  reason: 0/3 samples judged it novel; Fold-stack punch pullback is a direct duplicate of the existing
+    spatial_folding gallery task.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: lineage_share_reallocation
+  summary: Allocate an estate through descendant trees using branch representation or generation pooling,
+    with extinct branches and explicitly defined disqualifications; determine each eligible descendant's
+    final share.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_uncertainty:P007
+    relationship: same_operation
+    overlap: 'Both reallocate a residual estate after removing or disqualifying claimants: P007 removes
+      claimants after paying shares and redistributes the residual under proportional/priority rules;
+      C001 allocates via descendant trees with extinct branches and disqualifications, then determines
+      final shares, which is the same redistribute-after-removal procedure with branch-based rules.'
+  - id: proposal:ua_counterfactual:P002
+    relationship: adjacent
+    overlap: Both involve trees and combining branches, but P002 reconciles trees into a network via reticulation
+      choices; C001 allocates shares through descendant trees without reticulation or minimum counts.
+  - id: task:generated.k3_hierarchical_recursive_r1.decision_tree_induction.decision_tree_induction:DecisionTreeInduction
+    relationship: different
+    overlap: Decision-tree induction builds a tree by splitting on information gain; C001 computes shares
+      on a given tree without splitting decisions.
+  reason: 1/3 samples judged it novel; Same redistribute-after-removal operation as the estate reallocation
+    neighbor, differing only in branch-structure details.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: piecewise_envelope_repair
+  summary: Repair upper or lower envelopes after inserting, deleting, or editing domain-limited affine
+    pieces; account for intersections, ties, and gaps, returning changed winner intervals and their new
+    expressions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P009
+    relationship: same_operation
+    overlap: 'Both repair a global structure after local edits: P009 repairs dyadic partitions after refinement/coarsening
+      with size limits; C002 repairs envelope pieces after inserting/deleting/editing affine pieces, both
+      returning changed local regions and new descriptions.'
+  - id: proposal:ua_incremental-recomputation:P006
+    relationship: same_operation
+    overlap: 'Both update classification after geometric edits: P006 updates probe winding labels after
+      vertex moves/deletions; C002 updates winner intervals after editing affine pieces. The operation
+      is the same: identify changed portions of a decomposition after local modifications.'
+  - id: proposal:ua_incremental-recomputation:P010
+    relationship: adjacent
+    overlap: Both use interval slicing after edits, but P010 works in temporal dimensions and history,
+      while C002 works in spatial/domain affine pieces.
+  reason: 1/3 samples judged it novel; Same incremental-repair operation as two neighbors, with only the
+    geometric domain and output format changed.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: algebraic_field_presentation_transfer
+  summary: Translate algebraic elements between nested field towers and supplied primitive-element presentations,
+    reducing defining relations while preserving designated embeddings; answer exact basis coefficients.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-transfer:P004
+    relationship: same_operation
+    overlap: 'Both translate between equivalent algebraic representations: Plucker chart transfer converts
+      spanning matrices to Plucker coordinates; C009 converts between field towers and primitive-element
+      presentations. Both preserve the underlying object and find exact coefficients.'
+  - id: proposal:ua_representation-transfer:P007
+    relationship: same_operation
+    overlap: Stepped surface reconstruction translates between lozenge tilings, height arrays, and cube
+      order ideals; C009 translates between nested field presentations. Both are bijective representation
+      transfers with exact output.
+  - id: proposal:ua_incremental-recomputation:P003
+    relationship: adjacent
+    overlap: Both are representation transfers but for partitions, not fields.
+  reason: 1/3 samples judged it novel; Same representation-transfer operation as Plucker chart and stepped
+    surface transfers, just with field elements instead of subspaces or tilings.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: relational_lens_putback
+  summary: Propagate view insertions, deletions, and replacements backward through selection, projection,
+    and join lenses with declared keys and deletion policies; return the changed source rows.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P002
+    relationship: same_operation
+    overlap: Both push view edits backward through relational lenses over selections, projections, and
+      joins, returning changed source rows.
+  - id: proposal:ua_representation-specific:P003
+    relationship: adjacent
+    overlap: Both propagate deletions through structured data (relations vs. observed sets), but the latter
+      lacks relational joins/projections.
+  - id: proposal:ua_representation-specific:P004
+    relationship: different
+    overlap: Relation residuation computes largest relations satisfying composition containments, not
+      view putback.
+  reason: 0/3 samples judged it novel; Putback over relational lenses is a direct variant of the existing
+    composed_lens_update proposal.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: hydra_cut_regrowth
+  summary: Apply leaf-cut and ancestor-copy rules to hydra trees, varying cut depth, sibling order, move-dependent
+    regrowth, and successive cuts; determine the resulting tree or remaining head count.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P011
+    relationship: same_operation
+    overlap: Both compute the result of applying cut operations (leaf-cut/ancestor-copy vs. admissible
+      cuts) to rooted trees, with the answer being the resulting tree or coefficient.
+  - id: task:generated.k3_hierarchical_recursive_r1.recursion_tree_cost_analysis.recursion_tree_cost_analysis:RecursionTreeCostAnalysis
+    relationship: adjacent
+    overlap: Both involve recursively processing tree structures (hydra trees vs. call trees) with varying
+      branch shapes and returning an exact aggregate (tree or cost).
+  - id: proposal:ua_representation-specific:P007
+    relationship: different
+    overlap: Partition rim-strip cancellation removes strips from partitions, not tree nodes; no shared
+      operation.
+  reason: 1/3 samples judged it novel; Hydra regrowth is a direct variant of rooted-tree cut composition,
+    which is already in the catalog.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: multirate_polyphase_translation
+  summary: Translate periodically varying finite filters between sample-index equations and polyphase
+    delay matrices across rate changes, phase offsets, and boundary delays; answer equivalent coefficients.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-specific:P006
+    relationship: same_operation
+    overlap: 'Both translate a mathematical object between two equivalent representations: P006 switches
+      between min-plus polynomial coefficient lists and weighted breakpoint descriptions; C003 switches
+      between sample-index equations and polyphase delay matrices. The core is representation transfer
+      with equivalence preservation.'
+  - id: proposal:ua_representation-transfer:P004
+    relationship: same_operation
+    overlap: 'Both transfer between equivalent coordinate systems: Plucker chart transfer changes spanning
+      matrices to Plucker coordinates; multirate polyphase translates filter equations to delay matrices.
+      Both preserve underlying object and recover coefficients.'
+  - id: proposal:k3_semantics-preserving-translation:P003
+    relationship: adjacent
+    overlap: Both are semantics-preserving translations but one is syntactic (lambda terms) and the other
+      algebraic (filters); no direct shared procedure.
+  reason: 1/3 samples judged it novel; Same representation-transfer operation as the tropical polynomial
+    and Plucker chart neighbors, differing only in the object being translated.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: prosodic_domain_tone_docking
+  summary: Associate floating tones with syllables across nested prosodic domains under stated docking,
+    spreading, and blocking rules; vary domain boundaries and occupied hosts; answer the final tone associations.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_parsing_and_agreement_r1.vowel_harmony_spreading.vowel_harmony_spreading:VowelHarmonySpreading
+    relationship: same_operation
+    overlap: Both spread autosegmental features across syllables with blockers and transparent units;
+      tones and harmony features are interchangeable.
+  - id: task:generated.k3_formal_semantics_r1.tag_adjunction_derivation.tag_adjunction_derivation:TagAdjunctionDerivation
+    relationship: adjacent
+    overlap: Both operate on tree structures with attachment/docking, but TAG derivation inserts trees
+      while this associates tones to syllables.
+  - id: proposal:k3_semantics-preserving-translation:P003
+    relationship: different
+    overlap: DeBruijn translation changes variable representation, unrelated to phonological feature spreading.
+  reason: 1/3 samples judged it novel; Vowel harmony spreading with tones; same operation applied to a
+    different feature set.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: branch_sensitive_resource_audit
+  summary: Audit resource use in nested sequential, exclusive-choice, and parallel blocks; vary linear
+    and affine obligations plus local creation and transfer; identify resources whose usage violates the
+    stated discipline.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.deadlock_detection.deadlock_detection:DeadlockDetection
+    relationship: same_operation
+    overlap: Both track resource usage and ownership across execution to audit for violations (deadlock
+      vs. discipline), with structure changes only in control flow.
+  - id: proposal:k3_language-implementation:P003
+    relationship: adjacent
+    overlap: Both simulate programs with control flow, but one tracks resource obligations, the other
+      evaluates values.
+  - id: proposal:k3_operations-research:P012
+    relationship: adjacent
+    overlap: Both enforce resource constraints over tasks, but one is scheduling on unary resources, the
+      other is auditing resource usage in a program.
+  reason: 1/3 samples judged it novel; Resource tracking with sequential/parallel control flow is a variant
+    of deadlock detection; no fundamentally new operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: guillotine_layout_extent
+  summary: Determine enclosing dimensions for recursively sliced layouts with rotatable leaf rectangles,
+    cut gutters, and alignment constraints; vary horizontal and vertical nesting; answer the minimum-area
+    feasible dimensions.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.wave8.struct_layout_alignment.struct_layout_alignment:StructLayoutAlignment
+    relationship: adjacent
+    overlap: Both compute final dimensions from nested component sizes and alignment rules (struct alignment
+      vs. recursive slicing), but the struct layout is padding-based, not optimization over rotatable
+      rectangles with gutters.
+  - id: proposal:k3_operations-research:P009
+    relationship: adjacent
+    overlap: Both are optimization problems with piecewise costs (tiered pricing vs. cut gutters), but
+      one is about lot sizing, not spatial packing.
+  - id: task:generated.wave9.minimum_spanning_tree.minimum_spanning_tree:MinimumSpanningTree
+    relationship: different
+    overlap: Minimum spanning tree selects edges, unrelated to 2D layout.
+  reason: 1/3 samples judged it novel; No known task optimizes enclosing area for guillotine-sliced layouts
+    with rotation and gutters; it is a novel spatial reasoning task.
+  scores:
+    novelty: 4
+    sft_value: 3
+    feasibility: 3
+    clarity: 3
+  votes: 1/3
+- name: pedigree_identity_probability
+  summary: Compute kinship or inbreeding probabilities through pedigrees with shared ancestors, repeated
+    ancestry paths, and specified founder relationships; answer the exact identity-by-descent probability
+    for a queried pair or individual.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_relational_structures_r1.kinship_relation_resolution.kinship_relation_resolution:KinshipRelationResolution
+    relationship: same_operation
+    overlap: Both compute kinship-related values on pedigrees by tracing common ancestors and paths; one
+      gives relations, the other identity-by-descent probabilities.
+  - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+    relationship: adjacent
+    overlap: Both compute exact probabilities from conditional structures, but one is a general Bayesian
+      network and the other is a kinship-specific pedigree.
+  - id: proposal:ua_state-tracking:P008
+    relationship: different
+    overlap: Both handle probability constraints, but marginal extension combines tables over arbitrary
+      variables, while this tracks identity through a pedigree.
+  reason: 0/3 samples judged it novel; Same pedigree traversal as kinship resolution, only the computation
+    changes from relation labels to IBD probabilities.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: term_rewrite_residual_transport
+  summary: Transport marked redex occurrences through nested term rewrites that erase, duplicate, or permute
+    variable subtrees; distinguish surviving occurrences from newly created ones and return residual positions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_global-from-local:P009
+    relationship: same_operation
+    overlap: 'Both trace the fate of marked items through a deterministic rewrite system: the neighbor
+      derives surface strings via ordered rewrite rules, and C010 transports marked redex occurrences
+      through term rewrites. Both need to track whether a marked element survives, duplicates, or is erased
+      under rule application, and return its final position or absence.'
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: adjacent
+    overlap: Both track items (redexes vs. extrema) through a sequence of operations that can erase or
+      reorder, but the neighbor is about memory hysteresis, not term rewriting.
+  - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+    relationship: different
+    overlap: Graph edge reduction is deterministic but does not involve rewriting with duplication or
+      deletion of marked subterms.
+  reason: 1/3 samples judged it novel; Marking elements through rewrites is already done in ordered_rule_surface_derivation;
+    only the term structure differs.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 3
+    clarity: 3
+  votes: 1/3
+- name: tree_chip_firing_stabilization
+  summary: Stabilize chip configurations on rooted trees with absorbing sinks, weighted transfers, and
+    node thresholds; determine final chip counts or firing multiplicities after additions and cascading
+    discharges.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.chip_firing_stabilization.chip_firing_stabilization:ChipFiringStabilization
+    relationship: same_operation
+    overlap: Stabilize chip configurations on graphs by firing overloaded vertices, only the graph class
+      (trees with sinks) and weights/thresholds differ.
+  - id: proposal:k3_global-from-local:P008
+    relationship: adjacent
+    overlap: Both iteratively apply local thresholds to reach a fixpoint, but chip firing moves chips
+      to neighbors while threshold cascades activate nodes.
+  - id: task:generated.k3_relational_structures_r1.tree_subset_counting.tree_subset_counting_dp:TreeSubsetCounting
+    relationship: different
+    overlap: Both process trees but the former counts combinatorial objects via DP, not firing dynamics.
+  reason: 0/3 samples judged it novel; Same chip-firing stabilization operation on a subclass of graphs
+    with added parameters.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: hierarchical_symmetry_orbits
+  summary: Determine which leaves can exchange under structure-preserving symmetries of nested assemblies;
+    vary fixed, cyclic, dihedral, and freely permutable child arrangements plus leaf colors; answer a
+    marked leaf's orbit.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_uncertainty:P010
+    relationship: same_operation
+    overlap: 'Both compute the orbit partition of a structure under symmetries that respect additional
+      constraints: the neighbor pins sites or labels to retain symmetries and reports the orbit partition;
+      C004 determines which leaves can exchange under symmetries that preserve nested child arrangements
+      and colors. Both perform group action on a hierarchical structure with restricted permutations.'
+  - id: task:generated.wave8.finite_group_inverse.finite_group_inverse:FiniteGroupInverse
+    relationship: adjacent
+    overlap: Both involve group actions on labeled sets, but the neighbor computes inverses in a Cayley
+      table, not orbits under symmetry.
+  - id: proposal:k3_shortcuts-fail:P011
+    relationship: different
+    overlap: Rotation-system face tracing uses cyclic orders but to enumerate faces, not to compute symmetry
+      orbits; only the term 'cyclic' is shared.
+  reason: 1/3 samples judged it novel; Computing orbit partitions under restricted symmetries is already
+    the neighbor's operation; the tree shape is a parameter.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 3
+    clarity: 3
+  votes: 1/3
+- name: reinforced_tree_prediction
+  summary: Condition reinforced branching choices on observed leaf visits or partially revealed paths;
+    vary local initial weights, reinforcement amounts, and hidden branches; answer an exact next-visit
+    probability.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: same_operation
+    overlap: Both compute exact probabilities on branching trees with dynamic transitions; reinforcement
+      is just a parameter that changes the transition probabilities.
+  - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+    relationship: adjacent
+    overlap: Both compute probabilities from conditional structures, but Bayesian conditioning uses fixed
+      CPTs while this uses reinforcement.
+  - id: proposal:ua_compositional-generalization:P011
+    relationship: different
+    overlap: Composing formal tree series is algebraic, not stochastic.
+  reason: 1/3 samples judged it novel; Essentially a probability tree with dynamic weight updates; same
+    marginal probability computation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: nested_coalition_marginal_credit
+  summary: Average a member's marginal contribution over arrival orders that keep every nested coalition
+    contiguous; vary coalition shapes and additive, synergistic, or antagonistic worth rules; answer the
+    exact attributed share.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_rule_induction_r1.shapley_value_marginal_contributions.shapley_value_marginal_contributions:ShapleyValueMarginalContributions
+    relationship: same_operation
+    overlap: Both compute marginal contributions averaged over permutations of players; nesting as contiguous
+      blocks is a parameter restriction on permutations.
+  - id: proposal:k3_operations-research:P004
+    relationship: adjacent
+    overlap: Both consider nested structures for allocation, but one averages marginal contributions while
+      the other sets booking limits.
+  - id: proposal:ua_global-over-greedy:P002
+    relationship: different
+    overlap: Coalitional payoff stability checks existence of allocations under constraints, not attribution
+      by averaging.
+  reason: 0/3 samples judged it novel; Shapley value computation with a contiguity restriction; same operation
+    but new parameter.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: graph_rewrite_gluing_obstructions
+  summary: Apply node-and-edge replacement rules through noninjective graph matches; detect dangling edges
+    and forbidden identifications, returning an obstruction witness or a queried surviving connection.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P008
+    relationship: same_operation
+    overlap: Both apply graph rewriting rules with node/edge replacement, including dangling edge conditions
+      and negative application conditions, differing only in match injectivity and mode focus.
+  - id: task:generated.k3_synthetic_grammars_r1.hyperedge_replacement_derivation.hyperedge_replacement_derivation:HyperedgeReplacementDerivation
+    relationship: adjacent
+    overlap: Both replace parts of a graph by another graph with glueing, but HRD uses hyperedges while
+      this uses standard edges.
+  - id: proposal:ua_semantics-preserving-translation:P003
+    relationship: different
+    overlap: Both transform graphs, but local complementation pivots neighborhoods without applying general
+      rewrite rules.
+  reason: 0/3 samples judged it novel; Essentially the same graph rewriting operation with a twist on
+    matching and output, not a new cognitive step.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+pool:
+- name: adaptive_partition_rebalance
+  summary: Repair rectangular subdivision meshes after local refinement or requested coarsening; enforce
+    stated neighbor depth bounds with minimal additional splits, returning changed leaves or a blocked
+    coarsening.
+- name: compositional_lens_putback
+  summary: Push view replacements backward through composed, paired, and branched lenses with retained
+    complements; preserve hidden source fields and return the updated source or the first undefined update.
+- name: graph_rewrite_gluing
+  summary: Apply interface-preserving graph rewrites at supplied matches, checking dangling edges and
+    forbidden vertex identifications before each step; return the resulting graph or the blocking elements.
+- name: tree_pair_group_product
+  summary: Multiply elements represented by paired binary trees by refining shared middle trees, carrying
+    expansions to outer trees, and cancelling matching carets; recover the reduced product or decide identity.
+- name: nested_membrane_evolution
+  summary: Evolve nested compartments through simultaneous token consumption, inward or outward transport,
+    division, and deferred dissolution under stated rule priorities; determine compartment contents after
+    successive rounds.
+- name: fault_tree_minimal_cutsets
+  summary: Derive minimal leaf-failure sets for nested AND, OR, and threshold fault gates, sharing repeated
+    leaf identities and removing redundant supersets; identify all minimal cutsets or test a proposed
+    cutset.
+- name: phylogenetic_event_reconciliation
+  summary: Reconcile rooted gene trees with species trees using leaf species labels; vary repeated species,
+    missing lineages, and branching shapes; report implied duplication and loss counts under stated event
+    rules.
+- name: recursive_partition_interface
+  summary: Measure interfaces between labeled regions in recursively subdivided rectangles; vary unequal
+    refinement, alternating split axes, holes, and repeated labels; answer shared boundary length for
+    a requested label pair.
+- name: hereditary_base_descent
+  summary: Execute base changes and predecessor steps on hereditary numerals whose exponents are recursively
+    encoded; vary sparse digits, nested exponents, and borrowing chains; answer the resulting hereditary
+    numeral.
+- name: hierarchical_conservative_rounding
+  summary: Round fractional leaf quantities while preserving prescribed totals throughout a grouping hierarchy;
+    vary signed values, fixed leaves, and competing rounding costs; answer the least-cost consistent leaf
+    allocation.

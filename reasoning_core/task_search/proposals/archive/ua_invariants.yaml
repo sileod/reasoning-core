@@ -1,0 +1,964 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_invariants
+created_at: '2026-09-16T21:25:41.586980+00:00'
+provenance:
+  kind: proposer
+  name: ua_invariants
+  received: '2026-09-16'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks that teach models to identify invariants, sufficient statistics, or conserved
+    structure. The catalog you were shown already covers the classic textbook algorithms -- sorting, gcd,
+    graph traversal, compression, scheduling, matching, parsing -- and a proposal that names one will
+    be rejected as a repeat however well it fits this brief. Reach past the standard repertoire: propose
+    structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 8
+  complete: false
+catalog:
+  sha256: 4a3bb76912a29cc8fdeb184df8b4bee50a3cb0c3ed1dd3ea6e2775b5f4d56048
+  entries: 782
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 177
+    task: 443
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-1
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 8c1c1760200fa687c580f735623d0169637f822f8f0ea5a8e57af7b6501c0b5c
+    response_sha256: 3baab3abd1d4099d33a69b4f01b709b2d3308dc253edcefcdaef7f6f7f03943d
+    response_id: gen-1789592581-tt31S3F77kdmMZVuIDdY
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 53c6413141429788feaf3325d48db8e95522c17279856377539dbb14c5ea60ec
+    response_sha256: de274224c3043069a5f965a8fc73574935d1bcfcabfdeefa6bf5f84b9828e5c4
+    response_id: gen-1789593410-FAxhI8b2ZPG2yRrdjWnP
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 99e3a79373ab0e5e5c874cf52951fe17d23eaabd671cec44488c72ce18ed2ba0
+    response_sha256: 8717270787ffa10eb71df6abbd6074da01751b41eceeeb07456538731f8faff4
+    response_id: chatcmpl-b7fa0d5e824ce3da
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 55a3481590149ec0d743b25174c29c220b5dc6ff18a2da60e8ea83829380619f
+    response_sha256: 1c332ef01233bd7f66ce7f619903c98adf37bb4044ba13a4e3e99d7a0569c66c
+    response_id: chatcmpl-99545ec889087717
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 9fa90dfcfbb72f9476a8c9148decc0aebc8ebff623c065317be03f55a566735f
+    response_sha256: 5b71f60e653805f524b02ddcc11cadf2af3b8a5279b8d5f2143a06fe6abb5e9a
+    response_id: chatcmpl-ae13e700fd986542
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 80b89642aa2f533003f3f87cb373829bce21eb557d1a202c710dd48ebf6dcbf3
+    response_sha256: a8c9b0c7da7e1ccafd26a75822159f48bf574e0d05e2de7235caad2769552848
+    response_id: chatcmpl-940d36fbc85cf98f
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: b03f8b889771b39e2ce4e525dc1230d71e1544346ca510f657a2b731a38f1f51
+    response_sha256: 45aa0a9b14527dc5baf3485df5d670cf2bdf70341104df7dede5432bcdb9b65a
+    response_id: chatcmpl-8cb8f3d28d2d2c46
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: fa8cb95bf797985310faa9755984dc2071c4816c631b74519f6fb39b7e2b4e7a
+    response_sha256: c32cf5604b04284d8629b04489db39af8c2d37c2f1d1a60ff53a69d706f4f5c5
+    response_id: chatcmpl-a81e3af80ecd545b
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 5668ad427f157886537a89892e9e26132b8d0cf2fe8a64840d00cc37814f2b74
+    response_sha256: 81aee6fc3c08ba3e2504b44e21f512b51e20542c365242a23e4f48628e0b3a89
+    response_id: chatcmpl-b5ca09a737637ba7
+  - purpose: critic-round-3-sample-1-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 6191c27b198f3f17d10aea29249af40ca4fb0d5260a14a05fb5492c2953cfd48
+    response_sha256: c9c41b241d1c6f9c674d1a31144fba9d2ff66d09f553d6e08025f1f47d0ccdf7
+    response_id: chatcmpl-9ba893511915e8d4
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 57164a298a811096c5d135e08c3bdff309e8af3e0aaffa3ad52eb120944e1174
+    response_sha256: 33377b6cf20012fceb29f29b02c2eb997b2d5ef8b94f5635a10e9afb4447a2f5
+    response_id: chatcmpl-b263dad6bc7e900d
+  - purpose: critic-round-3-sample-2-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 6c38afa2a271e61454ed6351d5db41d2903224da738901da44dc12e494d3729a
+    response_sha256: e1052954a90a0ae2156736b23a2c47c412d93ecfaeaef5128a9a05c81b87c0c3
+    response_id: chatcmpl-ab1011c752ad4a15
+  - purpose: critic-round-3-sample-2-retry2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: a050be566bc8fe6ce402eafda33f208c29263143d82899a37b8d65eeee14e49c
+    response_sha256: 998ab96a1af1008f05fbf0a76d774548a18e8444470700fb9c2a476435c3e399
+    response_id: chatcmpl-b1183554042aed98
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: dff0abdb2e7205d6e1259f29452a1bb498e53b80cc6d464c9c82d73c9919eab1
+    response_sha256: dcfbeadb43c61eeaebf14beea9a98bc13167264b5b21a8398f4acc1082f633a0
+    response_id: chatcmpl-8f92e411e84cca35
+  - purpose: critic-round-3-sample-3-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c6e48aeff1e2ae3b38a38827ce803306ee628e07179253f51f6552239f3b2ea9
+    response_sha256: b535e8687f0675a191f1f2769b7581afc297b5e300b0e9d27387bba3b86594e3
+    response_id: chatcmpl-8fbfa516744a4a66
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-2-sample-1
+    presented: 10
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 10
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 10
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-3-sample-1
+    presented: 8
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 8
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 8
+    omitted: 0
+    malformed: 0
+proposals:
+- name: effective_boundary_response
+  summary: "Eliminate hidden nodes from rational conductance networks while preserving terminal current\xE2\
+    \x80\x93voltage behavior; recover the boundary response, decide exterior equivalence, or infer a uniquely\
+    \ determined conductance."
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:equation_system
+      relationship: adjacent
+      overlap: Both involve solving linear constraints, but C003 eliminates internal variables to find
+        terminal behavior while equation_system solves for unknowns generally.
+    - id: task:generated.wave9.causal_intervention.causal_intervention:CausalIntervention
+      relationship: different
+      overlap: Both can yield boundary responses, but causal intervention sets variables and truncates
+        edges, not equivalent to elimination preserving terminal I-V.
+    - id: task:generated.wave9.transitive_reduction.transitive_reduction:TransitiveReduction
+      relationship: different
+      overlap: Both remove redundant structure, but C003 removes hidden nodes to a boundary response,
+        unlike edge reduction in DAGs.
+    substantive_difference: "C003's core operation\u2014Schur complement elimination on conductance networks\
+      \ to obtain an exact boundary map\u2014is absent in all neighbors."
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor eliminates internal variables from a resistive network to obtain a reduced boundary
+      response, so it is novel.
+    votes: 3/3
+    dissent: []
+- name: cyclic_trace_invariants
+  summary: Identify equalities among traces of arbitrary-size noncommuting matrix words using cyclicity
+    and transpose laws; vary symmetric, skew, and paired-transpose factors; answer equality or a missing
+    coefficient.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_paraphrase-equivalence:P003
+      relationship: different
+      overlap: Both concern equivalence, but C012 is about matrix trace equalities and P003 about focus
+        particles.
+    - id: task:generated.k3_representation_specific_r1.necklace_canonical_rotation.necklace_canonical_rotation:NecklaceCanonicalRotation
+      relationship: adjacent
+      overlap: Both involve cyclic symmetry, but C012 uses cyclicity of traces and P003 canonicalizes
+        word rotations.
+    - id: task:generated.k3_parsing_and_agreement_r1.counter_machine_trace.counter_machine_trace:CounterMachineTrace
+      relationship: different
+      overlap: Both involve trace computation, but C012 is algebraic trace identities while that task
+        is about program counters.
+    substantive_difference: "C012 applies cyclic and transpose laws to noncommuting matrix words to prove\
+      \ trace equalities\u2014a symbolic algebra operation not found in neighbors."
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor performs trace equality reasoning under cyclic transposition; it is novel.
+    votes: 3/3
+    dissent: []
+- name: quadratic_energy_signature
+  summary: Determine the positive, negative, and null directions of rational quadratic energies with cross
+    terms and degeneracies; return the invariant signature or decide equivalence under invertible real
+    coordinate changes.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_hierarchical_recursive_r1.partial_fraction_decomposition.partial_fraction_decomposition:PartialFractionDecomposition
+      relationship: different
+      overlap: Both manipulate rational functions but C007 analyzes quadratic forms and P006 decomposes
+        rational functions.
+    - id: proposal:k3_state-tracking:P004
+      relationship: adjacent
+      overlap: Both evaluate expressions at a point, but C007 classifies quadratic signs and P006 computes
+        derivatives via dual numbers.
+    - id: plan:WAVE0:M7
+      relationship: adjacent
+      overlap: Both concern identifiability of a linear functional, but C007 is about quadratic form signature,
+        not equation solving.
+    substantive_difference: "C007 computes the Sylvester signature of a quadratic form and tests equivalence\
+      \ under real linear transformations\u2014a matrix algebra operation not present in neighboring tasks."
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor performs signature computation or congruence classification; it is novel.
+    votes: 2/2
+    dissent: []
+- name: local_quantum_sufficiency
+  summary: Extract the state accessible to selected subsystems from rational pure-state or mixed-state
+    descriptions with varied tensor orderings; decide local indistinguishability or return a queried local
+    expectation.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_latent-representation:P010
+      relationship: adjacent
+      overlap: Both use aggregation to check if coarse observables suffice, but P010 is state-space aggregation
+        while C005 is quantum subsystem reduction.
+    - id: gallery:equation_system
+      relationship: different
+      overlap: Both involve matrix operations but C005 extracts subsystems from tensor products, not solving
+        equations.
+    - id: proposal:k3_controlled-nli:P008
+      relationship: different
+      overlap: Both have an 'exact verifier' notion, but P008 is logical and C005 is quantum-mechanical.
+    substantive_difference: "C005's operation\u2014partial trace over subsystems of quantum states and\
+      \ testing local indistinguishability\u2014has no close analog in any neighbor."
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: The cognitive operation of extracting reduced density matrices and comparing local expectations
+      is novel.
+    votes: 3/3
+    dissent: []
+- name: stopped_expectation_conservation
+  summary: Use harmonic observables to preserve expectations through bounded stopping of finite stochastic
+    processes; audit proposed observables or infer uniquely determined terminal expectations and absorption
+    probabilities.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+      relationship: different
+      overlap: Both compute expectations, but C010 uses harmonic functions and stopping times, not conditional
+        distributions.
+    - id: proposal:k3_scientific-reasoning:P010
+      relationship: adjacent
+      overlap: Both extract identifiable quantities from limited data, but C010 is about stopping-time
+        invariants.
+    - id: task:generated.wave9.causal_intervention.causal_intervention:CausalIntervention
+      relationship: adjacent
+      overlap: Both involve structured processes and terminal outcomes, but C010 uses optimal stopping
+        theory.
+    substantive_difference: C010 uniquely uses the optional stopping theorem with harmonic functions to
+      infer terminal expectations, a distinct probabilistic operation not present in neighbors.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor uses harmonic functions and stopping times for expectation conservation; it is
+      novel.
+    votes: 2/3
+    dissent:
+    - variant
+- name: nuisance_contrast_identifiability
+  summary: From linear readings with shared offsets, drift terms, or calibration nuisances, determine
+    whether a target contrast is identifiable and recover its value by eliminating nuisance directions.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:mutated.wave0.m08_elimination_depth.elimination_depth_chain:EliminationDepthChain
+      relationship: adjacent
+      overlap: Both involve solving linear systems with elimination, but C011's focus is on identifying
+        nuisance-free contrasts rather than just solving.
+    - id: plan:WAVE0:M7
+      relationship: adjacent
+      overlap: Both deal with identifiability of linear functionals in underdetermined systems, but C011
+        extends to multiple nuisance types.
+    - id: proposal:ua_latent-representation:P011
+      relationship: different
+      overlap: Both involve latent parameters, but P011 is about additive preferences and C011 about linear
+        readings.
+    substantive_difference: C011 specifically targets nuisance elimination to identify a target contrast,
+      extending beyond simple elimination chains to handle drift and calibration nuisances.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: The operation of isolating identifiable contrasts by eliminating nuisance parameters is not
+      exactly matched by neighbors.
+    votes: 2/3
+    dissent:
+    - variant
+- name: frame_independent_observables
+  summary: Test rational observables under shared translations, Galilean boosts, and coordinate rescalings;
+    identify expressions unchanged for every frame parameter or recover coefficients required for invariance.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_formal-logic:P007
+      relationship: adjacent
+      overlap: Both track polarity/invariant through transformations, but C002 tests rational observables
+        under physical symmetries while P007 tracks type polarity in generics.
+    - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+      relationship: different
+      overlap: Both involve coordinate frames, but that task composes transformations on points whereas
+        C002 identifies invariants under a family of transformations.
+    - id: proposal:ua_latent-representation:P008
+      relationship: adjacent
+      overlap: Both assess equivalence under transformations, but P008 concerns information channels and
+        C002 concerns frame invariance of observables.
+    substantive_difference: "C002 uniquely combines rational expression manipulation with symmetry-group\
+      \ invariance testing, producing identifiable physical quantities\u2014a distinct cognitive operation\
+      \ not present in any neighbor."
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No neighbor performs invariance checking of literal expressions under Galilean rescaling;
+      the operation is novel.
+    votes: 3/3
+    dissent: []
+- name: projective_configuration_invariants
+  summary: Compare labeled finite and infinite points under fractional-linear coordinate changes; use
+    preserved cross-ratios to decide configuration equivalence or recover a missing coordinate from overlapping
+    constraints.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_invariants:P003
+      relationship: adjacent
+      overlap: Both use invariants to decide equivalence under coordinate changes, but C010 uses fractional-linear
+        transformations while quadratic_energy uses invertible real maps.
+    - id: proposal:ua_invariants:P002
+      relationship: adjacent
+      overlap: Both use invariants for equivalence, but C010 is geometric while cyclic_trace is algebraic.
+    - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+      relationship: different
+      overlap: Coordinate frame composition deals with discrete transforms, not projective invariants.
+    substantive_difference: Applying cross-ratio invariants to labeled point configurations under fractional-linear
+      changes is a distinct operation not present in any neighbor, which focus on quadratic forms or trace
+      identities.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: "The operation of using preserved cross-ratios to compare configurations under M\xF6bius transformation\
+      \ is novel."
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: markov_aggregation_sufficiency
+  summary: Find the coarsest grouping of Markov states that respects supplied observations and preserves
+    aggregate transition predictions; test proposed groupings or return the resulting classes and transition
+    probabilities.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P010
+    relationship: same_operation
+    overlap: Both given a fine-state Markov chain and an aggregation map, determine whether the aggregate
+      evolves independently and recover the induced transition probabilities.
+  - id: task:generated.wave9.markov_chain_distribution.markov_chain_distribution:MarkovChainDistribution
+    relationship: adjacent
+    overlap: Both involve Markov chains, but C009 focuses on aggregation closure while that task propagates
+      distributions.
+  - id: task:generated.wave9.hidden_state_filtering.hidden_state_filtering:HiddenStateFiltering
+    relationship: adjacent
+    overlap: Both involve hidden states and observation, but C009 seeks a coarsest partition rather than
+      filtering.
+  reason: 0/3 samples judged it novel; The operation of finding state aggregations that preserve transition
+    dynamics is identical to P010.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: polygon_gluing_surface_type
+  summary: Identify closed surfaces formed by directed polygon-edge pairings across one or several faces;
+    track induced vertex identifications and orientation consistency to return Euler characteristic and
+    surface type.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: same_operation
+    overlap: Both identify closed surfaces from directed polygon-edge pairings, track vertex identifications
+      and orientation, and compute Euler characteristic and surface type.
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: variant
+    overlap: Both track oriented surfaces through edge operations and report boundary components and genus,
+      differing only in the types of operations applied.
+  - id: proposal:k3_novel-composition:P006
+    relationship: adjacent
+    overlap: Both involve polygon geometry, but C001 focuses on gluing and surface classification while
+      P006 addresses area and point location.
+  reason: "0/3 samples judged it novel; The operation\u2014identifying surface type from polygon pairings\u2014\
+    is identical to P004, so it is a variant of a known task."
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: evidence_mass_fusion
+  summary: Combine evidence masses on overlapping subsets through discounting, conjunctive fusion, and
+    stated conflict redistribution; return a queried fused mass, belief, or plausibility.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.dempster_shafer_combination.dempster_shafer_combination:DempsterShaferCombination
+    relationship: same_operation
+    overlap: Both combine evidence masses via conjunctive fusion and conflict, returning fused mass/belief/plausibility.
+  - id: proposal:k3_algorithms-and-data-structures:P003
+    relationship: different
+    overlap: Both merge evidence but P003 uses distance-based aggregation, not mass intersection.
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: adjacent
+    overlap: Both combine structured contributions, but P012 is about shuffle products and C008 about
+      mass fusion.
+  reason: 0/3 samples judged it novel; Same evidence-mass combination as the Dempster-Shafer task, so
+    it is a variant.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: qualitative_perturbation_dominance
+  summary: Compare rational expressions under stated hierarchies of vanishing perturbations, accounting
+    for canceled leading terms; return eventual order, sign, or the first surviving asymptotic contribution.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_systematic-generalization:P010
+    relationship: same_operation
+    overlap: Both find the first surviving asymptotic term in expressions after cancellations under stated
+      perturbation hierarchies.
+  - id: proposal:ua_latent-representation:P006
+    relationship: different
+    overlap: Both compare candidates under a ranking, but C004 uses asymptotic order while P006 uses constraint
+      violations.
+  - id: proposal:ua_latent-representation:P008
+    relationship: adjacent
+    overlap: Both involve ordering/dominance, but C004 is about asymptotic expressions and P008 about
+      channel transformations.
+  reason: 0/3 samples judged it novel; Essentially the same first-surviving-term cancellation search as
+    P010, so it is a variant.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: projective_correspondence_completion
+  summary: Use point correspondences across projectively related coordinate lines to recover missing coordinates
+    or reject inconsistent observations, including finite points and points at infinity.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: same_operation
+    overlap: Both use coordinate transformations to map points between frames, and C006 adds projective
+      points at infinity but the underlying mapping is the same.
+  - id: proposal:k3_latent-structure-reconstruction:P007
+    relationship: different
+    overlap: Both reconstruct points on a line but C006 uses projectivity and correspondences, not distance
+      multiset.
+  - id: proposal:ua_latent-representation:P002
+    relationship: adjacent
+    overlap: Both involve coordinate changes, but P002 transports differential forms whereas C006 maps
+      points.
+  reason: 1/3 samples judged it novel; The projective point mapping is a direct generalization of coordinate
+    frame composition, making it a variant.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: concurrent_edit_rebasing
+  summary: Rebase concurrent insertions, deletions, and replacements through intervening text edits, preserving
+    intended targets under overlap and stated tie rules; return the transformed edit or reconciled text.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.concurrent_edit_rebase.concurrent_edit_rebase:ConcurrentEditRebase
+    relationship: same_operation
+    overlap: Both rebase concurrent insert/delete edits over an indexed buffer with tie rules, returning
+      transformed positions or text.
+  - id: task:generated.wave12.three_way_merge_resolution.three_way_merge_resolution:ThreeWayMergeResolution
+    relationship: adjacent
+    overlap: Both reconcile concurrent edits, but three_way_merge uses base/left/right while C008 handles
+      rebasing.
+  - id: task:generated.wave9.diff_patch_application.diff_patch_application:DiffPatchApplication
+    relationship: adjacent
+    overlap: Both apply edits, but diff_patch uses context hunks while C008 rebases concurrent changes.
+  reason: 0/3 samples judged it novel; This is a direct duplicate of the existing concurrent_edit_rebase
+    task, with no substantive change.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: forest_renormalization
+  summary: Subtract Laurent-series divergences across nested, disjoint, and overlapping substructures
+    using admissible subtraction forests and pole extraction; return a counterterm or finite renormalized
+    coefficient.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P005
+    relationship: variant
+    overlap: Both apply forest subtraction to remove divergences, returning counterterms or renormalized
+      expressions; C009 specifies Laurent-series pole extraction.
+  - id: proposal:ua_compositional-generalization:P011
+    relationship: adjacent
+    overlap: Both use tree structures and subtraction, but C009 is about divergences while rooted_tree_series
+      composes series.
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: different
+    overlap: Ribbon surgery is topological, not analytic.
+  reason: 0/3 samples judged it novel; C009 is a direct variant of renormalization_forest_subtraction,
+    sharing the same forest-subtraction operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: marginal_extension_consistency
+  summary: Combine probability tables on overlapping variable subsets into constraints on one joint distribution;
+    determine compatibility or the attainable range of an unreported event probability.
+  verdict: adjacent
+  nearest_neighbors:
+  - id: task:generated.k3_semantics_preserving_translation_r1.bayesian_network_table_conversion.bayesian_network_table_conversion:BayesianNetworkTableConversion
+    relationship: adjacent
+    overlap: Both combine probability tables over variable subsets, but the neighbor converts between
+      joint and conditional tables, while C009 checks compatibility of marginals.
+  - id: task:generated.wave9.conditional_expectation.conditional_expectation:ConditionalExpectation
+    relationship: adjacent
+    overlap: Both work with partial distributions, but the neighbor computes expectations given evidence,
+      not checking consistency of marginals.
+  - id: proposal:ua_latent-representation:P011
+    name: additive_preference_representability
+    relationship: adjacent
+    overlap: Both check consistency of constraints on an underlying representation, but one in probability
+      space and the other in preference space.
+  reason: 1/3 samples judged it novel; No catalog task specifically tests compatibility of overlapping
+    marginals and computes attainable intervals.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: counterfactual_seed_coupling
+  summary: Filter finite latent seeds using factual observations, then retain those same seeds under changed
+    structural assignments; recover counterfactual outcomes, probabilities, or bounds when seeds remain
+    ambiguous.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave10.counterfactual_replay.counterfactual_replay:CounterfactualReplay
+    relationship: variant
+    overlap: Both compute counterfactual outcomes by changing structural assignments while keeping the
+      same latent seeds; C006 explicitly filters seeds by observations, a small extension.
+  - id: task:generated.wave9.counterfactual_twin_model.counterfactual_twin_model:CounterfactualTwinModel
+    relationship: variant
+    overlap: Both perform abduction (filtering by facts) and intervention then prediction; C006 adds seed
+      coupling across structural changes.
+  - id: task:generated.wave12.truth_maintenance_revision.truth_maintenance_revision:TruthMaintenanceRevision
+    relationship: adjacent
+    overlap: Both maintain sets of possible worlds after changes, but C006 focuses on counterfactual outcomes.
+  reason: 0/3 samples judged it novel; C006 is a variant of existing counterfactual twin model tasks,
+    with the added seed retention step being surface-level.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: hidden_tree_metric_completion
+  summary: Interpret pairwise distances as path lengths through an unknown weighted tree; use shared-path
+    constraints to test realizability, recover a forced missing distance, or determine a quartet split.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_shortcuts_fail_r1.additive_tree_reconstruction.additive_tree_reconstruction:AdditiveTreeReconstruction
+    relationship: variant
+    overlap: 'Both deal with additive tree metrics: the neighbor reconstructs the tree from complete distances,
+      while C003 handles missing distances and realizability, a partial-information extension.'
+  - id: proposal:k3_latent-structure-reconstruction:P007
+    relationship: adjacent
+    overlap: Both reconstruct points from pairwise distances, but C003 uses tree metrics and quartet splits,
+      while the neighbor focuses on one-dimensional line placements.
+  - id: proposal:ua_invariants:P002
+    relationship: different
+    overlap: 'Both use algebraic invariants but in different structures: C003 uses tree metric constraints,
+      while the neighbor uses trace identities.'
+  reason: 0/3 samples judged it novel; The proposal is a partial-information variant of additive tree
+    reconstruction, a known operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: reaction_total_conservation
+  summary: Infer conserved weighted totals from directed or reversible multispecies conversion rules;
+    test proposed totals, recover uniquely determined weights, or infer terminal quantities despite unknown
+    reaction counts.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P001
+    relationship: variant
+    overlap: Both infer conserved invariant quantities from a system of linear constraints; C001 uses
+      conservation laws from reaction stoichiometry while the neighbor uses Kirchhoff laws from network
+      conductances.
+  - id: proposal:ua_invariants:P005
+    relationship: variant
+    overlap: Both use conservation principles to derive invariants (weighted totals vs. harmonic expectations)
+      and test proposed invariants, sharing the same inference pattern.
+  - id: proposal:k3_scientific-reasoning:P006
+    relationship: adjacent
+    overlap: Both involve combining quantities across groups with weights, but C001 tests conservation
+      instead of pooling estimates.
+  reason: 0/3 samples judged it novel; The proposal reuses the core invariant-inference operation found
+    in effective_boundary_response and stopped_expectation_conservation, differing only in the domain.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: likelihood_sufficient_partition
+  summary: Group outcomes whose likelihood vectors across candidate hypotheses are proportional; find
+    the minimal information preserving every posterior, test proposed summaries, or recover posterior
+    odds from retained classes.
+  verdict: adjacent
+  nearest_neighbors:
+  - id: task:generated.wave12.information_seeking.information_seeking:InformationSeeking
+    relationship: adjacent
+    overlap: Both partition hypotheses to preserve information, but C006 groups outcomes by likelihood
+      proportionality while the neighbor splits hypotheses by queries.
+  - id: proposal:ua_latent-representation:P011
+    name: additive_preference_representability
+    relationship: adjacent
+    overlap: Both find minimal representations of observed constraints, but one in likelihood space and
+      the other in preference space.
+  - id: task:generated.wave9.bayesian_conditioning.bayesian_conditioning:BayesianConditioning
+    relationship: adjacent
+    overlap: Both operate on posterior distributions, but the neighbor computes specific posteriors rather
+      than grouping outcomes by sufficiency.
+  reason: 1/3 samples judged it novel; No existing task specifically groups outcomes by likelihood proportionality
+    to find a minimal sufficient statistic.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: braid_closure_linking_invariants
+  summary: Track component identities through composed braid fragments, closures, and component orientation
+    reversals; accumulate signed mutual crossings to return pairwise linking numbers preserved by diagram
+    deformations.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_surface-invariance:P003
+    relationship: variant
+    overlap: Both compute pairwise linking numbers, but C005 does so from braid closures and orientation
+      reversals, while the neighbor uses Gauss codes.
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: adjacent
+    overlap: Both track topology, but C005 computes linking numbers, while ribbon_surface_surgery tracks
+      boundary/genus.
+  - id: proposal:ua_compositional-generalization:P003
+    relationship: adjacent
+    overlap: Both track labeled entities through transformations, but C005 uses braid crossings while
+      chromatid_segment uses crossovers.
+  reason: 0/3 samples judged it novel; C005 is a variant of gauss_link_code_walk that computes the same
+    invariant (pairing linking numbers) from a braid representation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: stabilizer_cut_entropy
+  summary: Commuting Pauli generators with redundancy, generator recombinations, and varied subsystem
+    cuts; isolate stabilizers supported inside each cut and return its entropy or Schmidt rank.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P004
+    relationship: variant
+    overlap: 'Both compute entropy-related quantities of a quantum state restricted to a subsystem (C004
+      via stabilizer-supported ops; P004 via density-matrix reduction). The operation is identical: reduce
+      to a subsystem and compute entropy/Schmidt rank.'
+  - id: task:generated.k3_shortcuts_fail_r2.stabilizer_tableau_simulation.stabilizer_tableau_simulation:StabilizerTableauSimulation
+    relationship: adjacent
+    overlap: Both use stabilizer tableau representations, but C004 isolates stabilizers in a cut and computes
+      entropy; the task simulates gates and measurement.
+  - id: proposal:ua_compositional-generalization:P010
+    relationship: different
+    overlap: C004 uses commuting Pauli generators; fermionic_normal_ordering uses anticommutation and
+      contractions.
+  reason: '0/3 samples judged it novel; Same operation as local_quantum_sufficiency: extract subsystem
+    entropy from a quantum state, only changing the input representation to stabilizer generators.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: binary_quadratic_arf_signature
+  summary: Quadratic forms over GF(2), supplied as polynomials or changed bases; extract polar rank, radical
+    type, and any defined Arf invariant to decide isometry or count zeros.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P003
+    relationship: variant
+    overlap: Both compute an invariant signature (polar rank vs. Arf invariant) of a quadratic form under
+      basis change, differing only in field (rational vs. GF(2)).
+  - id: proposal:ua_invariants:P005
+    relationship: different
+    overlap: C002 computes invariant of binary quadratic form; local_quantum_sufficiency reduces density
+      matrix states, sharing no procedure beyond 'invariant'.
+  - id: task:generated.k3_invariants_r1.gf2_matrix_rank.gf2_matrix_rank:GF2MatrixRank
+    relationship: adjacent
+    overlap: Both row-reduce over GF(2) and report rank-like data, but C002's polar rank is derived from
+      a quadratic form's radical, not just the incidence matrix.
+  reason: '0/3 samples judged it novel; Switching the field from R to GF(2) does not change the cognitive
+    operation: extract a basis-invariant signature of a quadratic form.'
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: strategy_realization_equivalence
+  summary: Translate mixtures of complete plans and local random choices into decision-history weights,
+    respecting shared information sets and unreachable branches; decide equivalence or recover an equivalent
+    policy.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P011
+    relationship: same_operation
+    overlap: 'Both translate a set of expressed preferences (here: strategy choices constrained by information
+      sets) into latent weights (here: decision-history weights) and decide whether the given evidence
+      is compatible with a weight assignment, or recover a value forced by the constraints.'
+  - id: proposal:k3_cognitive-psychology:P004
+    relationship: adjacent
+    overlap: Both compare verbal descriptions (plans vs. degree wordings) and translate to a formal representation
+      (decision histories vs. order constraints) to decide equivalence.
+  - id: gallery:table_equivalence
+    relationship: different
+    overlap: Both equate objects under semantic transformations, but C002 operates on strategic decision
+      histories with information sets, while table_equivalence checks rendered table isomorphism.
+  reason: 1/3 samples judged it novel; critic thresholds not met
+  scores: {}
+  votes: 1/3
+- name: collision_free_moment_extraction
+  summary: Recover sums of products over distinct records from aggregate power sums or mixed moments,
+    with repeated exponents and multivariate attributes; remove index collisions and return the exact
+    statistic.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P007
+    relationship: variant
+    overlap: 'Both recover a canonical set of statistics (cumulants vs. elementary symmetric-type sums)
+      from supplied power sums/moments by removing contributions of repeated indices/partitions. The operation
+      is identical: invert moment-to-cumulant type transform via inclusion-exclusion over index collisions.'
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: adjacent
+    overlap: Both involve iterated products and index combinatorics, but C008 removes index collisions
+      from sums of products; P012 expands products of integrals by interleaving words.
+  - id: proposal:ua_latent-representation:P005
+    relationship: different
+    overlap: C008 has no subtraction forests; P005 uses renormalization forests for divergent substructures.
+  reason: '0/3 samples judged it novel; Same operation as free_cumulant_recovery: recover a univariate/multivariate
+    canonical statistic from aggregate moments by eliminating distribution-overlap contributions.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: periodic_density_equivalence
+  summary: Polynomial local densities on periodic sequences with varied stencil widths and multiple fields;
+    group translated monomials to decide equality of total energies or return the surviving bulk coefficients.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P004
+    relationship: adjacent
+    overlap: Both reduce over a set of invariants to decide equivalence, but C001 uses polynomial local
+      densities on periodic sequences aggregated by translation, while P004 reduces quantum subsystem
+      states.
+  - id: proposal:ua_systematic-generalization:P008
+    relationship: adjacent
+    overlap: Both manipulate local polynomial/analytical pieces to produce a global summary, but C001
+      groups monomials by stencil translations on sequences, while P008 transports densities through noninjective
+      maps.
+  - id: task:generated.k3_hierarchical_recursive_r1.symmetric_poly_to_elementary.symmetric_polynomial_to_elementary:SymmetricPolyToElementary
+    relationship: different
+    overlap: C001 groups translated monomials with polynomial identities to decide equality; symmetric_poly_to_elementary
+      rewrites symmetric polynomials into elementary basis via leading-term elimination.
+  reason: 0/3 samples judged it novel; C001's translation-orbit grouping on periodic polynomial density
+    fields is a distinct cognitive operation not found in the neighbors.
+  scores:
+    novelty: 5
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: two_point_observation_equivalence
+  summary: Weighted patterns on cyclic grids and finite product groups; aggregate displacement correlations
+    across translations and reflections, then decide two-point indistinguishability or identify a differing
+    displacement.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P002
+    relationship: different
+    overlap: Both inspect algebraic invariants from expressions, but C001 uses displacement correlations
+      under translations/reflections on group-labeled grids, P002 uses trace equalities under cyclicity
+      laws for matrix words.
+  - id: proposal:ua_invariants:P008
+    relationship: adjacent
+    overlap: Both decide equivalence of labelled configurations under a symmetry group and can recover
+      a missing coordinate from constraints, but C001 aggregates displacement statistics on cyclic product
+      groups while P008 compares points under fractional-linear transforms via cross-ratios.
+  - id: proposal:k3_global-over-greedy:P004
+    relationship: different
+    overlap: Both operate on 2D grids and ask for final cell values after operations, but C001 aggregates
+      weighted patterns across translations to decide indistinguishability, while P004 uses difference
+      arrays for rectangle range updates.
+  reason: 1/3 samples judged it novel; critic thresholds not met
+  scores: {}
+  votes: 1/3
+- name: multiplicative_interaction_contrast
+  summary: Positive rational multiway tables under multiplicative rescaling on proper subsets of axes;
+    isolate irreducible interaction contrasts, test their invariance, or recover a cell from a specified
+    contrast.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P006
+    relationship: variant
+    overlap: "Both test which contrasts are invariant under nuisance directions: C006 uses multiplicative\
+      \ rescalings on multiway tables; P006 uses additive linear drifts. The operation is identical\u2014\
+      identify identifiable contrasts\u2014with only the group operation changed."
+  - id: proposal:ua_latent-representation:P012
+    relationship: adjacent
+    overlap: Both deal with product axes and hidden factorizations, but C006 tests multiplicative interactions;
+      P012 checks separable transition mechanisms.
+  - id: proposal:ua_invariants:P007
+    relationship: adjacent
+    overlap: Both test invariance under a group of transformations (rescaling vs. boosts), but C006 acts
+      on table cells; P007 acts on physical frame parameters.
+  reason: 0/3 samples judged it novel; C006 is a multiplicative-arithmetic variant of the additive nuisance-contrast
+    identification task.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: mean_preserving_spread_order
+  summary: Finite weighted outcome distributions with unequal supports and shared means; compare integrated
+    tails to decide whether mean-preserving redistribution is possible or identify a violated strike inequality.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_scientific-reasoning:P008
+    relationship: same_operation
+    overlap: 'Both compare distributions by examining tail sums of a statistic (here: integrated strikes
+      vs. mean gap/rank sum) and decide whether one distribution can be obtained from the other by a redistribution
+      preserving a constraint (mean vs. group allocation), returning a verdict or a violated tail inequality.'
+  - id: proposal:ua_systematic-generalization:P006
+    relationship: different
+    overlap: Both manipulate distributions, but C006 compares finite weighted outcome sets by integrated
+      tails to check mean-preserving spread, while P006 differentiates distributions and combines delta
+      atoms.
+  - id: proposal:ua_invariants:P008
+    relationship: adjacent
+    overlap: Both compare configurations under transformation groups (projective vs. redistribution),
+      but C006 checks tail dominance in the mean-preserving spread order.
+  reason: 1/3 samples judged it novel; critic thresholds not met
+  scores: {}
+  votes: 1/3
+pool:
+- name: residue_polynomial_function_equivalence
+  summary: Compare polynomial expressions as functions over composite residue rings, allowing nested products
+    and substitutions; extract finite-difference invariants and report equivalence or a separating residue.
+- name: monomial_quotient_dimension_profile
+  summary: Monomial relations with redundant generators, weighted degrees, and truncation bounds; identify
+    surviving monomials and return graded quotient dimensions invariant under changes of presentation.
+- name: rational_derivative_residue_class
+  summary: Split rational functions with repeated poles, polynomial parts, and canceling factors; extract
+    residues invariant under adding rational derivatives and decide class equality or rational integrability.
+- name: isotropic_moment_contraction
+  summary: Uniform-sphere polynomial averages specified by direction Gram matrices, including repeated
+    projections and mixed sums; eliminate odd terms and contract even products to return the exact expectation.
+- name: algebraic_norm_descent
+  summary: Elements in finite extension towers given by defining polynomials, basis expressions, or rational
+    combinations; descend conjugation-invariant norms through intermediate fields and return the ground-field
+    value.

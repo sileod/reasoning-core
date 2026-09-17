@@ -1,0 +1,1678 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_compositional-generalization
+created_at: '2026-09-16T18:31:21.621000+00:00'
+provenance:
+  kind: proposer
+  name: ua_compositional-generalization
+  received: '2026-09-16'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks that would improve compositional generalization in language models. The catalog
+    you were shown already covers the classic textbook algorithms -- sorting, gcd, graph traversal, compression,
+    scheduling, matching, parsing -- and a proposal that names one will be rejected as a repeat however
+    well it fits this brief. Reach past the standard repertoire: propose structures the catalog does not
+    have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 12
+  complete: true
+catalog:
+  sha256: aaaaaa22b53b2639a5a805b1cc76522d9fd0147cb02ccb7c39eb4e80051c5f52
+  entries: 747
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 146
+    task: 439
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-1
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 47d6d8d546a3ff1e4947ef2f49268f476bf84643b84dfd400f6e1564a3b811d9
+    response_sha256: 6ac6a3c3cb54440e56af4302d0b53abb551484815b02076fb1e7cb0dda8fdbe3
+    response_id: gen-1789581144-ngTd1gYdbAae3ZhVVdYX
+  - purpose: propose-round-2
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: e5b572196ea9d81a91c503b3174a318b204cbfb63a7ffbf11c32f6004c38266a
+    response_sha256: a5204dbb2d470e24b02a2416a38e07265ccea935f80fb2113d3bae5b87b503a0
+    response_id: gen-1789582807-8DzAPIPKipFSYLUhQAc7
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 58e1f6628292dc2ba48510b12151371e220015f24d3a5c1ac9405f550d36b9bc
+    response_sha256: bc37b304c301c62958585a2d218a020aac6ffdae0121e53804932e42a1bebcfd
+    response_id: gen-1789583034-gB08uLtNvpGqsz6wKMA4
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 87d62986c6d0cc9fe925d1d5655db45f6a107a0fa8d0130252d0183e0cba07e5
+    response_sha256: d7e738f937e301ea1590be8cc957d3e84d122ab3814d0dd8d831f934a374ef0d
+    response_id: chatcmpl-8e6f790c03e88aa1
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: abf7bccbf7c0bf33aaa8163fbff121d02077901706a41120980d17cbae0c4d7a
+    response_sha256: b049de49bde9cb867ab009d88da15aac0c874ad3cc755d5bb61a21afb43aeab8
+    response_id: chatcmpl-98c770980eda88d8
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: f4ae50caf56b3e38302a0415029eb90ae289dd09a97a0a8df20230c7a9ec4a79
+    response_sha256: 41e29d405c3f3f12bcd2f8363fa15e0e171ab8cda872e86c1f08bd3dc540eae5
+    response_id: chatcmpl-b4dacfbb7a75e338
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: bc8fd70f7cdfeb797f4fa2f19f410e3e75b0ad5ea0de1a3eee5b5d8760b35fc8
+    response_sha256: e0a8ed8c2c5b90b6b1a7dabdcdee9a7ddf99b5f8741268aebc5f9241ea57b707
+    response_id: chatcmpl-9b71e8441e865e26
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8b3d0b503e94b1c60107a116974a3b0542e6461c4645c04fab3deed647f9eff8
+    response_sha256: 06e7ae4104974399cdf921181ecd1d84aa25d541ad75172263367b682d9910ae
+    response_id: chatcmpl-ba39f35bb8ce55d5
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d62106b1f4943908e6abb35a49908d37470b676ad7af3735865907ebe11f550b
+    response_sha256: 7625c1e34ccc8616e35b4d0d8dbcf85aae00123a43b64d298016cf174a265a7a
+    response_id: chatcmpl-af817c17bb6968f6
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8feb5e3cce44e87569d473a230b993755c9d22d2cb6f5eece03b4fc9b5596642
+    response_sha256: c6424cf97dad7d7a7c26dfc3cb3b6dda565c61a66497fe78abc336e558fdc4bc
+    response_id: chatcmpl-b4b38d8329270811
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1fd78dfb71621c8ddc6f2959795fd7a0919b0b50e818b9b618f4807cd1a14b32
+    response_sha256: 8eb805143e543b9ce9ba8f040c8dd5cb7facc4e8c185062027061a1333f7d7e8
+    response_id: chatcmpl-841afdf7cb9ea856
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8864f61dbb315b1a6937fceec66ffc81fb06718c5b6fcea9791ba82c531dec7b
+    response_sha256: 7108b9c5ed7c1e2f233674f3c35317d99f3daffa0035b2490f7f0642515a781c
+    response_id: chatcmpl-b95c66a46b6d065c
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: hysteresis_reversal_memory
+  summary: 'Reduce reversal histories under return-point memory: close nested excursions, erase enclosed
+    extrema, and saturate at stated bounds across alternating drives; return surviving extrema or the
+    active branch.'
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_language-implementation:P008
+      relationship: adjacent
+      overlap: Both involve rollback/recovery with memory of past states, but ARIES crash recovery is
+        database-specific, while hysteresis is about material memory in driven systems.
+    - id: task:generated.k3_uncertainty_r1.iterated_dominance_elimination.iterated_dominance_elimination:IteratedDominanceElimination
+      relationship: adjacent
+      overlap: Both reduce sets by iterated elimination under constraints, but iterated dominance is game-theoretic
+        strategy removal, not physical memory.
+    - id: proposal:k3_state-tracking:P007
+      relationship: adjacent
+      overlap: Both track state with counters through streams, but Misra-Gries summaries are approximate
+        frequency estimation, not hysteresis with return-point memory.
+    substantive_difference: Implements a specific physical memory model (return-point analysis) that,
+      to my knowledge, is not present in any catalog task; the state reduction and branch selection are
+      concretely defined.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: No known catalog task models hysteresis with return-point memory; the operation seems new
+      and is precisely specified.
+    votes: 3/3
+    dissent: []
+- name: composed_lens_update
+  summary: Push view edits backward through composed projection, renaming, pairing, and tagged-union lenses
+    while preserving hidden source fields; return the revised source or a rejected update.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_formal-logic:P006
+      relationship: adjacent
+      overlap: Both involve view maintenance but one handles streaming deltas, the other synthesizes backward
+        updates from view edits.
+    - id: task:generated.wave10.scoped_instruction.scoped_instruction:ScopedInstruction
+      relationship: different
+      overlap: No shared procedure; one is lens composition, the other instruction application.
+    - id: task:generated.wave9.diff_patch_application.diff_patch_application:DiffPatchApplication
+      relationship: different
+      overlap: Applies patches to text, not propagating edits backward through lenses.
+    substantive_difference: The operation of composing projection/renaming/pairing lenses and pushing
+      edits backward with hidden-field preservation is a distinct algebraic operation not in any neighbor.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No known task performs inverse lens composition for view updates.
+    votes: 2/3
+    dissent:
+    - variant
+- name: chromatid_segment_ancestry
+  summary: Track segment ancestry through reciprocal crossovers and directed gene-conversion tracts on
+    labeled chromatids, with overlapping events and changing partners; return a queried chromatid or marker
+    phase.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.call_stack_trace.call_stack_trace:CallStackTrace
+      relationship: different
+      overlap: "Both trace nested structures, but call stacks track execution frames, while chromatids\
+        \ track genetic recombination\u2014no shared operation besides 'tracing'."
+    - id: proposal:k3_global-from-local:P006
+      relationship: adjacent
+      overlap: Both involve genetics, but one solves pedigree inheritance patterns, the other tracks physical
+        segment recombination; the cognitive operation (Mendelian inference vs. linear segment splicing)
+        is distinct.
+    - id: task:generated.wave9.data_lineage_trace.data_lineage_trace:DataLineageTrace
+      relationship: adjacent
+      overlap: "Both track provenance of parts through operations, but one is about genetic crossover,\
+        \ the other about data transformations\u2014surface similarity only."
+    substantive_difference: Tracks independent segment identity through reciprocal crossovers and gene
+      conversion with polarity, a distinct operation from existing lineage or pedigree tasks; no catalog
+      task handles recombining labeled linear sequences.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No existing task covers segment ancestry through ordered crossover and conversion; conceptually
+      unique and precisely specified.
+    votes: 3/3
+    dissent: []
+- name: surface_seam_composition
+  summary: Sew labeled boundary arcs of polygonal surfaces with preserving or reversing orientation, including
+    twists and self-seams; return boundary count, orientability, or Euler characteristic of a component.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+      relationship: adjacent
+      overlap: Both involve combining transformations, but one tracks point coordinates, the other identifies
+        topological invariants of surfaces.
+    - id: proposal:k3_multi-relation-integration:P001
+      relationship: different
+      overlap: "One computes surface topology from gluings, the other orients causal structures\u2014\
+        no shared operation."
+    - id: proposal:k3_global-from-local:P009
+      relationship: adjacent
+      overlap: Both apply ordered rewrite rules, but seam composition deals with geometric gluing and
+        orientability, not string rewriting.
+    substantive_difference: Computes fundamental topological properties (boundary count, orientability,
+      Euler characteristic) from a combinatorial gluing specification; no catalog task matches this.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No existing task computes surface invariants from gluings; conceptually novel and clearly
+      specified.
+    votes: 3/3
+    dissent: []
+- name: nested_port_wiring_substitution
+  summary: Expand nested wiring templates by grafting instances into ordered port boundaries, including
+    reversed ports, repeated instances, and feedback; return a terminal's mate or closed-wire count.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.nested_template_expansion.nested_template_expansion:NestedTemplateExpansion
+      relationship: adjacent
+      overlap: Both expand nested constructs, but template expansion substitutes strings while this proposal
+        grafts port wirings with orientation and feedback.
+    - id: task:generated.k3_synthetic_grammars_r1.hyperedge_replacement_derivation.hyperedge_replacement_derivation:HyperedgeReplacementDerivation
+      relationship: adjacent
+      overlap: Both replace nonterminal-like structures (hyperedges vs. wired templates), but the gluing/port
+        semantics differ.
+    - id: proposal:k3_language-implementation:P001
+      relationship: different
+      overlap: No shared operation; one is generator control flow, the other is spatial port wiring.
+    substantive_difference: The novel operation is grafting into ordered port boundaries with reversed
+      ports and feedback, distinct from string or hyperedge replacement.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: No known task expands wired ports with orientation and feedback; closest neighbors substitute
+      strings or hyperedges.
+    votes: 2/3
+    dissent:
+    - variant
+- name: wash_sale_basis_transport
+  summary: Carry disallowed losses into replacement-lot basis across partial sales, overlapping wash windows,
+    later resales, and ordered lot-selection rules; return recognized loss or a queried lot's adjusted
+    basis.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.wave9.ledger_reconciliation.ledger_reconciliation:LedgerReconciliation
+      relationship: adjacent
+      overlap: Both apply ordered financial transactions, but ledger reconciliation updates balances,
+        while this carries disallowed losses across lots.
+    - id: proposal:k3_operations-research:P005
+      relationship: different
+      overlap: Lot sizing in production planning, not basis adjustment.
+    - id: proposal:k3_global-from-local:P009
+      relationship: different
+      overlap: Rewriting rules, unrelated to basis transfer.
+    substantive_difference: The wash-sale basis adjustment with partial sales and replacement lots is
+      a domain-specific cost-tracking operation not found in any neighbor.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: No known task processes wash-sale disallowed losses through replacement lots.
+    votes: 2/3
+    dissent:
+    - variant
+- name: free_cumulant_recovery
+  summary: Recover free cumulants from supplied moments by removing contributions of noncrossing partitions;
+    vary scalar and ordered mixed moments, returning a queried cumulant or missing moment.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_inference-modes:P004
+      relationship: different
+      overlap: Xor peeling recovers bits; cumulant recovery solves algebraic equations over noncrossing
+        partitions.
+    - id: proposal:k3_latent-structure-reconstruction:P007
+      relationship: different
+      overlap: Turnpike reconstructs distances; cumulants from moments involve combinatorial partition
+        sums.
+    - id: task:generated.wave9.expected_utility_choice.expected_utility_choice:ExpectedUtilityChoice
+      relationship: different
+      overlap: Expected utility evaluates lotteries; cumulant recovery is algebraic moment-cumulant inversion.
+    substantive_difference: The extraction of free cumulants via noncrossing partition sums is a distinct
+      combinatorial algebra operation, not present in neighbors.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: 'Novel algebraic structure: free cumulant recovery from moments via noncrossing partitions.'
+    votes: 2/3
+    dissent:
+    - variant
+- name: graph_rewriting_system
+  summary: Apply graph rewriting rules with node matching and replacement, including dangling edges and
+    negative application conditions; modes ask for the final graph, the number of rule applications, or
+    whether a target subgraph appears.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_synthetic_grammars_r1.markov_algorithm.markov_algorithm:MarkovAlgorithm
+      relationship: different
+      overlap: Markov algorithm applies rules to strings; graph rewriting applies to graphs with matching
+        and NACs.
+    - id: task:generated.k3_shortcuts_fail_r1.color_refinement_signature.color_refinement_signature:ColorRefinementSignature
+      relationship: different
+      overlap: Color refinement recolors by neighbor multisets; graph rewriting replaces subgraphs.
+    - id: proposal:k3_global-from-local:P009
+      relationship: different
+      overlap: Ordered rule derivation is string-rewriting; graph rewriting is structural with dangling
+        edges.
+    substantive_difference: The combination of node matching, replacement, dangling edges, and negative
+      application conditions is a distinct graph transformation operation not present in catalog.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: Genuinely distinct graph rewriting with NAC and dangling-edge handling, unlike string rewriting
+      or recoloring.
+    votes: 2/3
+    dissent:
+    - variant
+- name: simplest_surreal_separator
+  summary: Evaluate finite surreal cuts by finding the earliest-born number strictly between their left
+    and right options; vary negative values, dyadic gaps, and nested cuts, returning the value or an invalid-cut
+    finding.
+  id: P009
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_multi-relation-integration:P003
+      relationship: adjacent
+      overlap: Both operate on rational values with dyadic/half-open intervals, but farey uses mediant
+        descent while surreal uses birthday order.
+    - id: task:generated.wave9.rational_interval_arithmetic.rational_interval_arithmetic:RationalIntervalArithmetic
+      relationship: adjacent
+      overlap: Both handle exact rational intervals but interval arithmetic propagates bounds; surreal
+        finds a canonical simplest value.
+    - id: proposal:k3_state-tracking:P004
+      relationship: different
+      overlap: dual numbers evaluate rational expressions; surreal constructs values from cuts.
+    substantive_difference: The core operation is the birthday-ordered simplest surreal number strictly
+      between options, a genuinely distinct procedure from interval arithmetic or Farey mediant descent.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 3
+    reason: The proposal uniquely evaluates surreal cuts by earliest-born interpolation, distinct from
+      known rational/interval operations.
+    votes: 3/3
+    dissent: []
+- name: fermionic_normal_ordering
+  summary: Normalize products of fermionic creation and annihilation operators using anticommutation and
+    contraction rules; vary repeated modes, nested products, and sums, returning the collected operator
+    expression.
+  id: P010
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_state-tracking:P004
+      relationship: different
+      overlap: Dual numbers differentiate rational expressions; fermionic normal ordering uses anticommutation
+        and contractions.
+    - id: proposal:k3_inference-modes:P006
+      relationship: adjacent
+      overlap: Both manipulate formal algebraic expressions but for different algebras (power series vs
+        fermionic operators).
+    - id: task:generated.k3_systematic_generalization_r1.birkhoff_decomposition.birkhoff:BirkhoffDecomposition
+      relationship: different
+      overlap: Birkhoff decomposition is for matrices, not operator algebras.
+    substantive_difference: The operation of normal-ordering fermionic creation/annihilation operators
+      via anticommutation and contractions is a distinct algebraic procedure not present in neighbors.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: 'Unique combinatorial algebra: fermionic normal ordering with contractions, not in catalog.'
+    votes: 2/3
+    dissent:
+    - variant
+- name: rooted_tree_series_composition
+  summary: Compose formal series indexed by rooted trees by summing admissible cuts and forest contributions;
+    vary branching, repeated subtrees, and nested composition, returning a queried tree coefficient.
+  id: P011
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_inference-modes:P006
+      relationship: adjacent
+      overlap: both involve formal series composition and coefficient recurrences, but truncated_series_operations
+        work on univariate power series, not tree-indexed series with admissible cuts.
+    - id: task:generated.k3_relational_structures_r1.tree_subset_counting.tree_subset_counting_dp:TreeSubsetCounting
+      relationship: different
+      overlap: tree subset counting uses tree DP for independent sets, not series composition over rooted
+        trees.
+    - id: proposal:ua_compositional-generalization:P004
+      relationship: different
+      overlap: surface seam composition sews polygons, not algebraic series composition.
+    substantive_difference: The operation is composition of tree-indexed formal series via admissible
+      cut summation, which is a distinct algebraic structure not present in any neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: Novel because it concerns a specific algebraic combinatorics structure absent from all neighbors.
+    votes: 2/3
+    dissent:
+    - variant
+- name: iterated_integral_shuffle_expansion
+  summary: Expand products of iterated integrals by interleaving their ordered integration words while
+    retaining multiplicities; vary repeated letters and nested products, returning coefficients or the
+    collected expansion.
+  id: P012
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_inference-modes:P006
+      relationship: different
+      overlap: Truncated series compose via coefficient recurrences; shuffle expansion interleaves words
+        with multiplicities.
+    - id: task:generated.k3_hierarchical_recursive_r1.polynomial_expansion.polynomial_expansion:PolynomialExpansion
+      relationship: adjacent
+      overlap: Both expand sums of products, but one is symbolic polynomial monomials, the other is shuffle
+        of integration words.
+    - id: proposal:k3_parsing-and-agreement:P002
+      relationship: different
+      overlap: Concatenative programs manipulate stacks; shuffle expansion interleaves sequences.
+    substantive_difference: The shuffle product expansion with multiplicities over iterated integrals
+      is a distinct combinatorial operation not covered by polynomial or series composition.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: 'Genuine new operation: shuffle algebra expansion for iterated integrals, combinatorially
+      distinct.'
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: argument_acceptance_labeling
+  summary: 'Attack graphs over arguments: repeatedly accept arguments whose attackers are all rejected
+    and reject those with an accepted attacker until stable; answer the labeling, one argument''s status,
+    or the seed deciding a contested node.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.argumentation_grounded_extension.argumentation_grounded_extension:ArgumentationGroundedExtension
+    relationship: same_operation
+    overlap: Both compute the grounded labeling of an argumentation graph by iterating acceptance/rejection
+      until fixpoint; C011 adds queries about seed nodes that decide a contested node.
+  - id: task:generated.wave8.wait_for_deadlock.wait_for_deadlock:WaitForDeadlock
+    relationship: adjacent
+    overlap: Both involve graph fixpoints, but one labels arguments and the other finds cycles.
+  - id: proposal:k3_global-from-local:P008
+    relationship: adjacent
+    overlap: Both are monotone graph fixpoint propagations, but with different update rules.
+  reason: 0/3 samples judged it novel; Variant of argumentation_grounded_extension with added seed-query
+    modes.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: fluent_inertia_projection
+  summary: Given events that initiate, terminate, or release fluents on a timeline, project fluent truth
+    by inertia between affecting events; answers are fluent truth at a queried time, its maximal true
+    intervals, or the earliest time it holds.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_non-local-structured:P003
+    relationship: same_operation
+    overlap: Both project fluent truth over time under inertia given initiate/terminate events, and ask
+      for truth at a time, maximal intervals, or earliest holding time.
+  - id: task:generated.wave11.temporal_perspective.temporal_perspective:TemporalPerspective
+    relationship: adjacent
+    overlap: Both reason about event status over time, but one uses inertia and the other linguistic perspective.
+  - id: task:generated.k3_representation_transfer_r1.allen_interval_composition.allen_interval_composition:AllenIntervalComposition
+    relationship: different
+    overlap: Allen algebra vs. fluent inertia.
+  reason: 0/3 samples judged it novel; Exact duplicate of fluent_persistence_windows.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: announcement_knowledge_audit
+  summary: 'Kripke models with valuations and per-agent accessibility: execute public announcements, each
+    deleting worlds where it fails; answer whether an agent knows a fact, which announcement first creates
+    ignorance, or how many worlds remain.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.announcement_round_deduction.announcement_round_deduction:AnnouncementRoundDeduction
+    relationship: same_operation
+    overlap: Both perform public announcements that delete worlds inconsistent with agents' knowledge/ignorance,
+      and track resulting knowledge; C010 generalizes to arbitrary announcements and different output
+      questions.
+  - id: task:generated.k3_uncertainty_r1.kripke_knowledge_evaluation.kripke_knowledge_evaluation:KripkeKnowledgeEvaluation
+    relationship: variant
+    overlap: Both evaluate knowledge in Kripke models, but without world deletion in the neighbor; C010
+      adds the announcement deletion step.
+  - id: proposal:k3_non-local-structured:P003
+    relationship: different
+    overlap: 'Unrelated: fluent persistence vs. announcement logic.'
+  reason: 0/3 samples judged it novel; Variant of announcement_round_deduction with arbitrary public announcements
+    and different queries.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: ranked_ballot_transfer_count
+  summary: 'Ranked ballots, a seat quota, weakest-candidate elimination and surplus transfers: recount
+    standings after every event; answer the full election order, which transfer first flips a race, or
+    the exhausted-ballot tally.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.instant_runoff_winner.instant_runoff_winner:InstantRunoffWinner
+    relationship: same_operation
+    overlap: Both recount ranked ballots, eliminate weakest candidates, transfer votes, and handle exhausted
+      ballots; C006 adds surplus transfers and different output questions.
+  - id: task:generated.wave8.borda_winner.borda_winner:BordaWinner
+    relationship: adjacent
+    overlap: Both aggregate ranked ballots but with different scoring rules (Borda vs. transfer count).
+  - id: task:generated.wave8.approval_voting_winner.approval_voting_winner:ApprovalVotingWinner
+    relationship: different
+    overlap: Approval voting uses yes/no, not ranked ballots.
+  reason: 0/3 samples judged it novel; Variant of instant-runoff with surplus rules and richer output.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: bom_netting_explosion
+  summary: 'Explode end-item demand through a multi-level bill of materials: scale by per-unit usage,
+    net against on-hand stock, round to lot sizes, and shift by lead times; answers are per-part net requirements
+    per period or the first shortage.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_operations-research:P008
+    relationship: same_operation
+    overlap: Both explode multilevel BOM demand with lead-time offset, net against stock, apply lot-sizing,
+      and return releases or shortages.
+  - id: proposal:k3_operations-research:P003
+    relationship: same_operation
+    overlap: Same MRP gross-to-net explosion across levels, with identical outputs.
+  - id: task:generated.wave9.rate_limit_token_bucket.rate_limit_token_bucket:RateLimitTokenBucket
+    relationship: different
+    overlap: 'Unrelated domain: token bucket vs. MRP.'
+  reason: 0/3 samples judged it novel; Duplicate of existing MRP explosion proposals.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: phonological_rule_interaction
+  summary: Ordered phonological rules over feature bundles rewrite underlying forms, creating or destroying
+    later rules' environments; answer surface forms, whether two rules feed, bleed or counterbleed, or
+    which rule never fires.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_global-from-local:P009
+    relationship: same_operation
+    overlap: Both run ordered context-sensitive rewrite rules (phonological-style) to derive surface forms
+      and compare rule orderings for feeding/bleeding.
+  - id: task:generated.k3_parsing_and_agreement_r1.vowel_harmony_spreading.vowel_harmony_spreading:VowelHarmonySpreading
+    relationship: adjacent
+    overlap: Both are phonological rule applications, but one uses rewrite rules and the other feature
+      spreading.
+  - id: proposal:k3_non-local-structured:P003
+    relationship: different
+    overlap: 'Different: fluent persistence vs. phonological rewriting.'
+  reason: 0/3 samples judged it novel; Duplicate of ordered_rule_surface_derivation with feature bundles
+    replacing segments.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: vertex_elimination_fill_accounting
+  summary: Eliminate vertices in turn under a stated min-degree or min-fill rule, adding fill edges that
+    complete each removed vertex's neighborhood; answer the fill added per step, the largest clique formed,
+    or the final order.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_verification_repair_r1.elimination_fill_in.elimination_fill_in:EliminationFillIn
+    relationship: same_operation
+    overlap: Both eliminate vertices in a stated order, complete neighborhoods into cliques, add fill
+      edges, and ask for fill added per step, largest clique, or final order.
+  - id: task:generated.k3_invariants_r1.ordered_greedy_coloring.ordered_greedy_coloring:OrderedGreedyColoring
+    relationship: adjacent
+    overlap: Both are greedy vertex-order procedures on graphs, but one adds fill edges and the other
+      assigns colors.
+  - id: task:generated.k3_invariants_r1.havel_hakimi_realization.havel_hakimi_realization:HavelHakimiRealization
+    relationship: adjacent
+    overlap: Both repeatedly reduce a graph or sequence by a fixed rule and track residual structure,
+      but different invariants.
+  reason: 0/3 samples judged it novel; Exact duplicate of elimination_fill_in with an extra rule choice.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: veracity_web_fixed_point
+  summary: 'Truth-teller/liar webs whose utterances name others'' types, nested claims, or liar counts:
+    propagate forced types and test consistency; answer the full assignment, which nodes stay free, or
+    the inconsistency witness.'
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_controlled-nli:P009
+    relationship: same_operation
+    overlap: Both assign types/roles to speakers so that stated claims are consistent with truth conditions;
+      both ask for the assignment or blocking claim.
+  - id: proposal:k3_global-from-local:P008
+    relationship: adjacent
+    overlap: Both are fixpoint propagations over a graph, but one uses truth-teller constraints and the
+      other activation thresholds.
+  - id: task:generated.k3_uncertainty_r1.kripke_knowledge_evaluation.kripke_knowledge_evaluation:KripkeKnowledgeEvaluation
+    relationship: different
+    overlap: Knowledge evaluation vs. truth assignment in liar webs.
+  reason: 0/3 samples judged it novel; Surface variant of speaker_role_consistency with the same assignment/consistency
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: interval_relation_closure
+  summary: Premises state before/meets/overlaps/during relations (with inverses) among events; compose
+    and tighten to closure; answer the strongest relation implied between a queried pair or which premise
+    first conflicts.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_representation_transfer_r1.allen_interval_composition.allen_interval_composition:AllenIntervalComposition
+    relationship: same_operation
+    overlap: Both do composition of Allen interval relations and query the strongest relation between
+      endpoints; C002 additionally tightens a set of premises, but that is a parameter change.
+  - id: proposal:k3_algorithms-and-data-structures:P002
+    relationship: adjacent
+    overlap: Both involve temporal reasoning over intervals, but one uses Allen algebra and the other
+      linguistic connectives.
+  - id: task:generated.k3_dynamic_structures_r1.transformation_semigroup_closure.transformation_semigroup_closure:TransformationSemigroupClosure
+    relationship: different
+    overlap: Closure of semigroup products vs. composition of interval relations; different algebra.
+  reason: 0/3 samples judged it novel; Variant of Allen interval composition with different premise formulation
+    and added conflict detection.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: marginal_share_settlement
+  summary: 'Worth tables for every coalition of a few players: average each player''s marginal contribution
+    across arrival orders; answers are exact shares, the pivotal player in a stated order, or a coalition
+    blocking a proposed split.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_rule_induction_r1.shapley_value_marginal_contributions.shapley_value_marginal_contributions:ShapleyValueMarginalContributions
+    relationship: same_operation
+    overlap: Both compute Shapley values from coalition worth tables by averaging marginal contributions
+      over permutations.
+  - id: task:generated.k3_counterfactual_r1.vcg_pivotal_payments.vcg_pivotal_payments:VcgPivotalPayments
+    relationship: adjacent
+    overlap: Both involve coalitional valuation and marginal-based payments, but one computes Shapley
+      values and the other VCG payments.
+  - id: proposal:k3_latent-structure-reconstruction:P003
+    relationship: different
+    overlap: Pairwise majority set vs. Shapley value.
+  reason: 0/3 samples judged it novel; Duplicate of shapley_value_marginal_contributions.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: envy_cycle_elimination
+  summary: From agents' additive valuations over indivisible goods and an allocation, build the envy graph
+    from pairwise bundle comparisons; answers are the envy-free verdict, a swap-cycle repair sequence,
+    or the most envy-reducing trade.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_shortcuts_fail_r1.envy_cycle_fair_allocation.envy_cycle_fair_allocation:EnvyCycleFairAllocation
+    relationship: same_operation
+    overlap: Both construct and manipulate an envy graph from additive valuations, detect cycles, and
+      repair via swaps along cycles; C001 differs only in starting with a given allocation and asking
+      for the repair sequence or most envy-reducing trade versus the assignment from scratch.
+  - id: proposal:k3_non-local-structured:P001
+    relationship: adjacent
+    overlap: Both involve iterative graph-based updates to reach a fixpoint, but one uses envy cycles
+      and the other mutex propagation in planning.
+  - id: task:generated.k3_relational_structures_r1.take_grant_rights_derivation.take_grant_rights_derivation:TakeGrantRightsDerivation
+    relationship: different
+    overlap: 'Different domain: knowledge/rights derivation vs. fair allocation; no shared procedure.'
+  reason: 0/3 samples judged it novel; Cosmetic variant of envy_cycle_fair_allocation with same cycle-detection/swap
+    operation and different output format.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: dominance_frontier_layers
+  summary: 'Rank multi-criteria candidates by dominance depth: repeatedly strip the nondominated front
+    of what remains; answers are the fronts in order, a named candidate''s layer, or whether one named
+    candidate dominates another.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_relational_structures_r1.pareto_frontier_layers.pareto_frontier_layers:ParetoFrontierLayers
+    relationship: same_operation
+    overlap: Both iteratively strip nondominated points into layers under coordinatewise dominance and
+      return per-point layers, k-th frontiers, or pairwise dominates queries.
+  - id: task:generated.k3_uncertainty_r1.iterated_dominance_elimination.iterated_dominance_elimination:IteratedDominanceElimination
+    relationship: adjacent
+    overlap: Both use iterated dominance, but one is over multi-criteria points and the other over game
+      strategies.
+  - id: proposal:k3_latent-structure-reconstruction:P003
+    relationship: adjacent
+    overlap: Both deal with pairwise dominance/beat relations, but one aggregates into fronts and the
+      other into a Smith set.
+  reason: 0/3 samples judged it novel; Exact duplicate of pareto_frontier_layers.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: interval_arithmetic_evaluation
+  summary: 'Evaluate arithmetic expressions over intervals: propagate lower and upper bounds through addition,
+    multiplication, division, and powers, track dependency and division-by-zero cases, and answer the
+    resulting interval or whether a target value is excluded.'
+  verdict: invalid
+  closest_id: null
+  reason: summary must be 40-240 characters, got 254
+- name: mastermind_feedback_candidate_filtering
+  summary: 'Filter secret codes under Mastermind feedback: track candidate sets consistent with exact-position
+    and wrong-position counts, apply subset deductions, and answer remaining codes, forced pegs, or the
+    most informative next guess.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.counterfeit_weighing_deduction.counterfeit_weighing_deduction:CounterfeitWeighingDeduction
+    relationship: same_operation
+    overlap: Both filter candidates by intersecting consistent sets from feedback (balance pans vs. pegs);
+      identical constraint propagation.
+  - id: task:generated.wave12.information_seeking.information_seeking:InformationSeeking
+    relationship: variant
+    overlap: Both choose next query to partition candidate space; different domain.
+  - id: proposal:k3_latent-structure-reconstruction:P005
+    relationship: adjacent
+    overlap: Both reconstruct a hidden structure from noisy feedback.
+  reason: 0/3 samples judged it novel; Variant of candidate filtering tasks like counterfeit weighing.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: kinship_relation_composition
+  summary: 'Compose kinship relations along paths in a family graph: apply parent, spouse, sibling, and
+    inverse operations, reduce composites to canonical terms, and answer the kin term, relation chain,
+    or whether two descriptions are equivalent.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_relational_structures_r1.kinship_relation_resolution.kinship_relation_resolution:KinshipRelationResolution
+    relationship: same_operation
+    overlap: Both resolve kinship by composing parent/spouse operations and reducing to a canonical kin
+      term; identical core.
+  - id: task:generated.k3_representation_transfer_r1.allen_interval_composition.allen_interval_composition:AllenIntervalComposition
+    relationship: variant
+    overlap: Both compose relation-algebra operations and reduce to canonical forms; different domains.
+  - id: proposal:k3_global-from-local:P006
+    relationship: adjacent
+    overlap: Both reason over pedigree graphs but with different (inheritance vs. relation composition)
+      procedures.
+  reason: 0/3 samples judged it novel; Variant of kinship resolution with more relation types.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: dimensional_analysis_conversion
+  summary: 'Reason about physical units: combine dimensions through multiplication, division, and powers,
+    cancel and simplify to base or derived units, check equation consistency, and answer the resulting
+    unit expression or converted numeric value.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave4.dimensional_analysis.s47_dimensional_analysis:DimensionalAnalysisTask
+    relationship: same_operation
+    overlap: Both perform unit cancellation and conversion; identical operation with different phrasing.
+  - id: task:generated.wave8.dimensional_consistency.dimensional_consistency:DimensionalConsistency
+    relationship: variant
+    overlap: Both check dimension consistency; one outputs the exponent, the other the simplified unit.
+  - id: proposal:k3_state-tracking:P004
+    relationship: different
+    overlap: No shared procedure.
+  reason: 0/3 samples judged it novel; Redundant with existing dimensional analysis tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: apportionment_method_allocation
+  summary: 'Allocate seats by apportionment rules: compute quotas, apply rounding or divisor methods,
+    handle minimum seats and paradoxes, and answer each state''s allocation, the modified divisor, or
+    which method satisfies a quota condition.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.dhondt_apportionment.dhondt_apportionment:DhondtApportionment
+    relationship: same_operation
+    overlap: Both allocate integer seats proportionally to votes using a divisor method; identical procedure,
+      only parameter variations.
+  - id: proposal:k3_operations-research:P006
+    relationship: variant
+    overlap: Both allocate a scarce resource by leveling or divisor rounds; same core allocation loop,
+      different fairness notion.
+  - id: proposal:k3_psychometrics:P001
+    relationship: different
+    overlap: No procedural overlap.
+  reason: 0/3 samples judged it novel; Duplicate of existing D'Hondt task with extra rounding variants.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: binding_principle_antecedent_filtering
+  summary: 'Apply binding theory to indexed sentences: use c-command and locality to filter antecedents
+    for anaphors, pronouns, and names under Principles A/B/C, answering allowed antecedents or the violated
+    principle.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_scope_and_binding_r1.antecedent_binding_legality.antecedent_binding_legality:AntecedentBindingLegality
+    relationship: same_operation
+    overlap: Both apply Principles A/B/C to coindexed pairs on a tree, checking c-command and locality;
+      identical operation and output.
+  - id: task:generated.k3_formal_semantics_r1.presupposition_projection.presupposition_projection:PresuppositionProjection
+    relationship: variant
+    overlap: Both filter candidates under syntactic/semantic constraints; different constraints and domain.
+  - id: proposal:k3_cognitive-psychology:P005
+    relationship: adjacent
+    overlap: Both resolve reference under contextual constraints, but different mechanisms.
+  reason: 0/3 samples judged it novel; Exact duplicate of antecedent_binding_legality.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: optimality_theory_tableau_ranking
+  summary: 'Evaluate optimality-theoretic tableaux: compare violation vectors under a constraint ranking,
+    resolve ties, and answer the winning candidate, eliminated set, or reranking that changes the winner.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_scope_and_binding_r1.de_re_de_dicto_evaluation.de_re_de_dicto_evaluation:DeReDeDictoEvaluation
+    relationship: same_operation
+    overlap: Both evaluate satisfaction of a constraint (violation vector vs. de re/de dicto assignment)
+      against a fixed interpretation (ranking vs. world table) and resolve ties/context to pick a winner.
+  - id: proposal:k3_cognitive-psychology:P004
+    relationship: variant
+    overlap: Both rank alternatives under a stated order/threshold and ask equivalence or implied ranking;
+      only the input formalism (tableau vs. degree phrases) differs.
+  - id: task:generated.wave8.vector_clock_order.vector_clock_order:VectorClockOrder
+    relationship: different
+    overlap: No shared procedure; different domain.
+  reason: 1/3 samples judged it novel; Known evaluation-then-compare pattern with cosmetic OT terminology.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: cellular_automaton_ancestry
+  summary: 'Evolve one-dimensional cellular automata: apply an elementary rule with boundary conditions
+    for synchronous steps, then answer the final tape, a queried cell''s value, or the initial cells causally
+    influencing it.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_verification_repair_r1.cellular_automaton_step.cellular_automaton_step:CellularAutomatonStep
+    relationship: same_operation
+    overlap: Both evolve an elementary 1D CA under a rule and boundary condition; identical procedure.
+  - id: task:generated.k3_counterfactual_r1.boolean_network_knockout.boolean_network_knockout:BooleanNetworkKnockout
+    relationship: variant
+    overlap: Both simulate synchronous state updates; different formalism.
+  - id: task:generated.wave0.n04_finite_automaton_execution.n04_finite_automaton_execution:FiniteAutomatonExecution
+    relationship: adjacent
+    overlap: Both execute state transition systems.
+  reason: 0/3 samples judged it novel; Variant of cellular automaton_step with causal-analysis output.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: minesweeper_deduction_frontier
+  summary: 'Deduce Minesweeper cells from number clues: propagate local exact-count constraints, combine
+    subset and global mine totals, and answer which frontier cells are safe, mined, or undetermined after
+    each deduction round.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_shortcuts_fail_r1.minesweeper_definite_cells.minesweeper_definite_cells:MinesweeperDefiniteCells
+    relationship: same_operation
+    overlap: Both deduce safe/mined cells from numeric clues via constraint propagation; identical core.
+  - id: proposal:k3_global-from-local:P010
+    relationship: variant
+    overlap: Both propagate constraints to fixpoint; different puzzle grid.
+  - id: proposal:k3_inference-modes:P002
+    relationship: adjacent
+    overlap: Both involve counting/elimination in finite structures.
+  reason: 0/3 samples judged it novel; Variant of minesweeper_definite_cells with iterative reporting.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: vector_clock_causality_tracing
+  summary: 'Trace distributed executions: update per-process vector clocks on local events, sends, and
+    receives, then answer happens-before/concurrent relations, final clock vectors, or the earliest consistent
+    cut for queried event sets.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave9.version_vector_causality.version_vector_causality:VersionVectorCausality
+    relationship: same_operation
+    overlap: Both update vector clocks on events and answer final clock values; identical operation and
+      output.
+  - id: task:generated.wave8.vector_clock_order.vector_clock_order:VectorClockOrder
+    relationship: same_operation
+    overlap: Both classify causal order using vector timestamps; identical.
+  - id: task:generated.wave9.critical_path_analysis.critical_path_analysis:CriticalPathAnalysis
+    relationship: different
+    overlap: Different procedure and domain.
+  reason: 0/3 samples judged it novel; Duplicate of version_vector_causality and vector_clock_order.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: finite_field_polynomial_arithmetic
+  summary: 'Manipulate polynomials over finite fields: add, multiply, divide with remainder, compute gcd,
+    or evaluate at field elements under a given prime or irreducible modulus, answering the resulting
+    polynomial, remainder, or value as coefficients.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.polynomial_euclidean_algorithm.polynomial_euclidean_algorithm:PolynomialEuclideanAlgorithm
+    relationship: same_operation
+    overlap: Both do polynomial arithmetic over finite fields, including division/gcd; identical procedure.
+  - id: task:generated.wave9.poly_euclid.poly_euclid_algorithm:PolyEuclid
+    relationship: same_operation
+    overlap: Both execute polynomial gcd over finite fields; identical.
+  - id: proposal:k3_state-tracking:P008
+    relationship: different
+    overlap: No shared procedure.
+  reason: 0/3 samples judged it novel; Duplicate of existing poly gcd and polynomial arithmetic tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: scalar_implicature_exhaustification
+  summary: 'Compute scalar implicatures by exhaustifying alternatives: given a sentence, scale, and context,
+    determine which stronger alternatives are negated, which stay open, and whether the result is ignorance
+    or competence.'
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_scope_and_binding_r1.scalar_alternative_exclusion.scalar_alternative_exclusion:ScalarAlternativeExclusion
+    relationship: same_operation
+    overlap: Both compute scalar implicatures by excluding stronger alternatives on a scale under context;
+      identical procedure.
+  - id: proposal:k3_controlled-nli:P001
+    relationship: variant
+    overlap: Both compute entailment/denial status under presupposition and context; different triggers.
+  - id: task:generated.wave11.scope_explication.scope_explication:ScopeExplication
+    relationship: adjacent
+    overlap: Both deal with semantic scope but different mechanisms.
+  reason: 0/3 samples judged it novel; Variant of existing scalar implicature task.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: ranked_ballot_elimination_transfer
+  summary: 'Instant-runoff counting over ranked ballots: retally first choices, drop the lowest candidate,
+    transfer those ballots downward as exhausted ones leave; answers are round tallies, the round a named
+    candidate falls, or the winner.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave8.instant_runoff_winner.instant_runoff_winner:InstantRunoffWinner
+    relationship: same_operation
+    overlap: Both execute instant-runoff elimination with vote transfer and tie-breaking; identical procedure.
+  - id: task:generated.wave8.condorcet_winner.condorcet_winner:CondorcetWinner
+    relationship: variant
+    overlap: Both count ranked ballots; different winner criterion.
+  - id: proposal:k3_latent-structure-reconstruction:P003
+    relationship: adjacent
+    overlap: Both use majority comparisons but for different goals (Smith set vs. IRV).
+  reason: 0/3 samples judged it novel; Duplicate of instant_runoff_winner with extra reporting.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: stereochemical_parity_transport
+  summary: Track tetrahedral handedness through composed ligand exchanges, spatial rotations, and wedge,
+    Fischer, or ordered-neighbor representations; return a queried center's final parity or configuration.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: variant
+    overlap: Both track orientation (handedness/axis direction) through sequences of discrete transformations
+      (rotations vs. ligand swaps), returning final orientation; only the underlying representation differs.
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: variant
+    overlap: Both compose transformations on labeled objects (frames vs. chiral centers) and track the
+      resulting orientation; the operation of composing orientation-preserving/reversing maps is identical.
+  - id: gallery:spatial_folding
+    relationship: adjacent
+    overlap: Both track spatial transformations, but folding is about hole positions, not handedness.
+  reason: 1/3 samples judged it novel; Variant of orientation tracking, only changing the objects from
+    axes to chiral centers.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: abstract_type_identity_transport
+  summary: Track abstract type identity through opaque sealing, module aliases, and generative or applicative
+    functor calls; determine queried type equalities or the first incompatible use.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.alias_mutation_tracking.alias_mutation_tracking:AliasMutationTracking
+    relationship: variant
+    overlap: Both track identity through aliasing, rebinding, and scoped constructs, answering whether
+      two references/type names refer to the same underlying entity; alias tracking at value level vs.
+      type level.
+  - id: proposal:k3_formal-logic:P007
+    relationship: variant
+    overlap: Both propagate type-level information through nested constructors and aliases, checking for
+      consistency violations; variance tracking is the polarity dual of type equality.
+  - id: task:generated.wave9.alias_mutation.alias_mutation_tracking:AliasMutation
+    relationship: variant
+    overlap: Same alias-tracking operation, but applied to mutable data instead of abstract types.
+  reason: 1/3 samples judged it novel; Variant of alias tracking applied to types instead of values.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: reborrow_permission_propagation
+  summary: Propagate access permissions through shared and exclusive borrows, nested reborrows, moves,
+    and explicit lifetime endings; return the first forbidden operation or the permissions remaining.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_formal-logic:P002
+    relationship: same_operation
+    overlap: Both propagate access permissions through borrows, reborrows, moves, and explicit ending
+      events, reporting first illegal use or remaining permissions; the exact same state transition system.
+  - id: task:generated.wave12.access_control_policy_evaluation.access_control_policy_evaluation:AccessControlPolicyEvaluation
+    relationship: adjacent
+    overlap: Both resolve permissions with inheritance and exceptions, but one tracks mutable borrows
+      and the other evaluates static policy rules.
+  - id: task:generated.wave9.reaching_defs.reaching_definitions:ReachingDefs
+    relationship: adjacent
+    overlap: Both propagate value/definition sets through control flow, but one is about assignment reaching,
+      the other about borrow permissions.
+  reason: 0/3 samples judged it novel; Exact duplicate of the ownership_lifeline_transfer proposal under
+    a different name.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: subgroup_coset_enumeration
+  summary: 'Enumerate cosets of a specified subgroup in a small presented group: complete coset tables
+    by scanning relators and merging coincident rows; answers are the index, the coset of a queried word,
+    or whether two words share a coset.'
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_shortcuts-fail:P006
+    relationship: same_operation
+    overlap: Both enumerate cosets of a subgroup in a presented group by completing coset tables and merging
+      coincident rows, returning the index and coset membership; identical algorithm.
+  - id: task:generated.wave8.left_coset_identification.left_coset_identification:LeftCosetIdentification
+    relationship: variant
+    overlap: Both identify which coset a given element belongs to; left_coset_identification is the cyclic-group
+      special case of the same operation.
+  - id: task:generated.k3_counterfactual_r1.wavelet_tree_queries.wavelet_tree_queries:WaveletTreeQueries
+    relationship: different
+    overlap: 'No overlap: group coset enumeration vs. rank/select on sequences.'
+  reason: 0/3 samples judged it novel; Duplicate of k3_shortcuts-fail:P006 (coset_enumeration_index).
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: effect_handler_resumption
+  summary: Execute nested effect handlers with shallow or deep scope, aborted or repeated resumptions,
+    and stateful branches; return the resulting value, emitted trace, or first unhandled effect.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:UNBUILT:P015
+    relationship: variant
+    overlap: Both execute nested scoped control-flow constructs with explicit suspension, resumption,
+      and aborted paths, returning the final value or the first unhandled continuation/exception; the
+      operations differ only in the control construct (effect handlers vs. exceptions/finally).
+  - id: proposal:k3_language-implementation:P001
+    relationship: variant
+    overlap: Both execute nested suspend/resume mechanisms where inner continuations can be aborted or
+      repeated, tracking suspension frames and returning emitted values or stale state; the generator
+      yield-from and effect handler resumption share the same control-flow operation with different syntax.
+  - id: proposal:k3_language-implementation:P002
+    relationship: adjacent
+    overlap: Both involve nested structural manipulation with explicit scoping and substitution, but one
+      is hygienic renaming and the other is runtime effect propagation.
+  reason: 0/3 samples judged it novel; Cosmetic variant of nested control-flow execution already covered
+    by exception handling and generator reentry tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: oriented_chain_boundary
+  summary: Form boundaries of oriented simplex chains across dimensions, vertex reorderings, repeated
+    cells, and signed multiplicities; cancel shared faces and return a queried coefficient or remaining
+    chain.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_semantics_preserving_translation_r1.simplicial_boundary_matrices.simplicial_boundary_matrices:SimplicialBoundaryMatrices
+    relationship: same_operation
+    overlap: Both compute boundary operators on oriented simplicial complexes with signed coefficients
+      and dimension-specific outputs; exact same mathematical operation.
+  - id: proposal:k3_shortcuts-fail:P011
+    relationship: adjacent
+    overlap: Both involve combinatorial topology, but one computes boundaries of chains, the other traces
+      faces of an embedding.
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: different
+    overlap: 'No connection: boundary computation vs. rigid-body rotations.'
+  reason: 0/3 samples judged it novel; Duplicate of an existing simplicial boundary matrices task.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: attribute_grammar_evaluation
+  summary: Evaluate attribute grammars over given parse trees with synthesized and inherited attributes,
+    including dependencies across siblings and parents; answers are attribute values at queried nodes
+    or detection of circular dependency.
+  verdict: duplicate
+  closest_id: task:generated.k3_synthetic_grammars_r1.attribute_grammar_evaluation.attribute_grammar_evaluation:AttributeGrammarEvaluation
+  reason: exact catalog name collision with task:generated.k3_synthetic_grammars_r1.attribute_grammar_evaluation.attribute_grammar_evaluation:AttributeGrammarEvaluation
+- name: combinatory_logic_reduction
+  summary: Reduce combinator expressions over S, K, I via leftmost-outermost contraction; modes ask for
+    the normal form, the first irreducible term, or whether reduction diverges for given Church numerals
+    and pairs.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:lambda_reduction
+    relationship: same_operation
+    overlap: Both reduce terms by leftmost-outermost contraction to a normal form; combinator logic is
+      syntactically encoded lambda calculus without binders.
+  - id: task:generated.k3_systematic_generalization_r1.reg_exp_derivative.regular_expression_derivative:RegExpDerivative
+    relationship: adjacent
+    overlap: Both apply rewrite rules until a normal form; but one reduces combinator terms and the other
+      derives regular expressions.
+  - id: proposal:k3_state-tracking:P009
+    relationship: different
+    overlap: 'Different operation: combinator reduction vs. positional morphism substitution.'
+  reason: 1/3 samples judged it novel; Combinator reduction is a notational variant of lambda reduction
+    sharing the same contraction-based normal-form computation.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: petri_net_marking_reachability
+  summary: Simulate bounded Petri nets by firing enabled transitions in given sequences or to fixed points;
+    modes ask for the final marking, the set of enabled transitions, or whether a target marking is reachable
+    under capacity constraints.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.petri_enabled_transitions.petri_enabled_transitions:PetriEnabledTransitions
+    relationship: same_operation
+    overlap: Both determine enabled transitions in Petri nets from markings and pre-arcs.
+  - id: task:generated.wave8.petri_conflict_pair.petri_conflict_pair:PetriConflictPair
+    relationship: variant
+    overlap: Both analyze Petri net enablement, one enumerates all, the other detects conflicts.
+  - id: task:generated.wave12.reaching_definitions.reaching_definitions:ReachingDefinitions
+    relationship: adjacent
+    overlap: Both propagate state through networks, but one is Petri nets and the other is control-flow
+      analysis.
+  reason: 1/3 samples judged it novel; Petri net firing is a direct extension of existing enabled-transition
+    tasks; the novelty is only in added simulation modes.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: l_system_derivation
+  summary: Apply context-free and context-sensitive L-system production rules in parallel across generations;
+    modes ask for the string at generation n, its length, or the first generation containing a target
+    substring.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_verification_repair_r1.lindenmayer_parallel_rewrite.lindenmayer_parallel_rewrite:LindenmayerParallelRewrite
+    relationship: same_operation
+    overlap: Both apply L-system parallel rewriting to derive strings, with the same production-application
+      semantics; the only extension is asking for the whole string, length, or substring presence, which
+      is a mode variation.
+  - id: proposal:k3_global-from-local:P009
+    relationship: adjacent
+    overlap: Both involve rule-based rewriting (L-system vs. ordered rewrite rules) but with different
+      rule application models (parallel vs. sequential).
+  - id: task:generated.wave9.grammar_first_follow.grammar_first_follow:GrammarFirstFollow
+    relationship: adjacent
+    overlap: Both operate on grammars, but one computes FIRT/FOLLOW sets and the other derives strings
+      via parallel rules.
+  reason: 0/3 samples judged it novel; The same parallel-rewrite operation as the neighbor with only output-format
+    changes.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: boolean_circuit_fault_diagnosis
+  summary: Diagnose single and multiple stuck-at faults in combinational circuits by propagating values
+    and comparing observed outputs; answers are the set of faulty gates, a minimal diagnosis, or whether
+    a fault is detectable.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_relevance_separation_r1.sensitive_input_identification.sensitive_input_identification:SensitiveInputIdentification
+    relationship: variant
+    overlap: Both diagnose which circuit elements affect observed outputs by evaluating value changes;
+      one uses stuck-at faults, the other input flips.
+  - id: task:generated.k3_counterfactual_r1.boolean_network_knockout.boolean_network_knockout:BooleanNetworkKnockout
+    relationship: variant
+    overlap: Both simulate Boolean networks with faults/knockouts to find alternative behaviors.
+  - id: gallery:boolean_propagation_search
+    relationship: adjacent
+    overlap: Both propagate Boolean values through circuits, but one diagnoses faults and the other finds
+      models.
+  reason: 1/3 samples judged it novel; Stuck-at fault diagnosis is a known operation of circuit fault
+    analysis, closely related to input sensitivity and network knockout.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: modal_kripke_evaluation
+  summary: Evaluate modal formulas with boxes and diamonds at worlds in finite Kripke models; modes ask
+    for the truth value at a world, the set of worlds satisfying a formula, or whether a formula is valid
+    on the frame.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.kripke_knowledge_evaluation.kripke_knowledge_evaluation:KripkeKnowledgeEvaluation
+    relationship: same_operation
+    overlap: 'Both evaluate modal-style formulas on Kripke models: one uses knowledge modalities for agents,
+      the other uses box/diamond modalities; the satisfaction relation and world-set queries are the same
+      operation.'
+  - id: task:generated.k3_dynamic_structures_r1.ctl_fixpoint_model_checking.ctl_fixpoint_model_checking:CtlFixpointModelChecking
+    relationship: adjacent
+    overlap: Both evaluate modal formulas on Kripke structures, but CTL adds temporal fixpoint semantics,
+      whereas the proposal uses basic box/diamond.
+  - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+    relationship: adjacent
+    overlap: Both evaluate logical formulas over finite models, but one uses first-order quantifiers and
+      the other modal operators.
+  reason: 0/3 samples judged it novel; Cosmetic change of modal operators from knowledge to box/diamond
+    without new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: default_logic_extension
+  summary: Compute extensions of normal and semi-normal default theories over propositional facts; modes
+    ask for all extensions, whether a formula is in some extension, or whether a default is applicable
+    in a given extension.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.argumentation_grounded_extension.argumentation_grounded_extension:ArgumentationGroundedExtension
+    relationship: variant
+    overlap: Iterate attack and defense relations to a fixed point to compute an extension; default logic
+      extensions also compute consistent sets of beliefs from defaults, but the operations differ (attack/defense
+      vs. default applicability).
+  - id: proposal:k3_global-from-local:P004
+    relationship: adjacent
+    overlap: Both use fixed-point or closure-based reasoning in a logical system, but one searches for
+      sequent derivations and the other computes default extensions.
+  - id: task:logic_semantics:LogicFormalization
+    relationship: adjacent
+    overlap: Both involve formal logic, but one translates NL to formulas and the other computes extensions
+      via default rules.
+  reason: 1/3 samples judged it novel; Cosmetically similar to argumentation extension tasks but with
+    a distinct fixed-point operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: formal_concept_lattice_construction
+  summary: From a formal context of objects and attributes, derive formal concepts by shared-attribute
+    closure, then answer extent/intent pairs, concept ordering, or meet and join of queried concepts across
+    varying context densities.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_relational_structures_r1.formal_concept_closure.formal_concept_closure:FormalConceptClosure
+    relationship: same_operation
+    overlap: Both compute formal concepts via closure operators and list extents/intents and implications;
+      the proposal adds lattice ordering and meet/join, but the core concept generation is identical.
+  - id: proposal:k3_controlled-nli:P003
+    relationship: adjacent
+    overlap: Both deal with structured sets of attributes, but one derives formal concepts and the other
+      evaluates spatial relations.
+  - id: task:generated.wave9.nfa_subset_construction.nfa_subset_construction:NfaSubsetConstruction
+    relationship: adjacent
+    overlap: Both compute closure-based sets, but one is for concepts and the other for DFA states.
+  reason: 0/3 samples judged it novel; Duplicates the existing formal concept closure task with extended
+    queries.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: concurrent_edit_rebasing
+  summary: Rebase concurrent insertions, deletions, and replacements through intervening text edits, preserving
+    intended targets under overlap and stated tie rules; return the transformed edit or reconciled text.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.k3_systematic_generalization_r1.concurrent_edit_rebase.concurrent_edit_rebase:ConcurrentEditRebase
+    relationship: same_operation
+    overlap: Both rebase concurrent insertions/deletions over text with tie rules; the proposal adds replacements
+      and text reconciliation, but the core operation is the same rebasing algorithm.
+  - id: task:generated.wave12.three_way_merge_resolution.three_way_merge_resolution:ThreeWayMergeResolution
+    relationship: adjacent
+    overlap: Both merge concurrent edits, but one rebases a single edit over another while the other merges
+      three versions with conflict spans.
+  - id: task:generated.wave9.diff_patch_application.diff_patch_application:DiffPatchApplication
+    relationship: adjacent
+    overlap: Both apply text edits but with different ordering (parallel vs. sequential application).
+  reason: 0/3 samples judged it novel; Identical operation as the nearest neighbor; no new cognitive mechanism.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: access_control_role_hierarchy
+  summary: Resolve effective permissions in role hierarchies with inheritance, exceptions, and separation-of-duty
+    constraints; modes ask for a user's permission set, whether access is granted, or role assignments
+    satisfying constraints.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave12.access_control_policy_evaluation.access_control_policy_evaluation:AccessControlPolicyEvaluation
+    relationship: same_operation
+    overlap: Both resolve inherit permissions with denials and exceptions in a hierarchy; the proposal
+      adds role constraints, but the core inheritance resolution is the same.
+  - id: task:generated.wave9.access_control_evaluation.access_control_policy_evaluation:AccessControlEvaluation
+    relationship: same_operation
+    overlap: 'Same as above: effective permission computation via inheritance and exceptions.'
+  - id: task:generated.wave8.unix_mode_permission.unix_mode_permission:UnixModePermission
+    relationship: adjacent
+    overlap: Both decide access permissions, but one uses Unix bits and the other role hierarchies.
+  reason: 0/3 samples judged it novel; Surface change in domain from groups to roles; same permission-resolution
+    operation.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: dataflow_reaching_definitions
+  summary: Perform forward dataflow analysis over control-flow graphs with gen/kill sets for reaching
+    definitions; modes ask for in/out sets at a queried node, the final fixed point, or whether a definition
+    reaches a use.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave12.reaching_definitions.reaching_definitions:ReachingDefinitions
+    relationship: same_operation
+    overlap: Both perform forward dataflow analysis for reaching definitions with gen/kill sets and propagate
+      through CFGs; the proposal adds query modes but the core operation is identical.
+  - id: task:generated.wave9.reaching_defs.reaching_definitions:ReachingDefs
+    relationship: same_operation
+    overlap: 'Same as above: compute reaching definition sets via fixed-point iteration over control flow.'
+  - id: task:generated.wave9.dataflow_liveness.dataflow_liveness:DataflowLiveness
+    relationship: adjacent
+    overlap: Both are dataflow analyses, but one is backward (liveness) and the other forward (reaching).
+  reason: 0/3 samples judged it novel; Duplicates the existing reaching definitions task.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: vector_clock_causality
+  summary: Advance vector clocks along per-process event chains joined by message edges; adjudicate a
+    queried pair as ordered or concurrent, list the events concurrent with a cut, or find the earliest
+    common descendant.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.version_vector_causality.version_vector_causality:VersionVectorCausality
+    relationship: same_operation
+    overlap: Both advance vector clocks along processes and message edges and reason about causality;
+      the proposal adds comparing pairs and finding concurrent events, but the clock update algorithm
+      is identical.
+  - id: task:generated.wave8.vector_clock_order.vector_clock_order:VectorClockOrder
+    relationship: same_operation
+    overlap: Both classify causal order of vector timestamps; the proposal also constructs the clocks,
+      but the ordering comparison is the same.
+  - id: task:generated.wave8.lamport_clock.lamport_clock:LamportClock
+    relationship: adjacent
+    overlap: Both use happens-before logic, but Lamport clocks are scalar and vector clocks are component-wise.
+  reason: 0/3 samples judged it novel; Same vector-clock causality operation as the neighbors, only adding
+    query modes.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: relational_functional_dependency_closure
+  summary: Compute attribute closures and candidate keys from sets of functional dependencies; modes ask
+    for the closure of an attribute set, all candidate keys, or whether a decomposition is lossless and
+    dependency-preserving.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.fd_attribute_closure.fd_attribute_closure:AttributeClosure
+    relationship: same_operation
+    overlap: Both compute attribute closure under functional dependencies via Armstrong iteration; the
+      proposal adds candidate keys and decomposition checks, but the closure core is identical.
+  - id: task:generated.wave8.candidate_key_minimality.candidate_key_minimality:CandidateKeyMinimality
+    relationship: variant
+    overlap: 'Both reason about FDs and candidate keys: one classifies a set as candidate key, the other
+      computes all keys via closure; but key search is the same algorithm family.'
+  - id: task:generated.wave8.lossless_binary_decomposition.lossless_binary_decomposition:LosslessBinaryDecomposition
+    relationship: adjacent
+    overlap: Both use FD-based reasoning, but the neighbor focuses on binary decomposition losslessness,
+      not closure mining.
+  reason: 0/3 samples judged it novel; Reuses the existing FD-closure operation with additional tasks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: play_operator_memory
+  summary: Propagate drives through cascaded deadband play elements whose states move only when thresholds
+    are exceeded; vary asymmetric bands, reversals, and initial memory, returning retained states or output.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: variant
+    overlap: 'both model hysteresis with memory: play_operator_memory propagates through deadband elements
+      retaining state, hysteresis_reversal_memory reduces reversal histories with extrema; both track
+      retained states under alternating drives.'
+  - id: proposal:k3_global-from-local:P001
+    relationship: adjacent
+    overlap: both propagate a state variable through sequential steps (wait vs play), but Lindley recursion
+      is a queue recurrence, not threshold-based hysteresis.
+  - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+    relationship: different
+    overlap: protocol state machines are event-driven transitions, not memory-based hysteresis.
+  reason: '1/3 samples judged it novel; Variant of hysteresis_reversal_memory: same memory state propagation
+    under thresholded reversals.'
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: branched_density_pushforward
+  summary: Transport piecewise probability densities through noninjective maps by combining inverse-branch
+    contributions and Jacobian factors; vary folds, flat regions, and composition, returning a density
+    or atom mass.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.markov_chain_distribution.markov_chain_distribution:MarkovChainDistribution
+    relationship: variant
+    overlap: Both propagate probability mass through deterministic/semantic maps, but Markov chains are
+      linear transitions; pushforward uses inverse branches.
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: variant
+    overlap: Both compute exact probabilities over branching structures, but tree is forward generative,
+      pushforward is functional composition.
+  - id: proposal:k3_scientific-reasoning:P009
+    relationship: adjacent
+    overlap: Uncertainty propagation uses linear/rss rules; density pushforward uses Jacobian changes.
+  reason: 1/3 samples judged it novel; Cosmetic variant of probability propagation through deterministic
+    maps, not a genuinely new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 1/3
+- name: bidirectional_view_putback
+  summary: Propagate edits of filtered, grouped, and computed views back to source records under stated
+    retention and repair laws; preserve hidden information and return the revised source or incompatible
+    edits.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P002
+    relationship: same_operation
+    overlap: Both propagate view edits back to source while preserving hidden fields; composed_lens_update
+      is a special case of putback shunting with retention laws.
+  - id: proposal:k3_formal-logic:P006
+    relationship: adjacent
+    overlap: Streaming view deltas maintain derived data on updates; putback goes backward.
+  - id: task:generated.wave10.scoped_instruction.scoped_instruction:ScopedInstruction
+    relationship: different
+    overlap: Scoped instruction applies a one-off edit; putback is a systematic view-update law.
+  reason: 0/3 samples judged it novel; Variant of existing composed lens update, extending to complex
+    views but same operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: operadic_port_substitution
+  summary: Compose port-labeled structures by inserting components into designated slots and transporting
+    ordered interfaces; vary nested insertions, nullary components, and shared boundaries, returning the
+    composite structure.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P005
+    relationship: same_operation
+    overlap: Both compose ported structures by grafting into ordered boundaries and returning mates/counts;
+      operadic substitution is the same interface wiring.
+  - id: task:generated.k3_synthetic_grammars_r1.hyperedge_replacement_derivation.hyperedge_replacement_derivation:HyperedgeReplacementDerivation
+    relationship: variant
+    overlap: Hyperedge replacement also glues graphs at attachment points; operadic substitution is a
+      more abstract port-gluing.
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: different
+    overlap: Coordinate composition transforms points in frames, not port structures.
+  reason: 0/3 samples judged it novel; Duplicate of existing nested port wiring substitution with cosmetic
+    renaming.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 2
+  votes: 0/3
+- name: distributional_jump_derivatives
+  summary: Differentiate piecewise polynomial functions and point-supported distributions across repeated
+    derivatives; combine ordinary derivatives with jump-induced delta terms, returning the resulting distribution.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_relational_structures_r1.symbolic_differentiation.symbolic_differentiation:SymbolicDifferentiation
+    relationship: variant
+    overlap: Both differentiate expressions; distributional adds delta terms but the core is symbolic
+      differentiation with linearity.
+  - id: proposal:k3_hierarchical-recursive:P001
+    relationship: different
+    overlap: Symmetric polynomial expansion is algebraic; distributional differentiation uses singular
+      supports.
+  - id: proposal:k3_global-from-local:P004
+    relationship: different
+    overlap: Sequent calculus is proof search; distributional differentiation is calculus manipulation.
+  reason: 0/3 samples judged it novel; Cosmetic extension of symbolic differentiation with delta terms;
+    known operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+pool:
+- name: differential_form_pullback
+  summary: Transport differential forms through composed coordinate maps using Jacobian substitution and
+    antisymmetric wedge expansion; vary degrees, dimensions, and vanishing terms, returning the resulting
+    form.
+- name: renormalization_forest_subtraction
+  summary: Subtract divergent substructures using a supplied singular-part projection; combine nested
+    and disjoint subtraction forests while excluding overlapping choices, returning a counterterm or renormalized
+    expression.
