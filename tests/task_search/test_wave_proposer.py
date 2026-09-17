@@ -1120,7 +1120,7 @@ def test_a_rejection_names_the_catalog_entries_it_collided_with():
                wave_proposer.CatalogEntry("gallery:constraint_satisfaction",
                                           "constraint_satisfaction", "solves", "gallery")]
     said = wave_proposer._collisions(ballot, catalog,
-                                 wave_proposer.DEDUP["strict"]["fatal"])
+                                 wave_proposer.DEDUP["strict"])
     # The fatal relationship is named; `adjacent` is what a good proposal looks like.
     assert said == " [overlaps belief_tracking (same_operation)]"
     assert "constraint_satisfaction" not in said
@@ -1130,7 +1130,7 @@ def test_a_rejection_with_no_fatal_overlap_adds_nothing():
     ballot = {"neighbors": [{"id": "gallery:x", "relationship": "adjacent",
                              "overlap": "some"}]}
     assert wave_proposer._collisions(
-        ballot, [], wave_proposer.DEDUP["strict"]["fatal"]) == ""
+        ballot, [], wave_proposer.DEDUP["strict"]) == ""
 
 
 def test_a_pool_does_not_climb_the_retry_ladder_before_trying_another_key(monkeypatch):
@@ -1660,14 +1660,14 @@ def test_a_collision_with_an_unbuilt_proposal_is_not_a_catalog_collision():
     collision real."""
     pending = CatalogEntry("proposal:old:P001", "claimed", SUMMARY, "proposal")
     shipped = CatalogEntry("task:generated.w.t:T", "built", SUMMARY, "task")
-    fatal = DEDUP["strict"]["fatal"]
+    fatal = DEDUP["strict"]
 
     assert _unshipped_blockers(_blocker_ballot("variant"), [pending], fatal)
     assert _unshipped_blockers(_blocker_ballot("same_operation"), [pending], fatal)
     assert not _unshipped_blockers(_blocker_ballot("adjacent"), [pending], fatal), (
         "adjacent is what a good proposal looks like and never refuses one")
     assert not _unshipped_blockers(_blocker_ballot("variant"), [pending],
-                                   DEDUP["lenient"]["fatal"]), (
+                                   DEDUP["lenient"]), (
         "a relationship the gate does not refuse on has nothing to defer")
     assert not _unshipped_blockers(
         _blocker_ballot("variant", "task:generated.w.t:T"), [shipped], fatal)
@@ -1754,18 +1754,3 @@ def test_same_operation_refuses_under_either_gate():
                             dedup=mode)
 
         assert not wave["proposals"], f"{mode} accepted a candidate that already exists"
-
-
-def test_an_archive_written_before_the_setting_is_read_as_strict(tmp_path):
-    """Every wave archived before the gate was settable was judged strictly, so a missing
-    key is history rather than a default -- and validation must not retro-pass them."""
-    wave = {"format_version": 1, "kind": "sft_task_proposals", "name": "old",
-            "review": {"model": "m"},
-            "proposals": [{"name": "old_one", "summary": SUMMARY, "id": "P001",
-                           "novelty": {"verdict": "variant", "substantive_difference": "x",
-                                       "scores": {"novelty": 4, "sft_value": 4,
-                                                  "feasibility": 4, "clarity": 4}}}]}
-
-    assert any("novelty.verdict" in problem for problem in validate_proposal_wave(wave))
-    wave["review"]["dedup"] = "lenient"
-    assert not any("novelty.verdict" in problem for problem in validate_proposal_wave(wave))

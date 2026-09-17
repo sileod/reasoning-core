@@ -185,22 +185,26 @@ candidates and reports what the critic says about tasks already known to be wort
 
 ### How strictly the gate dedups
 
-`--dedup lenient` (the default) and `--dedup strict` differ in one thing: how a nearest
-neighbour labelled `variant` is read. Strict refuses the candidate on it; lenient refuses
-only on `same_operation`, and tells the critic in the same breath that a candidate which
-narrows or redirects a known operation onto a different problem is a real proposal. Neither
-touches the score floors, so a surface reskin still fails on `novelty >= 4`.
+`--dedup lenient` (the default) and `--dedup strict` differ in one thing: whether a nearest
+neighbour labelled `variant` can veto a `novel` verdict. Strict refuses the candidate on it;
+lenient keeps the label as evidence the critic reports and refuses only on `same_operation`,
+the claim that the task already exists. Nothing else moves -- not the score floors, and not
+the verdict, which still has to be `novel`. `variant` as a *verdict* means what the critic
+prompt says it means, a known operation with surface, parameter, direction or output-only
+changes, so a gate that let it through would be admitting reskins by definition.
 
 Leniency is a claim about the catalog, not about the critic. At four hundred tasks almost
 every workable idea shares an operation with something already shipped -- 74% of one sweep's
-811 rejections were `variant`, against 8% scored novel and refused on the labels -- and read
-strictly that breadth argues the catalog is finished. What the setting can reach directly is
-small: of those 811, 27 would flip on the ballot alone and 96% were refused on the score
-floors. The larger effect is the prompt it carries, which moves the scores at their source.
+811 rejections were `variant` -- and read strictly that breadth argues the catalog is
+finished. What the setting reaches is the 8% the critic itself scored 4 or 5 and the labels
+refused anyway; the other 96% were refused on the score floors, which no gate setting
+touches. Raising the yield past that means changing what the critic is told counts as novel,
+and that is a bigger experiment than it looks: the first attempt at one -- a prompt sentence
+inviting the `variant` label -- took two briefs that had yielded 12 and 10 down to 1 and 0,
+with the rejections scored `novelty: 2` almost to a candidate.
 
-Each wave records the gate it was judged under in `review.dedup`, and validation reads that
-field rather than a constant, so waves proposed under either setting stay comparable and an
-archive written before the setting existed is still checked as the strict wave it was.
+Each wave records the gate it was judged under in `review.dedup`, so waves proposed under
+either setting stay comparable after the fact.
 
 ### Several models, several keys
 

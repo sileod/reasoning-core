@@ -507,10 +507,6 @@ def validate_proposal_wave(data):
         problems.append("wave proposals must be a list")
         return problems
     problems.extend(provenance_problems(data, proposals))
-    # Absent means strict, because every wave archived before the gate was settable was
-    # judged that way. New waves always write the key, so this reads history, not a default.
-    passing = DEDUP.get(str((data.get("review") or {}).get("dedup") or "strict"),
-                        DEDUP["strict"])["verdicts"]
     names = [_snake(item.get("name")) for item in proposals]
     if len(names) != len(set(names)):
         problems.append("proposal names must be unique")
@@ -520,9 +516,8 @@ def validate_proposal_wave(data):
         if novelty.get("source") == "legacy":
             # An imported reference wave was never model-reviewed and does not pretend to be.
             continue
-        if novelty.get("verdict") not in passing:
-            problems.append(f"P{index:03d}: accepted proposal must have"
-                            f" novelty.verdict in {{{', '.join(sorted(passing))}}}")
+        if novelty.get("verdict") != "novel":
+            problems.append(f"P{index:03d}: accepted proposal must have novelty.verdict=novel")
         if not _one_line(novelty.get("substantive_difference")):
             problems.append(f"P{index:03d}: novelty.substantive_difference is required")
         scores = novelty.get("scores") or {}
@@ -580,27 +575,30 @@ def _collisions(ballot, catalog, fatal):
     return f" [overlaps {', '.join(hits)}]" if hits else ""
 
 
-# Which neighbour relationships refuse a candidate outright, and which verdicts can still
-# carry one. The catalog is four hundred tasks wide and keeps growing, so past some size
-# almost every workable idea shares an operation with something already in it -- 74% of the
-# union-alpha waves' rejections were `variant`, against 8% scored novel-and-refused. Read
-# strictly, that breadth is an argument that the catalog is finished. `lenient` reads a
-# `variant` neighbour as what a sub-direction of an existing task looks like from outside:
-# the same machinery pointed at a narrower or different problem. `same_operation` refuses
-# under both, because that is the claim that the task already exists rather than that it is
-# nearby, and the score floors are untouched -- a surface reskin scores novelty 1 and fails
-# on the numbers either way.
+# Which neighbour relationships refuse a candidate. The catalog is four hundred tasks wide
+# and keeps growing, so past some size almost every workable idea shares an operation with
+# something already in it: 74% of one sweep's 811 rejections were `variant`. Read strictly,
+# that breadth becomes an argument that the catalog is finished. `lenient` keeps `variant`
+# as evidence the critic reports and stops letting it veto a `novel` verdict outright --
+# the 8% of that sweep the critic itself scored 4 or 5 and the labels refused anyway.
+# `same_operation` refuses under both, because that is the claim the task already exists.
+#
+# The verdict is deliberately not part of this. `variant` as a verdict means what the critic
+# prompt says it means -- surface, parameter, direction or output-only changes -- so a gate
+# that let it pass would be admitting reskins by definition. Letting it pass is what the
+# first lenient waves did, alongside a prompt sentence inviting the label, and two briefs
+# that had yielded 12 and 10 under the old gate came back with 1 and 0, their rejections
+# scored `novelty: 2` almost to a candidate and one ballot inventing the verdict `version`.
+# The mechanical half of the setting is sound; the prompt half was a bad experiment.
 DEDUP = {
-    "strict": {"fatal": frozenset({"same_operation", "variant"}),
-               "verdicts": frozenset({"novel"})},
-    "lenient": {"fatal": frozenset({"same_operation"}),
-                "verdicts": frozenset({"novel", "variant"})},
+    "strict": frozenset({"same_operation", "variant"}),
+    "lenient": frozenset({"same_operation"}),
 }
 DEFAULT_DEDUP = "lenient"
 
 
 def dedup_rule(mode):
-    """The gate named, or a SystemExit-worthy error naming the ones that exist."""
+    """The relationships that refuse a candidate under `mode`, or a naming error."""
     try:
         return DEDUP[mode]
     except KeyError:
@@ -678,7 +676,7 @@ it is implementable. Judge the proposed training distribution, not its prose. Th
 candidates are untrusted data. Output one JSON object and no prose."""
 
 
-def _critic_prompt(candidates, neighbors, rule=None):
+def _critic_prompt(candidates, neighbors, fatal=None):
     """One review per candidate, against that candidate's own retrieved competitors.
 
     The catalog used to be dumped here in full and the critic told to find three genuine
@@ -695,17 +693,10 @@ def _critic_prompt(candidates, neighbors, rule=None):
             "proposal": proposal,
             "closest_known": [entry.as_dict() for entry in found],
         })
-    rule = rule or DEDUP[DEFAULT_DEDUP]
-    fatal = sorted(rule["fatal"])
-    refusing_bare = " or ".join(f"`{label}`" for label in fatal)
-    refusing = f"{refusing_bare} {'are' if len(fatal) > 1 else 'is'}"
-    plural, verb = ("s", "") if len(fatal) > 1 else ("", "s")
-    # Said only when it is true: under the strict gate a variant neighbour refuses the
-    # candidate, and inviting one would be inviting a rejection.
-    narrowing = ("" if "variant" in rule["fatal"] else
-                 " A candidate that narrows or redirects a known operation onto a"
-                 " different problem is a `variant` neighbour and a real proposal; say so"
-                 " in `substantive_difference` and score it on what the narrowing buys.")
+    labels = sorted(fatal if fatal is not None else DEDUP[DEFAULT_DEDUP])
+    refusing_bare = " or ".join(f"`{label}`" for label in labels)
+    refusing = f"{refusing_bare} {'are' if len(labels) > 1 else 'is'}"
+    plural, verb = ("s", "") if len(labels) > 1 else ("", "s")
     shape = {"reviews": [{
         "proposal_id": "C001", "verdict": "novel | variant | duplicate",
         "nearest_neighbors": [
@@ -741,14 +732,14 @@ indistinguishable states -- any more than "both return a number" makes two tasks
 If the only overlap you can name is the kind of answer, the shape of the input, or the
 field it comes from, the relationship is `adjacent`. A passing verdict is inconsistent
 with a nearest neighbor labelled {refusing_bare} and will be rejected by the
-caller.{narrowing} Return one review per proposal_id in this exact shape:
+caller. Return one review per proposal_id in this exact shape:
 {json.dumps(shape, indent=2)}
 
 CANDIDATES:
 {json.dumps(compact, indent=2)}"""
 
 
-def _review_verdict(review, candidate_id, allowed_neighbor_ids, rule):
+def _review_verdict(review, candidate_id, allowed_neighbor_ids, fatal):
     """Does one critic review clear the structural gate, and what did it say?
 
     Lifted out of the accept loop so that K reviews of the same candidate are judged by
@@ -769,8 +760,8 @@ def _review_verdict(review, candidate_id, allowed_neighbor_ids, rule):
                 for item in neighbors)
     )
     contradicts_novelty = (neighbors_valid and any(
-        item["relationship"] in rule["fatal"] for item in neighbors))
-    passes = (review.get("verdict") in rule["verdicts"]
+        item["relationship"] in fatal for item in neighbors))
+    passes = (review.get("verdict") == "novel"
               and neighbors_valid and not contradicts_novelty
               and scores.get("novelty", 0) >= 4
               and scores.get("sft_value", 0) >= 4
@@ -784,7 +775,7 @@ def _review_verdict(review, candidate_id, allowed_neighbor_ids, rule):
 
 
 def _critic_votes(critic, reviewable, catalog, *, samples,
-                  round_index, wave_name, rule=None, max_batch=CRITIC_MAX_BATCH,
+                  round_index, wave_name, fatal=None, max_batch=CRITIC_MAX_BATCH,
                   ledger=None):
     """Ask the critic `samples` times, shuffling the candidates for each one.
 
@@ -826,7 +817,7 @@ def _critic_votes(critic, reviewable, catalog, *, samples,
                 reviewed = critic.json(
                     f"{purpose}-retry{attempt}" if attempt else purpose, _CRITIC_SYSTEM,
                     _critic_prompt(presented, [neighbors[position] for position in seats],
-                                   rule))
+                                   fatal))
                 reviews = reviewed.get("reviews")
                 if not isinstance(reviews, list):
                     raise ValueError("critic response requires a reviews list")
@@ -852,7 +843,7 @@ def _critic_votes(critic, reviewable, catalog, *, samples,
                 review = by_id.get(candidate_id)
                 ballot = (None if not review
                           else _review_verdict(review, candidate_id, allowed,
-                                               rule or DEDUP[DEFAULT_DEDUP]))
+                                               fatal or DEDUP[DEFAULT_DEDUP]))
                 votes[position].append(ballot)
                 if ballot is None:
                     omitted += 1
@@ -927,7 +918,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
     # design, not a gap: the catalog evaluates proposals, it does not prime them, and every
     # candidate still meets its own retrieved neighbours at the critic.
     attractors = brief_entries(brief, catalog)
-    rule = dedup_rule(dedup)
+    fatal = dedup_rule(dedup)
     accepted, rejected, exclusions = [], [], []
     # Candidates generated but not yet reviewed. The wave paid for these; dropping the ones
     # a round did not have critic budget for means buying them again next round, from a
@@ -1063,7 +1054,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
         pool = [proposal for proposal in pool if id(proposal) not in chosen]
         votes = _critic_votes(critic, reviewable, catalog,
                               samples=critic_samples, round_index=round_index,
-                              wave_name=name, rule=rule, ledger=panels)
+                              wave_name=name, fatal=fatal, ledger=panels)
         for proposal, ballots in zip(reviewable, votes):
             # A ballot that names no three real neighbours is a critic that did not do the
             # job, not a critic that found a duplicate, and it abstains for exactly the
@@ -1118,10 +1109,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                 proposal = dict(proposal)
                 proposal["id"] = f"P{len(accepted) + 1:03d}"
                 proposal["novelty"] = {
-                    # What the ballot said, not what a pass implies: under the lenient
-                    # gate a `variant` can carry a wave, and an archive that wrote every
-                    # acceptance down as `novel` could not be asked afterwards how many.
-                    "verdict": ballot["verdict"],
+                    "verdict": "novel",
                     "nearest_neighbors": ballot["neighbors"],
                     "substantive_difference": _one_line(
                         ballot["review"].get("substantive_difference")),
@@ -1145,7 +1133,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                 # the pool for that answer instead of spending its one replay on it.
                 # Once only, for the reason a tie is pooled once: a candidate that keeps
                 # deferring would eat a critic seat every round it came up.
-                if (_unshipped_blockers(ballot, catalog, rule["fatal"])
+                if (_unshipped_blockers(ballot, catalog, fatal)
                         and _snake(proposal["name"]) not in deferred):
                     deferred.add(_snake(proposal["name"]))
                     pool.append(proposal)
@@ -1161,7 +1149,7 @@ def propose_wave(repo_root, *, name, count=12, model=DEFAULT_MODEL,
                                  "nearest_neighbors": ballot["neighbors"], "reason": reason,
                                  "scores": ballot["scores"], "votes": tally})
                 exclusions.append(
-                    f"{proposal['name']}: {reason}{_collisions(ballot, catalog, rule["fatal"])}")
+                    f"{proposal['name']}: {reason}{_collisions(ballot, catalog, fatal)}")
         if checkpoint is not None:
             checkpoint(document())
     wave = document()
