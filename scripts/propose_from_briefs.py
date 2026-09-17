@@ -84,6 +84,10 @@ def main():
         help="comma-separated credential variables to share round-robin, so one key's"
              " quota does not cap the run")
     parser.add_argument(
+        "--dedup", default="",
+        help="novelty gate for every wave -- strict or lenient; empty leaves the CLI"
+             " default")
+    parser.add_argument(
         "--endpoint", default="",
         help="chat-completions URL for the proposer, when --model names a model the"
              " CLI's default provider does not serve; empty leaves the CLI default")
@@ -190,6 +194,8 @@ def sweep_once(arguments, pending):
             command += ["--api-key-env", arguments.api_key_env]
         if arguments.endpoint:
             command += ["--endpoint", arguments.endpoint]
+        if arguments.dedup:
+            command += ["--dedup", arguments.dedup]
         if arguments.replay:
             command += ["--replay", str(arguments.replay)]
         if arguments.dry_run:

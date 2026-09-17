@@ -32,6 +32,7 @@ from .implementation_runner import (
 )
 from .sandbox import _write_json
 from .doctor import default_fallback, default_provider
+from .wave_proposer import DEDUP, DEFAULT_DEDUP
 
 # The implementor that every landed wave was built with. A model name is a fact about
 # what works and belongs in the repository; which provider serves it is a fact about a
@@ -106,6 +107,12 @@ def _parser():
         "--api-key-env", default=DEFAULT_API_KEY_ENV,
         help="comma-separated names of credential variables to share round-robin, so one"
              " key's quota does not cap the wave")
+    propose.add_argument(
+        "--dedup", choices=sorted(DEDUP), default=DEFAULT_DEDUP,
+        help="how a neighbour that shares an operation is read. strict refuses a candidate"
+             " whose nearest neighbour is labelled variant; lenient refuses only"
+             " same_operation, on the view that a catalog this wide makes a narrowing of"
+             " known machinery a real proposal. Recorded in the wave.")
     propose.add_argument("--seed", type=int, default=0)
     propose.add_argument("--temperature", type=float, default=1.0)
     propose.add_argument(
@@ -401,6 +408,7 @@ def main(argv=None):
             critic_api_key=critic_key,
             critic_reasoning_effort=(None if args.critic_reasoning_effort == "none"
                                      else args.critic_reasoning_effort),
+            dedup=args.dedup,
             critic_samples=max(1, args.critic_samples),
             rounds=args.rounds,
             pool_size=args.pool_size,

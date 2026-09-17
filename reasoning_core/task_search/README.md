@@ -183,6 +183,25 @@ Anything that has since shipped under the same name is skipped too. Use `audit_n
 to measure how harsh the gate currently is -- it offers shipped tasks back as fresh
 candidates and reports what the critic says about tasks already known to be worth having.
 
+### How strictly the gate dedups
+
+`--dedup lenient` (the default) and `--dedup strict` differ in one thing: how a nearest
+neighbour labelled `variant` is read. Strict refuses the candidate on it; lenient refuses
+only on `same_operation`, and tells the critic in the same breath that a candidate which
+narrows or redirects a known operation onto a different problem is a real proposal. Neither
+touches the score floors, so a surface reskin still fails on `novelty >= 4`.
+
+Leniency is a claim about the catalog, not about the critic. At four hundred tasks almost
+every workable idea shares an operation with something already shipped -- 74% of one sweep's
+811 rejections were `variant`, against 8% scored novel and refused on the labels -- and read
+strictly that breadth argues the catalog is finished. What the setting can reach directly is
+small: of those 811, 27 would flip on the ballot alone and 96% were refused on the score
+floors. The larger effect is the prompt it carries, which moves the scores at their source.
+
+Each wave records the gate it was judged under in `review.dedup`, and validation reads that
+field rather than a constant, so waves proposed under either setting stay comparable and an
+archive written before the setting existed is still checked as the strict wave it was.
+
 ### Several models, several keys
 
 `--model` and `--api-key-env` both take comma-separated lists: models in preference order,

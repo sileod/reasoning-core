@@ -24,7 +24,8 @@ class Completed:
 
 
 def _arguments(**overrides):
-    return argparse.Namespace(**{"cooldowns": 2, "cooldown_seconds": 60, **overrides})
+    return argparse.Namespace(**{"cooldowns": 2, "cooldown_seconds": 60,
+                                 "endpoint": "", "dedup": "", **overrides})
 
 
 @pytest.mark.parametrize("text, expected", [

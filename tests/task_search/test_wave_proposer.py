@@ -16,7 +16,9 @@ from reasoning_core.task_search.wave_proposer import (
     CatalogEntry,
     CRITIC_MAX_BATCH,
     _critic_votes,
+    DEDUP,
     _proposal_entries,
+    _unshipped_blockers,
     build_catalog,
     catalog_record,
     check_proposal_file,
@@ -229,7 +231,23 @@ def test_incomplete_wave_is_returned_so_model_calls_are_not_lost():
     assert wave["rejected"][0]["verdict"] == "duplicate"
 
 
-def test_neighbor_evidence_overrides_an_inconsistent_novel_verdict():
+def _repo_with_one_task(root, name="constraint_satisfaction"):
+    """A repository whose whole catalog is one shipped task, so a ballot's neighbours can
+    only be that task and a gate's reading of them is the only thing under test."""
+    directory = root / "reasoning_core" / "tasks" / "generated" / "w"
+    directory.mkdir(parents=True)
+    (directory / f"{name}.py").write_text(
+        f'"""Propagate constraints over a relation graph and answer the queried pair."""\n'
+        f"class {''.join(part.title() for part in name.split('_'))}(Task):\n"
+        f"    task_name = {name!r}\n")
+    return root
+
+
+def test_neighbor_evidence_overrides_an_inconsistent_novel_verdict(tmp_path):
+    """Under the strict gate the labels outrank the verdict: a critic that calls a candidate
+    novel and then names a neighbour it is a variant of has contradicted itself, and the
+    labels are the part backed by evidence. `lenient` reads that same pair differently --
+    see the gate tests at the end of this file -- which is why this one names its gate."""
     client = FakeClient(
         {"proposals": [proposal("signed_constraint_parity")]},
         {"reviews": [{
@@ -248,7 +266,8 @@ def test_neighbor_evidence_overrides_an_inconsistent_novel_verdict():
         }]},
     )
 
-    wave = propose_wave(ROOT, name="neighbor-gate", count=1, rounds=1, client=client)
+    wave = propose_wave(_repo_with_one_task(tmp_path), name="neighbor-gate", count=1,
+                        rounds=1, client=client, dedup="strict")
 
     assert wave["proposals"] == []
     assert "contradicted" in wave["rejected"][0]["reason"]
@@ -1100,7 +1119,8 @@ def test_a_rejection_names_the_catalog_entries_it_collided_with():
                                           "tracks beliefs", "gallery"),
                wave_proposer.CatalogEntry("gallery:constraint_satisfaction",
                                           "constraint_satisfaction", "solves", "gallery")]
-    said = wave_proposer._collisions(ballot, catalog)
+    said = wave_proposer._collisions(ballot, catalog,
+                                 wave_proposer.DEDUP["strict"]["fatal"])
     # The fatal relationship is named; `adjacent` is what a good proposal looks like.
     assert said == " [overlaps belief_tracking (same_operation)]"
     assert "constraint_satisfaction" not in said
@@ -1109,7 +1129,8 @@ def test_a_rejection_names_the_catalog_entries_it_collided_with():
 def test_a_rejection_with_no_fatal_overlap_adds_nothing():
     ballot = {"neighbors": [{"id": "gallery:x", "relationship": "adjacent",
                              "overlap": "some"}]}
-    assert wave_proposer._collisions(ballot, []) == ""
+    assert wave_proposer._collisions(
+        ballot, [], wave_proposer.DEDUP["strict"]["fatal"]) == ""
 
 
 def test_a_pool_does_not_climb_the_retry_ladder_before_trying_another_key(monkeypatch):
@@ -1625,3 +1646,126 @@ def test_a_critic_that_reviews_one_of_twelve_is_re_asked_not_believed():
         f"the one-review answer was believed instead of re-asked: {purposes}")
     assert len(wave["proposals"]) == 12, (
         "the re-seated batch should carry every candidate")
+
+
+def _blocker_ballot(relationship, entry_id="proposal:old:P001"):
+    return {"neighbors": [{"id": entry_id, "relationship": relationship, "overlap": "x"},
+                          {"id": entry_id, "relationship": "adjacent", "overlap": "y"}]}
+
+
+def test_a_collision_with_an_unbuilt_proposal_is_not_a_catalog_collision():
+    """`build_catalog` puts a shipped task ahead of the proposal it came from, so an entry
+    still labelled `proposal` is an idea waiting in the backlog rather than one the catalog
+    covers. Only the fatal relationships count, and one real neighbour is enough to make the
+    collision real."""
+    pending = CatalogEntry("proposal:old:P001", "claimed", SUMMARY, "proposal")
+    shipped = CatalogEntry("task:generated.w.t:T", "built", SUMMARY, "task")
+    fatal = DEDUP["strict"]["fatal"]
+
+    assert _unshipped_blockers(_blocker_ballot("variant"), [pending], fatal)
+    assert _unshipped_blockers(_blocker_ballot("same_operation"), [pending], fatal)
+    assert not _unshipped_blockers(_blocker_ballot("adjacent"), [pending], fatal), (
+        "adjacent is what a good proposal looks like and never refuses one")
+    assert not _unshipped_blockers(_blocker_ballot("variant"), [pending],
+                                   DEDUP["lenient"]["fatal"]), (
+        "a relationship the gate does not refuse on has nothing to defer")
+    assert not _unshipped_blockers(
+        _blocker_ballot("variant", "task:generated.w.t:T"), [shipped], fatal)
+    assert not _unshipped_blockers(
+        _blocker_ballot("variant", "candidate:C002"), [pending], fatal), (
+        "a neighbour that is not a catalog entry is another candidate in this batch")
+
+
+def test_a_candidate_blocked_only_by_an_unbuilt_proposal_is_pooled(tmp_path):
+    """Losing to an idea nobody has built says another wave asked for it first, not that it
+    exists. 465 of 811 rejections in the union-alpha waves named a proposal as their nearest
+    neighbour and only 21 of those blockers had shipped, so the candidate waits in the pool
+    for the blocker's own outcome instead of spending its one replay on it."""
+    directory = tmp_path / "reasoning_core" / "task_search" / "proposals" / "archive"
+    directory.mkdir(parents=True)
+    (directory / "old.yaml").write_text(yaml.safe_dump({
+        "name": "old",
+        "proposals": [{"id": "P001", "name": "claimed_but_unbuilt", "summary": SUMMARY}]}))
+    reviews = {"reviews": [{
+        "proposal_id": "C001", "verdict": "variant",
+        "nearest_neighbors": [{"id": "-", "relationship": "same_operation", "overlap": "a"},
+                              {"id": "-", "relationship": "adjacent", "overlap": "b"},
+                              {"id": "-", "relationship": "adjacent", "overlap": "c"}],
+        "substantive_difference": "...",
+        "scores": {"novelty": 2, "sft_value": 4, "feasibility": 5, "clarity": 5},
+        "reason": "the operation an unbuilt proposal already claimed"}]}
+    client = FakeClient({"proposals": [proposal("waits_its_turn")]}, reviews)
+
+    wave = propose_wave(tmp_path, name="deferred", count=1, rounds=1, client=client)
+
+    assert not wave["rejected"], (
+        "a collision with an unbuilt proposal was recorded as a catalog rejection, which"
+        " spends the candidate's one replay on a blocker that may never exist")
+    assert [row["name"] for row in wave["pool"]] == ["waits_its_turn"]
+
+
+def _neighbour_ballot(relationship):
+    return {"reviews": [{
+        "proposal_id": "C001", "verdict": "novel",
+        "nearest_neighbors": [{"id": "-", "relationship": relationship, "overlap": "a"},
+                              {"id": "-", "relationship": "adjacent", "overlap": "b"},
+                              {"id": "-", "relationship": "adjacent", "overlap": "c"}],
+        "substantive_difference": "narrows the known operation onto a different problem",
+        "scores": {"novelty": 4, "sft_value": 4, "feasibility": 5, "clarity": 5},
+        "reason": "same machinery, different problem"}]}
+
+
+def test_the_lenient_gate_keeps_a_candidate_that_narrows_a_known_operation():
+    """A catalog four hundred tasks wide shares an operation with almost anything workable,
+    so reading every `variant` neighbour as a repeat is an argument that the catalog is
+    finished. Under `lenient` only `same_operation` refuses -- the claim that the task
+    already exists -- and the score floors still do their own work."""
+    client = FakeClient({"proposals": [proposal("narrows_a_known_operation")]},
+                        _neighbour_ballot("variant"))
+
+    wave = propose_wave(ROOT, name="lenient", count=1, rounds=1, client=client,
+                        dedup="lenient")
+
+    assert [row["name"] for row in wave["proposals"]] == ["narrows_a_known_operation"]
+    assert wave["review"]["dedup"] == "lenient", "the gate a wave was judged under is provenance"
+
+
+def test_the_strict_gate_still_refuses_that_candidate():
+    """The old gate stays reachable and unchanged, so waves stay comparable across the
+    setting rather than only across the code that produced them."""
+    client = FakeClient({"proposals": [proposal("narrows_a_known_operation")]},
+                        _neighbour_ballot("variant"))
+
+    wave = propose_wave(ROOT, name="strict", count=1, rounds=1, client=client,
+                        dedup="strict")
+
+    assert not wave["proposals"]
+    assert wave["review"]["dedup"] == "strict"
+
+
+def test_same_operation_refuses_under_either_gate():
+    """`same_operation` is the claim that the task already exists, which no leniency about
+    breadth can reach."""
+    for mode in ("lenient", "strict"):
+        client = FakeClient({"proposals": [proposal("already_exists")]},
+                            _neighbour_ballot("same_operation"))
+
+        wave = propose_wave(ROOT, name=f"same-{mode}", count=1, rounds=1, client=client,
+                            dedup=mode)
+
+        assert not wave["proposals"], f"{mode} accepted a candidate that already exists"
+
+
+def test_an_archive_written_before_the_setting_is_read_as_strict(tmp_path):
+    """Every wave archived before the gate was settable was judged strictly, so a missing
+    key is history rather than a default -- and validation must not retro-pass them."""
+    wave = {"format_version": 1, "kind": "sft_task_proposals", "name": "old",
+            "review": {"model": "m"},
+            "proposals": [{"name": "old_one", "summary": SUMMARY, "id": "P001",
+                           "novelty": {"verdict": "variant", "substantive_difference": "x",
+                                       "scores": {"novelty": 4, "sft_value": 4,
+                                                  "feasibility": 4, "clarity": 4}}}]}
+
+    assert any("novelty.verdict" in problem for problem in validate_proposal_wave(wave))
+    wave["review"]["dedup"] = "lenient"
+    assert not any("novelty.verdict" in problem for problem in validate_proposal_wave(wave))
