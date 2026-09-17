@@ -1,0 +1,653 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_operations-research
+created_at: '2026-09-17T09:55:32.554816+00:00'
+provenance:
+  kind: proposer
+  name: ua_operations-research
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks inspired by operations research: scheduling, allocation, optimization, matching,
+    and constraint propagation. The catalog you were shown already covers the classic textbook algorithms
+    -- sorting, gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that
+    names one will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 1
+  complete: false
+catalog:
+  sha256: 9ccb898608977648b0acf9c89f8dad72dfb5c947f199b90f3f01717a26875339
+  entries: 973
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 350
+    task: 461
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 2079aee2fbefb500823ea9662b333684739bccc62920db94c85837487fab4f20
+    response_sha256: 309a59eb911ebbf0c3823f0d615463731601c963d9dd0e90b2fd4a7c7e8c8c56
+    response_id: gen-1789637441-2E4zJ2v5YvsfHrb0A0fe
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  dedup: lenient
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 7bd1d98c5889b66e77fa446a4779b78abf328acd1ca471f22334aeb22192b5af
+    response_sha256: fae6904706704134121947f7f3fccd894b05cce23200a01595ff3affed9d983d
+    response_id: chatcmpl-ac47ed09a1f51c45
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 29f6388f92b0c21a00f348c32da5d5933189df4259acf61488d08a2d4f8f4777
+    response_sha256: c9e80cc036c150fe68d189ced576d81becea4fb5291100666904d080d1870af6
+    response_id: chatcmpl-a486005859e63331
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 5e1868a59cddb99457c8b15bfa01e5a3f943a4d3206c5df9d12118d2db0c3e06
+    response_sha256: 9edc98a77e18a7a2c57939cbc49d36d444c0c7c53dcab61d106853e084c94dc2
+    response_id: chatcmpl-824189e52d68f4b1
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1e36a0fd7eeacffc0ae8e28735b7518b874c7db420ae27fc451c8e3e5de76cb3
+    response_sha256: aec4f51612319b0d9c2f571b9feff938c5b3446ee33a4ca6f54ce258b2f45d0d
+    response_id: chatcmpl-8dba5348eaca7e21
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 4a4b6a5420ea74292d8597adc8f44442ccc3d8ebe3ff8c9ee36fb51fc1dcbfbb
+    response_sha256: 7b0396559bd5fb2dabe53353bbbac3334b82933d8f048ad86977287384d6ba65
+    response_id: chatcmpl-99b319c56c7854d1
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c08fa2ac9f73b1769a484ea05a3ea82face31f240714d774a64e6fbac3b11507
+    response_sha256: 75d8d3aa03ab3ff97639e334aace16d554066e34e40cdbf60ed7a2647f1b9f77
+    response_id: chatcmpl-89221a2106f0cd41
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: e290a36ca8ac60db7e2765a43b7e7030f178f4289adf73e6f8ffd165541d4b74
+    response_sha256: b60d4e7e4709fb93f2a543474cf7b017058c82c2221b3bbc498b4d9475df0861
+    response_id: chatcmpl-a98f148f5e40977d
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 6308f1ae063a526bead4d06d0c63b0d417e2f449aafedce35ac81c4b4048a3f1
+    response_sha256: f161209b2d0439652afa0c1a56a1982b834b96471299e5019a036c43c5c5fec9
+    response_id: chatcmpl-8f06f7479c4ca3b7
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: dae3c07376d4244c6e5d94344e0a2816a7170682a6e91b3e27c7be468f67bc5f
+    response_sha256: 7aa5a163b7b48e387ba549182dfb069c49f3ac2d79ae07573228a2d01d690c5a
+    response_id: chatcmpl-bcc2d4cd6d838151
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: conserved_resource_bound
+  summary: Derive nonnegative conserved resource weights from consume-produce recipes and initial stocks
+    across recycling, coproducts and alternative recipes; answer the sharp output bound implied by those
+    invariants.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_global-over-greedy:P009
+      relationship: different
+      overlap: Both find weights satisfying constraints, but this neighbor uses weights to realize voting
+        coalitions, not to derive resource bounds.
+    - id: proposal:ua_state-tracking:P007
+      relationship: adjacent
+      overlap: Both involve nonnegative weights and constraints, but this neighbor compares distributions.
+    - id: proposal:ua_relational-structures:P001
+      relationship: different
+      overlap: Both handle resource consumption, but this neighbor audits path discipline, not invariant
+        derivation.
+    substantive_difference: "C008 finds conserved linear invariants from stoichiometric equations and\
+      \ uses them to bound outputs\u2014a distinct operation of invariant discovery via linear dependencies,\
+      \ not present in neighbors."
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Unique operation of deriving conservation laws from reaction networks.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: quasistatic_branch_tracking
+  summary: Follow stable equilibrium branches under slow parameter sweeps, reversals, and disappearing
+    attractors using stated jump rules; return occupied branches, switching thresholds, and hysteresis
+    outcomes.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P010
+    relationship: variant
+    overlap: Both track system state through external changes under given rules (charge conservation vs.
+      branch following) and report queried state variables under perturbations.
+  - id: proposal:ua_compositional-generalization:P003
+    relationship: variant
+    overlap: Both track entities (chromatid segments vs. equilibrium branches) through a series of events
+      (crossovers/parameter sweeps) and report queried ancestry/branch status.
+  - id: task:generated.wave12.alias_mutation_tracking.alias_mutation_tracking:AliasMutationTracking
+    relationship: adjacent
+    overlap: Both involve tracking mutable state through a sequence of operations (aliasing/mutations
+      vs. parameter sweeps and jumps), but the operations and state types differ.
+  reason: 0/3 samples judged it novel; A genuine tracking operation but essentially a known schema (state
+    tracking under perturbations) applied to a new domain (quasistatic branches), with the jump rules
+    being the only distinctive feature.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: contamination_robust_evidence
+  summary: Test rival finite probability models when either may contain bounded arbitrary contamination;
+    derive least-favorable distributions and return robust evidence ratios or the point at which discrimination
+    collapses.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_scientific-reasoning:P009
+    relationship: variant
+    overlap: Both compare decision rules (hypothesis tests) under uncertainty, but here the uncertainty
+      is from contamination sets and the decision is a likelihood ratio.
+  - id: proposal:ua_scientific-reasoning:P012
+    relationship: adjacent
+    overlap: Both combine evidence from multiple sources, but one is about logical support and the other
+      about probability distributions with contamination.
+  - id: gallery:most_probable_evidence
+    relationship: different
+    overlap: MPE is about finding the most probable explanation, not about robustness to contamination.
+  reason: 0/3 samples judged it novel; A variant of robust testing, but with a sufficiently specific contamination
+    model that adds value beyond the general concept.
+  scores:
+    novelty: 3
+    sft_value: 3
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: population_effect_transport
+  summary: Transport causal effects across populations with changed subgroup frequencies, uneven sampling,
+    and specified invariant mechanisms; return the target effect or nonidentifiability from missing support.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_systematic-generalization:P008
+    relationship: variant
+    overlap: Both transport a distribution from one population to another using a map, but one is about
+      densities and the other about causal effects.
+  - id: proposal:ua_scientific-reasoning:P004
+    relationship: variant
+    overlap: Both recover a causal effect under transport, but one uses negative controls and the other
+      uses invariant mechanisms.
+  - id: proposal:k3_scientific-reasoning:P010
+    relationship: adjacent
+    overlap: Both are about causal inference under assumptions, but one gives bounds and the other point
+      identification.
+  reason: 0/3 samples judged it novel; A variant of causal transport, which is a known concept.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: conservation_sensor_diagnosis
+  summary: Localize faulty measurements using redundant mass, charge, or energy balances across repeated
+    perturbations, allowing offsets, gain errors, and missing readings; return compatible sensor faults
+    and corrections.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_reusable-operations:P002
+    relationship: variant
+    overlap: Both diagnose faults in a system from observed outputs under a known model, but one uses
+      combinatorial circuits and the other conservation laws.
+  - id: proposal:ua_incremental-recomputation:P008
+    relationship: variant
+    overlap: Both recover feasible latent values from constrained observed readings, but one is about
+      sensor calibration and the other about rounding.
+  - id: gallery:equation_system
+    relationship: adjacent
+    overlap: Both involve solving linear equations, but the diagnostic aspect (locating faults) is additional.
+  reason: 0/3 samples judged it novel; A variant of fault diagnosis applied to sensor networks, with the
+    novelty limited to the domain-specific constraints.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: interference_exposure_weighting
+  summary: Map randomized assignments to direct and neighbor exposure states under stated interference
+    rules, derive exposure probabilities, and return inverse-probability estimates of exposure contrasts.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P006
+    relationship: adjacent
+    overlap: Both involve weighting and contrasts, but one is about nuisance parameters and the other
+      about exposure probabilities.
+  - id: proposal:ua_scientific-reasoning:P004
+    relationship: adjacent
+    overlap: Both deal with causal inference and potentially confounded effects, but one uses negative
+      controls and the other inverse probability weights.
+  - id: gallery:reference_tracking
+    relationship: different
+    overlap: Reference tracking is about positions, not exposure probabilities.
+  reason: 0/3 samples judged it novel; A specific variant of inverse probability weighting applied to
+    interference, which is a known technique.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: trajectory_reversal_evidence
+  summary: Compare forward and physically reversed stochastic trajectories under stationary or driven
+    protocols, accounting for endpoint ensembles and reversal parity; return path evidence ratios or forbidden
+    reversals.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_counterfactual:P007
+    relationship: same_operation
+    overlap: Both reverse a process (pooled comparison vs stochastic trajectory) to test what could reverse
+      the outcome; C005 uses path evidence ratios, but the reversal comparison principle is shared.
+  - id: proposal:ua_inference-modes:P008
+    relationship: adjacent
+    overlap: Both check consistency of directions, but one is stochastic reversibility and the other scalar
+      potential.
+  - id: task:generated.k3_dependence_relevance_r1.simpson_reversal_detection.simpson_reversal_detection:SimpsonReversalDetection
+    relationship: adjacent
+    overlap: Both detect reversal under different conditioning, but one is trajectory-level and the other
+      categorical.
+  reason: 0/3 samples judged it novel; Variant of reversal detection on stochastic trajectories.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 2
+  votes: 0/3
+- name: intuitionistic_kripke_forcing
+  summary: Evaluate intuitionistic formulas on finite ordered worlds with persistent predicates and constant
+    or expanding domains; return forcing worlds or a verdict, respecting future-world implication and
+    quantification.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_formal-logic:P011
+    relationship: same_operation
+    overlap: Both evaluate formulas over sets of assignments/worlds with non-classical semantics (team
+      semantics vs Kripke forcing), but the forcing relation and world-order handling are different.
+  - id: task:generated.wave9.finite_model_quantifiers.finite_model_quantifiers:FiniteModelQuantifiers
+    relationship: variant
+    overlap: Both evaluate first-order formulas over finite structures; C008 adds Kripke semantics, but
+      the quantifier evaluation is similar.
+  - id: proposal:k3_global-from-local:P004
+    relationship: adjacent
+    overlap: Both evaluate logical validity, but one is forcing and the other proof search.
+  reason: 1/3 samples judged it novel; Variant of non-classical model evaluation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: randomization_tail_mass
+  summary: Compute exact null tail probabilities under complete, blocked, paired, or cluster randomization,
+    with unequal assignment weights, ties, and one- or two-sided statistics; return the exact p-value.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_scientific-reasoning:P008
+    relationship: same_operation
+    overlap: Both enumerate all relabelings/allocations and compute tail probability of a statistic; C011
+      generalizes to blocked/paired, but the enumeration logic is the same.
+  - id: proposal:ua_novel-composition:P002
+    relationship: adjacent
+    overlap: Both compute probabilities over randomized assignments, but one is tail mass and the other
+      likelihood ratio.
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: adjacent
+    overlap: Both compute exact event probabilities, but one is structured randomization and the other
+      sequential process.
+  reason: 0/3 samples judged it novel; Variant of exact randomization tests.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: competing_risk_accounting
+  summary: Reconstruct risk sets with delayed entry, censoring, and competing events, then propagate survival-weighted
+    hazards; return survival or cause-specific cumulative incidence at queried times.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.censored_survival_estimate.censored_survival_estimate:CensoredSurvivalEstimate
+    relationship: same_operation
+    overlap: Both propagate at-risk counts with censoring and compute survival/CIF; C004 adds competing
+      risks, but the product-limit walk is identical.
+  - id: proposal:ua_scientific-reasoning:P006
+    relationship: adjacent
+    overlap: Both handle latent events, but one is survival and the other causal constraints.
+  - id: proposal:ua_state-tracking:P006
+    relationship: adjacent
+    overlap: Both track counts over time/interactions, but one is survival and the other multiplicative
+      tables.
+  reason: 0/3 samples judged it novel; Variant of censored survival estimation with competing risks.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: factorial_alias_estimability
+  summary: Determine which effect contrasts remain identifiable in incomplete factorial experiments with
+    missing cells, nuisance blocks, and specified interaction terms; return the estimable contrasts.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P006
+    relationship: same_operation
+    overlap: Both determine which contrasts are identifiable under nuisance parameters; C007 uses factorial
+      experiments but the linear algebra of identifiability is identical.
+  - id: proposal:ua_state-tracking:P006
+    relationship: variant
+    overlap: Both isolate interaction contrasts under invariance; P006 uses multiplicative scaling, C007
+      uses missing cells.
+  - id: proposal:k3_scientific-reasoning:P010
+    relationship: adjacent
+    overlap: Both identify causal/contrast effects, but one is experimental design and the other observational
+      bounds.
+  reason: 0/3 samples judged it novel; Variant of nuisance contrast identifiability in factorial settings.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: discrepancy_double_use_calibration
+  summary: For finite Bayesian models, reuse observations to fit and check a model using stated discrepancies;
+    derive posterior predictive tail areas and their repeated-sampling distribution, exposing conservative
+    or uneven calibration.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_scientific-reasoning:P010
+    relationship: variant
+    overlap: Both decompose predictive error into components; C012 focuses on double-use calibration,
+      P010 on forecast decomposition.
+  - id: proposal:k3_scientific-reasoning:P008
+    relationship: adjacent
+    overlap: Both assess tail probabilities of statistics, but one is posterior predictive and the other
+      permutation test.
+  - id: proposal:ua_scientific-reasoning:P005
+    relationship: variant
+    overlap: Both adjust for data reuse in inference, but C012 uses posterior predictive checks, P005
+      uses selection bias.
+  reason: 1/3 samples judged it novel; Variant of data reuse correction in Bayesian checks.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 2
+  votes: 1/3
+- name: coarse_grained_dynamics_closure
+  summary: Test whether grouped states support autonomous dynamics across deterministic and stochastic
+    systems, alternative partitions, and initial-state restrictions; return closure verdicts and induced
+    transition laws.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P010
+    relationship: same_operation
+    overlap: Both check whether an aggregation map yields autonomous dynamics and recover induced update;
+      C009 adds stochastic systems, but the closure test is identical.
+  - id: proposal:ua_scientific-reasoning:P006
+    relationship: adjacent
+    overlap: Both test hidden-variable consistency, but one is dynamics closure and the other causal independence.
+  - id: task:generated.k3_dynamic_structures_r1.transformation_semigroup_closure.transformation_semigroup_closure:TransformationSemigroupClosure
+    relationship: adjacent
+    overlap: Both study closure under composition, but C009 is on state aggregation, P is on transformations.
+  reason: 0/3 samples judged it novel; Variant of coarse-graining closure.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: closed_family_rejections
+  summary: Combine local intersection tests through closed testing across overlapping scientific claims,
+    logical exclusions, and nested hypothesis families; return adjusted p-values or the rejected elementary
+    claims.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_scientific-reasoning:P003
+    relationship: same_operation
+    overlap: Both apply a multiple testing correction to a family of hypotheses; C010 generalizes to closed
+      family but the adjustment procedure is inherited.
+  - id: proposal:ua_scientific-reasoning:P009
+    relationship: variant
+    overlap: Both reason about rejection rules across hypothesis families; C010 focuses on closed testing,
+      P009 on dominance.
+  - id: proposal:ua_scope-and-binding:P005
+    relationship: adjacent
+    overlap: Both combine local exclusions into global conclusions, but one is p-value correction and
+      the other exhaustification.
+  reason: 0/3 samples judged it novel; Variant of multiple testing correction.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: contextual_marginal_compatibility
+  summary: Determine whether overlapping measurement-context distributions admit one joint distribution,
+    varying outcome alphabets, overlap patterns, and structural zeros; return global compatibility verdicts.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P008
+    relationship: same_operation
+    overlap: Both test whether overlapping probability distributions admit a joint consistent distribution;
+      C006 calls them measurement contexts but the compatibility check is identical.
+  - id: proposal:ua_algorithms-and-data-structures:P003
+    relationship: variant
+    overlap: Both evaluate compatibility of partial observations; P003 focuses on censoring, C006 on marginals.
+  - id: task:generated.k3_cognitive_psychology_r1.degree_construction_equivalence.degree_construction_equivalence:DegreeConstructionEquivalence
+    relationship: adjacent
+    overlap: Both decide constraint satisfaction of alternatives, but one is probabilistic and the other
+      order-theoretic.
+  reason: 0/3 samples judged it novel; Duplicate of marginal extension consistency.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: nested_tail_risk_backup
+  summary: Back up conditional upper-tail costs through decision trees with unequal branch probabilities
+    and stage-specific tail fractions; split boundary probability mass exactly and answer the root risk
+    or chosen action.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: same_operation
+    overlap: Both evaluate branching decision/probability trees with conditional probabilities and unequal
+      branch weights, computing exact total probabilities or expected values. C007 extends with tail fractions
+      but the core tree propagation is identical.
+  - id: task:generated.wave12.probability_tree_marginal.probability_tree_marginal:ProbabilityTreeMarginal
+    relationship: same_operation
+    overlap: Same tree evaluation over decision nodes with probabilities, returning root probability.
+  - id: proposal:ua_state-tracking:P007
+    relationship: adjacent
+    overlap: Both involve tail-conditional comparisons across distributions.
+  reason: 0/3 samples judged it novel; Probability tree evaluation is already well covered by existing
+    tasks.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: actual_cause_contingencies
+  summary: Evaluate actual-cause claims in finite structural models under stated contingency rules, including
+    preemption, redundancy, and conjunctive causes; return causation verdicts and minimum witness contingencies.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_uncertainty:P003
+    relationship: same_operation
+    overlap: 'Both evaluate actual cause in structural models with contingencies, preemption, redundancy,
+      and compute minimum witness contingencies. C012''s actual_cause_contingencies and causal_contingency_responsibility
+      are identical: find smallest contingency making event necessary for outcome.'
+  - id: proposal:ua_relational-structures:P006
+    relationship: variant
+    overlap: Both involve event structures and residualization, but different purpose.
+  - id: task:generated.wave9.causal_intervention.causal_intervention:CausalIntervention
+    relationship: adjacent
+    overlap: Both handle causal models but intervention is execution, not cause evaluation.
+  reason: 0/3 samples judged it novel; Duplicate of causal_contingency_responsibility.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: dependency_quantifier_realizability
+  summary: Solve finite quantified constraints where each existential choice sees only designated universal
+    variables; vary dependency overlap and relation arity, returning realizability or a requested strategy
+    table.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_formal-semantics:P004
+    relationship: same_operation
+    overlap: 'Both evaluate quantified formulas with explicit witness dependencies: C009 asks whether
+      there exists a strategy table for existential variables depending on designated universals, witness_uniformity_semantics
+      checks uniform witness policies. Identical operation of dependency-quantifier realizability.'
+  - id: task:generated.k3_scope_and_binding_r1.quantifier_dependency_strategy.quantifier_dependency_strategy:QuantifierDependencyStrategy
+    relationship: same_operation
+    overlap: Both solve quantifier-dependence games and output strategies as dependence functions.
+  - id: proposal:ua_representation-specific:P008
+    relationship: adjacent
+    overlap: Both deal with dependencies (MVD closure vs quantifier dependence).
+  reason: 0/3 samples judged it novel; Direct duplicate of witness_uniformity_semantics and quantifier_dependency_strategy.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+pool:
+- name: finite_back_and_forth_rank
+  summary: Compare finite relational structures with named tuples by extending partial isomorphisms under
+    alternating element choices; return the least distinguishing game length or survival through a given
+    bound.
+- name: ascertainment_conditioned_likelihood
+  summary: Compare hypotheses after threshold screening, outcome-dependent reporting, or case enrichment
+    using stated selection probabilities; return the likelihood ratio conditional on inclusion.
+- name: sequential_likelihood_stopping
+  summary: Accumulate evidence along ordered observations with history-dependent likelihoods, scheduled
+    inspections, and asymmetric stopping boundaries; return the first stopping time and decision, or continuation.
+- name: stopping_rule_likelihood_equivalence
+  summary: Compare evidence from fixed-sample, sequentially stopped, and censored experiments by constructing
+    likelihoods over shared hypotheses; return whether two records have proportional likelihoods.
+- name: likelihood_principle_audit
+  summary: Compare realized evidence across fixed, censored, and outcome-dependent stopping protocols;
+    derive likelihood vectors over hypotheses and identify which records carry proportional evidence.
+- name: counterfactual_coupling_bounds
+  summary: Bound joint potential-outcome claims from experimental marginals, subgroup mixtures, and optional
+    monotonicity restrictions; return sharp bounds on benefit, harm, or probability of necessity.
+- name: adaptive_hypothesis_probes
+  summary: Choose adaptive experiments separating finite hypotheses under deterministic predictions, unequal
+    costs, restricted probes, and bounded response errors; return the minimax first probe and total cost,
+    or infeasibility.
+- name: coalition_excess_balancing
+  summary: Allocate a fixed payoff by lexicographically minimizing descending coalition dissatisfaction
+    across overlapping claims, individual floors and coalition values; answer the allocation or successive
+    excess thresholds.
+- name: policy_information_consistency
+  summary: Audit contingent actions against information actually available from delayed, masked or action-dependent
+    observations; answer forced action-equality groups or the earliest decision that uses unavailable
+    knowledge.
+- name: integer_balance_augmentation
+  summary: Improve a bounded integer allocation through supplied balance-preserving directions under separable
+    cost tables; vary sign compatibility and feasible step lengths, and answer the best direction, step
+    and gain.
+- name: coarsening_ignorability_audit
+  summary: Check whether an observation mechanism assigns equal reporting probabilities to latent states
+    compatible with each report; vary censoring, overlapping reports, and adaptive revelation; return
+    ignorability or a violating pair.
+- name: scenario_recombination_stress
+  summary: Find the worst cumulative load after uncertainty scenarios are closed under allowed prefix-suffix
+    recombinations; vary splice checkpoints and history restrictions, and answer the new worst path or
+    conservatism gap.
+- name: objective_perturbation_stability
+  summary: Find the full parameter interval preserving a designated plan's optimality when costs vary
+    affinely across feasible alternatives, including degeneracy and ties; answer the interval and limiting
+    rivals.
+- name: recourse_certificate_projection
+  summary: Project downstream feasibility and cost certificates onto upstream decisions by canceling recourse
+    variables; vary shared capacities and scenario coupling, and answer the induced cut or its violation.
+- name: disjunctive_bound_convexification
+  summary: Derive the tight convex relaxation of unions of bounded operating regimes with activation costs
+    and minimum outputs; answer a queried envelope value or a separating inequality for a fractional operating
+    point.
+- name: adaptive_probe_valuation
+  summary: Value inspections that reveal partitions of possible demand before an irreversible allocation;
+    vary noisy signals, probe costs and sequential probe choices, and answer the optimal first probe or
+    its net value.
+- name: sequential_cut_lifting
+  summary: Extend a valid packing inequality to omitted binary choices in a stated order, recomputing
+    each coefficient over residual feasible packs; answer the lifted inequality or a queried coefficient.
+- name: budgeted_uncertainty_counterpart
+  summary: Replace uncertain resource loads with exact worst-case loads under shared deviation budgets,
+    asymmetric ranges and grouped limits; answer a robust capacity requirement or an attaining deviation
+    allocation.

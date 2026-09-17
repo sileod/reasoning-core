@@ -1,0 +1,891 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_latent-structure-reconstruction
+created_at: '2026-09-17T11:42:20.849635+00:00'
+provenance:
+  kind: proposer
+  name: ua_latent-structure-reconstruction
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'tasks involving global consistency, reconstruction, or latent-structure inference from partial
+    local observations. The catalog you were shown already covers the classic textbook algorithms -- sorting,
+    gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that names one
+    will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 3
+  complete: false
+catalog:
+  sha256: 7202b526147b2ebe83d050df1da14bc9080d590b2c1bbad0e2b3dd7a39129798
+  entries: 973
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 348
+    task: 463
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 4668a5593c6cf0cd642f35aaa09b3f3f4b0a41f3d1772663ec2378af0f5d4fd5
+    response_sha256: bc0f09441d6e3d84ade30e53915e6914f246c9b5ecd763d35adc4b7edbf43eb1
+    response_id: gen-1789644761-uiOq0nYyS1P2Pv71uISm
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  dedup: lenient
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8bbc3b1659bef09ef8c9f8117ad4dcd42e3b180e3585dc9826aec93fecbc6440
+    response_sha256: fcb4123ef5e0d78adadd10f22ddda38a92d182d34c31b55cd1843721c97b488e
+    response_id: chatcmpl-91415eb3448cac9d
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c6aa59ddc3c3e5c41d532bb437a6e3c1984bf78f87706deae3b1b38278bb1b5a
+    response_sha256: 167bfba308d7e60f4f1cd570345750ee29949081a73983548e0ccfba7cc321e0
+    response_id: chatcmpl-b3c36c75c76a4cc0
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: de06e3c4738bca682cf2eeda55d85247f2ca5b0b9aa604272f8fe93d8fad87d7
+    response_sha256: 112b12188faf2ac940887bfc975a7e73646a0a8dfa315394daa3e6a88adb1c73
+    response_id: chatcmpl-89abec2ddc3184f7
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 49563e7bb34711a26d647489527a720f73c79e1ea4dafcb5059e6d371d3f6f18
+    response_sha256: 6e2ac1f3742adcb9bcc3eda749e40959c06d524995eadad6430d0c51a6fa3afa
+    response_id: chatcmpl-beb4772f7640d7ad
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: b62fbb206ef255c0a993637827b7f67869e4ccc47fd3e4af1b5a52588b8cbfaa
+    response_sha256: f34784d10a412354bac40e28b63a19f610bbe0a82f2b769cfc352e9e5476d2ef
+    response_id: chatcmpl-aa1dadbd8654b857
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c502be8d5b52a5632a1940f3561134cf252ad086252a8b91cae69b81a5691c16
+    response_sha256: f8ee89cb3865c247ee29420cd6abc7a0433a7c291a44c10d0c56984f2083004e
+    response_id: chatcmpl-9bb70b48800fa72a
+  - purpose: critic-round-2-sample-3-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8878a0f7c5a0e35e913ef767db2c29257150bfd13341ec23f0b50c1cfb43b1a4
+    response_sha256: 7da5014dc8b958fb3e7504e540476e439ea795f942e37b0e5994846c971e6b52
+    response_id: chatcmpl-add18f26c31b1c5a
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: a7c47001047e7c4297d80d2318c62680839a75c2cd8aadba56fa292a8a1dfca7
+    response_sha256: af9044c3f581a48388ff7ae78ff895aa94c9036b2cf6b7d76e66933c317e6bb1
+    response_id: chatcmpl-a2d9fdf9930073a6
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d8b62ae4c5ef776d4cc63b17aca027ff21c325cce452a9790b1b04ae27d4983f
+    response_sha256: c224ac51ae37f1e28912c4a3027b235cbc5b87c373f60a88a69933aa686d84e7
+    response_id: chatcmpl-a1dbb6dfa9b58b30
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8aff8f830e39f9d830d99425abc3f8ec448abf7913809d774fa47cebab650bf4
+    response_sha256: 70648b0718febafaaf4b0ae1d456b9d82c0bb7fc99166838e759b5591c533eed
+    response_id: chatcmpl-a8f1cd18278ebcaf
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: scenario_recombination_stress
+  summary: Find the worst cumulative load after uncertainty scenarios are closed under allowed prefix-suffix
+    recombinations; vary splice checkpoints and history restrictions, and answer the new worst path or
+    conservatism gap.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_novel-composition:P001
+      relationship: adjacent
+      overlap: Both consider worst-case over coupled scenarios, but C009 recombines prefixes/suffixes
+        of scenarios, P001 compares regret among interventions.
+    - id: proposal:ua_scientific-reasoning:P001
+      relationship: adjacent
+      overlap: Both accumulate loads/evidence under constraints, but P001 is about betting martingales,
+        C009 about scenario recombinations.
+    - id: proposal:k3_scientific-reasoning:P007
+      relationship: adjacent
+      overlap: Both track cumulative quantities under rules, but C009 involves closed-set recombination,
+        not stopping boundaries.
+    substantive_difference: The operation is finding the worst path after closing a set of scenarios under
+      prefix-suffix concatenation, which is a new combinatorial optimization over scenario spaces not
+      present in the neighbors.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 3
+      clarity: 4
+    reason: This introduces a genuinely new combinatorial operation (scenario recombination closure) with
+      a clear objective and output, distinct from any neighbor.
+    votes: 2/3
+    dissent:
+    - variant
+- name: sandpile_recurrence_membership
+  summary: Use local grain counts, edge multiplicities, and sink connections to distinguish stable configurations
+    that belong to the recurrent addition-and-relaxation regime from configurations that are transient.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_global-over-greedy:P002
+      relationship: adjacent
+      overlap: Both involve stability of configurations under rules, but C011 is about sandpile recurrent
+        states, P002 about coalition stability.
+    - id: proposal:ua_state-tracking:P001
+      relationship: adjacent
+      overlap: Both use algebraic conditions to classify states, but P001 is quantum entropy, C011 is
+        abelian sandpile recurrence.
+    - id: proposal:ua_invariants:P004
+      relationship: adjacent
+      overlap: Both extract properties from local state descriptions, but C011 is about sandpile group
+        membership, P004 about quantum sufficiency.
+    substantive_difference: The operation is determining membership in the recurrent class of the abelian
+      sandpile model, a distinct algebraic/graph-theoretic problem not present in any neighbor, with a
+      clear algorithm via burning test.
+    scores:
+      novelty: 5
+      sft_value: 5
+      feasibility: 4
+      clarity: 4
+    reason: This is a genuinely new cognitive operation (sandpile recurrence classification) with a precise
+      algorithm, distinct from any neighbor's stability or invariant extraction.
+    votes: 2/2
+    dissent: []
+- name: polynomial_radical_consequence
+  summary: Combine monomial, binomial, and coupled polynomial equations over complex variables; decide
+    whether a queried polynomial vanishes on every common solution, distinguishing radical from ideal
+    membership.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_global-over-greedy:P007
+      relationship: different
+      overlap: modular root survival vs radical membership over complex numbers.
+    - id: proposal:k3_hierarchical-recursive:P001
+      relationship: different
+      overlap: elementary symmetric expansion vs ideal membership decision.
+    - id: proposal:ua_global-over-greedy:P006
+      relationship: adjacent
+      overlap: both check vanishing under substitutions; C008 uses polynomial ideal theory, not matrix
+        identities.
+    substantive_difference: "Distinct operation: distinguish radical from ideal membership, requiring\
+      \ Gr\xF6bner basis computation, new relative to expansion or root lifting."
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 3
+      clarity: 4
+    reason: Radical membership is a deeper algebraic operation not present in existing polynomial tasks.
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: disjunctive_bound_convexification
+  summary: Derive the tight convex relaxation of unions of bounded operating regimes with activation costs
+    and minimum outputs; answer a queried envelope value or a separating inequality for a fractional operating
+    point.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_operations-research:P001
+    relationship: variant
+    overlap: Both derive a convex hull or bound from linear constraints with costs; P001 is about resource
+      invariants, C006 about unions of operating regimes.
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: Both involve reconstructing bounds from partial information, but C006 is a specific convexification
+      of disjunctive regimes.
+  - id: proposal:k3_scientific-reasoning:P010
+    relationship: adjacent
+    overlap: Both compute bounds on a quantity under constraints, but P010 is causal bounds, C006 is convex
+      envelope of unions.
+  reason: 0/3 samples judged it novel; This is a known convexification technique applied to a specific
+    structure; not novel but could provide useful SFT data on envelope computation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: quartet_tree_compatibility
+  summary: Combine overlapping four-leaf separation claims, unresolved quartets, and forbidden splits;
+    decide whether one unrooted tree realizes all claims or whether an additional separation is forced.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_counterfactual:P002
+    relationship: variant
+    overlap: Both combine overlapping leaf-set claims into a global tree/network; C002 asks for unrooted
+      tree compatibility, P002 for minimum reticulation in a network.
+  - id: task:generated.wave8.kraft_feasibility.kraft_feasibility:KraftFeasibility
+    relationship: adjacent
+    overlap: Both involve combining local constraints into a global feasibility decision, but Kraft is
+      numeric inequality and C002 is tree split consistency.
+  - id: proposal:ua_relational-structures:P004
+    relationship: adjacent
+    overlap: Both combine tree-like structures with constraints, but P004 is about term ordering, C002
+      about quartet splits.
+  reason: 1/3 samples judged it novel; Phylogenetic quartet compatibility is a known operation with specific
+    new constraints; it's a justified variant, not a new cognitive operation.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: recourse_certificate_projection
+  summary: Project downstream feasibility and cost certificates onto upstream decisions by canceling recourse
+    variables; vary shared capacities and scenario coupling, and answer the induced cut or its violation.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_novel-composition:P001
+    relationship: adjacent
+    overlap: Both project or compare across scenarios, but C012 projects feasibility certificates, P001
+      computes regret.
+  - id: proposal:ua_inference-modes:P006
+    relationship: adjacent
+    overlap: Both relate upstream decisions to downstream constraints, but C012 is about certificate projection,
+      P006 about workspace cleanup.
+  - id: proposal:ua_relational-structures:P001
+    relationship: adjacent
+    overlap: Both audit resource use across branches, but C012 is on linear programming projections, not
+      resource disciplines.
+  reason: 0/3 samples judged it novel; This is a standard Benders decomposition concept, variant of existing
+    projection tasks, with practical SFT value in optimization reasoning.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 3
+    clarity: 4
+  votes: 0/3
+- name: policy_information_consistency
+  summary: Audit contingent actions against information actually available from delayed, masked or action-dependent
+    observations; answer forced action-equality groups or the earliest decision that uses unavailable
+    knowledge.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P002
+    relationship: variant
+    overlap: Both audit policies with respect to information sets and action consistency; P002 checks
+      equivalence of policies, C004 checks availability of information for contingent actions.
+  - id: proposal:ua_uncertainty:P008
+    relationship: adjacent
+    overlap: Both involve decision-making under limited information, but P008 compares experiments by
+      value, C004 audits information availability constraints.
+  - id: proposal:ua_formal-semantics:P004
+    relationship: adjacent
+    overlap: Both enforce consistency constraints on actions/choices under different observation scenarios,
+      but P004 is about logical semantics, C004 about actions.
+  reason: 1/3 samples judged it novel; This is a well-defined variant of policy-consistency auditing,
+    adding a concrete unavailable-knowledge detection regime; not a fully new operation but useful.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: objective_perturbation_stability
+  summary: Find the full parameter interval preserving a designated plan's optimality when costs vary
+    affinely across feasible alternatives, including degeneracy and ties; answer the interval and limiting
+    rivals.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P006
+    relationship: variant
+    overlap: 'Both analyze sensitivity of optimal choice to parameter rankings: P006 on constraint rankings,
+      C007 on cost parameters.'
+  - id: proposal:ua_global-over-greedy:P004
+    relationship: adjacent
+    overlap: Both find parameter intervals preserving a property (stability vs optimality), but for different
+      contexts.
+  - id: proposal:ua_uncertainty:P008
+    relationship: adjacent
+    overlap: Both deal with decision-making under parameters, but P008 values experiments, C007 gives
+      optimality intervals.
+  reason: 0/3 samples judged it novel; This is a well-known operations-research problem (parametric LP
+    sensitivity) that is a variant of existing ranking-sensitivity tasks, but with a fresh output regime.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: pseudoline_stretchability
+  summary: Combine local crossing orders along labeled pseudolines, with specified crossing orientations
+    and parallelism permissions; decide whether straight lines can realize the entire arrangement.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_dynamic-structures:P005
+    relationship: variant
+    overlap: Both organize line crossing orders to answer a permutation or arrangement property; C001
+      extends to abstract pseudolines with orientation constraints, P005 handles only straight-line swap
+      sequences.
+  - id: proposal:ua_counterfactual:P001
+    relationship: adjacent
+    overlap: Both involve geometric realizability but P001 is constructive straightedge-compass while
+      C001 is decision about straight-line realizability of an arrangement.
+  - id: proposal:k3_latent-structure-reconstruction:P008
+    relationship: adjacent
+    overlap: Both reconstruct a global order from local constraints, but P008 is about betweenness on
+      a line and C001 about crossing orders in an arrangement.
+  reason: 1/3 samples judged it novel; This is a real geometric decision problem but closely tied to existing
+    crossing-order and realizability tasks, making it a variant with useful parameterization.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 3
+    clarity: 4
+  votes: 1/3
+- name: boundary_degree_inference
+  summary: Combine oriented boundary pieces and nonzero piecewise-linear vector values in two or three
+    dimensions; infer the signed interior zero count forced by the boundary and whether a zero must exist.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_inference-modes:P012
+    relationship: variant
+    overlap: Both infer forced existence of zeros from boundary/symmetry conditions, but C010 uses topological
+      degree, P012 uses index symmetries.
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: Both infer global properties from local data, but C010 is about continuous vector fields,
+      P001 about discrete arrays.
+  - id: proposal:ua_state-tracking:P011
+    relationship: adjacent
+    overlap: Both use algebraic invariants to deduce existence, but C010 uses degree, P011 uses norms.
+  reason: 1/3 samples judged it novel; This is a known topological approach applied to piecewise-linear
+    fields, making it a variant with potential SFT value in geometric inference.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 3
+    clarity: 3
+  votes: 1/3
+- name: integer_balance_augmentation
+  summary: Improve a bounded integer allocation through supplied balance-preserving directions under separable
+    cost tables; vary sign compatibility and feasible step lengths, and answer the best direction, step
+    and gain.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: variant
+    overlap: Both improve integer allocations under constraints; C009 focuses on balance-preserving directions.
+  - id: proposal:ua_novel-composition:P005
+    relationship: adjacent
+    overlap: Both use signed adjustments, but for different objectives.
+  - id: proposal:k3_interacting-updates:P002
+    relationship: adjacent
+    overlap: Both update integer vectors, but C009 is optimization not market clearing.
+  reason: 0/3 samples judged it novel; A new direction-based improvement for integer allocations.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: projection_join_spuriousness
+  summary: Combine attribute dependencies with overlapping relational projections; determine whether recombining
+    the projections can introduce records absent from an original relation satisfying those dependencies.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.lossless_binary_decomposition.lossless_binary_decomposition:LosslessBinaryDecomposition
+    relationship: variant
+    overlap: Both decide whether a decomposition is spurious using functional dependencies; C006 considers
+      joins of multiple projections.
+  - id: proposal:ua_state-tracking:P008
+    relationship: adjacent
+    overlap: Both check consistency of overlapping constraints, but over distributions vs. relations.
+  - id: proposal:ua_latent-representation:P011
+    relationship: adjacent
+    overlap: Both infer preferred structures from constraints, but different formal settings.
+  reason: 0/3 samples judged it novel; Extends a known dependency-based decomposition check to broader
+    joins.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: signed_tensor_vanishing
+  summary: Combine signed axis symmetries across tensor contractions with repeated factors and dummy indices;
+    decide whether the whole expression is forced to vanish through a sign-reversing symmetry.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_inference-modes:P012
+    relationship: same_operation
+    overlap: Both combine signed index symmetries across tensor contractions, with repeated indices, to
+      force zeros.
+  - id: proposal:ua_global-over-greedy:P006
+    relationship: adjacent
+    overlap: Both decide vanishing of algebraic expressions, but P006 is general matrix identities, not
+      tensor contractions.
+  - id: proposal:ua_invariants:P002
+    relationship: adjacent
+    overlap: Both handle equalities among tensor words, but different rule sets (cyclicity vs sign symmetry).
+  reason: 0/3 samples judged it novel; Same operation as existing signed_symmetry_forcing.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: adaptive_probe_valuation
+  summary: Value inspections that reveal partitions of possible demand before an irreversible allocation;
+    vary noisy signals, probe costs and sequential probe choices, and answer the optimal first probe or
+    its net value.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_uncertainty:P008
+    relationship: variant
+    overlap: Both compute expected value of information for experiments before decisions; C003 replaces
+      general experiments with demand-revealing probes.
+  - id: proposal:k3_global-from-local:P004
+    relationship: adjacent
+    overlap: Both involve sequential decision processes, but in different domains (logic vs. procurement).
+  - id: task:generated.wave9.access_control_evaluation.access_control_policy_evaluation:AccessControlEvaluation
+    relationship: different
+    overlap: No shared operation; different domains.
+  reason: 0/3 samples judged it novel; A known value-of-information operation specialized to demand probes.
+  scores:
+    novelty: 2
+    sft_value: 4
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: budgeted_uncertainty_counterpart
+  summary: Replace uncertain resource loads with exact worst-case loads under shared deviation budgets,
+    asymmetric ranges and grouped limits; answer a robust capacity requirement or an attaining deviation
+    allocation.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_dynamic-structures:P004
+    relationship: variant
+    overlap: Both involve load redistribution under constraints; C001 shifts from discrete failure thresholds
+      to budgeted uncertainty sets.
+  - id: proposal:ua_novel-composition:P001
+    relationship: adjacent
+    overlap: Both use worst-case reasoning over scenarios, but C001 focuses on load allocation, not regret.
+  - id: proposal:k3_operations-research:P012
+    relationship: adjacent
+    overlap: Both deal with capacity and resource constraints, but C001 uses uncertainty budgets.
+  reason: 0/3 samples judged it novel; A known robust load allocation operation with a new uncertainty
+    parameterization.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: polygon_seam_surface_type
+  summary: Infer the global surface formed by polygon edge identifications with reversed or preserved
+    directions and unpaired edges; answer orientability, boundary count, and genus or crosscap count.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: same_operation
+    overlap: Both infer orientability, boundary count, and genus from polygon edge identifications.
+  - id: proposal:ua_global-over-greedy:P008
+    relationship: adjacent
+    overlap: Both involve geometric invariants but scissors congruence is different.
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: adjacent
+    overlap: Both track topology under operations, but different representation (ribbons).
+  reason: 0/3 samples judged it novel; Same operation as surface_seam_composition.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: sequential_cut_lifting
+  summary: Extend a valid packing inequality to omitted binary choices in a stated order, recomputing
+    each coefficient over residual feasible packs; answer the lifted inequality or a queried coefficient.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_novel-composition:P005
+    relationship: variant
+    overlap: Both construct valid inequalities/cuts, but C011 does sequential lifting.
+  - id: proposal:k3_operations-research:P009
+    relationship: adjacent
+    overlap: Both involve optimization with piecewise constraints, but different methods.
+  - id: proposal:ua_scope-and-binding:P005
+    relationship: adjacent
+    overlap: Both iterative refinement, but different domains.
+  reason: 0/3 samples judged it novel; Known cutting-plane method now framed as sequential lifting.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: coalition_excess_balancing
+  summary: Allocate a fixed payoff by lexicographically minimizing descending coalition dissatisfaction
+    across overlapping claims, individual floors and coalition values; answer the allocation or successive
+    excess thresholds.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_global-over-greedy:P002
+    relationship: variant
+    overlap: Both allocate surplus under coalition constraints; C005 adds lexicographic minimization of
+      excesses.
+  - id: proposal:k3_operations-research:P006
+    relationship: adjacent
+    overlap: Both allocate resources, but waterfilling is continuous while C005 is lexicographic.
+  - id: proposal:ua_shortcuts-fail:P006
+    relationship: adjacent
+    overlap: Both optimize allocations with incentives, but C005 lacks payments.
+  reason: 0/3 samples judged it novel; Known coalitional allocation with a new lexicographic objective.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: periodic_weave_reconstruction
+  summary: Unregistered row, column, and diagonal snippets sample a symbol weave with unknown bounded
+    periods and shifted seams; recover all period-and-shift triples consistent with one shared pattern.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: variant
+    overlap: Both recover an unknown grid pattern from partial observations (directional sums vs. snippets).
+      The inversion of a periodic pattern is a known reconstruction class.
+  - id: proposal:ua_representation-transfer:P001
+    relationship: adjacent
+    overlap: Both involve weaves but different aspects (drawing vs. periodic pattern inference).
+  - id: proposal:ua_invariants:P002
+    relationship: adjacent
+    overlap: Both reason about periodicity, but one in traces and the other in patterns.
+  reason: 0/3 samples judged it novel; An instance of pattern reconstruction under shifts; close to discrete
+    tomographic completion.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: relational_team_satisfaction
+  summary: Evaluate dependence, inclusion, and exclusion claims over collections of assignments with conjunction
+    and split disjunction; answer whether one globally coherent partition satisfies the nested claims.
+  verdict: adjacent
+  nearest_neighbors:
+  - id: proposal:ua_formal-logic:P011
+    relationship: variant
+    overlap: Both evaluate formulas over sets of assignments using dependence and inclusion, but the proposal
+      narrows to a fixed set of claims and asks for a coherent partition, which is a defined subtask of
+      team semantics.
+  - id: proposal:ua_formal-semantics:P004
+    relationship: adjacent
+    overlap: Both about existence of assignments satisfying constraints, but differing semantics (team
+      vs. witness).
+  - id: gallery:constraint_satisfaction
+    relationship: adjacent
+    overlap: Both solve satisfiability problems, but team semantics adds dependence relations beyond standard
+      CSP.
+  reason: 0/3 samples judged it novel; A particular decision problem within known team semantics, offering
+    some novelty in the boundary conditions.
+  scores:
+    novelty: 3
+    sft_value: 3
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: persistent_reporter_fault_localization
+  summary: Overlapping reports share latent binary event traces, while each source has a persistent truthful,
+    inverted, stuck, or lagged behavior; identify source behaviors forced by global consistency.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_algorithms-and-data-structures:P003
+    relationship: variant
+    overlap: Both infer latent sources from overlapping reports; here the focus is on persistent report
+      biases rather than censoring.
+  - id: proposal:ua_state-tracking:P008
+    relationship: adjacent
+    overlap: Both combine overlapping observations into a consistent latent structure.
+  - id: task:generated.wave9.ledger_reconciliation.ledger_reconciliation:LedgerReconciliation
+    relationship: adjacent
+    overlap: Both reconcile multiple reports to find consistency; one is financial, the other sensor-like.
+  reason: 0/3 samples judged it novel; A sensor-fault variant of evidence reconciliation; not a new operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: simplicial_link_manifold_audit
+  summary: Combine triangle or tetrahedron incidences whose face counts may appear locally valid; use
+    vertex and edge neighborhoods to decide whether the whole complex is a manifold, with or without boundary.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_relational-structures:P008
+    relationship: same_operation
+    overlap: 'Both check simplicial complex links for a manifold condition: compare link''s topology with
+      that of a sphere or disc (the proposal uses vertex/edge neighborhoods to decide manifoldness).'
+  - id: task:generated.k3_shortcuts_fail_r1.face_tracing.rotation_system_face_tracing:FaceTracing
+    relationship: variant
+    overlap: Both operate on combinatorial topology structures; face tracing enumerates faces whereas
+      this checks manifoldness via local link conditions.
+  - id: proposal:ua_semantics-preserving-translation:P001
+    relationship: adjacent
+    overlap: Both concern simplicial complexes but one is about normalized operators while this is about
+      manifoldness.
+  reason: 0/3 samples judged it novel; The manifold audit is a standard application of the existing simplicial
+    link condition task.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: rigid_footprint_reconstruction
+  summary: Translations and rotations of an unknown connected lattice footprint are tested against obstacle
+    masks, reporting collision or fit; recover cells forced occupied or empty across every compatible
+    shape.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: variant
+    overlap: Both recover unknown structures from partial observations; here it's a shape from collision
+      tests, a direct analog to tomographic constraints.
+  - id: proposal:k3_latent-structure-reconstruction:P005
+    relationship: variant
+    overlap: Both reconstruct a source from noisy/partial observations with unknown alignments; one handles
+      shifts and the other rotations.
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: adjacent
+    overlap: Both involve rigid transformations, but one is composition vs. reconstruction.
+  reason: 0/3 samples judged it novel; Similar to consensus reconstruction but with rotation invariance;
+    still a standard inverse problem.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: hysteretic_population_reconstruction
+  summary: Input sweeps reveal partial totals from hidden bistable switches with distinct activation and
+    release thresholds; reconcile reversal histories to recover possible threshold populations or forced
+    later totals.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: variant
+    overlap: Both deal with hysteresis and reversal histories; the proposal adds reconstruction of hidden
+      thresholds from partial totals.
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: variant
+    overlap: Both reconstruct hidden quantities from partial observations, but one is bistable thresholds
+      and the other is array sums.
+  - id: proposal:ua_scientific-reasoning:P002
+    relationship: adjacent
+    overlap: Both infer unobserved populations from overlapping lists, but one uses detection probabilities
+      and the other threshold dynamics.
+  reason: 0/3 samples judged it novel; Combines hysteresis with reconstruction but stays within known
+    modeling families.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: dimensional_basis_reconstruction
+  summary: Invented formulas constrain unknown dimensions through sums, products, powers, derivatives,
+    and integrals; recover the number of free dimension vectors or determine whether a queried dimensional
+    relation is forced.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.dimensional_consistency.dimensional_consistency:DimensionalConsistency
+    relationship: variant
+    overlap: Both reason about dimensions in formulas; the proposal inverts to reconstruct dimension vectors
+      rather than checking consistency.
+  - id: task:generated.wave8.missing_dimension.missing_dimension:MissingDimension
+    relationship: variant
+    overlap: Both recover unknown dimensions from valid formulas; the proposal generalizes to multiple
+      unknowns and a basis count.
+  - id: proposal:k3_scientific-reasoning:P009
+    relationship: adjacent
+    overlap: Both deal with formulas and uncertainties; one is units and the other is measurement noise.
+  reason: 0/3 samples judged it novel; A natural inverse of existing dimensional consistency tasks; not
+    a new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: partial_operation_completion
+  summary: Partial finite operation tables obey associativity, units, inverses, or absorption across one
+    or two operations; recover forced missing entries or detect that no completion exists.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_parsing_and_agreement_r1.cayley_table_evaluation.cayley_table_evaluation:CayleyTableEvaluation
+    relationship: variant
+    overlap: Both work with finite Cayley tables and hidden properties; the proposal adds an inversion
+      (completing missing entries) to existing evaluation.
+  - id: proposal:ua_latent-representation:P012
+    relationship: adjacent
+    overlap: Both factor hidden structure from tables, but one is algebraic axioms and the other is product
+      decomposition.
+  - id: proposal:ua_formal-logic:P001
+    relationship: adjacent
+    overlap: Both involve completion of partial structures, but one is operation tables and the other
+      is posets.
+  reason: 0/3 samples judged it novel; Narrows known Cayley-table operations to a completion question.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: masked_stencil_identification
+  summary: Sparse space-time patches from several runs share an unknown finite-neighborhood update rule;
+    vary boundaries, alphabets, and missing states, and recover rule entries forced across all completions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: variant
+    overlap: Both recover an unknown structured array from partial observations (directional sums vs.
+      space-time patches). The inversion of a stencil rule is a new variant.
+  - id: gallery:sequential_induction
+    relationship: variant
+    overlap: Both infer a rule from data; sequential_induction is a general template, whereas this restricts
+      to finite-neighborhood stencils.
+  - id: task:generated.wave11.causal_identification.causal_identification:CausalIdentification
+    relationship: adjacent
+    overlap: Both identify a hidden structure from observations, but one is a DAG and the other a stencil.
+  reason: 0/3 samples judged it novel; A specific instance of rule induction from partial examples; several
+    close neighbors exist.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: ascertainment_conditioned_likelihood
+  summary: Compare hypotheses after threshold screening, outcome-dependent reporting, or case enrichment
+    using stated selection probabilities; return the likelihood ratio conditional on inclusion.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_scientific-reasoning:P005
+    relationship: same_operation
+    overlap: Both condition evidence on a selection rule (threshold screening, outcome-dependent reporting)
+      and compute adjusted likelihood ratios. The proposal is a restatement of selective_evidence_conditioning.
+  - id: proposal:ua_novel-composition:P002
+    relationship: variant
+    overlap: Both compute likelihood ratios under biased sampling; one with stopping rules, the other
+      with selection probabilities.
+  - id: proposal:ua_state-tracking:P009
+    relationship: adjacent
+    overlap: Both involve likelihoods and evidence, but one is conditioning on a selection event and the
+      other is sufficiency partitions.
+  reason: 0/3 samples judged it novel; Essentially a duplicate of selective_evidence_conditioning with
+    minor wording differences.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: pooled_distinctness_reconstruction
+  summary: Overlapping pools report exact, bounded, or saturated counts of distinct hidden types rather
+    than item counts; reconcile one global partition and recover forced same-type and different-type item
+    pairs.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_latent-structure-reconstruction:P004
+    relationship: variant
+    overlap: Both decode pooled tests with binary states; here counts are distinct types rather than positive/negative,
+      a small modification.
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: variant
+    overlap: Both recover hidden classifications from aggregate pool constraints; one uses sums and the
+      other distinctness.
+  - id: proposal:ua_relational-structures:P009
+    relationship: adjacent
+    overlap: Both involve partition reconstruction but from different input types.
+  reason: 0/3 samples judged it novel; Direct extension of pooled test decoding to distinctness counts.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+pool:
+- name: sequential_likelihood_stopping
+  summary: Accumulate evidence along ordered observations with history-dependent likelihoods, scheduled
+    inspections, and asymmetric stopping boundaries; return the first stopping time and decision, or continuation.
+- name: stopping_rule_likelihood_equivalence
+  summary: Compare evidence from fixed-sample, sequentially stopped, and censored experiments by constructing
+    likelihoods over shared hypotheses; return whether two records have proportional likelihoods.
+- name: likelihood_principle_audit
+  summary: Compare realized evidence across fixed, censored, and outcome-dependent stopping protocols;
+    derive likelihood vectors over hypotheses and identify which records carry proportional evidence.
+- name: local_frame_synchronization
+  summary: Overlapping observers report vectors in independently permuted, reflected, or rescaled coordinate
+    frames; reconcile loop constraints and recover the possible relative frames of a queried pair.
+- name: contextual_marginal_extension
+  summary: Overlapping variable subsets reveal exact probabilities, forbidden outcomes, or conditional
+    ratios; determine joint consistency or recover the attainable probability interval of a queried event.
+- name: disablement_provenance_recovery
+  summary: An unknown bounded sum-of-products expression generates counts while selected inputs are disabled
+    or assigned small weights; combine overlapping responses to recover forced monomials and multiplicities.
+- name: strided_alias_reconstruction
+  summary: Partially observed writes and readbacks across unknown strided, reversed, and overlapping array
+    views constrain shared storage; recover which queried cell pairs must alias or cannot alias.

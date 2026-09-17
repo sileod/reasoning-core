@@ -16,6 +16,7 @@ answer_relevant_change
 antecedent_binding_legality
 approval_voting_winner
 arc_consistency_reduction
+argument_support_graph_reconstruction
 argumentation_grounded_extension
 arithmetic_coding_intervals
 arithmetics
@@ -34,6 +35,7 @@ binary_morphology_passes
 binary_search_probes
 bipartite_matching
 birkhoff_decomposition
+block_pile_surface_accounting
 bloom_filter_membership
 boolean_network_knockout
 boolean_propagation_search
@@ -140,6 +142,7 @@ difference_array2_d
 dimensional_analysis
 dimensional_consistency
 direct_inverse_inflection
+distance_based_belief_merge
 distinguishing_witness
 distributed_snapshot_recording
 dominator_analysis
@@ -443,6 +446,7 @@ table_qa
 table_statistics
 tag_adjunction_derivation
 take_grant_rights_derivation
+temporal_connective_equivalence
 temporal_logic_monitoring
 temporal_perspective
 term_unification
