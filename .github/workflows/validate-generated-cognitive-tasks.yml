@@ -17,7 +17,7 @@ jobs:
           cache: pip
       - run: |
           python -m pip install -e .
-          python -m pip install 'xxhash<4'
+          python -m pip install 'xxhash<4' pytest
       - name: Validate task manifest
         run: python -m pytest -q tests/test_task_manifest.py
       - name: Validate Jev tasks at levels 0-6
