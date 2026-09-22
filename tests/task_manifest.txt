@@ -16,8 +16,10 @@ answer_relevant_change
 antecedent_binding_legality
 approval_voting_winner
 arc_consistency_reduction
+archive_symbol_binding_order
 argument_support_graph_reconstruction
 argumentation_grounded_extension
+aries_crash_recovery
 arithmetic_coding_intervals
 arithmetics
 articulation_bridges
@@ -63,6 +65,7 @@ ccg_category_combination
 cellular_automaton_step
 censored_survival_estimate
 centering_transition_tracking
+centering_transition_walk
 checksum_scheme_inference
 chip_firing_stabilization
 clarification_question
@@ -76,6 +79,7 @@ coin_selection
 color_refinement_signature
 combinatorics_formula
 compound_cue_weight_updates
+concat_stack_evaluate
 concurrent_edit_rebase
 conditional_expectation
 conditional_probability
@@ -188,6 +192,7 @@ firewall_rule_shadowing
 fixpoint_iteration
 floor_quotient_blocks
 flow_path_decomposition
+focus_particle_equivalence
 formal_concept_closure
 function_manipulation
 game_best_move
@@ -217,6 +222,7 @@ hidden_state_filtering
 hierarchical_rollup
 hindley_milner_inference
 hyperedge_replacement_derivation
+implicative_factive_inference
 incremental_build_rebuild_set
 incremental_interpretation
 indexical_context_shifting
@@ -272,6 +278,7 @@ lossless_summary
 lsm_level_compaction_trace
 lyndon_factorization_duval
 lz77_tokenization
+macro_hygiene_expansion
 markov_algorithm
 markov_chain_distribution
 math_word_problem
@@ -330,6 +337,7 @@ perceptron_update_trace
 permutation_pattern_witness
 petri_conflict_pair
 petri_enabled_transitions
+phi_sensitive_ssa
 pickup_delivery_route_search
 pipeline_hazard_trace
 pitch_class_prime_normal_forms
@@ -346,6 +354,7 @@ polynomial_expansion
 polynomial_gcd
 poset_cover_query
 posix_acl_permission
+post_tag_system_evolution
 pragmatic_reference_generation
 prefix_code_decode
 presupposition_projection
@@ -365,6 +374,7 @@ quadtree_region_construction
 qualitative_causal_reasoning
 qualitative_reasoning
 quantifier_dependency_strategy
+query_cardinality_estimation
 query_plan_execution
 question_generation
 quorum_intersection
@@ -377,6 +387,7 @@ reaching_definitions
 reaching_defs
 recursion_tree_cost_analysis
 red_black_black_height
+reentry_trace
 ref_gen
 reference_tracking
 reg_exp_derivative
@@ -386,6 +397,7 @@ regular_language_counting
 relational_join
 relational_join_execution
 repeating_decimal_expansion
+representation_boundary_values
 request_revision
 resistor_networks
 rewrite_system
@@ -429,7 +441,9 @@ skip_list_search_path
 skyline_dominance_query
 skyline_rectangle_update
 sld_resolution
+slot_init_writes
 smith_normal_form
+sowing_game_simulation
 spatial_folding
 spatial_frame_relation_verdicts
 speaker_role_consistency
@@ -514,4 +528,5 @@ weakest_precondition_computation
 weight_sensitive_stress_parse
 window_function
 window_function_execution
+word_equation_solving
 word_problem_distractors

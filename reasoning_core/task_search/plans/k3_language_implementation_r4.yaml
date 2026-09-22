@@ -1,0 +1,489 @@
+version: 1
+name: k3_language_implementation_r4
+proposal_wave: k3_language-implementation
+defaults:
+  base_ref: 574e1538679534d540ae6639aaaa51dcc64d56dc
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: generator_reentry_trace_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v1
+  instruction: |-
+    Author a new task from scratch: generator_reentry_trace_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resume nested generators through yield-from delegation, sent values, closes, and mutable suspension frames without replaying completed steps; answer emitted order, live frames, or the stale binding on re-entry.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v1
+  design_choice: 'Format answers as an ordered list of tokens (e.g., ''emit: A,B,C'') for a single trace,
+    where each token is a fixed alphabet symbol.'
+- id: P001v2
+  hypothesis: P001
+  idea: generator_reentry_trace_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v2
+  instruction: |-
+    Author a new task from scratch: generator_reentry_trace_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resume nested generators through yield-from delegation, sent values, closes, and mutable suspension frames without replaying completed steps; answer emitted order, live frames, or the stale binding on re-entry.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v2
+  design_choice: 'Answer as a canonical frame-state string listing live generator names in suspension
+    order, e.g., ''live: outer->inner->leaf''.'
+- id: P001v3
+  hypothesis: P001
+  idea: generator_reentry_trace_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v3
+  instruction: |-
+    Author a new task from scratch: generator_reentry_trace_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resume nested generators through yield-from delegation, sent values, closes, and mutable suspension frames without replaying completed steps; answer emitted order, live frames, or the stale binding on re-entry.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/generator_reentry_trace_v3
+- id: P002v1
+  hypothesis: P002
+  idea: macro_hygiene_expansion_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v1
+  instruction: |-
+    Author a new task from scratch: macro_hygiene_expansion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand recursive macros with fresh renamings and declared capture exemptions, resolving generated bindings through staging; answer a renamed result, identifier origin, or first unintended capture.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v1
+  design_choice: Instances present a macro call in a small lambda calculus with explicit binder syntax;
+    the answer is the fully expanded term after all recursive expansions, with fresh names chosen from
+    a deterministic counter.
+- id: P002v2
+  hypothesis: P002
+  idea: macro_hygiene_expansion_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v2
+  instruction: |-
+    Author a new task from scratch: macro_hygiene_expansion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand recursive macros with fresh renamings and declared capture exemptions, resolving generated bindings through staging; answer a renamed result, identifier origin, or first unintended capture.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v2
+  design_choice: Instances pose a query about a specific identifier in the expanded output, such as 'which
+    original variable does this generated binding refer to?', requiring tracing through staged renamings.
+- id: P002v3
+  hypothesis: P002
+  idea: macro_hygiene_expansion_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v3
+  instruction: |-
+    Author a new task from scratch: macro_hygiene_expansion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand recursive macros with fresh renamings and declared capture exemptions, resolving generated bindings through staging; answer a renamed result, identifier origin, or first unintended capture.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/macro_hygiene_expansion_v3
+- id: P003v1
+  hypothesis: P003
+  idea: phi_sensitive_ssa_evaluation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: phi_sensitive_ssa_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute arithmetic SSA programs with branches, loops, and predecessor-selected phi nodes until halt; report a queried value, the phi edge taken at a step, or the first invalid operation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v1
+  design_choice: Queried value is the final value of a named variable, while phi-edge and invalid-op queries
+    are separate instance types.
+- id: P003v2
+  hypothesis: P003
+  idea: phi_sensitive_ssa_evaluation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: phi_sensitive_ssa_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute arithmetic SSA programs with branches, loops, and predecessor-selected phi nodes until halt; report a queried value, the phi edge taken at a step, or the first invalid operation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v2
+  design_choice: Instances use only integer arithmetic with division by zero as the sole invalid operation,
+    making error detection deterministic.
+- id: P003v3
+  hypothesis: P003
+  idea: phi_sensitive_ssa_evaluation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: phi_sensitive_ssa_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute arithmetic SSA programs with branches, loops, and predecessor-selected phi nodes until halt; report a queried value, the phi edge taken at a step, or the first invalid operation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/phi_sensitive_ssa_evaluation_v3
+- id: P004v1
+  hypothesis: P004
+  idea: archive_symbol_binding_order_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v1
+  instruction: |-
+    Author a new task from scratch: archive_symbol_binding_order_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Process object files and archives in link order with strong, weak, common, and internal symbols, extracting archive members only as references demand; report bindings, extracted members, or the first unresolved symbol.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v1
+  design_choice: Represent inputs as a text sequence of link-command lines and outputs as a canonical
+    ordered list of extracted member names and final binding table.
+- id: P004v2
+  hypothesis: P004
+  idea: archive_symbol_binding_order_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v2
+  instruction: |-
+    Author a new task from scratch: archive_symbol_binding_order_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Process object files and archives in link order with strong, weak, common, and internal symbols, extracting archive members only as references demand; report bindings, extracted members, or the first unresolved symbol.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v2
+  design_choice: Present each instance as a list of object-file symbol tables with archive indices; answer
+    is the first unresolved symbol or 'NONE'.
+- id: P004v3
+  hypothesis: P004
+  idea: archive_symbol_binding_order_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v3
+  instruction: |-
+    Author a new task from scratch: archive_symbol_binding_order_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Process object files and archives in link order with strong, weak, common, and internal symbols, extracting archive members only as references demand; report bindings, extracted members, or the first unresolved symbol.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/archive_symbol_binding_order_v3
+- id: P005v1
+  hypothesis: P005
+  idea: representation_boundary_values_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v1
+  instruction: |-
+    Author a new task from scratch: representation_boundary_values_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pass byte values through fixed-width signed and unsigned arithmetic, enum tags, pointer indices, tagged unions, casts, and traps; answer each checkpoint's value-with-type or first invalid reinterpretation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v1
+  design_choice: Checkpoints require exact integer answers for signed/unsigned overflow at fixed bit widths,
+    with traps answered as the word 'trap'.
+- id: P005v2
+  hypothesis: P005
+  idea: representation_boundary_values_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v2
+  instruction: |-
+    Author a new task from scratch: representation_boundary_values_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pass byte values through fixed-width signed and unsigned arithmetic, enum tags, pointer indices, tagged unions, casts, and traps; answer each checkpoint's value-with-type or first invalid reinterpretation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v2
+  design_choice: Checkpoints ask for the first index where a tagged union's reinterpretation becomes invalid,
+    with answers as a single integer.
+- id: P005v3
+  hypothesis: P005
+  idea: representation_boundary_values_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v3
+  instruction: |-
+    Author a new task from scratch: representation_boundary_values_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pass byte values through fixed-width signed and unsigned arithmetic, enum tags, pointer indices, tagged unions, casts, and traps; answer each checkpoint's value-with-type or first invalid reinterpretation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/representation_boundary_values_v3
+- id: P006v1
+  hypothesis: P006
+  idea: constructor_slot_initialization_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v1
+  instruction: |-
+    Author a new task from scratch: constructor_slot_initialization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply field defaults, base constructor calls, initializer expressions, and dependent assignments in declared order; report the final visible fields, ordered writes, or the first read of an uninitialized slot.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v1
+  design_choice: Represent each instance as a class definition with fields, an explicit constructor, and
+    a base class; ask for the ordered sequence of writes to all fields, with each write as 'field=value'
+    in a comma-separated list.
+- id: P006v2
+  hypothesis: P006
+  idea: constructor_slot_initialization_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v2
+  instruction: |-
+    Author a new task from scratch: constructor_slot_initialization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply field defaults, base constructor calls, initializer expressions, and dependent assignments in declared order; report the final visible fields, ordered writes, or the first read of an uninitialized slot.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v2
+  design_choice: Represent each instance as a sequence of initialization statements (field declarations
+    with defaults, base calls, assignments) and ask for the first field name that is read before any write,
+    or 'none' if all reads are preceded by writes.
+- id: P006v3
+  hypothesis: P006
+  idea: constructor_slot_initialization_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v3
+  instruction: |-
+    Author a new task from scratch: constructor_slot_initialization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply field defaults, base constructor calls, initializer expressions, and dependent assignments in declared order; report the final visible fields, ordered writes, or the first read of an uninitialized slot.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/constructor_slot_initialization_v3
+- id: P007v1
+  hypothesis: P007
+  idea: query_cardinality_estimation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v1
+  instruction: |-
+    Author a new task from scratch: query_cardinality_estimation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate table sizes through histogram-guided equality and range predicates, conjunctions, disjunctions, and joins with declared independence or containment assumptions; report the estimated cardinality at queried nodes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v1
+  design_choice: Represent histograms as fixed-width bins with uniform density; predicates reference explicit
+    bin edges, and estimates are sums of bin overlaps.
+- id: P007v2
+  hypothesis: P007
+  idea: query_cardinality_estimation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v2
+  instruction: |-
+    Author a new task from scratch: query_cardinality_estimation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate table sizes through histogram-guided equality and range predicates, conjunctions, disjunctions, and joins with declared independence or containment assumptions; report the estimated cardinality at queried nodes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v2
+  design_choice: Use multi-column histograms with correlation factors; estimates adjust by a stored dependency
+    ratio between joined key distributions.
+- id: P007v3
+  hypothesis: P007
+  idea: query_cardinality_estimation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v3
+  instruction: |-
+    Author a new task from scratch: query_cardinality_estimation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate table sizes through histogram-guided equality and range predicates, conjunctions, disjunctions, and joins with declared independence or containment assumptions; report the estimated cardinality at queried nodes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/query_cardinality_estimation_v3
+- id: P008v1
+  hypothesis: P008
+  idea: aries_crash_recovery_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v1
+  instruction: |-
+    Author a new task from scratch: aries_crash_recovery_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover from a crash over ARIES logs with checkpoints: analysis finds dirty pages and losers, redo repeats from the oldest recLSN, undo logs compensation records; answers are final page values or the set of aborted transactions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v1
+  design_choice: Answer as a canonical string of final page IDs with their values, e.g., 'P1=5,P2=0',
+    with pages sorted by ID and losers listed separately.
+- id: P008v2
+  hypothesis: P008
+  idea: aries_crash_recovery_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v2
+  instruction: |-
+    Author a new task from scratch: aries_crash_recovery_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover from a crash over ARIES logs with checkpoints: analysis finds dirty pages and losers, redo repeats from the oldest recLSN, undo logs compensation records; answers are final page values or the set of aborted transactions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v2
+  design_choice: Answer as a set of aborted transaction IDs in a compact bracket list, e.g., '[T2,T5]',
+    with no page values, testing undo-only recovery.
+- id: P008v3
+  hypothesis: P008
+  idea: aries_crash_recovery_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v3
+  instruction: |-
+    Author a new task from scratch: aries_crash_recovery_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover from a crash over ARIES logs with checkpoints: analysis finds dirty pages and losers, redo repeats from the oldest recLSN, undo logs compensation records; answers are final page values or the set of aborted transactions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_language_implementation_r4/aries_crash_recovery_v3
