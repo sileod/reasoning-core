@@ -59,6 +59,7 @@ case_government_assignment
 causal_identification
 causal_intervention
 cayley_table_evaluation
+ccg_category_combination
 cellular_automaton_step
 censored_survival_estimate
 centering_transition_tracking
@@ -295,6 +296,7 @@ multistep_abduction
 multistep_evidence_retrieval
 multistep_nli
 mvcc_visibility
+natural_deduction_line_audit
 near_tie_map
 necklace_canonical_rotation
 nested_template_expansion
