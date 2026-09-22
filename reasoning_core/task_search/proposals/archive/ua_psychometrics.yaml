@@ -1,0 +1,1445 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_psychometrics
+created_at: '2026-09-17T16:32:38.070316+00:00'
+provenance:
+  kind: proposer
+  name: ua_psychometrics
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'procedural tasks inspired by psychometric tests but converted into scalable generative training
+    distributions. The catalog you were shown already covers the classic textbook algorithms -- sorting,
+    gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that names one
+    will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 8
+  complete: false
+catalog:
+  sha256: 496372b2c43a629b24738689ecc5b4e9aa8477cd77eec327f224cdde6541583d
+  entries: 997
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 370
+    task: 465
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls: []
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  dedup: lenient
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: be834e2bf2f9573fe7cb597367819b4becb0b4ee0ee89ff9500aee9d12f4184b
+    response_sha256: 65172226b9064623cee1629863bda530a2e5519ccfd47fef8cfdca790ac92471
+    response_id: chatcmpl-9a3fc10bb3786197
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 4539fdce47a8fc170f03f56bd559e8eaeafe6a69b6bb10efd37cff5fb0e82e8f
+    response_sha256: 09d265856ad78ff73c63f5174cd2dc253d584860051755fabbe798ba83ba0122
+    response_id: chatcmpl-800ef687534664b3
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 0fd83e8437f40efbec5c631e789db70955150be05daf80af3fa948c1962af698
+    response_sha256: 1867288f147464df9567b5aa7a201f39e459e76b9f06a20c1d32d64f7f52aa94
+    response_id: chatcmpl-bbb3e8217d097b4e
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 6a82fe13b73633c0711be027103e0062e36350038e88825f3417349387276094
+    response_sha256: 7603562100c5d221cd9d81a6c1ae78998a0d922f14471d76a8110bb46b81538f
+    response_id: chatcmpl-bb58b199675c5bb2
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 802766a2cef42190a33c70545cd9f09d64f1a9f7c999857269daaa298bfa6b03
+    response_sha256: da05cce39410d59b34abaa45d3daaacb1bfb9cca2fa5252921c6c3cf5a6d6db9
+    response_id: chatcmpl-a16e10dc406833b9
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: cdcf0605958e50e7fd70bfa729575bd46244a4aaa89110793cacd7d91d7ef12b
+    response_sha256: e2aef8b8688dd54c9a508718d0060d9b8c9f820daf2ad0623e5a8f7312dae63e
+    response_id: chatcmpl-88d70f24262e8131
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: c1e306977ed6f3b61bae713fea7e39157705b7fe38546eb2be52f7d60bc7fe3e
+    response_sha256: cf9aa45dfca555e6ef73a15b79d2a6cea6bbd12fbd87cfb9fc4dcba50d3b78d8
+    response_id: chatcmpl-b3580483f9969076
+  - purpose: critic-round-3-sample-1-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 6efea3451edbe504dd89d2bafe37107b9042915facea4f398ecb1c58091713b3
+    response_sha256: a905f77ba3e290765e63714e180fa3d92f40613f53cdd0d45a5b4590c153f3e9
+    response_id: chatcmpl-ad3e01236c063993
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 1b33781b7bd1e7c356038fe4387e96bbe9c91eb0c30db35676bb88e23e3d82ac
+    response_sha256: 06e10985ebca73b94c89ca905fe6a9f051f8676e0bc393ec1b87dfc8393bc385
+    response_id: chatcmpl-b001137db40ce4ad
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8fb3013b9427a03db59947a6dacedccab51f64325f56ef362e3ea8521f944896
+    response_sha256: 10513f3e6db0ba534cf84e9c703de1030575c071c81fcb1bf6ad09648ad95359
+    response_id: chatcmpl-8d6f9ed9cfc7b8cd
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 8
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-1-sample-2
+    presented: 8
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 8
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-2-sample-1
+    presented: 8
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 8
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 8
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 8
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 8
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 8
+    omitted: 0
+    malformed: 0
+proposals:
+- name: exemplar_similarity_generalization
+  summary: Classify novel stimuli by summed similarity to remembered exemplars; vary feature weights,
+    missing dimensions, exemplar frequencies, and similarity kernels; answer the winning category or evidence
+    margin.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_cognitive-psychology:P007
+      relationship: adjacent
+      overlap: Both involve memory/categorization judgments, but C001's exemplar similarity matching and
+        inference differs from criterion shifting.
+    - id: task:generated.k3_synthetic_grammars_r1.aspectual_class_entailment.aspectual_class_entailment:AspectualClassEntailment
+      relationship: adjacent
+      overlap: Both classify stimuli, but C001 uses exemplar similarity while aspectual entailment uses
+        linguistic diagnostics.
+    - id: proposal:ua_cognitive-psychology:P005
+      relationship: adjacent
+      overlap: Both involve feature pooling/classification, but C001's summed similarity is a distinct
+        mechanism from spatial pooling.
+    substantive_difference: C001's mechanism of summed similarity to exemplars with flexible kernels and
+      frequency weighting is a distinct cognitive operation from any listed neighbor.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Novel exemplar-based classification with no known duplicate.
+    votes: 3/3
+    dissent: []
+- name: leaky_evidence_commitment
+  summary: Accumulate signed evidence with stated leakage, starting bias, and absorbing decision bounds;
+    vary interruptions, changing bounds, and opposing evidence bursts; answer the committed choice and
+    stopping time.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_scientific-reasoning:P007
+      relationship: adjacent
+      overlap: Both involve accumulating evidence over time, but one uses leaky integration and decision
+        bounds, the other likelihood ratio tests and boundaries.
+    - id: proposal:ua_novel-composition:P005
+      relationship: different
+      overlap: No shared operation; one is sequential decision-making, the other is partition problems.
+    - id: proposal:ua_inference-modes:P010
+      relationship: different
+      overlap: Different operations; menu choice vs. evidence accumulation.
+    substantive_difference: Leaky accumulation of evidence with explicit leakage and absorbing bounds
+      is a distinct process not covered by existing proposals.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: The operation of leaky evidence accumulation with decision bounds is novel relative to existing
+      tasks.
+    votes: 2/3
+    dissent:
+    - variant
+- name: process_dissociation_routes
+  summary: Separate controlled recollection from automatic influence using inclusion and exclusion outcomes;
+    vary independent serial or parallel automatic routes and shared components; answer route probabilities
+    or feasibility.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_latent-representation:P012
+      relationship: adjacent
+      overlap: Both factor mechanisms, but C006 separates controlled and automatic processes in cognition,
+        not coordinate transitions.
+    - id: proposal:ua_inference-modes:P010
+      relationship: adjacent
+      overlap: Both separate latent sources, but menu attention separates preference from attention, not
+        recollection from automaticity.
+    - id: proposal:ua_state-tracking:P006
+      relationship: adjacent
+      overlap: Both involve contrasts, but multiplicative interactions are for tables, not process dissociation.
+    substantive_difference: C006's separation of controlled and automatic influences via inclusion/exclusion
+      is a distinct cognitive modelling approach.
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: Novel process dissociation task.
+    votes: 2/3
+    dissent:
+    - variant
+- name: partitioned_block_surface_signatures
+  summary: Propagate face markings through paint, mask, cut, and repaint stages on blocks with uneven
+    partitions; return the number of pieces bearing a requested combination of marked and cut faces.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_psychometrics:P002
+      relationship: adjacent
+      overlap: Both count exposed faces on block structures, but C009 involves paint/cut stages on uneven
+        partitions and queries piece counts, not just exposed faces.
+    - id: task:generated.k3_shortcuts_fail_r1.color_refinement_signature.color_refinement_signature:ColorRefinementSignature
+      relationship: different
+      overlap: Color refinement recolors vertices by neighbor colors, unrelated to geometric face markings.
+    - id: proposal:ua_novel-composition:P005
+      relationship: adjacent
+      overlap: Consensus cut minimum splits lines with signed totals, whereas C009 propagates paint masks
+        through physical cuts; different operation.
+    substantive_difference: No neighbor combines paint/mask propagation with cut-induced fragmentation
+      and counting resulting pieces with combined markings; the state update (paint faces, cut, repaint)
+      is a new compositional procedure on partitions.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: 'Novel combined operation: propagate markings through cuts on partitioned blocks and count
+      resultant signatures.'
+    votes: 2/3
+    dissent:
+    - variant
+- name: ratchet_motion_rectification
+  summary: Convert alternating strokes into retained motion through ratchets with specified tooth pitches,
+    pawl directions, and engagement windows; return net advance, the holding pawl, or the first ineffective
+    stroke.
+  id: P005
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_incremental-recomputation:P004
+      relationship: adjacent
+      overlap: Both involve mechanical systems with incremental updates and returning a specific output
+        after propagation, but C001 is about motion conversion via ratchets, while neighbor is about force
+        systems and screw axes.
+    - id: task:generated.wave9.protocol_state_machine_trace.protocol_state_machine_trace:ProtocolStateMachineTrace
+      relationship: adjacent
+      overlap: Both execute step-by-step state transitions with events and conditions, but C001 is a physical
+        ratchet mechanism, not a protocol state machine.
+    - id: proposal:k3_incremental-recomputation:P001
+      relationship: different
+      overlap: C001 involves mechanical ratchets and motion, whereas alpha-beta pruning is a tree search
+        algorithm; no operational overlap.
+    substantive_difference: C001 involves a specific mechanical ratchet with teeth, pawls, and engagement
+      windows, requiring reasoning about alternating strokes and net advance, which is unique from any
+      neighbor.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Novel operation of ratchet motion rectification with precise mechanical parameters, distinct
+      from existing proposals.
+    votes: 2/3
+    dissent:
+    - variant
+- name: capstan_holding_bounds
+  summary: Propagate tension bounds through rough drums with specified wrap factors and possible slip
+    directions; combine driven ends and suspended loads, and return the holding-force interval or first
+    slipping contact.
+  id: P006
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_incremental-recomputation:P005
+      relationship: adjacent
+      overlap: Both propagate forces/motion through mechanical systems, but C012 specifically uses capstan
+        friction and slip bounds, while neighbor uses rigid contacts and gaps.
+    - id: proposal:ua_dynamic-structures:P004
+      relationship: adjacent
+      overlap: Both involve load redistribution and limits, but C012 focuses on tension propagation with
+        wrap factors.
+    - id: proposal:ua_latent-representation:P002
+      relationship: different
+      overlap: C012 is about mechanical forces, differential forms are about mathematical geometry; no
+        operational overlap.
+    substantive_difference: C012 uniquely models capstan friction with wrap factors and slip directions,
+      returning holding-force intervals.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Novel operation of capstan tension bound propagation with slip analysis.
+    votes: 2/3
+    dissent:
+    - variant
+- name: perceptual_rivalry_adaptation
+  summary: Track competing percepts under stated mutual inhibition, dominance adaptation, and recovery
+    rules; vary stimulus pulses, interruptions, and asymmetric strengths; answer the dominant percept
+    or switch count.
+  id: P007
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:k3_cognitive-psychology:P006
+      relationship: adjacent
+      overlap: Both model cognitive processes with competing stimuli and responses, but C010 is about
+        perceptual rivalry with adaptation, while neighbor is about response selection under conflict.
+    - id: proposal:k3_cognitive-psychology:P008
+      relationship: adjacent
+      overlap: Both involve updating internal states based on experience (adaptation vs. learning), but
+        C010 uses mutual inhibition and stimulus pulses, not error-correction.
+    - id: proposal:k3_cognitive-psychology:P007
+      relationship: adjacent
+      overlap: Both track a dynamic state (percept vs. criterion) over trials, but the mechanisms and
+        outputs differ.
+    substantive_difference: C010 uniquely models binocular rivalry with mutual inhibition and adaptation
+      dynamics, which is not covered by existing cognitive tasks.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Novel operation of perceptual rivalry tracking with adaptation rules.
+    votes: 2/3
+    dissent:
+    - novel
+- name: polarization_projection_cascade
+  summary: Track light through rotated polarizers, split paths, and incoherent recombination using supplied
+    transmission rules; distinguish blocked paths from partial attenuation and return output intensity
+    or polarization.
+  id: P008
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: task:generated.k3_counterfactual_r1.light_occlusion_delta.light_occlusion_delta_task:LightOcclusionDelta
+      relationship: adjacent
+      overlap: Both involve light propagation and blocking, but C011 is about polarization through polarizers,
+        not occlusion by cells.
+    - id: proposal:ua_cognitive-psychology:P005
+      relationship: adjacent
+      overlap: Both involve perception of features, but C011 is about physical light intensity/polarization,
+        while neighbor is about pooling features.
+    - id: proposal:ua_dynamic-structures:P006
+      relationship: adjacent
+      overlap: Both track light through systems, but moving mirrors vs. polarizers have different physics.
+    substantive_difference: C011 uniquely models polarization projection through cascaded polarizers and
+      splitters, with outputs of intensity and polarization state.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 5
+      clarity: 4
+    reason: Novel operation of polarization cascade with transmission and recombination.
+    votes: 2/2
+    dissent: []
+rejected:
+- name: transactional_visibility_equivalence
+  summary: Compare visibility contracts phrased through snapshots, read dependencies, publication points
+    and session guarantees; decide whether they admit the same finite transaction histories.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:external:P033
+    relationship: same_operation
+    overlap: Both determine visibility of versions to transactions; C007 compares visibility contracts
+      instead of computing version directly, but core is visibility logic.
+  - id: task:generated.wave8.mvcc_visibility.mvcc_visibility:MVCCVisibility
+    relationship: same_operation
+    overlap: Both apply snapshot visibility rules; C007 adds equivalence of contracts, but the underlying
+      visibility predicate is the same.
+  - id: task:generated.wave12.transaction_serializability.transaction_serializability:TransactionSerializability
+    relationship: adjacent
+    overlap: Both reason about transaction histories, but serializability builds precedence graphs, not
+      visibility.
+  reason: 0/3 samples judged it novel; Variant of MVCC visibility with equivalence testing.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: respectively_dependency_expansion
+  summary: Expand respectively constructions by pairing coordinated arguments and modifiers at their licensed
+    syntactic scopes; handle nested lists and shared constituents, returning the resulting atomic predications.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.nested_template_expansion.nested_template_expansion:NestedTemplateExpansion
+    relationship: same_operation
+    overlap: Both expand structured expressions by pairing arguments; C005's respectively is a linguistic
+      instance of template expansion with coordination.
+  - id: proposal:ua_paraphrase-equivalence:P002
+    relationship: adjacent
+    overlap: Both operate on linguistic structure, but focus projection computes alternatives, not expansion
+      of coordinations.
+  - id: proposal:ua_compositional-generalization:P012
+    relationship: adjacent
+    overlap: Both expand nested expressions, but iterated integrals shuffle, not respectively matching.
+  reason: 1/3 samples judged it novel; Variant of nested expansion for respectively.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: factorial_survivor_interactions
+  summary: Compute alternating survivor contrasts across selectively altered processing channels; vary
+    channel counts, discrete latency distributions, and time windows; answer contrast values or their
+    sign pattern.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P006
+    relationship: same_operation
+    overlap: Both compute interaction contrasts across factors; C012 uses survivor functions, but the
+      factorial contrast computation is the same operation.
+  - id: proposal:ua_uncertainty:P011
+    relationship: same_operation
+    overlap: Both decompose responses into interaction terms; C012 applies to survivor analysis, but core
+      decomposition is identical.
+  - id: proposal:ua_latent-representation:P012
+    relationship: adjacent
+    overlap: Both involve factorization, but axis-separable transitions factor transition tables, not
+      contrasts.
+  reason: 0/3 samples judged it novel; Variant of factorial interaction decomposition.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: material_frame_equivalence
+  summary: Compare sentences describing quantities attached to moving objects versus quantities sampled
+    at fixed locations; compose stated deformations and decide whether both descriptions specify the same
+    physical field.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.k3_controlled_nli_r1.spatial_frame_relation_verdicts.spatial_frame_relation_verdicts:SpatialFrameRelationVerdicts
+    relationship: adjacent
+    overlap: Both involve frames of reference, but C011 is about material versus spatial fields, not left/right
+      relations.
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: adjacent
+    overlap: Both check semantic equivalence, but C011 is about physical field descriptions, not focus
+      particles.
+  - id: proposal:k3_cognitive-psychology:P004
+    relationship: adjacent
+    overlap: Both involve constructions, but degree constructions are comparative, not field descriptions.
+  reason: 0/3 samples judged it novel; Novel task on material and spatial field equivalence.
+  scores:
+    novelty: 5
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: adaptive_staircase_tracking
+  summary: Update stimulus intensity from response histories under consecutive-success and failure rules;
+    vary interleaved tracks, reversal-dependent steps, and boundaries; answer the next intensity or reversal
+    estimate.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_cognitive-psychology:P007
+    relationship: same_operation
+    overlap: Both update thresholds/criteria based on responses; C009 uses staircase rules, but both are
+      adaptive decision threshold tracking.
+  - id: proposal:k3_cognitive-psychology:P008
+    relationship: adjacent
+    overlap: Both update weights/parameters from trial outcomes, but compound cue learning uses error
+      correction on cues, not staircase.
+  - id: proposal:k3_scientific-reasoning:P007
+    relationship: adjacent
+    overlap: Both involve sequential decision boundaries, but C009 adjusts stimulus intensity, not accumulate
+      evidence.
+  reason: 1/3 samples judged it novel; Variant of adaptive threshold tracking.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: censoring_observation_equivalence
+  summary: Compare reports using exact observations, censoring bounds, entry restrictions and interval
+    inspections; recover compatible latent histories and decide whether differently structured reports
+    convey identical evidence.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P008
+    relationship: same_operation
+    overlap: Both recover latent values from censored/bounded observations; C012 generalizes to interval
+      censoring and entry restrictions, but the core is identical.
+  - id: proposal:ua_latent-representation:P008
+    relationship: adjacent
+    overlap: Both compare information content of observation schemes, but one is censoring and the other
+      is garbling.
+  - id: proposal:ua_novel-composition:P002
+    relationship: adjacent
+    overlap: Both involve likelihood ratio calculations with censoring, but one is about observation equivalence
+      and the other is about sampling.
+  reason: 1/3 samples judged it novel; It reuses the latent recovery operation from rounded displays with
+    censoring variations.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: signal_detection_criterion_transfer
+  summary: Apply likelihood-ratio decisions to discrete sensory evidence under changing priors, rewards,
+    and response costs; vary unequal evidence distributions and ties; answer accepted evidence states
+    or error rates.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_cognitive-psychology:P007
+    relationship: same_operation
+    overlap: Both apply signal detection theory with likelihood-ratio decisions and criterion shifts to
+      classify stimuli; same core operation with parameter changes.
+  - id: proposal:ua_uncertainty:P008
+    relationship: adjacent
+    overlap: Both involve decision-making under uncertainty, but C002 is signal detection while intervention
+      value is experimental choice.
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: adjacent
+    overlap: Both involve probability calculations, but C002 uses likelihood ratios for detection, not
+      tree marginals.
+  reason: 0/3 samples judged it novel; Variant of signal detection with parameter changes.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: exhaustification_equivalence
+  summary: Disjunctions, numeral scales and contrastive alternatives with local or global exhaustification;
+    derive innocently excludable alternatives through nested operators and compare strengthened meanings.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_scope-and-binding:P005
+    relationship: same_operation
+    overlap: Both compute exhaustified meanings with innocent exclusion; C003 adds local-global nesting
+      but same operation.
+  - id: task:generated.k3_scope_and_binding_r1.scalar_alternative_exclusion.scalar_alternative_exclusion:ScalarAlternativeExclusion
+    relationship: same_operation
+    overlap: Both derive scalar implicatures by excluding alternatives; C003 explores equivalence, but
+      core is same.
+  - id: proposal:ua_paraphrase-equivalence:P002
+    relationship: adjacent
+    overlap: Both work with alternatives, but focus projection is about generating alternatives, not exhaustification.
+  reason: 0/3 samples judged it novel; Variant of exhaustification and implicature.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: plural_cover_equivalence
+  summary: Collective, distributive and groupwise predications with explicit covers of plural entities;
+    expand nested distribution and shared participants, then compare the resulting predicate obligations.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_scope_and_binding_r1.plural_predication_readings.plural_predication_readings:PluralPredicationReadings
+    relationship: same_operation
+    overlap: Both classify plural predications as distributive/collective/groupwise; C008 adds covers
+      and equivalence, but core is plural reading classification.
+  - id: proposal:ua_cognitive-psychology:P001
+    relationship: adjacent
+    overlap: Both involve equivalence, but loss coverage is about insurance, not plural semantics.
+  - id: proposal:k3_cognitive-psychology:P004
+    relationship: adjacent
+    overlap: Both involve semantics of constructions, but degree constructions are comparative, not plural.
+  reason: 0/3 samples judged it novel; Variant of plural predication classification.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: conditional_card_inspection
+  summary: Determine which partially revealed two-sided records require inspection to test universal rules
+    with conjunctions, exceptions, or biconditionals; return those permitting hidden violations.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_inference-modes:P011
+    relationship: same_operation
+    overlap: 'Both query whether hidden information can violate a universal rule: C011 inspects records;
+      geometric_orientation completes partial data to see if all triples satisfy a rule. Both are ''discover
+      a counterexample'' searches.'
+  - id: proposal:k3_cognitive-psychology:P003
+    relationship: adjacent
+    overlap: Evidential felicity determines which evidence sources license a form; not the same as checking
+      rule violations.
+  - id: proposal:ua_shortcuts-fail:P002
+    relationship: adjacent
+    overlap: Secret-sharing checks leakage but not universal rule compliance.
+  reason: 1/3 samples judged it novel; Variant of existing rule-verification tasks via missing data.
+  scores:
+    novelty: 1
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: panel_relation_induction
+  summary: Infer and apply shared row or column relations over layered panels using overlay, cancellation,
+    intersection, and count composition; return the missing panel's features.
+  verdict: variant
+  nearest_neighbors:
+  - id: gallery:pattern_induction
+    relationship: same_operation
+    overlap: Both infer a shared rule from examples and apply it to predict a missing element; C003 uses
+      panel compositions but the inference and extrapolation are identical.
+  - id: gallery:matrix_induction
+    relationship: same_operation
+    overlap: Both predict a missing entry in a matrix-like grid by discovering a relation among rows/columns;
+      C003 adds layered panels but core is analogous matrix induction.
+  - id: gallery:sequential_induction
+    relationship: adjacent
+    overlap: Sequential induction is on one-dimensional sequences, while C003 is 2D panels; both infer
+      recurrent rules.
+  reason: 1/3 samples judged it novel; Duplicate of matrix/pattern induction under a panel vocabulary.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: projected_aperture_clearance
+  summary: Compute directional clearance for rigid silhouettes passing through slits, varying compound
+    shapes, orientations, and successive apertures; return the narrowest clearance or first obstruction.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_counterfactual:P008
+    relationship: same_operation
+    overlap: Both compute directional visibility/occlusion through apertures on a grid; C004 generalizes
+      to orientations and compound shapes, but the shadow-casting/clearance computation is the same.
+  - id: task:generated.k3_counterfactual_r1.light_occlusion_delta.light_occlusion_delta_task:LightOcclusionDelta
+    relationship: same_operation
+    overlap: Both determine which cells are visible from a source given opaque blockers; C004 adds arbitrary
+      silhouettes and slits but core ray-counting identical.
+  - id: proposal:ua_counterfactual:P005
+    relationship: adjacent
+    overlap: 'Different geometric operation: flip sequences on triangulated surfaces vs. aperture clearance;
+      share geometric constraint search but not procedure.'
+  reason: 0/3 samples judged it novel; Variant of grid light occlusion with geometric dressing.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: event_granularity_equivalence
+  summary: Compare sentences counting atomic acts, fused episodes and repeated participations under stated
+    event decompositions; resolve what constitutes one occurrence and decide whether the counting claims
+    coincide.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_cognitive-psychology:P001
+    relationship: variant
+    overlap: both compare clause-level descriptions for equivalence of coverage/counting under regrouping
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: adjacent
+    overlap: both assess truth-conditional equivalence but with different phenomena (focus vs. event counting)
+  - id: proposal:ua_cognitive-psychology:P002
+    relationship: adjacent
+    overlap: both decide semantic equivalence of questions/expressions but different objects
+  reason: 1/3 samples judged it novel; Same equivalence-checking operation over a different semantic domain.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: observer_nested_belief_updates
+  summary: Update nested beliefs under private moves, identity disguises, witnessed observations, and
+    selective corrections; return an observer's attributed object identity or expected search location.
+  verdict: novel
+  nearest_neighbors:
+  - id: gallery:belief_tracking
+    relationship: variant
+    overlap: Both update agents' beliefs about a world under new observations and communications; C002
+      adds disguised identities and nested attributions, but the update rule is standard epistemic conditioning.
+  - id: proposal:ua_dynamic-structures:P002
+    relationship: adjacent
+    overlap: Both use event models for epistemic update, but the neighbor is abstract product update while
+      C002 is a specific linguistic/story-driven observer model with identity masks.
+  - id: proposal:ua_compositional-generalization:P002
+    relationship: different
+    overlap: 'Different domain and operation: lens composition vs. belief update; no shared procedure.'
+  reason: 0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Novel combination
+    of belief updates with identity disguise and nested attribution, not found in the catalog's generic
+    belief tracking or event-product update.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: landmark_chirality
+  summary: Determine whether ordered landmark quadruples are right-handed, left-handed, or coplanar after
+    landmark exchanges, reflections, and nested rigid motions; return the resulting orientation.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P003
+    relationship: same_operation
+    overlap: Both track handedness/orientation through transformations (exchanges, reflections, rotations)
+      and report the resulting chiral parity.
+  - id: proposal:ua_inference-modes:P011
+    relationship: adjacent
+    overlap: Geometric orientation entailment completes partial data, not transforms known chirality.
+  - id: proposal:k3_shortcuts-fail:P011
+    relationship: different
+    overlap: Face tracing uses rotation systems, not chirdality.
+  reason: 0/3 samples judged it novel; Duplicate of stereochemical parity transport with landmark vocabulary.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: gapping_parallelism_recovery
+  summary: Recover omitted predicates in coordinated clauses using supplied remnant correspondences; vary
+    contrastive arguments, shared adjuncts and nested coordination; answers give the reconstructed clause.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_parsing-and-agreement:P004
+    relationship: same_operation
+    overlap: Recover omitted morphological material in coordinate structures given shared-scope affixes
+      and explicit conjunct boundaries; both reconstruct full forms for each conjunct.
+  - id: proposal:ua_paraphrase-equivalence:P002
+    relationship: adjacent
+    overlap: Both operate on sentence-level alternatives but one computes focus alternatives while the
+      other recovers gapped predicates; no shared procedure.
+  - id: task:generated.k3_parsing_and_agreement_r1.ellipsis_reconstruction.ellipsis_reconstruction:EllipsisReconstruction
+    relationship: variant
+    overlap: Both reconstruct elided material from an antecedent structure; C001 restricts to gapping
+      with remnant correspondences, while neighbor covers multiple ellipsis types including sluicing and
+      VPE.
+  reason: 0/3 samples judged it novel; Same reconstruction operation, only different surface realization
+    (gapping remnants vs. shared affixes).
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: mechanical_backlash_tracking
+  summary: Propagate motion through couplings where reversals consume slack before moving downstream parts,
+    varying asymmetric gaps and cascades; return a queried part's position or remaining slack.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_incremental-recomputation:P005
+    relationship: same_operation
+    overlap: Both propagate quasistatic motion through rigid bodies with gaps, closing gaps before transmission
+      and reporting changed positions or stops; C007 adds slack on reversals but the core gap-close-and-push
+      is identical.
+  - id: proposal:ua_dynamic-structures:P006
+    relationship: different
+    overlap: Moving mirrors propagate light/events, not mechanical contact; unrelated.
+  - id: proposal:k3_global-from-local:P001
+    relationship: adjacent
+    overlap: Both propagate waits through a queue/bodies, sharing a recursive carry-over, but Lindley
+      is queueing not mechanical gaps.
+  reason: 0/3 samples judged it novel; Variant of contact-chain displacement with asymmetric slack.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: folded_sheet_punch_preimages
+  summary: Unfold punctures made through selected layers of repeatedly folded sheets, varying crease directions,
+    partial folds, and punch shapes; return the resulting hole locations or multiplicities.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: gallery:spatial_folding
+    relationship: same_operation
+    overlap: Both track hole positions through folds and unfolds on a grid sheet, returning final hole
+      locations and multiplicities.
+  - id: proposal:ua_representation-transfer:P003
+    relationship: different
+    overlap: Branched cover signatures transfer local data on surfaces, not folding/punching; unrelated.
+  - id: proposal:ua_planning-backtracking:P003
+    relationship: adjacent
+    overlap: Common polyhedral net relates to unfolding but for nets, not hole tracking; different goal.
+  reason: 0/3 samples judged it novel; Duplicate of existing spatial_folding gallery task.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: layered_occlusion_ownership
+  summary: Resolve line-of-sight ownership through layered silhouettes with holes, partial overlaps, and
+    displaced viewpoints; return the visible surface at queried locations or its exposed area.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_counterfactual:P008
+    relationship: same_operation
+    overlap: Both determine line-of-sight through occluders (grid cells) with holes/overlaps; C010 generalizes
+      to silhouettes with holes and viewpoints, but the ray-casting core is the same.
+  - id: task:generated.k3_counterfactual_r1.light_occlusion_delta.light_occlusion_delta_task:LightOcclusionDelta
+    relationship: same_operation
+    overlap: Both compute visible regions from a viewpoint given opaque objects; C010 adds layered shapes
+      but same ownership-by-cover test.
+  - id: proposal:ua_cognitive-psychology:P005
+    relationship: different
+    overlap: Visual crowding pools features perceptually, not geometric line-of-sight.
+  reason: 0/3 samples judged it novel; Variant of grid light occlusion applied to silhouettes with holes.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: shared_ownership_equivalence
+  summary: Compare sentences allocating whole, fractional and overlapping ownership claims under stated
+    composition rules; decide whether they permit exactly the same resource holdings and compatible extensions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_cognitive-psychology:P001
+    relationship: variant
+    overlap: Both compare two descriptions and decide equivalence of their resulting outcomes; C007 about
+      ownership shares, neighbor about insurance coverage.
+  - id: proposal:k3_cognitive-psychology:P004
+    relationship: variant
+    overlap: Both are equivalence-checking tasks over verbal descriptions, mapping to mathematical constraints;
+      C007 maps to holdings, neighbor to order relations.
+  - id: proposal:ua_state-tracking:P002
+    relationship: variant
+    overlap: Both decide equivalence of strategies/policies, while C007 decides equivalence of ownership
+      allocations.
+  reason: 0/3 samples judged it novel; Variant of known equivalence tasks applied to ownership claims.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: serial_lens_conjugation
+  summary: Propagate object and image locations through spaced converging and diverging lenses, allowing
+    intermediate virtual objects; return the final image position, orientation, or signed magnification.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: same_operation
+    overlap: Both compose a sequence of linear transformations (lens matrices vs translations/rotations)
+      applied to a point/object, tracking intermediate states to output final position/coordinates.
+  - id: proposal:ua_dynamic-structures:P006
+    relationship: adjacent
+    overlap: Both involve sequential propagation of optical signals, but moving mirror echoes includes
+      time-dependent motion and Doppler, unlike static lens composition.
+  - id: proposal:ua_incremental-recomputation:P004
+    relationship: adjacent
+    overlap: Both reexpress geometric or physical states under transformations, but wrench line reconstruction
+      deals with force systems and screw axes, not lens imaging.
+  reason: 1/3 samples judged it novel; It is essentially a coordinate transformation composition task
+    presented as optics, with lens matrices replacing affine maps.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: pulley_segment_length_accounting
+  summary: Infer coupled motion in fixed-length ropes threaded around fixed and moving pulleys; vary anchored
+    ends, shared carriages, and imposed endpoint motions; return a queried displacement or required payout.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:k3_global-from-local:P007
+    relationship: variant
+    overlap: Both involve mechanical systems with coupled motion and ratio propagation (gear trains vs.
+      pulleys), but the physical principles and outputs differ (speed ratio vs. displacement).
+  - id: proposal:ua_incremental-recomputation:P005
+    relationship: adjacent
+    overlap: Both involve propagation of motion/displacement through mechanical systems, but C006 is specifically
+      about fixed-length ropes and pulleys, while neighbor is about rigid bodies and gaps.
+  - id: proposal:ua_representation-transfer:P001
+    relationship: adjacent
+    overlap: Both are mechanical systems with multiple components, but loom sheds and pulleys differ in
+      mechanism and output.
+  reason: 0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Novel operation
+    of pulley segment length accounting with unique coupling constraints.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: solid_cross_section_reconstruction
+  summary: Intersect stepped solids, internal cavities, and joined prisms with moving or oblique planes;
+    reconstruct material intervals across the cut and return a section profile, area, or component count.
+  verdict: novel
+  nearest_neighbors:
+  - id: proposal:ua_novel-composition:P004
+    relationship: variant
+    overlap: Both compute cross-sectional properties (area, moments) of composite solids, but C009 focuses
+      on cutting with planes and reconstructing profiles, not just moments.
+  - id: proposal:ua_representation-transfer:P007
+    relationship: adjacent
+    overlap: Both involve cross-sections of stepped surfaces, but C009 includes cavities and moving planes,
+      while neighbor is about tilings and height arrays.
+  - id: proposal:ua_counterfactual:P001
+    relationship: different
+    overlap: C009 is about geometric cutting, while bounded geometric construction is about straightedge-compass
+      constructions; no operational overlap.
+  reason: 0/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Novel operation
+    of cross-section reconstruction with diverse solid geometries and moving planes.
+  scores:
+    novelty: 4
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: mobile_torque_rebalancing
+  summary: Restore balance in nested mobiles by moving supports, shifting loads, or replacing weights;
+    account for off-center arms and weighted beams, and return the required adjustment or resulting tilt.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_dynamic-structures:P004
+    relationship: same_operation
+    overlap: Both tasks take a load distribution, adjust components (weights or loads) to meet equilibrium
+      constraints, and output the necessary change to restore stability or the resulting state.
+  - id: task:generated.k3_representation_specific_r1.tower_block_removal.tower_block_removal:TowerBlockRemoval
+    relationship: variant
+    overlap: Both test equilibrium of nested structures under perturbation, using center-of-mass and support
+      rules, and return which elements shift or topple.
+  - id: proposal:ua_uncertainty:P001
+    relationship: adjacent
+    overlap: Both involve mechanical equilibrium with constraints, but constraint release recomputes minimum-energy
+      states, while mobiles use recursive torque balance.
+  reason: 1/3 samples judged it novel; It applies the same equilibrium-maintenance operation as fracture
+    load redistribution and tower block removal to nested mobiles.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 1/3
+- name: rolling_contact_phase
+  summary: Track marked circles and regular polygons rolling without slipping along straight runs and
+    around corners; distinguish traveled distance from body rotation and return the contact mark or final
+    orientation.
+  verdict: novel
+  nearest_neighbors:
+  - id: task:generated.wave9.three_dimensional_orientation.three_dimensional_orientation:ThreeDimensionalOrientation
+    relationship: variant
+    overlap: Both track orientation of an object (circle/polygon vs cube) after a sequence of rotations,
+      but rolling contact couples translation and rotation via rolling, which 3D orientation does not.
+  - id: gallery:spatial_folding
+    relationship: adjacent
+    overlap: Both manipulate a spatially extended object and track a feature, but folding refolds a grid,
+      while rolling moves along a path with rotation.
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: adjacent
+    overlap: Both involve tracking orientation or topology of a surface, but ribbon surgery changes genus,
+      not a rolling contact.
+  reason: 1/3 samples judged it novel; novel verdict contradicted its nearest-neighbor labels; Rolling
+    contact kinematics with corner negotiation is a distinct geometric simulation not covered by the orientation
+    tracking or folding neighbors.
+  scores:
+    novelty: 5
+    sft_value: 5
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: oriented_boundary_equivalence
+  summary: Compare verbal descriptions of oriented patches, reversed faces, internal seams and repeated
+    layers; cancel oppositely oriented contributions and decide whether the resulting signed boundaries
+    coincide.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_cognitive-psychology:P002
+    relationship: variant
+    overlap: Both decide equivalence between two described structures by comparing canonical properties
+      after cancellation/partitioning; C003 uses oriented boundary cancellation, while neighbor uses answer
+      partitions.
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: variant
+    overlap: Both involve comparing surfaces with orientation and seams, but C003 is about signed-boundary
+      equivalence, while neighbor computes invariants of the resulting surface.
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: variant
+    overlap: Both involve comparing surfaces with orientation and seams, but C003 is about signed-boundary
+      equivalence, while neighbor computes invariants of the resulting surface.
+  reason: 0/3 samples judged it novel; Variant of known equivalence-deciding operations applied to oriented
+    boundaries.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: binocular_disparity_reconstruction
+  summary: Recover depth from paired retinal coordinates and fixation geometry; vary eye separation, crossed
+    disparity, and successive refixations, and return object depth or its predicted displacement in the
+    other view.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_latent-structure-reconstruction:P007
+    relationship: same_operation
+    overlap: Both tasks reconstruct a hidden spatial configuration (points on a line vs depth in 3D) from
+      a set of observed measurements (distances/disparities) using a principled geometric inversion.
+  - id: proposal:ua_cognitive-psychology:P005
+    relationship: variant
+    overlap: Both recover a perceived latent state (depth vs feature) from spatial pooling of sensory
+      inputs, involving biological vision processes.
+  - id: proposal:ua_latent-representation:P005
+    relationship: adjacent
+    overlap: Both involve recovering a latent from observations, but renormalization subtraction is about
+      subtracting divergent terms in particle physics, not geometric reconstruction.
+  reason: 1/3 samples judged it novel; It is a geometric reconstruction from indirect observations, a
+    well-known operation also exemplified by turnpike reconstruction.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 1/3
+- name: attentional_blink_gating
+  summary: Track target admission through an attention gate with stated consolidation and recovery rules;
+    vary distractor gaps, adjacent targets, and prolonged stimuli; answer admitted targets or the gate
+    state.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_inference-modes:P010
+    relationship: adjacent
+    overlap: Both involve attention-like filtering, but one in cognitive gating and the other in economic
+      choice; different formal operations.
+  - id: proposal:ua_surface-invariance:P001
+    relationship: adjacent
+    overlap: Both gate exposure over time, but one for attention and the other for motion through spatial
+      windows.
+  - id: proposal:ua_formal-logic:P005
+    relationship: adjacent
+    overlap: Both track stateful accumulation with thresholds, but one in attention and the other in evidence
+      accumulation.
+  reason: 1/3 samples judged it novel; The gate mechanism appears in other tasks, but the cognitive blink
+    dynamics give a fresh flavor.
+  scores:
+    novelty: 3
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: elastic_load_redistribution
+  summary: Redistribute loads across springs and tension-only cords as supports move, elements engage,
+    or cords go slack; vary preload and stiffness, and return equilibrium displacement or a queried element
+    force.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_dynamic-structures:P004
+    relationship: variant
+    overlap: Both redistribute loads over mechanical elements (springs/cords vs. fracture bundles) and
+      compute equilibrium or resulting loads through iterative updates.
+  - id: proposal:ua_uncertainty:P001
+    relationship: variant
+    overlap: Both solve for minimum-energy equilibrium of mechanical systems with constraints (supports/cords
+      vs. constraints), returning displacements or forces.
+  - id: proposal:ua_global-over-greedy:P005
+    relationship: adjacent
+    overlap: Common theme of mechanical equilibrium, but C001 uses linear springs and slack while P005
+      uses rigid contacts with friction cones.
+  reason: 0/2 samples judged it novel; Mechanical load redistribution is a known operation; variation
+    in element type (cords) and slack behavior.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/2
+- name: polyhedral_plane_sections
+  summary: Intersect specified planes with prisms, pyramids, and beveled solids, including oblique cuts
+    and cuts through vertices or edges; return the section's vertex count or boundary labels.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_representation-transfer:P002
+    relationship: adjacent
+    overlap: Visuospatial reasoning in projective and 3D geometry.
+  - id: proposal:k3_global-over-greedy:P005
+    relationship: adjacent
+    overlap: Potentially computing intersections or sections of geometric objects.
+  - id: proposal:ua_relevance-separation:P001
+    relationship: adjacent
+    overlap: Deals with 3D solids and their properties under physical constraints.
+  reason: 0/3 samples judged it novel; Similar to existing projective geometry and intersection tasks
+    but different output domain, making it a variant.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: quadrature_exactness_audit
+  summary: Audit weighted sampling formulas against polynomial moments on intervals, weighted domains,
+    and symmetric regions; return the first failed moment, true exactness degree, or corrected weight.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_verification-repair:P002
+    relationship: adjacent
+    overlap: Both verify polynomial-related properties and locate failures.
+  - id: proposal:ua_novel-composition:P004
+    relationship: adjacent
+    overlap: Both involve polynomial moments or quadrature-like computations.
+  - id: proposal:ua_invariants:P003
+    relationship: different
+    overlap: 'Different: one is quadratic form signature, this is quadrature exactness.'
+  reason: 0/3 samples judged it novel; Similar to sumcheck and moment tasks but with distinct quadrature-exactness
+    focus, a variant.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 3
+  votes: 0/3
+- name: interventional_cause_equivalence
+  summary: Prevention, enabling, omission and nested counterfactual clauses under stated causal mechanisms;
+    evaluate their outcome dependencies across single and joint interventions and decide semantic equivalence.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_algorithms-and-data-structures:P003
+    relationship: adjacent
+    overlap: Both decide equivalence of descriptions under different observation mechanisms.
+  - id: proposal:ua_scientific-reasoning:P012
+    relationship: adjacent
+    overlap: Both compare support expressions for equivalence.
+  - id: proposal:ua_uncertainty:P009
+    relationship: adjacent
+    overlap: Both handle counterfactual interventions and outcome changes.
+  reason: 0/3 samples judged it novel; Similar to other equivalence/report tasks but with added causal
+    mechanism layer, earning variant.
+  scores:
+    novelty: 3
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: tensor_state_separability
+  summary: Determine whether exact two-qubit density matrices describe separable or entangled states using
+    partial-transpose positivity; vary mixtures, coherent blocks, and boundary cases; answer status or
+    violating eigenvalue.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P004
+    relationship: adjacent
+    overlap: both involve quantum state descriptions; C001 decides separability (a property of the state),
+      while the neighbor extracts local information from a state, without checking entanglement separability.
+  - id: proposal:ua_latent-representation:P012
+    relationship: adjacent
+    overlap: both ask whether a composite object factorizes into independent parts (tensor product vs.
+      Cartesian product), but C001 uses the Peres-Horodecki criterion on density matrices, while the neighbor
+      checks coordinate-wise transition independence.
+  - id: proposal:ua_relational-structures:P007
+    relationship: adjacent
+    overlap: both involve a structural decomposition criterion (separability vs. two-sum independence),
+      but the neighbor is about matroid independence and the candidate about quantum entanglement; shared
+      abstraction only.
+  reason: 0/3 samples judged it novel; The PPT criterion for two-qubit separability is a specific, well-defined
+    operation not present in any listed neighbor, so it is a variant of the general 'factorization' theme
+    but not a duplicate of any concrete neighbor.
+  scores:
+    novelty: 3
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: action_effect_induction
+  summary: Infer action preconditions and conditional effects from before-and-after demonstrations, including
+    toggles, consumption and enabling; determine the state after a new action sequence.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_uncertainty_r1.counterfeit_weighing_deduction.counterfeit_weighing_deduction:CounterfeitWeighingDeduction
+    relationship: same_operation
+    overlap: both infer hidden state (coin weight vs. action effects) from observations (balance outcomes
+      vs. before-after states) and then apply the inferred model to answer a new probe; the operations
+      are abduction followed by forward simulation.
+  - id: proposal:ua_uncertainty:P002
+    relationship: adjacent
+    overlap: both involve abducing a hidden mechanism from observations (diffraction motif vs. action
+      preconditions), but the underlying inference structures differ (periodic motifs vs. state-transition
+      rules).
+  - id: gallery:pattern_induction
+    relationship: variant
+    overlap: both infer a rule from examples and apply it to a new case, though the gallery is for symbolic
+      sequence patterns and C003 is for state-changing actions.
+  reason: 0/3 samples judged it novel; Action-effect induction can be seen as a variant of the common
+    abduction-then-apply pattern, but the particular state-transition semantics makes it distinct from
+    the listed exact matches.
+  scores:
+    novelty: 3
+    sft_value: 4
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: buoyant_displacement_transfer
+  summary: Track displaced liquid as objects move between floating vessels, immersion, suspension, and
+    removal; vary density, hollow interiors, and carried loads; return the water-level change or displaced
+    volume.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_relevance-separation:P001
+    relationship: variant
+    overlap: both track buoyancy and immersed/floating objects in fluids, computing waterlines, submerged
+      fractions, or sinking; C005 adds moving between vessels and carried loads, but the core physical
+      modeling is the same.
+  - id: proposal:ua_formal-semantics:P003
+    relationship: adjacent
+    overlap: both track liquid volume in vessels, but the neighbor deals with tilting and spillage (static
+      geometry) while C005 involves displacement transfer between vessels and objects.
+  - id: proposal:k3_formal-logic:P002
+    relationship: adjacent
+    overlap: both involve moving objects between containers (floating vessels vs. ownership scopes), but
+      the semantics differ (physical vs. ownership).
+  reason: 0/3 samples judged it novel; Buoyant displacement tracking is already covered by the buoyancy
+    layer alignment neighbor; the vessel-transfer setup is a new scenario but not a new cognitive operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: spatial_perspective_equivalence
+  summary: Locative sentences mixing viewer-relative, object-intrinsic and absolute directions; compose
+    explicitly oriented reference frames through nested descriptions and compare the spatial relations
+    asserted.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_controlled_nli_r1.spatial_frame_relation_verdicts.spatial_frame_relation_verdicts:SpatialFrameRelationVerdicts
+    relationship: same_operation
+    overlap: both evaluate locative sentences with viewer-relative, intrinsic, and absolute frames, compose
+      oriented frames, and decide the truth of spatial relations; the answer format differs (sentence
+      verdict vs. relation equivalence).
+  - id: proposal:ua_controlled-nli:P001
+    relationship: variant
+    overlap: both compare sentences about geometric/topological acceptances and decide whether two descriptions
+      pick out the same set of situations; C004 is specifically about spatial frames while this neighbor
+      is about tolerance zones.
+  - id: proposal:k3_paraphrase-equivalence:P003
+    relationship: adjacent
+    overlap: both compare truth-conditional equivalence, but C004 targets spatial frame composition and
+      this neighbor targets focus particles; the underlying mechanisms differ.
+  reason: 0/3 samples judged it novel; Spatial frame composition and verdict are already covered by the
+    cited task; the only new aspect is comparing two such sentences, which is a variant of the existing
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: cue_competition_credit_assignment
+  summary: Redistribute prediction error among jointly presented cues under stated learning rates; vary
+    compound training, blocking, extinction, and outcome reversals; answer learned cue strengths or probe
+    predictions.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_cognitive_psychology_r1.compound_cue_weight_updates.compound_cue_weight_updates:CompoundCueWeightUpdates
+    relationship: same_operation
+    overlap: both run trial-wise error-correction learning over compound cue schedules (acquisition, blocking,
+      extinction) and output learned cue strengths or probe predictions; C007 adds only the credit-assignment
+      framing and a redemption-redistribution detail.
+  - id: proposal:ua_inference-modes:P010
+    relationship: adjacent
+    overlap: both infer hidden weights/attention parameters from observed choices, but the neighbor uses
+      menu-choice data while C007 uses associative learning trials.
+  - id: proposal:ua_formal-logic:P005
+    relationship: adjacent
+    overlap: both accumulate signed evidence over time with learning rates, but the neighbor is about
+      decision bounds and C007 about cue-weight updates.
+  reason: 0/3 samples judged it novel; The compound cue weight update task already implements the same
+    trial-wise error-correction learning and probing; the proposal is a cosmetic rephrasing.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: stereochemical_descriptor_audit
+  summary: Audit tetrahedral stereodescriptors through recursive ligand ranking with isotopes, multiple
+    bonds, and rings; return the first incorrect priority comparison or the corrected handedness descriptor.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_latent-representation:P003
+    relationship: variant
+    overlap: both handle tetrahedral stereochemistry and handedness (parity/descriptor), with the neighbor
+      tracking through exchanges and rotations while C008 audits ligand rankings; the core operation of
+      determining handedness from ligand order is shared.
+  - id: proposal:ua_verification-repair:P001
+    relationship: adjacent
+    overlap: both audit a claimed structure and return a repair or first violation, but the neighbor is
+      about linear logic proof nets, not stereochemistry.
+  - id: proposal:ua_verification-repair:P002
+    relationship: adjacent
+    overlap: both audit and locate the first inconsistency in a transcript, but the neighbor deals with
+      polynomial sumchecks, not molecular descriptors.
+  reason: 0/3 samples judged it novel; Tetrahedral stereocentre determination is already present in stereochemical_parity_transport;
+    C008 adds only a verification/audit mode with the same underlying ranking logic.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: bag_query_equivalence_audit
+  summary: Audit claimed query rewrites on finite tables with duplicates and nulls across projection,
+    joins, filtering, and grouping; return an output tuple whose multiplicity differs or confirm equivalence.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:k3_formal-logic:P003
+    relationship: same_operation
+    overlap: "Both audit bag-relational query rewrites under multiset semantics with nulls, returning\
+      \ a multiplicity mismatch or confirming equivalence. C001 adds grouping but the core operation\u2014\
+      comparing multiset outputs of different query plans\u2014is identical."
+  - id: proposal:ua_scientific-reasoning:P012
+    relationship: variant
+    overlap: Both compare evidence or data aggregates under multiplicity to decide equivalence; C001 uses
+      relational algebra, the neighbor uses support expressions, but the cognitive operation of evaluating
+      multiplicity-preserving equivalences is shared.
+  - id: task:generated.wave9.query_plan_execution.query_plan_execution:QueryPlanExecution
+    relationship: adjacent
+    overlap: Both involve executing relational plans with joins, filters, projections, and grouping, but
+      query_plan_execution computes an output, while C001 compares two plans for multiset equivalence.
+  reason: 0/3 samples judged it novel; Same operation as bag-join equivalence with a grouping surface
+    change.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: asymptotic_balance_repair
+  summary: Check proposed leading terms in algebraic and differential equations by comparing exponents
+    and cancellation conditions; return the first unbalanced order or a corrected exponent and coefficient.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_inference-modes:P009
+    relationship: same_operation
+    overlap: Both infer leading exponents in asymptotic balances by comparing terms and enforcing cancellation
+      conditions; C002 adds a repair output but the core operation is identical tropical/ asymptotic balancing.
+  - id: proposal:ua_systematic-generalization:P010
+    relationship: variant
+    overlap: Both identify first surviving asymptotic terms through cancellation; C002 focuses on checking
+      proposed leading terms, the neighbor finds first survivors, but both are asymptotic cancellation
+      analysis.
+  - id: proposal:ua_verification-repair:P002
+    relationship: adjacent
+    overlap: Both verify algebraic identities and locate inconsistencies, but sumcheck transcript audit
+      is a different mathematical operation.
+  reason: 0/3 samples judged it novel; Same asymptotic-balancing operation with a repair twist.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: experimental_alias_audit
+  summary: Audit signed effect aliases in fractional factorial designs with generators, blocks, and foldovers;
+    return the first false alias, its corrected sign, or a generator repair restoring a claimed separation.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:k3_scientific-reasoning:P004
+    relationship: same_operation
+    overlap: Both audit signed effect aliases in factorial designs by computing inner products among design
+      columns, returning confounded pairs or an orthogonality verdict; C004 only adds foldovers and generator
+      repair, which is exactly the same operation.
+  - id: proposal:ua_verification-repair:P003
+    relationship: variant
+    overlap: Both audit rule-compliance in a structured domain, locating first violations and proposing
+      repairs; but C004 is about factorial aliasing, counterpoint is about dissonance.
+  - id: proposal:k3_formal-logic:P007
+    relationship: adjacent
+    overlap: Both involve tracking signs through composed structures, but polarity tracking is distinct
+      from effect aliasing.
+  reason: 0/3 samples judged it novel; Exact duplicate of design_column_alias_audit; foldovers are a cosmetic
+    addition.
+  scores:
+    novelty: 1
+    sft_value: 2
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+pool:
+- name: evidence_reuse_equivalence
+  summary: Compare sentences combining independent support, alternative derivations and repeated use of
+    one source; distinguish evidence identity from multiplicity and decide whether their support expressions
+    coincide.
+- name: conserved_liquid_tilting
+  summary: Track conserved liquid through upright and tilted rectangular containers, immersed blocks,
+    transfers, and rim spill; return the retained volume or fill depth after the specified changes.
+- name: noncommutative_identity_audit
+  summary: Verify symbolic derivations with ordered products, distributivity, powers, inverses, and declared
+    commutation pairs; locate the first unsupported equality or repair a missing factor or coefficient.
+- name: stopping_rule_likelihood_equivalence
+  summary: Compare evidence from fixed-sample, sequentially stopped, and censored experiments by constructing
+    likelihoods over shared hypotheses; return whether two records have proportional likelihoods.
+- name: quantifier_dependency_uniformity
+  summary: Decide whether existential choices can satisfy a finite relation when each choice observes
+    only specified universal variables; vary shared observations and forbidden dependencies; return feasibility.
+- name: quantifier_certificate_audit
+  summary: Audit quantified deduction traces with nested assumptions, witness introduction, generalization,
+    and discharge; locate the first scope or freshness violation or identify an admissible replacement
+    witness.
+- name: occluded_motion_extrapolation
+  summary: Extrapolate hidden motion from timed sightings under stated constant-velocity and wall-reflection
+    rules, varying chambers and occlusion intervals; return reappearance position or direction.
+- name: finite_conditional_independence
+  summary: Test independence in exact finite distributions after conditioning, marginalizing hidden variables,
+    or coarsening outcomes; include mixture-induced dependence and cancellation; return which claims hold.
+- name: compartment_spill_propagation
+  summary: Redistribute liquid through partitioned vessels under successive tilts and pours, accounting
+    for sill heights, trapped pools, and external overflow; return retained volumes or the next spill
+    boundary.
+- name: sequential_likelihood_stopping
+  summary: Accumulate evidence along ordered observations with history-dependent likelihoods, scheduled
+    inspections, and asymmetric stopping boundaries; return the first stopping time and decision, or continuation.
+- name: fermionic_normal_order_audit
+  summary: Audit normal-order expansions with repeated fermionic modes, contractions, and mixed creation
+    operators; return an incorrect term's corrected coefficient or the earliest invalid equality.

@@ -1,0 +1,606 @@
+version: 1
+name: ua_formal_semantics_r1
+proposal_wave: ua_formal-semantics
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: conservative_mesh_remapping_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v1
+  instruction: |-
+    Author a new task from scratch: conservative_mesh_remapping_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transfer piecewise constant material densities through prescribed cell splits, merges and boundary shifts by integrating overlap with the previous mesh; return a queried cell's mass or density.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v1
+  design_choice: Queried cell is identified by its centroid coordinates; solver must compute overlap integrals
+    and return density as a reduced fraction.
+- id: P001v2
+  hypothesis: P001
+  idea: conservative_mesh_remapping_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v2
+  instruction: |-
+    Author a new task from scratch: conservative_mesh_remapping_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transfer piecewise constant material densities through prescribed cell splits, merges and boundary shifts by integrating overlap with the previous mesh; return a queried cell's mass or density.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v2
+  design_choice: Queried cell is identified by its index in the new mesh; solver must return total mass
+    as an integer, requiring exact area overlap summation.
+- id: P001v3
+  hypothesis: P001
+  idea: conservative_mesh_remapping_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v3
+  instruction: |-
+    Author a new task from scratch: conservative_mesh_remapping_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transfer piecewise constant material densities through prescribed cell splits, merges and boundary shifts by integrating overlap with the previous mesh; return a queried cell's mass or density.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/conservative_mesh_remapping_v3
+- id: P002v1
+  hypothesis: P002
+  idea: zigzag_cycle_survival_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v1
+  instruction: |-
+    Author a new task from scratch: zigzag_cycle_survival_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track homology classes through cell insertions and deletions over a stated finite field, including cycles becoming boundaries and later reopening; return birth and death intervals in a queried dimension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v1
+  design_choice: 'Answer format: return a canonical list of half-open intervals [birth, death) for the
+    queried dimension, using integer time steps for insertions and deletions.'
+- id: P002v2
+  hypothesis: P002
+  idea: zigzag_cycle_survival_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v2
+  instruction: |-
+    Author a new task from scratch: zigzag_cycle_survival_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track homology classes through cell insertions and deletions over a stated finite field, including cycles becoming boundaries and later reopening; return birth and death intervals in a queried dimension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v2
+  design_choice: 'Instance type: provide a sequence of cell additions/removals with explicit incidence
+    matrices over GF(p), and the solver must infer homology changes via linear algebra.'
+- id: P002v3
+  hypothesis: P002
+  idea: zigzag_cycle_survival_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v3
+  instruction: |-
+    Author a new task from scratch: zigzag_cycle_survival_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track homology classes through cell insertions and deletions over a stated finite field, including cycles becoming boundaries and later reopening; return birth and death intervals in a queried dimension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/zigzag_cycle_survival_v3
+- id: P003v1
+  hypothesis: P003
+  idea: tilted_vessel_spillage_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v1
+  instruction: |-
+    Author a new task from scratch: tilted_vessel_spillage_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track liquid in polygonal vessel cross-sections through tilts, additions and partition removal; equilibrate free surfaces and discard overflow, returning retained volume or a queried liquid height.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v1
+  design_choice: Vary vessel shapes from convex to non-convex polygons and compute retained volume via
+    explicit free-surface intersection with polygon edges.
+- id: P003v2
+  hypothesis: P003
+  idea: tilted_vessel_spillage_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v2
+  instruction: |-
+    Author a new task from scratch: tilted_vessel_spillage_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track liquid in polygonal vessel cross-sections through tilts, additions and partition removal; equilibrate free surfaces and discard overflow, returning retained volume or a queried liquid height.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v2
+  design_choice: Answer as a canonical string of the form 'V=<fraction>' for total retained volume or
+    'H=<fraction>' for a queried liquid height, with fractions in lowest terms.
+- id: P003v3
+  hypothesis: P003
+  idea: tilted_vessel_spillage_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v3
+  instruction: |-
+    Author a new task from scratch: tilted_vessel_spillage_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track liquid in polygonal vessel cross-sections through tilts, additions and partition removal; equilibrate free surfaces and discard overflow, returning retained volume or a queried liquid height.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/tilted_vessel_spillage_v3
+- id: P004v1
+  hypothesis: P004
+  idea: witness_uniformity_semantics_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v1
+  instruction: |-
+    Author a new task from scratch: witness_uniformity_semantics_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate quantified clauses with declared witness dependencies and independence constraints over finite relations; return whether a uniform witness policy satisfies every combination of universal choices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v1
+  design_choice: Represent each clause as a conjunction of atomic relation literals over shared variables,
+    with witness dependencies encoded as explicit Skolem function symbols and independence as separate
+    quantified variables.
+- id: P004v2
+  hypothesis: P004
+  idea: witness_uniformity_semantics_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v2
+  instruction: |-
+    Author a new task from scratch: witness_uniformity_semantics_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate quantified clauses with declared witness dependencies and independence constraints over finite relations; return whether a uniform witness policy satisfies every combination of universal choices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v2
+  design_choice: Encode witness dependencies as ordered tuples of universal variables in the clause head,
+    and independence constraints as explicit equality/inequality conditions between tuple positions.
+- id: P004v3
+  hypothesis: P004
+  idea: witness_uniformity_semantics_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v3
+  instruction: |-
+    Author a new task from scratch: witness_uniformity_semantics_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate quantified clauses with declared witness dependencies and independence constraints over finite relations; return whether a uniform witness policy satisfies every combination of universal choices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/witness_uniformity_semantics_v3
+- id: P005v1
+  hypothesis: P005
+  idea: cluster_seed_evolution_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v1
+  instruction: |-
+    Author a new task from scratch: cluster_seed_evolution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evolve exchange matrices and attached rational expressions through seed mutations, frozen-variable changes and relabelings; return a queried variable or exchange coefficient after the sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v1
+  design_choice: Answers are a single integer index into a canonical list of cluster variables, with difficulty
+    from tracking relabelings and frozen-variable swaps.
+- id: P005v2
+  hypothesis: P005
+  idea: cluster_seed_evolution_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v2
+  instruction: |-
+    Author a new task from scratch: cluster_seed_evolution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evolve exchange matrices and attached rational expressions through seed mutations, frozen-variable changes and relabelings; return a queried variable or exchange coefficient after the sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v2
+  design_choice: Answers are a rational number in reduced fraction form, requiring exact arithmetic through
+    mutation sequences with symbolic coefficients.
+- id: P005v3
+  hypothesis: P005
+  idea: cluster_seed_evolution_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v3
+  instruction: |-
+    Author a new task from scratch: cluster_seed_evolution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evolve exchange matrices and attached rational expressions through seed mutations, frozen-variable changes and relabelings; return a queried variable or exchange coefficient after the sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/cluster_seed_evolution_v3
+- id: P006v1
+  hypothesis: P006
+  idea: mass_count_unit_interpretation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v1
+  instruction: |-
+    Author a new task from scratch: mass_count_unit_interpretation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Interpret mass and count expressions through substance, portion, package, and kind readings with explicit realization maps; compose classifiers and partitives; return the selected units or their quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v1
+  design_choice: Each instance presents a short context sentence and four canonical readings (substance/portion/package/kind);
+    the solver must output the reading label and the matched unit string from a fixed set.
+- id: P006v2
+  hypothesis: P006
+  idea: mass_count_unit_interpretation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v2
+  instruction: |-
+    Author a new task from scratch: mass_count_unit_interpretation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Interpret mass and count expressions through substance, portion, package, and kind readings with explicit realization maps; compose classifiers and partitives; return the selected units or their quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v2
+  design_choice: Instances pair a classifier phrase with a partitive construction; the answer is the minimal
+    unit expression (e.g., 'glass of water') selected from a generated list of five possible unit strings
+    per item.
+- id: P006v3
+  hypothesis: P006
+  idea: mass_count_unit_interpretation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v3
+  instruction: |-
+    Author a new task from scratch: mass_count_unit_interpretation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Interpret mass and count expressions through substance, portion, package, and kind readings with explicit realization maps; compose classifiers and partitives; return the selected units or their quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/mass_count_unit_interpretation_v3
+- id: P007v1
+  hypothesis: P007
+  idea: lexical_event_coercion_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v1
+  instruction: |-
+    Author a new task from scratch: lexical_event_coercion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve entity arguments of event-selecting predicates through stated purpose, creation, and use relations; compose nested coercions and competing lexical routes; return the licensed event interpretations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v1
+  design_choice: Answer as a canonical bracket-enclosed list of event labels (e.g., [READ, WRITE]) licensed
+    by coercing the argument via its stated purpose relation, with nested coercions flattened in dependency
+    order.
+- id: P007v2
+  hypothesis: P007
+  idea: lexical_event_coercion_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v2
+  instruction: |-
+    Author a new task from scratch: lexical_event_coercion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve entity arguments of event-selecting predicates through stated purpose, creation, and use relations; compose nested coercions and competing lexical routes; return the licensed event interpretations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v2
+  design_choice: Answer as a canonical bracket-enclosed list of event labels, one per coercion route,
+    with duplicates allowed and order reflecting resolution priority.
+- id: P007v3
+  hypothesis: P007
+  idea: lexical_event_coercion_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v3
+  instruction: |-
+    Author a new task from scratch: lexical_event_coercion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve entity arguments of event-selecting predicates through stated purpose, creation, and use relations; compose nested coercions and competing lexical routes; return the licensed event interpretations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/lexical_event_coercion_v3
+- id: P008v1
+  hypothesis: P008
+  idea: minimal_truthmaker_composition_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v1
+  instruction: |-
+    Author a new task from scratch: minimal_truthmaker_composition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute minimal supporting situations for clauses built from positive and negative facts, conjunction, disjunction, and finite quantification; distinguish support from mere compatibility; return minimal fact sets.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v1
+  design_choice: Represent each fact as a named atomic proposition (e.g., P, Q, R) and each situation
+    as a set of such names; answer with the minimal set(s) of names that support the formula under standard
+    truthmaker semantics.
+- id: P008v2
+  hypothesis: P008
+  idea: minimal_truthmaker_composition_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v2
+  instruction: |-
+    Author a new task from scratch: minimal_truthmaker_composition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute minimal supporting situations for clauses built from positive and negative facts, conjunction, disjunction, and finite quantification; distinguish support from mere compatibility; return minimal fact sets.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v2
+  design_choice: Encode facts as ground atoms with constants (e.g., F(a), G(b)) and finite domains; answer
+    as a canonical list of minimal sets of ground atoms, using sorted string notation like '{F(a),G(b)}'.
+- id: P008v3
+  hypothesis: P008
+  idea: minimal_truthmaker_composition_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v3
+  instruction: |-
+    Author a new task from scratch: minimal_truthmaker_composition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute minimal supporting situations for clauses built from positive and negative facts, conjunction, disjunction, and finite quantification; distinguish support from mere compatibility; return minimal fact sets.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/minimal_truthmaker_composition_v3
+- id: P009v1
+  hypothesis: P009
+  idea: negative_concord_interpretation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v1
+  instruction: |-
+    Author a new task from scratch: negative_concord_interpretation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive semantic negation from negative indefinites, overt negators, concord domains, and embedding barriers under stated dialect rules; return the resulting truth conditions or an unlicensed reading.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v1
+  design_choice: 'Answer as a canonical truth-value pair: ''true'' or ''false'' for the licensed reading,
+    or ''unlicensed'' when no reading exists under the dialect rules.'
+- id: P009v2
+  hypothesis: P009
+  idea: negative_concord_interpretation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v2
+  instruction: |-
+    Author a new task from scratch: negative_concord_interpretation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive semantic negation from negative indefinites, overt negators, concord domains, and embedding barriers under stated dialect rules; return the resulting truth conditions or an unlicensed reading.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v2
+  design_choice: 'Answer as a compact ternary string: ''N'' for negative, ''P'' for positive, ''U'' for
+    unlicensed, encoding the polarity of the final interpretation.'
+- id: P009v3
+  hypothesis: P009
+  idea: negative_concord_interpretation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v3
+  instruction: |-
+    Author a new task from scratch: negative_concord_interpretation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive semantic negation from negative indefinites, overt negators, concord domains, and embedding barriers under stated dialect rules; return the resulting truth conditions or an unlicensed reading.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/negative_concord_interpretation_v3
+- id: P010v1
+  hypothesis: P010
+  idea: conventional_implicature_separation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v1
+  instruction: |-
+    Author a new task from scratch: conventional_implicature_separation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose asserted and supplementary content for appositives, expressives, and parentheticals under negation, conditionals, and attitude embedding; return each content contribution and its attributed source.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v1
+  design_choice: 'Return a fixed canonical two-line string: first line lists asserted content, second
+    line lists implicature content, each as semicolon-separated clauses.'
+- id: P010v2
+  hypothesis: P010
+  idea: conventional_implicature_separation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v2
+  instruction: |-
+    Author a new task from scratch: conventional_implicature_separation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose asserted and supplementary content for appositives, expressives, and parentheticals under negation, conditionals, and attitude embedding; return each content contribution and its attributed source.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v2
+  design_choice: 'Use a numbered tuple format: each content item is prefixed by a role tag (A for asserted,
+    I for implicature) and a source tag (appositive, expressive, parenthetical).'
+- id: P010v3
+  hypothesis: P010
+  idea: conventional_implicature_separation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v3
+  instruction: |-
+    Author a new task from scratch: conventional_implicature_separation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose asserted and supplementary content for appositives, expressives, and parentheticals under negation, conditionals, and attitude embedding; return each content contribution and its attributed source.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_semantics_r1/conventional_implicature_separation_v3

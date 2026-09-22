@@ -1,0 +1,547 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_non-local-structured
+created_at: '2026-09-17T13:24:44.445130+00:00'
+provenance:
+  kind: proposer
+  name: ua_non-local-structured
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'tasks requiring non-local reasoning over graphs, relations, events, constraints, or structured
+    language, rather than tracing a standard algorithm. The catalog you were shown already covers the
+    classic textbook algorithms -- sorting, gcd, graph traversal, compression, scheduling, matching, parsing
+    -- and a proposal that names one will be rejected as a repeat however well it fits this brief. Reach
+    past the standard repertoire: propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 0
+  complete: false
+catalog:
+  sha256: 3a538f2319a1ad66d5fc8bced9de5a29cffc6329a612146d95384df9d2d80251
+  entries: 980
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 353
+    task: 465
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls: []
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  dedup: lenient
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: e6505db30f7faee535f51c5c6126de5313844c18a7c2b1bbdf8b9d6bc5f84729
+    response_sha256: 52b6140ccfca9d4d04ed902357b95b9e186a0aa7f284d926eb23ee0eb72620f6
+    response_id: chatcmpl-a4ad4af05a016097
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 51a426bc159db353c6e8e56885306e2f96cca615f5cd29e36dba3ef1ecd98977
+    response_sha256: 5ce63c286034890211eb05de0e63e84db310258f41635fc16075b9c22321c61a
+    response_id: chatcmpl-95b6ccb14b49ceb3
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: e9b5b4e7ce2e68732a5e97f915dd108ec7ef6eab546c3355d65b1111ea986101
+    response_sha256: 18109200e6fb32d81d69c9247eb2b0987fcfea1b51652e63d50c87f816bb40c3
+    response_id: chatcmpl-b16994e09293403d
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: d76a08e3c69fb984a82352b160c7e4273115f0cd4117a54f5d1f6e7b98a37583
+    response_sha256: 24621d2673586577b5344868ba3816b1c05a3814e8eed53224ae706195720cfa
+    response_id: chatcmpl-81fc91a9c581f929
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 574a125c786f5fc27d8e918945498a7927011435ffe05021a99ffc45f86b8e32
+    response_sha256: 0c3af9181d6cf34dd4c8f39d85a65d7b256c182959a5e7e1c336bf606cf717f8
+    response_id: chatcmpl-b02fe1a850c86c78
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 7293ebb06df8093d88f25e4468045cbcde80472f0ea3bccd50461dec86a072fa
+    response_sha256: ce86752aebe9e9d52a95fa56ca1643d9d09b6d498b420835dccd0dd34f8a4999
+    response_id: chatcmpl-822a51289c0bb691
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 6d1523ce0ebc79e46ca62b9a7079350f00ef458ab2db38864f0039bead13a17b
+    response_sha256: 22c58a224dd5522247a3c67fa862beac870053b869e7d5d28e0cd1590672258f
+    response_id: chatcmpl-aaa5ecd72b180dce
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 58b05cba8f56a1faf23d6820aa052d83f87816ceb4bf83de13308982111918a8
+    response_sha256: 9f7dc836fc78871d138f1d5d1f4572b3415cb53dc1044a6f2baed35935f1de83
+    response_id: chatcmpl-a82158901959f89b
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: ba9096c80547bb702817a2b47598a112c021613c353179ea2b1ad0245f2c7942
+    response_sha256: 6b8dde81143635796939bc9851a4487315ac0b7010eb8bc1c18d3935bc11f320
+    response_id: chatcmpl-93dd4ed21f80cd49
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals: []
+rejected:
+- name: allocation_concealment_predictability
+  summary: Condition restricted treatment-allocation processes on partially disclosed enrollment histories,
+    varying random blocks, urn rules, and balancing schemes; return the next-assignment probabilities.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_scientific-reasoning:P005
+    relationship: variant
+    overlap: Computing conditional assignment probabilities given selection rules and partial history,
+      akin to adjusting for selective evidence.
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: adjacent
+    overlap: Sequential random processes with conditional transitions, but not restricted to treatment
+      allocation.
+  - id: proposal:ua_uncertainty:P003
+    relationship: different
+    overlap: Causal responsibility scoring, not allocation prediction.
+  reason: 1/3 samples judged it novel; Variant of conditional sequential probability, applied to allocation
+    concealment.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: style_cascade_recomputation
+  summary: Resolve computed properties after tree edits and stylesheet changes across layered precedence,
+    inheritance, custom-property fallbacks, and invalid substitutions; return queried values or winning
+    declarations.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.spreadsheet_formula_dependency.spreadsheet_formula_dependency:SpreadsheetFormulaDependency
+    relationship: same_operation
+    overlap: Both evaluate computed values after edits in a dependency graph with precedence and inheritance,
+      returning queried values or winning declarations.
+  - id: task:generated.wave9.access_control_evaluation.access_control_policy_evaluation:AccessControlEvaluation
+    relationship: variant
+    overlap: Resolves layered precedence and inheritance (permissions vs styles) with explicit exceptions,
+      returning effective outcome.
+  - id: task:generated.wave8.lexical_scope_resolution.lexical_scope_resolution:LexicalScopeResolution
+    relationship: adjacent
+    overlap: Resolves scoped bindings with inheritance, but output is binding not computed value.
+  reason: 0/3 samples judged it novel; Only surface domain changes from spreadsheet formulas to style
+    cascade; core compute-after-edit operation is unchanged.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: experimental_unit_variance
+  summary: Propagate shared experimental-unit noise through treatment contrasts in nested, crossed, split-unit,
+    and repeated-measure designs; return the exact sampling variance or pseudoreplication inflation factor.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_invariants:P006
+    relationship: same_operation
+    overlap: Both eliminate shared nuisance/unit effects from linear contrasts to find identifiable target
+      variance or value.
+  - id: proposal:ua_scientific-reasoning:P004
+    relationship: variant
+    overlap: Both use control observations to isolate a target effect from latent nuisance sources, returning
+      an identified quantity.
+  - id: proposal:ua_latent-representation:P008
+    relationship: different
+    overlap: Both compare information transformations but one in channel order, other in experimental
+      unit structure.
+  reason: 1/3 samples judged it novel; Variant of nuisance-elimination for variance contrasts.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: tombstone_resurrection_tracking
+  summary: Track versioned writes, deletions, delayed replication, read repair, and tombstone expiry across
+    replicas under supplied reconciliation rules; return visible values or the event that resurrects deleted
+    data.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.ledger_reconciliation.ledger_reconciliation:LedgerReconciliation
+    relationship: same_operation
+    overlap: Both apply ordered transactions (writes/deletes vs. debits/credits) with reconciliation rules
+      and return final values or the first failing item.
+  - id: proposal:ua_algorithms-and-data-structures:P004
+    relationship: variant
+    overlap: Both track versions of objects and determine reclaimability/resurrection based on grace periods
+      and active references.
+  - id: proposal:k3_language-implementation:P008
+    relationship: variant
+    overlap: Both apply a log of operations with rollback/recovery and return final state or the causal
+      event (crash vs. resurrection).
+  reason: 0/3 samples judged it novel; Variant of ledger/epoch tracking with tombstone-specific details
+    but no new operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: latent_heat_contact_sequences
+  summary: Update bodies through ordered thermal contacts, separations, and heat injections with finite
+    heat capacities and latent heat plateaus; return final temperatures, phase fractions, or heat transferred.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_shortcuts-fail:P003
+    relationship: same_operation
+    overlap: Both conserve energy/enthalpy across phase changes and heat transfers, returning equilibrium
+      temperature and phase fraction.
+  - id: proposal:ua_formal-semantics:P001
+    relationship: variant
+    overlap: Both conserve quantities across repartitioning/contact sequences, one for mass, one for heat;
+      same iterative accounting.
+  - id: proposal:ua_incremental-recomputation:P005
+    relationship: variant
+    overlap: Both propagate an effect through ordered contacts and recompute state, returning final state
+      or the blocking step.
+  reason: 0/3 samples judged it novel; Variant of enthalpy conservation applied to a sequence of contacts.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: idealization_order_audit
+  summary: Audit scientific predictions involving two idealizations using stated response laws; compare
+    sequential limits and coupled approaches across rational and piecewise families; return the distinct
+    limiting predictions.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_counterfactual:P004
+    relationship: same_operation
+    overlap: Both compare sequential/theoretical limits and return distinct limiting predictions, using
+      path-dependence for multivariable expressions.
+  - id: proposal:ua_latent-representation:P008
+    relationship: variant
+    overlap: Both compare orders of transformations/operations and decide equivalence or dominance, one
+      in idealizations, the other in information channels.
+  - id: proposal:ua_scientific-reasoning:P009
+    relationship: variant
+    overlap: Both audit alternative orders of applying rules to see if outcomes differ, akin to comparing
+      limit orders vs. rejection rules.
+  reason: 0/3 samples judged it novel; Variant of limit-path comparison applied to idealization orders.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: disablement_provenance_recovery
+  summary: An unknown bounded sum-of-products expression generates counts while selected inputs are disabled
+    or assigned small weights; combine overlapping responses to recover forced monomials and multiplicities.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: same_operation
+    overlap: Both recover hidden discrete structure from overlapping aggregate measurements (directional
+      sums vs. counts) with disables, returning forced values or uniqueness.
+  - id: proposal:ua_uncertainty:P002
+    relationship: variant
+    overlap: Both infer hidden patterns from overlapping observations with unknown weights, using consistency
+      to recover the underlying object.
+  - id: proposal:ua_state-tracking:P003
+    relationship: variant
+    overlap: Both recover sums of products from mixed moments/counts by removing overlap collisions.
+  reason: 0/3 samples judged it novel; Variant of tomographic completion with a sum-of-products parameterization.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: margin_liquidation_feedback
+  summary: Apply price shocks and forced sales under supplied margin, liquidation, and market-impact rules,
+    recomputing all accounts after each sale batch; return surviving positions, defaults, or terminal
+    prices.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_dynamic-structures:P003
+    relationship: same_operation
+    overlap: Both execute transactions (swaps vs. forced sales) under liquidity/margin constraints, updating
+      positions and prices iteratively.
+  - id: proposal:k3_interacting-updates:P002
+    relationship: variant
+    overlap: Both adjust prices based on excess demand and update accounts/positions until equilibrium
+      or cycling.
+  - id: proposal:ua_dynamic-structures:P004
+    relationship: variant
+    overlap: Both apply shocks and redistribute loads/positions when thresholds are breached, resolving
+      cascades.
+  reason: 0/3 samples judged it novel; Variant of dynamic market clearing with forced sales, not a new
+    operation.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: photochromic_layer_feedback
+  summary: Propagate light pulses through layered materials whose accumulated absorbed dose triggers bleaching
+    or darkening between pulses; return layer states, transmitted dose, or the first threshold-crossing
+    pulse.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P010
+    relationship: same_operation
+    overlap: Both propagate a quantity (light vs. charge) through a sequence of state changes with thresholds
+      and return final state or the first crossing event.
+  - id: proposal:ua_dynamic-structures:P006
+    relationship: variant
+    overlap: Both simulate pulse/particle propagation with activation/removal and cumulative effects,
+      returning arrival time or threshold crossing.
+  - id: proposal:ua_incremental-recomputation:P005
+    relationship: variant
+    overlap: Both propagate an impulse through a chain with accumulation and threshold feedback, returning
+      changed positions or blocking point.
+  reason: 0/3 samples judged it novel; Variant of threshold-driven propagation, same core as switched
+    capacitor tracking.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: strided_alias_reconstruction
+  summary: Partially observed writes and readbacks across unknown strided, reversed, and overlapping array
+    views constrain shared storage; recover which queried cell pairs must alias or cannot alias.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_formal-logic:P003
+    relationship: same_operation
+    overlap: Both determine aliasing across strided/reversed/overlapping array views; one computes from
+      view definitions, the other from partial observations.
+  - id: task:generated.wave9.alias_mutation.alias_mutation_tracking:AliasMutation
+    relationship: variant
+    overlap: Both track aliasing across mutations and rebinding, but C010 adds unknown strided views.
+  - id: proposal:ua_interacting-updates:P001
+    relationship: variant
+    overlap: Both reconstruct shared underlying structure from partially observed overlapping samples
+      (strides vs. periods).
+  reason: 1/3 samples judged it novel; Variant of affine view aliasing with added inference step.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 1/3
+- name: switched_capacitor_charge_redistribution
+  summary: Track charge through capacitor terminal reconnections, isolated conductor splits, and voltage
+    clamps using charge conservation at each switch; return final voltages, capacitor charges, or source
+    charge transfer.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_state-tracking:P010
+    relationship: same_operation
+    overlap: Both track charge through capacitor terminal reconnections, isolation, grounding, and voltage
+      clamping, conserving charge and returning voltages/charges.
+  - id: proposal:ua_compositional-generalization:P005
+    relationship: different
+    overlap: Both involve reconnections but one is electrical charge conservation and the other is wiring
+      topology expansion.
+  - id: proposal:ua_semantics-preserving-translation:P004
+    relationship: different
+    overlap: Both convert between representations but one conserves charge, the other translates equations.
+  reason: 0/3 samples judged it novel; Exact duplicate of an existing proposal with the same single-domain
+    capacitor tracking.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 5
+  votes: 0/3
+- name: rational_interference_conditioning
+  summary: Apply path mixing, phase flips, and selected detections to rational-amplitude networks, tracking
+    interference and branch normalization; return an output probability or the probability of an outcome
+    sequence.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_counterfactual:P006
+    relationship: same_operation
+    overlap: Both propagate amplitudes through networks with phase shifts, blockers, and detection, combining
+      coherent vs. incoherent paths; they return detector probabilities. C010 adds branch normalization,
+      but the interference-computation operation is the same.
+  - id: proposal:ua_surface-invariance:P003
+    relationship: variant
+    overlap: Both handle quantum outcomes with branch merging/coarsening and return probabilities; C010
+      uses rational amplitudes vs. operator trees.
+  - id: task:generated.wave9.probability_tree.probability_tree_marginal:ProbabilityTree
+    relationship: adjacent
+    overlap: Both compute probabilities in branching trees; one uses classical transitions, one coherent
+      amplitudes.
+  reason: 0/3 samples judged it novel; Same interference-path computation as which_path_intervention.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+- name: coalition_excess_balancing
+  summary: Allocate a fixed payoff by lexicographically minimizing descending coalition dissatisfaction
+    across overlapping claims, individual floors and coalition values; answer the allocation or successive
+    excess thresholds.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_global-over-greedy:P002
+    relationship: same_operation
+    overlap: Both allocate a fixed surplus to players subject to coalitional claims/floors and return
+      a stable allocation or range. C009 lexicographically minimizes excess instead of checking emptiness,
+      but the constraint set and allocation-over-coalitions operation are identical.
+  - id: proposal:ua_uncertainty:P007
+    relationship: variant
+    overlap: Both allocate divisible resources to claimants with priorities and caps; one uses coalitional
+      excess, the other estate rules.
+  - id: proposal:k3_operations-research:P006
+    relationship: adjacent
+    overlap: Both share resources among claimants with caps/levels; but waterfilling is single-level,
+      C009 has multiple coalition constraints.
+  reason: 0/3 samples judged it novel; Coalitional allocation with an added objective layer.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 3
+    clarity: 3
+  votes: 0/3
+- name: persistent_reporter_fault_localization
+  summary: Overlapping reports share latent binary event traces, while each source has a persistent truthful,
+    inverted, stuck, or lagged behavior; identify source behaviors forced by global consistency.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_algorithms-and-data-structures:P003
+    relationship: same_operation
+    overlap: Both recover latent ground truth from noisy/biased reporter observations (censoring vs. inversion/stuck)
+      and determine source behavior or compatibility. The constraint-propagation over overlapping reports
+      is the same.
+  - id: proposal:ua_state-tracking:P008
+    relationship: variant
+    overlap: Both combine overlapping partial observations to constrain a hidden structure; C007 deals
+      with binary events, P008 with probabilities, but the consistency-checking operation is alike.
+  - id: proposal:ua_scientific-reasoning:P011
+    relationship: adjacent
+    overlap: Track lineage of observations to identify contamination; different goal (fault type vs. data
+      reuse).
+  reason: 1/3 samples judged it novel; Variant of censoring_observation_equivalence with new fault labels.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 1/3
+- name: local_frame_synchronization
+  summary: Overlapping observers report vectors in independently permuted, reflected, or rescaled coordinate
+    frames; reconcile loop constraints and recover the possible relative frames of a queried pair.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: same_operation
+    overlap: Both operate on multiple named coordinate frames linked by linear transformations (translate,
+      rotate, reflect, scale) and reconcile a queried point/vector between frames; C001 adds edge-loops
+      and invertibility constraints, but the core is still frame composition/transformation, not a distinct
+      cognitive operation.
+  - id: proposal:ua_invariants:P007
+    relationship: variant
+    overlap: Both involve transformations across frames with parameters (rescaling, reflection) and recover
+      invariant properties; C001 asks for possible relative frames rather than invariant quantities, but
+      underlying linear-algebra operation is the same.
+  - id: proposal:ua_algorithms-and-data-structures:P003
+    relationship: adjacent
+    overlap: Reconciliation of overlapping observations with unknown hidden parameters; but one uses geometric
+      frame constraints, the other uses censored observation semantics.
+  reason: 0/3 samples judged it novel; Same operation as coordinate_frame_composition with an inversion
+    twist.
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 4
+    clarity: 3
+  votes: 0/3
+pool:
+- name: sequential_likelihood_stopping
+  summary: Accumulate evidence along ordered observations with history-dependent likelihoods, scheduled
+    inspections, and asymmetric stopping boundaries; return the first stopping time and decision, or continuation.
+- name: shared_extent_liveness
+  summary: Track physical storage through extent sharing, partial copy-on-write updates, truncation, snapshots,
+    and deletion of open files; return allocated space, reclaimable space, or the holders retaining an
+    extent.
+- name: insurance_limit_reinstatement
+  summary: Process claims across deductibles, layered coverage, shared aggregate limits, and paid reinstatements
+    under supplied erosion rules; return claim recoveries, remaining coverage, or total reinstatement
+    cost.
+- name: strided_storage_aliasing
+  summary: Execute assignments through overlapping, reversed, broadcast, and strided views under snapshot
+    or sequential read semantics; return selected cells or identify the first write that changes a later
+    read.
+- name: buoyancy_overflow_accounting
+  summary: Track water displacement as cargo moves between floating vessels, the water, and shore, with
+    filling, draining, and irreversible overflow; return water levels, spilled volume, or vessel flotation
+    status.
+- name: stopping_rule_likelihood_equivalence
+  summary: Compare evidence from fixed-sample, sequentially stopped, and censored experiments by constructing
+    likelihoods over shared hypotheses; return whether two records have proportional likelihoods.
+- name: pooled_distinctness_reconstruction
+  summary: Overlapping pools report exact, bounded, or saturated counts of distinct hidden types rather
+    than item counts; reconcile one global partition and recover forced same-type and different-type item
+    pairs.
+- name: wash_sale_basis_chains
+  summary: Propagate deferred losses through partial lot sales and replacement purchases under supplied
+    matching windows and priorities; return recognized gains, remaining lot bases, or permanently disallowed
+    losses.
+- name: ascertainment_conditioned_likelihood
+  summary: Compare hypotheses after threshold screening, outcome-dependent reporting, or case enrichment
+    using stated selection probabilities; return the likelihood ratio conditional on inclusion.

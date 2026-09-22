@@ -1,0 +1,717 @@
+version: 1
+name: ua_formal_logic_r1
+proposal_wave: ua_formal-logic
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  - P012v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  - P012v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  - P012v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: antichain_progress_completion_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v1
+  instruction: |-
+    Author a new task from scratch: antichain_progress_completion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track progress frontiers in partially ordered timestamp spaces through advances, forks, and joins; determine which queried times are complete because no frontier element can still precede them.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v1
+  design_choice: Answer as a canonical list of complete queried times in increasing order, with all incomplete
+    times omitted.
+- id: P001v2
+  hypothesis: P001
+  idea: antichain_progress_completion_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v2
+  instruction: |-
+    Author a new task from scratch: antichain_progress_completion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track progress frontiers in partially ordered timestamp spaces through advances, forks, and joins; determine which queried times are complete because no frontier element can still precede them.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v2
+  design_choice: Answer as a canonical boolean string of length equal to the number of queried times,
+    where '1' means complete and '0' means incomplete.
+- id: P001v3
+  hypothesis: P001
+  idea: antichain_progress_completion_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v3
+  instruction: |-
+    Author a new task from scratch: antichain_progress_completion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track progress frontiers in partially ordered timestamp spaces through advances, forks, and joins; determine which queried times are complete because no frontier element can still precede them.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/antichain_progress_completion_v3
+- id: P002v1
+  hypothesis: P002
+  idea: layered_interval_exposure_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v1
+  instruction: |-
+    Author a new task from scratch: layered_interval_exposure_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain visible values beneath prioritized interval layers through activation, removal, and priority changes; reveal covered layers when higher ones disappear and return maximal constant visible spans.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v1
+  design_choice: Answers are the sequence of maximal visible spans encoded as 'start:end:value' pairs
+    separated by semicolons, with spans sorted left-to-right and ties broken by lower layer priority.
+- id: P002v2
+  hypothesis: P002
+  idea: layered_interval_exposure_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v2
+  instruction: |-
+    Author a new task from scratch: layered_interval_exposure_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain visible values beneath prioritized interval layers through activation, removal, and priority changes; reveal covered layers when higher ones disappear and return maximal constant visible spans.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v2
+  design_choice: Answers are the ordered list of layer indices that become newly visible after each operation,
+    separated by commas, with no span values returned.
+- id: P002v3
+  hypothesis: P002
+  idea: layered_interval_exposure_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v3
+  instruction: |-
+    Author a new task from scratch: layered_interval_exposure_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain visible values beneath prioritized interval layers through activation, removal, and priority changes; reveal covered layers when higher ones disappear and return maximal constant visible spans.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/layered_interval_exposure_v3
+- id: P003v1
+  hypothesis: P003
+  idea: affine_view_aliasing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v1
+  instruction: |-
+    Author a new task from scratch: affine_view_aliasing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose slicing, transposition, reversal, and broadcasting over strided array views; determine whether selected views share storage and return a shared address, overlap count, or disjointness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v1
+  design_choice: Answer as a canonical string 'shared:<hex_address>' when any overlap exists, else 'disjoint'
+    with no count.
+- id: P003v2
+  hypothesis: P003
+  idea: affine_view_aliasing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v2
+  instruction: |-
+    Author a new task from scratch: affine_view_aliasing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose slicing, transposition, reversal, and broadcasting over strided array views; determine whether selected views share storage and return a shared address, overlap count, or disjointness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v2
+  design_choice: Answer as an integer overlap count of element positions shared by the two views, with
+    disjointness encoded as 0.
+- id: P003v3
+  hypothesis: P003
+  idea: affine_view_aliasing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v3
+  instruction: |-
+    Author a new task from scratch: affine_view_aliasing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose slicing, transposition, reversal, and broadcasting over strided array views; determine whether selected views share storage and return a shared address, overlap count, or disjointness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/affine_view_aliasing_v3
+- id: P004v1
+  hypothesis: P004
+  idea: density_window_rebalancing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v1
+  instruction: |-
+    Author a new task from scratch: density_window_rebalancing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain ordered records in a gapped array under insertions and deletions; select the smallest enclosing window satisfying stated density bounds and redistribute records; return repaired positions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v1
+  design_choice: 'Answer as a single integer: the minimal number of record shifts performed to satisfy
+    density bounds after all operations.'
+- id: P004v2
+  hypothesis: P004
+  idea: density_window_rebalancing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v2
+  instruction: |-
+    Author a new task from scratch: density_window_rebalancing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain ordered records in a gapped array under insertions and deletions; select the smallest enclosing window satisfying stated density bounds and redistribute records; return repaired positions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v2
+  design_choice: Answer as a comma-separated list of final indices of moved records, sorted ascending.
+- id: P004v3
+  hypothesis: P004
+  idea: density_window_rebalancing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v3
+  instruction: |-
+    Author a new task from scratch: density_window_rebalancing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain ordered records in a gapped array under insertions and deletions; select the smallest enclosing window satisfying stated density bounds and redistribute records; return repaired positions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/density_window_rebalancing_v3
+- id: P005v1
+  hypothesis: P005
+  idea: leaky_evidence_commitment_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v1
+  instruction: |-
+    Author a new task from scratch: leaky_evidence_commitment_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate signed evidence with stated leakage, starting bias, and absorbing decision bounds; vary interruptions, changing bounds, and opposing evidence bursts; answer the committed choice and stopping time.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v1
+  design_choice: Present evidence as a stream of +1/-1 signs with leakage rate and time-varying thresholds,
+    requiring exact integer stopping time and committed sign.
+- id: P005v2
+  hypothesis: P005
+  idea: leaky_evidence_commitment_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v2
+  instruction: |-
+    Author a new task from scratch: leaky_evidence_commitment_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate signed evidence with stated leakage, starting bias, and absorbing decision bounds; vary interruptions, changing bounds, and opposing evidence bursts; answer the committed choice and stopping time.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v2
+  design_choice: Use precomputed evidence tables with random burst placements and interruption gaps; solver
+    must identify final bound hit and the step index.
+- id: P005v3
+  hypothesis: P005
+  idea: leaky_evidence_commitment_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v3
+  instruction: |-
+    Author a new task from scratch: leaky_evidence_commitment_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate signed evidence with stated leakage, starting bias, and absorbing decision bounds; vary interruptions, changing bounds, and opposing evidence bursts; answer the committed choice and stopping time.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/leaky_evidence_commitment_v3
+- id: P006v1
+  hypothesis: P006
+  idea: online_nondeterminism_resolution_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v1
+  instruction: |-
+    Author a new task from scratch: online_nondeterminism_resolution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether an automaton's nondeterminism can be resolved from input prefixes using bounded memory while preserving its accepted language; vary safety, Buchi, and parity acceptance, returning existence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v1
+  design_choice: Instantiate automata as explicit transition tables with labeled edges, and ask for a
+    yes/no answer on whether a finite-state resolver exists for a given acceptance condition.
+- id: P006v2
+  hypothesis: P006
+  idea: online_nondeterminism_resolution_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v2
+  instruction: |-
+    Author a new task from scratch: online_nondeterminism_resolution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether an automaton's nondeterminism can be resolved from input prefixes using bounded memory while preserving its accepted language; vary safety, Buchi, and parity acceptance, returning existence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v2
+  design_choice: Generate random automata with varying sizes and edge densities, and require the solver
+    to output the minimal memory bound (as an integer) when one exists, else -1.
+- id: P006v3
+  hypothesis: P006
+  idea: online_nondeterminism_resolution_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v3
+  instruction: |-
+    Author a new task from scratch: online_nondeterminism_resolution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether an automaton's nondeterminism can be resolved from input prefixes using bounded memory while preserving its accepted language; vary safety, Buchi, and parity acceptance, returning existence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/online_nondeterminism_resolution_v3
+- id: P007v1
+  hypothesis: P007
+  idea: hereditary_typed_substitution_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v1
+  instruction: |-
+    Author a new task from scratch: hereditary_typed_substitution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Substitute normal terms into typed normal forms, immediately reducing redexes created by replacement; range over nested functions, products, and projections, returning the resulting beta-normal term.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v1
+  design_choice: Encode terms as de Bruijn indices in a first-order syntax, with substitution defined
+    by parallel capture-avoiding replacement and answer as a canonical string of constructors.
+- id: P007v2
+  hypothesis: P007
+  idea: hereditary_typed_substitution_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v2
+  instruction: |-
+    Author a new task from scratch: hereditary_typed_substitution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Substitute normal terms into typed normal forms, immediately reducing redexes created by replacement; range over nested functions, products, and projections, returning the resulting beta-normal term.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v2
+  design_choice: Use named variables with a locally nameless representation; require the solver to output
+    the fully normalized term in a pretty-printed human-readable notation.
+- id: P007v3
+  hypothesis: P007
+  idea: hereditary_typed_substitution_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v3
+  instruction: |-
+    Author a new task from scratch: hereditary_typed_substitution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Substitute normal terms into typed normal forms, immediately reducing redexes created by replacement; range over nested functions, products, and projections, returning the resulting beta-normal term.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/hereditary_typed_substitution_v3
+- id: P008v1
+  hypothesis: P008
+  idea: resolution_interpolant_extraction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v1
+  instruction: |-
+    Author a new task from scratch: resolution_interpolant_extraction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate partial interpolants through partitioned resolution refutations with shared and private atoms, using supplied extraction rules; return a queried node's interpolant as a truth table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v1
+  design_choice: Choose the queried node randomly from all internal nodes of the refutation, ensuring
+    each node's interpolant is derivable from its children's partial interpolants.
+- id: P008v2
+  hypothesis: P008
+  idea: resolution_interpolant_extraction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v2
+  instruction: |-
+    Author a new task from scratch: resolution_interpolant_extraction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate partial interpolants through partitioned resolution refutations with shared and private atoms, using supplied extraction rules; return a queried node's interpolant as a truth table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v2
+  design_choice: Present the refutation with only a single shared atom appearing in multiple clauses,
+    making the extraction rules depend on that atom's polarity in each resolution step.
+- id: P008v3
+  hypothesis: P008
+  idea: resolution_interpolant_extraction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v3
+  instruction: |-
+    Author a new task from scratch: resolution_interpolant_extraction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate partial interpolants through partitioned resolution refutations with shared and private atoms, using supplied extraction rules; return a queried node's interpolant as a truth table.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/resolution_interpolant_extraction_v3
+- id: P009v1
+  hypothesis: P009
+  idea: finite_order_gap_elimination_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v1
+  instruction: |-
+    Author a new task from scratch: finite_order_gap_elimination_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Eliminate quantified variables from formulas over finite linear orders by reasoning about endpoint and inter-variable gaps; return an equivalent condition on the free variables' order and gap sizes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v1
+  design_choice: Present formulas with explicit lower and upper endpoint constants, requiring the solver
+    to derive constraints on gaps between free variables and endpoints.
+- id: P009v2
+  hypothesis: P009
+  idea: finite_order_gap_elimination_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v2
+  instruction: |-
+    Author a new task from scratch: finite_order_gap_elimination_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Eliminate quantified variables from formulas over finite linear orders by reasoning about endpoint and inter-variable gaps; return an equivalent condition on the free variables' order and gap sizes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v2
+  design_choice: Use formulas where quantified variables are nested between free variables, so the solver
+    must infer which inter-variable gaps are forced to be zero or positive.
+- id: P009v3
+  hypothesis: P009
+  idea: finite_order_gap_elimination_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v3
+  instruction: |-
+    Author a new task from scratch: finite_order_gap_elimination_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Eliminate quantified variables from formulas over finite linear orders by reasoning about endpoint and inter-variable gaps; return an equivalent condition on the free variables' order and gap sizes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/finite_order_gap_elimination_v3
+- id: P010v1
+  hypothesis: P010
+  idea: bounded_model_amalgamation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v1
+  instruction: |-
+    Author a new task from scratch: bounded_model_amalgamation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine finite relational structures over a shared embedded substructure while preserving embeddings and supplied universal constraints; return the smallest permitted amalgam size or nonexistence within a bound.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v1
+  design_choice: 'Answers are a single integer: the minimal amalgam size, or the string NONE if no amalgam
+    of size at most the bound exists.'
+- id: P010v2
+  hypothesis: P010
+  idea: bounded_model_amalgamation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v2
+  instruction: |-
+    Author a new task from scratch: bounded_model_amalgamation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine finite relational structures over a shared embedded substructure while preserving embeddings and supplied universal constraints; return the smallest permitted amalgam size or nonexistence within a bound.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v2
+  design_choice: Instances specify the shared substructure implicitly via a list of tuples that must embed
+    identically in both input structures, rather than labeling the overlap explicitly.
+- id: P010v3
+  hypothesis: P010
+  idea: bounded_model_amalgamation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v3
+  instruction: |-
+    Author a new task from scratch: bounded_model_amalgamation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine finite relational structures over a shared embedded substructure while preserving embeddings and supplied universal constraints; return the smallest permitted amalgam size or nonexistence within a bound.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/bounded_model_amalgamation_v3
+- id: P011v1
+  hypothesis: P011
+  idea: team_semantics_evaluation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: team_semantics_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate formulas over sets of assignments using dependence, inclusion, independence, split disjunction, and quantified team extension; return satisfaction under the specified strict or lax semantics.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v1
+  design_choice: Generate instances as single quantified team formula strings with a fixed variable ordering
+    and random quantifier nesting; answer is a canonical 'true'/'false' string.
+- id: P011v2
+  hypothesis: P011
+  idea: team_semantics_evaluation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: team_semantics_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate formulas over sets of assignments using dependence, inclusion, independence, split disjunction, and quantified team extension; return satisfaction under the specified strict or lax semantics.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v2
+  design_choice: Provide a pre-built team as a list of assignment maps and a formula; answer is a single
+    integer code mapping to the satisfied semantic clause (e.g., dependence, inclusion, independence).
+- id: P011v3
+  hypothesis: P011
+  idea: team_semantics_evaluation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: team_semantics_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate formulas over sets of assignments using dependence, inclusion, independence, split disjunction, and quantified team extension; return satisfaction under the specified strict or lax semantics.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/team_semantics_evaluation_v3
+- id: P012v1
+  hypothesis: P012
+  idea: nominal_equation_solving_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v1
+  instruction: |-
+    Author a new task from scratch: nominal_equation_solving_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve equations between terms with atom binders, suspended permutations, and freshness constraints modulo alpha-equivalence; return inconsistency or the principal substitution and residual freshness conditions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v1
+  design_choice: Represent solutions as explicit substitution lists mapping variables to nominal terms,
+    with residual constraints as conjuncts of freshness atoms.
+- id: P012v2
+  hypothesis: P012
+  idea: nominal_equation_solving_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v2
+  instruction: |-
+    Author a new task from scratch: nominal_equation_solving_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve equations between terms with atom binders, suspended permutations, and freshness constraints modulo alpha-equivalence; return inconsistency or the principal substitution and residual freshness conditions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v2
+  design_choice: 'Return a canonical answer string: ''inconsistent'' or ''subst=[...]; fresh=[...]'',
+    where substitutions are sorted by variable name.'
+- id: P012v3
+  hypothesis: P012
+  idea: nominal_equation_solving_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v3
+  instruction: |-
+    Author a new task from scratch: nominal_equation_solving_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Solve equations between terms with atom binders, suspended permutations, and freshness constraints modulo alpha-equivalence; return inconsistency or the principal substitution and residual freshness conditions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_formal_logic_r1/nominal_equation_solving_v3

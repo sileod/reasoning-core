@@ -1,0 +1,256 @@
+version: 1
+name: ua_semantics_preserving_translation_r1
+proposal_wave: ua_semantics-preserving-translation
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: simplicial_operator_normalization_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v1
+  instruction: |-
+    Author a new task from scratch: simplicial_operator_normalization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Normalize composites of dimension-indexed face and degeneracy maps using index-shift and cancellation identities; return the canonical operator word or its omitted and repeated vertex indices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v1
+  design_choice: Return the canonical operator word as a string of alternating F/D symbols with explicit
+    integer indices, e.g., 'F0 D1 F2', after applying all cancellations and shifts.
+- id: P001v2
+  hypothesis: P001
+  idea: simplicial_operator_normalization_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v2
+  instruction: |-
+    Author a new task from scratch: simplicial_operator_normalization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Normalize composites of dimension-indexed face and degeneracy maps using index-shift and cancellation identities; return the canonical operator word or its omitted and repeated vertex indices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v2
+  design_choice: 'Return a pair of lists: omitted vertex indices (for face maps) and repeated vertex indices
+    (for degeneracy maps), each sorted ascending, from the fully simplified word.'
+- id: P001v3
+  hypothesis: P001
+  idea: simplicial_operator_normalization_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v3
+  instruction: |-
+    Author a new task from scratch: simplicial_operator_normalization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Normalize composites of dimension-indexed face and degeneracy maps using index-shift and cancellation identities; return the canonical operator word or its omitted and repeated vertex indices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/simplicial_operator_normalization_v3
+- id: P002v1
+  hypothesis: P002
+  idea: permutation_interval_inflation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v1
+  instruction: |-
+    Author a new task from scratch: permutation_interval_inflation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested permutation blocks whose parent ranks determine block value ranges and whose children determine internal order; vary block sizes and nesting, returning the expanded permutation or a queried image.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v1
+  design_choice: 'Answer format: return the full expanded permutation as a comma-separated list of integers,
+    with block sizes varying from 1 to 4 and nesting depth up to 3.'
+- id: P002v2
+  hypothesis: P002
+  idea: permutation_interval_inflation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v2
+  instruction: |-
+    Author a new task from scratch: permutation_interval_inflation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested permutation blocks whose parent ranks determine block value ranges and whose children determine internal order; vary block sizes and nesting, returning the expanded permutation or a queried image.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v2
+  design_choice: 'Answer format: given a query index, return the single image integer at that position
+    in the expanded permutation, with block sizes and nesting chosen so the queried position falls inside
+    a nested block.'
+- id: P002v3
+  hypothesis: P002
+  idea: permutation_interval_inflation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v3
+  instruction: |-
+    Author a new task from scratch: permutation_interval_inflation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested permutation blocks whose parent ranks determine block value ranges and whose children determine internal order; vary block sizes and nesting, returning the expanded permutation or a queried image.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/permutation_interval_inflation_v3
+- id: P003v1
+  hypothesis: P003
+  idea: graph_local_complementation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v1
+  instruction: |-
+    Author a new task from scratch: graph_local_complementation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply sequences of neighborhood complementation, edge pivots, and vertex deletion to labeled simple graphs; track changing neighborhoods and return the surviving edges or a queried adjacency.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v1
+  design_choice: Use a fixed sequence of exactly k operations (mix of local complementation, edge pivot,
+    deletion) applied to a random 6-vertex graph, and ask for the set of surviving edges as a canonical
+    sorted tuple of vertex-pair strings.
+- id: P003v2
+  hypothesis: P003
+  idea: graph_local_complementation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v2
+  instruction: |-
+    Author a new task from scratch: graph_local_complementation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply sequences of neighborhood complementation, edge pivots, and vertex deletion to labeled simple graphs; track changing neighborhoods and return the surviving edges or a queried adjacency.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v2
+  design_choice: Query a single adjacency between two named vertices after the operation sequence; the
+    answer is a boolean 'yes' or 'no', with the difficulty coming from tracking how the operation sequence
+    transforms that specific edge.
+- id: P003v3
+  hypothesis: P003
+  idea: graph_local_complementation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v3
+  instruction: |-
+    Author a new task from scratch: graph_local_complementation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply sequences of neighborhood complementation, edge pivots, and vertex deletion to labeled simple graphs; track changing neighborhoods and return the surviving edges or a queried adjacency.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/graph_local_complementation_v3
+- id: P004v1
+  hypothesis: P004
+  idea: multiport_wave_relation_translation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v1
+  instruction: "Author a new task from scratch: multiport_wave_relation_translation_v1.\n\nCover exactly\
+    \ this, and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Convert\
+    \ coupled voltage\xE2\x80\x93current equations to incident/reflected wave constraints and back under\
+    \ stated reference impedances; answer equivalent relations, including shorts, opens, and singular\
+    \ ports.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v1
+  design_choice: 'Answer format: output a canonical sequence of two scalar equations, each as a fraction
+    or integer, encoding the relation between incident and reflected wave amplitudes at each port.'
+- id: P004v2
+  hypothesis: P004
+  idea: multiport_wave_relation_translation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v2
+  instruction: "Author a new task from scratch: multiport_wave_relation_translation_v2.\n\nCover exactly\
+    \ this, and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Convert\
+    \ coupled voltage\xE2\x80\x93current equations to incident/reflected wave constraints and back under\
+    \ stated reference impedances; answer equivalent relations, including shorts, opens, and singular\
+    \ ports.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v2
+  design_choice: 'Instance generation: randomly assign one port to be shorted, one to be open, and the
+    rest resistive; the solver must detect and express the corresponding wave constraint (a=-b, a=b, or
+    ratio) as the answer.'
+- id: P004v3
+  hypothesis: P004
+  idea: multiport_wave_relation_translation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v3
+  instruction: "Author a new task from scratch: multiport_wave_relation_translation_v3.\n\nCover exactly\
+    \ this, and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Convert\
+    \ coupled voltage\xE2\x80\x93current equations to incident/reflected wave constraints and back under\
+    \ stated reference impedances; answer equivalent relations, including shorts, opens, and singular\
+    \ ports.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_semantics_preserving_translation_r1/multiport_wave_relation_translation_v3

@@ -1,0 +1,667 @@
+version: 1
+name: ua_global_over_greedy_r1
+proposal_wave: ua_global-over-greedy
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: frustrated_interaction_ground_states_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v1
+  instruction: |-
+    Author a new task from scratch: frustrated_interaction_ground_states_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Minimize total energy for finite-valued sites with competing pairwise and higher-order interactions, external biases, and pinned values; answer the minimum energy or site values shared by every minimizer.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v1
+  design_choice: Represent each site as a ternary spin (-1,0,+1) with pairwise couplings favoring unlike
+    signs and a three-body term penalizing all-equal triples, asking for the ground-state energy as an
+    integer.
+- id: P001v2
+  hypothesis: P001
+  idea: frustrated_interaction_ground_states_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v2
+  instruction: |-
+    Author a new task from scratch: frustrated_interaction_ground_states_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Minimize total energy for finite-valued sites with competing pairwise and higher-order interactions, external biases, and pinned values; answer the minimum energy or site values shared by every minimizer.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v2
+  design_choice: Use binary variables with random sparse hyperedges of size 3, each carrying a random
+    sign and weight, plus random local fields and a small set of pinned sites, asking for the forced values
+    that appear in all optimal assignments.
+- id: P001v3
+  hypothesis: P001
+  idea: frustrated_interaction_ground_states_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v3
+  instruction: |-
+    Author a new task from scratch: frustrated_interaction_ground_states_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Minimize total energy for finite-valued sites with competing pairwise and higher-order interactions, external biases, and pinned values; answer the minimum energy or site values shared by every minimizer.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/frustrated_interaction_ground_states_v3
+- id: P002v1
+  hypothesis: P002
+  idea: coalitional_payoff_stability_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v1
+  instruction: |-
+    Author a new task from scratch: coalitional_payoff_stability_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Allocate a fixed surplus under overlapping coalitions' blocking thresholds, individual guarantees, and payoff caps; answer whether a stable allocation exists or the tight payoff range for one member.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v1
+  design_choice: 'Vary coalition structures: use only pairwise coalitions vs. overlapping triples vs.
+    nested hierarchies, altering blocking complexity.'
+- id: P002v2
+  hypothesis: P002
+  idea: coalitional_payoff_stability_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v2
+  instruction: |-
+    Author a new task from scratch: coalitional_payoff_stability_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Allocate a fixed surplus under overlapping coalitions' blocking thresholds, individual guarantees, and payoff caps; answer whether a stable allocation exists or the tight payoff range for one member.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v2
+  design_choice: 'Answer form: binary existence only vs. a single member''s tight interval with integer
+    endpoints, forcing range derivation.'
+- id: P002v3
+  hypothesis: P002
+  idea: coalitional_payoff_stability_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v3
+  instruction: |-
+    Author a new task from scratch: coalitional_payoff_stability_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Allocate a fixed surplus under overlapping coalitions' blocking thresholds, individual guarantees, and payoff caps; answer whether a stable allocation exists or the tight payoff range for one member.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/coalitional_payoff_stability_v3
+- id: P003v1
+  hypothesis: P003
+  idea: catalytic_majorization_search_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v1
+  instruction: |-
+    Author a new task from scratch: catalytic_majorization_search_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find an auxiliary probability vector whose tensor product enables a specified majorization relation; vary dimension bounds, denominator bounds, and fixed coordinates; answer the minimum feasible dimension or none.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v1
+  design_choice: 'Answer as a single integer: the smallest auxiliary dimension d such that a rational
+    probability vector of length d with denominator at most D exists, or 0 if none.'
+- id: P003v2
+  hypothesis: P003
+  idea: catalytic_majorization_search_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v2
+  instruction: |-
+    Author a new task from scratch: catalytic_majorization_search_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find an auxiliary probability vector whose tensor product enables a specified majorization relation; vary dimension bounds, denominator bounds, and fixed coordinates; answer the minimum feasible dimension or none.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v2
+  design_choice: Answer as a canonical string 'd:k' where d is the minimal dimension and k is the minimal
+    denominator bound achieving feasibility, or 'none' if impossible.
+- id: P003v3
+  hypothesis: P003
+  idea: catalytic_majorization_search_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v3
+  instruction: |-
+    Author a new task from scratch: catalytic_majorization_search_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find an auxiliary probability vector whose tensor product enables a specified majorization relation; vary dimension bounds, denominator bounds, and fixed coordinates; answer the minimum feasible dimension or none.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/catalytic_majorization_search_v3
+- id: P004v1
+  hypothesis: P004
+  idea: parametric_root_stability_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v1
+  instruction: |-
+    Author a new task from scratch: parametric_root_stability_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Locate every parameter value where a polynomial has all roots in the open left half-plane or unit disk; vary polynomial coefficient dependence, repeated roots, and vanishing leading terms; answer the complete stability region.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v1
+  design_choice: Parameter space is a 1D interval; answer as a sorted list of maximal open intervals where
+    stability holds, with endpoints given as exact rationals or radicals.
+- id: P004v2
+  hypothesis: P004
+  idea: parametric_root_stability_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v2
+  instruction: |-
+    Author a new task from scratch: parametric_root_stability_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Locate every parameter value where a polynomial has all roots in the open left half-plane or unit disk; vary polynomial coefficient dependence, repeated roots, and vanishing leading terms; answer the complete stability region.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v2
+  design_choice: Parameter space is a 2D grid; answer as the set of grid points (integer coordinates)
+    that are stable, encoded as a compact list of (x,y) pairs.
+- id: P004v3
+  hypothesis: P004
+  idea: parametric_root_stability_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v3
+  instruction: |-
+    Author a new task from scratch: parametric_root_stability_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Locate every parameter value where a polynomial has all roots in the open left half-plane or unit disk; vary polynomial coefficient dependence, repeated roots, and vanishing leading terms; answer the complete stability region.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/parametric_root_stability_v3
+- id: P005v1
+  hypothesis: P005
+  idea: unilateral_contact_equilibrium_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v1
+  instruction: |-
+    Author a new task from scratch: unilateral_contact_equilibrium_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Balance coupled forces and torques across rigid bodies with unilateral contacts and rational friction cones; decide static feasibility or the largest admissible load multiplier.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v1
+  design_choice: Represent bodies as 2D polygons and contacts as point pairs; answer is yes/no for static
+    equilibrium under given external forces.
+- id: P005v2
+  hypothesis: P005
+  idea: unilateral_contact_equilibrium_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v2
+  instruction: |-
+    Author a new task from scratch: unilateral_contact_equilibrium_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Balance coupled forces and torques across rigid bodies with unilateral contacts and rational friction cones; decide static feasibility or the largest admissible load multiplier.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v2
+  design_choice: Use a 3D assembly of blocks with prescribed friction coefficients; answer is the maximal
+    scalar load multiplier as an exact rational.
+- id: P005v3
+  hypothesis: P005
+  idea: unilateral_contact_equilibrium_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v3
+  instruction: |-
+    Author a new task from scratch: unilateral_contact_equilibrium_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Balance coupled forces and torques across rigid bodies with unilateral contacts and rational friction cones; decide static feasibility or the largest admissible load multiplier.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/unilateral_contact_equilibrium_v3
+- id: P006v1
+  hypothesis: P006
+  idea: universal_matrix_identity_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v1
+  instruction: |-
+    Author a new task from scratch: universal_matrix_identity_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide whether expressions vanish under every matrix substitution of a stated dimension; combine commutators, products, alternating sums and trace factors, answering identity or nonidentity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v1
+  design_choice: Generate instances from random noncommutative polynomials with coefficients in a finite
+    field, where the answer is identity iff the polynomial evaluates to zero on all matrices over that
+    field, verified by brute force for small dimensions.
+- id: P006v2
+  hypothesis: P006
+  idea: universal_matrix_identity_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v2
+  instruction: |-
+    Author a new task from scratch: universal_matrix_identity_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide whether expressions vanish under every matrix substitution of a stated dimension; combine commutators, products, alternating sums and trace factors, answering identity or nonidentity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v2
+  design_choice: Vary the matrix dimension across instances (e.g., 2x2, 3x3, 4x4) and use symbolic trace
+    identities like the Cayley-Hamilton theorem to decide vanishing, with nonidentity cases constructed
+    by substitutions that yield nonzero traces.
+- id: P006v3
+  hypothesis: P006
+  idea: universal_matrix_identity_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v3
+  instruction: |-
+    Author a new task from scratch: universal_matrix_identity_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide whether expressions vanish under every matrix substitution of a stated dimension; combine commutators, products, alternating sums and trace factors, answering identity or nonidentity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/universal_matrix_identity_v3
+- id: P007v1
+  hypothesis: P007
+  idea: singular_residue_lift_survival_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v1
+  instruction: |-
+    Author a new task from scratch: singular_residue_lift_survival_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine which polynomial roots modulo a prime survive to a specified prime power; track singular branching, merging descriptions and dead ends, returning surviving residues or descendant counts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v1
+  design_choice: Return a canonical list of all distinct residue classes mod p^k that lift a given root
+    mod p, sorted ascending, with empty list for dead ends.
+- id: P007v2
+  hypothesis: P007
+  idea: singular_residue_lift_survival_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v2
+  instruction: |-
+    Author a new task from scratch: singular_residue_lift_survival_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine which polynomial roots modulo a prime survive to a specified prime power; track singular branching, merging descriptions and dead ends, returning surviving residues or descendant counts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v2
+  design_choice: Return the total number of distinct lifts to mod p^k for each root, as a space-separated
+    list of integers in root order.
+- id: P007v3
+  hypothesis: P007
+  idea: singular_residue_lift_survival_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v3
+  instruction: |-
+    Author a new task from scratch: singular_residue_lift_survival_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine which polynomial roots modulo a prime survive to a specified prime power; track singular branching, merging descriptions and dead ends, returning surviving residues or descendant counts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/singular_residue_lift_survival_v3
+- id: P008v1
+  hypothesis: P008
+  idea: scissors_congruence_obstruction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v1
+  instruction: |-
+    Author a new task from scratch: scissors_congruence_obstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide scissors congruence of polyhedra from volumes and exact edge-length and dihedral-angle bases; reduce global tensor invariants, including cancellations across unequal edge types.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v1
+  design_choice: Answer is a canonical yes/no string, with instances balanced so each label occurs roughly
+    half the time across the level.
+- id: P008v2
+  hypothesis: P008
+  idea: scissors_congruence_obstruction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v2
+  instruction: |-
+    Author a new task from scratch: scissors_congruence_obstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide scissors congruence of polyhedra from volumes and exact edge-length and dihedral-angle bases; reduce global tensor invariants, including cancellations across unequal edge types.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v2
+  design_choice: Instances present two polyhedra; solver must output a canonical invariant tuple (e.g.,
+    sorted rational volume and tensor ranks) that differs iff non-congruent.
+- id: P008v3
+  hypothesis: P008
+  idea: scissors_congruence_obstruction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v3
+  instruction: |-
+    Author a new task from scratch: scissors_congruence_obstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide scissors congruence of polyhedra from volumes and exact edge-length and dihedral-angle bases; reduce global tensor invariants, including cancellations across unequal edge types.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/scissors_congruence_obstruction_v3
+- id: P009v1
+  hypothesis: P009
+  idea: weighted_vote_realization_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v1
+  instruction: |-
+    Author a new task from scratch: weighted_vote_realization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Realize coalition constraints with nonnegative integer weights and one quota; vary complete winning labels, boundary antichains, and partial labels; answer the least total weight or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v1
+  design_choice: Instances give a partial labeling over voters plus a set of complete winning coalitions;
+    the solver must find the minimum total weight realizing all labels and coalition constraints, or report
+    impossible.
+- id: P009v2
+  hypothesis: P009
+  idea: weighted_vote_realization_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v2
+  instruction: |-
+    Author a new task from scratch: weighted_vote_realization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Realize coalition constraints with nonnegative integer weights and one quota; vary complete winning labels, boundary antichains, and partial labels; answer the least total weight or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v2
+  design_choice: Instances present an antichain of minimal winning coalitions and a partial labeling;
+    the answer is the least integer quota and weight vector consistent with both, or 'impossible'.
+- id: P009v3
+  hypothesis: P009
+  idea: weighted_vote_realization_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v3
+  instruction: |-
+    Author a new task from scratch: weighted_vote_realization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Realize coalition constraints with nonnegative integer weights and one quota; vary complete winning labels, boundary antichains, and partial labels; answer the least total weight or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/weighted_vote_realization_v3
+- id: P010v1
+  hypothesis: P010
+  idea: projective_phase_obstruction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v1
+  instruction: |-
+    Author a new task from scratch: projective_phase_obstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether modular phase defects in finite-group multiplication can be removed by globally consistent rephasing; vary groups and phase moduli, answering liftability or obstruction order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v1
+  design_choice: Instances give a finite group multiplication table with a modular phase function mod
+    n; answer is 'liftable' iff the phase is a 2-coboundary in group cohomology, with n varying across
+    primes and composites.
+- id: P010v2
+  hypothesis: P010
+  idea: projective_phase_obstruction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v2
+  instruction: |-
+    Author a new task from scratch: projective_phase_obstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether modular phase defects in finite-group multiplication can be removed by globally consistent rephasing; vary groups and phase moduli, answering liftability or obstruction order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v2
+  design_choice: Instances specify a group presentation and a phase rule on generators; answer is the
+    minimal positive integer k such that the k-th power of the phase becomes a coboundary, with k reported
+    as a canonical integer.
+- id: P010v3
+  hypothesis: P010
+  idea: projective_phase_obstruction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v3
+  instruction: |-
+    Author a new task from scratch: projective_phase_obstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether modular phase defects in finite-group multiplication can be removed by globally consistent rephasing; vary groups and phase moduli, answering liftability or obstruction order.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/projective_phase_obstruction_v3
+- id: P011v1
+  hypothesis: P011
+  idea: representation_composition_multiplicity_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v1
+  instruction: |-
+    Author a new task from scratch: representation_composition_multiplicity_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve nested tensor, symmetric and exterior powers of finite-group representations into irreducibles using supplied character tables; return a target multiplicity after global cancellation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v1
+  design_choice: Use real-valued character tables with irrational entries; answers are integer multiplicities
+    after global cancellation.
+- id: P011v2
+  hypothesis: P011
+  idea: representation_composition_multiplicity_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v2
+  instruction: |-
+    Author a new task from scratch: representation_composition_multiplicity_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve nested tensor, symmetric and exterior powers of finite-group representations into irreducibles using supplied character tables; return a target multiplicity after global cancellation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v2
+  design_choice: Present the target as a specific irreducible label and ask for its multiplicity in the
+    fully reduced tensor power.
+- id: P011v3
+  hypothesis: P011
+  idea: representation_composition_multiplicity_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v3
+  instruction: |-
+    Author a new task from scratch: representation_composition_multiplicity_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve nested tensor, symmetric and exterior powers of finite-group representations into irreducibles using supplied character tables; return a target multiplicity after global cancellation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_global_over_greedy_r1/representation_composition_multiplicity_v3

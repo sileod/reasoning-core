@@ -1,0 +1,664 @@
+version: 1
+name: k3_operations_research_r3
+proposal_wave: k3_operations-research
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  - P012v1
+  v2:
+  - P001v2
+  - P002v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  - P012v2
+  v3:
+  - P001v3
+  - P002v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  - P012v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: dpll_clause_search_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v1
+  instruction: |-
+    Author a new task from scratch: dpll_clause_search_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Drive DPLL over small CNF instances: propagate unit clauses, collapse pure literals, branch with backtracking; answer a satisfying assignment, the literals in decision order, an UNSAT verdict, or the first conflicting clause.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v1
+  design_choice: 'Answer format: a compact canonical string listing variable assignments in order, e.g.,
+    ''x1=1,x2=0,x3=1'', with UNSAT as the literal string ''UNSAT''.'
+- id: P001v2
+  hypothesis: P001
+  idea: dpll_clause_search_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v2
+  instruction: |-
+    Author a new task from scratch: dpll_clause_search_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Drive DPLL over small CNF instances: propagate unit clauses, collapse pure literals, branch with backtracking; answer a satisfying assignment, the literals in decision order, an UNSAT verdict, or the first conflicting clause.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v2
+  design_choice: 'Instance generation: random 3-CNF with n=4-8 variables and m=8-15 clauses, ensuring
+    both satisfiable and unsatisfiable instances appear equally per level.'
+- id: P001v3
+  hypothesis: P001
+  idea: dpll_clause_search_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v3
+  instruction: |-
+    Author a new task from scratch: dpll_clause_search_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Drive DPLL over small CNF instances: propagate unit clauses, collapse pure literals, branch with backtracking; answer a satisfying assignment, the literals in decision order, an UNSAT verdict, or the first conflicting clause.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/dpll_clause_search_v3
+- id: P002v1
+  hypothesis: P002
+  idea: prenex_skolem_clause_form_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v1
+  instruction: |-
+    Author a new task from scratch: prenex_skolem_clause_form_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert a first-order formula to clause form through negation normal form, prenex rearrangement, arity-correct Skolemization, and distribution; answer the final clause set or the Skolem term introduced for a given quantifier.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v1
+  design_choice: 'Answer format: return the full clause set as a semicolon-separated list of disjunctions,
+    with variables standardized apart and no duplicate clauses.'
+- id: P002v2
+  hypothesis: P002
+  idea: prenex_skolem_clause_form_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v2
+  instruction: |-
+    Author a new task from scratch: prenex_skolem_clause_form_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert a first-order formula to clause form through negation normal form, prenex rearrangement, arity-correct Skolemization, and distribution; answer the final clause set or the Skolem term introduced for a given quantifier.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v2
+  design_choice: 'Answer format: given a specific existentially quantified variable name, return only
+    the Skolem function term (with arguments) introduced for it, not the whole clause set.'
+- id: P002v3
+  hypothesis: P002
+  idea: prenex_skolem_clause_form_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v3
+  instruction: |-
+    Author a new task from scratch: prenex_skolem_clause_form_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert a first-order formula to clause form through negation normal form, prenex rearrangement, arity-correct Skolemization, and distribution; answer the final clause set or the Skolem term introduced for a given quantifier.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/prenex_skolem_clause_form_v3
+- id: P004v1
+  hypothesis: P004
+  idea: nested_fare_protection_levels_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v1
+  instruction: |-
+    Author a new task from scratch: nested_fare_protection_levels_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Set nested booking limits for fare classes sharing a cabin: walk each demand table to the fractile where expected marginal revenue meets the next fare down; answers are the nested protection levels or one class's availability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v1
+  design_choice: Choose whether the answer is the full nested protection vector for all classes or only
+    the protection level for the highest class.
+- id: P004v2
+  hypothesis: P004
+  idea: nested_fare_protection_levels_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v2
+  instruction: |-
+    Author a new task from scratch: nested_fare_protection_levels_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Set nested booking limits for fare classes sharing a cabin: walk each demand table to the fractile where expected marginal revenue meets the next fare down; answers are the nested protection levels or one class's availability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v2
+  design_choice: Vary the difficulty by fixing the number of fare classes (e.g., 3 vs 5) and the demand
+    distribution shape (normal vs uniform) across instances.
+- id: P004v3
+  hypothesis: P004
+  idea: nested_fare_protection_levels_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v3
+  instruction: |-
+    Author a new task from scratch: nested_fare_protection_levels_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Set nested booking limits for fare classes sharing a cabin: walk each demand table to the fractile where expected marginal revenue meets the next fare down; answers are the nested protection levels or one class's availability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/nested_fare_protection_levels_v3
+- id: P005v1
+  hypothesis: P005
+  idea: dynamic_lot_sizing_plan_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v1
+  instruction: |-
+    Author a new task from scratch: dynamic_lot_sizing_plan_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan production over a horizon with setup and holding costs: a forward pass weighs producing now against carrying stock from an earlier setup; answers are production periods, minimal cost, or stock crossing a given boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v1
+  design_choice: Answer as the set of production periods, with instances differing in whether setup costs
+    dominate holding costs or vice versa to shift difficulty between combinatorial selection and cost
+    arithmetic.
+- id: P005v2
+  hypothesis: P005
+  idea: dynamic_lot_sizing_plan_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v2
+  instruction: |-
+    Author a new task from scratch: dynamic_lot_sizing_plan_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan production over a horizon with setup and holding costs: a forward pass weighs producing now against carrying stock from an earlier setup; answers are production periods, minimal cost, or stock crossing a given boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v2
+  design_choice: Answer as the minimal total cost, with instances requiring the solver to trace a forward
+    pass across a horizon where demand spikes force multiple setups and holding costs accumulate over
+    long gaps.
+- id: P005v3
+  hypothesis: P005
+  idea: dynamic_lot_sizing_plan_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v3
+  instruction: |-
+    Author a new task from scratch: dynamic_lot_sizing_plan_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan production over a horizon with setup and holding costs: a forward pass weighs producing now against carrying stock from an earlier setup; answers are production periods, minimal cost, or stock crossing a given boundary.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/dynamic_lot_sizing_plan_v3
+- id: P006v1
+  hypothesis: P006
+  idea: maxmin_waterfilling_allocation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v1
+  instruction: |-
+    Author a new task from scratch: maxmin_waterfilling_allocation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Share a scarce divisible resource by raising unsatisfied claims toward one level until caps or supply bind: freeze saturated claims and re-level the remainder; answers are the allocation vector or each claim's freezing level.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v1
+  design_choice: Present claims as integer amounts and supply as an integer; answers are exact integer
+    allocations, with ties broken by freezing lower-index claims first.
+- id: P006v2
+  hypothesis: P006
+  idea: maxmin_waterfilling_allocation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v2
+  instruction: |-
+    Author a new task from scratch: maxmin_waterfilling_allocation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Share a scarce divisible resource by raising unsatisfied claims toward one level until caps or supply bind: freeze saturated claims and re-level the remainder; answers are the allocation vector or each claim's freezing level.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v2
+  design_choice: Frame the resource as water units and claims as tank capacities; answers list each tank's
+    final water level as a reduced fraction of the common level.
+- id: P006v3
+  hypothesis: P006
+  idea: maxmin_waterfilling_allocation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v3
+  instruction: |-
+    Author a new task from scratch: maxmin_waterfilling_allocation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Share a scarce divisible resource by raising unsatisfied claims toward one level until caps or supply bind: freeze saturated claims and re-level the remainder; answers are the allocation vector or each claim's freezing level.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/maxmin_waterfilling_allocation_v3
+- id: P007v1
+  hypothesis: P007
+  idea: penalty_recomputed_transport_assignment_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v1
+  instruction: |-
+    Author a new task from scratch: penalty_recomputed_transport_assignment_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recompute row/column two-smallest-cost penalties each round, commit the largest-penalty line to saturating its cheapest cell until exhaustion; answers are the allocation map, total cost, or the final degenerate cell.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v1
+  design_choice: 'Answer as an allocation map: a canonical list of (row, column, amount) triples sorted
+    by row then column, with fractional amounts as reduced fractions.'
+- id: P007v2
+  hypothesis: P007
+  idea: penalty_recomputed_transport_assignment_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v2
+  instruction: |-
+    Author a new task from scratch: penalty_recomputed_transport_assignment_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recompute row/column two-smallest-cost penalties each round, commit the largest-penalty line to saturating its cheapest cell until exhaustion; answers are the allocation map, total cost, or the final degenerate cell.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v2
+  design_choice: 'Answer as the total cost only: a single reduced fraction or integer computed from the
+    final allocation, omitting the map itself.'
+- id: P007v3
+  hypothesis: P007
+  idea: penalty_recomputed_transport_assignment_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v3
+  instruction: |-
+    Author a new task from scratch: penalty_recomputed_transport_assignment_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recompute row/column two-smallest-cost penalties each round, commit the largest-penalty line to saturating its cheapest cell until exhaustion; answers are the allocation map, total cost, or the final degenerate cell.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/penalty_recomputed_transport_assignment_v3
+- id: P008v1
+  hypothesis: P008
+  idea: mrp_order_release_explosion_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v1
+  instruction: |-
+    Author a new task from scratch: mrp_order_release_explosion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Explode multilevel BOM demand through lead-time offsets, on-hand/receipt netting and lot-for-lot, fixed, or period-quantity rules; answers are planned order releases, ending inventories, or first shortage period.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v1
+  design_choice: 'Answer as a single integer: the period index (1-based) of the first shortage, with 0
+    if never short, under netting and lot-for-lot with zero lead times.'
+- id: P008v2
+  hypothesis: P008
+  idea: mrp_order_release_explosion_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v2
+  instruction: |-
+    Author a new task from scratch: mrp_order_release_explosion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Explode multilevel BOM demand through lead-time offsets, on-hand/receipt netting and lot-for-lot, fixed, or period-quantity rules; answers are planned order releases, ending inventories, or first shortage period.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v2
+  design_choice: 'Answer as a comma-separated list of integers: planned order release quantities for each
+    period, where the list length equals the planning horizon, with fixed lot sizing and lead-time offsets.'
+- id: P008v3
+  hypothesis: P008
+  idea: mrp_order_release_explosion_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v3
+  instruction: |-
+    Author a new task from scratch: mrp_order_release_explosion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Explode multilevel BOM demand through lead-time offsets, on-hand/receipt netting and lot-for-lot, fixed, or period-quantity rules; answers are planned order releases, ending inventories, or first shortage period.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/mrp_order_release_explosion_v3
+- id: P009v1
+  hypothesis: P009
+  idea: tiered_price_lot_clipping_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v1
+  instruction: |-
+    Author a new task from scratch: tiered_price_lot_clipping_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      For stepped unit prices, form each tier's unconstrained economic lot, clip into its price interval, and compare total costs at surviving tiers and breakpoints; answers are optimal lot size, total cost, and the losing breakpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v1
+  design_choice: Vary the number of price tiers from 2 to 6, and for each tier, randomly generate breakpoints
+    and unit prices so that the unconstrained lot for at least two tiers falls inside its interval, forcing
+    comparisons at multiple interior points.
+- id: P009v2
+  hypothesis: P009
+  idea: tiered_price_lot_clipping_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v2
+  instruction: |-
+    Author a new task from scratch: tiered_price_lot_clipping_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      For stepped unit prices, form each tier's unconstrained economic lot, clip into its price interval, and compare total costs at surviving tiers and breakpoints; answers are optimal lot size, total cost, and the losing breakpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v2
+  design_choice: Vary the number of price tiers from 2 to 5, with each tier's interval width and unit
+    price chosen so the unconstrained lot falls outside the interval for some tiers, forcing clipping
+    and breakpoint comparisons.
+- id: P009v3
+  hypothesis: P009
+  idea: tiered_price_lot_clipping_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v3
+  instruction: |-
+    Author a new task from scratch: tiered_price_lot_clipping_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      For stepped unit prices, form each tier's unconstrained economic lot, clip into its price interval, and compare total costs at surviving tiers and breakpoints; answers are optimal lot size, total cost, and the losing breakpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/tiered_price_lot_clipping_v3
+- id: P010v1
+  hypothesis: P010
+  idea: pivot_rotation_fixture_building_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v1
+  instruction: |-
+    Author a new task from scratch: pivot_rotation_fixture_building_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rotate all but one team around a fixed pivot to emit round pairings, set venues by position parity, optionally mirror rounds for a double season; answers are a round's pairings, a team's home/away string, and break count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v1
+  design_choice: Pivot team is the lowest-index team; rotation order is cyclic left-shift of the remaining
+    teams, with pairings listed as (pivot, other) first.
+- id: P010v2
+  hypothesis: P010
+  idea: pivot_rotation_fixture_building_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v2
+  instruction: |-
+    Author a new task from scratch: pivot_rotation_fixture_building_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rotate all but one team around a fixed pivot to emit round pairings, set venues by position parity, optionally mirror rounds for a double season; answers are a round's pairings, a team's home/away string, and break count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v2
+  design_choice: Pivot team is fixed to team 0; rotation direction alternates each round, and pairings
+    are sorted by the non-pivot team's index within each round.
+- id: P010v3
+  hypothesis: P010
+  idea: pivot_rotation_fixture_building_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v3
+  instruction: |-
+    Author a new task from scratch: pivot_rotation_fixture_building_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rotate all but one team around a fixed pivot to emit round pairings, set venues by position parity, optionally mirror rounds for a double season; answers are a round's pairings, a team's home/away string, and break count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/pivot_rotation_fixture_building_v3
+- id: P011v1
+  hypothesis: P011
+  idea: savings_ordered_route_merging_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v1
+  instruction: |-
+    Author a new task from scratch: savings_ordered_route_merging_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Merge single-stop routes by descending depot savings under capacity, joining only at route ends and flipping orientation as needed; answers are the final routes, total distance, or which profitable merge was blocked first.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v1
+  design_choice: 'Instance format: nodes on a line with depot at 0 and all demands equal to 1, so capacity
+    constraints reduce to route length limits and savings are simply inter-customer distances.'
+- id: P011v2
+  hypothesis: P011
+  idea: savings_ordered_route_merging_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v2
+  instruction: |-
+    Author a new task from scratch: savings_ordered_route_merging_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Merge single-stop routes by descending depot savings under capacity, joining only at route ends and flipping orientation as needed; answers are the final routes, total distance, or which profitable merge was blocked first.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v2
+  design_choice: 'Answer form: output the sequence of merge decisions as a list of route-pair indices
+    in the order they are attempted, with ''blocked'' markers for infeasible merges.'
+- id: P011v3
+  hypothesis: P011
+  idea: savings_ordered_route_merging_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v3
+  instruction: |-
+    Author a new task from scratch: savings_ordered_route_merging_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Merge single-stop routes by descending depot savings under capacity, joining only at route ends and flipping orientation as needed; answers are the final routes, total distance, or which profitable merge was blocked first.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/savings_ordered_route_merging_v3
+- id: P012v1
+  hypothesis: P012
+  idea: unary_resource_edge_finding_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v1
+  instruction: |-
+    Author a new task from scratch: unary_resource_edge_finding_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate load on a unary resource: from release dates, deadlines and durations, run overload and edge-finding passes that tighten time windows; answers are a task's tightened bound or the subset forcing an update.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v1
+  design_choice: 'Answer format: report only the tightened earliest start of a designated task, with instances
+    balanced across which task is queried.'
+- id: P012v2
+  hypothesis: P012
+  idea: unary_resource_edge_finding_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v2
+  instruction: |-
+    Author a new task from scratch: unary_resource_edge_finding_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate load on a unary resource: from release dates, deadlines and durations, run overload and edge-finding passes that tighten time windows; answers are a task's tightened bound or the subset forcing an update.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v2
+  design_choice: 'Answer format: report the minimal subset of tasks whose cumulative duration proves a
+    given task''s deadline must move earlier.'
+- id: P012v3
+  hypothesis: P012
+  idea: unary_resource_edge_finding_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v3
+  instruction: |-
+    Author a new task from scratch: unary_resource_edge_finding_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate load on a unary resource: from release dates, deadlines and durations, run overload and edge-finding passes that tighten time windows; answers are a task's tightened bound or the subset forcing an update.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_operations_research_r3/unary_resource_edge_finding_v3

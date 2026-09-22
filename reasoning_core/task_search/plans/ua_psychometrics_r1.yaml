@@ -1,0 +1,428 @@
+version: 1
+name: ua_psychometrics_r1
+proposal_wave: ua_psychometrics
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: exemplar_similarity_generalization_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v1
+  instruction: |-
+    Author a new task from scratch: exemplar_similarity_generalization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify novel stimuli by summed similarity to remembered exemplars; vary feature weights, missing dimensions, exemplar frequencies, and similarity kernels; answer the winning category or evidence margin.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v1
+  design_choice: Answer the winning category name only, with category labels drawn from a fixed small
+    set and balanced across trials.
+- id: P001v2
+  hypothesis: P001
+  idea: exemplar_similarity_generalization_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v2
+  instruction: |-
+    Author a new task from scratch: exemplar_similarity_generalization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify novel stimuli by summed similarity to remembered exemplars; vary feature weights, missing dimensions, exemplar frequencies, and similarity kernels; answer the winning category or evidence margin.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v2
+  design_choice: Answer a signed evidence margin as a fraction (e.g., -3/5) computed from summed similarities,
+    with signs indicating the winning category.
+- id: P001v3
+  hypothesis: P001
+  idea: exemplar_similarity_generalization_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v3
+  instruction: |-
+    Author a new task from scratch: exemplar_similarity_generalization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify novel stimuli by summed similarity to remembered exemplars; vary feature weights, missing dimensions, exemplar frequencies, and similarity kernels; answer the winning category or evidence margin.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/exemplar_similarity_generalization_v3
+- id: P003v1
+  hypothesis: P003
+  idea: process_dissociation_routes_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v1
+  instruction: |-
+    Author a new task from scratch: process_dissociation_routes_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate controlled recollection from automatic influence using inclusion and exclusion outcomes; vary independent serial or parallel automatic routes and shared components; answer route probabilities or feasibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v1
+  design_choice: Answer as a reduced fraction for the probability that a given trial is attributed to
+    a specified automatic route, given inclusion/exclusion hit rates and route independence.
+- id: P003v2
+  hypothesis: P003
+  idea: process_dissociation_routes_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v2
+  instruction: |-
+    Author a new task from scratch: process_dissociation_routes_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate controlled recollection from automatic influence using inclusion and exclusion outcomes; vary independent serial or parallel automatic routes and shared components; answer route probabilities or feasibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v2
+  design_choice: Answer as a canonical feasibility string listing which automatic routes can produce the
+    observed inclusion/exclusion pattern, e.g., 'serial-A;parallel-B'.
+- id: P003v3
+  hypothesis: P003
+  idea: process_dissociation_routes_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v3
+  instruction: |-
+    Author a new task from scratch: process_dissociation_routes_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate controlled recollection from automatic influence using inclusion and exclusion outcomes; vary independent serial or parallel automatic routes and shared components; answer route probabilities or feasibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/process_dissociation_routes_v3
+- id: P004v1
+  hypothesis: P004
+  idea: partitioned_block_surface_signatures_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v1
+  instruction: |-
+    Author a new task from scratch: partitioned_block_surface_signatures_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate face markings through paint, mask, cut, and repaint stages on blocks with uneven partitions; return the number of pieces bearing a requested combination of marked and cut faces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v1
+  design_choice: Vary the order and repetition of paint, mask, cut, and repaint stages across instances,
+    with the requested combination only present in some stages.
+- id: P004v2
+  hypothesis: P004
+  idea: partitioned_block_surface_signatures_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v2
+  instruction: |-
+    Author a new task from scratch: partitioned_block_surface_signatures_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate face markings through paint, mask, cut, and repaint stages on blocks with uneven partitions; return the number of pieces bearing a requested combination of marked and cut faces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v2
+  design_choice: Define the requested combination as a canonical string like 'M2:C1' where M2 means two
+    marked faces and C1 means one cut face, requiring exact count matching.
+- id: P004v3
+  hypothesis: P004
+  idea: partitioned_block_surface_signatures_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v3
+  instruction: |-
+    Author a new task from scratch: partitioned_block_surface_signatures_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate face markings through paint, mask, cut, and repaint stages on blocks with uneven partitions; return the number of pieces bearing a requested combination of marked and cut faces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/partitioned_block_surface_signatures_v3
+- id: P005v1
+  hypothesis: P005
+  idea: ratchet_motion_rectification_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v1
+  instruction: |-
+    Author a new task from scratch: ratchet_motion_rectification_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert alternating strokes into retained motion through ratchets with specified tooth pitches, pawl directions, and engagement windows; return net advance, the holding pawl, or the first ineffective stroke.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v1
+  design_choice: 'Answer form varies by query type: net advance as signed integer, holding pawl as ''L''/''R'',
+    first ineffective stroke as 1-based index.'
+- id: P005v2
+  hypothesis: P005
+  idea: ratchet_motion_rectification_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v2
+  instruction: |-
+    Author a new task from scratch: ratchet_motion_rectification_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert alternating strokes into retained motion through ratchets with specified tooth pitches, pawl directions, and engagement windows; return net advance, the holding pawl, or the first ineffective stroke.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v2
+  design_choice: Instance presents a mechanical diagram with labeled teeth, pawls, and stroke arrows;
+    solver must parse spatial layout to infer pitch and engagement order.
+- id: P005v3
+  hypothesis: P005
+  idea: ratchet_motion_rectification_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v3
+  instruction: |-
+    Author a new task from scratch: ratchet_motion_rectification_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Convert alternating strokes into retained motion through ratchets with specified tooth pitches, pawl directions, and engagement windows; return net advance, the holding pawl, or the first ineffective stroke.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/ratchet_motion_rectification_v3
+- id: P006v1
+  hypothesis: P006
+  idea: capstan_holding_bounds_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v1
+  instruction: |-
+    Author a new task from scratch: capstan_holding_bounds_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate tension bounds through rough drums with specified wrap factors and possible slip directions; combine driven ends and suspended loads, and return the holding-force interval or first slipping contact.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v1
+  design_choice: Represent each drum's wrap as an angle in radians and propagate tension bounds via the
+    capstan equation with a discrete slip-direction flag per drum.
+- id: P006v2
+  hypothesis: P006
+  idea: capstan_holding_bounds_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v2
+  instruction: |-
+    Author a new task from scratch: capstan_holding_bounds_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate tension bounds through rough drums with specified wrap factors and possible slip directions; combine driven ends and suspended loads, and return the holding-force interval or first slipping contact.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v2
+  design_choice: Model the system as a chain of segments where each segment either transmits force statically
+    or slips, and output the minimal holding force as a rational interval.
+- id: P006v3
+  hypothesis: P006
+  idea: capstan_holding_bounds_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v3
+  instruction: |-
+    Author a new task from scratch: capstan_holding_bounds_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate tension bounds through rough drums with specified wrap factors and possible slip directions; combine driven ends and suspended loads, and return the holding-force interval or first slipping contact.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/capstan_holding_bounds_v3
+- id: P007v1
+  hypothesis: P007
+  idea: perceptual_rivalry_adaptation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v1
+  instruction: |-
+    Author a new task from scratch: perceptual_rivalry_adaptation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track competing percepts under stated mutual inhibition, dominance adaptation, and recovery rules; vary stimulus pulses, interruptions, and asymmetric strengths; answer the dominant percept or switch count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v1
+  design_choice: Present trials as a fixed-length time series of discrete pulses; solver tracks dominance
+    and switches across pulses, answering the final dominant percept.
+- id: P007v2
+  hypothesis: P007
+  idea: perceptual_rivalry_adaptation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v2
+  instruction: |-
+    Author a new task from scratch: perceptual_rivalry_adaptation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track competing percepts under stated mutual inhibition, dominance adaptation, and recovery rules; vary stimulus pulses, interruptions, and asymmetric strengths; answer the dominant percept or switch count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v2
+  design_choice: Use continuous-time intervals with variable-duration stimuli and interruptions; solver
+    computes total switch count over the entire timeline.
+- id: P007v3
+  hypothesis: P007
+  idea: perceptual_rivalry_adaptation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v3
+  instruction: |-
+    Author a new task from scratch: perceptual_rivalry_adaptation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track competing percepts under stated mutual inhibition, dominance adaptation, and recovery rules; vary stimulus pulses, interruptions, and asymmetric strengths; answer the dominant percept or switch count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/perceptual_rivalry_adaptation_v3
+- id: P008v1
+  hypothesis: P008
+  idea: polarization_projection_cascade_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v1
+  instruction: |-
+    Author a new task from scratch: polarization_projection_cascade_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track light through rotated polarizers, split paths, and incoherent recombination using supplied transmission rules; distinguish blocked paths from partial attenuation and return output intensity or polarization.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v1
+  design_choice: Use a fixed sequence of polarizers with angles given in degrees; output intensity as
+    a reduced fraction of input, with a second field for final polarization angle.
+- id: P008v2
+  hypothesis: P008
+  idea: polarization_projection_cascade_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v2
+  instruction: |-
+    Author a new task from scratch: polarization_projection_cascade_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track light through rotated polarizers, split paths, and incoherent recombination using supplied transmission rules; distinguish blocked paths from partial attenuation and return output intensity or polarization.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v2
+  design_choice: Present a branching tree of polarizers with some paths recombined; ask for the total
+    output intensity as a fraction, treating any fully blocked path as zero contribution.
+- id: P008v3
+  hypothesis: P008
+  idea: polarization_projection_cascade_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v3
+  instruction: |-
+    Author a new task from scratch: polarization_projection_cascade_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track light through rotated polarizers, split paths, and incoherent recombination using supplied transmission rules; distinguish blocked paths from partial attenuation and return output intensity or polarization.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_psychometrics_r1/polarization_projection_cascade_v3

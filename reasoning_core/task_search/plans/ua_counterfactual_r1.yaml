@@ -1,0 +1,488 @@
+version: 1
+name: ua_counterfactual_r1
+proposal_wave: ua_counterfactual
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: bounded_geometric_construction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v1
+  instruction: |-
+    Author a new task from scratch: bounded_geometric_construction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search straightedge-and-compass constructions using lines, circles and intersections from existing points under supplied move restrictions; reach designated exact targets and return a shortest construction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v1
+  design_choice: Use a fixed initial point set (e.g., two points) and a single target point; the answer
+    is a canonical sequence of primitive move labels, e.g., 'C12 L34 I5', with ties broken by lexicographic
+    order.
+- id: P001v2
+  hypothesis: P001
+  idea: bounded_geometric_construction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v2
+  instruction: |-
+    Author a new task from scratch: bounded_geometric_construction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search straightedge-and-compass constructions using lines, circles and intersections from existing points under supplied move restrictions; reach designated exact targets and return a shortest construction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v2
+  design_choice: Vary the target by specifying its coordinates as a rational fraction of the initial segment
+    length; the solver must output the minimal number of moves, not the sequence, for that fraction.
+- id: P001v3
+  hypothesis: P001
+  idea: bounded_geometric_construction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v3
+  instruction: |-
+    Author a new task from scratch: bounded_geometric_construction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search straightedge-and-compass constructions using lines, circles and intersections from existing points under supplied move restrictions; reach designated exact targets and return a shortest construction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/bounded_geometric_construction_v3
+- id: P002v1
+  hypothesis: P002
+  idea: phylogenetic_network_reconciliation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v1
+  instruction: |-
+    Author a new task from scratch: phylogenetic_network_reconciliation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine rooted trees with overlapping leaf sets into a network displaying each through reticulation choices and subdivision suppression; return the minimum reticulation count under stated ancestry constraints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v1
+  design_choice: Instances provide two rooted trees with identical leaf sets; answer is the minimum number
+    of reticulations needed to reconcile them under a fixed root and no subdivision suppression.
+- id: P002v2
+  hypothesis: P002
+  idea: phylogenetic_network_reconciliation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v2
+  instruction: |-
+    Author a new task from scratch: phylogenetic_network_reconciliation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine rooted trees with overlapping leaf sets into a network displaying each through reticulation choices and subdivision suppression; return the minimum reticulation count under stated ancestry constraints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v2
+  design_choice: Instances provide three rooted trees with partially overlapping leaf sets; answer is
+    the minimum reticulation count allowing leaf subdivision and suppressing unary nodes, with leaves
+    shared by at least two trees.
+- id: P002v3
+  hypothesis: P002
+  idea: phylogenetic_network_reconciliation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v3
+  instruction: |-
+    Author a new task from scratch: phylogenetic_network_reconciliation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine rooted trees with overlapping leaf sets into a network displaying each through reticulation choices and subdivision suppression; return the minimum reticulation count under stated ancestry constraints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/phylogenetic_network_reconciliation_v3
+- id: P003v1
+  hypothesis: P003
+  idea: relational_gadget_synthesis_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v1
+  instruction: |-
+    Author a new task from scratch: relational_gadget_synthesis_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose supplied finite relations by wiring ports and hiding internal variables so the external relation equals a target exactly; vary reuse and wiring restrictions, returning a smallest gadget or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v1
+  design_choice: Restrict wiring to a fixed bus topology where each port connects to exactly one bus line,
+    and rank solutions by total wire crossings.
+- id: P003v2
+  hypothesis: P003
+  idea: relational_gadget_synthesis_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v2
+  instruction: |-
+    Author a new task from scratch: relational_gadget_synthesis_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose supplied finite relations by wiring ports and hiding internal variables so the external relation equals a target exactly; vary reuse and wiring restrictions, returning a smallest gadget or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v2
+  design_choice: Require that each supplied relation be used at most once, and score gadgets by the number
+    of hidden intermediate variables.
+- id: P003v3
+  hypothesis: P003
+  idea: relational_gadget_synthesis_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v3
+  instruction: |-
+    Author a new task from scratch: relational_gadget_synthesis_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose supplied finite relations by wiring ports and hiding internal variables so the external relation equals a target exactly; vary reuse and wiring restrictions, returning a smallest gadget or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/relational_gadget_synthesis_v3
+- id: P004v1
+  hypothesis: P004
+  idea: qualitative_limit_path_dependence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v1
+  instruction: |-
+    Author a new task from scratch: qualitative_limit_path_dependence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether multivariable expressions approach one value across all admissible paths; vary rational forms, piecewise boundaries, and constrained approaches; answer the limit or two conflicting path limits.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v1
+  design_choice: 'Answer format: output the common limit as a reduced fraction, or the string ''DIVERGES''
+    when two admissible paths yield different finite limits'
+- id: P004v2
+  hypothesis: P004
+  idea: qualitative_limit_path_dependence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v2
+  instruction: |-
+    Author a new task from scratch: qualitative_limit_path_dependence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether multivariable expressions approach one value across all admissible paths; vary rational forms, piecewise boundaries, and constrained approaches; answer the limit or two conflicting path limits.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v2
+  design_choice: 'Difficulty source: piecewise-defined functions where the boundary curve itself is the
+    path of approach, requiring checking limits along the boundary and off-boundary paths'
+- id: P004v3
+  hypothesis: P004
+  idea: qualitative_limit_path_dependence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v3
+  instruction: |-
+    Author a new task from scratch: qualitative_limit_path_dependence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine whether multivariable expressions approach one value across all admissible paths; vary rational forms, piecewise boundaries, and constrained approaches; answer the limit or two conflicting path limits.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/qualitative_limit_path_dependence_v3
+- id: P005v1
+  hypothesis: P005
+  idea: constrained_surface_flip_paths_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v1
+  instruction: |-
+    Author a new task from scratch: constrained_surface_flip_paths_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reconfigure triangulated surfaces by legal diagonal flips while preserving marked edges and obeying forbidden-edge and vertex-degree constraints; return a shortest flip sequence to the target or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v1
+  design_choice: 'Instance format: input as a combinatorial triangulation with vertices, marked edges,
+    forbidden edges, and target surface; output as a canonical sequence of edge labels to flip or ''IMPOSSIBLE''.'
+- id: P005v2
+  hypothesis: P005
+  idea: constrained_surface_flip_paths_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v2
+  instruction: |-
+    Author a new task from scratch: constrained_surface_flip_paths_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reconfigure triangulated surfaces by legal diagonal flips while preserving marked edges and obeying forbidden-edge and vertex-degree constraints; return a shortest flip sequence to the target or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v2
+  design_choice: 'Answer form: output the length of the shortest flip sequence as an integer, or -1 if
+    impossible, with no sequence details.'
+- id: P005v3
+  hypothesis: P005
+  idea: constrained_surface_flip_paths_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v3
+  instruction: |-
+    Author a new task from scratch: constrained_surface_flip_paths_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reconfigure triangulated surfaces by legal diagonal flips while preserving marked edges and obeying forbidden-edge and vertex-degree constraints; return a shortest flip sequence to the target or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/constrained_surface_flip_paths_v3
+- id: P006v1
+  hypothesis: P006
+  idea: which_path_intervention_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v1
+  instruction: |-
+    Author a new task from scratch: which_path_intervention_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Alter phase shifts, path blockers and distinguishability tags in finite amplitude networks; combine indistinguishable paths coherently and distinguishable paths incoherently to obtain counterfactual detector probabilities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v1
+  design_choice: Represent networks as directed acyclic graphs with integer edge weights; answers are
+    reduced fractions for detector probabilities.
+- id: P006v2
+  hypothesis: P006
+  idea: which_path_intervention_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v2
+  instruction: |-
+    Author a new task from scratch: which_path_intervention_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Alter phase shifts, path blockers and distinguishability tags in finite amplitude networks; combine indistinguishable paths coherently and distinguishable paths incoherently to obtain counterfactual detector probabilities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v2
+  design_choice: Use a fixed 3-level network topology with variable phase shifts; answers are exact symbolic
+    sums of cosines.
+- id: P006v3
+  hypothesis: P006
+  idea: which_path_intervention_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v3
+  instruction: |-
+    Author a new task from scratch: which_path_intervention_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Alter phase shifts, path blockers and distinguishability tags in finite amplitude networks; combine indistinguishable paths coherently and distinguishable paths incoherently to obtain counterfactual detector probabilities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/which_path_intervention_v3
+- id: P007v1
+  hypothesis: P007
+  idea: stratified_reversal_intervention_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v1
+  instruction: |-
+    Author a new task from scratch: stratified_reversal_intervention_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Move, delete or duplicate permitted records in stratified count tables; find the smallest intervention reversing the pooled comparison while preserving every within-stratum ordering, or report impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v1
+  design_choice: Answer form is a canonical intervention string listing per-stratum move/delete/duplicate
+    actions, with impossibility as a fixed token.
+- id: P007v2
+  hypothesis: P007
+  idea: stratified_reversal_intervention_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v2
+  instruction: |-
+    Author a new task from scratch: stratified_reversal_intervention_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Move, delete or duplicate permitted records in stratified count tables; find the smallest intervention reversing the pooled comparison while preserving every within-stratum ordering, or report impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v2
+  design_choice: Instance generation fixes stratum sizes and baseline counts, then hides the minimal intervention
+    among multiple feasible reversal actions.
+- id: P007v3
+  hypothesis: P007
+  idea: stratified_reversal_intervention_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v3
+  instruction: |-
+    Author a new task from scratch: stratified_reversal_intervention_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Move, delete or duplicate permitted records in stratified count tables; find the smallest intervention reversing the pooled comparison while preserving every within-stratum ordering, or report impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/stratified_reversal_intervention_v3
+- id: P008v1
+  hypothesis: P008
+  idea: event_time_intervention_sensitivity_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v1
+  instruction: |-
+    Author a new task from scratch: event_time_intervention_sensitivity_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perturb initial states or thresholds in piecewise-affine flows with guards and resets; propagate shifts in event times as well as states and return the exact one-sided sensitivity of a terminal quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v1
+  design_choice: Represent event times as rational fractions of a common period, and return sensitivity
+    as a reduced fraction with denominator capped at 1000.
+- id: P008v2
+  hypothesis: P008
+  idea: event_time_intervention_sensitivity_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v2
+  instruction: |-
+    Author a new task from scratch: event_time_intervention_sensitivity_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perturb initial states or thresholds in piecewise-affine flows with guards and resets; propagate shifts in event times as well as states and return the exact one-sided sensitivity of a terminal quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v2
+  design_choice: Return sensitivity as an integer by scaling all time derivatives and thresholds to integers,
+    ensuring all event times and sensitivities are integer-valued.
+- id: P008v3
+  hypothesis: P008
+  idea: event_time_intervention_sensitivity_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v3
+  instruction: |-
+    Author a new task from scratch: event_time_intervention_sensitivity_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perturb initial states or thresholds in piecewise-affine flows with guards and resets; propagate shifts in event times as well as states and return the exact one-sided sensitivity of a terminal quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r1/event_time_intervention_sensitivity_v3

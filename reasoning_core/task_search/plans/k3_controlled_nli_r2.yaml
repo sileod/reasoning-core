@@ -1,0 +1,135 @@
+version: 1
+name: k3_controlled_nli_r2
+proposal_wave: k3_controlled-nli
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  v2:
+  - P001v2
+  - P002v2
+  v3:
+  - P001v3
+  - P002v3
+  pilot:
+  - P001v1
+  - P002v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: implicative_factive_inference_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v1
+  instruction: |-
+    Author a new task from scratch: implicative_factive_inference_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Implicative and factive verbs (manage, fail, remember, pretend) under negation and conditional or question embedding; compute whether the complement is entailed, denied or open; also judge equivalence with the bare assertion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v1
+  design_choice: 'Answer as a three-way label: ENTAILED, DENIED, or OPEN, for the complement under the
+    matrix verb and its negation, with balanced distribution across labels.'
+- id: P001v2
+  hypothesis: P001
+  idea: implicative_factive_inference_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v2
+  instruction: |-
+    Author a new task from scratch: implicative_factive_inference_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Implicative and factive verbs (manage, fail, remember, pretend) under negation and conditional or question embedding; compute whether the complement is entailed, denied or open; also judge equivalence with the bare assertion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v2
+  design_choice: 'Answer as a canonical equivalence string: ''EQ'' if the sentence entails the bare complement
+    assertion, ''NEQ'' if it entails its negation, and ''UNK'' if neither, using a fixed verb set and
+    both polarities.'
+- id: P001v3
+  hypothesis: P001
+  idea: implicative_factive_inference_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v3
+  instruction: |-
+    Author a new task from scratch: implicative_factive_inference_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Implicative and factive verbs (manage, fail, remember, pretend) under negation and conditional or question embedding; compute whether the complement is entailed, denied or open; also judge equivalence with the bare assertion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r2/implicative_factive_inference_v3
+- id: P002v1
+  hypothesis: P002
+  idea: centering_transition_walk_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v1
+  instruction: |-
+    Author a new task from scratch: centering_transition_walk_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a stated centering algorithm over multi-sentence passages: rank forward-looking centers by the given role order, resolve each pronoun to the top accessible candidate, and report the transition label at every step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v1
+  design_choice: Use only third-person pronouns and rank centers by grammatical role order (SUBJ > OBJ
+    > OTHER), with each step reporting one of {CONTINUE, RETAIN, SMOOTH-SHIFT, ROUGH-SHIFT}.
+- id: P002v2
+  hypothesis: P002
+  idea: centering_transition_walk_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v2
+  instruction: |-
+    Author a new task from scratch: centering_transition_walk_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a stated centering algorithm over multi-sentence passages: rank forward-looking centers by the given role order, resolve each pronoun to the top accessible candidate, and report the transition label at every step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v2
+  design_choice: Include first/second-person pronouns and possessive determiners, with role order extended
+    to include possessives, and require binary labels {CONTINUE, SHIFT} per step.
+- id: P002v3
+  hypothesis: P002
+  idea: centering_transition_walk_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v3
+  instruction: |-
+    Author a new task from scratch: centering_transition_walk_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute a stated centering algorithm over multi-sentence passages: rank forward-looking centers by the given role order, resolve each pronoun to the top accessible candidate, and report the transition label at every step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_controlled_nli_r2/centering_transition_walk_v3

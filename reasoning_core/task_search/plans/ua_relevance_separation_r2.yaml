@@ -1,0 +1,137 @@
+version: 1
+name: ua_relevance_separation_r2
+proposal_wave: ua_relevance-separation
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  v2:
+  - P001v2
+  - P002v2
+  v3:
+  - P001v3
+  - P002v3
+  pilot:
+  - P001v1
+  - P002v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: buoyancy_layer_alignment_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v1
+  instruction: |-
+    Author a new task from scratch: buoyancy_layer_alignment_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Balance segmented prismatic bodies across immiscible fluid layers, varying cross-sections, ballast, and flooded versus sealed cavities; return equilibrium waterlines, submerged fractions, or sinking outcomes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v1
+  design_choice: Represent each layer's density as a piecewise constant function of height and require
+    the solver to compute the exact waterline height by root-finding the buoyancy integral, with answers
+    as a rational fraction of total height.
+- id: P001v2
+  hypothesis: P001
+  idea: buoyancy_layer_alignment_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v2
+  instruction: |-
+    Author a new task from scratch: buoyancy_layer_alignment_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Balance segmented prismatic bodies across immiscible fluid layers, varying cross-sections, ballast, and flooded versus sealed cavities; return equilibrium waterlines, submerged fractions, or sinking outcomes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v2
+  design_choice: Provide a discrete set of possible waterline levels (e.g., at layer boundaries) and ask
+    whether the body floats, sinks, or rests at a given boundary, with answers as one of three canonical
+    labels.
+- id: P001v3
+  hypothesis: P001
+  idea: buoyancy_layer_alignment_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v3
+  instruction: |-
+    Author a new task from scratch: buoyancy_layer_alignment_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Balance segmented prismatic bodies across immiscible fluid layers, varying cross-sections, ballast, and flooded versus sealed cavities; return equilibrium waterlines, submerged fractions, or sinking outcomes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r2/buoyancy_layer_alignment_v3
+- id: P002v1
+  hypothesis: P002
+  idea: differential_shaft_propagation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v1
+  instruction: |-
+    Author a new task from scratch: differential_shaft_propagation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate exact rotations through external and internal gear meshes, shared shafts, planetary carriers, and clutch locks; return queried shaft motion or identify incompatible imposed rotations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v1
+  design_choice: 'Answer format: return a canonical string per queried shaft like ''shaft3:+2.5'' or ''conflict:shaft7'',
+    with each query answered independently and conflicts only flagged when queried.'
+- id: P002v2
+  hypothesis: P002
+  idea: differential_shaft_propagation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v2
+  instruction: |-
+    Author a new task from scratch: differential_shaft_propagation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate exact rotations through external and internal gear meshes, shared shafts, planetary carriers, and clutch locks; return queried shaft motion or identify incompatible imposed rotations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v2
+  design_choice: 'Instance generation: build a random gear train by connecting shafts via meshes and carriers,
+    then impose rotations on a subset of non-query shafts, ensuring the queried shaft''s motion is uniquely
+    determined by topological constraints.'
+- id: P002v3
+  hypothesis: P002
+  idea: differential_shaft_propagation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v3
+  instruction: |-
+    Author a new task from scratch: differential_shaft_propagation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate exact rotations through external and internal gear meshes, shared shafts, planetary carriers, and clutch locks; return queried shaft motion or identify incompatible imposed rotations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r2/differential_shaft_propagation_v3

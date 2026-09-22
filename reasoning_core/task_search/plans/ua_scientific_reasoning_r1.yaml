@@ -1,0 +1,726 @@
+version: 1
+name: ua_scientific_reasoning_r1
+proposal_wave: ua_scientific-reasoning
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  - P012v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  - P012v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  - P012v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: sequential_bet_calibration_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v1
+  instruction: |-
+    Author a new task from scratch: sequential_bet_calibration_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given composite null transition laws and history-dependent betting payoffs, test whether accumulated evidence remains a supermartingale; return the first unsafe wager or maximal safe stake.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v1
+  design_choice: Represent the history as a sequence of categorical outcomes and encode each wager as
+    a scalar stake; the answer is the index of the first wager where the conditional expected payoff exceeds
+    the stake, or a canonical 'none' string.
+- id: P001v2
+  hypothesis: P001
+  idea: sequential_bet_calibration_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v2
+  instruction: |-
+    Author a new task from scratch: sequential_bet_calibration_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given composite null transition laws and history-dependent betting payoffs, test whether accumulated evidence remains a supermartingale; return the first unsafe wager or maximal safe stake.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v2
+  design_choice: Encode payoffs as rational functions of the history's empirical frequencies; the answer
+    is the maximal integer stake that preserves the supermartingale inequality, computed via exact fraction
+    arithmetic.
+- id: P001v3
+  hypothesis: P001
+  idea: sequential_bet_calibration_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v3
+  instruction: |-
+    Author a new task from scratch: sequential_bet_calibration_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given composite null transition laws and history-dependent betting payoffs, test whether accumulated evidence remains a supermartingale; return the first unsafe wager or maximal safe stake.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/sequential_bet_calibration_v3
+- id: P002v1
+  hypothesis: P002
+  idea: capture_recapture_unseen_mass_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v1
+  instruction: |-
+    Author a new task from scratch: capture_recapture_unseen_mass_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer an unobserved all-missed count from overlapping detection lists under stated conditional-independence or log-linear interaction restrictions; return the implied population size or nonidentifiability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v1
+  design_choice: Present detection lists as sets of marked individuals with overlaps, requiring solvers
+    to fit a two-list independence model and solve for the unseen count via the Lincoln-Petersen estimator.
+- id: P002v2
+  hypothesis: P002
+  idea: capture_recapture_unseen_mass_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v2
+  instruction: |-
+    Author a new task from scratch: capture_recapture_unseen_mass_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer an unobserved all-missed count from overlapping detection lists under stated conditional-independence or log-linear interaction restrictions; return the implied population size or nonidentifiability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v2
+  design_choice: Provide only aggregate counts for three lists and require solving a log-linear model
+    with a specified two-way interaction term to derive the missing cell and total population size.
+- id: P002v3
+  hypothesis: P002
+  idea: capture_recapture_unseen_mass_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v3
+  instruction: |-
+    Author a new task from scratch: capture_recapture_unseen_mass_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer an unobserved all-missed count from overlapping detection lists under stated conditional-independence or log-linear interaction restrictions; return the implied population size or nonidentifiability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/capture_recapture_unseen_mass_v3
+- id: P003v1
+  hypothesis: P003
+  idea: path_intervention_world_consistency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v1
+  instruction: |-
+    Author a new task from scratch: path_intervention_world_consistency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test path-specific causal claims in fully observed causal graphs by tracing whether shared intermediates require incompatible treatment assignments; return identifiability or a recanting witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v1
+  design_choice: Represent each instance as a directed acyclic graph with two treatment nodes and one
+    outcome node, where the answer is a canonical string naming the recanting witness node or 'identifiable'
+- id: P003v2
+  hypothesis: P003
+  idea: path_intervention_world_consistency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v2
+  instruction: |-
+    Author a new task from scratch: path_intervention_world_consistency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test path-specific causal claims in fully observed causal graphs by tracing whether shared intermediates require incompatible treatment assignments; return identifiability or a recanting witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v2
+  design_choice: Generate instances by random edge addition with a fixed number of nodes, and require
+    the solver to output a minimal set of intermediate nodes that break path-specific effect identifiability
+- id: P003v3
+  hypothesis: P003
+  idea: path_intervention_world_consistency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v3
+  instruction: |-
+    Author a new task from scratch: path_intervention_world_consistency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test path-specific causal claims in fully observed causal graphs by tracing whether shared intermediates require incompatible treatment assignments; return identifiability or a recanting witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/path_intervention_world_consistency_v3
+- id: P004v1
+  hypothesis: P004
+  idea: negative_control_bridge_recovery_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v1
+  instruction: |-
+    Author a new task from scratch: negative_control_bridge_recovery_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use paired negative-control measurements to recover an outcome bridge despite latent confounding; vary categorical supports and proxy redundancy; return the identified causal mean or nonidentifiability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v1
+  design_choice: Answer as a reduced fraction when the bridge is point-identified from the negative-control
+    moments; else return the exact string 'nonidentifiable'.
+- id: P004v2
+  hypothesis: P004
+  idea: negative_control_bridge_recovery_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v2
+  instruction: |-
+    Author a new task from scratch: negative_control_bridge_recovery_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use paired negative-control measurements to recover an outcome bridge despite latent confounding; vary categorical supports and proxy redundancy; return the identified causal mean or nonidentifiability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v2
+  design_choice: Present the support sizes of the outcome, treatment, and proxies as small coprime integers,
+    and require the solver to derive the closed-form causal mean from the implied linear system.
+- id: P004v3
+  hypothesis: P004
+  idea: negative_control_bridge_recovery_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v3
+  instruction: |-
+    Author a new task from scratch: negative_control_bridge_recovery_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use paired negative-control measurements to recover an outcome bridge despite latent confounding; vary categorical supports and proxy redundancy; return the identified causal mean or nonidentifiability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/negative_control_bridge_recovery_v3
+- id: P005v1
+  hypothesis: P005
+  idea: selective_evidence_conditioning_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v1
+  instruction: |-
+    Author a new task from scratch: selective_evidence_conditioning_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Condition evidence on the rule that selected a finding for inspection, across threshold screening, winner selection, and selective follow-up; return the adjusted likelihood ratio between hypotheses.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v1
+  design_choice: Answers as a reduced fraction LR, with hypotheses fixed and thresholds given; difficulty
+    from computing P(selected evidence | H) via truncated distributions.
+- id: P005v2
+  hypothesis: P005
+  idea: selective_evidence_conditioning_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v2
+  instruction: |-
+    Author a new task from scratch: selective_evidence_conditioning_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Condition evidence on the rule that selected a finding for inspection, across threshold screening, winner selection, and selective follow-up; return the adjusted likelihood ratio between hypotheses.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v2
+  design_choice: Answers as a canonical string listing the selected finding index and the LR, with selection
+    rule varying per instance; difficulty from identifying which finding was selected under the rule.
+- id: P005v3
+  hypothesis: P005
+  idea: selective_evidence_conditioning_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v3
+  instruction: |-
+    Author a new task from scratch: selective_evidence_conditioning_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Condition evidence on the rule that selected a finding for inspection, across threshold screening, winner selection, and selective follow-up; return the adjusted likelihood ratio between hypotheses.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/selective_evidence_conditioning_v3
+- id: P006v1
+  hypothesis: P006
+  idea: dormant_independence_testing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v1
+  instruction: |-
+    Author a new task from scratch: dormant_independence_testing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expose testable constraints hidden from ordinary conditional-independence checks by reweighting and marginalizing causal kernels; across latent-variable graphs, return a violated equality or compatibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v1
+  design_choice: Instances present two candidate causal DAGs over observed variables; solvers must output
+    the single equality constraint (e.g., 'p(x|z)=p(x|z,y)') that holds under one graph but fails under
+    the other after latent marginalization.
+- id: P006v2
+  hypothesis: P006
+  idea: dormant_independence_testing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v2
+  instruction: |-
+    Author a new task from scratch: dormant_independence_testing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expose testable constraints hidden from ordinary conditional-independence checks by reweighting and marginalizing causal kernels; across latent-variable graphs, return a violated equality or compatibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v2
+  design_choice: Each instance gives a set of observed-variable kernels from a latent graph; the answer
+    is a canonical string naming the minimal conditional independence that becomes testable only after
+    reweighting, e.g., 'CI(X,Y|Z)'.
+- id: P006v3
+  hypothesis: P006
+  idea: dormant_independence_testing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v3
+  instruction: |-
+    Author a new task from scratch: dormant_independence_testing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expose testable constraints hidden from ordinary conditional-independence checks by reweighting and marginalizing causal kernels; across latent-variable graphs, return a violated equality or compatibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/dormant_independence_testing_v3
+- id: P007v1
+  hypothesis: P007
+  idea: misspecified_model_concentration_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v1
+  instruction: |-
+    Author a new task from scratch: misspecified_model_concentration_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a data-generating law, rival predictive models, and prior masses, determine asymptotic posterior concentration through expected log evidence; return surviving models, ties, or exponential odds rates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v1
+  design_choice: Return surviving models as a sorted comma-separated list of model indices, with ties
+    as a single index repeated, and odds rates as a fraction string 'a/b'
+- id: P007v2
+  hypothesis: P007
+  idea: misspecified_model_concentration_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v2
+  instruction: |-
+    Author a new task from scratch: misspecified_model_concentration_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a data-generating law, rival predictive models, and prior masses, determine asymptotic posterior concentration through expected log evidence; return surviving models, ties, or exponential odds rates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v2
+  design_choice: Represent each instance as a table of prior masses and expected log evidences, with answer
+    being a canonical bracketed list of model numbers and a rate string
+- id: P007v3
+  hypothesis: P007
+  idea: misspecified_model_concentration_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v3
+  instruction: |-
+    Author a new task from scratch: misspecified_model_concentration_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given a data-generating law, rival predictive models, and prior masses, determine asymptotic posterior concentration through expected log evidence; return surviving models, ties, or exponential odds rates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/misspecified_model_concentration_v3
+- id: P008v1
+  hypothesis: P008
+  idea: conditional_coverage_audit_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v1
+  instruction: |-
+    Author a new task from scratch: conditional_coverage_audit_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate confidence procedures on finite sampling spaces under ancillary strata, stopping events, and reported-width subsets; return conditional coverage and the subsets where advertised coverage fails.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v1
+  design_choice: Instances specify strata and stopping rules as explicit tables; solvers output a canonical
+    list of subset names where coverage deviates from the advertised level.
+- id: P008v2
+  hypothesis: P008
+  idea: conditional_coverage_audit_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v2
+  instruction: |-
+    Author a new task from scratch: conditional_coverage_audit_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate confidence procedures on finite sampling spaces under ancillary strata, stopping events, and reported-width subsets; return conditional coverage and the subsets where advertised coverage fails.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v2
+  design_choice: Instances define confidence intervals via a fixed algorithm with random seeds; solvers
+    compute exact coverage by enumerating all samples and return the failing subsets as sorted strings.
+- id: P008v3
+  hypothesis: P008
+  idea: conditional_coverage_audit_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v3
+  instruction: |-
+    Author a new task from scratch: conditional_coverage_audit_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate confidence procedures on finite sampling spaces under ancillary strata, stopping events, and reported-width subsets; return conditional coverage and the subsets where advertised coverage fails.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/conditional_coverage_audit_v3
+- id: P009v1
+  hypothesis: P009
+  idea: uniform_test_dominance_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v1
+  instruction: |-
+    Author a new task from scratch: uniform_test_dominance_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare candidate rejection rules across finite null and alternative families, including randomized decisions; filter size-valid rules and return power-dominance relations or a uniformly best rule if one exists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v1
+  design_choice: Answer as a compact list of dominance pairs (e.g., 'R1>R2,R3>R4') or 'UBEST:Rk' when
+    a uniformly best rule exists, with rules indexed by a fixed ordering.
+- id: P009v2
+  hypothesis: P009
+  idea: uniform_test_dominance_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v2
+  instruction: |-
+    Author a new task from scratch: uniform_test_dominance_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare candidate rejection rules across finite null and alternative families, including randomized decisions; filter size-valid rules and return power-dominance relations or a uniformly best rule if one exists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v2
+  design_choice: Instances specify null and alternative distributions as small probability tables over
+    a fixed outcome set, and rules as deterministic or randomized acceptance probabilities per outcome;
+    the solver must compute exact power and size.
+- id: P009v3
+  hypothesis: P009
+  idea: uniform_test_dominance_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v3
+  instruction: |-
+    Author a new task from scratch: uniform_test_dominance_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare candidate rejection rules across finite null and alternative families, including randomized decisions; filter size-valid rules and return power-dominance relations or a uniformly best rule if one exists.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/uniform_test_dominance_v3
+- id: P010v1
+  hypothesis: P010
+  idea: forecast_diagnostic_decomposition_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v1
+  instruction: |-
+    Author a new task from scratch: forecast_diagnostic_decomposition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate probabilistic forecast error into calibration, resolution, and outcome uncertainty across weighted cohorts and merged forecast bins; return component values or the source of a score improvement.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v1
+  design_choice: Return the three component values as a compact string in the fixed order 'calibration,resolution,outcome'
+    with integer percentages summing to 100.
+- id: P010v2
+  hypothesis: P010
+  idea: forecast_diagnostic_decomposition_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v2
+  instruction: |-
+    Author a new task from scratch: forecast_diagnostic_decomposition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate probabilistic forecast error into calibration, resolution, and outcome uncertainty across weighted cohorts and merged forecast bins; return component values or the source of a score improvement.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v2
+  design_choice: Present two models' decompositions and ask which component accounts for a given improvement,
+    with the answer as one of three canonical labels.
+- id: P010v3
+  hypothesis: P010
+  idea: forecast_diagnostic_decomposition_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v3
+  instruction: |-
+    Author a new task from scratch: forecast_diagnostic_decomposition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate probabilistic forecast error into calibration, resolution, and outcome uncertainty across weighted cohorts and merged forecast bins; return component values or the source of a score improvement.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/forecast_diagnostic_decomposition_v3
+- id: P011v1
+  hypothesis: P011
+  idea: prediction_commitment_lineage_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v1
+  instruction: |-
+    Author a new task from scratch: prediction_commitment_lineage_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track hypothesis revisions, analysis choices, and data access through branching study histories; distinguish genuinely held-out tests from inherited data reuse and return the uncontaminated claim-test pairs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v1
+  design_choice: Represent each study history as a directed acyclic graph where nodes are analysis steps
+    and edges are revisions; answers are the set of leaf-node test claims whose entire ancestry contains
+    no data-access node labeled 'train'.
+- id: P011v2
+  hypothesis: P011
+  idea: prediction_commitment_lineage_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v2
+  instruction: |-
+    Author a new task from scratch: prediction_commitment_lineage_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track hypothesis revisions, analysis choices, and data access through branching study histories; distinguish genuinely held-out tests from inherited data reuse and return the uncontaminated claim-test pairs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v2
+  design_choice: Encode each history as a sequence of timestamped operations (hypothesis edit, data split
+    selection, test run) and ask for the earliest test whose data split was never seen by any prior hypothesis
+    revision.
+- id: P011v3
+  hypothesis: P011
+  idea: prediction_commitment_lineage_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v3
+  instruction: |-
+    Author a new task from scratch: prediction_commitment_lineage_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track hypothesis revisions, analysis choices, and data access through branching study histories; distinguish genuinely held-out tests from inherited data reuse and return the uncontaminated claim-test pairs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/prediction_commitment_lineage_v3
+- id: P012v1
+  hypothesis: P012
+  idea: evidence_reuse_equivalence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v1
+  instruction: |-
+    Author a new task from scratch: evidence_reuse_equivalence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare sentences combining independent support, alternative derivations and repeated use of one source; distinguish evidence identity from multiplicity and decide whether their support expressions coincide.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v1
+  design_choice: Each instance presents two argument fragments with the same premise used in two different
+    inference paths; solvers answer whether the sets of support tokens are identical, with answer 'yes'
+    or 'no'.
+- id: P012v2
+  hypothesis: P012
+  idea: evidence_reuse_equivalence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v2
+  instruction: |-
+    Author a new task from scratch: evidence_reuse_equivalence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare sentences combining independent support, alternative derivations and repeated use of one source; distinguish evidence identity from multiplicity and decide whether their support expressions coincide.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v2
+  design_choice: Instances show a single conclusion derived once from one premise and once from two separate
+    premises; the answer is the count of distinct support sources, chosen from 1 or 2.
+- id: P012v3
+  hypothesis: P012
+  idea: evidence_reuse_equivalence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v3
+  instruction: |-
+    Author a new task from scratch: evidence_reuse_equivalence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare sentences combining independent support, alternative derivations and repeated use of one source; distinguish evidence identity from multiplicity and decide whether their support expressions coincide.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scientific_reasoning_r1/evidence_reuse_equivalence_v3

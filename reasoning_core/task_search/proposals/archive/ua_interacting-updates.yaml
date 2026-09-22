@@ -1,0 +1,719 @@
+format_version: 1
+kind: sft_task_proposals
+name: ua_interacting-updates
+created_at: '2026-09-17T12:33:23.873218+00:00'
+provenance:
+  kind: proposer
+  name: ua_interacting-updates
+  received: '2026-09-17'
+  source: stealth/union-alpha via openrouter
+  brief: 'tasks where several individually simple state updates interact to create a non-obvious global
+    consequence. The catalog you were shown already covers the classic textbook algorithms -- sorting,
+    gcd, graph traversal, compression, scheduling, matching, parsing -- and a proposal that names one
+    will be rejected as a repeat however well it fits this brief. Reach past the standard repertoire:
+    propose structures the catalog does not have.'
+objective:
+  training_stage: sft
+  requested: 12
+  accepted: 4
+  complete: false
+catalog:
+  sha256: 1931bb0d6ce9b994d7ecb9e7f3b18f02aee92fc235bafcda79a714c5c5650f33
+  entries: 976
+  sources:
+    gallery: 65
+    plan: 97
+    proposal: 349
+    task: 465
+generation:
+  provider: openrouter
+  model: stealth/union-alpha
+  requested_model: stealth/union-alpha
+  endpoint: https://openrouter.ai/api/v1/chat/completions
+  seed: 0
+  temperature: 1.0
+  reasoning_effort: max
+  calls:
+  - purpose: propose-round-3
+    model: stealth/union-alpha
+    provider: openrouter
+    request_sha256: 1f8067e1319e83d8b7e59d8b189bd28df424f0d0fc853e0814052107d2369243
+    response_sha256: a1f85d723992a7c3970bf81593b9e0057788839bb8ff754337e49f03d16e07b0
+    response_id: gen-1789647164-TWOQxZWWSPOBHNkYWFcb
+review:
+  provider: albert.etalab.gouv
+  model: deepseek-v4-flash
+  endpoint: https://albert.api.etalab.gouv.fr/v1/chat/completions
+  reasoning_effort: null
+  shared_with_generator: false
+  dedup: lenient
+  calls:
+  - purpose: critic-round-1-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 7edbcca22b9ee56cd157b588abede66aed22516f500b3d5a8a1284a2c484c699
+    response_sha256: b963c4fdc2a5d12819262a7e8767451b75e39cb4cac4ddd9d1a55a573178c1a0
+    response_id: chatcmpl-b61aed7885fa332b
+  - purpose: critic-round-1-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 85fcb2f59b16c44d6309b1fab8dbfac386653dcbb12bb9da2bdaa87ee8e43e37
+    response_sha256: 78ca4d1c75ff89cc23a6972367e24b12022b34dfd322dd969c429dc0adf906cf
+    response_id: chatcmpl-87d8881393ab697a
+  - purpose: critic-round-1-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 5e8a00ab5d0807625536d1143cc8df2fc974de4d71b5616521503057dd055292
+    response_sha256: 665ca357847983257050f7fe603c6a1116484d8b4443815bb83b6b1db489533c
+    response_id: chatcmpl-ba6962cf553298e5
+  - purpose: critic-round-2-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 87001b52b66a5f79cf61aa3561cae75553d0d42249dd8fafea808dda426a1179
+    response_sha256: ea9813a1da9473df6e1596fdc1bff6bc56e6cec403ac466512a54a81a51491e5
+    response_id: chatcmpl-a9a655b5c00ef9df
+  - purpose: critic-round-2-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 9c2393eda256a06b2eac5ad573eaebad93d0a530fc1e1768f4a370cef20183ac
+    response_sha256: 068ee3e848944c77828df3e27df246889b5237e4ad385a0189acccf7698c21e7
+    response_id: chatcmpl-9f2065b7307638a1
+  - purpose: critic-round-2-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 77b96a41353b4f1acca82da5d7d9fadf6454894227eec322973b5cc0e0ce96ec
+    response_sha256: 0c16b3412bb8124ac87ddf305d0f7ba7cd60216bce5f000caa2cde56d77c5a9c
+    response_id: chatcmpl-8bc6d913e3e80582
+  - purpose: critic-round-3-sample-1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 24f571db6b3db74c9a2502265cce56ff22ddeb17fcad28a7e55bb2b220d48316
+    response_sha256: 97c79a3e9ad72d5e024687cb82db0376b9177b4f08dc81d6911a60343860a7cc
+    response_id: chatcmpl-865c025e3e80439b
+  - purpose: critic-round-3-sample-1-retry1
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 92919d43ebc917c2e1a84533bd337b1cbb5f5a43bc9e98d8d29202e4634ffc65
+    response_sha256: 9c03762aa95e9186bfbc2add31b039ba3f8fe556e872288e2e45a98ba2d40b4d
+    response_id: chatcmpl-b3190b126d092bd3
+  - purpose: critic-round-3-sample-2
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: 8be84f05a59a354022737cd83d33215ae3de4aa9ad60a103b45eb12c99ecfc30
+    response_sha256: 1197ced203fb09b3d16247684c2aabc7657708f44a27c4d14f8d34d3076019ae
+    response_id: chatcmpl-a65a9545acfde4a2
+  - purpose: critic-round-3-sample-3
+    model: deepseek-v4-flash
+    provider: albert.etalab.gouv
+    request_sha256: ad1bc10dc5b526d64455fecffdfa03e15989427235b7a2156a6717705c464f14
+    response_sha256: b0debb950a75ec8be3c11c4e68c5cdd4d3cf135377b2e8b26c5a0aefc2a177e2
+    response_id: chatcmpl-8d0e1511c216b14d
+  panels:
+  - purpose: critic-round-1-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-1-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 1
+  - purpose: critic-round-2-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-2-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 2
+  - purpose: critic-round-3-sample-1
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-2
+    presented: 12
+    omitted: 0
+    malformed: 0
+  - purpose: critic-round-3-sample-3
+    presented: 12
+    omitted: 0
+    malformed: 0
+proposals:
+- name: periodic_weave_reconstruction
+  summary: Unregistered row, column, and diagonal snippets sample a symbol weave with unknown bounded
+    periods and shifted seams; recover all period-and-shift triples consistent with one shared pattern.
+  id: P001
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_shortcuts-fail:P001
+      relationship: adjacent
+      overlap: "Both reconstruct a 2D grid from partial data (rows/columns/diagonals vs. directional sums),\
+        \ but C007 recovers a periodic pattern with unknown period and shift, while tomographic completion\
+        \ infers cell values from sums\u2014different inference target and method."
+    - id: proposal:ua_compositional-generalization:P004
+      relationship: adjacent
+      overlap: "Both involve periodic/seam structure (weave vs. surface sewing), but C007 infers periods\
+        \ from snippets, while P004 composes boundary arcs\u2014different operation."
+    - id: task:generated.k3_representation_specific_r1.necklace_canonical_rotation.necklace_canonical_rotation:NecklaceCanonicalRotation
+      relationship: variant
+      overlap: "Both handle periodic/cyclic patterns (necklace vs. weave), but necklace_canonical_rotation\
+        \ canonicalizes a whole word, while C007 recovers a 2D pattern from partial snippets with unknown\
+        \ shifts\u2014different dimensionality and inference challenge."
+    substantive_difference: 'C007''s operation is reconstructing a 2D periodic pattern from unregistered
+      1D snippets, inferring unknown period and shift parameters. This is not present in known tasks:
+      tomographic completion uses sums, not snippet patterns; necklace canonicalization is 1D and fully
+      observed. The inference of global periodic structure from partial samples is a distinct cog'
+    scores:
+      novelty: 5
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: "Novel: recover a 2D periodic motif from unregistered row/column/diagonal snippets with unknown\
+      \ period and shift\u2014no known analog."
+    votes: 2/3
+    dissent:
+    - variant
+- name: substitution_uniform_recurrence
+  summary: Infer bounded-gap recurrence in infinite words defined by nonerasing substitutions and prolongable
+    seeds, including reducible symbol systems; answer whether every occurring finite block recurs uniformly.
+  id: P002
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: gallery:pattern_induction
+      relationship: variant
+      overlap: "Both infer a rule from examples (substitution vs. pattern), but pattern_induction is about\
+        \ predicting a continuation from a known pattern, whereas C011 verifies a property (uniform recurrence)\
+        \ of the generated infinite word\u2014different operation (property checking vs. sequence completion)."
+    - id: gallery:sequential_induction
+      relationship: adjacent
+      overlap: "Both infer recurrences from examples, but sequential_induction is restricted to a polynomial\
+        \ DSL over sequences, while C011 handles substitution systems in infinite words with recurrence\
+        \ property\u2014distinct formalism."
+    - id: proposal:ua_formal-logic:P009
+      relationship: adjacent
+      overlap: "Both reason about gaps in ordered structures (finite orders vs. infinite words), but the\
+        \ logical elimination is not about recurrence of blocks\u2014different operation."
+    substantive_difference: The operation is verifying uniform recurrence of an infinite word defined
+      by substitutions, which is a property-checking task on infinite objects, not a simple sequence inference.
+      No known task checks uniform recurrence in substitution systems; this is a new inference mode involving
+      automata and combinatorics on words.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 4
+    reason: 'Novel: infer and verify uniform recurrence in infinite words generated by substitutions,
+      not just predict continuations or recurrences in finite sequences.'
+    votes: 2/3
+    dissent:
+    - variant
+- name: masked_stencil_identification
+  summary: Sparse space-time patches from several runs share an unknown finite-neighborhood update rule;
+    vary boundaries, alphabets, and missing states, and recover rule entries forced across all completions.
+  id: P003
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_shortcuts-fail:P001
+      relationship: variant
+      overlap: 'Both involve reconstruction from partial/masked data (tomographic sums vs. space-time
+        patches), but C003 recovers a local finite-neighborhood rule from sparse observations, whereas
+        P001 recovers an array from directional sums. The core inference differs: rule identification
+        vs. matrix completion.'
+    - id: gallery:sequential_induction
+      relationship: adjacent
+      overlap: "Both infer a rule from examples (stencil rule vs. recurrence), but sequential_induction\
+        \ is limited to a polynomial DSL over sequences, while C003 handles arbitrary finite-neighborhood\
+        \ update rules over 2D space-time patches with boundary and missing-state variations\u2014different\
+        \ scope and operation."
+    - id: proposal:ua_state-tracking:P012
+      relationship: adjacent
+      overlap: "Both involve stencil-like updates on a grid, but P012 executes given stencil operations,\
+        \ while C003 infers the stencil rule from sparse observations\u2014inverse problem vs. forward\
+        \ execution."
+    substantive_difference: The operation is identifying an unknown update rule from partial observations,
+      which is a distinct inverse problem not covered by reconstruction from sums or executing a known
+      stencil. There is no known neighbor that recovers a cellular-automaton rule from sparse patches;
+      this is a new inference mode.
+    scores:
+      novelty: 4
+      sft_value: 4
+      feasibility: 4
+      clarity: 3
+    reason: 'Genuinely different cognitive operation: infer a local update rule from sparse runs, not
+      reconstructing an array or executing a known stencil.'
+    votes: 2/3
+    dissent:
+    - variant
+- name: boundary_degree_inference
+  summary: Combine oriented boundary pieces and nonzero piecewise-linear vector values in two or three
+    dimensions; infer the signed interior zero count forced by the boundary and whether a zero must exist.
+  id: P004
+  novelty:
+    verdict: novel
+    nearest_neighbors:
+    - id: proposal:ua_inference-modes:P012
+      relationship: different
+      overlap: Both infer forced relations from symmetry constraints, but index symmetries vs topological
+        degree.
+    - id: proposal:ua_representation-transfer:P002
+      relationship: adjacent
+      overlap: Both involve orientation and boundary incidence in geometric spaces, but meet/join vs topological
+        zero existence.
+    - id: proposal:ua_shortcuts-fail:P001
+      relationship: adjacent
+      overlap: Both recover missing structure from boundary data, but array sums vs vector field zero
+        count.
+    substantive_difference: Applies degree theory to infer existence and signed count of interior zeros
+      from boundary samples, a new operation not in known set.
+    scores:
+      novelty: 5
+      sft_value: 5
+      feasibility: 5
+      clarity: 4
+    reason: 'Novel cognitive operation: derive topological invariants from boundary data to infer forced
+      zeros, distinct from symmetry or tomography.'
+    votes: 2/3
+    dissent:
+    - variant
+rejected:
+- name: dimensional_basis_reconstruction
+  summary: Invented formulas constrain unknown dimensions through sums, products, powers, derivatives,
+    and integrals; recover the number of free dimension vectors or determine whether a queried dimensional
+    relation is forced.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave8.dimensional_consistency.dimensional_consistency:DimensionalConsistency
+    relationship: same_operation
+    overlap: 'Both solve for unknown dimensional exponents given a set of inventational formulas: C005
+      recovers the number of free dimension vectors or forced relations; dimensional_consistency outputs
+      the exponent triple for X. The operation is identical: determine dimensional consistency and the
+      resulting exponent vector from formula constraints.'
+  - id: task:generated.wave8.missing_dimension.missing_dimension:MissingDimension
+    relationship: variant
+    overlap: "Both find a missing dimensional exponent from a formula, but missing_dimension is a simpler\
+      \ monomial case; C005 generalizes to multiple unknown dimensions and constraint inference\u2014\
+      still the same core dimension-solving operation."
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: "Both recover unknown integers from constraints (arrays vs. dimensions), but the domains\
+      \ and constraint types differ\u2014tomographic sums vs. algebraic dimensional equations."
+  reason: '0/3 samples judged it novel; Variant of dimensional_consistency: same solving for unknown dimension
+    exponents, only expanded to multiple constraints and degrees of freedom.'
+  scores:
+    novelty: 2
+    sft_value: 3
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: projection_join_spuriousness
+  summary: Combine attribute dependencies with overlapping relational projections; determine whether recombining
+    the projections can introduce records absent from an original relation satisfying those dependencies.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: task:generated.wave8.lossless_binary_decomposition.lossless_binary_decomposition:LosslessBinaryDecomposition
+    relationship: same_operation
+    overlap: 'Both decide whether recombining projections introduces spurious tuples given functional
+      dependencies: C004 asks if overlap of projections can produce records absent from original; lossless_binary_decomposition
+      checks losslessness via shared-key dependency. The operation is identical: test if dependency closure
+      implies the join is lossless (no spurious tuples).'
+  - id: proposal:ua_invariants:P008
+    relationship: variant
+    overlap: 'Both involve constraints on overlapping projections (C004: relations; P008: point configurations),
+      but they are different domains and operations.'
+  - id: proposal:ua_state-tracking:P008
+    relationship: adjacent
+    overlap: "Both combine overlapping projections (tables vs. probability tables), but P008 checks compatibility\
+      \ of joint distributions, not spurious records\u2014different operation."
+  reason: '0/3 samples judged it novel; Duplicate of lossless_binary_decomposition: both test spurious-tuple
+    introduction under functional dependencies in a projection-join decomposition.'
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 5
+    clarity: 4
+  votes: 0/3
+- name: rigid_footprint_reconstruction
+  summary: Translations and rotations of an unknown connected lattice footprint are tested against obstacle
+    masks, reporting collision or fit; recover cells forced occupied or empty across every compatible
+    shape.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_uncertainty:P010
+    relationship: same_operation
+    overlap: Both test transformations (translations/rotations vs. symmetries) against constraints and
+      report forced cells or orbits consistent with every transformation
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: variant
+    overlap: Both involve applying rigid motions (translations/rotations) to shapes and reporting resulting
+      positions or constraints
+  - id: proposal:ua_interacting-updates:P003
+    relationship: variant
+    overlap: Both recover hidden patterns (shape vs. update rule) from masked/partial observations over
+      a lattice or space-time grid
+  reason: Variant of symmetry-constrained inference applied to rigid motions.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/1
+- name: hysteretic_population_reconstruction
+  summary: Input sweeps reveal partial totals from hidden bistable switches with distinct activation and
+    release thresholds; reconcile reversal histories to recover possible threshold populations or forced
+    later totals.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P001
+    relationship: same_operation
+    overlap: Both involve hysteresis with distinct activation/release thresholds and return-point memory;
+      C003's reconstruction of threshold populations is a reverse-engineering variant of the forward hysteresis
+      memory traversal.
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: Both are inverse problems wanting forced values from incomplete data, but P001 is tomographic
+      sums while C003 is hysteresis-driven totals.
+  - id: proposal:ua_incremental-recomputation:P008
+    relationship: adjacent
+    overlap: Both recover latent numbers from rounded/linked readings, but P008 is about rounding consistency
+      while C003 is about threshold-driven accumulation.
+  reason: 0/3 samples judged it novel; The hysteresis model and its memory structure are identical; only
+    the direction (forward vs. reverse) changes.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: likelihood_principle_audit
+  summary: Compare realized evidence across fixed, censored, and outcome-dependent stopping protocols;
+    derive likelihood vectors over hypotheses and identify which records carry proportional evidence.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_scientific-reasoning:P005
+    relationship: same_operation
+    overlap: Both compare evidence under different selection/stopping protocols to decide proportional
+      likelihood or adjusted likelihood ratios; C008's audit of stopping rules is a variant of the selective
+      evidence conditioning task.
+  - id: proposal:ua_state-tracking:P009
+    relationship: variant
+    overlap: Both group outcomes by likelihood proportionality, but P009 focuses on sufficient partitions
+      while C008 on stopping protocols.
+  - id: proposal:ua_algorithms-and-data-structures:P003
+    relationship: adjacent
+    overlap: Both involve censoring/observational equivalence, but P003 is about latent histories, C008
+      about likelihood vectors.
+  reason: 0/3 samples judged it novel; Similar to P005, both derive likelihood adjustments under data-dependent
+    protocols.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: periodic_motif_extinction
+  summary: Combine fractional motif positions, signed weights, and repeated translations in periodic structures;
+    infer reciprocal-index congruence classes whose scattering contributions cancel identically.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_uncertainty:P002
+    relationship: same_operation
+    overlap: Both infer compatible motifs from diffraction extinctions using phase-addition rules; C011's
+      reciprocal-index congruence analysis is a direct variant of this known motif abduction task.
+  - id: proposal:ua_interacting-updates:P001
+    relationship: adjacent
+    overlap: Both recover hidden periodic structure from overlapping observations, but P001 is about symbol
+      weaves, C011 about scattering.
+  - id: proposal:ua_state-tracking:P004
+    relationship: adjacent
+    overlap: Both involve periodic structures and cancellation/equivalence, but P004 is about local densities,
+      C011 about scattering amplitudes.
+  reason: 0/3 samples judged it novel; Both infer hidden motifs from systematic absences using the same
+    phase-addition rules.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: partial_operation_completion
+  summary: Partial finite operation tables obey associativity, units, inverses, or absorption across one
+    or two operations; recover forced missing entries or detect that no completion exists.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.k3_parsing_and_agreement_r1.cayley_table_evaluation.cayley_table_evaluation:CayleyTableEvaluation
+    relationship: same_operation
+    overlap: Both involve finite binary operation tables and solving for missing entries/elements under
+      algebraic properties; C005's completion under associativity/units is a generalization of the known
+      Cayley table evaluation.
+  - id: proposal:ua_latent-representation:P012
+    relationship: adjacent
+    overlap: Both deduce structure from operation tables, but P012 factorizes transition systems while
+      C005 completes tables under algebraic laws.
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: adjacent
+    overlap: Both are completion problems with forced values, but P001 is linear sums and C005 is algebraic
+      tables.
+  reason: 0/2 samples judged it novel; Both tasks center on deducing missing entries in operation tables
+    with algebraic constraints.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/2
+- name: simplicial_link_manifold_audit
+  summary: Combine triangle or tetrahedron incidences whose face counts may appear locally valid; use
+    vertex and edge neighborhoods to decide whether the whole complex is a manifold, with or without boundary.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_relational-structures:P008
+    relationship: same_operation
+    overlap: Both examine vertex/edge neighborhoods in simplicial complexes to decide manifold-like properties
+      (link condition vs. manifold audit); C006's global manifold decision is a direct use of the same
+      link condition logic.
+  - id: task:generated.k3_shortcuts_fail_r1.face_tracing.rotation_system_face_tracing:FaceTracing
+    relationship: adjacent
+    overlap: Both involve combinatorial topology on simplicial complexes, but FaceTracing enumerates faces
+      while C006 checks manifoldness.
+  - id: proposal:ua_global-over-greedy:P008
+    relationship: adjacent
+    overlap: Both involve geometric/topological invariants, but P008 is about congruence while C006 is
+      about manifoldness.
+  reason: 0/3 samples judged it novel; The manifold audit is essentially the known link condition check
+    extended to the whole complex.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: local_frame_synchronization
+  summary: Overlapping observers report vectors in independently permuted, reflected, or rescaled coordinate
+    frames; reconcile loop constraints and recover the possible relative frames of a queried pair.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.coordinate_frame_composition.coordinate_frame_composition:CoordinateFrameComposition
+    relationship: same_operation
+    overlap: Both compose transformations between coordinate frames and return a queried frame/vector;
+      C010 adds consistency constraints from overlapping observers, but the core operation is frame composition
+      with matching transformations.
+  - id: proposal:ua_algorithms-and-data-structures:P003
+    relationship: adjacent
+    overlap: Both reconcile multiple reports of latent objects, but P003 is about data censorship and
+      C010 about coordinate transformations.
+  - id: proposal:ua_invariants:P007
+    relationship: adjacent
+    overlap: Both handle coordinate rescalings/transformations but P007 tests invariance of expressions,
+      C010 recovers relative frames.
+  reason: 0/3 samples judged it novel; The task is essentially frame composition with added consistency
+    loop constraints.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: detector_history_reconstruction
+  summary: Invert finite-resolution detector records with dead time, saturation, merged arrivals, and
+    coincidence channels over bounded event grids; return feasible event counts or events shared by every
+    compatible history.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_algorithms-and-data-structures:P003
+    relationship: same_operation
+    overlap: Both recover compatible latent histories from imperfect observations (censoring/equivalence
+      vs. dead time/saturation), returning what is forced across all compatible histories; the uncertainty
+      model differs but the operation is identical.
+  - id: proposal:ua_incremental-recomputation:P008
+    relationship: adjacent
+    overlap: Both recover latent values from displayed/observed readings with resolution limits, but P008
+      is about rounding, C009 about detector artifacts.
+  - id: proposal:ua_state-tracking:P003
+    relationship: adjacent
+    overlap: Both recover hidden counts from aggregate observations, but P003 uses moments, C009 uses
+      detector responses.
+  reason: 0/3 samples judged it novel; Both tasks infer forced aspects of latent events from imperfect
+    observations.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 4
+    clarity: 4
+  votes: 0/3
+- name: style_cascade_recomputation
+  summary: Resolve computed properties after tree edits and stylesheet changes across layered precedence,
+    inheritance, custom-property fallbacks, and invalid substitutions; return queried values or winning
+    declarations.
+  verdict: variant
+  nearest_neighbors:
+  - id: task:generated.wave9.spreadsheet_formula_dependency.spreadsheet_formula_dependency:SpreadsheetFormulaDependency
+    relationship: same_operation
+    overlap: Both evaluate computed values in a DAG of dependencies (spreadsheet cells or DOM computed
+      properties) after incremental edits, returning queried values.
+  - id: task:generated.wave12.relational_join_execution.relational_join_execution:RelationalJoinExecution
+    relationship: adjacent
+    overlap: Both execute a rule-based transformation over structured data and return specified projections;
+      different underlying formalism.
+  - id: proposal:k3_multi-relation-integration:P002
+    relationship: adjacent
+    overlap: Both propagate changes through a cascade to a stable state; but match-3 is about grid physics,
+      style is about declaration precedence.
+  reason: 0/3 samples judged it novel; The core operation is identical to spreadsheet dependency evaluation;
+    only the domain and rule set are changed.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 2
+  votes: 0/3
+- name: relational_team_satisfaction
+  summary: Evaluate dependence, inclusion, and exclusion claims over collections of assignments with conjunction
+    and split disjunction; answer whether one globally coherent partition satisfies the nested claims.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_formal-logic:P011
+    relationship: same_operation
+    overlap: Both evaluate team semantics formulas with dependence, inclusion, and split disjunction over
+      sets of assignments, reporting satisfaction.
+  - id: proposal:ua_formal-semantics:P004
+    relationship: variant
+    overlap: Both evaluate logical formulas under uniform witness/team semantics; the difference is quantifier
+      handling versus dependence atoms.
+  - id: proposal:ua_relational-structures:P007
+    relationship: adjacent
+    overlap: Both work with relational structures, but matroid independence is a different theory.
+  reason: 0/3 samples judged it novel; Directly duplicates existing team semantics evaluation; the summary
+    is a paraphrase without new content.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 2
+    clarity: 1
+  votes: 0/3
+- name: disablement_provenance_recovery
+  summary: An unknown bounded sum-of-products expression generates counts while selected inputs are disabled
+    or assigned small weights; combine overlapping responses to recover forced monomials and multiplicities.
+  verdict: variant
+  nearest_neighbors:
+  - id: proposal:ua_shortcuts-fail:P001
+    relationship: same_operation
+    overlap: Both recover a hidden structured object (array or sum-of-products expression) from overlapping
+      projections/observations, answering forced values or uniqueness.
+  - id: proposal:ua_state-tracking:P003
+    relationship: variant
+    overlap: Both recover products/aggregates from overlapping masked data; the former uses power sums
+      and the latter uses disabled inputs.
+  - id: proposal:ua_scientific-reasoning:P002
+    relationship: adjacent
+    overlap: Both use overlapping detections to infer a hidden count, but the latent model differs (boolean
+      flags vs monomials).
+  reason: 1/3 samples judged it novel; Still the same recovery-from-overlapping-observations operation
+    as P001; only the expression type changes.
+  scores:
+    novelty: 2
+    sft_value: 2
+    feasibility: 3
+    clarity: 2
+  votes: 1/3
+- name: polygon_seam_surface_type
+  summary: Infer the global surface formed by polygon edge identifications with reversed or preserved
+    directions and unpaired edges; answer orientability, boundary count, and genus or crosscap count.
+  verdict: duplicate
+  nearest_neighbors:
+  - id: proposal:ua_compositional-generalization:P004
+    relationship: same_operation
+    overlap: Both stitch polygonal boundaries with orientation and pairing to compute surface invariants
+      (orientability, boundary count, Euler characteristic).
+  - id: proposal:ua_systematic-generalization:P011
+    relationship: variant
+    overlap: Both manipulate surfaces via edge operations and compute genus/boundary invariants; one uses
+      gluing and the other surgery operations.
+  - id: task:generated.k3_psychometrics_r1.block_pile_surface_accounting.block_pile_surface_accounting:BlockPileSurfaceAccounting
+    relationship: adjacent
+    overlap: Both count surface features, but block pile is about exposed faces of unit cubes and not
+      about topological gluings.
+  reason: 0/3 samples judged it novel; Identical to P004 in every substantive aspect; only the presentation
+    of input is different.
+  scores:
+    novelty: 1
+    sft_value: 1
+    feasibility: 2
+    clarity: 1
+  votes: 0/3
+pool:
+- name: sequential_likelihood_stopping
+  summary: Accumulate evidence along ordered observations with history-dependent likelihoods, scheduled
+    inspections, and asymmetric stopping boundaries; return the first stopping time and decision, or continuation.
+- name: stopping_rule_likelihood_equivalence
+  summary: Compare evidence from fixed-sample, sequentially stopped, and censored experiments by constructing
+    likelihoods over shared hypotheses; return whether two records have proportional likelihoods.
+- name: ascertainment_conditioned_likelihood
+  summary: Compare hypotheses after threshold screening, outcome-dependent reporting, or case enrichment
+    using stated selection probabilities; return the likelihood ratio conditional on inclusion.
+- name: pooled_distinctness_reconstruction
+  summary: Overlapping pools report exact, bounded, or saturated counts of distinct hidden types rather
+    than item counts; reconcile one global partition and recover forced same-type and different-type item
+    pairs.
+- name: coalition_excess_balancing
+  summary: Allocate a fixed payoff by lexicographically minimizing descending coalition dissatisfaction
+    across overlapping claims, individual floors and coalition values; answer the allocation or successive
+    excess thresholds.
+- name: strided_storage_aliasing
+  summary: Execute assignments through overlapping, reversed, broadcast, and strided views under snapshot
+    or sequential read semantics; return selected cells or identify the first write that changes a later
+    read.
+- name: tombstone_resurrection_tracking
+  summary: Track versioned writes, deletions, delayed replication, read repair, and tombstone expiry across
+    replicas under supplied reconciliation rules; return visible values or the event that resurrects deleted
+    data.
+- name: wash_sale_basis_chains
+  summary: Propagate deferred losses through partial lot sales and replacement purchases under supplied
+    matching windows and priorities; return recognized gains, remaining lot bases, or permanently disallowed
+    losses.
+- name: buoyancy_overflow_accounting
+  summary: Track water displacement as cargo moves between floating vessels, the water, and shore, with
+    filling, draining, and irreversible overflow; return water levels, spilled volume, or vessel flotation
+    status.
+- name: switched_capacitor_charge_redistribution
+  summary: Track charge through capacitor terminal reconnections, isolated conductor splits, and voltage
+    clamps using charge conservation at each switch; return final voltages, capacitor charges, or source
+    charge transfer.
+- name: insurance_limit_reinstatement
+  summary: Process claims across deductibles, layered coverage, shared aggregate limits, and paid reinstatements
+    under supplied erosion rules; return claim recoveries, remaining coverage, or total reinstatement
+    cost.
+- name: shared_extent_liveness
+  summary: Track physical storage through extent sharing, partial copy-on-write updates, truncation, snapshots,
+    and deletion of open files; return allocated space, reclaimable space, or the holders retaining an
+    extent.
+- name: photochromic_layer_feedback
+  summary: Propagate light pulses through layered materials whose accumulated absorbed dose triggers bleaching
+    or darkening between pulses; return layer states, transmitted dose, or the first threshold-crossing
+    pulse.
+- name: margin_liquidation_feedback
+  summary: Apply price shocks and forced sales under supplied margin, liquidation, and market-impact rules,
+    recomputing all accounts after each sale batch; return surviving positions, defaults, or terminal
+    prices.
+- name: persistent_reporter_fault_localization
+  summary: Overlapping reports share latent binary event traces, while each source has a persistent truthful,
+    inverted, stuck, or lagged behavior; identify source behaviors forced by global consistency.
+- name: latent_heat_contact_sequences
+  summary: Update bodies through ordered thermal contacts, separations, and heat injections with finite
+    heat capacities and latent heat plateaus; return final temperatures, phase fractions, or heat transferred.
+- name: rational_interference_conditioning
+  summary: Apply path mixing, phase flips, and selected detections to rational-amplitude networks, tracking
+    interference and branch normalization; return an output probability or the probability of an outcome
+    sequence.
+- name: strided_alias_reconstruction
+  summary: Partially observed writes and readbacks across unknown strided, reversed, and overlapping array
+    views constrain shared storage; recover which queried cell pairs must alias or cannot alias.

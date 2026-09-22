@@ -1,0 +1,486 @@
+version: 1
+name: ua_representation_specific_r2
+proposal_wave: ua_representation-specific
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: local_interaction_energy_delta_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v1
+  instruction: |-
+    Author a new task from scratch: local_interaction_energy_delta_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update lattice energies after simultaneous site or interaction edits across pairwise and multisite potentials; count jointly affected terms once and return changed interaction contributions and total energy delta.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v1
+  design_choice: Edits are single-site flips; answer lists per-pair energy deltas for all neighbors, then
+    total delta as an integer.
+- id: P001v2
+  hypothesis: P001
+  idea: local_interaction_energy_delta_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v2
+  instruction: |-
+    Author a new task from scratch: local_interaction_energy_delta_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update lattice energies after simultaneous site or interaction edits across pairwise and multisite potentials; count jointly affected terms once and return changed interaction contributions and total energy delta.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v2
+  design_choice: Edits are edge toggles plus site flips; answer is a canonical sorted list of changed
+    term IDs and one integer total delta.
+- id: P001v3
+  hypothesis: P001
+  idea: local_interaction_energy_delta_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v3
+  instruction: |-
+    Author a new task from scratch: local_interaction_energy_delta_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update lattice energies after simultaneous site or interaction edits across pairwise and multisite potentials; count jointly affected terms once and return changed interaction contributions and total energy delta.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/local_interaction_energy_delta_v3
+- id: P002v1
+  hypothesis: P002
+  idea: paragraph_reflow_resynchronization_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v1
+  instruction: |-
+    Author a new task from scratch: paragraph_reflow_resynchronization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair cached line layouts after token or width edits under wrapping, glue, and discretionary-break rules; track spill and pullback until unchanged suffix alignment, returning changed lines.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v1
+  design_choice: Return a compact list of line indices (0-based) whose text changed after reflow, with
+    unchanged suffix lines omitted.
+- id: P002v2
+  hypothesis: P002
+  idea: paragraph_reflow_resynchronization_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v2
+  instruction: |-
+    Author a new task from scratch: paragraph_reflow_resynchronization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair cached line layouts after token or width edits under wrapping, glue, and discretionary-break rules; track spill and pullback until unchanged suffix alignment, returning changed lines.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v2
+  design_choice: Return a canonical string like 'L3..L7' for contiguous changed runs, using commas for
+    gaps (e.g., 'L0,L2..L4').
+- id: P002v3
+  hypothesis: P002
+  idea: paragraph_reflow_resynchronization_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v3
+  instruction: |-
+    Author a new task from scratch: paragraph_reflow_resynchronization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair cached line layouts after token or width edits under wrapping, glue, and discretionary-break rules; track spill and pullback until unchanged suffix alignment, returning changed lines.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/paragraph_reflow_resynchronization_v3
+- id: P003v1
+  hypothesis: P003
+  idea: observed_remove_delta_merge_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v1
+  instruction: |-
+    Author a new task from scratch: observed_remove_delta_merge_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Merge partial updates to observed-remove sets with tagged duplicate adds, causal removals, delayed delivery, and replay; return changed visible memberships without reviving removed tags.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v1
+  design_choice: Answer as a compact list of visible member IDs, sorted ascending, with an empty list
+    for no changes.
+- id: P003v2
+  hypothesis: P003
+  idea: observed_remove_delta_merge_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v2
+  instruction: |-
+    Author a new task from scratch: observed_remove_delta_merge_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Merge partial updates to observed-remove sets with tagged duplicate adds, causal removals, delayed delivery, and replay; return changed visible memberships without reviving removed tags.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v2
+  design_choice: Answer as a canonical string of visible member IDs separated by commas, prefixed by a
+    single letter indicating change status (C for changed, N for none).
+- id: P003v3
+  hypothesis: P003
+  idea: observed_remove_delta_merge_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v3
+  instruction: |-
+    Author a new task from scratch: observed_remove_delta_merge_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Merge partial updates to observed-remove sets with tagged duplicate adds, causal removals, delayed delivery, and replay; return changed visible memberships without reviving removed tags.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/observed_remove_delta_merge_v3
+- id: P004v1
+  hypothesis: P004
+  idea: relation_residuation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v1
+  instruction: |-
+    Author a new task from scratch: relation_residuation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the largest relation satisfying a left or right composition containment, across rectangular carriers and nested converse or residual operations; return the resulting relation or queried membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v1
+  design_choice: Represent relations as Boolean matrices and require the solver to compute the full residual
+    via set-theoretic operations, returning the relation as a list of ordered pairs.
+- id: P004v2
+  hypothesis: P004
+  idea: relation_residuation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v2
+  instruction: |-
+    Author a new task from scratch: relation_residuation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the largest relation satisfying a left or right composition containment, across rectangular carriers and nested converse or residual operations; return the resulting relation or queried membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v2
+  design_choice: 'Pose membership queries: given a specific pair, determine whether it belongs to the
+    largest relation, using the defining containment to derive a logical condition.'
+- id: P004v3
+  hypothesis: P004
+  idea: relation_residuation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v3
+  instruction: |-
+    Author a new task from scratch: relation_residuation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute the largest relation satisfying a left or right composition containment, across rectangular carriers and nested converse or residual operations; return the resulting relation or queried membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/relation_residuation_v3
+- id: P005v1
+  hypothesis: P005
+  idea: set_family_shattering_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v1
+  instruction: |-
+    Author a new task from scratch: set_family_shattering_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine shattering and strong shattering for set families given by members or forbidden patterns, including restrictions to smaller grounds; return the queried status or a missing trace.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v1
+  design_choice: 'Answer format: return ''shatters''/''not'' for the queried subset and ''trace'' as a
+    canonical list of subset indices when missing'
+- id: P005v2
+  hypothesis: P005
+  idea: set_family_shattering_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v2
+  instruction: |-
+    Author a new task from scratch: set_family_shattering_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine shattering and strong shattering for set families given by members or forbidden patterns, including restrictions to smaller grounds; return the queried status or a missing trace.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v2
+  design_choice: 'Difficulty source: require solving both shattering and strong shattering for the same
+    family, with the queried status randomly selected per instance'
+- id: P005v3
+  hypothesis: P005
+  idea: set_family_shattering_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v3
+  instruction: |-
+    Author a new task from scratch: set_family_shattering_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine shattering and strong shattering for set families given by members or forbidden patterns, including restrictions to smaller grounds; return the queried status or a missing trace.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/set_family_shattering_v3
+- id: P006v1
+  hypothesis: P006
+  idea: tropical_corner_transfer_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v1
+  instruction: |-
+    Author a new task from scratch: tropical_corner_transfer_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate univariate min-plus polynomials between coefficient lists and weighted breakpoint descriptions, accounting for inactive terms and affine offsets; recover a corner, slope or normalized coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v1
+  design_choice: Answers specify a single integer slope, corner x-coordinate, or normalized coefficient,
+    with the requested quantity chosen randomly per instance to vary the output label set.
+- id: P006v2
+  hypothesis: P006
+  idea: tropical_corner_transfer_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v2
+  instruction: |-
+    Author a new task from scratch: tropical_corner_transfer_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate univariate min-plus polynomials between coefficient lists and weighted breakpoint descriptions, accounting for inactive terms and affine offsets; recover a corner, slope or normalized coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v2
+  design_choice: Instances present the polynomial either as a coefficient list or as breakpoints, and
+    the solver must output the equivalent representation in the other form, with inactive terms omitted.
+- id: P006v3
+  hypothesis: P006
+  idea: tropical_corner_transfer_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v3
+  instruction: |-
+    Author a new task from scratch: tropical_corner_transfer_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate univariate min-plus polynomials between coefficient lists and weighted breakpoint descriptions, accounting for inactive terms and affine offsets; recover a corner, slope or normalized coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/tropical_corner_transfer_v3
+- id: P007v1
+  hypothesis: P007
+  idea: partition_rim_strip_cancellation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v1
+  instruction: |-
+    Author a new task from scratch: partition_rim_strip_cancellation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Remove connected rim strips containing no two-by-two square from partition diagrams in specified size sequences; weight histories by strip-height parity and return their signed total.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v1
+  design_choice: Represent partitions as Young diagrams encoded by row lengths, with rim strips identified
+    via boundary paths; answer is a signed integer.
+- id: P007v2
+  hypothesis: P007
+  idea: partition_rim_strip_cancellation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v2
+  instruction: |-
+    Author a new task from scratch: partition_rim_strip_cancellation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Remove connected rim strips containing no two-by-two square from partition diagrams in specified size sequences; weight histories by strip-height parity and return their signed total.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v2
+  design_choice: Represent partitions as beta-set binary strings, with rim strips removed by bit flips
+    along the rim; answer is a reduced fraction of signed counts.
+- id: P007v3
+  hypothesis: P007
+  idea: partition_rim_strip_cancellation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v3
+  instruction: |-
+    Author a new task from scratch: partition_rim_strip_cancellation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Remove connected rim strips containing no two-by-two square from partition diagrams in specified size sequences; weight histories by strip-height parity and return their signed total.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/partition_rim_strip_cancellation_v3
+- id: P008v1
+  hypothesis: P008
+  idea: multivalued_dependency_closure_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v1
+  instruction: |-
+    Author a new task from scratch: multivalued_dependency_closure_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Close finite relations under multivalued dependencies by swapping attribute blocks between rows agreeing on determinants; handle interacting dependencies and return forced-row membership or added-row count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v1
+  design_choice: "Answers ask whether a specific candidate row is forced by the dependency closure, with\
+    \ rows given as compact tuples and dependencies as determinant\u2192attribute-block pairs."
+- id: P008v2
+  hypothesis: P008
+  idea: multivalued_dependency_closure_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v2
+  instruction: |-
+    Author a new task from scratch: multivalued_dependency_closure_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Close finite relations under multivalued dependencies by swapping attribute blocks between rows agreeing on determinants; handle interacting dependencies and return forced-row membership or added-row count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v2
+  design_choice: Answers return the count of added rows after fully closing the relation, with dependencies
+    encoded as a list of block-swap rules and a canonical minimal representation of the closure.
+- id: P008v3
+  hypothesis: P008
+  idea: multivalued_dependency_closure_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v3
+  instruction: |-
+    Author a new task from scratch: multivalued_dependency_closure_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Close finite relations under multivalued dependencies by swapping attribute blocks between rows agreeing on determinants; handle interacting dependencies and return forced-row membership or added-row count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_specific_r2/multivalued_dependency_closure_v3

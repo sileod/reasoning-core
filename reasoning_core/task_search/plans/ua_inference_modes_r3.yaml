@@ -1,0 +1,731 @@
+version: 1
+name: ua_inference_modes_r3
+proposal_wave: ua_inference-modes
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  - P012v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  - P012v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  - P012v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: knockout_agenda_control_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v1
+  instruction: |-
+    Author a new task from scratch: knockout_agenda_control_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Construct elimination brackets from pairwise outcome tables with fixed seeds, byes and protected pairings; force a designated winner across listed outcome scenarios and return a valid bracket or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v1
+  design_choice: Represent each instance as a fixed seed list and a set of pairwise win/loss tables; solvers
+    must output the bracket string or 'impossible' for each table, with difficulty from varying table
+    count and bracket size.
+- id: P001v2
+  hypothesis: P001
+  idea: knockout_agenda_control_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v2
+  instruction: |-
+    Author a new task from scratch: knockout_agenda_control_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Construct elimination brackets from pairwise outcome tables with fixed seeds, byes and protected pairings; force a designated winner across listed outcome scenarios and return a valid bracket or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v2
+  design_choice: Vary the number of protected pairings and byes across instances; solvers must produce
+    a single bracket that works for all listed outcome scenarios, where impossibility arises from conflicting
+    protected slots.
+- id: P001v3
+  hypothesis: P001
+  idea: knockout_agenda_control_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v3
+  instruction: |-
+    Author a new task from scratch: knockout_agenda_control_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Construct elimination brackets from pairwise outcome tables with fixed seeds, byes and protected pairings; force a designated winner across listed outcome scenarios and return a valid bracket or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/knockout_agenda_control_v3
+- id: P002v1
+  hypothesis: P002
+  idea: recursive_equivalence_extraction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v1
+  instruction: |-
+    Author a new task from scratch: recursive_equivalence_extraction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose finite representatives from mutually recursive equivalence classes with alternative operators, shared subterms and operator budgets; return a minimum-cost acyclic expression with sharing counted once.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v1
+  design_choice: Represent each equivalence class by a canonical minimal DAG, where shared subterms are
+    merged and the cost is the number of distinct operator nodes, with ties broken by lexicographic expression
+    order.
+- id: P002v2
+  hypothesis: P002
+  idea: recursive_equivalence_extraction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v2
+  instruction: |-
+    Author a new task from scratch: recursive_equivalence_extraction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose finite representatives from mutually recursive equivalence classes with alternative operators, shared subterms and operator budgets; return a minimum-cost acyclic expression with sharing counted once.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v2
+  design_choice: Encode the problem as a shortest-path search over states of assigned class representatives,
+    where each operator application adds its cost once and the goal is a set of acyclic bindings covering
+    all classes.
+- id: P002v3
+  hypothesis: P002
+  idea: recursive_equivalence_extraction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v3
+  instruction: |-
+    Author a new task from scratch: recursive_equivalence_extraction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose finite representatives from mutually recursive equivalence classes with alternative operators, shared subterms and operator budgets; return a minimum-cost acyclic expression with sharing counted once.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/recursive_equivalence_extraction_v3
+- id: P003v1
+  hypothesis: P003
+  idea: cyclic_proof_closure_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v1
+  instruction: |-
+    Author a new task from scratch: cyclic_proof_closure_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Complete cyclic proof skeletons by linking open leaves to compatible ancestors, respecting substitutions and a stated progress condition on every cycle; return valid back-links or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v1
+  design_choice: Represent the proof tree as a plain list of sequents with explicit indices for parent
+    edges; solvers output a list of leaf-to-ancestor index pairs.
+- id: P003v2
+  hypothesis: P003
+  idea: cyclic_proof_closure_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v2
+  instruction: |-
+    Author a new task from scratch: cyclic_proof_closure_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Complete cyclic proof skeletons by linking open leaves to compatible ancestors, respecting substitutions and a stated progress condition on every cycle; return valid back-links or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v2
+  design_choice: Encode the skeleton as a directed acyclic graph with labeled edges for rule applications;
+    answer is a canonical string listing back-link nodes in topological order.
+- id: P003v3
+  hypothesis: P003
+  idea: cyclic_proof_closure_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v3
+  instruction: |-
+    Author a new task from scratch: cyclic_proof_closure_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Complete cyclic proof skeletons by linking open leaves to compatible ancestors, respecting substitutions and a stated progress condition on every cycle; return valid back-links or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/cyclic_proof_closure_v3
+- id: P004v1
+  hypothesis: P004
+  idea: bounded_loop_deformation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v1
+  instruction: |-
+    Author a new task from scratch: bounded_loop_deformation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Contract or reroute edge loops on supplied cell complexes using spur insertion/removal and face-boundary substitutions; respect fixed anchors and length caps, returning a shortest deformation or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v1
+  design_choice: 'Answer form: a canonical sequence of move tokens like ''S3F2R5'' listing spur operations
+    and face-boundary swaps, with empty string for no-op and ''IMPOSSIBLE'' for failure.'
+- id: P004v2
+  hypothesis: P004
+  idea: bounded_loop_deformation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v2
+  instruction: |-
+    Author a new task from scratch: bounded_loop_deformation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Contract or reroute edge loops on supplied cell complexes using spur insertion/removal and face-boundary substitutions; respect fixed anchors and length caps, returning a shortest deformation or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v2
+  design_choice: 'Instance geometry: use triangulated grids or polyhedral meshes, where loops are explicit
+    vertex-index cycles and faces are triangles/quads, enabling combinatorial verification.'
+- id: P004v3
+  hypothesis: P004
+  idea: bounded_loop_deformation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v3
+  instruction: |-
+    Author a new task from scratch: bounded_loop_deformation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Contract or reroute edge loops on supplied cell complexes using spur insertion/removal and face-boundary substitutions; respect fixed anchors and length caps, returning a shortest deformation or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/bounded_loop_deformation_v3
+- id: P005v1
+  hypothesis: P005
+  idea: stoichiometric_bootstrap_planning_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v1
+  instruction: |-
+    Author a new task from scratch: stoichiometric_bootstrap_planning_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan reaction firings with integer stoichiometry, reusable catalysts, unavailable intermediates and waste caps; return a least-cost sequence achieving target stock while restoring borrowed species.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v1
+  design_choice: Represent stock levels as exact integer counts per species, with target stock specified
+    as a vector of required minimum counts and a cap on total waste mass.
+- id: P005v2
+  hypothesis: P005
+  idea: stoichiometric_bootstrap_planning_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v2
+  instruction: |-
+    Author a new task from scratch: stoichiometric_bootstrap_planning_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan reaction firings with integer stoichiometry, reusable catalysts, unavailable intermediates and waste caps; return a least-cost sequence achieving target stock while restoring borrowed species.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v2
+  design_choice: Encode each reaction as a canonical string like '2A+1B -> 1C+1W', and the answer as a
+    sequence of such strings; cost is total firings, ties broken by lexicographic order.
+- id: P005v3
+  hypothesis: P005
+  idea: stoichiometric_bootstrap_planning_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v3
+  instruction: |-
+    Author a new task from scratch: stoichiometric_bootstrap_planning_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan reaction firings with integer stoichiometry, reusable catalysts, unavailable intermediates and waste caps; return a least-cost sequence achieving target stock while restoring borrowed species.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/stoichiometric_bootstrap_planning_v3
+- id: P006v1
+  hypothesis: P006
+  idea: reversible_workspace_cleanup_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v1
+  instruction: |-
+    Author a new task from scratch: reversible_workspace_cleanup_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan creation and erasure of intermediate values when both require their dependencies to remain present; vary shared dependencies, workspace caps and retained outputs, returning a shortest clean computation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v1
+  design_choice: Represent each instance as a DAG of value nodes with per-node creation/destruction costs;
+    answers are a sequence of canonical node IDs to create/erase, optimized for minimal total cost under
+    a fixed workspace capacity.
+- id: P006v2
+  hypothesis: P006
+  idea: reversible_workspace_cleanup_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v2
+  instruction: |-
+    Author a new task from scratch: reversible_workspace_cleanup_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan creation and erasure of intermediate values when both require their dependencies to remain present; vary shared dependencies, workspace caps and retained outputs, returning a shortest clean computation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v2
+  design_choice: Encode the problem as a set of dependency pairs and output the minimal number of simultaneous
+    live values (workspace peak) required, with the answer being that integer plus a witness list of creation/erasure
+    events.
+- id: P006v3
+  hypothesis: P006
+  idea: reversible_workspace_cleanup_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v3
+  instruction: |-
+    Author a new task from scratch: reversible_workspace_cleanup_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan creation and erasure of intermediate values when both require their dependencies to remain present; vary shared dependencies, workspace caps and retained outputs, returning a shortest clean computation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/reversible_workspace_cleanup_v3
+- id: P007v1
+  hypothesis: P007
+  idea: conformant_action_synthesis_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v1
+  instruction: |-
+    Author a new task from scratch: conformant_action_synthesis_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan across hidden initial states and nondeterministic effects without observations, including irreversible actions and resource caps; return a shortest fixed action sequence guaranteed to reach the goal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v1
+  design_choice: Encode initial-state uncertainty as a set of flags and require a single sequence that
+    works for every flag combination, with goal defined as a conjunction of propositions.
+- id: P007v2
+  hypothesis: P007
+  idea: conformant_action_synthesis_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v2
+  instruction: |-
+    Author a new task from scratch: conformant_action_synthesis_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan across hidden initial states and nondeterministic effects without observations, including irreversible actions and resource caps; return a shortest fixed action sequence guaranteed to reach the goal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v2
+  design_choice: Model resources as a numeric counter with a hard cap and make each action either consume
+    or produce a fixed amount, requiring the plan to respect the cap on all possible paths.
+- id: P007v3
+  hypothesis: P007
+  idea: conformant_action_synthesis_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v3
+  instruction: |-
+    Author a new task from scratch: conformant_action_synthesis_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Plan across hidden initial states and nondeterministic effects without observations, including irreversible actions and resource caps; return a shortest fixed action sequence guaranteed to reach the goal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/conformant_action_synthesis_v3
+- id: P008v1
+  hypothesis: P008
+  idea: thermodynamic_direction_consistency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v1
+  instruction: |-
+    Author a new task from scratch: thermodynamic_direction_consistency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test whether proposed directions of coupled transformations admit a shared scalar potential; vary stoichiometry, reversible steps, and fixed potential differences; answer feasibility or an inconsistent subset.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v1
+  design_choice: Present each instance as a list of reversible coupled transformations with fixed potential
+    differences, and ask whether a consistent assignment of scalar potentials exists; answer is a canonical
+    'yes' or 'no'.
+- id: P008v2
+  hypothesis: P008
+  idea: thermodynamic_direction_consistency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v2
+  instruction: |-
+    Author a new task from scratch: thermodynamic_direction_consistency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test whether proposed directions of coupled transformations admit a shared scalar potential; vary stoichiometry, reversible steps, and fixed potential differences; answer feasibility or an inconsistent subset.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v2
+  design_choice: Vary the instance by including one or more irreversible steps that impose strict inequalities,
+    and ask for the minimal subset of steps whose removal restores consistency; answer is a canonical
+    list of step indices.
+- id: P008v3
+  hypothesis: P008
+  idea: thermodynamic_direction_consistency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v3
+  instruction: |-
+    Author a new task from scratch: thermodynamic_direction_consistency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test whether proposed directions of coupled transformations admit a shared scalar potential; vary stoichiometry, reversible steps, and fixed potential differences; answer feasibility or an inconsistent subset.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/thermodynamic_direction_consistency_v3
+- id: P009v1
+  hypothesis: P009
+  idea: tropical_balance_inference_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v1
+  instruction: |-
+    Author a new task from scratch: tropical_balance_inference_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer possible leading powers in small-parameter polynomial systems by balancing dominant terms and checking cancellation signs; vary coupled unknowns and vanishing coefficients; answer admissible exponent tuples.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v1
+  design_choice: Instances present 2-3 coupled unknowns with symbolic coefficients; solver must output
+    all integer exponent tuples (as comma-separated tuples) that balance dominant terms, given sign constraints
+    for cancellation.
+- id: P009v2
+  hypothesis: P009
+  idea: tropical_balance_inference_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v2
+  instruction: |-
+    Author a new task from scratch: tropical_balance_inference_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer possible leading powers in small-parameter polynomial systems by balancing dominant terms and checking cancellation signs; vary coupled unknowns and vanishing coefficients; answer admissible exponent tuples.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v2
+  design_choice: Each instance fixes one unknown's exponent and asks for the unique admissible exponent
+    of another unknown, with answer as a single integer; difficulty comes from choosing which terms vanish.
+- id: P009v3
+  hypothesis: P009
+  idea: tropical_balance_inference_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v3
+  instruction: |-
+    Author a new task from scratch: tropical_balance_inference_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer possible leading powers in small-parameter polynomial systems by balancing dominant terms and checking cancellation signs; vary coupled unknowns and vanishing coefficients; answer admissible exponent tuples.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/tropical_balance_inference_v3
+- id: P010v1
+  hypothesis: P010
+  idea: menu_attention_abduction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v1
+  instruction: |-
+    Author a new task from scratch: menu_attention_abduction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate preference from limited consideration using choices from overlapping menus and stated attention axioms; vary defaults, distractors, and menu expansion; answer forced preference or attention relations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v1
+  design_choice: Answers are forced preference relations (e.g., 'prefers A over B') chosen from a small
+    fixed set of pairwise comparisons, with menus constructed to make attention asymmetric.
+- id: P010v2
+  hypothesis: P010
+  idea: menu_attention_abduction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v2
+  instruction: |-
+    Author a new task from scratch: menu_attention_abduction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate preference from limited consideration using choices from overlapping menus and stated attention axioms; vary defaults, distractors, and menu expansion; answer forced preference or attention relations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v2
+  design_choice: Answers are forced attention relations (e.g., 'attends to A but not B') chosen from a
+    small fixed set of pairwise attention links, with menus designed to isolate limited consideration
+    from stated axioms.
+- id: P010v3
+  hypothesis: P010
+  idea: menu_attention_abduction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v3
+  instruction: |-
+    Author a new task from scratch: menu_attention_abduction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate preference from limited consideration using choices from overlapping menus and stated attention axioms; vary defaults, distractors, and menu expansion; answer forced preference or attention relations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/menu_attention_abduction_v3
+- id: P011v1
+  hypothesis: P011
+  idea: geometric_orientation_entailment_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v1
+  instruction: |-
+    Author a new task from scratch: geometric_orientation_entailment_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Complete partial orientation data for labeled planar points under collinearity, convexity, and sidedness constraints; answer the forced orientation of a queried triple or whether alternatives remain.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v1
+  design_choice: Answers are a single triple orientation symbol (CW/CCW) when forced, or a canonical 'UNDECIDED'
+    string when multiple orientations remain possible.
+- id: P011v2
+  hypothesis: P011
+  idea: geometric_orientation_entailment_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v2
+  instruction: |-
+    Author a new task from scratch: geometric_orientation_entailment_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Complete partial orientation data for labeled planar points under collinearity, convexity, and sidedness constraints; answer the forced orientation of a queried triple or whether alternatives remain.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v2
+  design_choice: Instances are generated by randomly sampling complete point sets, then deleting orientation
+    facts until the queried triple's orientation is uniquely implied; difficulty scales with deletion
+    count.
+- id: P011v3
+  hypothesis: P011
+  idea: geometric_orientation_entailment_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v3
+  instruction: |-
+    Author a new task from scratch: geometric_orientation_entailment_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Complete partial orientation data for labeled planar points under collinearity, convexity, and sidedness constraints; answer the forced orientation of a queried triple or whether alternatives remain.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/geometric_orientation_entailment_v3
+- id: P012v1
+  hypothesis: P012
+  idea: signed_symmetry_forcing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v1
+  instruction: |-
+    Author a new task from scratch: signed_symmetry_forcing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Deduce component relations from signed index symmetries across arrays and polynomial coefficients; combine swaps, cycles, and repeated indices; answer forced zero, relative sign, or independence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v1
+  design_choice: Instances give two arrays A[i,j,k] and B[i,j] with a stated symmetry like A antisymmetric
+    in i,j and B symmetric; solver must decide if a specified component B[p,q] is forced zero or sign-related
+    to another component.
+- id: P012v2
+  hypothesis: P012
+  idea: signed_symmetry_forcing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v2
+  instruction: |-
+    Author a new task from scratch: signed_symmetry_forcing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Deduce component relations from signed index symmetries across arrays and polynomial coefficients; combine swaps, cycles, and repeated indices; answer forced zero, relative sign, or independence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v2
+  design_choice: Present a polynomial with coefficients c_{ijk} and a stated invariance under a cycle
+    permutation of indices; ask whether a given coefficient is forced zero, equals another with a sign,
+    or remains independent.
+- id: P012v3
+  hypothesis: P012
+  idea: signed_symmetry_forcing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v3
+  instruction: |-
+    Author a new task from scratch: signed_symmetry_forcing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Deduce component relations from signed index symmetries across arrays and polynomial coefficients; combine swaps, cycles, and repeated indices; answer forced zero, relative sign, or independence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_inference_modes_r3/signed_symmetry_forcing_v3

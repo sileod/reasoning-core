@@ -1,0 +1,487 @@
+version: 1
+name: ua_representation_transfer_r1
+proposal_wave: ua_representation-transfer
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: loom_shed_memory_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v1
+  instruction: |-
+    Author a new task from scratch: loom_shed_memory_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute loom picks with shaft threading, pedal tie-ups, latched lifts, explicit releases, and reversed shuttle passes; determine queried over-under crossings or uninterrupted floats in the resulting cloth.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v1
+  design_choice: Present the loom state as a matrix of shaft positions per pick, with the query asking
+    for the crossing sequence at a single warp column, answer as a canonical over/under string.
+- id: P001v2
+  hypothesis: P001
+  idea: loom_shed_memory_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v2
+  instruction: |-
+    Author a new task from scratch: loom_shed_memory_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute loom picks with shaft threading, pedal tie-ups, latched lifts, explicit releases, and reversed shuttle passes; determine queried over-under crossings or uninterrupted floats in the resulting cloth.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v2
+  design_choice: Ask for the count of warp threads that float uninterrupted across all picks in a specified
+    weft interval, answer as a single integer, with instance difficulty from length and release timing.
+- id: P001v3
+  hypothesis: P001
+  idea: loom_shed_memory_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v3
+  instruction: |-
+    Author a new task from scratch: loom_shed_memory_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute loom picks with shaft threading, pedal tie-ups, latched lifts, explicit releases, and reversed shuttle passes; determine queried over-under crossings or uninterrupted floats in the resulting cloth.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/loom_shed_memory_v3
+- id: P002v1
+  hypothesis: P002
+  idea: exterior_meet_join_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v1
+  instruction: |-
+    Author a new task from scratch: exterior_meet_join_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine projective points, lines and planes represented by coordinates, incidence blades or homogeneous equations using exterior joins and regressive meets; return the resulting subspace or a degeneracy label.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v1
+  design_choice: "Return the result as a canonical Pl\xFCcker coordinate vector for the meet/join subspace,\
+    \ with a fixed ordering of basis blades."
+- id: P002v2
+  hypothesis: P002
+  idea: exterior_meet_join_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v2
+  instruction: |-
+    Author a new task from scratch: exterior_meet_join_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine projective points, lines and planes represented by coordinates, incidence blades or homogeneous equations using exterior joins and regressive meets; return the resulting subspace or a degeneracy label.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v2
+  design_choice: Return a degeneracy label only when the meet/join is empty or the whole space, otherwise
+    output the dimension and a canonical basis of the result.
+- id: P002v3
+  hypothesis: P002
+  idea: exterior_meet_join_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v3
+  instruction: |-
+    Author a new task from scratch: exterior_meet_join_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine projective points, lines and planes represented by coordinates, incidence blades or homogeneous equations using exterior joins and regressive meets; return the resulting subspace or a degeneracy label.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/exterior_meet_join_v3
+- id: P003v1
+  hypothesis: P003
+  idea: branched_cover_signature_transfer_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v1
+  instruction: |-
+    Author a new task from scratch: branched_cover_signature_transfer_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Read local branching from sheet permutations or ramification partitions and transfer it into the covering-surface description; recover the cover genus or a uniquely determined missing branching index.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v1
+  design_choice: Given a sheet permutation in cycle notation, output the cover genus via Riemann-Hurwitz;
+    missing index is inferred from a stated total degree.
+- id: P003v2
+  hypothesis: P003
+  idea: branched_cover_signature_transfer_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v2
+  instruction: |-
+    Author a new task from scratch: branched_cover_signature_transfer_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Read local branching from sheet permutations or ramification partitions and transfer it into the covering-surface description; recover the cover genus or a uniquely determined missing branching index.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v2
+  design_choice: Given a ramification partition list and a specified missing index position, output the
+    unique integer that makes the total branching satisfy the genus formula.
+- id: P003v3
+  hypothesis: P003
+  idea: branched_cover_signature_transfer_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v3
+  instruction: |-
+    Author a new task from scratch: branched_cover_signature_transfer_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Read local branching from sheet permutations or ramification partitions and transfer it into the covering-surface description; recover the cover genus or a uniquely determined missing branching index.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/branched_cover_signature_transfer_v3
+- id: P004v1
+  hypothesis: P004
+  idea: plucker_chart_transfer_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v1
+  instruction: |-
+    Author a new task from scratch: plucker_chart_transfer_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate subspaces among spanning matrices, normalized Plucker coordinates and affine Grassmann charts with changing pivot sets; recover a chart entry or minor ratio, or detect an unavailable chart.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v1
+  design_choice: 'Answer format: return a canonical string naming the pivot set and the single normalized
+    coordinate value, with a sentinel token for unavailable charts.'
+- id: P004v2
+  hypothesis: P004
+  idea: plucker_chart_transfer_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v2
+  instruction: |-
+    Author a new task from scratch: plucker_chart_transfer_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate subspaces among spanning matrices, normalized Plucker coordinates and affine Grassmann charts with changing pivot sets; recover a chart entry or minor ratio, or detect an unavailable chart.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v2
+  design_choice: "Answer format: return a reduced fraction representing a specific Pl\xFCcker minor ratio,\
+    \ using 'NA' when the requested chart is undefined."
+- id: P004v3
+  hypothesis: P004
+  idea: plucker_chart_transfer_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v3
+  instruction: |-
+    Author a new task from scratch: plucker_chart_transfer_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate subspaces among spanning matrices, normalized Plucker coordinates and affine Grassmann charts with changing pivot sets; recover a chart entry or minor ratio, or detect an unavailable chart.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/plucker_chart_transfer_v3
+- id: P005v1
+  hypothesis: P005
+  idea: quadratic_refinement_arf_recovery_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v1
+  instruction: |-
+    Author a new task from scratch: quadratic_refinement_arf_recovery_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover quadratic refinements from cycle-sum values, Boolean polynomials or spin-sign tables using a supplied mod-two intersection pairing; answer missing values or the basis-independent Arf parity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v1
+  design_choice: Present instances as a cycle-sum table over a fixed basis, where the solver must compute
+    the Arf parity of a queried vector from its intersection numbers and supplied quadratic values.
+- id: P005v2
+  hypothesis: P005
+  idea: quadratic_refinement_arf_recovery_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v2
+  instruction: |-
+    Author a new task from scratch: quadratic_refinement_arf_recovery_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover quadratic refinements from cycle-sum values, Boolean polynomials or spin-sign tables using a supplied mod-two intersection pairing; answer missing values or the basis-independent Arf parity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v2
+  design_choice: Provide a Boolean polynomial in several variables and its quadratic part; the solver
+    must evaluate the Arf invariant by reducing to a canonical symplectic basis using the given pairing.
+- id: P005v3
+  hypothesis: P005
+  idea: quadratic_refinement_arf_recovery_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v3
+  instruction: |-
+    Author a new task from scratch: quadratic_refinement_arf_recovery_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover quadratic refinements from cycle-sum values, Boolean polynomials or spin-sign tables using a supplied mod-two intersection pairing; answer missing values or the basis-independent Arf parity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/quadratic_refinement_arf_recovery_v3
+- id: P006v1
+  hypothesis: P006
+  idea: event_configuration_recovery_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v1
+  instruction: |-
+    Author a new task from scratch: event_configuration_recovery_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover prime event structures from complete configuration families or maximal execution words, distinguishing causality from inherited conflict; return immediate causes, minimal conflicts or configurations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v1
+  design_choice: Represent configurations as sets of event labels with causal closure, and require solvers
+    to output immediate causes as a canonical list of parent labels per event.
+- id: P006v2
+  hypothesis: P006
+  idea: event_configuration_recovery_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v2
+  instruction: |-
+    Author a new task from scratch: event_configuration_recovery_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover prime event structures from complete configuration families or maximal execution words, distinguishing causality from inherited conflict; return immediate causes, minimal conflicts or configurations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v2
+  design_choice: Present maximal execution words as interleavings of concurrent events, and require solvers
+    to output the minimal conflict pairs as an unordered set of two-label strings.
+- id: P006v3
+  hypothesis: P006
+  idea: event_configuration_recovery_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v3
+  instruction: |-
+    Author a new task from scratch: event_configuration_recovery_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover prime event structures from complete configuration families or maximal execution words, distinguishing causality from inherited conflict; return immediate causes, minimal conflicts or configurations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/event_configuration_recovery_v3
+- id: P007v1
+  hypothesis: P007
+  idea: stepped_surface_reconstruction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v1
+  instruction: |-
+    Author a new task from scratch: stepped_surface_reconstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate lozenge tilings, monotone height arrays and cube order ideals into the same stepped surface across boxed and skew regions; answer a queried height, occupied cube or cross-section.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v1
+  design_choice: 'Answer format varies: for height queries output a small integer; for cube queries output
+    a canonical cube coordinate string; for cross-sections output a sorted list of cube coordinates.'
+- id: P007v2
+  hypothesis: P007
+  idea: stepped_surface_reconstruction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v2
+  instruction: |-
+    Author a new task from scratch: stepped_surface_reconstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate lozenge tilings, monotone height arrays and cube order ideals into the same stepped surface across boxed and skew regions; answer a queried height, occupied cube or cross-section.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v2
+  design_choice: 'Instance generation: randomly pick one of three representations (lozenge tiling, height
+    array, or order ideal) as the input, and the queried object type is chosen independently to force
+    translation between representations.'
+- id: P007v3
+  hypothesis: P007
+  idea: stepped_surface_reconstruction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v3
+  instruction: |-
+    Author a new task from scratch: stepped_surface_reconstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate lozenge tilings, monotone height arrays and cube order ideals into the same stepped surface across boxed and skew regions; answer a queried height, occupied cube or cross-section.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/stepped_surface_reconstruction_v3
+- id: P008v1
+  hypothesis: P008
+  idea: newton_puiseux_branch_transfer_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v1
+  instruction: |-
+    Author a new task from scratch: newton_puiseux_branch_transfer_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate implicit polynomial curves into fractional-power branch expansions through successive Newton balances, including repeated leading roots; return a selected branch coefficient or ramification index.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v1
+  design_choice: Choose coefficients so that the first Newton polygon side has a fixed set of repeated
+    leading roots, and ask for the ramification index of the selected branch.
+- id: P008v2
+  hypothesis: P008
+  idea: newton_puiseux_branch_transfer_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v2
+  instruction: |-
+    Author a new task from scratch: newton_puiseux_branch_transfer_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate implicit polynomial curves into fractional-power branch expansions through successive Newton balances, including repeated leading roots; return a selected branch coefficient or ramification index.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v2
+  design_choice: Present the polynomial in a shifted coordinate system where the origin is a singular
+    point, and require the solver to first perform a translation before applying the Newton polygon method.
+- id: P008v3
+  hypothesis: P008
+  idea: newton_puiseux_branch_transfer_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v3
+  instruction: |-
+    Author a new task from scratch: newton_puiseux_branch_transfer_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate implicit polynomial curves into fractional-power branch expansions through successive Newton balances, including repeated leading roots; return a selected branch coefficient or ramification index.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_representation_transfer_r1/newton_puiseux_branch_transfer_v3

@@ -1,0 +1,429 @@
+version: 1
+name: ua_shortcuts_fail_r1
+proposal_wave: ua_shortcuts-fail
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: discrete_tomographic_completion_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v1
+  instruction: |-
+    Author a new task from scratch: discrete_tomographic_completion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover bounded integer arrays from overlapping directional sums, masked cells, and region totals, including ambiguous and inconsistent systems; answer a forced cell value, its attainable range, or uniqueness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v1
+  design_choice: Vary ambiguity by fixing the number of masked cells, and ask for the forced value only
+    when the system is uniquely determined, else output the attainable range as two integers.
+- id: P001v2
+  hypothesis: P001
+  idea: discrete_tomographic_completion_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v2
+  instruction: |-
+    Author a new task from scratch: discrete_tomographic_completion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover bounded integer arrays from overlapping directional sums, masked cells, and region totals, including ambiguous and inconsistent systems; answer a forced cell value, its attainable range, or uniqueness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v2
+  design_choice: Generate instances from a random hidden array, then corrupt some directional sums with
+    bounded noise; the solver must detect inconsistency and answer the range of a chosen cell across all
+    feasible arrays.
+- id: P001v3
+  hypothesis: P001
+  idea: discrete_tomographic_completion_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v3
+  instruction: |-
+    Author a new task from scratch: discrete_tomographic_completion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover bounded integer arrays from overlapping directional sums, masked cells, and region totals, including ambiguous and inconsistent systems; answer a forced cell value, its attainable range, or uniqueness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/discrete_tomographic_completion_v3
+- id: P002v1
+  hypothesis: P002
+  idea: joint_share_information_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v1
+  instruction: |-
+    Author a new task from scratch: joint_share_information_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Analyze finite secret-sharing encoders with biased randomness, correlated shares, and missing observations; answer minimal recovering coalitions or whether a coalition has perfect secrecy, partial leakage, or recovery.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v1
+  design_choice: Present encoder as a probabilistic circuit diagram and ask for the set of all minimal
+    coalitions that can recover the secret, with answers as sorted lists of coalition labels.
+- id: P002v2
+  hypothesis: P002
+  idea: joint_share_information_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v2
+  instruction: |-
+    Author a new task from scratch: joint_share_information_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Analyze finite secret-sharing encoders with biased randomness, correlated shares, and missing observations; answer minimal recovering coalitions or whether a coalition has perfect secrecy, partial leakage, or recovery.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v2
+  design_choice: Give the encoder as a joint probability table over secret and shares; ask whether a specified
+    coalition has perfect secrecy, partial leakage, or recovery, with answers as one of three fixed labels.
+- id: P002v3
+  hypothesis: P002
+  idea: joint_share_information_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v3
+  instruction: |-
+    Author a new task from scratch: joint_share_information_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Analyze finite secret-sharing encoders with biased randomness, correlated shares, and missing observations; answer minimal recovering coalitions or whether a coalition has perfect secrecy, partial leakage, or recovery.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/joint_share_information_v3
+- id: P003v1
+  hypothesis: P003
+  idea: phase_change_equilibration_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v1
+  instruction: |-
+    Author a new task from scratch: phase_change_equilibration_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Conserve enthalpy through mixtures, heat pulses, and withdrawals involving materials with distinct heat capacities and latent heats; return the equilibrium temperature and queried phase fraction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v1
+  design_choice: Use a fixed set of three materials with tabulated heat capacities and latent heats, and
+    generate instances by randomizing initial masses, temperatures, and pulse/withdrawal magnitudes.
+- id: P003v2
+  hypothesis: P003
+  idea: phase_change_equilibration_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v2
+  instruction: |-
+    Author a new task from scratch: phase_change_equilibration_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Conserve enthalpy through mixtures, heat pulses, and withdrawals involving materials with distinct heat capacities and latent heats; return the equilibrium temperature and queried phase fraction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v2
+  design_choice: Make the answer the equilibrium temperature only, with the queried phase fraction always
+    being 0 or 1, so solvers must detect complete melting or freezing.
+- id: P003v3
+  hypothesis: P003
+  idea: phase_change_equilibration_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v3
+  instruction: |-
+    Author a new task from scratch: phase_change_equilibration_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Conserve enthalpy through mixtures, heat pulses, and withdrawals involving materials with distinct heat capacities and latent heats; return the equilibrium temperature and queried phase fraction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/phase_change_equilibration_v3
+- id: P004v1
+  hypothesis: P004
+  idea: interval_matrix_regularity_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v1
+  instruction: |-
+    Author a new task from scratch: interval_matrix_regularity_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide whether every matrix within rational entry bounds is nonsingular; vary independent and shared uncertainties, answering robust regularity or the first supplied radius admitting singularity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v1
+  design_choice: Answer as yes/no for a fixed uncertainty set, where all entries vary independently in
+    symmetric rational intervals around an integer matrix.
+- id: P004v2
+  hypothesis: P004
+  idea: interval_matrix_regularity_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v2
+  instruction: |-
+    Author a new task from scratch: interval_matrix_regularity_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide whether every matrix within rational entry bounds is nonsingular; vary independent and shared uncertainties, answering robust regularity or the first supplied radius admitting singularity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v2
+  design_choice: Answer as the smallest integer radius r at which some matrix in the r-ball around the
+    nominal matrix is singular, with radii 1..k supplied.
+- id: P004v3
+  hypothesis: P004
+  idea: interval_matrix_regularity_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v3
+  instruction: |-
+    Author a new task from scratch: interval_matrix_regularity_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decide whether every matrix within rational entry bounds is nonsingular; vary independent and shared uncertainties, answering robust regularity or the first supplied radius admitting singularity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/interval_matrix_regularity_v3
+- id: P005v1
+  hypothesis: P005
+  idea: nested_radical_continuation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v1
+  instruction: |-
+    Author a new task from scratch: nested_radical_continuation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Continue nested square-root expressions along closed polygonal paths avoiding branch points; vary shifts, nesting, and loop order; return the endpoint branch relative to the starting branch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v1
+  design_choice: Choose the polygon vertices on a fixed integer lattice so that branch points lie strictly
+    inside edges, and the answer is the sign of the imaginary part of the final radical value.
+- id: P005v2
+  hypothesis: P005
+  idea: nested_radical_continuation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v2
+  instruction: |-
+    Author a new task from scratch: nested_radical_continuation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Continue nested square-root expressions along closed polygonal paths avoiding branch points; vary shifts, nesting, and loop order; return the endpoint branch relative to the starting branch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v2
+  design_choice: Let the path be a sequence of axis-aligned unit steps with random shifts, and the answer
+    is the integer winding number around all branch points modulo the nesting depth.
+- id: P005v3
+  hypothesis: P005
+  idea: nested_radical_continuation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v3
+  instruction: |-
+    Author a new task from scratch: nested_radical_continuation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Continue nested square-root expressions along closed polygonal paths avoiding branch points; vary shifts, nesting, and loop order; return the endpoint branch relative to the starting branch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/nested_radical_continuation_v3
+- id: P006v1
+  hypothesis: P006
+  idea: incentive_compatible_menu_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v1
+  instruction: |-
+    Author a new task from scratch: incentive_compatible_menu_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Optimize a menu of allocations and payments subject to truthful choice and voluntary participation; vary multidimensional valuations, type probabilities, and allocation restrictions; answer maximum expected profit.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v1
+  design_choice: Represent valuations as integer vectors with a fixed small support, and require exact
+    rational expected profit as a reduced fraction.
+- id: P006v2
+  hypothesis: P006
+  idea: incentive_compatible_menu_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v2
+  instruction: |-
+    Author a new task from scratch: incentive_compatible_menu_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Optimize a menu of allocations and payments subject to truthful choice and voluntary participation; vary multidimensional valuations, type probabilities, and allocation restrictions; answer maximum expected profit.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v2
+  design_choice: Use a two-type menu with binary allocations and payments, where the solver must compare
+    two candidate menus to find the profit-maximizing one.
+- id: P006v3
+  hypothesis: P006
+  idea: incentive_compatible_menu_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v3
+  instruction: |-
+    Author a new task from scratch: incentive_compatible_menu_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Optimize a menu of allocations and payments subject to truthful choice and voluntary participation; vary multidimensional valuations, type probabilities, and allocation restrictions; answer maximum expected profit.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/incentive_compatible_menu_v3
+- id: P007v1
+  hypothesis: P007
+  idea: heap_extension_truth_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v1
+  instruction: |-
+    Author a new task from scratch: heap_extension_truth_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate assertions on bounded heaps using points-to facts, separating conjunction, and separating implication; quantify over disjoint splits and extensions to return the assertion's truth value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v1
+  design_choice: Use heap graphs with fixed node labels and edge sets, where assertions are evaluated
+    via exhaustive enumeration of all possible disjoint subheap splits and extension allocations.
+- id: P007v2
+  hypothesis: P007
+  idea: heap_extension_truth_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v2
+  instruction: |-
+    Author a new task from scratch: heap_extension_truth_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate assertions on bounded heaps using points-to facts, separating conjunction, and separating implication; quantify over disjoint splits and extensions to return the assertion's truth value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v2
+  design_choice: Represent heaps as lists of allocation blocks with size and ownership flags, and evaluate
+    separating implication by simulating the minimal extension that satisfies the antecedent.
+- id: P007v3
+  hypothesis: P007
+  idea: heap_extension_truth_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v3
+  instruction: |-
+    Author a new task from scratch: heap_extension_truth_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate assertions on bounded heaps using points-to facts, separating conjunction, and separating implication; quantify over disjoint splits and extensions to return the assertion's truth value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_shortcuts_fail_r1/heap_extension_truth_v3

@@ -1,0 +1,314 @@
+version: 1
+name: ua_novel_composition_r2
+proposal_wave: ua_novel-composition
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: robust_counterfactual_regret_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v1
+  instruction: |-
+    Author a new task from scratch: robust_counterfactual_regret_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare interventions across coupled uncertainty scenarios, measuring each loss against the best alternative in that same scenario; return the minimum-worst-regret intervention or its adversarial witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v1
+  design_choice: Represent scenarios as a small finite set of probability vectors over outcomes, with
+    interventions as actions; answer is the action index minimizing max over scenarios of (best action
+    loss - chosen action loss).
+- id: P001v2
+  hypothesis: P001
+  idea: robust_counterfactual_regret_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v2
+  instruction: |-
+    Author a new task from scratch: robust_counterfactual_regret_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare interventions across coupled uncertainty scenarios, measuring each loss against the best alternative in that same scenario; return the minimum-worst-regret intervention or its adversarial witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v2
+  design_choice: Represent interventions as binary vectors and scenarios as additive noise vectors; answer
+    is a witness scenario index and intervention index where regret exceeds a threshold, formatted as
+    two integers.
+- id: P001v3
+  hypothesis: P001
+  idea: robust_counterfactual_regret_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v3
+  instruction: |-
+    Author a new task from scratch: robust_counterfactual_regret_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare interventions across coupled uncertainty scenarios, measuring each loss against the best alternative in that same scenario; return the minimum-worst-regret intervention or its adversarial witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/robust_counterfactual_regret_v3
+- id: P002v1
+  hypothesis: P002
+  idea: stopped_sample_likelihood_ratio_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v1
+  instruction: |-
+    Author a new task from scratch: stopped_sample_likelihood_ratio_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute likelihood ratios for censored urn-sampling reports with or without replacement and history-dependent stopping; aggregate only draw histories consistent with both the stopping event and report.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v1
+  design_choice: 'Answer format: give the likelihood ratio as a reduced fraction with numerator and denominator
+    separated by a slash, e.g., ''3/2''.'
+- id: P002v2
+  hypothesis: P002
+  idea: stopped_sample_likelihood_ratio_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v2
+  instruction: |-
+    Author a new task from scratch: stopped_sample_likelihood_ratio_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute likelihood ratios for censored urn-sampling reports with or without replacement and history-dependent stopping; aggregate only draw histories consistent with both the stopping event and report.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v2
+  design_choice: 'Answer format: give the likelihood ratio as an integer when it is whole, otherwise as
+    a reduced fraction with a slash.'
+- id: P002v3
+  hypothesis: P002
+  idea: stopped_sample_likelihood_ratio_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v3
+  instruction: |-
+    Author a new task from scratch: stopped_sample_likelihood_ratio_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute likelihood ratios for censored urn-sampling reports with or without replacement and history-dependent stopping; aggregate only draw histories consistent with both the stopping event and report.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/stopped_sample_likelihood_ratio_v3
+- id: P003v1
+  hypothesis: P003
+  idea: quantizer_preimage_measure_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v1
+  instruction: |-
+    Author a new task from scratch: quantizer_preimage_measure_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invert cascades of affine maps, rounding, clipping, and modular wrapping over a bounded real interval; return the exact measure of inputs producing a specified output code.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v1
+  design_choice: Answer as a reduced fraction of the interval length, requiring exact rational arithmetic
+    for all piecewise-linear preimage regions.
+- id: P003v2
+  hypothesis: P003
+  idea: quantizer_preimage_measure_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v2
+  instruction: |-
+    Author a new task from scratch: quantizer_preimage_measure_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invert cascades of affine maps, rounding, clipping, and modular wrapping over a bounded real interval; return the exact measure of inputs producing a specified output code.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v2
+  design_choice: Answer as an integer count of unit subintervals that map to the code, with inputs discretized
+    to a fixed grid of equally spaced points.
+- id: P003v3
+  hypothesis: P003
+  idea: quantizer_preimage_measure_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v3
+  instruction: |-
+    Author a new task from scratch: quantizer_preimage_measure_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invert cascades of affine maps, rounding, clipping, and modular wrapping over a bounded real interval; return the exact measure of inputs producing a specified output code.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/quantizer_preimage_measure_v3
+- id: P004v1
+  hypothesis: P004
+  idea: laminated_section_moments_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v1
+  instruction: |-
+    Author a new task from scratch: laminated_section_moments_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine offset material patches, holes, and rotated rectangular inserts using stiffness-weighted area moments; return the neutral axis, effective bending stiffness, or stress ratio at queried locations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v1
+  design_choice: 'Answer form: return neutral axis coordinate as a reduced fraction of the section height,
+    with signs indicating direction from a fixed reference edge.'
+- id: P004v2
+  hypothesis: P004
+  idea: laminated_section_moments_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v2
+  instruction: |-
+    Author a new task from scratch: laminated_section_moments_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine offset material patches, holes, and rotated rectangular inserts using stiffness-weighted area moments; return the neutral axis, effective bending stiffness, or stress ratio at queried locations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v2
+  design_choice: 'Answer form: return the ratio of maximum bending stress at a queried point to the average
+    stress, expressed as an integer percentage (rounded to nearest whole number).'
+- id: P004v3
+  hypothesis: P004
+  idea: laminated_section_moments_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v3
+  instruction: |-
+    Author a new task from scratch: laminated_section_moments_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine offset material patches, holes, and rotated rectangular inserts using stiffness-weighted area moments; return the neutral axis, effective bending stiffness, or stress ratio at queried locations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/laminated_section_moments_v3
+- id: P005v1
+  hypothesis: P005
+  idea: consensus_cut_minimum_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v1
+  instruction: |-
+    Author a new task from scratch: consensus_cut_minimum_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Split a line into alternating signs so each piecewise-constant valuation has its prescribed signed total; vary overlapping supports, target imbalances, and fixed endpoint signs; answer the fewest cuts or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v1
+  design_choice: Choose supports that all span the full line, so solvers must reconcile conflicting endpoint
+    signs via interior cuts, making infeasibility common when target sums exceed available positive/negative
+    mass.
+- id: P005v2
+  hypothesis: P005
+  idea: consensus_cut_minimum_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v2
+  instruction: |-
+    Author a new task from scratch: consensus_cut_minimum_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Split a line into alternating signs so each piecewise-constant valuation has its prescribed signed total; vary overlapping supports, target imbalances, and fixed endpoint signs; answer the fewest cuts or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v2
+  design_choice: Make each valuation's support a contiguous interval with varying overlaps, and answer
+    the minimal number of cut points in sorted order as a comma-separated list of fractions, or 'impossible'.
+- id: P005v3
+  hypothesis: P005
+  idea: consensus_cut_minimum_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v3
+  instruction: |-
+    Author a new task from scratch: consensus_cut_minimum_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Split a line into alternating signs so each piecewise-constant valuation has its prescribed signed total; vary overlapping supports, target imbalances, and fixed endpoint signs; answer the fewest cuts or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_novel_composition_r2/consensus_cut_minimum_v3

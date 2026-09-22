@@ -1,0 +1,253 @@
+version: 1
+name: ua_interacting_updates_r3
+proposal_wave: ua_interacting-updates
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: periodic_weave_reconstruction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v1
+  instruction: |-
+    Author a new task from scratch: periodic_weave_reconstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Unregistered row, column, and diagonal snippets sample a symbol weave with unknown bounded periods and shifted seams; recover all period-and-shift triples consistent with one shared pattern.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v1
+  design_choice: 'Answer format: a canonical triple string for each period pair, e.g., ''p=3,q=5,s=2'',
+    sorted lexicographically, with empty list as ''none'''
+- id: P001v2
+  hypothesis: P001
+  idea: periodic_weave_reconstruction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v2
+  instruction: |-
+    Author a new task from scratch: periodic_weave_reconstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Unregistered row, column, and diagonal snippets sample a symbol weave with unknown bounded periods and shifted seams; recover all period-and-shift triples consistent with one shared pattern.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v2
+  design_choice: 'Instance generation: symbols are integers mod a fixed small prime, and each row/column/diagonal
+    snippet is given as a contiguous run with its start coordinate, forcing solvers to infer global consistency
+    from local overlaps'
+- id: P001v3
+  hypothesis: P001
+  idea: periodic_weave_reconstruction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v3
+  instruction: |-
+    Author a new task from scratch: periodic_weave_reconstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Unregistered row, column, and diagonal snippets sample a symbol weave with unknown bounded periods and shifted seams; recover all period-and-shift triples consistent with one shared pattern.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/periodic_weave_reconstruction_v3
+- id: P002v1
+  hypothesis: P002
+  idea: substitution_uniform_recurrence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v1
+  instruction: |-
+    Author a new task from scratch: substitution_uniform_recurrence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer bounded-gap recurrence in infinite words defined by nonerasing substitutions and prolongable seeds, including reducible symbol systems; answer whether every occurring finite block recurs uniformly.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v1
+  design_choice: Present the substitution as a list of symbol-to-word rules, with a seed symbol and explicit
+    iteration count; the answer is a canonical yes/no string.
+- id: P002v2
+  hypothesis: P002
+  idea: substitution_uniform_recurrence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v2
+  instruction: |-
+    Author a new task from scratch: substitution_uniform_recurrence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer bounded-gap recurrence in infinite words defined by nonerasing substitutions and prolongable seeds, including reducible symbol systems; answer whether every occurring finite block recurs uniformly.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v2
+  design_choice: Give a reducible substitution where some symbols are not prolongable, and ask whether
+    uniform recurrence holds for blocks over the full alphabet or only the recurrent sub-alphabet.
+- id: P002v3
+  hypothesis: P002
+  idea: substitution_uniform_recurrence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v3
+  instruction: |-
+    Author a new task from scratch: substitution_uniform_recurrence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer bounded-gap recurrence in infinite words defined by nonerasing substitutions and prolongable seeds, including reducible symbol systems; answer whether every occurring finite block recurs uniformly.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/substitution_uniform_recurrence_v3
+- id: P003v1
+  hypothesis: P003
+  idea: masked_stencil_identification_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v1
+  instruction: |-
+    Author a new task from scratch: masked_stencil_identification_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sparse space-time patches from several runs share an unknown finite-neighborhood update rule; vary boundaries, alphabets, and missing states, and recover rule entries forced across all completions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v1
+  design_choice: Present patches as fixed masked grids and require a canonical list of all rule entries
+    that are identical across every valid completion of the missing cells.
+- id: P003v2
+  hypothesis: P003
+  idea: masked_stencil_identification_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v2
+  instruction: |-
+    Author a new task from scratch: masked_stencil_identification_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sparse space-time patches from several runs share an unknown finite-neighborhood update rule; vary boundaries, alphabets, and missing states, and recover rule entries forced across all completions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v2
+  design_choice: Provide multiple runs with varying boundary conditions and answer with the minimal deterministic
+    rule table consistent with all observed transitions, using a compact bitstring encoding.
+- id: P003v3
+  hypothesis: P003
+  idea: masked_stencil_identification_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v3
+  instruction: |-
+    Author a new task from scratch: masked_stencil_identification_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sparse space-time patches from several runs share an unknown finite-neighborhood update rule; vary boundaries, alphabets, and missing states, and recover rule entries forced across all completions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/masked_stencil_identification_v3
+- id: P004v1
+  hypothesis: P004
+  idea: boundary_degree_inference_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v1
+  instruction: |-
+    Author a new task from scratch: boundary_degree_inference_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine oriented boundary pieces and nonzero piecewise-linear vector values in two or three dimensions; infer the signed interior zero count forced by the boundary and whether a zero must exist.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v1
+  design_choice: Instances are closed polygonal chains in 2D with piecewise-constant vector directions;
+    answer is the winding-number integer plus a yes/no zero-existence flag.
+- id: P004v2
+  hypothesis: P004
+  idea: boundary_degree_inference_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v2
+  instruction: |-
+    Author a new task from scratch: boundary_degree_inference_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine oriented boundary pieces and nonzero piecewise-linear vector values in two or three dimensions; infer the signed interior zero count forced by the boundary and whether a zero must exist.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v2
+  design_choice: Instances are tetrahedral meshes in 3D with affine vector fields on each tetrahedron;
+    answer is the total index sum as a reduced fraction and a yes/no flag.
+- id: P004v3
+  hypothesis: P004
+  idea: boundary_degree_inference_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v3
+  instruction: |-
+    Author a new task from scratch: boundary_degree_inference_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine oriented boundary pieces and nonzero piecewise-linear vector values in two or three dimensions; infer the signed interior zero count forced by the boundary and whether a zero must exist.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_interacting_updates_r3/boundary_degree_inference_v3

@@ -1,0 +1,723 @@
+version: 1
+name: ua_uncertainty_r1
+proposal_wave: ua_uncertainty
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  - P012v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  - P012v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  - P012v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: constraint_release_response_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v1
+  instruction: |-
+    Author a new task from scratch: constraint_release_response_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Release, replace or move constraints in quadratic mechanical systems with stated loads; enforce the remaining constraints and recompute minimum-energy states, returning displacement changes or released reaction forces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v1
+  design_choice: Each instance gives a single redundant constraint to release, and the answer is the resulting
+    displacement vector change as a comma-separated list of integers.
+- id: P001v2
+  hypothesis: P001
+  idea: constraint_release_response_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v2
+  instruction: |-
+    Author a new task from scratch: constraint_release_response_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Release, replace or move constraints in quadratic mechanical systems with stated loads; enforce the remaining constraints and recompute minimum-energy states, returning displacement changes or released reaction forces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v2
+  design_choice: Each instance gives a set of constraints to replace with a new single constraint, and
+    the answer is the released reaction force magnitude as a fraction in lowest terms.
+- id: P001v3
+  hypothesis: P001
+  idea: constraint_release_response_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v3
+  instruction: |-
+    Author a new task from scratch: constraint_release_response_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Release, replace or move constraints in quadratic mechanical systems with stated loads; enforce the remaining constraints and recompute minimum-energy states, returning displacement changes or released reaction forces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/constraint_release_response_v3
+- id: P002v1
+  hypothesis: P002
+  idea: diffraction_motif_abduction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v1
+  instruction: |-
+    Author a new task from scratch: diffraction_motif_abduction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer hidden repeating motifs from allowed and extinguished reflections using supplied phase-addition rules; vary translated copies, signed weights, and incomplete observations; answer compatible motifs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v1
+  design_choice: Represent motifs as binary strings on a 1D lattice; rules specify which pairwise phase
+    differences cancel; answers are all motif strings up to translation.
+- id: P002v2
+  hypothesis: P002
+  idea: diffraction_motif_abduction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v2
+  instruction: |-
+    Author a new task from scratch: diffraction_motif_abduction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer hidden repeating motifs from allowed and extinguished reflections using supplied phase-addition rules; vary translated copies, signed weights, and incomplete observations; answer compatible motifs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v2
+  design_choice: Present reflections as integer indices with parity constraints; solver deduces motif
+    period and sign pattern; answer is a canonical minimal period string.
+- id: P002v3
+  hypothesis: P002
+  idea: diffraction_motif_abduction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v3
+  instruction: |-
+    Author a new task from scratch: diffraction_motif_abduction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer hidden repeating motifs from allowed and extinguished reflections using supplied phase-addition rules; vary translated copies, signed weights, and incomplete observations; answer compatible motifs.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/diffraction_motif_abduction_v3
+- id: P003v1
+  hypothesis: P003
+  idea: causal_contingency_responsibility_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v1
+  instruction: |-
+    Author a new task from scratch: causal_contingency_responsibility_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the smallest admissible contingency making a nominated event necessary for an outcome in Boolean or threshold mechanisms with redundancy and preemption; return its responsibility score or noncause.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v1
+  design_choice: Represent the mechanism as a Boolean circuit with AND/OR/NOT gates; instances are assignments
+    to inputs and a target output; answer is a fraction for the minimal contingency size.
+- id: P003v2
+  hypothesis: P003
+  idea: causal_contingency_responsibility_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v2
+  instruction: |-
+    Author a new task from scratch: causal_contingency_responsibility_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the smallest admissible contingency making a nominated event necessary for an outcome in Boolean or threshold mechanisms with redundancy and preemption; return its responsibility score or noncause.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v2
+  design_choice: Represent the mechanism as a threshold function over weighted binary variables; instances
+    list weights, a threshold, and an outcome; answer is an integer contingency size or the string 'noncause'.
+- id: P003v3
+  hypothesis: P003
+  idea: causal_contingency_responsibility_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v3
+  instruction: |-
+    Author a new task from scratch: causal_contingency_responsibility_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the smallest admissible contingency making a nominated event necessary for an outcome in Boolean or threshold mechanisms with redundancy and preemption; return its responsibility score or noncause.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/causal_contingency_responsibility_v3
+- id: P004v1
+  hypothesis: P004
+  idea: cell_surgery_homology_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v1
+  instruction: |-
+    Author a new task from scratch: cell_surgery_homology_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Add, excise or identify cells in finite complexes under stated boundary rules; compare binary homology before and after the intervention and report changes in component, tunnel and cavity counts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v1
+  design_choice: "Instances give a small cubical complex as a set of filled unit squares; the answer is\
+    \ a triple (\u0394\u03B20, \u0394\u03B21, \u0394\u03B22) after deleting one specified cell, with the\
+    \ change computed mod 2."
+- id: P004v2
+  hypothesis: P004
+  idea: cell_surgery_homology_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v2
+  instruction: |-
+    Author a new task from scratch: cell_surgery_homology_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Add, excise or identify cells in finite complexes under stated boundary rules; compare binary homology before and after the intervention and report changes in component, tunnel and cavity counts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v2
+  design_choice: Instances present a 2D cell complex as a list of vertices, edges and faces; the solver
+    must add a single new edge between two specified vertices and output the resulting Betti numbers as
+    three integers.
+- id: P004v3
+  hypothesis: P004
+  idea: cell_surgery_homology_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v3
+  instruction: |-
+    Author a new task from scratch: cell_surgery_homology_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Add, excise or identify cells in finite complexes under stated boundary rules; compare binary homology before and after the intervention and report changes in component, tunnel and cavity counts.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/cell_surgery_homology_v3
+- id: P005v1
+  hypothesis: P005
+  idea: strategic_commitment_optimization_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v1
+  instruction: |-
+    Author a new task from scratch: strategic_commitment_optimization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose a binding action or lottery before another agent responds optimally in finite payoff systems with stated tie rules; return the payoff-maximizing commitment or its induced outcome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v1
+  design_choice: Instances present the commitment as a pure action from a finite set, and the solver must
+    return the action string that maximizes the follower's best response payoff under a lexicographic
+    tie rule.
+- id: P005v2
+  hypothesis: P005
+  idea: strategic_commitment_optimization_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v2
+  instruction: |-
+    Author a new task from scratch: strategic_commitment_optimization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose a binding action or lottery before another agent responds optimally in finite payoff systems with stated tie rules; return the payoff-maximizing commitment or its induced outcome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v2
+  design_choice: Instances present the commitment as a lottery over two pure actions with stated probabilities,
+    and the solver must return the induced outcome pair (probabilities, expected payoff) as a reduced
+    fraction.
+- id: P005v3
+  hypothesis: P005
+  idea: strategic_commitment_optimization_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v3
+  instruction: |-
+    Author a new task from scratch: strategic_commitment_optimization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose a binding action or lottery before another agent responds optimally in finite payoff systems with stated tie rules; return the payoff-maximizing commitment or its induced outcome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/strategic_commitment_optimization_v3
+- id: P006v1
+  hypothesis: P006
+  idea: ballot_clone_counterfactuals_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v1
+  instruction: |-
+    Author a new task from scratch: ballot_clone_counterfactuals_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Replace candidates with contiguous clone blocks in ranked ballots under stated elimination or scoring rules; range over internal clone orders and determine which original candidates can win after collapsing clone identities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v1
+  design_choice: 'Answer format: output the set of surviving original candidate labels as a sorted space-separated
+    string, e.g., ''B C'', with at least two distinct sets per difficulty level.'
+- id: P006v2
+  hypothesis: P006
+  idea: ballot_clone_counterfactuals_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v2
+  instruction: |-
+    Author a new task from scratch: ballot_clone_counterfactuals_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Replace candidates with contiguous clone blocks in ranked ballots under stated elimination or scoring rules; range over internal clone orders and determine which original candidates can win after collapsing clone identities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v2
+  design_choice: 'Clone block placement: fix clone blocks at specified contiguous positions in each ballot,
+    but randomize internal clone order per ballot; difficulty comes from tracking permutations across
+    ballots.'
+- id: P006v3
+  hypothesis: P006
+  idea: ballot_clone_counterfactuals_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v3
+  instruction: |-
+    Author a new task from scratch: ballot_clone_counterfactuals_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Replace candidates with contiguous clone blocks in ranked ballots under stated elimination or scoring rules; range over internal clone orders and determine which original candidates can win after collapsing clone identities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/ballot_clone_counterfactuals_v3
+- id: P007v1
+  hypothesis: P007
+  idea: settlement_departure_consistency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v1
+  instruction: |-
+    Author a new task from scratch: settlement_departure_consistency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Remove claimants after paying their assigned shares, then redistribute the residual estate under capped, proportional, priority or hybrid rules; determine whether remaining awards change and identify the affected claimants.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v1
+  design_choice: Vary the number of claimants from 2 to 12 and the estate size relative to total claims,
+    forcing solvers to handle zero or negative residuals.
+- id: P007v2
+  hypothesis: P007
+  idea: settlement_departure_consistency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v2
+  instruction: |-
+    Author a new task from scratch: settlement_departure_consistency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Remove claimants after paying their assigned shares, then redistribute the residual estate under capped, proportional, priority or hybrid rules; determine whether remaining awards change and identify the affected claimants.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v2
+  design_choice: Use fractional shares with denominators up to 20, requiring exact rational arithmetic
+    to detect whether removing a claimant alters others' awards.
+- id: P007v3
+  hypothesis: P007
+  idea: settlement_departure_consistency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v3
+  instruction: |-
+    Author a new task from scratch: settlement_departure_consistency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Remove claimants after paying their assigned shares, then redistribute the residual estate under capped, proportional, priority or hybrid rules; determine whether remaining awards change and identify the affected claimants.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/settlement_departure_consistency_v3
+- id: P008v1
+  hypothesis: P008
+  idea: intervention_information_value_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v1
+  instruction: |-
+    Author a new task from scratch: intervention_information_value_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare experiments that reveal uncertain intervention responses before a consequential choice; combine likelihoods, posterior-optimal actions, and test costs to return the best experiment or its net value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v1
+  design_choice: Represent each experiment as a fixed set of possible likelihood vectors over a binary
+    outcome, with the solver computing expected posterior utility minus test cost for each candidate.
+- id: P008v2
+  hypothesis: P008
+  idea: intervention_information_value_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v2
+  instruction: |-
+    Author a new task from scratch: intervention_information_value_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare experiments that reveal uncertain intervention responses before a consequential choice; combine likelihoods, posterior-optimal actions, and test costs to return the best experiment or its net value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v2
+  design_choice: Present experiments as conditional probability tables over a small discrete state space,
+    where the solver must enumerate all posterior action changes to rank net values.
+- id: P008v3
+  hypothesis: P008
+  idea: intervention_information_value_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v3
+  instruction: |-
+    Author a new task from scratch: intervention_information_value_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare experiments that reveal uncertain intervention responses before a consequential choice; combine likelihoods, posterior-optimal actions, and test costs to return the best experiment or its net value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/intervention_information_value_v3
+- id: P009v1
+  hypothesis: P009
+  idea: derived_view_intervention_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v1
+  instruction: |-
+    Author a new task from scratch: derived_view_intervention_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Impose counterfactual changes on derived relations built from joins, exclusions and grouped counts; determine the fewest base-fact edits realizing exactly those changes without collateral view changes, or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v1
+  design_choice: Answer as a canonical edit plan string like 'insert R(a,b); delete S(c,d)' with count
+    of edits, enforcing minimality via exhaustive search.
+- id: P009v2
+  hypothesis: P009
+  idea: derived_view_intervention_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v2
+  instruction: |-
+    Author a new task from scratch: derived_view_intervention_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Impose counterfactual changes on derived relations built from joins, exclusions and grouped counts; determine the fewest base-fact edits realizing exactly those changes without collateral view changes, or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v2
+  design_choice: Restrict base facts to two relations and derived views to counts only, so answers are
+    integers (minimum edits) or 'impossible'.
+- id: P009v3
+  hypothesis: P009
+  idea: derived_view_intervention_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v3
+  instruction: |-
+    Author a new task from scratch: derived_view_intervention_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Impose counterfactual changes on derived relations built from joins, exclusions and grouped counts; determine the fewest base-fact edits realizing exactly those changes without collateral view changes, or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/derived_view_intervention_v3
+- id: P010v1
+  hypothesis: P010
+  idea: residual_symmetry_under_pinning_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v1
+  instruction: |-
+    Author a new task from scratch: residual_symmetry_under_pinning_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Intervene on finite symmetric structures using fixed sites, distinct labels or interchangeable marked sets; retain exactly the transformations respecting the intervention and report the resulting orbit partition.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v1
+  design_choice: Answer as a canonical list of orbit sets, each written as a sorted tuple of site indices,
+    with orbits ordered by their smallest element.
+- id: P010v2
+  hypothesis: P010
+  idea: residual_symmetry_under_pinning_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v2
+  instruction: |-
+    Author a new task from scratch: residual_symmetry_under_pinning_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Intervene on finite symmetric structures using fixed sites, distinct labels or interchangeable marked sets; retain exactly the transformations respecting the intervention and report the resulting orbit partition.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v2
+  design_choice: 'Answer as a single integer: the number of orbits in the residual group, with ties broken
+    by requiring the intervention to be a minimal fixed-site pinning.'
+- id: P010v3
+  hypothesis: P010
+  idea: residual_symmetry_under_pinning_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v3
+  instruction: |-
+    Author a new task from scratch: residual_symmetry_under_pinning_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Intervene on finite symmetric structures using fixed sites, distinct labels or interchangeable marked sets; retain exactly the transformations respecting the intervention and report the resulting orbit partition.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/residual_symmetry_under_pinning_v3
+- id: P011v1
+  hypothesis: P011
+  idea: factorial_intervention_interactions_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v1
+  instruction: |-
+    Author a new task from scratch: factorial_intervention_interactions_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate joint intervention responses into baseline, individual, and higher-order interaction terms across binary or multivalued factors; return a requested pure interaction or reconstruct a missing response.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v1
+  design_choice: Factors are presented as named variables with fixed levels, and the solver must return
+    the pure interaction term as a canonical arithmetic expression using the provided response values.
+- id: P011v2
+  hypothesis: P011
+  idea: factorial_intervention_interactions_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v2
+  instruction: |-
+    Author a new task from scratch: factorial_intervention_interactions_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate joint intervention responses into baseline, individual, and higher-order interaction terms across binary or multivalued factors; return a requested pure interaction or reconstruct a missing response.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v2
+  design_choice: The solver is given a subset of response values and must reconstruct the missing one
+    by computing the full factorial decomposition, with the answer as an integer or fraction.
+- id: P011v3
+  hypothesis: P011
+  idea: factorial_intervention_interactions_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v3
+  instruction: |-
+    Author a new task from scratch: factorial_intervention_interactions_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Separate joint intervention responses into baseline, individual, and higher-order interaction terms across binary or multivalued factors; return a requested pure interaction or reconstruct a missing response.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/factorial_intervention_interactions_v3
+- id: P012v1
+  hypothesis: P012
+  idea: nested_closest_world_counterfactuals_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v1
+  instruction: |-
+    Author a new task from scratch: nested_closest_world_counterfactuals_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate nested would/might counterfactuals over world-relative closeness orders with ties and impossible antecedents; return truth by selecting the closest antecedent worlds separately at each scope.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v1
+  design_choice: Present each instance as a natural-language scenario with a timeline and explicit closeness
+    ranking; answer is a single canonical word from {true, false}.
+- id: P012v2
+  hypothesis: P012
+  idea: nested_closest_world_counterfactuals_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v2
+  instruction: |-
+    Author a new task from scratch: nested_closest_world_counterfactuals_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate nested would/might counterfactuals over world-relative closeness orders with ties and impossible antecedents; return truth by selecting the closest antecedent worlds separately at each scope.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v2
+  design_choice: Encode worlds as bitstrings with a Hamming-distance closeness order; answer is the truth
+    value as a 0/1 integer.
+- id: P012v3
+  hypothesis: P012
+  idea: nested_closest_world_counterfactuals_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v3
+  instruction: |-
+    Author a new task from scratch: nested_closest_world_counterfactuals_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate nested would/might counterfactuals over world-relative closeness orders with ties and impossible antecedents; return truth by selecting the closest antecedent worlds separately at each scope.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_uncertainty_r1/nested_closest_world_counterfactuals_v3

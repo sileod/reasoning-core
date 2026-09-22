@@ -1,0 +1,193 @@
+version: 1
+name: k3_multi_relation_integration_r2
+proposal_wave: k3_multi-relation-integration
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: constraint_based_skeleton_orientation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v1
+  instruction: |-
+    Author a new task from scratch: constraint_based_skeleton_orientation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Constraint-based skeleton search from listed conditional independencies: remove edges licensed by separations while recording separating sets, orient v-structures, apply Meek rules; answer the final edge set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v1
+  design_choice: Represent the skeleton as an undirected graph over a fixed node set; answers are canonical
+    alphabetical edge lists.
+- id: P001v2
+  hypothesis: P001
+  idea: constraint_based_skeleton_orientation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v2
+  instruction: |-
+    Author a new task from scratch: constraint_based_skeleton_orientation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Constraint-based skeleton search from listed conditional independencies: remove edges licensed by separations while recording separating sets, orient v-structures, apply Meek rules; answer the final edge set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v2
+  design_choice: "Use a small fixed set of node labels (A\u2013F) so answers are compact sorted pairs\
+    \ like 'AB CD EF'."
+- id: P001v3
+  hypothesis: P001
+  idea: constraint_based_skeleton_orientation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v3
+  instruction: |-
+    Author a new task from scratch: constraint_based_skeleton_orientation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Constraint-based skeleton search from listed conditional independencies: remove edges licensed by separations while recording separating sets, orient v-structures, apply Meek rules; answer the final edge set.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/constraint_based_skeleton_orientation_v3
+- id: P002v1
+  hypothesis: P002
+  idea: match_clear_cascade_resolution_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v1
+  instruction: |-
+    Author a new task from scratch: match_clear_cascade_resolution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve swap-and-match boards: apply a proposed swap, clear all line matches of three or more, drop tiles, refill from a stated stream, and repeat to stability; answers are the final board, cascade count, or total tiles cleared.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v1
+  design_choice: Answer as the final board state after all cascades, with tiles represented by single
+    letters and empty cells as dots
+- id: P002v2
+  hypothesis: P002
+  idea: match_clear_cascade_resolution_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v2
+  instruction: |-
+    Author a new task from scratch: match_clear_cascade_resolution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve swap-and-match boards: apply a proposed swap, clear all line matches of three or more, drop tiles, refill from a stated stream, and repeat to stability; answers are the final board, cascade count, or total tiles cleared.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v2
+  design_choice: 'Answer as a single integer: the total number of tiles cleared across all cascades, including
+    refills'
+- id: P002v3
+  hypothesis: P002
+  idea: match_clear_cascade_resolution_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v3
+  instruction: |-
+    Author a new task from scratch: match_clear_cascade_resolution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve swap-and-match boards: apply a proposed swap, clear all line matches of three or more, drop tiles, refill from a stated stream, and repeat to stability; answers are the final board, cascade count, or total tiles cleared.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/match_clear_cascade_resolution_v3
+- id: P003v1
+  hypothesis: P003
+  idea: farey_mediant_descent_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v1
+  instruction: |-
+    Author a new task from scratch: farey_mediant_descent_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search for rationals by mediant descent: keep two Farey neighbors, compare the target, and move into the half cut by their mediant; answers are the L/R path to a target fraction or the simplest rational inside a given interval.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v1
+  design_choice: Answer as a canonical L/R string where the descent stops at the exact target numerator/denominator
+    pair, with targets chosen from Farey sequences of increasing order.
+- id: P003v2
+  hypothesis: P003
+  idea: farey_mediant_descent_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v2
+  instruction: |-
+    Author a new task from scratch: farey_mediant_descent_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search for rationals by mediant descent: keep two Farey neighbors, compare the target, and move into the half cut by their mediant; answers are the L/R path to a target fraction or the simplest rational inside a given interval.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v2
+  design_choice: Answer as the fraction with the smallest denominator inside a given interval, found by
+    mediant descent on the two bounding Farey neighbors; the interval endpoints are random reduced fractions.
+- id: P003v3
+  hypothesis: P003
+  idea: farey_mediant_descent_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v3
+  instruction: |-
+    Author a new task from scratch: farey_mediant_descent_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search for rationals by mediant descent: keep two Farey neighbors, compare the target, and move into the half cut by their mediant; answers are the L/R path to a target fraction or the simplest rational inside a given interval.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_multi_relation_integration_r2/farey_mediant_descent_v3

@@ -1,0 +1,491 @@
+version: 1
+name: ua_invariants_r2
+proposal_wave: ua_invariants
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: effective_boundary_response_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v1
+  instruction: "Author a new task from scratch: effective_boundary_response_v1.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Eliminate\
+    \ hidden nodes from rational conductance networks while preserving terminal current\xE2\x80\x93voltage\
+    \ behavior; recover the boundary response, decide exterior equivalence, or infer a uniquely determined\
+    \ conductance.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v1
+  design_choice: 'Answer as a single integer: the equivalent conductance between two specified terminals
+    after eliminating all internal nodes, with instances varying in network topology and edge values.'
+- id: P001v2
+  hypothesis: P001
+  idea: effective_boundary_response_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v2
+  instruction: "Author a new task from scratch: effective_boundary_response_v2.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Eliminate\
+    \ hidden nodes from rational conductance networks while preserving terminal current\xE2\x80\x93voltage\
+    \ behavior; recover the boundary response, decide exterior equivalence, or infer a uniquely determined\
+    \ conductance.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v2
+  design_choice: Answer as a balanced binary choice (YES/NO) indicating whether two given boundary-accessible
+    networks have identical terminal behavior, with instances presenting pairs of differently structured
+    networks.
+- id: P001v3
+  hypothesis: P001
+  idea: effective_boundary_response_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v3
+  instruction: "Author a new task from scratch: effective_boundary_response_v3.\n\nCover exactly this,\
+    \ and put this line -- adapted to what you actually build -- in the class `summary`:\n\n  Eliminate\
+    \ hidden nodes from rational conductance networks while preserving terminal current\xE2\x80\x93voltage\
+    \ behavior; recover the boundary response, decide exterior equivalence, or infer a uniquely determined\
+    \ conductance.\n\nEvery decision the summary does not fix is yours: instance family, generator, verifier,\
+    \ difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing\
+    \ the same summary independently and are not coordinating with you. Make the choices you believe produce\
+    \ the best training data.\n\nAUTHORING_RULES.md lists the checks generate_entry must perform and the\
+    \ failure modes that sank earlier waves -- read it before writing code, and treat it as part of this\
+    \ instruction."
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/effective_boundary_response_v3
+- id: P002v1
+  hypothesis: P002
+  idea: cyclic_trace_invariants_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v1
+  instruction: |-
+    Author a new task from scratch: cyclic_trace_invariants_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Identify equalities among traces of arbitrary-size noncommuting matrix words using cyclicity and transpose laws; vary symmetric, skew, and paired-transpose factors; answer equality or a missing coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v1
+  design_choice: Vary whether the two compared words differ by a cyclic rotation, a transpose of a subword,
+    or both, with equal answer probability across equality and inequality.
+- id: P002v2
+  hypothesis: P002
+  idea: cyclic_trace_invariants_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v2
+  instruction: |-
+    Author a new task from scratch: cyclic_trace_invariants_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Identify equalities among traces of arbitrary-size noncommuting matrix words using cyclicity and transpose laws; vary symmetric, skew, and paired-transpose factors; answer equality or a missing coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v2
+  design_choice: Ask for the scalar coefficient that must be inserted before a given word to make it equal
+    to a target word, with the coefficient chosen from {1, -1, 2, -2}.
+- id: P002v3
+  hypothesis: P002
+  idea: cyclic_trace_invariants_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v3
+  instruction: |-
+    Author a new task from scratch: cyclic_trace_invariants_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Identify equalities among traces of arbitrary-size noncommuting matrix words using cyclicity and transpose laws; vary symmetric, skew, and paired-transpose factors; answer equality or a missing coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/cyclic_trace_invariants_v3
+- id: P003v1
+  hypothesis: P003
+  idea: quadratic_energy_signature_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v1
+  instruction: |-
+    Author a new task from scratch: quadratic_energy_signature_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine the positive, negative, and null directions of rational quadratic energies with cross terms and degeneracies; return the invariant signature or decide equivalence under invertible real coordinate changes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v1
+  design_choice: Present the energy as a symmetric integer matrix and require the answer as the count
+    of positive, negative, and zero eigenvalues (e.g., '2,1,1') after exact rational diagonalization.
+- id: P003v2
+  hypothesis: P003
+  idea: quadratic_energy_signature_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v2
+  instruction: |-
+    Author a new task from scratch: quadratic_energy_signature_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine the positive, negative, and null directions of rational quadratic energies with cross terms and degeneracies; return the invariant signature or decide equivalence under invertible real coordinate changes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v2
+  design_choice: Give the energy as a rational quadratic form in explicit variables (e.g., '3x^2 - 2xy
+    + y^2') and ask for a canonical signature string like '(+,-,0)' sorted by sign.
+- id: P003v3
+  hypothesis: P003
+  idea: quadratic_energy_signature_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v3
+  instruction: |-
+    Author a new task from scratch: quadratic_energy_signature_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine the positive, negative, and null directions of rational quadratic energies with cross terms and degeneracies; return the invariant signature or decide equivalence under invertible real coordinate changes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/quadratic_energy_signature_v3
+- id: P004v1
+  hypothesis: P004
+  idea: local_quantum_sufficiency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v1
+  instruction: |-
+    Author a new task from scratch: local_quantum_sufficiency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Extract the state accessible to selected subsystems from rational pure-state or mixed-state descriptions with varied tensor orderings; decide local indistinguishability or return a queried local expectation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v1
+  design_choice: 'Answer form: return a canonical local-density matrix as a fraction list for the queried
+    subsystem, with ordering normalized to ascending subsystem indices.'
+- id: P004v2
+  hypothesis: P004
+  idea: local_quantum_sufficiency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v2
+  instruction: |-
+    Author a new task from scratch: local_quantum_sufficiency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Extract the state accessible to selected subsystems from rational pure-state or mixed-state descriptions with varied tensor orderings; decide local indistinguishability or return a queried local expectation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v2
+  design_choice: 'Answer form: decide local indistinguishability with a balanced binary output, where
+    instances are generated in pairs that always differ in answer.'
+- id: P004v3
+  hypothesis: P004
+  idea: local_quantum_sufficiency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v3
+  instruction: |-
+    Author a new task from scratch: local_quantum_sufficiency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Extract the state accessible to selected subsystems from rational pure-state or mixed-state descriptions with varied tensor orderings; decide local indistinguishability or return a queried local expectation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/local_quantum_sufficiency_v3
+- id: P005v1
+  hypothesis: P005
+  idea: stopped_expectation_conservation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v1
+  instruction: |-
+    Author a new task from scratch: stopped_expectation_conservation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use harmonic observables to preserve expectations through bounded stopping of finite stochastic processes; audit proposed observables or infer uniquely determined terminal expectations and absorption probabilities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v1
+  design_choice: Instances present a finite Markov chain with a proposed harmonic function; solver must
+    verify it is harmonic on transient states and check whether the stopped expectation matches the given
+    value.
+- id: P005v2
+  hypothesis: P005
+  idea: stopped_expectation_conservation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v2
+  instruction: |-
+    Author a new task from scratch: stopped_expectation_conservation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use harmonic observables to preserve expectations through bounded stopping of finite stochastic processes; audit proposed observables or infer uniquely determined terminal expectations and absorption probabilities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v2
+  design_choice: Instances give a stopped process with boundary rewards; solver must compute the unique
+    terminal expectation from the initial state using harmonic extension, with the answer as an exact
+    fraction.
+- id: P005v3
+  hypothesis: P005
+  idea: stopped_expectation_conservation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v3
+  instruction: |-
+    Author a new task from scratch: stopped_expectation_conservation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use harmonic observables to preserve expectations through bounded stopping of finite stochastic processes; audit proposed observables or infer uniquely determined terminal expectations and absorption probabilities.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/stopped_expectation_conservation_v3
+- id: P006v1
+  hypothesis: P006
+  idea: nuisance_contrast_identifiability_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v1
+  instruction: |-
+    Author a new task from scratch: nuisance_contrast_identifiability_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From linear readings with shared offsets, drift terms, or calibration nuisances, determine whether a target contrast is identifiable and recover its value by eliminating nuisance directions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v1
+  design_choice: Instances give readings as affine equations y_i = a_i x + b_i with unknown shared offset
+    b; solver must decide if x1-x2 is identifiable and output its value when yes.
+- id: P006v2
+  hypothesis: P006
+  idea: nuisance_contrast_identifiability_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v2
+  instruction: |-
+    Author a new task from scratch: nuisance_contrast_identifiability_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From linear readings with shared offsets, drift terms, or calibration nuisances, determine whether a target contrast is identifiable and recover its value by eliminating nuisance directions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v2
+  design_choice: Instances include a known drift direction d and readings y_i = a_i x + d_i t with unknown
+    t; target is a linear contrast; solver returns 'identifiable' or 'not' plus value if yes.
+- id: P006v3
+  hypothesis: P006
+  idea: nuisance_contrast_identifiability_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v3
+  instruction: |-
+    Author a new task from scratch: nuisance_contrast_identifiability_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From linear readings with shared offsets, drift terms, or calibration nuisances, determine whether a target contrast is identifiable and recover its value by eliminating nuisance directions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/nuisance_contrast_identifiability_v3
+- id: P007v1
+  hypothesis: P007
+  idea: frame_independent_observables_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v1
+  instruction: |-
+    Author a new task from scratch: frame_independent_observables_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test rational observables under shared translations, Galilean boosts, and coordinate rescalings; identify expressions unchanged for every frame parameter or recover coefficients required for invariance.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v1
+  design_choice: Present a set of candidate rational expressions in position, velocity, and time; the
+    solver must select all that are invariant under every translation, boost, and rescaling, with the
+    answer as a canonical subset list.
+- id: P007v2
+  hypothesis: P007
+  idea: frame_independent_observables_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v2
+  instruction: |-
+    Author a new task from scratch: frame_independent_observables_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test rational observables under shared translations, Galilean boosts, and coordinate rescalings; identify expressions unchanged for every frame parameter or recover coefficients required for invariance.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v2
+  design_choice: Provide an underdetermined rational expression with unknown coefficients; the solver
+    must output the integer coefficient vector (as a compact list) that makes it invariant under all three
+    transformations.
+- id: P007v3
+  hypothesis: P007
+  idea: frame_independent_observables_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v3
+  instruction: |-
+    Author a new task from scratch: frame_independent_observables_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test rational observables under shared translations, Galilean boosts, and coordinate rescalings; identify expressions unchanged for every frame parameter or recover coefficients required for invariance.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/frame_independent_observables_v3
+- id: P008v1
+  hypothesis: P008
+  idea: projective_configuration_invariants_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v1
+  instruction: |-
+    Author a new task from scratch: projective_configuration_invariants_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare labeled finite and infinite points under fractional-linear coordinate changes; use preserved cross-ratios to decide configuration equivalence or recover a missing coordinate from overlapping constraints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v1
+  design_choice: Use integer-valued cross-ratio invariants by constraining quadruples to rational coordinates,
+    forcing exact equality checks rather than approximate comparisons.
+- id: P008v2
+  hypothesis: P008
+  idea: projective_configuration_invariants_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v2
+  instruction: |-
+    Author a new task from scratch: projective_configuration_invariants_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare labeled finite and infinite points under fractional-linear coordinate changes; use preserved cross-ratios to decide configuration equivalence or recover a missing coordinate from overlapping constraints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v2
+  design_choice: Present configurations as two overlapping quadruples sharing three points; the solver
+    must compute the missing coordinate using the cross-ratio equality across both quadruples.
+- id: P008v3
+  hypothesis: P008
+  idea: projective_configuration_invariants_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v3
+  instruction: |-
+    Author a new task from scratch: projective_configuration_invariants_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare labeled finite and infinite points under fractional-linear coordinate changes; use preserved cross-ratios to decide configuration equivalence or recover a missing coordinate from overlapping constraints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_invariants_r2/projective_configuration_invariants_v3

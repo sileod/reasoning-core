@@ -1,0 +1,547 @@
+version: 1
+name: k3_scientific_reasoning_r2
+proposal_wave: k3_scientific-reasoning
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  v2:
+  - P001v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  v3:
+  - P001v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  pilot:
+  - P001v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: automaton_word_counting_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v1
+  instruction: |-
+    Author a new task from scratch: automaton_word_counting_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count the words an automaton accepts at a given length by subset dynamic programming over transition tables, including epsilon-NFAs and products of two machines; answer an exact count at one length or totals across a range.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v1
+  design_choice: Represent transitions as explicit integer-labeled edges vs. compact bitmask character
+    classes, altering table density and counting arithmetic.
+- id: P001v2
+  hypothesis: P001
+  idea: automaton_word_counting_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v2
+  instruction: |-
+    Author a new task from scratch: automaton_word_counting_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count the words an automaton accepts at a given length by subset dynamic programming over transition tables, including epsilon-NFAs and products of two machines; answer an exact count at one length or totals across a range.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v2
+  design_choice: Ask for count at a single length vs. cumulative sum over a range, changing whether DP
+    must aggregate or track per-length states.
+- id: P001v3
+  hypothesis: P001
+  idea: automaton_word_counting_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v3
+  instruction: |-
+    Author a new task from scratch: automaton_word_counting_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Count the words an automaton accepts at a given length by subset dynamic programming over transition tables, including epsilon-NFAs and products of two machines; answer an exact count at one length or totals across a range.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/automaton_word_counting_v3
+- id: P003v1
+  hypothesis: P003
+  idea: stepwise_rejection_set_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v1
+  instruction: |-
+    Author a new task from scratch: stepwise_rejection_set_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply Bonferroni, Holm, or Benjamini-Hochberg to indexed p-values: order, compare against position-scaled thresholds, and return the exact rejected hypothesis set for the named rule.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v1
+  design_choice: Vary p-value magnitudes so that Holm and BH disagree on the last rejected index, but
+    Bonferroni is always a subset of both.
+- id: P003v2
+  hypothesis: P003
+  idea: stepwise_rejection_set_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v2
+  instruction: |-
+    Author a new task from scratch: stepwise_rejection_set_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply Bonferroni, Holm, or Benjamini-Hochberg to indexed p-values: order, compare against position-scaled thresholds, and return the exact rejected hypothesis set for the named rule.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v2
+  design_choice: Present p-values as exact fractions with denominators up to 100, requiring symbolic comparison
+    to thresholds without floating-point error.
+- id: P003v3
+  hypothesis: P003
+  idea: stepwise_rejection_set_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v3
+  instruction: |-
+    Author a new task from scratch: stepwise_rejection_set_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply Bonferroni, Holm, or Benjamini-Hochberg to indexed p-values: order, compare against position-scaled thresholds, and return the exact rejected hypothesis set for the named rule.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/stepwise_rejection_set_v3
+- id: P004v1
+  hypothesis: P004
+  idea: design_column_alias_audit_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v1
+  instruction: |-
+    Author a new task from scratch: design_column_alias_audit_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Audit each run sheet as a sign-coded design matrix: inner products among main-effect and interaction columns across experiments expose aliasing; answer the confounded-pair list or the orthogonality verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v1
+  design_choice: Generate run sheets with a hidden underlying 2^k full factorial and randomly omit half
+    the runs, so aliasing stems from fractional replication and the answer lists all pairs with identical
+    sign patterns.
+- id: P004v2
+  hypothesis: P004
+  idea: design_column_alias_audit_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v2
+  instruction: |-
+    Author a new task from scratch: design_column_alias_audit_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Audit each run sheet as a sign-coded design matrix: inner products among main-effect and interaction columns across experiments expose aliasing; answer the confounded-pair list or the orthogonality verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v2
+  design_choice: Use a fixed set of candidate main-effect and two-way interaction columns, then randomly
+    rotate signs on a subset of rows to induce controlled partial aliasing, and ask for any pair whose
+    inner product is nonzero.
+- id: P004v3
+  hypothesis: P004
+  idea: design_column_alias_audit_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v3
+  instruction: |-
+    Author a new task from scratch: design_column_alias_audit_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Audit each run sheet as a sign-coded design matrix: inner products among main-effect and interaction columns across experiments expose aliasing; answer the confounded-pair list or the orthogonality verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/design_column_alias_audit_v3
+- id: P005v1
+  hypothesis: P005
+  idea: fixed_rule_bandit_simulation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v1
+  instruction: |-
+    Author a new task from scratch: fixed_rule_bandit_simulation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate allocation policies - epsilon-greedy on a fixed schedule, UCB with given c, Thompson over tabulated grids - on tabulated success streams with fixed tie-breaks; answer pull counts or the arm at round t.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v1
+  design_choice: Answer the arm pulled at a specified round t, requiring exact deterministic tie-break
+    simulation of the chosen policy.
+- id: P005v2
+  hypothesis: P005
+  idea: fixed_rule_bandit_simulation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v2
+  instruction: |-
+    Author a new task from scratch: fixed_rule_bandit_simulation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate allocation policies - epsilon-greedy on a fixed schedule, UCB with given c, Thompson over tabulated grids - on tabulated success streams with fixed tie-breaks; answer pull counts or the arm at round t.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v2
+  design_choice: Answer the cumulative pull count for a specified arm after N rounds, testing the scheduler's
+    bookkeeping across the fixed schedule.
+- id: P005v3
+  hypothesis: P005
+  idea: fixed_rule_bandit_simulation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v3
+  instruction: |-
+    Author a new task from scratch: fixed_rule_bandit_simulation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Simulate allocation policies - epsilon-greedy on a fixed schedule, UCB with given c, Thompson over tabulated grids - on tabulated success streams with fixed tie-breaks; answer pull counts or the arm at round t.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/fixed_rule_bandit_simulation_v3
+- id: P006v1
+  hypothesis: P006
+  idea: inverse_variance_pooling_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v1
+  instruction: |-
+    Author a new task from scratch: inverse_variance_pooling_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pool effect estimates by inverse-variance weights across study sets: form the pooled mean, Q and I2, judge heterogeneity, switch to random effects when triggered; answer pooled values and verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v1
+  design_choice: 'Answer format: a canonical 4-tuple string of pooled mean, Q statistic, I2 percentage,
+    and verdict word (fixed/random), all exact fractions or integers.'
+- id: P006v2
+  hypothesis: P006
+  idea: inverse_variance_pooling_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v2
+  instruction: |-
+    Author a new task from scratch: inverse_variance_pooling_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pool effect estimates by inverse-variance weights across study sets: form the pooled mean, Q and I2, judge heterogeneity, switch to random effects when triggered; answer pooled values and verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v2
+  design_choice: 'Difficulty source: generate study sets where the random-effects trigger is near the
+    threshold, requiring precise Q vs df comparison to avoid ambiguity.'
+- id: P006v3
+  hypothesis: P006
+  idea: inverse_variance_pooling_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v3
+  instruction: |-
+    Author a new task from scratch: inverse_variance_pooling_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pool effect estimates by inverse-variance weights across study sets: form the pooled mean, Q and I2, judge heterogeneity, switch to random effects when triggered; answer pooled values and verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/inverse_variance_pooling_v3
+- id: P007v1
+  hypothesis: P007
+  idea: sequential_boundary_crossing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v1
+  instruction: |-
+    Author a new task from scratch: sequential_boundary_crossing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate log-likelihood increments or per-look z scores, checking efficacy and futility boundaries at each look across drift and boundary schedules; report the stopping look and final decision.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v1
+  design_choice: 'Boundary schedules fixed across instances: O''Brien-Fleming efficacy and Pocock futility,
+    with drift varied to control stopping look distribution.'
+- id: P007v2
+  hypothesis: P007
+  idea: sequential_boundary_crossing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v2
+  instruction: |-
+    Author a new task from scratch: sequential_boundary_crossing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate log-likelihood increments or per-look z scores, checking efficacy and futility boundaries at each look across drift and boundary schedules; report the stopping look and final decision.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v2
+  design_choice: Per-look z scores generated from multivariate normal with unit variance and fixed correlation,
+    requiring exact boundary-crossing probabilities via numerical integration.
+- id: P007v3
+  hypothesis: P007
+  idea: sequential_boundary_crossing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v3
+  instruction: |-
+    Author a new task from scratch: sequential_boundary_crossing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Accumulate log-likelihood increments or per-look z scores, checking efficacy and futility boundaries at each look across drift and boundary schedules; report the stopping look and final decision.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/sequential_boundary_crossing_v3
+- id: P008v1
+  hypothesis: P008
+  idea: exact_relabeling_tail_count_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v1
+  instruction: |-
+    Author a new task from scratch: exact_relabeling_tail_count_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Enumerate relabelings of group allocations, recompute a statistic per arrangement - mean gap or rank sum - and tally arrangements at least as extreme as observed; answer the tail count or p-value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v1
+  design_choice: Statistic fixed to mean gap between group means; answer is exact integer tail count of
+    relabelings with gap >= observed.
+- id: P008v2
+  hypothesis: P008
+  idea: exact_relabeling_tail_count_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v2
+  instruction: |-
+    Author a new task from scratch: exact_relabeling_tail_count_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Enumerate relabelings of group allocations, recompute a statistic per arrangement - mean gap or rank sum - and tally arrangements at least as extreme as observed; answer the tail count or p-value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v2
+  design_choice: Statistic fixed to rank-sum (Wilcoxon) over pooled ranks; answer is exact p-value as
+    reduced fraction, tail count over total permutations.
+- id: P008v3
+  hypothesis: P008
+  idea: exact_relabeling_tail_count_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v3
+  instruction: |-
+    Author a new task from scratch: exact_relabeling_tail_count_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Enumerate relabelings of group allocations, recompute a statistic per arrangement - mean gap or rank sum - and tally arrangements at least as extreme as observed; answer the tail count or p-value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/exact_relabeling_tail_count_v3
+- id: P009v1
+  hypothesis: P009
+  idea: measurement_uncertainty_propagation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v1
+  instruction: |-
+    Author a new task from scratch: measurement_uncertainty_propagation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate values with uncertainties through formula DAGs, combining terms by worst-case linear or root-sum-square rules as dependencies dictate; answer the resulting value, its half-width, or dominant input.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v1
+  design_choice: 'Answer format varies per query: numeric value, numeric half-width, or input label; instances
+    randomize which output is requested.'
+- id: P009v2
+  hypothesis: P009
+  idea: measurement_uncertainty_propagation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v2
+  instruction: |-
+    Author a new task from scratch: measurement_uncertainty_propagation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate values with uncertainties through formula DAGs, combining terms by worst-case linear or root-sum-square rules as dependencies dictate; answer the resulting value, its half-width, or dominant input.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v2
+  design_choice: 'Uncertainty rules fixed per instance: either worst-case linear for all correlated branches
+    or root-sum-square for independent inputs, with DAG structure forcing dependency tracking.'
+- id: P009v3
+  hypothesis: P009
+  idea: measurement_uncertainty_propagation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v3
+  instruction: |-
+    Author a new task from scratch: measurement_uncertainty_propagation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate values with uncertainties through formula DAGs, combining terms by worst-case linear or root-sum-square rules as dependencies dictate; answer the resulting value, its half-width, or dominant input.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/measurement_uncertainty_propagation_v3
+- id: P010v1
+  hypothesis: P010
+  idea: partial_identification_bounds_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v1
+  instruction: |-
+    Author a new task from scratch: partial_identification_bounds_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From observational contingency tables, bracket a causal effect under assumptions - none, monotone response, an instrument - by extremizing stratum terms per formula; answer the bound interval endpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v1
+  design_choice: Each instance provides a 2x2xK contingency table with binary treatment, outcome, and
+    covariate strata; the answer is the exact lower and upper bound as a fraction pair, with stratum weights
+    fixed and known.
+- id: P010v2
+  hypothesis: P010
+  idea: partial_identification_bounds_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v2
+  instruction: |-
+    Author a new task from scratch: partial_identification_bounds_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From observational contingency tables, bracket a causal effect under assumptions - none, monotone response, an instrument - by extremizing stratum terms per formula; answer the bound interval endpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v2
+  design_choice: 'Choose table sizes: 2x2, 2x3, or 3x3 with fixed marginals; answer endpoints as exact
+    fractions or integers.'
+- id: P010v3
+  hypothesis: P010
+  idea: partial_identification_bounds_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v3
+  instruction: |-
+    Author a new task from scratch: partial_identification_bounds_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From observational contingency tables, bracket a causal effect under assumptions - none, monotone response, an instrument - by extremizing stratum terms per formula; answer the bound interval endpoints.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_scientific_reasoning_r2/partial_identification_bounds_v3

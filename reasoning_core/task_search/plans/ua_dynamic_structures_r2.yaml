@@ -1,0 +1,430 @@
+version: 1
+name: ua_dynamic_structures_r2
+proposal_wave: ua_dynamic-structures
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: tree_pair_group_product_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v1
+  instruction: |-
+    Author a new task from scratch: tree_pair_group_product_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Multiply elements represented by paired binary trees by refining shared middle trees, carrying expansions to outer trees, and cancelling matching carets; recover the reduced product or decide identity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v1
+  design_choice: Represent elements as words in the generators of Thompson's group F, with paired trees
+    encoded as bracket strings; answers are reduced bracket strings or 'identity'.
+- id: P001v2
+  hypothesis: P001
+  idea: tree_pair_group_product_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v2
+  instruction: |-
+    Author a new task from scratch: tree_pair_group_product_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Multiply elements represented by paired binary trees by refining shared middle trees, carrying expansions to outer trees, and cancelling matching carets; recover the reduced product or decide identity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v2
+  design_choice: Use integer labels on tree nodes, multiply by merging middle tree frontiers, and output
+    the reduced normal form as a canonical integer sequence.
+- id: P001v3
+  hypothesis: P001
+  idea: tree_pair_group_product_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v3
+  instruction: |-
+    Author a new task from scratch: tree_pair_group_product_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Multiply elements represented by paired binary trees by refining shared middle trees, carrying expansions to outer trees, and cancelling matching carets; recover the reduced product or decide identity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/tree_pair_group_product_v3
+- id: P002v1
+  hypothesis: P002
+  idea: epistemic_event_product_update_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v1
+  instruction: |-
+    Author a new task from scratch: epistemic_event_product_update_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update finite belief models using events with agent-specific observability and factual changes; retain compatible world-event pairs and report which agents know a queried fact after an event sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v1
+  design_choice: Events specify which agents observe the event and which factual atoms they change; solvers
+    must compute the product update and then report the set of agents that know a given fact in the resulting
+    model.
+- id: P002v2
+  hypothesis: P002
+  idea: epistemic_event_product_update_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v2
+  instruction: |-
+    Author a new task from scratch: epistemic_event_product_update_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update finite belief models using events with agent-specific observability and factual changes; retain compatible world-event pairs and report which agents know a queried fact after an event sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v2
+  design_choice: Instances present a sequence of events; the answer is the subset of agents (as a canonical
+    string like 'ab' or 'none') whose knowledge of the queried fact is entailed by the final model, with
+    no need to output the full model.
+- id: P002v3
+  hypothesis: P002
+  idea: epistemic_event_product_update_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v3
+  instruction: |-
+    Author a new task from scratch: epistemic_event_product_update_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update finite belief models using events with agent-specific observability and factual changes; retain compatible world-event pairs and report which agents know a queried fact after an event sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/epistemic_event_product_update_v3
+- id: P003v1
+  hypothesis: P003
+  idea: liquidity_range_updates_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v1
+  instruction: |-
+    Author a new task from scratch: liquidity_range_updates_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute swaps and liquidity additions or removals across bounded price ranges under stated reserve and fee laws; update active positions at crossed boundaries and return price, reserves or position balances.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v1
+  design_choice: Answers report a single canonical string of the form 'P=price;R0=reserve0;R1=reserve1;L=active_liquidity'
+    after all operations, with integer values only.
+- id: P003v2
+  hypothesis: P003
+  idea: liquidity_range_updates_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v2
+  instruction: |-
+    Author a new task from scratch: liquidity_range_updates_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute swaps and liquidity additions or removals across bounded price ranges under stated reserve and fee laws; update active positions at crossed boundaries and return price, reserves or position balances.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v2
+  design_choice: Each instance emits a balanced multiple-choice set of 3 candidate final states (varying
+    price, reserves, or position balances), where only one matches the correct execution.
+- id: P003v3
+  hypothesis: P003
+  idea: liquidity_range_updates_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v3
+  instruction: |-
+    Author a new task from scratch: liquidity_range_updates_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute swaps and liquidity additions or removals across bounded price ranges under stated reserve and fee laws; update active positions at crossed boundaries and return price, reserves or position balances.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/liquidity_range_updates_v3
+- id: P004v1
+  hypothesis: P004
+  idea: fracture_load_redistribution_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v1
+  instruction: |-
+    Author a new task from scratch: fracture_load_redistribution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply load increments and removals to bundles with individual failure thresholds and stated redistribution weights; resolve irreversible break cascades to return surviving elements and their loads.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v1
+  design_choice: Represent each bundle element with a single integer threshold and a global redistribution
+    rule where all load from a failed element is distributed equally among all surviving elements.
+- id: P004v2
+  hypothesis: P004
+  idea: fracture_load_redistribution_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v2
+  instruction: |-
+    Author a new task from scratch: fracture_load_redistribution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply load increments and removals to bundles with individual failure thresholds and stated redistribution weights; resolve irreversible break cascades to return surviving elements and their loads.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v2
+  design_choice: Use a directed redistribution graph where each element has a fixed list of downstream
+    recipients and a proportional weight; failures cascade only along explicit edges.
+- id: P004v3
+  hypothesis: P004
+  idea: fracture_load_redistribution_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v3
+  instruction: |-
+    Author a new task from scratch: fracture_load_redistribution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply load increments and removals to bundles with individual failure thresholds and stated redistribution weights; resolve irreversible break cascades to return surviving elements and their loads.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/fracture_load_redistribution_v3
+- id: P005v1
+  hypothesis: P005
+  idea: anyon_fusion_reassociation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v1
+  instruction: |-
+    Author a new task from scratch: anyon_fusion_reassociation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track fusion states through tree reassociations, particle exchanges and specified fusion outcomes using supplied fusion, F and R tables; return a queried unnormalized amplitude.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v1
+  design_choice: Answer as a reduced fraction when the queried amplitude is a sum of equal-magnitude terms,
+    and as a signed integer when all terms cancel to zero.
+- id: P005v2
+  hypothesis: P005
+  idea: anyon_fusion_reassociation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v2
+  instruction: |-
+    Author a new task from scratch: anyon_fusion_reassociation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track fusion states through tree reassociations, particle exchanges and specified fusion outcomes using supplied fusion, F and R tables; return a queried unnormalized amplitude.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v2
+  design_choice: Return the amplitude as a product of a sign and a power of the golden ratio when the
+    supplied tables involve Fibonacci anyons, otherwise as an integer.
+- id: P005v3
+  hypothesis: P005
+  idea: anyon_fusion_reassociation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v3
+  instruction: |-
+    Author a new task from scratch: anyon_fusion_reassociation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track fusion states through tree reassociations, particle exchanges and specified fusion outcomes using supplied fusion, F and R tables; return a queried unnormalized amplitude.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/anyon_fusion_reassociation_v3
+- id: P006v1
+  hypothesis: P006
+  idea: moving_mirror_echoes_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v1
+  instruction: |-
+    Author a new task from scratch: moving_mirror_echoes_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate light pulses among piecewise uniformly moving mirrors with activation and removal events; resolve successive interceptions and Doppler shifts, returning an arrival time or received frequency.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v1
+  design_choice: Mirrors are arranged on a 1D line; each pulse has a fixed speed and the answer is the
+    time of the first interception after all events, given as an integer in microseconds.
+- id: P006v2
+  hypothesis: P006
+  idea: moving_mirror_echoes_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v2
+  instruction: |-
+    Author a new task from scratch: moving_mirror_echoes_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate light pulses among piecewise uniformly moving mirrors with activation and removal events; resolve successive interceptions and Doppler shifts, returning an arrival time or received frequency.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v2
+  design_choice: Mirrors move in 2D with velocities parallel to their surfaces; the answer is the received
+    frequency as a reduced fraction of the source frequency, computed after a specified number of reflections.
+- id: P006v3
+  hypothesis: P006
+  idea: moving_mirror_echoes_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v3
+  instruction: |-
+    Author a new task from scratch: moving_mirror_echoes_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate light pulses among piecewise uniformly moving mirrors with activation and removal events; resolve successive interceptions and Doppler shifts, returning an arrival time or received frequency.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/moving_mirror_echoes_v3
+- id: P007v1
+  hypothesis: P007
+  idea: orbital_impulse_rebaselining_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v1
+  instruction: |-
+    Author a new task from scratch: orbital_impulse_rebaselining_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update orbital invariants through velocity impulses, central-mass changes and coasting between specified apsides; return the resulting orbit type, turning radii or specific angular momentum.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v1
+  design_choice: Answer as a compact canonical string like 'elliptic rp=1.2e7 ra=2.3e7' for final orbit
+    radii, with inputs varying the impulse magnitude and central mass.
+- id: P007v2
+  hypothesis: P007
+  idea: orbital_impulse_rebaselining_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v2
+  instruction: |-
+    Author a new task from scratch: orbital_impulse_rebaselining_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update orbital invariants through velocity impulses, central-mass changes and coasting between specified apsides; return the resulting orbit type, turning radii or specific angular momentum.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v2
+  design_choice: Answer as a small integer label (0=hyperbolic, 1=parabolic, 2=elliptic, 3=circular) based
+    on the final energy sign, with impulses chosen to cross thresholds.
+- id: P007v3
+  hypothesis: P007
+  idea: orbital_impulse_rebaselining_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v3
+  instruction: |-
+    Author a new task from scratch: orbital_impulse_rebaselining_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update orbital invariants through velocity impulses, central-mass changes and coasting between specified apsides; return the resulting orbit type, turning radii or specific angular momentum.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dynamic_structures_r2/orbital_impulse_rebaselining_v3

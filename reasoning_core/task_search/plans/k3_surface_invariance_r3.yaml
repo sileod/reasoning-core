@@ -1,0 +1,194 @@
+version: 1
+name: k3_surface_invariance_r3
+proposal_wave: k3_surface-invariance
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: version_space_elimination_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v1
+  instruction: |-
+    Author a new task from scratch: version_space_elimination_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain most-specific and most-general conjunctive boundaries over an attribute lattice as labeled examples arrive; answers are the surviving boundary sets, whether a new instance's label is forced, or the breaking example.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v1
+  design_choice: Represent attributes as a fixed taxonomy tree per feature; boundaries are node sets,
+    and generalization/specialization moves are tree ancestor/descendant steps.
+- id: P001v2
+  hypothesis: P001
+  idea: version_space_elimination_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v2
+  instruction: |-
+    Author a new task from scratch: version_space_elimination_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain most-specific and most-general conjunctive boundaries over an attribute lattice as labeled examples arrive; answers are the surviving boundary sets, whether a new instance's label is forced, or the breaking example.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v2
+  design_choice: Answers are canonical sorted lists of boundary attribute-value pairs; forced-label queries
+    return yes/no plus the boundary list that decides it.
+- id: P001v3
+  hypothesis: P001
+  idea: version_space_elimination_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v3
+  instruction: |-
+    Author a new task from scratch: version_space_elimination_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Maintain most-specific and most-general conjunctive boundaries over an attribute lattice as labeled examples arrive; answers are the surviving boundary sets, whether a new instance's label is forced, or the breaking example.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/version_space_elimination_v3
+- id: P002v1
+  hypothesis: P002
+  idea: parking_function_simulation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v1
+  instruction: |-
+    Author a new task from scratch: parking_function_simulation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Drive cars one at a time onto a one-way street: each takes its preferred space or the next free space beyond; answers are the final occupancy list, total displacement, the index of the first car that fails, or a parkable/not verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v1
+  design_choice: Represent each car's preference as a single integer in [1, n] and the street as a list
+    of n boolean slots; answer with a 0/1 string for final occupancy plus total displacement as a fraction.
+- id: P002v2
+  hypothesis: P002
+  idea: parking_function_simulation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v2
+  instruction: |-
+    Author a new task from scratch: parking_function_simulation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Drive cars one at a time onto a one-way street: each takes its preferred space or the next free space beyond; answers are the final occupancy list, total displacement, the index of the first car that fails, or a parkable/not verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v2
+  design_choice: Use a fixed set of small n (e.g., 3 to 6) and vary the preference lists; answer with
+    the index of the first failing car (1-based) or 0 if all park, and also output the final occupancy
+    as a comma-separated list of occupied slot numbers.
+- id: P002v3
+  hypothesis: P002
+  idea: parking_function_simulation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v3
+  instruction: |-
+    Author a new task from scratch: parking_function_simulation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Drive cars one at a time onto a one-way street: each takes its preferred space or the next free space beyond; answers are the final occupancy list, total displacement, the index of the first car that fails, or a parkable/not verdict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/parking_function_simulation_v3
+- id: P003v1
+  hypothesis: P003
+  idea: gauss_link_code_walk_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v1
+  instruction: |-
+    Author a new task from scratch: gauss_link_code_walk_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Trace signed Gauss/DT codes of knot and link diagrams: follow the strand order to recover components, fix crossing signs, and compute writhe, component counts, or pairwise linking numbers; answers are those signed integers.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v1
+  design_choice: 'Choose the code input format: an alternating sequence of crossing labels and signs (+/-)
+    per component, where solvers must parse and reorder by strand continuity to reconstruct components.'
+- id: P003v2
+  hypothesis: P003
+  idea: gauss_link_code_walk_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v2
+  instruction: |-
+    Author a new task from scratch: gauss_link_code_walk_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Trace signed Gauss/DT codes of knot and link diagrams: follow the strand order to recover components, fix crossing signs, and compute writhe, component counts, or pairwise linking numbers; answers are those signed integers.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v2
+  design_choice: 'Vary the question asked: for a given signed Gauss code, ask either the total writhe,
+    the number of link components, or a specific pairwise linking number, with answer as that integer.'
+- id: P003v3
+  hypothesis: P003
+  idea: gauss_link_code_walk_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v3
+  instruction: |-
+    Author a new task from scratch: gauss_link_code_walk_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Trace signed Gauss/DT codes of knot and link diagrams: follow the strand order to recover components, fix crossing signs, and compute writhe, component counts, or pairwise linking numbers; answers are those signed integers.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_surface_invariance_r3/gauss_link_code_walk_v3

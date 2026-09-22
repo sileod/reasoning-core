@@ -1,0 +1,193 @@
+version: 1
+name: ua_latent_structure_reconstruction_r2
+proposal_wave: ua_latent-structure-reconstruction
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: scenario_recombination_stress_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v1
+  instruction: |-
+    Author a new task from scratch: scenario_recombination_stress_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the worst cumulative load after uncertainty scenarios are closed under allowed prefix-suffix recombinations; vary splice checkpoints and history restrictions, and answer the new worst path or conservatism gap.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v1
+  design_choice: Represent each scenario as a sequence of loads over time steps; the worst cumulative
+    load is the maximum prefix sum over any recombination, answered as an integer total.
+- id: P001v2
+  hypothesis: P001
+  idea: scenario_recombination_stress_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v2
+  instruction: |-
+    Author a new task from scratch: scenario_recombination_stress_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the worst cumulative load after uncertainty scenarios are closed under allowed prefix-suffix recombinations; vary splice checkpoints and history restrictions, and answer the new worst path or conservatism gap.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v2
+  design_choice: Restrict recombinations to preserve a fixed historical prefix length; the answer is the
+    conservatism gap between the original worst path and the recombined worst path, given as a fraction.
+- id: P001v3
+  hypothesis: P001
+  idea: scenario_recombination_stress_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v3
+  instruction: |-
+    Author a new task from scratch: scenario_recombination_stress_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the worst cumulative load after uncertainty scenarios are closed under allowed prefix-suffix recombinations; vary splice checkpoints and history restrictions, and answer the new worst path or conservatism gap.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/scenario_recombination_stress_v3
+- id: P002v1
+  hypothesis: P002
+  idea: sandpile_recurrence_membership_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v1
+  instruction: |-
+    Author a new task from scratch: sandpile_recurrence_membership_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use local grain counts, edge multiplicities, and sink connections to distinguish stable configurations that belong to the recurrent addition-and-relaxation regime from configurations that are transient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v1
+  design_choice: Generate instances as small rectangular grids with random grain counts and random sink
+    edges, and ask whether the configuration is recurrent under the standard toppling rule.
+- id: P002v2
+  hypothesis: P002
+  idea: sandpile_recurrence_membership_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v2
+  instruction: |-
+    Author a new task from scratch: sandpile_recurrence_membership_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use local grain counts, edge multiplicities, and sink connections to distinguish stable configurations that belong to the recurrent addition-and-relaxation regime from configurations that are transient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v2
+  design_choice: Present configurations on a fixed 3x3 grid with edge multiplicities encoded as a compact
+    string, and require a yes/no answer after checking the burning criterion.
+- id: P002v3
+  hypothesis: P002
+  idea: sandpile_recurrence_membership_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v3
+  instruction: |-
+    Author a new task from scratch: sandpile_recurrence_membership_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Use local grain counts, edge multiplicities, and sink connections to distinguish stable configurations that belong to the recurrent addition-and-relaxation regime from configurations that are transient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/sandpile_recurrence_membership_v3
+- id: P003v1
+  hypothesis: P003
+  idea: polynomial_radical_consequence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v1
+  instruction: |-
+    Author a new task from scratch: polynomial_radical_consequence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine monomial, binomial, and coupled polynomial equations over complex variables; decide whether a queried polynomial vanishes on every common solution, distinguishing radical from ideal membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v1
+  design_choice: Present equations as homogeneous polynomials in projective space, forcing the answer
+    to account for scaling and exclude the trivial zero solution.
+- id: P003v2
+  hypothesis: P003
+  idea: polynomial_radical_consequence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v2
+  instruction: |-
+    Author a new task from scratch: polynomial_radical_consequence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine monomial, binomial, and coupled polynomial equations over complex variables; decide whether a queried polynomial vanishes on every common solution, distinguishing radical from ideal membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v2
+  design_choice: Use a single polynomial equation with a repeated radical factor, so the queried polynomial
+    vanishes on the solution set but is not in the ideal.
+- id: P003v3
+  hypothesis: P003
+  idea: polynomial_radical_consequence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v3
+  instruction: |-
+    Author a new task from scratch: polynomial_radical_consequence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine monomial, binomial, and coupled polynomial equations over complex variables; decide whether a queried polynomial vanishes on every common solution, distinguishing radical from ideal membership.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_latent_structure_reconstruction_r2/polynomial_radical_consequence_v3

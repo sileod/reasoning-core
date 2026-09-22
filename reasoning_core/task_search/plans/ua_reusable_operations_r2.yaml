@@ -1,0 +1,374 @@
+version: 1
+name: ua_reusable_operations_r2
+proposal_wave: ua_reusable-operations
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: differential_form_pullback_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v1
+  instruction: |-
+    Author a new task from scratch: differential_form_pullback_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transport differential forms through composed coordinate maps using Jacobian substitution and antisymmetric wedge expansion; vary degrees, dimensions, and vanishing terms, returning the resulting form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v1
+  design_choice: Instances present composed maps as explicit variable substitutions (u,v)->(x,y); solvers
+    must expand wedge products and cancel antisymmetric terms, returning a canonical polynomial form.
+- id: P001v2
+  hypothesis: P001
+  idea: differential_form_pullback_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v2
+  instruction: |-
+    Author a new task from scratch: differential_form_pullback_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transport differential forms through composed coordinate maps using Jacobian substitution and antisymmetric wedge expansion; vary degrees, dimensions, and vanishing terms, returning the resulting form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v2
+  design_choice: Instances use abstract symbolic maps with unspecified component functions; solvers must
+    return the pullback as a determinant-style expression in terms of the Jacobian components.
+- id: P001v3
+  hypothesis: P001
+  idea: differential_form_pullback_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v3
+  instruction: |-
+    Author a new task from scratch: differential_form_pullback_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transport differential forms through composed coordinate maps using Jacobian substitution and antisymmetric wedge expansion; vary degrees, dimensions, and vanishing terms, returning the resulting form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/differential_form_pullback_v3
+- id: P002v1
+  hypothesis: P002
+  idea: boolean_circuit_fault_diagnosis_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v1
+  instruction: |-
+    Author a new task from scratch: boolean_circuit_fault_diagnosis_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Diagnose single and multiple stuck-at faults in combinational circuits by propagating values and comparing observed outputs; answers are the set of faulty gates, a minimal diagnosis, or whether a fault is detectable.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v1
+  design_choice: Represent circuits as gate-level netlists with fixed gate types and fan-out, where solvers
+    must trace signal paths from inputs to outputs to identify faulty gates.
+- id: P002v2
+  hypothesis: P002
+  idea: boolean_circuit_fault_diagnosis_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v2
+  instruction: |-
+    Author a new task from scratch: boolean_circuit_fault_diagnosis_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Diagnose single and multiple stuck-at faults in combinational circuits by propagating values and comparing observed outputs; answers are the set of faulty gates, a minimal diagnosis, or whether a fault is detectable.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v2
+  design_choice: Present circuits as truth tables with observed outputs differing from expected, requiring
+    solvers to infer which gate outputs are stuck at 0 or 1 by elimination.
+- id: P002v3
+  hypothesis: P002
+  idea: boolean_circuit_fault_diagnosis_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v3
+  instruction: |-
+    Author a new task from scratch: boolean_circuit_fault_diagnosis_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Diagnose single and multiple stuck-at faults in combinational circuits by propagating values and comparing observed outputs; answers are the set of faulty gates, a minimal diagnosis, or whether a fault is detectable.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/boolean_circuit_fault_diagnosis_v3
+- id: P003v1
+  hypothesis: P003
+  idea: stereochemical_parity_transport_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v1
+  instruction: |-
+    Author a new task from scratch: stereochemical_parity_transport_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track tetrahedral handedness through composed ligand exchanges, spatial rotations, and wedge, Fischer, or ordered-neighbor representations; return a queried center's final parity or configuration.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v1
+  design_choice: Represent each center as an ordered 4-tuple of ligand labels; parity is the sign of the
+    permutation that transports the tuple through each exchange and rotation step, with the answer being
+    the final sign (+ or -).
+- id: P003v2
+  hypothesis: P003
+  idea: stereochemical_parity_transport_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v2
+  instruction: |-
+    Author a new task from scratch: stereochemical_parity_transport_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track tetrahedral handedness through composed ligand exchanges, spatial rotations, and wedge, Fischer, or ordered-neighbor representations; return a queried center's final parity or configuration.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v2
+  design_choice: Use Fischer projections where vertical bonds are away and horizontal bonds are toward;
+    each exchange swaps two positions, and the final answer is the R/S label after applying the CIP priority
+    rules to the transported configuration.
+- id: P003v3
+  hypothesis: P003
+  idea: stereochemical_parity_transport_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v3
+  instruction: |-
+    Author a new task from scratch: stereochemical_parity_transport_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track tetrahedral handedness through composed ligand exchanges, spatial rotations, and wedge, Fischer, or ordered-neighbor representations; return a queried center's final parity or configuration.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/stereochemical_parity_transport_v3
+- id: P004v1
+  hypothesis: P004
+  idea: kauffman_bracket_state_sum_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v1
+  instruction: |-
+    Author a new task from scratch: kauffman_bracket_state_sum_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate the Kauffman bracket of knot and tangle diagrams by summing over local smoothings with loop factors; answers give the bracket polynomial, the contribution of a smoothing choice, or the writhe-corrected normalization.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v1
+  design_choice: Ask for the full Kauffman bracket polynomial as a Laurent polynomial in A, with coefficients
+    given as integers or fractions, requiring the solver to sum all smoothings.
+- id: P004v2
+  hypothesis: P004
+  idea: kauffman_bracket_state_sum_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v2
+  instruction: |-
+    Author a new task from scratch: kauffman_bracket_state_sum_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate the Kauffman bracket of knot and tangle diagrams by summing over local smoothings with loop factors; answers give the bracket polynomial, the contribution of a smoothing choice, or the writhe-corrected normalization.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v2
+  design_choice: Ask for the contribution of a single specified smoothing choice (e.g., 'A-smoothing at
+    crossing 3') to the bracket sum, as an integer or fraction times a monomial.
+- id: P004v3
+  hypothesis: P004
+  idea: kauffman_bracket_state_sum_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v3
+  instruction: |-
+    Author a new task from scratch: kauffman_bracket_state_sum_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate the Kauffman bracket of knot and tangle diagrams by summing over local smoothings with loop factors; answers give the bracket polynomial, the contribution of a smoothing choice, or the writhe-corrected normalization.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/kauffman_bracket_state_sum_v3
+- id: P005v1
+  hypothesis: P005
+  idea: hypergraph_gyo_reduction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v1
+  instruction: |-
+    Author a new task from scratch: hypergraph_gyo_reduction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test hypergraph acyclicity by GYO reductions: repeatedly delete vertices contained in a single edge or edges contained in another; answers give the reduction order, the final emptiness verdict, or the first blocked subhypergraph.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v1
+  design_choice: Answer as a canonical sequence of vertex deletions and edge deletions interleaved, e.g.,
+    "V3 E2 V1 E1", with the final token being EMPTY or BLOCKED.
+- id: P005v2
+  hypothesis: P005
+  idea: hypergraph_gyo_reduction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v2
+  instruction: |-
+    Author a new task from scratch: hypergraph_gyo_reduction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test hypergraph acyclicity by GYO reductions: repeatedly delete vertices contained in a single edge or edges contained in another; answers give the reduction order, the final emptiness verdict, or the first blocked subhypergraph.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v2
+  design_choice: 'Answer as a single integer: 1 if the reduction empties the hypergraph, 0 if blocked,
+    where the input hypergraph is presented as a list of edge sets.'
+- id: P005v3
+  hypothesis: P005
+  idea: hypergraph_gyo_reduction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v3
+  instruction: |-
+    Author a new task from scratch: hypergraph_gyo_reduction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Test hypergraph acyclicity by GYO reductions: repeatedly delete vertices contained in a single edge or edges contained in another; answers give the reduction order, the final emptiness verdict, or the first blocked subhypergraph.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/hypergraph_gyo_reduction_v3
+- id: P006v1
+  hypothesis: P006
+  idea: merkle_inclusion_path_checking_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v1
+  instruction: |-
+    Author a new task from scratch: merkle_inclusion_path_checking_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Verify and extend hash-tree inclusion proofs: combine sibling hashes along a stated path, detect malformed proofs, and answer the recomputed root, the first mismatching level, or the missing sibling hash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v1
+  design_choice: Present fixed-size trees with a stated leaf index; solvers must recompute the root from
+    a given sibling list and output the root hash plus the first level where the stated proof diverges
+    from actual computation.
+- id: P006v2
+  hypothesis: P006
+  idea: merkle_inclusion_path_checking_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v2
+  instruction: |-
+    Author a new task from scratch: merkle_inclusion_path_checking_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Verify and extend hash-tree inclusion proofs: combine sibling hashes along a stated path, detect malformed proofs, and answer the recomputed root, the first mismatching level, or the missing sibling hash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v2
+  design_choice: Use variable-depth trees where the proof path may be incomplete or contain extra levels;
+    solvers must output the recomputed root and the missing sibling hash at the first incomplete level,
+    or 'complete' if valid.
+- id: P006v3
+  hypothesis: P006
+  idea: merkle_inclusion_path_checking_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v3
+  instruction: |-
+    Author a new task from scratch: merkle_inclusion_path_checking_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Verify and extend hash-tree inclusion proofs: combine sibling hashes along a stated path, detect malformed proofs, and answer the recomputed root, the first mismatching level, or the missing sibling hash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_reusable_operations_r2/merkle_inclusion_path_checking_v3

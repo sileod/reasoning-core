@@ -1,0 +1,315 @@
+version: 1
+name: ua_algorithms_and_data_structures_r1
+proposal_wave: ua_algorithms-and-data-structures
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: respectively_dependency_expansion_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v1
+  instruction: |-
+    Author a new task from scratch: respectively_dependency_expansion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand respectively constructions by pairing coordinated arguments and modifiers at their licensed syntactic scopes; handle nested lists and shared constituents, returning the resulting atomic predications.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v1
+  design_choice: Instances present a single sentence with two coordinated subject lists and two coordinated
+    object lists; the answer is the list of paired atomic predications in canonical order.
+- id: P001v2
+  hypothesis: P001
+  idea: respectively_dependency_expansion_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v2
+  instruction: |-
+    Author a new task from scratch: respectively_dependency_expansion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand respectively constructions by pairing coordinated arguments and modifiers at their licensed syntactic scopes; handle nested lists and shared constituents, returning the resulting atomic predications.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v2
+  design_choice: Instances present a sentence with three coordinated adverbial phrases and three coordinated
+    verb phrases; the answer is the sequence of expanded full clauses, each with the shared subject repeated.
+- id: P001v3
+  hypothesis: P001
+  idea: respectively_dependency_expansion_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v3
+  instruction: |-
+    Author a new task from scratch: respectively_dependency_expansion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand respectively constructions by pairing coordinated arguments and modifiers at their licensed syntactic scopes; handle nested lists and shared constituents, returning the resulting atomic predications.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/respectively_dependency_expansion_v3
+- id: P002v1
+  hypothesis: P002
+  idea: material_frame_equivalence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v1
+  instruction: |-
+    Author a new task from scratch: material_frame_equivalence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare sentences describing quantities attached to moving objects versus quantities sampled at fixed locations; compose stated deformations and decide whether both descriptions specify the same physical field.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v1
+  design_choice: Use a discrete grid world where each instance gives a deformation as a permutation of
+    cell labels, and solvers must verify whether a moving-label quantity equals a fixed-location quantity
+    via a single canonical equality string.
+- id: P002v2
+  hypothesis: P002
+  idea: material_frame_equivalence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v2
+  instruction: |-
+    Author a new task from scratch: material_frame_equivalence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare sentences describing quantities attached to moving objects versus quantities sampled at fixed locations; compose stated deformations and decide whether both descriptions specify the same physical field.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v2
+  design_choice: 'Frame comparisons as symbolic algebra problems: each sentence names a scalar field under
+    a composition of translations and rotations, and the answer is a yes/no on whether the two composed
+    operators commute to identity.'
+- id: P002v3
+  hypothesis: P002
+  idea: material_frame_equivalence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v3
+  instruction: |-
+    Author a new task from scratch: material_frame_equivalence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare sentences describing quantities attached to moving objects versus quantities sampled at fixed locations; compose stated deformations and decide whether both descriptions specify the same physical field.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/material_frame_equivalence_v3
+- id: P003v1
+  hypothesis: P003
+  idea: censoring_observation_equivalence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v1
+  instruction: |-
+    Author a new task from scratch: censoring_observation_equivalence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare reports using exact observations, censoring bounds, entry restrictions and interval inspections; recover compatible latent histories and decide whether differently structured reports convey identical evidence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v1
+  design_choice: Use integer-valued latent histories with fixed time grid; answers are canonical 'equivalent'
+    or 'not_equivalent' strings, with reports generated by random censoring rules.
+- id: P003v2
+  hypothesis: P003
+  idea: censoring_observation_equivalence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v2
+  instruction: |-
+    Author a new task from scratch: censoring_observation_equivalence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare reports using exact observations, censoring bounds, entry restrictions and interval inspections; recover compatible latent histories and decide whether differently structured reports convey identical evidence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v2
+  design_choice: Vary report structure by permuting the order of observation intervals and censoring types;
+    solver must align intervals by time labels before comparing evidence.
+- id: P003v3
+  hypothesis: P003
+  idea: censoring_observation_equivalence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v3
+  instruction: |-
+    Author a new task from scratch: censoring_observation_equivalence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare reports using exact observations, censoring bounds, entry restrictions and interval inspections; recover compatible latent histories and decide whether differently structured reports convey identical evidence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/censoring_observation_equivalence_v3
+- id: P004v1
+  hypothesis: P004
+  idea: epoch_retirement_safety_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v1
+  instruction: |-
+    Author a new task from scratch: epoch_retirement_safety_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track active readers, announced epochs, quiescent transitions, and object retirements under stated grace-period rules; determine which retired objects are reclaimable or which readers still block them.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v1
+  design_choice: Present a sequence of reader registration/deregistration and epoch-announce events; ask
+    for a compact set of object IDs that are reclaimable at a given time, with the answer as a sorted
+    list.
+- id: P004v2
+  hypothesis: P004
+  idea: epoch_retirement_safety_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v2
+  instruction: |-
+    Author a new task from scratch: epoch_retirement_safety_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track active readers, announced epochs, quiescent transitions, and object retirements under stated grace-period rules; determine which retired objects are reclaimable or which readers still block them.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v2
+  design_choice: Model a fixed set of readers with per-reader epoch values, and ask which reader(s) still
+    block each retired object under a stated grace-period rule, answering with a mapping of object to
+    blocking reader IDs.
+- id: P004v3
+  hypothesis: P004
+  idea: epoch_retirement_safety_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v3
+  instruction: |-
+    Author a new task from scratch: epoch_retirement_safety_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track active readers, announced epochs, quiescent transitions, and object retirements under stated grace-period rules; determine which retired objects are reclaimable or which readers still block them.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/epoch_retirement_safety_v3
+- id: P005v1
+  hypothesis: P005
+  idea: shared_term_congruence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v1
+  instruction: |-
+    Author a new task from scratch: shared_term_congruence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate asserted equalities through shared term structures, merging parent classes when their operators and child classes coincide; answer forced equalities or the resulting partition of queried terms.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v1
+  design_choice: Answer as a yes/no on whether two given terms are forced equal, with instances balanced
+    across true/false by construction.
+- id: P005v2
+  hypothesis: P005
+  idea: shared_term_congruence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v2
+  instruction: |-
+    Author a new task from scratch: shared_term_congruence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate asserted equalities through shared term structures, merging parent classes when their operators and child classes coincide; answer forced equalities or the resulting partition of queried terms.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v2
+  design_choice: Answer as a canonical partition of all queried terms, using integer class IDs assigned
+    in first-seen order.
+- id: P005v3
+  hypothesis: P005
+  idea: shared_term_congruence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v3
+  instruction: |-
+    Author a new task from scratch: shared_term_congruence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate asserted equalities through shared term structures, merging parent classes when their operators and child classes coincide; answer forced equalities or the resulting partition of queried terms.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_algorithms_and_data_structures_r1/shared_term_congruence_v3

@@ -1,0 +1,604 @@
+version: 1
+name: ua_incremental_recomputation_r3
+proposal_wave: ua_incremental-recomputation
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: crystal_signature_transfer_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v1
+  instruction: |-
+    Author a new task from scratch: crystal_signature_transfer_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute crystal raising and lowering across equivalent tableaux, interlacing patterns and reading words, with signature cancellation and null moves; return the changed entries or resulting weight.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v1
+  design_choice: Return the list of cell coordinates whose entries change after a single raising/lowering
+    operation, ordered by row-major scan.
+- id: P001v2
+  hypothesis: P001
+  idea: crystal_signature_transfer_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v2
+  instruction: |-
+    Author a new task from scratch: crystal_signature_transfer_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute crystal raising and lowering across equivalent tableaux, interlacing patterns and reading words, with signature cancellation and null moves; return the changed entries or resulting weight.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v2
+  design_choice: Return the final weight vector (multiplicities of each symbol) after applying a full
+    sequence of signature-cancelled moves until no null move remains.
+- id: P001v3
+  hypothesis: P001
+  idea: crystal_signature_transfer_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v3
+  instruction: |-
+    Author a new task from scratch: crystal_signature_transfer_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute crystal raising and lowering across equivalent tableaux, interlacing patterns and reading words, with signature cancellation and null moves; return the changed entries or resulting weight.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/crystal_signature_transfer_v3
+- id: P002v1
+  hypothesis: P002
+  idea: oriented_matroid_dual_recovery_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v1
+  instruction: |-
+    Author a new task from scratch: oriented_matroid_dual_recovery_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover signed circuits or cocircuits from complete covector, tope or dual-circuit data using signed orthogonality and minimal support; answer the vectors on a queried support, including loop cases.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v1
+  design_choice: 'Answer format: output the signed circuit as a compact string of nonzero entries indexed
+    by support positions, e.g., ''[+,-,+]'' with fixed ordering; loops represented by a zero placeholder
+    in the support list.'
+- id: P002v2
+  hypothesis: P002
+  idea: oriented_matroid_dual_recovery_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v2
+  instruction: |-
+    Author a new task from scratch: oriented_matroid_dual_recovery_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover signed circuits or cocircuits from complete covector, tope or dual-circuit data using signed orthogonality and minimal support; answer the vectors on a queried support, including loop cases.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v2
+  design_choice: 'Difficulty source: generate instances by starting from a random oriented matroid, then
+    hide one circuit by giving all other circuits and cocircuits, requiring minimal-support reconstruction
+    via orthogonality checks.'
+- id: P002v3
+  hypothesis: P002
+  idea: oriented_matroid_dual_recovery_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v3
+  instruction: |-
+    Author a new task from scratch: oriented_matroid_dual_recovery_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover signed circuits or cocircuits from complete covector, tope or dual-circuit data using signed orthogonality and minimal support; answer the vectors on a queried support, including loop cases.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/oriented_matroid_dual_recovery_v3
+- id: P003v1
+  hypothesis: P003
+  idea: abacus_partition_transfer_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v1
+  instruction: |-
+    Author a new task from scratch: abacus_partition_transfer_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate partitions, beta sets and runner abaci into core-and-quotient data and back, tracking bead origins and runner order; answer a requested core, quotient component or reconstructed partition.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v1
+  design_choice: 'Answer format: request a single core partition string, a single quotient component string,
+    or the full reconstructed partition string, chosen at random per instance.'
+- id: P003v2
+  hypothesis: P003
+  idea: abacus_partition_transfer_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v2
+  instruction: |-
+    Author a new task from scratch: abacus_partition_transfer_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate partitions, beta sets and runner abaci into core-and-quotient data and back, tracking bead origins and runner order; answer a requested core, quotient component or reconstructed partition.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v2
+  design_choice: 'Bead tracking: require the solver to identify the origin runner index of a specified
+    bead in the final abacus, with answer as an integer runner number.'
+- id: P003v3
+  hypothesis: P003
+  idea: abacus_partition_transfer_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v3
+  instruction: |-
+    Author a new task from scratch: abacus_partition_transfer_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate partitions, beta sets and runner abaci into core-and-quotient data and back, tracking bead origins and runner order; answer a requested core, quotient component or reconstructed partition.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/abacus_partition_transfer_v3
+- id: P004v1
+  hypothesis: P004
+  idea: wrench_line_reconstruction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v1
+  instruction: |-
+    Author a new task from scratch: wrench_line_reconstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reexpress force systems as resultant force-moment pairs or screw axes with pitch across reference-point changes; recover the central axis, pitch or moment while distinguishing pure couples.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v1
+  design_choice: Use a 3D wrench with random force and moment; ask for the resultant wrench at a shifted
+    origin, with answer as an integer-coordinate force vector and moment vector.
+- id: P004v2
+  hypothesis: P004
+  idea: wrench_line_reconstruction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v2
+  instruction: |-
+    Author a new task from scratch: wrench_line_reconstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reexpress force systems as resultant force-moment pairs or screw axes with pitch across reference-point changes; recover the central axis, pitch or moment while distinguishing pure couples.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v2
+  design_choice: Present a pure couple with zero force; ask solvers to identify it as such and output
+    the couple moment, with distractors being nonzero-force wrenches.
+- id: P004v3
+  hypothesis: P004
+  idea: wrench_line_reconstruction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v3
+  instruction: |-
+    Author a new task from scratch: wrench_line_reconstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reexpress force systems as resultant force-moment pairs or screw axes with pitch across reference-point changes; recover the central axis, pitch or moment while distinguishing pure couples.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/wrench_line_reconstruction_v3
+- id: P005v1
+  hypothesis: P005
+  idea: contact_chain_displacement_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v1
+  instruction: |-
+    Author a new task from scratch: contact_chain_displacement_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate a prescribed quasistatic push through ordered rigid bodies with varied lengths, gaps, and fixed stops; close gaps before transmitting motion and return changed positions or the blocking stop.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v1
+  design_choice: Answer as a compact list of final positions for each body, with the blocking stop name
+    appended only when motion halts prematurely.
+- id: P005v2
+  hypothesis: P005
+  idea: contact_chain_displacement_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v2
+  instruction: |-
+    Author a new task from scratch: contact_chain_displacement_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate a prescribed quasistatic push through ordered rigid bodies with varied lengths, gaps, and fixed stops; close gaps before transmitting motion and return changed positions or the blocking stop.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v2
+  design_choice: Answer as a canonical string encoding the moved bodies' displacements and the stop that
+    blocks, e.g., 'B2:+3,B4:-1,STOP:C'.
+- id: P005v3
+  hypothesis: P005
+  idea: contact_chain_displacement_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v3
+  instruction: |-
+    Author a new task from scratch: contact_chain_displacement_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate a prescribed quasistatic push through ordered rigid bodies with varied lengths, gaps, and fixed stops; close gaps before transmitting motion and return changed positions or the blocking stop.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/contact_chain_displacement_v3
+- id: P006v1
+  hypothesis: P006
+  idea: winding_region_repair_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v1
+  instruction: |-
+    Author a new task from scratch: winding_region_repair_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update probe classifications after moving, inserting, or deleting vertices of oriented closed paths; handle self-crossings, nested loops, and boundary hits, returning only changed winding labels.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v1
+  design_choice: Each instance specifies a single edit (move, insert, or delete) and the solver must output
+    the set of regions whose winding number changes, given as a list of integer labels.
+- id: P006v2
+  hypothesis: P006
+  idea: winding_region_repair_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v2
+  instruction: |-
+    Author a new task from scratch: winding_region_repair_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update probe classifications after moving, inserting, or deleting vertices of oriented closed paths; handle self-crossings, nested loops, and boundary hits, returning only changed winding labels.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v2
+  design_choice: Instances present a sequence of up to three edits; the answer is the final set of changed
+    region labels after all edits, with intermediate states not reported.
+- id: P006v3
+  hypothesis: P006
+  idea: winding_region_repair_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v3
+  instruction: |-
+    Author a new task from scratch: winding_region_repair_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Update probe classifications after moving, inserting, or deleting vertices of oriented closed paths; handle self-crossings, nested loops, and boundary hits, returning only changed winding labels.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/winding_region_repair_v3
+- id: P007v1
+  hypothesis: P007
+  idea: minimal_trigger_antichain_repair_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v1
+  instruction: |-
+    Author a new task from scratch: minimal_trigger_antichain_repair_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair minimal triggering sets after gate, threshold, or shared-input edits in monotone trigger networks; combine witnesses and absorb supersets, returning added and removed minimal triggers.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v1
+  design_choice: Represent each trigger set as a sorted integer tuple of gate indices; answers are two
+    sorted tuples (added, removed) with canonical comma-separated formatting.
+- id: P007v2
+  hypothesis: P007
+  idea: minimal_trigger_antichain_repair_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v2
+  instruction: |-
+    Author a new task from scratch: minimal_trigger_antichain_repair_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair minimal triggering sets after gate, threshold, or shared-input edits in monotone trigger networks; combine witnesses and absorb supersets, returning added and removed minimal triggers.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v2
+  design_choice: Present edits as one of three mutation types (gate flip, threshold shift, edge rewire);
+    solver must output a compact pair of integer lists, e.g., 'A:[1,3] R:[2]', with empty lists as '[]'.
+- id: P007v3
+  hypothesis: P007
+  idea: minimal_trigger_antichain_repair_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v3
+  instruction: |-
+    Author a new task from scratch: minimal_trigger_antichain_repair_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair minimal triggering sets after gate, threshold, or shared-input edits in monotone trigger networks; combine witnesses and absorb supersets, returning added and removed minimal triggers.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/minimal_trigger_antichain_repair_v3
+- id: P008v1
+  hypothesis: P008
+  idea: rounded_display_consistency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v1
+  instruction: |-
+    Author a new task from scratch: rounded_display_consistency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover feasible latent values from linked rounded readings; vary increments, tie rules, shared offsets, and sum displays, returning consistency or the tight interval for a queried quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v1
+  design_choice: 'Answer format: return ''consistent'' if any assignment satisfies all rounded equations,
+    else ''inconsistent''; queried quantity tight interval only when consistent.'
+- id: P008v2
+  hypothesis: P008
+  idea: rounded_display_consistency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v2
+  instruction: |-
+    Author a new task from scratch: rounded_display_consistency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover feasible latent values from linked rounded readings; vary increments, tie rules, shared offsets, and sum displays, returning consistency or the tight interval for a queried quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v2
+  design_choice: 'Difficulty source: include hidden shared offsets applied to all readings before rounding,
+    so solvers must infer offset parity and range from linked equations.'
+- id: P008v3
+  hypothesis: P008
+  idea: rounded_display_consistency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v3
+  instruction: |-
+    Author a new task from scratch: rounded_display_consistency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover feasible latent values from linked rounded readings; vary increments, tie rules, shared offsets, and sum displays, returning consistency or the tight interval for a queried quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/rounded_display_consistency_v3
+- id: P009v1
+  hypothesis: P009
+  idea: dyadic_balance_patch_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v1
+  instruction: |-
+    Author a new task from scratch: dyadic_balance_patch_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair dyadic cell partitions after local refinement or coarsening; enforce face- or corner-neighbor size limits across periodic and bounded domains, returning the minimal additional subdivisions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v1
+  design_choice: Return the minimal count of added subdivisions as an integer, with instances generated
+    so the answer is never zero and varies across cases.
+- id: P009v2
+  hypothesis: P009
+  idea: dyadic_balance_patch_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v2
+  instruction: |-
+    Author a new task from scratch: dyadic_balance_patch_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair dyadic cell partitions after local refinement or coarsening; enforce face- or corner-neighbor size limits across periodic and bounded domains, returning the minimal additional subdivisions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v2
+  design_choice: Return the answer as a canonical patch specification string listing the coordinates of
+    newly created cells in sorted order, with the count derivable but not directly output.
+- id: P009v3
+  hypothesis: P009
+  idea: dyadic_balance_patch_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v3
+  instruction: |-
+    Author a new task from scratch: dyadic_balance_patch_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Repair dyadic cell partitions after local refinement or coarsening; enforce face- or corner-neighbor size limits across periodic and bounded domains, returning the minimal additional subdivisions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/dyadic_balance_patch_v3
+- id: P010v1
+  hypothesis: P010
+  idea: bitemporal_correction_slicing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v1
+  instruction: |-
+    Author a new task from scratch: bitemporal_correction_slicing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply retroactive interval corrections to records with valid time and transaction time; split affected slices while preserving earlier as-of views, returning changed history rectangles.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v1
+  design_choice: Use integer time coordinates with inclusive-exclusive intervals; answer as canonical
+    set of changed rectangles in (valid_start, valid_end, tx_start, tx_end) order.
+- id: P010v2
+  hypothesis: P010
+  idea: bitemporal_correction_slicing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v2
+  instruction: |-
+    Author a new task from scratch: bitemporal_correction_slicing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply retroactive interval corrections to records with valid time and transaction time; split affected slices while preserving earlier as-of views, returning changed history rectangles.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v2
+  design_choice: Represent corrections as logical delete+insert pairs; require solver to output per-slice
+    bitemporal validity flags rather than geometric rectangles.
+- id: P010v3
+  hypothesis: P010
+  idea: bitemporal_correction_slicing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v3
+  instruction: |-
+    Author a new task from scratch: bitemporal_correction_slicing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply retroactive interval corrections to records with valid time and transaction time; split affected slices while preserving earlier as-of views, returning changed history rectangles.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_incremental_recomputation_r3/bitemporal_correction_slicing_v3

@@ -1,0 +1,545 @@
+version: 1
+name: ua_systematic_generalization_r3
+proposal_wave: ua_systematic-generalization
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  v2:
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  v3:
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  pilot:
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+trials:
+- id: P003v1
+  hypothesis: P003
+  idea: default_logic_extension_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v1
+  instruction: |-
+    Author a new task from scratch: default_logic_extension_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute extensions of normal and semi-normal default theories over propositional facts; modes ask for all extensions, whether a formula is in some extension, or whether a default is applicable in a given extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v1
+  design_choice: Represent defaults as prerequisite:justification:consequent triples over a fixed propositional
+    alphabet, with answer as a canonical sorted list of extension sets or yes/no.
+- id: P003v2
+  hypothesis: P003
+  idea: default_logic_extension_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v2
+  instruction: |-
+    Author a new task from scratch: default_logic_extension_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute extensions of normal and semi-normal default theories over propositional facts; modes ask for all extensions, whether a formula is in some extension, or whether a default is applicable in a given extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v2
+  design_choice: Vary difficulty by controlling the number of defaults and their interactions (e.g., disjoint,
+    conflicting, or chained prerequisites) while keeping propositional formulas in CNF form.
+- id: P003v3
+  hypothesis: P003
+  idea: default_logic_extension_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v3
+  instruction: |-
+    Author a new task from scratch: default_logic_extension_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute extensions of normal and semi-normal default theories over propositional facts; modes ask for all extensions, whether a formula is in some extension, or whether a default is applicable in a given extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/default_logic_extension_v3
+- id: P004v1
+  hypothesis: P004
+  idea: renormalization_forest_subtraction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v1
+  instruction: |-
+    Author a new task from scratch: renormalization_forest_subtraction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Subtract divergent substructures using a supplied singular-part projection; combine nested and disjoint subtraction forests while excluding overlapping choices, returning a counterterm or renormalized expression.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v1
+  design_choice: Instances give a multiset of Feynman diagram nodes with pairwise inclusion relations;
+    answer is the canonical forest-subtraction counterterm string over node labels.
+- id: P004v2
+  hypothesis: P004
+  idea: renormalization_forest_subtraction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v2
+  instruction: |-
+    Author a new task from scratch: renormalization_forest_subtraction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Subtract divergent substructures using a supplied singular-part projection; combine nested and disjoint subtraction forests while excluding overlapping choices, returning a counterterm or renormalized expression.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v2
+  design_choice: Present a list of candidate subgraphs with a singular-part projector; solver outputs
+    the minimal valid subtraction forest as an ordered list of chosen subgraph IDs.
+- id: P004v3
+  hypothesis: P004
+  idea: renormalization_forest_subtraction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v3
+  instruction: |-
+    Author a new task from scratch: renormalization_forest_subtraction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Subtract divergent substructures using a supplied singular-part projection; combine nested and disjoint subtraction forests while excluding overlapping choices, returning a counterterm or renormalized expression.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/renormalization_forest_subtraction_v3
+- id: P005v1
+  hypothesis: P005
+  idea: optimality_theory_tableau_ranking_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v1
+  instruction: |-
+    Author a new task from scratch: optimality_theory_tableau_ranking_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate optimality-theoretic tableaux: compare violation vectors under a constraint ranking, resolve ties, and answer the winning candidate, eliminated set, or reranking that changes the winner.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v1
+  design_choice: Vary tableau size and candidate count per instance, from 2 candidates/2 constraints up
+    to 6 candidates/6 constraints, to control combinatorial difficulty.
+- id: P005v2
+  hypothesis: P005
+  idea: optimality_theory_tableau_ranking_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v2
+  instruction: |-
+    Author a new task from scratch: optimality_theory_tableau_ranking_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate optimality-theoretic tableaux: compare violation vectors under a constraint ranking, resolve ties, and answer the winning candidate, eliminated set, or reranking that changes the winner.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v2
+  design_choice: 'Answer format alternates across instances among: winning candidate index, set of eliminated
+    candidates (as sorted indices), or a valid reranking (as a permutation of constraint indices) that
+    flips the winner.'
+- id: P005v3
+  hypothesis: P005
+  idea: optimality_theory_tableau_ranking_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v3
+  instruction: |-
+    Author a new task from scratch: optimality_theory_tableau_ranking_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate optimality-theoretic tableaux: compare violation vectors under a constraint ranking, resolve ties, and answer the winning candidate, eliminated set, or reranking that changes the winner.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/optimality_theory_tableau_ranking_v3
+- id: P006v1
+  hypothesis: P006
+  idea: distributional_jump_derivatives_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v1
+  instruction: |-
+    Author a new task from scratch: distributional_jump_derivatives_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Differentiate piecewise polynomial functions and point-supported distributions across repeated derivatives; combine ordinary derivatives with jump-induced delta terms, returning the resulting distribution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v1
+  design_choice: Answer as a canonical string of the form 'f^(n) = sum_i c_i * delta(x - a_i) + piecewise_poly',
+    where coefficients are integers or fractions and support points are explicit.
+- id: P006v2
+  hypothesis: P006
+  idea: distributional_jump_derivatives_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v2
+  instruction: |-
+    Author a new task from scratch: distributional_jump_derivatives_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Differentiate piecewise polynomial functions and point-supported distributions across repeated derivatives; combine ordinary derivatives with jump-induced delta terms, returning the resulting distribution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v2
+  design_choice: Vary difficulty by choosing the order of differentiation and the number of piecewise
+    breakpoints, with higher orders requiring tracking of jump magnitudes and delta derivatives.
+- id: P006v3
+  hypothesis: P006
+  idea: distributional_jump_derivatives_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v3
+  instruction: |-
+    Author a new task from scratch: distributional_jump_derivatives_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Differentiate piecewise polynomial functions and point-supported distributions across repeated derivatives; combine ordinary derivatives with jump-induced delta terms, returning the resulting distribution.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/distributional_jump_derivatives_v3
+- id: P007v1
+  hypothesis: P007
+  idea: ordinal_limit_descent_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v1
+  instruction: |-
+    Author a new task from scratch: ordinal_limit_descent_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute indexed descents on ordinals below epsilon-zero: subtract at successors and apply stated fundamental sequences at limits, recursively handling sums and nested powers; return the residual ordinal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v1
+  design_choice: Represent the input ordinal in Cantor normal form as a nested sum of powers of omega,
+    and the answer as the same canonical notation after all descents.
+- id: P007v2
+  hypothesis: P007
+  idea: ordinal_limit_descent_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v2
+  instruction: |-
+    Author a new task from scratch: ordinal_limit_descent_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute indexed descents on ordinals below epsilon-zero: subtract at successors and apply stated fundamental sequences at limits, recursively handling sums and nested powers; return the residual ordinal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v2
+  design_choice: Provide the initial ordinal as a finite expression with named variables for limit stages,
+    and require the solver to output the exact ordinal term after applying the stated descent rule.
+- id: P007v3
+  hypothesis: P007
+  idea: ordinal_limit_descent_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v3
+  instruction: |-
+    Author a new task from scratch: ordinal_limit_descent_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute indexed descents on ordinals below epsilon-zero: subtract at successors and apply stated fundamental sequences at limits, recursively handling sums and nested powers; return the residual ordinal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/ordinal_limit_descent_v3
+- id: P008v1
+  hypothesis: P008
+  idea: branched_density_pushforward_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v1
+  instruction: |-
+    Author a new task from scratch: branched_density_pushforward_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transport piecewise probability densities through noninjective maps by combining inverse-branch contributions and Jacobian factors; vary folds, flat regions, and composition, returning a density or atom mass.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v1
+  design_choice: Answer as a canonical piecewise-linear density string over fixed bins, with each bin's
+    mass computed by summing inverse-branch contributions from all preimages.
+- id: P008v2
+  hypothesis: P008
+  idea: branched_density_pushforward_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v2
+  instruction: |-
+    Author a new task from scratch: branched_density_pushforward_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transport piecewise probability densities through noninjective maps by combining inverse-branch contributions and Jacobian factors; vary folds, flat regions, and composition, returning a density or atom mass.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v2
+  design_choice: Answer as a single rational fraction for the total atom mass in a specified interval,
+    requiring integration over overlapping inverse branches and Jacobian adjustments.
+- id: P008v3
+  hypothesis: P008
+  idea: branched_density_pushforward_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v3
+  instruction: |-
+    Author a new task from scratch: branched_density_pushforward_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Transport piecewise probability densities through noninjective maps by combining inverse-branch contributions and Jacobian factors; vary folds, flat regions, and composition, returning a density or atom mass.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/branched_density_pushforward_v3
+- id: P009v1
+  hypothesis: P009
+  idea: finite_partizan_order_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v1
+  instruction: |-
+    Author a new task from scratch: finite_partizan_order_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare finite partisan games built from left/right option sets, sums, and negation by recursive option exclusion; return less, equal, greater, or incomparable, including nonnumeric games.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v1
+  design_choice: Represent games as strings like {L|R} with L,R as comma-separated substrings, and compute
+    outcome via recursive comparison of option sets.
+- id: P009v2
+  hypothesis: P009
+  idea: finite_partizan_order_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v2
+  instruction: |-
+    Author a new task from scratch: finite_partizan_order_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare finite partisan games built from left/right option sets, sums, and negation by recursive option exclusion; return less, equal, greater, or incomparable, including nonnumeric games.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v2
+  design_choice: Present games as sums of atomic components (e.g., *, up, down, numbers) and ask for the
+    order relation using canonical simplification to normal forms.
+- id: P009v3
+  hypothesis: P009
+  idea: finite_partizan_order_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v3
+  instruction: |-
+    Author a new task from scratch: finite_partizan_order_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare finite partisan games built from left/right option sets, sums, and negation by recursive option exclusion; return less, equal, greater, or incomparable, including nonnumeric games.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/finite_partizan_order_v3
+- id: P010v1
+  hypothesis: P010
+  idea: asymptotic_cancellation_order_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v1
+  instruction: |-
+    Author a new task from scratch: asymptotic_cancellation_order_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the first surviving asymptotic term in nested sums, products, quotients, and analytic expansions of exact series; handle successive cancellations and return its exponent and coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v1
+  design_choice: Generate instances where cancellations occur only at the leading order, requiring comparison
+    of coefficients after subtracting dominant terms.
+- id: P010v2
+  hypothesis: P010
+  idea: asymptotic_cancellation_order_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v2
+  instruction: |-
+    Author a new task from scratch: asymptotic_cancellation_order_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the first surviving asymptotic term in nested sums, products, quotients, and analytic expansions of exact series; handle successive cancellations and return its exponent and coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v2
+  design_choice: Construct series with multiple layers of nested cancellations, where each layer reveals
+    a new term with a rational exponent and coefficient.
+- id: P010v3
+  hypothesis: P010
+  idea: asymptotic_cancellation_order_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v3
+  instruction: |-
+    Author a new task from scratch: asymptotic_cancellation_order_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find the first surviving asymptotic term in nested sums, products, quotients, and analytic expansions of exact series; handle successive cancellations and return its exponent and coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/asymptotic_cancellation_order_v3
+- id: P011v1
+  hypothesis: P011
+  idea: ribbon_surface_surgery_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v1
+  instruction: |-
+    Author a new task from scratch: ribbon_surface_surgery_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track oriented ribbon surfaces through edge deletion, contraction, band attachment, and vertex splitting using cyclic half-edge orders; return the resulting boundary components and genus.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v1
+  design_choice: Represent the ribbon surface combinatorially as a list of cyclic permutations on directed
+    half-edges, with boundary components returned as ordered lists of half-edge labels.
+- id: P011v2
+  hypothesis: P011
+  idea: ribbon_surface_surgery_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v2
+  instruction: |-
+    Author a new task from scratch: ribbon_surface_surgery_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track oriented ribbon surfaces through edge deletion, contraction, band attachment, and vertex splitting using cyclic half-edge orders; return the resulting boundary components and genus.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v2
+  design_choice: Encode the surgery operations as transformations on a signed permutation matrix, with
+    the answer being the number of boundary cycles and the genus computed via the Euler characteristic.
+- id: P011v3
+  hypothesis: P011
+  idea: ribbon_surface_surgery_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v3
+  instruction: |-
+    Author a new task from scratch: ribbon_surface_surgery_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track oriented ribbon surfaces through edge deletion, contraction, band attachment, and vertex splitting using cyclic half-edge orders; return the resulting boundary components and genus.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_systematic_generalization_r3/ribbon_surface_surgery_v3

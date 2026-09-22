@@ -1,0 +1,312 @@
+version: 1
+name: ua_planning_backtracking_r2
+proposal_wave: ua_planning-backtracking
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: rigidity_brace_design_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v1
+  instruction: |-
+    Author a new task from scratch: rigidity_brace_design_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Add permitted bars to coordinate-specified joint frameworks so their infinitesimal motions equal a prescribed subspace, preserving intended freedoms; return a minimum-cost brace set or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v1
+  design_choice: 'Instance form: joints on a regular triangular lattice with fixed outer boundary, prescribed
+    subspace limited to translations and rotations; answers are brace subsets encoded as sorted edge indices.'
+- id: P001v2
+  hypothesis: P001
+  idea: rigidity_brace_design_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v2
+  instruction: |-
+    Author a new task from scratch: rigidity_brace_design_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Add permitted bars to coordinate-specified joint frameworks so their infinitesimal motions equal a prescribed subspace, preserving intended freedoms; return a minimum-cost brace set or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v2
+  design_choice: 'Difficulty source: edge costs vary with bar length and crossing penalties; solver must
+    trade off stiffness against budget while preserving a single specified internal mechanism.'
+- id: P001v3
+  hypothesis: P001
+  idea: rigidity_brace_design_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v3
+  instruction: |-
+    Author a new task from scratch: rigidity_brace_design_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Add permitted bars to coordinate-specified joint frameworks so their infinitesimal motions equal a prescribed subspace, preserving intended freedoms; return a minimum-cost brace set or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/rigidity_brace_design_v3
+- id: P002v1
+  hypothesis: P002
+  idea: terminal_network_coding_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v1
+  instruction: |-
+    Author a new task from scratch: terminal_network_coding_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose finite-field mixing coefficients on directed communication networks so receivers recover specified source symbols despite listed erasure patterns; return valid local coefficients or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v1
+  design_choice: Coefficients are restricted to nonzero field elements, forcing solvers to handle field-specific
+    multiplicative constraints beyond simple linear independence.
+- id: P002v2
+  hypothesis: P002
+  idea: terminal_network_coding_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v2
+  instruction: |-
+    Author a new task from scratch: terminal_network_coding_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose finite-field mixing coefficients on directed communication networks so receivers recover specified source symbols despite listed erasure patterns; return valid local coefficients or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v2
+  design_choice: Network topology is generated randomly per instance, so solvers must verify feasibility
+    for arbitrary directed graphs rather than relying on fixed canonical structures.
+- id: P002v3
+  hypothesis: P002
+  idea: terminal_network_coding_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v3
+  instruction: |-
+    Author a new task from scratch: terminal_network_coding_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose finite-field mixing coefficients on directed communication networks so receivers recover specified source symbols despite listed erasure patterns; return valid local coefficients or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/terminal_network_coding_v3
+- id: P003v1
+  hypothesis: P003
+  idea: common_polyhedral_net_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v1
+  instruction: |-
+    Author a new task from scratch: common_polyhedral_net_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find edge cuts whose unfolded faces form one nonoverlapping planar net for each of several supplied polyhedra; respect forbidden seams and face correspondences, returning a shared net or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v1
+  design_choice: Represent each polyhedron as a fixed triangulated surface; solvers must return a canonical
+    list of cut edge indices, with impossibility as the empty list.
+- id: P003v2
+  hypothesis: P003
+  idea: common_polyhedral_net_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v2
+  instruction: |-
+    Author a new task from scratch: common_polyhedral_net_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find edge cuts whose unfolded faces form one nonoverlapping planar net for each of several supplied polyhedra; respect forbidden seams and face correspondences, returning a shared net or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v2
+  design_choice: Use only convex polyhedra with identical face-count sequences; require a single shared
+    net, and score by exact match of the net's edge-label string.
+- id: P003v3
+  hypothesis: P003
+  idea: common_polyhedral_net_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v3
+  instruction: |-
+    Author a new task from scratch: common_polyhedral_net_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Find edge cuts whose unfolded faces form one nonoverlapping planar net for each of several supplied polyhedra; respect forbidden seams and face correspondences, returning a shared net or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/common_polyhedral_net_v3
+- id: P004v1
+  hypothesis: P004
+  idea: order_independent_tile_seeding_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v1
+  instruction: |-
+    Author a new task from scratch: order_independent_tile_seeding_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose seed tiles under glue, temperature and board constraints so every maximal legal attachment sequence yields exactly the target assembly; return a smallest forcing seed or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v1
+  design_choice: Seed set must be given as a sorted list of tile-type names with counts, and the solver
+    must output the lexicographically smallest such list among all minimum-size forcing seeds.
+- id: P004v2
+  hypothesis: P004
+  idea: order_independent_tile_seeding_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v2
+  instruction: |-
+    Author a new task from scratch: order_independent_tile_seeding_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose seed tiles under glue, temperature and board constraints so every maximal legal attachment sequence yields exactly the target assembly; return a smallest forcing seed or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v2
+  design_choice: Board is a fixed rectangular grid with wrap-around edges, and the answer is either a
+    canonical seed string or the literal 'IMPOSSIBLE', with ties broken by choosing the seed that minimizes
+    the sum of tile-type indices.
+- id: P004v3
+  hypothesis: P004
+  idea: order_independent_tile_seeding_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v3
+  instruction: |-
+    Author a new task from scratch: order_independent_tile_seeding_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Choose seed tiles under glue, temperature and board constraints so every maximal legal attachment sequence yields exactly the target assembly; return a smallest forcing seed or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/order_independent_tile_seeding_v3
+- id: P005v1
+  hypothesis: P005
+  idea: reidemeister_reduction_plan_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v1
+  instruction: |-
+    Author a new task from scratch: reidemeister_reduction_plan_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search Reidemeister moves on combinatorial link diagrams with marked strands and intermediate crossing caps; reach a specified diagram or crossing bound and return the minimum move count or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v1
+  design_choice: Answer is the minimal number of moves as an integer, with impossibility encoded as a
+    sentinel value like -1, balancing reachable and unreachable instances.
+- id: P005v2
+  hypothesis: P005
+  idea: reidemeister_reduction_plan_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v2
+  instruction: |-
+    Author a new task from scratch: reidemeister_reduction_plan_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search Reidemeister moves on combinatorial link diagrams with marked strands and intermediate crossing caps; reach a specified diagram or crossing bound and return the minimum move count or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v2
+  design_choice: Answer is a canonical sequence of move labels (e.g., R1,R2,R3) of minimal length, with
+    ties broken lexicographically, requiring exact plan output.
+- id: P005v3
+  hypothesis: P005
+  idea: reidemeister_reduction_plan_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v3
+  instruction: |-
+    Author a new task from scratch: reidemeister_reduction_plan_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search Reidemeister moves on combinatorial link diagrams with marked strands and intermediate crossing caps; reach a specified diagram or crossing bound and return the minimum move count or impossibility.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_planning_backtracking_r2/reidemeister_reduction_plan_v3

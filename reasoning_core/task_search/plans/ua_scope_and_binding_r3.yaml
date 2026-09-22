@@ -1,0 +1,316 @@
+version: 1
+name: ua_scope_and_binding_r3
+proposal_wave: ua_scope-and-binding
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: monotonicity_context_signatures_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v1
+  instruction: |-
+    Author a new task from scratch: monotonicity_context_signatures_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate upward, downward and nonmonotone entailment signatures through quantified restrictors, nuclear scopes, negation and conjunction; return the substitution direction at a marked constituent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v1
+  design_choice: Generate instances where the marked constituent is inside nested quantifier restrictors
+    and nuclear scopes, with the answer being the canonical direction string like 'upward' or 'downward'
+    applied to that constituent.
+- id: P001v2
+  hypothesis: P001
+  idea: monotonicity_context_signatures_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v2
+  instruction: |-
+    Author a new task from scratch: monotonicity_context_signatures_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate upward, downward and nonmonotone entailment signatures through quantified restrictors, nuclear scopes, negation and conjunction; return the substitution direction at a marked constituent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v2
+  design_choice: Present each instance as a logical formula with a highlighted subexpression; the solver
+    must output the substitution direction (upward/downward/nonmonotone) as a single lowercase word, with
+    balanced answer distribution across formulas.
+- id: P001v3
+  hypothesis: P001
+  idea: monotonicity_context_signatures_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v3
+  instruction: |-
+    Author a new task from scratch: monotonicity_context_signatures_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate upward, downward and nonmonotone entailment signatures through quantified restrictors, nuclear scopes, negation and conjunction; return the substitution direction at a marked constituent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/monotonicity_context_signatures_v3
+- id: P002v1
+  hypothesis: P002
+  idea: repetition_restitution_witnesses_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v1
+  instruction: |-
+    Author a new task from scratch: repetition_restitution_witnesses_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Match repetitive and restitutive readings to prior events or result states across participant changes, interrupted states, and nested event decompositions; answer which readings have an appropriate earlier witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v1
+  design_choice: Present each instance as a short scenario text; ask which of two listed readings (repetitive/restitutive)
+    has a supporting earlier occurrence, answer as 'A' or 'B'.
+- id: P002v2
+  hypothesis: P002
+  idea: repetition_restitution_witnesses_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v2
+  instruction: |-
+    Author a new task from scratch: repetition_restitution_witnesses_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Match repetitive and restitutive readings to prior events or result states across participant changes, interrupted states, and nested event decompositions; answer which readings have an appropriate earlier witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v2
+  design_choice: Use a structured event tree with labeled states and participant swaps; ask for the set
+    of readings (e.g., 'R,S') that have a witness, with answer as a compact set string.
+- id: P002v3
+  hypothesis: P002
+  idea: repetition_restitution_witnesses_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v3
+  instruction: |-
+    Author a new task from scratch: repetition_restitution_witnesses_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Match repetitive and restitutive readings to prior events or result states across participant changes, interrupted states, and nested event decompositions; answer which readings have an appropriate earlier witness.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/repetition_restitution_witnesses_v3
+- id: P003v1
+  hypothesis: P003
+  idea: modifier_entailment_profiles_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v1
+  instruction: |-
+    Author a new task from scratch: modifier_entailment_profiles_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose noun modifiers with stated intersective, noun-relative, privative, and modal denotations; vary order-sensitive nesting and return the base predicates entailed, contradicted, or unsettled.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v1
+  design_choice: Generate instances from a fixed template of modifier types and noun classes, with the
+    answer as a canonical comma-separated list of base predicates each tagged with entail, contradict,
+    or unsettle.
+- id: P003v2
+  hypothesis: P003
+  idea: modifier_entailment_profiles_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v2
+  instruction: |-
+    Author a new task from scratch: modifier_entailment_profiles_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose noun modifiers with stated intersective, noun-relative, privative, and modal denotations; vary order-sensitive nesting and return the base predicates entailed, contradicted, or unsettled.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v2
+  design_choice: Vary the order of two modifiers per noun, and require the solver to output a compact
+    3-character string per predicate (E/C/U) in the order the predicates appear in the premise.
+- id: P003v3
+  hypothesis: P003
+  idea: modifier_entailment_profiles_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v3
+  instruction: |-
+    Author a new task from scratch: modifier_entailment_profiles_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose noun modifiers with stated intersective, noun-relative, privative, and modal denotations; vary order-sensitive nesting and return the base predicates entailed, contradicted, or unsettled.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/modifier_entailment_profiles_v3
+- id: P004v1
+  hypothesis: P004
+  idea: quotation_reference_composition_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v1
+  instruction: |-
+    Author a new task from scratch: quotation_reference_composition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate expressions mixing reference, quotation, splicing, and names of expressions across nested quotation boundaries; distinguish identical referents from identical wording and answer the resulting denotation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v1
+  design_choice: Use a fixed grammar of expression forms (atoms, lists, quoted forms, splice markers)
+    and ask for the fully evaluated S-expression as a canonical string.
+- id: P004v2
+  hypothesis: P004
+  idea: quotation_reference_composition_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v2
+  instruction: |-
+    Author a new task from scratch: quotation_reference_composition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate expressions mixing reference, quotation, splicing, and names of expressions across nested quotation boundaries; distinguish identical referents from identical wording and answer the resulting denotation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v2
+  design_choice: Present pairs of expressions that differ only by one layer of quoting or splicing; the
+    answer is a yes/no equality judgment of their denotations.
+- id: P004v3
+  hypothesis: P004
+  idea: quotation_reference_composition_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v3
+  instruction: |-
+    Author a new task from scratch: quotation_reference_composition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate expressions mixing reference, quotation, splicing, and names of expressions across nested quotation boundaries; distinguish identical referents from identical wording and answer the resulting denotation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/quotation_reference_composition_v3
+- id: P005v1
+  hypothesis: P005
+  idea: innocent_exclusion_exhaustification_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v1
+  instruction: |-
+    Author a new task from scratch: innocent_exclusion_exhaustification_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exhaustified meanings from a prejacent and candidate alternatives: intersect maximal jointly consistent exclusion sets, then return the worlds satisfying the prejacent and all shared exclusions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v1
+  design_choice: Generate instances with a fixed small set of atomic propositions and random candidate
+    alternatives, where the answer is a canonical bitstring of worlds satisfying the prejacent and all
+    shared exclusions.
+- id: P005v2
+  hypothesis: P005
+  idea: innocent_exclusion_exhaustification_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v2
+  instruction: |-
+    Author a new task from scratch: innocent_exclusion_exhaustification_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exhaustified meanings from a prejacent and candidate alternatives: intersect maximal jointly consistent exclusion sets, then return the worlds satisfying the prejacent and all shared exclusions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v2
+  design_choice: Vary the prejacent as a conjunction of literals and alternatives as disjunctions, requiring
+    the solver to compute maximal consistent exclusions via a truth-table check, with the answer as a
+    set of world indices.
+- id: P005v3
+  hypothesis: P005
+  idea: innocent_exclusion_exhaustification_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v3
+  instruction: |-
+    Author a new task from scratch: innocent_exclusion_exhaustification_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute exhaustified meanings from a prejacent and candidate alternatives: intersect maximal jointly consistent exclusion sets, then return the worlds satisfying the prejacent and all shared exclusions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_scope_and_binding_r3/innocent_exclusion_exhaustification_v3

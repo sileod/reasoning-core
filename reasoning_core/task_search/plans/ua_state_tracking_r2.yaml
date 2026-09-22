@@ -1,0 +1,724 @@
+version: 1
+name: ua_state_tracking_r2
+proposal_wave: ua_state-tracking
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  - P012v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  - P012v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  - P012v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: stabilizer_cut_entropy_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v1
+  instruction: |-
+    Author a new task from scratch: stabilizer_cut_entropy_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Commuting Pauli generators with redundancy, generator recombinations, and varied subsystem cuts; isolate stabilizers supported inside each cut and return its entropy or Schmidt rank.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v1
+  design_choice: Each instance specifies a fixed subsystem cut (e.g., first 3 qubits vs. rest) and asks
+    for the entropy of the reduced stabilizer state, given as a fraction log2(dimension)/2.
+- id: P001v2
+  hypothesis: P001
+  idea: stabilizer_cut_entropy_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v2
+  instruction: |-
+    Author a new task from scratch: stabilizer_cut_entropy_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Commuting Pauli generators with redundancy, generator recombinations, and varied subsystem cuts; isolate stabilizers supported inside each cut and return its entropy or Schmidt rank.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v2
+  design_choice: Each instance provides a stabilizer group via redundant generators and asks for the Schmidt
+    rank across the cut, returned as an integer power of 2.
+- id: P001v3
+  hypothesis: P001
+  idea: stabilizer_cut_entropy_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v3
+  instruction: |-
+    Author a new task from scratch: stabilizer_cut_entropy_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Commuting Pauli generators with redundancy, generator recombinations, and varied subsystem cuts; isolate stabilizers supported inside each cut and return its entropy or Schmidt rank.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/stabilizer_cut_entropy_v3
+- id: P002v1
+  hypothesis: P002
+  idea: strategy_realization_equivalence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v1
+  instruction: |-
+    Author a new task from scratch: strategy_realization_equivalence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate mixtures of complete plans and local random choices into decision-history weights, respecting shared information sets and unreachable branches; decide equivalence or recover an equivalent policy.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v1
+  design_choice: Represent plans as decision trees with chance nodes; solvers output a canonical fraction
+    for equivalence, with unreachable branches pruned via fixed-point elimination.
+- id: P002v2
+  hypothesis: P002
+  idea: strategy_realization_equivalence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v2
+  instruction: |-
+    Author a new task from scratch: strategy_realization_equivalence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate mixtures of complete plans and local random choices into decision-history weights, respecting shared information sets and unreachable branches; decide equivalence or recover an equivalent policy.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v2
+  design_choice: Encode strategies as action sequences per information set, where the answer is a minimal
+    distinguishing counterexample string of shared decisions and chance outcomes.
+- id: P002v3
+  hypothesis: P002
+  idea: strategy_realization_equivalence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v3
+  instruction: |-
+    Author a new task from scratch: strategy_realization_equivalence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Translate mixtures of complete plans and local random choices into decision-history weights, respecting shared information sets and unreachable branches; decide equivalence or recover an equivalent policy.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/strategy_realization_equivalence_v3
+- id: P003v1
+  hypothesis: P003
+  idea: collision_free_moment_extraction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v1
+  instruction: |-
+    Author a new task from scratch: collision_free_moment_extraction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover sums of products over distinct records from aggregate power sums or mixed moments, with repeated exponents and multivariate attributes; remove index collisions and return the exact statistic.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v1
+  design_choice: Instances specify a single multivariate attribute per record, with answer as a canonical
+    polynomial string in sorted monomial order, requiring expansion of aggregate moments into distinct-index
+    sums.
+- id: P003v2
+  hypothesis: P003
+  idea: collision_free_moment_extraction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v2
+  instruction: |-
+    Author a new task from scratch: collision_free_moment_extraction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover sums of products over distinct records from aggregate power sums or mixed moments, with repeated exponents and multivariate attributes; remove index collisions and return the exact statistic.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v2
+  design_choice: Instances provide only univariate power sums per attribute column, and the solver must
+    reconstruct cross-attribute mixed moments via generating functions, answering with an integer coefficient.
+- id: P003v3
+  hypothesis: P003
+  idea: collision_free_moment_extraction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v3
+  instruction: |-
+    Author a new task from scratch: collision_free_moment_extraction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover sums of products over distinct records from aggregate power sums or mixed moments, with repeated exponents and multivariate attributes; remove index collisions and return the exact statistic.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/collision_free_moment_extraction_v3
+- id: P004v1
+  hypothesis: P004
+  idea: periodic_density_equivalence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v1
+  instruction: |-
+    Author a new task from scratch: periodic_density_equivalence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Polynomial local densities on periodic sequences with varied stencil widths and multiple fields; group translated monomials to decide equality of total energies or return the surviving bulk coefficients.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v1
+  design_choice: Instances present two periodic sequences over a fixed period length with monomial local
+    densities; the solver must output a canonical fraction if total energies are equal, else the lexicographically
+    smallest surviving coefficient string.
+- id: P004v2
+  hypothesis: P004
+  idea: periodic_density_equivalence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v2
+  instruction: |-
+    Author a new task from scratch: periodic_density_equivalence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Polynomial local densities on periodic sequences with varied stencil widths and multiple fields; group translated monomials to decide equality of total energies or return the surviving bulk coefficients.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v2
+  design_choice: Difficulty arises from stencil widths that exceed the period, requiring the solver to
+    fold contributions across boundaries; answers are either a balanced yes/no for equality or the sorted
+    list of bulk coefficients after cancellation.
+- id: P004v3
+  hypothesis: P004
+  idea: periodic_density_equivalence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v3
+  instruction: |-
+    Author a new task from scratch: periodic_density_equivalence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Polynomial local densities on periodic sequences with varied stencil widths and multiple fields; group translated monomials to decide equality of total energies or return the surviving bulk coefficients.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/periodic_density_equivalence_v3
+- id: P005v1
+  hypothesis: P005
+  idea: two_point_observation_equivalence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v1
+  instruction: |-
+    Author a new task from scratch: two_point_observation_equivalence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Weighted patterns on cyclic grids and finite product groups; aggregate displacement correlations across translations and reflections, then decide two-point indistinguishability or identify a differing displacement.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v1
+  design_choice: 'Answer format: output a single canonical string ''equal'' or the differing displacement
+    tuple (dx,dy) as two space-separated integers, with ties resolved by lexicographic order of displacements.'
+- id: P005v2
+  hypothesis: P005
+  idea: two_point_observation_equivalence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v2
+  instruction: |-
+    Author a new task from scratch: two_point_observation_equivalence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Weighted patterns on cyclic grids and finite product groups; aggregate displacement correlations across translations and reflections, then decide two-point indistinguishability or identify a differing displacement.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v2
+  design_choice: 'Answer format: output ''equivalent'' if all aggregate correlations match, else output
+    the canonical displacement vector (dx,dy) that differs, with ties broken by smallest magnitude then
+    lexicographic order.'
+- id: P005v3
+  hypothesis: P005
+  idea: two_point_observation_equivalence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v3
+  instruction: |-
+    Author a new task from scratch: two_point_observation_equivalence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Weighted patterns on cyclic grids and finite product groups; aggregate displacement correlations across translations and reflections, then decide two-point indistinguishability or identify a differing displacement.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/two_point_observation_equivalence_v3
+- id: P006v1
+  hypothesis: P006
+  idea: multiplicative_interaction_contrast_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v1
+  instruction: |-
+    Author a new task from scratch: multiplicative_interaction_contrast_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Positive rational multiway tables under multiplicative rescaling on proper subsets of axes; isolate irreducible interaction contrasts, test their invariance, or recover a cell from a specified contrast.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v1
+  design_choice: 'Answer format: output the minimal positive integer multiplier that restores invariance,
+    given a table and a specified contrast.'
+- id: P006v2
+  hypothesis: P006
+  idea: multiplicative_interaction_contrast_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v2
+  instruction: |-
+    Author a new task from scratch: multiplicative_interaction_contrast_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Positive rational multiway tables under multiplicative rescaling on proper subsets of axes; isolate irreducible interaction contrasts, test their invariance, or recover a cell from a specified contrast.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v2
+  design_choice: 'Instance structure: present a 3x3x3 table and ask whether a given 3-way contrast is
+    invariant under all allowed rescalings; answer yes/no.'
+- id: P006v3
+  hypothesis: P006
+  idea: multiplicative_interaction_contrast_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v3
+  instruction: |-
+    Author a new task from scratch: multiplicative_interaction_contrast_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Positive rational multiway tables under multiplicative rescaling on proper subsets of axes; isolate irreducible interaction contrasts, test their invariance, or recover a cell from a specified contrast.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/multiplicative_interaction_contrast_v3
+- id: P007v1
+  hypothesis: P007
+  idea: mean_preserving_spread_order_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v1
+  instruction: |-
+    Author a new task from scratch: mean_preserving_spread_order_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Finite weighted outcome distributions with unequal supports and shared means; compare integrated tails to decide whether mean-preserving redistribution is possible or identify a violated strike inequality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v1
+  design_choice: Generate pairs where the lower-support distribution has a heavier left tail but a lighter
+    right tail, so the answer depends on which integrated-tail inequality fails first.
+- id: P007v2
+  hypothesis: P007
+  idea: mean_preserving_spread_order_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v2
+  instruction: |-
+    Author a new task from scratch: mean_preserving_spread_order_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Finite weighted outcome distributions with unequal supports and shared means; compare integrated tails to decide whether mean-preserving redistribution is possible or identify a violated strike inequality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v2
+  design_choice: Use answer formats that require reporting the sign of the minimal strike surplus as an
+    integer, with ties broken by a fixed canonical rule.
+- id: P007v3
+  hypothesis: P007
+  idea: mean_preserving_spread_order_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v3
+  instruction: |-
+    Author a new task from scratch: mean_preserving_spread_order_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Finite weighted outcome distributions with unequal supports and shared means; compare integrated tails to decide whether mean-preserving redistribution is possible or identify a violated strike inequality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/mean_preserving_spread_order_v3
+- id: P008v1
+  hypothesis: P008
+  idea: marginal_extension_consistency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v1
+  instruction: |-
+    Author a new task from scratch: marginal_extension_consistency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine probability tables on overlapping variable subsets into constraints on one joint distribution; determine compatibility or the attainable range of an unreported event probability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v1
+  design_choice: Represent each input table as a set of linear equalities; compatibility is determined
+    by existence of a joint table via linear programming, with answer as yes/no.
+- id: P008v2
+  hypothesis: P008
+  idea: marginal_extension_consistency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v2
+  instruction: |-
+    Author a new task from scratch: marginal_extension_consistency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine probability tables on overlapping variable subsets into constraints on one joint distribution; determine compatibility or the attainable range of an unreported event probability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v2
+  design_choice: Ask for the exact attainable interval [min,max] of the target event probability, given
+    tables as rational constraints; answer is a fraction pair like [lower, upper].
+- id: P008v3
+  hypothesis: P008
+  idea: marginal_extension_consistency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v3
+  instruction: |-
+    Author a new task from scratch: marginal_extension_consistency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine probability tables on overlapping variable subsets into constraints on one joint distribution; determine compatibility or the attainable range of an unreported event probability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/marginal_extension_consistency_v3
+- id: P009v1
+  hypothesis: P009
+  idea: likelihood_sufficient_partition_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v1
+  instruction: |-
+    Author a new task from scratch: likelihood_sufficient_partition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Group outcomes whose likelihood vectors across candidate hypotheses are proportional; find the minimal information preserving every posterior, test proposed summaries, or recover posterior odds from retained classes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v1
+  design_choice: Instances present 5 hypotheses and 10 outcomes; solver must output the partition of outcomes
+    into minimal sufficient classes, as a list of sorted outcome indices per class.
+- id: P009v2
+  hypothesis: P009
+  idea: likelihood_sufficient_partition_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v2
+  instruction: |-
+    Author a new task from scratch: likelihood_sufficient_partition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Group outcomes whose likelihood vectors across candidate hypotheses are proportional; find the minimal information preserving every posterior, test proposed summaries, or recover posterior odds from retained classes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v2
+  design_choice: Each instance gives a proposed partition of outcomes; solver must answer yes/no whether
+    it is sufficient for all posteriors, with balanced true/false cases.
+- id: P009v3
+  hypothesis: P009
+  idea: likelihood_sufficient_partition_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v3
+  instruction: |-
+    Author a new task from scratch: likelihood_sufficient_partition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Group outcomes whose likelihood vectors across candidate hypotheses are proportional; find the minimal information preserving every posterior, test proposed summaries, or recover posterior odds from retained classes.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/likelihood_sufficient_partition_v3
+- id: P010v1
+  hypothesis: P010
+  idea: switched_capacitor_charge_tracking_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v1
+  instruction: |-
+    Author a new task from scratch: switched_capacitor_charge_tracking_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track ideal capacitors through plate reconnections, isolation, grounding, and voltage clamping; conserve charge on floating conductors and return queried plate charges or capacitor voltages.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v1
+  design_choice: 'Answer format: return a compact list of integer microcoulomb charges, one per queried
+    plate, in the order queried.'
+- id: P010v2
+  hypothesis: P010
+  idea: switched_capacitor_charge_tracking_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v2
+  instruction: |-
+    Author a new task from scratch: switched_capacitor_charge_tracking_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track ideal capacitors through plate reconnections, isolation, grounding, and voltage clamping; conserve charge on floating conductors and return queried plate charges or capacitor voltages.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v2
+  design_choice: 'Difficulty source: require solvers to detect when a plate group becomes floating after
+    a switch opens, then conserve charge across that isolated subnetwork.'
+- id: P010v3
+  hypothesis: P010
+  idea: switched_capacitor_charge_tracking_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v3
+  instruction: |-
+    Author a new task from scratch: switched_capacitor_charge_tracking_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track ideal capacitors through plate reconnections, isolation, grounding, and voltage clamping; conserve charge on floating conductors and return queried plate charges or capacitor voltages.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/switched_capacitor_charge_tracking_v3
+- id: P011v1
+  hypothesis: P011
+  idea: algebraic_norm_descent_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v1
+  instruction: |-
+    Author a new task from scratch: algebraic_norm_descent_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Elements in finite extension towers given by defining polynomials, basis expressions, or rational combinations; descend conjugation-invariant norms through intermediate fields and return the ground-field value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v1
+  design_choice: Instances specify elements as polynomials in a single primitive element of the full tower,
+    and solvers must compute the norm by successive resultant computations with intermediate defining
+    polynomials, returning an integer or rational.
+- id: P011v2
+  hypothesis: P011
+  idea: algebraic_norm_descent_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v2
+  instruction: |-
+    Author a new task from scratch: algebraic_norm_descent_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Elements in finite extension towers given by defining polynomials, basis expressions, or rational combinations; descend conjugation-invariant norms through intermediate fields and return the ground-field value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v2
+  design_choice: Elements are given as rational functions in several basis elements from different intermediate
+    fields; the answer is the norm expressed as a fraction of integers, requiring symbolic simplification
+    and conjugation-invariant reduction.
+- id: P011v3
+  hypothesis: P011
+  idea: algebraic_norm_descent_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v3
+  instruction: |-
+    Author a new task from scratch: algebraic_norm_descent_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Elements in finite extension towers given by defining polynomials, basis expressions, or rational combinations; descend conjugation-invariant norms through intermediate fields and return the ground-field value.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/algebraic_norm_descent_v3
+- id: P012v1
+  hypothesis: P012
+  idea: stencil_depth_compositing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v1
+  instruction: |-
+    Author a new task from scratch: stencil_depth_compositing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute fragment streams with stencil comparisons, depth tests, masked writes, and integer blending; track distinct fail and pass updates and return queried pixels' color, depth, or stencil state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v1
+  design_choice: Query a single pixel after a fixed sequence of draw calls; answer is a canonical triple
+    of color, depth, and stencil values.
+- id: P012v2
+  hypothesis: P012
+  idea: stencil_depth_compositing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v2
+  instruction: |-
+    Author a new task from scratch: stencil_depth_compositing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute fragment streams with stencil comparisons, depth tests, masked writes, and integer blending; track distinct fail and pass updates and return queried pixels' color, depth, or stencil state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v2
+  design_choice: Present a 2D grid of pixels; solver must output a compact string encoding per-pixel final
+    depth and stencil, with color masked to a single channel.
+- id: P012v3
+  hypothesis: P012
+  idea: stencil_depth_compositing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v3
+  instruction: |-
+    Author a new task from scratch: stencil_depth_compositing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute fragment streams with stencil comparisons, depth tests, masked writes, and integer blending; track distinct fail and pass updates and return queried pixels' color, depth, or stencil state.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r2/stencil_depth_compositing_v3

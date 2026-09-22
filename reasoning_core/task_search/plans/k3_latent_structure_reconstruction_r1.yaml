@@ -1,0 +1,544 @@
+version: 1
+name: k3_latent_structure_reconstruction_r1
+proposal_wave: k3_latent-structure-reconstruction
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: comparator_network_zero_one_verification_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v1
+  instruction: |-
+    Author a new task from scratch: comparator_network_zero_one_verification_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Comparator networks on few wires: trace a given input through comparators, and judge sorting behavior by sweeping all binary inputs per the zero-one principle; answer output vectors, the verdict, or a smallest failing binary word.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v1
+  design_choice: Answer as the lexicographically smallest binary input that produces an unsorted output,
+    with ties broken by treating earlier wires as more significant.
+- id: P001v2
+  hypothesis: P001
+  idea: comparator_network_zero_one_verification_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v2
+  instruction: |-
+    Author a new task from scratch: comparator_network_zero_one_verification_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Comparator networks on few wires: trace a given input through comparators, and judge sorting behavior by sweeping all binary inputs per the zero-one principle; answer output vectors, the verdict, or a smallest failing binary word.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v2
+  design_choice: 'Answer as a canonical failing pair: the first wire index (0-based) where output is 1
+    above a 0, plus the full input word, separated by a colon.'
+- id: P001v3
+  hypothesis: P001
+  idea: comparator_network_zero_one_verification_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v3
+  instruction: |-
+    Author a new task from scratch: comparator_network_zero_one_verification_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Comparator networks on few wires: trace a given input through comparators, and judge sorting behavior by sweeping all binary inputs per the zero-one principle; answer output vectors, the verdict, or a smallest failing binary word.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/comparator_network_zero_one_verification_v3
+- id: P002v1
+  hypothesis: P002
+  idea: reduced_matrix_tour_branching_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v1
+  instruction: |-
+    Author a new task from scratch: reduced_matrix_tour_branching_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Branch-and-bound small tours on reduced matrices: subtract row/column minima, rank zeros by penalty, branch on the top zero, re-reduce and prune; answers are optimal tour value, branch order, or best live lower bound.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v1
+  design_choice: 'Instance format: complete directed graph with integer edge weights, answer is the optimal
+    tour cost as a fraction with denominator 1'
+- id: P002v2
+  hypothesis: P002
+  idea: reduced_matrix_tour_branching_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v2
+  instruction: |-
+    Author a new task from scratch: reduced_matrix_tour_branching_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Branch-and-bound small tours on reduced matrices: subtract row/column minima, rank zeros by penalty, branch on the top zero, re-reduce and prune; answers are optimal tour value, branch order, or best live lower bound.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v2
+  design_choice: 'Answer format: a canonical string listing the branch decisions (zero cell indices) in
+    the order they are explored, each as ''r,c'''
+- id: P002v3
+  hypothesis: P002
+  idea: reduced_matrix_tour_branching_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v3
+  instruction: |-
+    Author a new task from scratch: reduced_matrix_tour_branching_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Branch-and-bound small tours on reduced matrices: subtract row/column minima, rank zeros by penalty, branch on the top zero, re-reduce and prune; answers are optimal tour value, branch order, or best live lower bound.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/reduced_matrix_tour_branching_v3
+- id: P003v1
+  hypothesis: P003
+  idea: pairwise_majority_smith_set_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v1
+  instruction: |-
+    Author a new task from scratch: pairwise_majority_smith_set_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pairwise majority tallies with margins over a candidate slate: trace beat relations upward to find the smallest set that defeats every outsider; answer its sorted membership or a queried candidate's membership status.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v1
+  design_choice: Vary margin magnitudes and tie counts so beat relations can be dense or sparse, forcing
+    solvers to handle both strict and tied pairwise outcomes.
+- id: P003v2
+  hypothesis: P003
+  idea: pairwise_majority_smith_set_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v2
+  instruction: |-
+    Author a new task from scratch: pairwise_majority_smith_set_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pairwise majority tallies with margins over a candidate slate: trace beat relations upward to find the smallest set that defeats every outsider; answer its sorted membership or a queried candidate's membership status.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v2
+  design_choice: Answer as a canonical sorted candidate-name list for the Smith set, with candidate labels
+    drawn from a fixed alphabet to avoid ordering ambiguity.
+- id: P003v3
+  hypothesis: P003
+  idea: pairwise_majority_smith_set_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v3
+  instruction: |-
+    Author a new task from scratch: pairwise_majority_smith_set_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pairwise majority tallies with margins over a candidate slate: trace beat relations upward to find the smallest set that defeats every outsider; answer its sorted membership or a queried candidate's membership status.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pairwise_majority_smith_set_v3
+- id: P004v1
+  hypothesis: P004
+  idea: pooled_test_status_decoding_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v1
+  instruction: |-
+    Author a new task from scratch: pooled_test_status_decoding_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decode pooled tests reporting clean or tainted under a known number of positives: negative pools sterilize members, complement and budget arguments isolate the rest; answer every item's status or the undetermined residue.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v1
+  design_choice: 'Status resolution strategy: require full determination of all items when pool count
+    and positive count make it unique, else output the undetermined residue as a canonical list of item
+    indices.'
+- id: P004v2
+  hypothesis: P004
+  idea: pooled_test_status_decoding_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v2
+  instruction: |-
+    Author a new task from scratch: pooled_test_status_decoding_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decode pooled tests reporting clean or tainted under a known number of positives: negative pools sterilize members, complement and budget arguments isolate the rest; answer every item's status or the undetermined residue.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v2
+  design_choice: 'Answer format: emit a compact string per item (C for clean, T for tainted, ? for unknown)
+    in original index order, with a trailing semicolon and the count of unknowns if any.'
+- id: P004v3
+  hypothesis: P004
+  idea: pooled_test_status_decoding_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v3
+  instruction: |-
+    Author a new task from scratch: pooled_test_status_decoding_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Decode pooled tests reporting clean or tainted under a known number of positives: negative pools sterilize members, complement and budget arguments isolate the rest; answer every item's status or the undetermined residue.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/pooled_test_status_decoding_v3
+- id: P005v1
+  hypothesis: P005
+  idea: shifted_consensus_reconstruction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v1
+  instruction: |-
+    Author a new task from scratch: shifted_consensus_reconstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover a source string from noisy copies with unknown shifts: score each copy's displacement by agreement, align on the best offsets, then vote columnwise; answer the consensus string, each copy's shift, or its mismatch positions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v1
+  design_choice: 'Answer format: output only the consensus string, with shifts inferred but not reported.'
+- id: P005v2
+  hypothesis: P005
+  idea: shifted_consensus_reconstruction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v2
+  instruction: |-
+    Author a new task from scratch: shifted_consensus_reconstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover a source string from noisy copies with unknown shifts: score each copy's displacement by agreement, align on the best offsets, then vote columnwise; answer the consensus string, each copy's shift, or its mismatch positions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v2
+  design_choice: 'Answer format: output a canonical list of per-copy shift integers, with consensus string
+    omitted.'
+- id: P005v3
+  hypothesis: P005
+  idea: shifted_consensus_reconstruction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v3
+  instruction: |-
+    Author a new task from scratch: shifted_consensus_reconstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover a source string from noisy copies with unknown shifts: score each copy's displacement by agreement, align on the best offsets, then vote columnwise; answer the consensus string, each copy's shift, or its mismatch positions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/shifted_consensus_reconstruction_v3
+- id: P006v1
+  hypothesis: P006
+  idea: parsimony_ancestral_state_inference_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v1
+  instruction: |-
+    Author a new task from scratch: parsimony_ancestral_state_inference_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer ancestral states on a rooted tree with labeled tips: an upward intersection/union pass then a downward pass fixing ambiguities; answer the minimal change count, valid root states, or one optimal labeling.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v1
+  design_choice: 'Answer as a fraction: minimal changes over number of internal nodes, with numerator
+    and denominator reduced.'
+- id: P006v2
+  hypothesis: P006
+  idea: parsimony_ancestral_state_inference_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v2
+  instruction: |-
+    Author a new task from scratch: parsimony_ancestral_state_inference_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer ancestral states on a rooted tree with labeled tips: an upward intersection/union pass then a downward pass fixing ambiguities; answer the minimal change count, valid root states, or one optimal labeling.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v2
+  design_choice: Answer as a sorted list of valid root states (e.g., ['A','C']), where tip labels are
+    drawn from a fixed alphabet of size 3.
+- id: P006v3
+  hypothesis: P006
+  idea: parsimony_ancestral_state_inference_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v3
+  instruction: |-
+    Author a new task from scratch: parsimony_ancestral_state_inference_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer ancestral states on a rooted tree with labeled tips: an upward intersection/union pass then a downward pass fixing ambiguities; answer the minimal change count, valid root states, or one optimal labeling.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/parsimony_ancestral_state_inference_v3
+- id: P007v1
+  hypothesis: P007
+  idea: turnpike_distance_reconstruction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v1
+  instruction: |-
+    Author a new task from scratch: turnpike_distance_reconstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover points on a line from the multiset of all pairwise distances by recursively assigning the largest remaining gap to an end; answer the canonical placement, all placements, or the count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v1
+  design_choice: 'Answer format: canonical placement as a sorted tuple of integers, all placements as
+    a list of such tuples, or count as an integer; each instance specifies which form.'
+- id: P007v2
+  hypothesis: P007
+  idea: turnpike_distance_reconstruction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v2
+  instruction: |-
+    Author a new task from scratch: turnpike_distance_reconstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover points on a line from the multiset of all pairwise distances by recursively assigning the largest remaining gap to an end; answer the canonical placement, all placements, or the count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v2
+  design_choice: 'Instance generation: start from a random sorted point set, compute its distance multiset,
+    then shuffle the multiset order; the solver must reconstruct any valid set.'
+- id: P007v3
+  hypothesis: P007
+  idea: turnpike_distance_reconstruction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v3
+  instruction: |-
+    Author a new task from scratch: turnpike_distance_reconstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover points on a line from the multiset of all pairwise distances by recursively assigning the largest remaining gap to an end; answer the canonical placement, all placements, or the count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/turnpike_distance_reconstruction_v3
+- id: P008v1
+  hypothesis: P008
+  idea: betweenness_triple_seriation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v1
+  instruction: |-
+    Author a new task from scratch: betweenness_triple_seriation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rebuild a line order from betweenness triples by anchoring extremes and splicing elements into surviving slots; answer the canonical order, the count of consistent orders, or the first conflicting triple.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v1
+  design_choice: Vary the number of given betweenness triples from sparse to dense, so solvers must either
+    deduce missing constraints or detect redundancy.
+- id: P008v2
+  hypothesis: P008
+  idea: betweenness_triple_seriation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v2
+  instruction: |-
+    Author a new task from scratch: betweenness_triple_seriation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rebuild a line order from betweenness triples by anchoring extremes and splicing elements into surviving slots; answer the canonical order, the count of consistent orders, or the first conflicting triple.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v2
+  design_choice: Present the answer as the canonical order when the triple set is uniquely consistent,
+    else as the count of all consistent orders if multiple exist.
+- id: P008v3
+  hypothesis: P008
+  idea: betweenness_triple_seriation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v3
+  instruction: |-
+    Author a new task from scratch: betweenness_triple_seriation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Rebuild a line order from betweenness triples by anchoring extremes and splicing elements into surviving slots; answer the canonical order, the count of consistent orders, or the first conflicting triple.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/betweenness_triple_seriation_v3
+- id: P009v1
+  hypothesis: P009
+  idea: mealy_trace_machine_induction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v1
+  instruction: |-
+    Author a new task from scratch: mealy_trace_machine_induction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer a hidden Mealy machine from input/output transcripts by merging histories with agreeing futures and propagating table entries; answer the minimized machine, the reply to a fresh input, or the earliest underdetermined step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v1
+  design_choice: 'Answer format: output the minimized state-transition table as a canonical string of
+    rows per state, with blank cells for never-observed transitions.'
+- id: P009v2
+  hypothesis: P009
+  idea: mealy_trace_machine_induction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v2
+  instruction: |-
+    Author a new task from scratch: mealy_trace_machine_induction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer a hidden Mealy machine from input/output transcripts by merging histories with agreeing futures and propagating table entries; answer the minimized machine, the reply to a fresh input, or the earliest underdetermined step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v2
+  design_choice: 'Difficulty source: transcripts are generated from random machines but with adversarial
+    counterexamples that force non-minimal merges until the final step.'
+- id: P009v3
+  hypothesis: P009
+  idea: mealy_trace_machine_induction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v3
+  instruction: |-
+    Author a new task from scratch: mealy_trace_machine_induction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Infer a hidden Mealy machine from input/output transcripts by merging histories with agreeing futures and propagating table entries; answer the minimized machine, the reply to a fresh input, or the earliest underdetermined step.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_latent_structure_reconstruction_r1/mealy_trace_machine_induction_v3

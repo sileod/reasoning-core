@@ -1,0 +1,430 @@
+version: 1
+name: k3_state_tracking_r3
+proposal_wave: k3_state-tracking
+defaults:
+  base_ref: 7d397190c18fe0159f638d731240267962b3097a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P003v1
+  - P004v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  v2:
+  - P001v2
+  - P003v2
+  - P004v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  v3:
+  - P001v3
+  - P003v3
+  - P004v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  pilot:
+  - P001v1
+  - P003v1
+  - P004v1
+  - P006v1
+  - P007v1
+  - P008v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: manacher_palindrome_radii_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v1
+  instruction: |-
+    Author a new task from scratch: manacher_palindrome_radii_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute palindrome radii around every center of a string using mirror reuse against a moving right boundary, returning the full radius array, the radius at a queried center, or the span of the longest palindrome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v1
+  design_choice: Return the full radius array for all centers, with radii measured in characters to the
+    right of each center (inclusive of center), using the standard Manacher initialization where odd and
+    even centers are interleaved.
+- id: P001v2
+  hypothesis: P001
+  idea: manacher_palindrome_radii_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v2
+  instruction: |-
+    Author a new task from scratch: manacher_palindrome_radii_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute palindrome radii around every center of a string using mirror reuse against a moving right boundary, returning the full radius array, the radius at a queried center, or the span of the longest palindrome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v2
+  design_choice: Return only the radius at a single queried center index, where the query asks for the
+    length of the longest palindrome centered exactly at that position, and the solver must extract it
+    from the computed array.
+- id: P001v3
+  hypothesis: P001
+  idea: manacher_palindrome_radii_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v3
+  instruction: |-
+    Author a new task from scratch: manacher_palindrome_radii_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compute palindrome radii around every center of a string using mirror reuse against a moving right boundary, returning the full radius array, the radius at a queried center, or the span of the longest palindrome.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/manacher_palindrome_radii_v3
+- id: P003v1
+  hypothesis: P003
+  idea: ferrers_diagram_operations_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v1
+  instruction: |-
+    Author a new task from scratch: ferrers_diagram_operations_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Operate on Ferrers diagrams of integer partitions: form the conjugate partition by transposition, compute hook lengths of cells, and count standard Young tableaux via the hook-length formula.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v1
+  design_choice: Present the partition as a list of row lengths and ask for the conjugate partition as
+    a list, with the answer being that list.
+- id: P003v2
+  hypothesis: P003
+  idea: ferrers_diagram_operations_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v2
+  instruction: |-
+    Author a new task from scratch: ferrers_diagram_operations_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Operate on Ferrers diagrams of integer partitions: form the conjugate partition by transposition, compute hook lengths of cells, and count standard Young tableaux via the hook-length formula.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v2
+  design_choice: Show a Ferrers diagram as a grid of '#' and '.' characters and ask for the hook length
+    of a specified cell, with the answer being an integer.
+- id: P003v3
+  hypothesis: P003
+  idea: ferrers_diagram_operations_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v3
+  instruction: |-
+    Author a new task from scratch: ferrers_diagram_operations_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Operate on Ferrers diagrams of integer partitions: form the conjugate partition by transposition, compute hook lengths of cells, and count standard Young tableaux via the hook-length formula.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/ferrers_diagram_operations_v3
+- id: P004v1
+  hypothesis: P004
+  idea: dual_number_evaluation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v1
+  instruction: |-
+    Author a new task from scratch: dual_number_evaluation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate a rational expression in dual numbers at an exact rational point, propagating the infinitesimal part through sums, products, and quotients; answer is the exact value and derivative pair.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v1
+  design_choice: Choose the rational point as a small integer and the dual part as a fixed simple fraction,
+    with expression trees of depth 3-5 built from binary operations; difficulty from exact fraction arithmetic.
+- id: P004v2
+  hypothesis: P004
+  idea: dual_number_evaluation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v2
+  instruction: |-
+    Author a new task from scratch: dual_number_evaluation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate a rational expression in dual numbers at an exact rational point, propagating the infinitesimal part through sums, products, and quotients; answer is the exact value and derivative pair.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v2
+  design_choice: Present the expression in prefix notation with the point given as a quotient of two-digit
+    primes, and require the answer as a reduced fraction pair, forcing simplification of large numerators.
+- id: P004v3
+  hypothesis: P004
+  idea: dual_number_evaluation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v3
+  instruction: |-
+    Author a new task from scratch: dual_number_evaluation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate a rational expression in dual numbers at an exact rational point, propagating the infinitesimal part through sums, products, and quotients; answer is the exact value and derivative pair.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/dual_number_evaluation_v3
+- id: P006v1
+  hypothesis: P006
+  idea: prufer_coding_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v1
+  instruction: |-
+    Author a new task from scratch: prufer_coding_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Encode a labeled tree as its Prufer sequence or decode a sequence back into edges by repeatedly stripping or attaching the smallest available leaf; answer is the code word or the edge list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v1
+  design_choice: Vary tree size from 3 to 20 nodes; answer is the Prufer sequence as a space-separated
+    list of integers.
+- id: P006v2
+  hypothesis: P006
+  idea: prufer_coding_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v2
+  instruction: |-
+    Author a new task from scratch: prufer_coding_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Encode a labeled tree as its Prufer sequence or decode a sequence back into edges by repeatedly stripping or attaching the smallest available leaf; answer is the code word or the edge list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v2
+  design_choice: Vary labeling by using arbitrary node IDs (e.g., 1..n, 0..n-1, or shuffled labels); answer
+    is the same format but labels reflect the chosen set.
+- id: P006v3
+  hypothesis: P006
+  idea: prufer_coding_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v3
+  instruction: |-
+    Author a new task from scratch: prufer_coding_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Encode a labeled tree as its Prufer sequence or decode a sequence back into edges by repeatedly stripping or attaching the smallest available leaf; answer is the code word or the edge list.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/prufer_coding_v3
+- id: P007v1
+  hypothesis: P007
+  idea: misra_gries_summary_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v1
+  instruction: |-
+    Author a new task from scratch: misra_gries_summary_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute Misra-Gries with a stated counter budget over a symbol stream (increment, place, decrement-all, evict), then report the final counter table and whether a queried symbol can be the majority.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v1
+  design_choice: Vary the budget across instances and require the final table to list all symbols with
+    positive counters in insertion order of their first placement.
+- id: P007v2
+  hypothesis: P007
+  idea: misra_gries_summary_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v2
+  instruction: |-
+    Author a new task from scratch: misra_gries_summary_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute Misra-Gries with a stated counter budget over a symbol stream (increment, place, decrement-all, evict), then report the final counter table and whether a queried symbol can be the majority.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v2
+  design_choice: Make the queried symbol always one that appears in the stream, and require the answer
+    to be 'yes' only if its final counter exceeds half the stream length.
+- id: P007v3
+  hypothesis: P007
+  idea: misra_gries_summary_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v3
+  instruction: |-
+    Author a new task from scratch: misra_gries_summary_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute Misra-Gries with a stated counter budget over a symbol stream (increment, place, decrement-all, evict), then report the final counter table and whether a queried symbol can be the majority.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/misra_gries_summary_v3
+- id: P008v1
+  hypothesis: P008
+  idea: finite_difference_extension_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v1
+  instruction: |-
+    Author a new task from scratch: finite_difference_extension_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given consecutive integer evaluations of an unknown polynomial of stated degree, extend its forward-difference table and report the values at queried later indices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v1
+  design_choice: 'Answer format: a single integer per query, with queries asked one at a time and each
+    answer independently scored.'
+- id: P008v2
+  hypothesis: P008
+  idea: finite_difference_extension_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v2
+  instruction: |-
+    Author a new task from scratch: finite_difference_extension_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given consecutive integer evaluations of an unknown polynomial of stated degree, extend its forward-difference table and report the values at queried later indices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v2
+  design_choice: 'Answer format: a space-separated list of integers for all queried indices in a fixed
+    order, scored as exact match.'
+- id: P008v3
+  hypothesis: P008
+  idea: finite_difference_extension_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v3
+  instruction: |-
+    Author a new task from scratch: finite_difference_extension_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Given consecutive integer evaluations of an unknown polynomial of stated degree, extend its forward-difference table and report the values at queried later indices.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/finite_difference_extension_v3
+- id: P009v1
+  hypothesis: P009
+  idea: morphism_word_indexing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v1
+  instruction: |-
+    Author a new task from scratch: morphism_word_indexing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Descend positionally through a uniform morphism's substitution lengths; answer the kth symbol of the iterated image, the first iteration whose length exceeds k, or the preimage chain of a queried position.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v1
+  design_choice: 'Answer format: output the kth symbol as a single lowercase letter from the alphabet,
+    with k given in binary to force length computation.'
+- id: P009v2
+  hypothesis: P009
+  idea: morphism_word_indexing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v2
+  instruction: |-
+    Author a new task from scratch: morphism_word_indexing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Descend positionally through a uniform morphism's substitution lengths; answer the kth symbol of the iterated image, the first iteration whose length exceeds k, or the preimage chain of a queried position.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v2
+  design_choice: 'Preimage chain answer: output a comma-separated list of morphism rule indices (e.g.,
+    ''2,0,1'') tracing the position back to the seed, with length equal to the iteration count.'
+- id: P009v3
+  hypothesis: P009
+  idea: morphism_word_indexing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v3
+  instruction: |-
+    Author a new task from scratch: morphism_word_indexing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Descend positionally through a uniform morphism's substitution lengths; answer the kth symbol of the iterated image, the first iteration whose length exceeds k, or the preimage chain of a queried position.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_state_tracking_r3/morphism_word_indexing_v3
