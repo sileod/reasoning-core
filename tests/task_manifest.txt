@@ -231,6 +231,13 @@ interval_stabbing
 interval_sweep
 inversion_trigger_linearization
 iterated_dominance_elimination
+jev_entity_belief_tracking
+jev_event_state_reconstruction
+jev_evidence_sufficiency
+jev_multi_view_adjudication
+jev_partial_observation_calibration
+jev_policy_applicability
+jev_state_perturbation
 kinship_relation_resolution
 kmp_prefix_value
 kraft_feasibility
