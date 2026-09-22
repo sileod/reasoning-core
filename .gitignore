@@ -150,3 +150,8 @@ scripts/g5k_influence_gaps.py
 # not a record: one was swept into a commit by a directory-wide `git add` and the
 # next wave to finish deleted it out from under the repository.
 reasoning_core/task_search/proposals/archive/*.yaml.partial
+
+# Sandbox tests build their worktrees inside the repo, because a sandbox has to sit on
+# the same filesystem as what it copies. On NFS a still-open file survives the cleanup as
+# a .nfs silly-rename, so the directory outlives the test that made it.
+.task-search-test-*/
