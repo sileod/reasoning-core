@@ -32,6 +32,9 @@ from .wave_proposer import _snake, _task_entries
 # `wave8` fans one proposal into `strongly_connected_component_v1` and `_v2`; the idea
 # they are drafts of is the name without the suffix.
 VARIANT_SUFFIX = re.compile(r"_v\d+(?:d\d+)?$")
+# The outcome a trial records when its worker never started or never answered, which
+# is the only one a dead provider can produce.
+HARNESS_FAILED = "harness_failed"
 
 
 def comparison_key(name):
@@ -88,7 +91,7 @@ def landed_proposals(repo_root):
 
 
 def outcomes(repo_root, plan_name):
-    """Trial ids this plan actually spent a run on, or None if it never recorded any.
+    """`{trial id: status}` this plan actually spent a run on, or None if it recorded none.
 
     A plan is a statement of intent. It says nothing about what happened, and for six days
     that silence read as failure: a wave planned and then killed -- by a restart, a quota
@@ -96,17 +99,22 @@ def outcomes(repo_root, plan_name):
     them against the idea's budget, and the service reported `0 proposals owed` every
     fifteen minutes while the backlog was full. Nothing was broken loudly enough to notice.
 
-    `None` rather than an empty set when there is no record, because the two mean opposite
-    things: a plan from before this file existed was probably run, while a plan with an
-    empty record demonstrably was not.
+    `None` rather than an empty mapping when there is no record, because the two mean
+    opposite things: a plan from before this file existed was probably run, while a plan
+    with an empty record demonstrably was not.
+
+    The statuses ride along rather than being thrown away at the door: whether a trial ran
+    and how it ended are the same fact read at two depths, and the caller that has to tell
+    a bad round from a dead provider needs the second one.
     """
     path = (Path(repo_root) / "reasoning_core" / "task_search" / "plans" / "outcomes"
             / f"{plan_name}.yaml")
     if not path.is_file():
         return None
     try:
-        return set(yaml.safe_load(path.read_text()) or {})
-    except yaml.YAMLError:
+        return {str(trial): str(status)
+                for trial, status in (yaml.safe_load(path.read_text()) or {}).items()}
+    except (yaml.YAMLError, AttributeError):
         return None
 
 
@@ -150,6 +158,15 @@ def attempted(repo_root):
     recorded have no record and keep the old, conservative reading -- every trial counts
     as having run -- so fixing this cannot reopen a year of ideas that genuinely were
     tried.
+
+    And a round in which the harness never once ran is not an attempt at anything. When
+    stealth/union-alpha was retired mid-sweep the endpoint kept answering, with an error
+    string where the model used to be, so every trial came back `harness_failed` in
+    seconds and the driver raced each idea from r1 to r3 inside an hour. Three days later
+    380 proposals were retired at `--max-attempts 3` by rounds that had never reached a
+    worker, and the loop went quiet saying `0 proposals owed`. One `harness_failed` among
+    others is an ordinary bad trial and still counts; a round that is nothing else is
+    evidence about the provider.
     """
     root = Path(repo_root) / "reasoning_core" / "task_search" / "plans"
     counts = Counter()
@@ -159,6 +176,8 @@ def attempted(repo_root):
         except yaml.YAMLError:
             continue
         ran = outcomes(repo_root, str(plan.get("name") or path.stem))
+        if ran and all(status == HARNESS_FAILED for status in ran.values()):
+            continue
         spent = set()
         for trial in plan.get("trials", ()):
             if ran is not None and str(trial.get("id") or "") not in ran:

@@ -160,13 +160,43 @@ def test_a_plan_whose_trials_never_ran_does_not_spend_the_idea_s_budget(tmp_path
     archive is full. Nothing is broken loudly enough to look at."""
     _repo(tmp_path, plans=[("brief_r1", ["owed_idea", "owed_idea", "owed_idea"])],
           archives=[("brief", ["owed_idea"])])
-    backlog.record_outcomes(tmp_path, "brief_r1", {"P001v1": "harness_failed"})
+    # Any outcome but `harness_failed`: a round that is nothing but harness failures is
+    # a dead provider rather than an attempt, which the next test is about.
+    backlog.record_outcomes(tmp_path, "brief_r1", {"P001v1": "validation_failed"})
 
     counts = backlog.attempted(tmp_path)
 
     assert counts[backlog.comparison_key("owed_idea")] == 1, (
         "only the trial that produced an outcome was actually spent")
     assert [row.name for row in backlog.pending(tmp_path, max_attempts=3)] == ["owed_idea"]
+
+
+def test_a_round_the_harness_never_survived_is_not_an_attempt(tmp_path):
+    """stealth/union-alpha was retired mid-sweep and its endpoint kept answering, with an
+    error string where the model used to be. Every trial came back `harness_failed` in
+    seconds, the driver raced each idea r1 to r3 inside an hour, and three days later 380
+    proposals were retired at --max-attempts 3 by rounds that never reached a worker."""
+    _repo(tmp_path, plans=[("brief_r1", ["owed_idea"]), ("brief_r2", ["owed_idea"]),
+                           ("brief_r3", ["owed_idea"])],
+          archives=[("brief", ["owed_idea"])])
+    for round_number in (1, 2, 3):
+        backlog.record_outcomes(tmp_path, f"brief_r{round_number}",
+                                {"P001v1": "harness_failed"})
+
+    assert backlog.attempted(tmp_path)[backlog.comparison_key("owed_idea")] == 0
+    assert [row.name for row in backlog.pending(tmp_path, max_attempts=3)] == ["owed_idea"]
+
+
+def test_one_harness_failure_among_others_is_still_a_spent_round(tmp_path):
+    """The harness fails on its own often enough -- a refused request that outlasts the
+    retry ladder, a worker that never starts -- and a round that reached the model and
+    went badly is exactly what the retry budget exists to count."""
+    _repo(tmp_path, plans=[("brief_r1", ["owed_idea", "owed_idea"])],
+          archives=[("brief", ["owed_idea"])])
+    backlog.record_outcomes(tmp_path, "brief_r1", {"P001v1": "harness_failed",
+                                                   "P001v2": "validation_failed"})
+
+    assert backlog.attempted(tmp_path)[backlog.comparison_key("owed_idea")] == 1
 
 
 def test_a_plan_from_before_outcomes_were_recorded_still_counts_every_trial(tmp_path):
@@ -190,7 +220,8 @@ def test_outcomes_merge_across_runs_rather_than_replacing(tmp_path):
     merged = backlog.record_outcomes(tmp_path, "brief_r1", {"P002v1": "validation_failed"})
 
     assert merged == {"P001v1": "success", "P002v1": "validation_failed"}
-    assert backlog.outcomes(tmp_path, "brief_r1") == {"P001v1", "P002v1"}
+    assert backlog.outcomes(tmp_path, "brief_r1") == {"P001v1": "success",
+                                                      "P002v1": "validation_failed"}
 
 
 def test_the_outcomes_record_is_not_mistaken_for_a_plan(tmp_path):
