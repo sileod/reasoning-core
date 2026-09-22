@@ -144,6 +144,13 @@ background scripts do not inherit it. `--live` spends one tiny completion to pro
 key is not merely present but accepted, which is how a spent daily quota shows up before
 a run rather than during one.
 
+Those three variables say where the reviewer lives; `TASK_SEARCH_JUDGE_BACKEND` says what
+kind of thing answers it. `llm` is the default and the only one built: it asks a chat
+model for a `VERDICT:` and a `WHY:`, which is what the gates have always done. A single
+gate can be moved on its own with `TASK_SEARCH_<PURPOSE>_BACKEND` (`SANITY`, `FIDELITY`),
+so a new judge can be measured against the gates that did not move rather than against a
+memory of how the old one scored.
+
 `run` defaults `--model` to `deepseek-v4-flash`, the implementor every landed wave
 was built with. It has no default provider: which host serves that model is a fact
 about a machine, so set `TASK_SEARCH_PROVIDER` in the env file and `run` and `doctor`

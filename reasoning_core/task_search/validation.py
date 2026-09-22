@@ -11,14 +11,13 @@ import subprocess
 import sys
 import shlex
 import time
-import urllib.request
-import urllib.error
 
 from .implementor_prompt import (
     _prior_audit_command,
     _sample_command,
     _sample_command_for,
 )
+from .judge import Question, get_judge
 from .sandbox import (
     _resource_command,
     _run_validation,
@@ -226,23 +225,7 @@ def _sample_sanity(sample_path, instruction="", source=""):
         + "\n\nWORKED EXAMPLES:\n"
         + sample_path.read_text()[:20000]
     )
-    first = _sanity_ask(_SANITY_ASK, message)
-    if first["verdict"] != "INVALID":
-        return first
-    second = _sanity_ask(
-        _SANITY_RECHECK, message + "\n\nFIRST REVIEWER: " + first["why"]
-    )
-    if second["verdict"] == "INVALID":
-        return second
-    return {
-        "verdict": second["verdict"],
-        "why": (
-            "recheck did not confirm ("
-            + second["why"]
-            + "); first reviewer said: "
-            + first["why"]
-        )[:400],
-    }
+    return _two_votes("sanity", message, _SANITY, _SANITY_AGAIN, "INVALID")
 
 
 # This reviewer answers in its own vocabulary, and a verdict read with the wrong one is
@@ -284,6 +267,47 @@ VERDICT: REALIZES or SUBSTITUTES
 WHY: one sentence, or "-" when REALIZES."""
 
 
+# The prose above, typed. The pair is one question asked twice under different
+# instructions, so both carry the same name and a caller reads one answer either way.
+_SANITY = Question("valid", _SANITY_ASK, choices=("VALID", "INVALID"))
+_SANITY_AGAIN = Question("valid", _SANITY_RECHECK, choices=("VALID", "INVALID"))
+
+
+def _verdict(answer):
+    """A normalized answer in the vocabulary the gates and the artifacts already use."""
+    return {"verdict": answer["value"], "why": answer["reason"]}
+
+
+def _two_votes(purpose, state, ask, recheck, accusing):
+    """Ask, and make an accusation earn a second reader before it refuses anything.
+
+    Both semantic gates are built this way and for the same reason: the reviewer overreaches
+    in one direction only. It killed a correct spreadsheet task by summing three cells for
+    the range A1:B1, and it calls an abstract rendering of an assignment a substitution when
+    the subject matter is still doing the work. A pass needs one vote and an accusation needs
+    two, so an outage or a lone hallucination costs a review rather than a task.
+
+    The recheck reads the same state with the first reader's sentence appended, which makes
+    it a conversation rather than a question, which is why it lives here rather than behind
+    `evaluate`: a backend answers what it is asked, and what to ask second is policy.
+    """
+    judge = get_judge(purpose)
+    first = judge.evaluate(state, [ask])[ask.name]
+    if first["value"] != accusing:
+        return _verdict(first)
+    seconded = judge.evaluate(
+        state + "\n\nFIRST REVIEWER: " + (first["reason"] or ""), [recheck])[recheck.name]
+    if seconded["value"] == accusing:
+        return _verdict(seconded)
+    return {"verdict": seconded["value"],
+            "why": ("recheck did not confirm (" + (seconded["reason"] or "")
+                    + "); first reviewer said: " + (first["reason"] or ""))[:400]}
+
+
+_FIDELITY = Question("fidelity", _FIDELITY_ASK, choices=_FIDELITY_VERDICTS)
+_FIDELITY_AGAIN = Question("fidelity", _FIDELITY_RECHECK, choices=_FIDELITY_VERDICTS)
+
+
 def _sample_fidelity(sample_path, instruction="", source=""):
     """Ask whether the candidate built the assigned task or an easier lookalike.
 
@@ -308,78 +332,7 @@ def _sample_fidelity(sample_path, instruction="", source=""):
     message = ("ASSIGNMENT:\n" + instruction[:6000]
                + "\n\nCANDIDATE SOURCE (untrusted):\n" + source[:20000]
                + "\n\nWORKED EXAMPLES:\n" + sample_path.read_text()[:20000])
-    first = _sanity_ask(_FIDELITY_ASK, message, _FIDELITY_VERDICTS)
-    if first["verdict"] != "SUBSTITUTES":
-        return first
-    second = _sanity_ask(_FIDELITY_RECHECK, message + "\n\nFIRST REVIEWER: " + first["why"],
-                         _FIDELITY_VERDICTS)
-    if second["verdict"] == "SUBSTITUTES":
-        return second
-    return {"verdict": second["verdict"],
-            "why": ("recheck did not confirm (" + second["why"]
-                    + "); first reviewer said: " + first["why"])[:400]}
-
-
-# The reviewer shares its provider quota with the workers it reviews, so a wave running
-# eight at a time draws 429s that clear in seconds. One of those used to cost a trial its
-# whole review -- the call fails open, so the gate passed the task unread rather than
-# failing it. Wait the spike out instead.
-RETRY_AFTER = (5, 20, 60)
-
-
-def _post(request):
-    for wait in RETRY_AFTER:
-        try:
-            with urllib.request.urlopen(request, timeout=180) as response:
-                return json.load(response)["choices"][0]["message"].get("content")
-        except urllib.error.HTTPError as error:
-            if error.code != 429 and error.code < 500:
-                raise
-            time.sleep(wait)
-    with urllib.request.urlopen(request, timeout=180) as response:
-        return json.load(response)["choices"][0]["message"].get("content")
-
-
-def _sanity_ask(system, message, verdicts=("VALID", "INVALID")):
-    """One reviewer call. Fails open: any fault returns a null verdict, never a rejection.
-
-    `verdicts` is the pair the system prompt actually asks for, because failing open means
-    an answer in the wrong vocabulary is indistinguishable from no answer at all.
-    """
-    key_name = os.environ.get("TASK_SEARCH_REVIEW_KEY_ENV", "")
-    key = os.environ.get(key_name, "") if key_name else ""
-    endpoint = os.environ.get("TASK_SEARCH_REVIEW_ENDPOINT", "")
-    model = os.environ.get("TASK_SEARCH_REVIEW_MODEL", "")
-    if not key or not endpoint or not model:
-        return {"verdict": None, "why": "reviewer is not configured"}
-    body = json.dumps(
-        {
-            "model": model,
-            "temperature": 0,
-            "max_tokens": 512,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": message},
-            ],
-        }
-    ).encode()
-    request = urllib.request.Request(
-        endpoint,
-        body,
-        {"Authorization": "Bearer " + key, "Content-Type": "application/json"},
-    )
-    try:
-        text = _post(request)
-    except Exception as error:
-        return {"verdict": None, "why": f"reviewer unreachable: {error}"}
-    if not isinstance(text, str) or not text.strip():
-        return {"verdict": None, "why": "reviewer returned no text"}
-    found = re.search(r"VERDICT:\s*(" + "|".join(verdicts) + r")\b", text)
-    why = re.search(r"WHY:\s*(.+)", text)
-    return {
-        "verdict": found.group(1) if found else None,
-        "why": (why.group(1).strip() if why else text.strip())[:400],
-    }
+    return _two_votes("fidelity", message, _FIDELITY, _FIDELITY_AGAIN, "SUBSTITUTES")
 
 
 def _json_events(events_path):

@@ -11,7 +11,7 @@ import tempfile
 
 import pytest
 
-from reasoning_core.task_search import prior_audit, trajectory, validation
+from reasoning_core.task_search import judge_llm, prior_audit, trajectory, validation
 
 from reasoning_core.task_search.implementor_prompt import (
     PACE,
@@ -476,7 +476,7 @@ def test_sample_sanity_reads_the_verdict_and_reason(tmp_path, monkeypatch):
         return io.BytesIO(reply.encode())
 
     monkeypatch.setattr(
-        "reasoning_core.task_search.validation.urllib.request.urlopen", urlopen
+        "reasoning_core.task_search.judge_llm.urllib.request.urlopen", urlopen
     )
     assert _sample_sanity(
         samples, instruction="counts stay non-negative", source="answer = -44 / 5"
@@ -498,7 +498,7 @@ def test_sample_sanity_fails_open_on_empty_model_content(tmp_path, monkeypatch):
     monkeypatch.setenv("TASK_SEARCH_REVIEW_MODEL", "example-model")
     reply = json.dumps({"choices": [{"message": {"content": None}}]})
     monkeypatch.setattr(
-        "reasoning_core.task_search.validation.urllib.request.urlopen",
+        "reasoning_core.task_search.judge_llm.urllib.request.urlopen",
         lambda *a, **k: io.BytesIO(reply.encode()),
     )
 
@@ -699,19 +699,22 @@ def test_each_reviewer_is_read_in_the_vocabulary_it_was_asked_for(monkeypatch):
         def opener(request, timeout=None):
             body = {"choices": [{"message": {"content": text}}]}
             return io.BytesIO(json_module.dumps(body).encode())
-        monkeypatch.setattr(validation.urllib.request, "urlopen", opener)
+        monkeypatch.setattr(judge_llm.urllib.request, "urlopen", opener)
+
+    def asked(question):
+        return judge_llm.LLMJudge().evaluate("m", [question])[question.name]
 
     answering("VERDICT: REALIZES\nWHY: -")
-    assert validation._sanity_ask("s", "m", validation._FIDELITY_VERDICTS)["verdict"] == "REALIZES"
+    assert asked(validation._FIDELITY)["value"] == "REALIZES"
     # ... and the sanity reviewer's own pair still reads, and neither reads the other's.
-    assert validation._sanity_ask("s", "m")["verdict"] is None
+    assert asked(validation._SANITY)["value"] is None
 
     answering("VERDICT: SUBSTITUTES\nWHY: arithmetic over bare numbers")
-    got = validation._sanity_ask("s", "m", validation._FIDELITY_VERDICTS)
-    assert got == {"verdict": "SUBSTITUTES", "why": "arithmetic over bare numbers"}
+    assert asked(validation._FIDELITY) == {"value": "SUBSTITUTES", "probs": None,
+                                           "reason": "arithmetic over bare numbers"}
 
     answering("VERDICT: INVALID\nWHY: the gold answer is wrong")
-    assert validation._sanity_ask("s", "m")["verdict"] == "INVALID"
+    assert asked(validation._SANITY)["value"] == "INVALID"
 
 
 def test_sample_review_survives_a_harness_log_that_is_not_an_event_stream(tmp_path):
