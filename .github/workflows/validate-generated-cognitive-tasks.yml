@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - agent/validate-cognitive-generated-tasks
+      - agent/jev-generated-tasks
 
 jobs:
   validate:
@@ -17,15 +18,30 @@ jobs:
       - run: |
           python -m pip install -e .
           python -m pip install 'xxhash<4'
-      - name: Validate tasks at levels 0-5
+      - name: Validate task manifest
+        run: python -m pytest -q tests/test_task_manifest.py
+      - name: Validate Jev tasks at levels 0-6
         run: |
           python - <<'PY'
-          from reasoning_core.tasks.generated.spatial_folding import SpatialFolding
-          from reasoning_core.tasks.generated.matrix_induction import MatrixInduction
-          from reasoning_core.tasks.generated.rule_switching import RuleSwitching
+          from reasoning_core.tasks.generated.jev.entity_belief_tracking import JevEntityBeliefTracking
+          from reasoning_core.tasks.generated.jev.event_state_reconstruction import JevEventStateReconstruction
+          from reasoning_core.tasks.generated.jev.evidence_sufficiency import JevEvidenceSufficiency
+          from reasoning_core.tasks.generated.jev.multi_view_adjudication import JevMultiViewAdjudication
+          from reasoning_core.tasks.generated.jev.partial_observation_calibration import JevPartialObservationCalibration
+          from reasoning_core.tasks.generated.jev.policy_applicability import JevPolicyApplicability
+          from reasoning_core.tasks.generated.jev.state_perturbation import JevStatePerturbation
 
-          for cls in (SpatialFolding, MatrixInduction, RuleSwitching):
-              for level in range(6):
+          classes = (
+              JevMultiViewAdjudication,
+              JevEvidenceSufficiency,
+              JevStatePerturbation,
+              JevPartialObservationCalibration,
+              JevEventStateReconstruction,
+              JevPolicyApplicability,
+              JevEntityBeliefTracking,
+          )
+          for cls in classes:
+              for level in range(7):
                   task = cls()
                   task.config.set_level(level)
                   task.validate(n_samples=20)
