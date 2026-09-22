@@ -225,7 +225,7 @@ def _sample_sanity(sample_path, instruction="", source=""):
         + "\n\nWORKED EXAMPLES:\n"
         + sample_path.read_text()[:20000]
     )
-    return _two_votes("sanity", message, _SANITY, _SANITY_AGAIN, "INVALID")
+    return _two_votes("sanity", message, _SANITY, _SANITY_AGAIN, "INVALID", show_first=True)
 
 
 # This reviewer answers in its own vocabulary, and a verdict read with the wrong one is
@@ -278,7 +278,7 @@ def _verdict(answer):
     return {"verdict": answer["value"], "why": answer["reason"]}
 
 
-def _two_votes(purpose, state, ask, recheck, accusing):
+def _two_votes(purpose, state, ask, recheck, accusing, *, show_first):
     """Ask, and make an accusation earn a second reader before it refuses anything.
 
     Both semantic gates are built this way and for the same reason: the reviewer overreaches
@@ -287,16 +287,26 @@ def _two_votes(purpose, state, ask, recheck, accusing):
     the subject matter is still doing the work. A pass needs one vote and an accusation needs
     two, so an outage or a lone hallucination costs a review rather than a task.
 
-    The recheck reads the same state with the first reader's sentence appended, which makes
-    it a conversation rather than a question, which is why it lives here rather than behind
-    `evaluate`: a backend answers what it is asked, and what to ask second is policy.
+    Whether the recheck is shown the first reader's sentence is the gate's call, because
+    the sentence is evidence for one gate and pressure for the other. Re-asking every past
+    accusation both ways (2026-09-22, deepseek-v4-flash): a fidelity recheck shown the
+    sentence confirmed 34 of 36 and a blind one 24, every disagreement in the accuser's
+    favour -- substitution is a judgement about the whole task, so the sentence points at
+    nothing and only persuades. A sanity accusation names an example and the arithmetic
+    that fails, which a blind reader has to rediscover in twenty thousand characters of
+    samples; there the gap (18 of 48 against 4) cannot tell agreement from verification,
+    so sanity keeps the sentence until someone labels those cases.
+
+    This lives here rather than behind `evaluate` because a backend answers what it is
+    asked, and what to ask second is policy.
     """
     judge = get_judge(purpose)
     first = judge.evaluate(state, [ask])[ask.name]
     if first["value"] != accusing:
         return _verdict(first)
-    seconded = judge.evaluate(
-        state + "\n\nFIRST REVIEWER: " + (first["reason"] or ""), [recheck])[recheck.name]
+    if show_first:
+        state += "\n\nFIRST REVIEWER: " + (first["reason"] or "")
+    seconded = judge.evaluate(state, [recheck])[recheck.name]
     if seconded["value"] == accusing:
         return _verdict(seconded)
     return {"verdict": seconded["value"],
@@ -332,7 +342,8 @@ def _sample_fidelity(sample_path, instruction="", source=""):
     message = ("ASSIGNMENT:\n" + instruction[:6000]
                + "\n\nCANDIDATE SOURCE (untrusted):\n" + source[:20000]
                + "\n\nWORKED EXAMPLES:\n" + sample_path.read_text()[:20000])
-    return _two_votes("fidelity", message, _FIDELITY, _FIDELITY_AGAIN, "SUBSTITUTES")
+    return _two_votes("fidelity", message, _FIDELITY, _FIDELITY_AGAIN, "SUBSTITUTES",
+                      show_first=False)
 
 
 def _json_events(events_path):

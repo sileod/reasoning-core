@@ -58,12 +58,12 @@ def test_an_unknown_backend_is_named_in_the_error(monkeypatch):
         judge.get_judge("fidelity")
 
 
-def _votes(monkeypatch, *replies):
+def _votes(monkeypatch, *replies, show_first=False):
     fake = FakeJudge(*replies)
     monkeypatch.setattr(validation, "get_judge", lambda purpose: fake)
     verdict = validation._two_votes(
         "fidelity", "state", validation._FIDELITY, validation._FIDELITY_AGAIN,
-        "SUBSTITUTES")
+        "SUBSTITUTES", show_first=show_first)
     return fake, verdict
 
 
@@ -73,13 +73,39 @@ def test_a_pass_needs_one_vote(monkeypatch):
     assert len(fake.asked) == 1
 
 
-def test_an_accusation_needs_a_second_reader_who_is_shown_the_first(monkeypatch):
+def test_an_accusation_needs_a_second_reader(monkeypatch):
     fake, verdict = _votes(
         monkeypatch,
         answer(value="SUBSTITUTES", reason="bare arithmetic"),
         answer(value="SUBSTITUTES", reason="agreed"))
     assert verdict == {"verdict": "SUBSTITUTES", "why": "agreed"}
-    assert "FIRST REVIEWER: bare arithmetic" in fake.asked[1]
+    assert len(fake.asked) == 2
+
+
+@pytest.mark.parametrize("show_first", [True, False])
+def test_the_gate_decides_whether_the_second_reader_sees_the_first(monkeypatch, show_first):
+    fake, _ = _votes(
+        monkeypatch,
+        answer(value="SUBSTITUTES", reason="bare arithmetic"),
+        answer(value="SUBSTITUTES", reason="agreed"),
+        show_first=show_first)
+    assert ("FIRST REVIEWER: bare arithmetic" in fake.asked[1]) is show_first
+
+
+def test_fidelity_rechecks_blind_and_sanity_shows_the_accusation(tmp_path, monkeypatch):
+    """Fidelity's sentence only persuades; sanity's names the example that fails."""
+    monkeypatch.setenv("TASK_SEARCH_REVIEW_KEY_ENV", "FAKE_REVIEW_KEY")
+    monkeypatch.setenv("FAKE_REVIEW_KEY", "x")
+    samples = tmp_path / "samples.md"
+    samples.write_text("example")
+    for gate, accusing in ((validation._sample_fidelity, "SUBSTITUTES"),
+                           (validation._sample_sanity, "INVALID")):
+        fake = FakeJudge(answer(value=accusing, reason="the accusation"),
+                         answer(value=accusing, reason="agreed"))
+        monkeypatch.setattr(validation, "get_judge", lambda purpose: fake)
+        gate(samples)
+        shown = "FIRST REVIEWER: the accusation" in fake.asked[1]
+        assert shown is (gate is validation._sample_sanity)
 
 
 def test_an_unconfirmed_accusation_does_not_refuse_the_task(monkeypatch):
