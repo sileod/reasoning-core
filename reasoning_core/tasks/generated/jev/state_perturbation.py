@@ -8,14 +8,23 @@ from reasoning_core.tasks.generated.jev._common import canonical_json, choice_an
 
 DIMENSIONS = ["authorization", "status", "financial", "ownership", "none"]
 RISK = ["Lower operational risk than before.", "No material risk change.", "Higher operational risk than before."]
+RISK_RULE = {
+    "unauthorized_points": 3,
+    "blocked_status_points": 2,
+    "amount_threshold": 500,
+    "amount_threshold_points": 1,
+    "unassigned_owner_points": 1,
+    "otherwise_points": 0,
+    "direction": "Add the applicable points for each record. Compare after with before: lower total means lower risk, equal means no material risk change, and higher total means higher risk.",
+}
 
 
 def _risk(record):
     return (
-        (0 if record["authorized"] else 3)
-        + (2 if record["status"] == "blocked" else 0)
-        + (1 if record["amount"] >= 500 else 0)
-        + (1 if record["owner"] == "unassigned" else 0)
+        (0 if record["authorized"] else RISK_RULE["unauthorized_points"])
+        + (RISK_RULE["blocked_status_points"] if record["status"] == "blocked" else RISK_RULE["otherwise_points"])
+        + (RISK_RULE["amount_threshold_points"] if record["amount"] >= RISK_RULE["amount_threshold"] else RISK_RULE["otherwise_points"])
+        + (RISK_RULE["unassigned_owner_points"] if record["owner"] == "unassigned" else RISK_RULE["otherwise_points"])
     )
 
 
@@ -28,7 +37,8 @@ class JevStatePerturbationConfig(Config):
 
 
 class JevStatePerturbation(Task):
-    summary = "Compare minimally edited operational states and identify semantic change, changed dimension, and risk direction with Jev primitives."
+    summary = "Compare minimally edited operational states and identify semantic change, changed dimension, and risk direction under an explicit additive risk rule."
+    task_version = 2
     config_cls = JevStatePerturbationConfig
 
     def generate_entry(self):
@@ -57,15 +67,22 @@ class JevStatePerturbation(Task):
         delta = _risk(after) - _risk(before)
         risk_index = 0 if delta < 0 else 2 if delta > 0 else 1
         material = dimension != "none"
-        state = {"before": before, "after": after}
+        state = {"before": before, "after": after, "risk_rule": RISK_RULE}
         questions = {
-            "material_change": {"type": "noul", "instructions": "Did authorization, status, amount, or owner change? Ignore note and aux_* fields."},
+            "material_change": {
+                "type": "noul",
+                "instructions": "Did authorization, status, amount, or owner change? Ignore note and aux_* fields.",
+            },
             "changed_dimension": {
                 "type": "choice",
                 "instructions": "Which material dimension changed? Choose none when only non-material fields changed.",
                 "criteria": {x: x for x in DIMENSIONS},
             },
-            "risk_direction": {"type": "score", "instructions": "How did operational risk change from before to after?", "criteria": RISK},
+            "risk_direction": {
+                "type": "score",
+                "instructions": "Using state.risk_rule, how did operational risk change from before to after?",
+                "criteria": RISK,
+            },
         }
         answers = {
             "material_change": noul_answer(material),
