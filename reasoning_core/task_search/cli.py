@@ -643,5 +643,5 @@ def main(argv=None):
             )
             if result.get("error"):
                 print(f"{result['trial_id']}: {result['error']}", file=sys.stderr)
-        if any(result["status"] != "success" for result in results):
+        if any(result["status"] not in ("success", "superseded") for result in results):
             raise SystemExit(1)

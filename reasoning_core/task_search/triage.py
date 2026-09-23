@@ -211,6 +211,20 @@ RANK = {"VALID": 0, None: 1, "INVALID": 2}
 FIDELITY_RANK = {"REALIZES": 0, None: 1, "SUBSTITUTES": 2}
 
 
+def settles(result):
+    """A success no sibling could outrank on anything but its trial id.
+
+    `pick` ranks on sanity, fidelity and budget before the trial id, so once one draft of an
+    idea tops all three a sibling can only win the arbitrary tie. Measured over the r4
+    waves: 62 of 73 picks between successes were that tie, and building the losers cost
+    about 18 of 58 worker-hours.
+    """
+    return (result.get("status") == "success"
+            and (result.get("sample_sanity") or {}).get("verdict") == "VALID"
+            and (result.get("sample_fidelity") or {}).get("verdict") == "REALIZES"
+            and not (result.get("steps") or {}).get("exhausted"))
+
+
 def pick(drafts):
     # Trial id decides last, which was fine while variants differed only by seed and wrong
     # once they differ by design: taking v1 of three design choices because it sorts first

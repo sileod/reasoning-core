@@ -26,6 +26,7 @@ from .implementor_prompt import (
     render_implementor_prompt,
 )
 from .backlog import record_outcomes
+from .triage import proposal_of, settles
 from .plan import _frozen_module_drift, _plan_problems, _select_trials, load_plan
 from . import namespace
 from .sandbox import (
@@ -678,6 +679,40 @@ def _retryable_harness_failure(result):
     return None
 
 
+def _siblings_last(trials):
+    """Every idea's first draft before any idea's second, so a settled idea skips the rest."""
+    seen = {}
+    keyed = []
+    for position, trial in enumerate(trials):
+        idea = proposal_of(trial.trial_id)
+        keyed.append((seen.get(idea, 0), position, trial))
+        seen[idea] = seen.get(idea, 0) + 1
+    return [trial for _, _, trial in sorted(keyed, key=lambda row: row[:2])]
+
+
+def _skipping_settled(plan, run):
+    """`run`, except that an idea stops launching drafts once one of them settles it.
+
+    Drafts already running finish; only those not yet started are skipped, which is why
+    `_siblings_last` queues every idea's first draft ahead of any second.
+    """
+    settled = {}
+
+    def run_one(*arguments):
+        trial = arguments[1]
+        idea = proposal_of(trial.trial_id)
+        if idea in settled:
+            return {"schema_version": 1, "wave": plan.name,
+                    "proposal_wave": plan.proposal_wave, "trial_id": trial.trial_id,
+                    "status": "superseded", "superseded_by": settled[idea]}
+        result = run(*arguments)
+        if settles(result):
+            settled.setdefault(idea, trial.trial_id)
+        return result
+
+    return run_one
+
+
 def run_plan(
     plan_path,
     *,
@@ -727,7 +762,7 @@ def run_plan(
         else repo_root.parent / f".{repo_root.name}-task-search"
     )
     _check_sandbox_location(root, "runs root")
-    selected = _select_trials(plan, trial_ids, queue_names)
+    selected = _siblings_last(_select_trials(plan, trial_ids, queue_names))
     base_commit = subprocess.check_output(
         ["git", "rev-parse", plan.base_ref], cwd=repo_root, text=True
     ).strip()
@@ -853,10 +888,11 @@ def run_plan(
 
     write_summary()
     print(f"Run artifacts: {invocation}", file=sys.stderr, flush=True)
+    run_one = _skipping_settled(plan, run_trial_retrying)
     with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
         futures = {
             pool.submit(
-                run_trial_retrying,
+                run_one,
                 plan,
                 trial,
                 repo_root,

@@ -457,3 +457,56 @@ def test_a_run_records_which_build_of_the_harness_wrote_the_task(monkeypatch):
     # failing the run: an unrecorded version is worth less than a wave.
     monkeypatch.setattr(runner.shutil, "which", lambda binary: None)
     assert runner._harness_version("opencode") is None
+
+
+def _drafts(*ids):
+    return [types.SimpleNamespace(trial_id=trial_id) for trial_id in ids]
+
+
+def test_every_idea_s_first_draft_is_queued_before_any_second():
+    from reasoning_core.task_search.implementation_runner import _siblings_last
+
+    order = _siblings_last(_drafts("P001v1", "P001v2", "P001v3", "P002v1", "P002v2"))
+    assert [trial.trial_id for trial in order] == [
+        "P001v1", "P002v1", "P001v2", "P002v2", "P001v3"]
+
+
+def _settling(verdict="VALID", fidelity="REALIZES", exhausted=False, status="success"):
+    return {"status": status, "sample_sanity": {"verdict": verdict},
+            "sample_fidelity": {"verdict": fidelity}, "steps": {"exhausted": exhausted}}
+
+
+@pytest.mark.parametrize("result, settles", [
+    (_settling(), True),
+    (_settling(verdict=None), False),
+    (_settling(fidelity="SUBSTITUTES"), False),
+    (_settling(exhausted=True), False),
+    (_settling(status="timed_out"), False),
+])
+def test_only_a_draft_no_sibling_could_outrank_settles_its_idea(result, settles):
+    from reasoning_core.task_search.triage import settles as settles_idea
+
+    assert settles_idea(result) is settles
+
+
+def test_a_settled_idea_skips_the_drafts_that_have_not_started():
+    from reasoning_core.task_search.implementation_runner import _skipping_settled
+
+    plan = types.SimpleNamespace(name="w_r1", proposal_wave="w")
+    outcomes = {"P001v1": _settling(), "P002v1": _settling(fidelity=None),
+                "P002v2": _settling()}
+    ran = []
+
+    def run(_plan, trial):
+        ran.append(trial.trial_id)
+        return outcomes.get(trial.trial_id, _settling(status="timed_out"))
+
+    run_one = _skipping_settled(plan, run)
+    results = {trial.trial_id: run_one(plan, trial)
+               for trial in _drafts("P001v1", "P002v1", "P001v2", "P002v2", "P001v3", "P002v3")}
+    # P002v1 was unread by fidelity, so a sibling could still beat it and P002v2 ran.
+    assert ran == ["P001v1", "P002v1", "P002v2"]
+    assert results["P001v2"] == {"schema_version": 1, "wave": "w_r1", "proposal_wave": "w",
+                                 "trial_id": "P001v2", "status": "superseded",
+                                 "superseded_by": "P001v1"}
+    assert results["P002v3"]["superseded_by"] == "P002v2"
