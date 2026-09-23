@@ -1,0 +1,6 @@
+P001v1: contract_failed
+P001v2: validation_failed
+P001v3: validation_failed
+P002v1: success
+P002v2: success
+P002v3: harness_failed

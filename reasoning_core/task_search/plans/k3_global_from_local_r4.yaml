@@ -1,0 +1,602 @@
+version: 1
+name: k3_global_from_local_r4
+proposal_wave: k3_global-from-local
+defaults:
+  base_ref: 0ef48434475eaad02a7b98f473541f091e08110a
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: lindley_wait_propagation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v1
+  instruction: |-
+    Author a new task from scratch: lindley_wait_propagation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate waits through a single-server queue via the Lindley recursion over arrival and service sequences: carry each wait forward, marking busy periods; answers are a queried wait, busy-period spans, or peak backlog.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v1
+  design_choice: Queries ask for the wait of a specific job index, with arrivals and services given as
+    integer lists; answer is that wait as a fraction or integer.
+- id: P001v2
+  hypothesis: P001
+  idea: lindley_wait_propagation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v2
+  instruction: |-
+    Author a new task from scratch: lindley_wait_propagation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate waits through a single-server queue via the Lindley recursion over arrival and service sequences: carry each wait forward, marking busy periods; answers are a queried wait, busy-period spans, or peak backlog.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v2
+  design_choice: Queries ask for the start and end indices of all busy periods, given as a semicolon-separated
+    list of index pairs; answer is a canonical string like "0-2;4-5".
+- id: P001v3
+  hypothesis: P001
+  idea: lindley_wait_propagation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v3
+  instruction: |-
+    Author a new task from scratch: lindley_wait_propagation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate waits through a single-server queue via the Lindley recursion over arrival and service sequences: carry each wait forward, marking busy periods; answers are a queried wait, busy-period spans, or peak backlog.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/lindley_wait_propagation_v3
+- id: P002v1
+  hypothesis: P002
+  idea: facility_member_swap_descent_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v1
+  instruction: |-
+    Author a new task from scratch: facility_member_swap_descent_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From a chosen facility set, evaluate every member-out/candidate-in swap's exact change in nearest-facility distance, apply the best improving swap, repeat to local optimum; answers are swap sequence, final set, and cost.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v1
+  design_choice: Answer as an ordered list of swap tuples (member_id, candidate_id), final facility set,
+    and integer total cost, with ties broken by smallest member_id then smallest candidate_id.
+- id: P002v2
+  hypothesis: P002
+  idea: facility_member_swap_descent_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v2
+  instruction: |-
+    Author a new task from scratch: facility_member_swap_descent_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From a chosen facility set, evaluate every member-out/candidate-in swap's exact change in nearest-facility distance, apply the best improving swap, repeat to local optimum; answers are swap sequence, final set, and cost.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v2
+  design_choice: Answer as a canonical string encoding the swap sequence using semicolon-separated 'member:candidate'
+    pairs, followed by the final set sorted ascending, then the cost, all space-separated.
+- id: P002v3
+  hypothesis: P002
+  idea: facility_member_swap_descent_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v3
+  instruction: |-
+    Author a new task from scratch: facility_member_swap_descent_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      From a chosen facility set, evaluate every member-out/candidate-in swap's exact change in nearest-facility distance, apply the best improving swap, repeat to local optimum; answers are swap sequence, final set, and cost.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/facility_member_swap_descent_v3
+- id: P003v1
+  hypothesis: P003
+  idea: binary_weight_incidence_reordering_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v1
+  instruction: |-
+    Author a new task from scratch: binary_weight_incidence_reordering_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Treat incidence matrix rows then columns as binary numbers, sort by decreasing weight, and iterate until stable, revealing machine cells; answers are final row/column permutations, block count, or exceptional-bit count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v1
+  design_choice: Answer as the final row permutation only, with columns fixed in original order, to reduce
+    answer space and avoid ambiguity from column ties.
+- id: P003v2
+  hypothesis: P003
+  idea: binary_weight_incidence_reordering_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v2
+  instruction: |-
+    Author a new task from scratch: binary_weight_incidence_reordering_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Treat incidence matrix rows then columns as binary numbers, sort by decreasing weight, and iterate until stable, revealing machine cells; answers are final row/column permutations, block count, or exceptional-bit count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v2
+  design_choice: Answer as the ordered list of block sizes (e.g., [3,2,1]) after stable sorting, requiring
+    the solver to compute the final grouping but not the full permutation.
+- id: P003v3
+  hypothesis: P003
+  idea: binary_weight_incidence_reordering_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v3
+  instruction: |-
+    Author a new task from scratch: binary_weight_incidence_reordering_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Treat incidence matrix rows then columns as binary numbers, sort by decreasing weight, and iterate until stable, revealing machine cells; answers are final row/column permutations, block count, or exceptional-bit count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/binary_weight_incidence_reordering_v3
+- id: P004v1
+  hypothesis: P004
+  idea: sequent_proof_search_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v1
+  instruction: |-
+    Author a new task from scratch: sequent_proof_search_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search for a propositional sequent-calculus derivation, applying invertible rules freely and branching on disjunctive ones; answer derivability, a countermodel valuation from an open leaf, or the leaf count of the finished tree.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v1
+  design_choice: Encode formulas in Polish notation with atoms as single letters and answer as 'yes' or
+    a countermodel as a semicolon-separated list of true atom names.
+- id: P004v2
+  hypothesis: P004
+  idea: sequent_proof_search_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v2
+  instruction: |-
+    Author a new task from scratch: sequent_proof_search_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search for a propositional sequent-calculus derivation, applying invertible rules freely and branching on disjunctive ones; answer derivability, a countermodel valuation from an open leaf, or the leaf count of the finished tree.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v2
+  design_choice: Use only single-conclusion sequents and answer with an integer leaf count, where leaves
+    are counted after exhaustive invertible and disjunctive branching.
+- id: P004v3
+  hypothesis: P004
+  idea: sequent_proof_search_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v3
+  instruction: |-
+    Author a new task from scratch: sequent_proof_search_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search for a propositional sequent-calculus derivation, applying invertible rules freely and branching on disjunctive ones; answer derivability, a countermodel valuation from an open leaf, or the leaf count of the finished tree.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/sequent_proof_search_v3
+- id: P005v1
+  hypothesis: P005
+  idea: positional_weight_station_packing_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v1
+  instruction: |-
+    Author a new task from scratch: positional_weight_station_packing_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sum each task's own time plus all successors', sort by positional weight, pack tasks into stations greedily while precedence and cycle time allow; answers are station rosters, idle totals, and the resulting balance delay.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v1
+  design_choice: 'Instance parameters: random task counts, precedence densities, and cycle times; answer
+    format is a sorted list of station rosters with idle time per station and balance delay as a fraction.'
+- id: P005v2
+  hypothesis: P005
+  idea: positional_weight_station_packing_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v2
+  instruction: |-
+    Author a new task from scratch: positional_weight_station_packing_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sum each task's own time plus all successors', sort by positional weight, pack tasks into stations greedily while precedence and cycle time allow; answers are station rosters, idle totals, and the resulting balance delay.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v2
+  design_choice: 'Answer format: canonical string like ''S1:t1,t3|S2:t2,t4|Idle:5|Delay:0.2'' where station
+    rosters are comma-separated task IDs and idle/delay are integers/fractions.'
+- id: P005v3
+  hypothesis: P005
+  idea: positional_weight_station_packing_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v3
+  instruction: |-
+    Author a new task from scratch: positional_weight_station_packing_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sum each task's own time plus all successors', sort by positional weight, pack tasks into stations greedily while precedence and cycle time allow; answers are station rosters, idle totals, and the resulting balance delay.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/positional_weight_station_packing_v3
+- id: P006v1
+  hypothesis: P006
+  idea: pedigree_genotype_consistency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v1
+  instruction: |-
+    Author a new task from scratch: pedigree_genotype_consistency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pedigrees with phenotypes under a stated mode, autosomal or X-linked, dominant or recessive: Mendelian rules through matings and sibships; answer a member's forced genotypes, the obligate carriers, or the first impossible record.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v1
+  design_choice: Answer the first impossible record by its record index in the input order, with ties
+    broken by earliest generation then birth order.
+- id: P006v2
+  hypothesis: P006
+  idea: pedigree_genotype_consistency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v2
+  instruction: |-
+    Author a new task from scratch: pedigree_genotype_consistency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pedigrees with phenotypes under a stated mode, autosomal or X-linked, dominant or recessive: Mendelian rules through matings and sibships; answer a member's forced genotypes, the obligate carriers, or the first impossible record.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v2
+  design_choice: Forced genotypes are requested as a canonical string listing each queried member's genotype
+    (e.g., AA, Aa, aa) in the order they appear in the pedigree input.
+- id: P006v3
+  hypothesis: P006
+  idea: pedigree_genotype_consistency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v3
+  instruction: |-
+    Author a new task from scratch: pedigree_genotype_consistency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Pedigrees with phenotypes under a stated mode, autosomal or X-linked, dominant or recessive: Mendelian rules through matings and sibships; answer a member's forced genotypes, the obligate carriers, or the first impossible record.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/pedigree_genotype_consistency_v3
+- id: P007v1
+  hypothesis: P007
+  idea: gear_train_signed_ratio_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v1
+  instruction: |-
+    Author a new task from scratch: gear_train_signed_ratio_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Gear meshes, shared shafts, and open or crossed belts forming one train: multiply pitch ratios and flip signs along each path from driver to output; answer the output's signed rational speed or a jam verdict when parities clash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v1
+  design_choice: Represent gear sizes as coprime integer tooth counts and ask for the reduced fraction
+    of output speed over input speed, with a jam verdict if the sign path is impossible.
+- id: P007v2
+  hypothesis: P007
+  idea: gear_train_signed_ratio_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v2
+  instruction: |-
+    Author a new task from scratch: gear_train_signed_ratio_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Gear meshes, shared shafts, and open or crossed belts forming one train: multiply pitch ratios and flip signs along each path from driver to output; answer the output's signed rational speed or a jam verdict when parities clash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v2
+  design_choice: Provide a diagram-like textual listing of meshes, shafts, and belts; solver must parse
+    the topology and return a canonical signed ratio string like '3/2' or 'jam'.
+- id: P007v3
+  hypothesis: P007
+  idea: gear_train_signed_ratio_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v3
+  instruction: |-
+    Author a new task from scratch: gear_train_signed_ratio_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Gear meshes, shared shafts, and open or crossed belts forming one train: multiply pitch ratios and flip signs along each path from driver to output; answer the output's signed rational speed or a jam verdict when parities clash.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/gear_train_signed_ratio_v3
+- id: P008v1
+  hypothesis: P008
+  idea: threshold_cascade_fixpoint_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v1
+  instruction: |-
+    Author a new task from scratch: threshold_cascade_fixpoint_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Digraphs with per-node activation thresholds and a seed set: a node turns active once enough in-neighbors are active, applied in rounds; answer the final active set, the round a queried node turns on, or whether the process saturates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v1
+  design_choice: Instance graphs are generated with a fixed small out-degree and thresholds set to half
+    the in-degree, forcing multi-round cascades where the final set depends on seed timing.
+- id: P008v2
+  hypothesis: P008
+  idea: threshold_cascade_fixpoint_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v2
+  instruction: |-
+    Author a new task from scratch: threshold_cascade_fixpoint_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Digraphs with per-node activation thresholds and a seed set: a node turns active once enough in-neighbors are active, applied in rounds; answer the final active set, the round a queried node turns on, or whether the process saturates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v2
+  design_choice: Answer format is a canonical comma-separated list of node labels in ascending order for
+    the final active set, with ties broken by round number for queried nodes.
+- id: P008v3
+  hypothesis: P008
+  idea: threshold_cascade_fixpoint_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v3
+  instruction: |-
+    Author a new task from scratch: threshold_cascade_fixpoint_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Digraphs with per-node activation thresholds and a seed set: a node turns active once enough in-neighbors are active, applied in rounds; answer the final active set, the round a queried node turns on, or whether the process saturates.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/threshold_cascade_fixpoint_v3
+- id: P009v1
+  hypothesis: P009
+  idea: ordered_rule_surface_derivation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v1
+  instruction: |-
+    Author a new task from scratch: ordered_rule_surface_derivation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invented segment inventories with ordered context-sensitive rewrite rules: derive surface strings from underlying forms, and compare swapped rule orders for feeding/bleeding; answer the surface string or whether reordering changes it.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v1
+  design_choice: "Rule notation: use explicit formal rewrite rules (A\u2192B / X_Y) with segment symbols,\
+    \ requiring solvers to apply them stepwise to underlying strings."
+- id: P009v2
+  hypothesis: P009
+  idea: ordered_rule_surface_derivation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v2
+  instruction: |-
+    Author a new task from scratch: ordered_rule_surface_derivation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invented segment inventories with ordered context-sensitive rewrite rules: derive surface strings from underlying forms, and compare swapped rule orders for feeding/bleeding; answer the surface string or whether reordering changes it.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v2
+  design_choice: 'Answer format: for each instance, ask for the exact surface string after applying the
+    given ordered rule set, with no multiple-choice options.'
+- id: P009v3
+  hypothesis: P009
+  idea: ordered_rule_surface_derivation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v3
+  instruction: |-
+    Author a new task from scratch: ordered_rule_surface_derivation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Invented segment inventories with ordered context-sensitive rewrite rules: derive surface strings from underlying forms, and compare swapped rule orders for feeding/bleeding; answer the surface string or whether reordering changes it.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/ordered_rule_surface_derivation_v3
+- id: P010v1
+  hypothesis: P010
+  idea: nonogram_fixpoint_propagation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v1
+  instruction: |-
+    Author a new task from scratch: nonogram_fixpoint_propagation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Nonograms with row and column clues: force cells per line from clue overlap, propagate fixed cells across crossing lines to a fixpoint; answer a queried cell, the solved grid, or the line where contradiction appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v1
+  design_choice: 'Queried cell answer: return a single canonical token (''B''/''W''/''?'') for a specified
+    coordinate after full fixpoint propagation.'
+- id: P010v2
+  hypothesis: P010
+  idea: nonogram_fixpoint_propagation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v2
+  instruction: |-
+    Author a new task from scratch: nonogram_fixpoint_propagation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Nonograms with row and column clues: force cells per line from clue overlap, propagate fixed cells across crossing lines to a fixpoint; answer a queried cell, the solved grid, or the line where contradiction appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v2
+  design_choice: 'Contradiction detection answer: return the 1-based index of the first row/column whose
+    clues become unsatisfiable during propagation, or ''NONE'' if none.'
+- id: P010v3
+  hypothesis: P010
+  idea: nonogram_fixpoint_propagation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v3
+  instruction: |-
+    Author a new task from scratch: nonogram_fixpoint_propagation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Nonograms with row and column clues: force cells per line from clue overlap, propagate fixed cells across crossing lines to a fixpoint; answer a queried cell, the solved grid, or the line where contradiction appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/k3_global_from_local_r4/nonogram_fixpoint_propagation_v3
