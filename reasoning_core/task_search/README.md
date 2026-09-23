@@ -145,8 +145,10 @@ key is not merely present but accepted, which is how a spent daily quota shows u
 a run rather than during one.
 
 Those three variables say where the reviewer lives; `TASK_SEARCH_JUDGE_BACKEND` says what
-kind of thing answers it. `llm` is the default and the only one built: it asks a chat
-model for a `VERDICT:` and a `WHY:`, which is what the gates have always done. A single
+kind of thing answers it. `llm` is the default: it asks a chat model for a `VERDICT:` and
+a `WHY:`, which is what the gates have always done. `jev` asks TypeSafe's Jev through
+OpenRouter's decisions endpoint and gets a typed choice with a distribution instead; it
+reads `JEV_OPENROUTER_API_KEY`, a paid key, which is why it is never the default. A single
 gate can be moved on its own with `TASK_SEARCH_<PURPOSE>_BACKEND` (`SANITY`, `FIDELITY`),
 so a new judge can be measured against the gates that did not move rather than against a
 memory of how the old one scored.

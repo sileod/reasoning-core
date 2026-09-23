@@ -21,7 +21,11 @@ did, and the silence is the same silence they were written against.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 import os
+import time
+import urllib.error
+import urllib.request
 
 
 @dataclass(frozen=True)
@@ -67,6 +71,28 @@ def abstain(reason):
     return answer(reason=reason)
 
 
+# Judges share provider quota with the workers they review, so a wave running eight at a
+# time draws 429s that clear in seconds. One of those used to cost a trial its whole
+# review -- the call fails open, so the gate passed the task unread rather than failing
+# it. Every backend that speaks HTTP waits the spike out the same way.
+RETRY_AFTER = (5, 20, 60)
+TIMEOUT_SECONDS = 180
+
+
+def post_json(request):
+    """The decoded JSON body, retrying rate limits and server errors; anything else raises."""
+    for wait in RETRY_AFTER:
+        try:
+            with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 and error.code < 500:
+                raise
+            time.sleep(wait)
+    with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+        return json.load(response)
+
+
 DEFAULT_BACKEND = "llm"
 BACKEND_VAR = "TASK_SEARCH_JUDGE_BACKEND"
 
@@ -90,4 +116,9 @@ def get_judge(purpose):
         from .judge_llm import LLMJudge
 
         return LLMJudge()
-    raise ValueError(f"unknown judge backend {name!r} for {purpose}: known backends are llm")
+    if name == "jev":
+        from .judge_jev import JevJudge
+
+        return JevJudge()
+    raise ValueError(
+        f"unknown judge backend {name!r} for {purpose}: known backends are llm, jev")

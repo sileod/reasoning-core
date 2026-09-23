@@ -121,3 +121,63 @@ def test_an_unconfirmed_accusation_does_not_refuse_the_task(monkeypatch):
 def test_an_abstaining_backend_leaves_the_trial_unreviewed(monkeypatch):
     _, verdict = _votes(monkeypatch, abstain("reviewer unreachable: timed out"))
     assert verdict == {"verdict": None, "why": "reviewer unreachable: timed out"}
+
+
+def _jev_replying(monkeypatch, reply=None, error=None):
+    """Fake the decisions endpoint; return the list of request bodies it received."""
+    import io
+    import json
+
+    from reasoning_core.task_search import judge_jev
+
+    sent = []
+
+    def opener(request, timeout=None):
+        sent.append(json.loads(request.data))
+        if error:
+            raise error
+        return io.BytesIO(json.dumps(reply).encode())
+
+    monkeypatch.setattr(judge_jev.urllib.request, "urlopen", opener)
+    return judge_jev.JevJudge(key="k"), sent
+
+
+def test_jev_asks_every_question_in_one_request_without_the_chat_format(monkeypatch):
+    judge_, sent = _jev_replying(monkeypatch, {"answers": {
+        "valid": {"type": "choice", "choice": "INVALID",
+                  "probabilities": {"INVALID": 0.9, "VALID": 0.1}}}})
+    got = judge_.evaluate("state", [validation._SANITY])["valid"]
+    assert got["value"] == "INVALID"
+    assert got["probs"] == {"VALID": 0.1, "INVALID": 0.9}
+    assert len(sent) == 1
+    asked = sent[0]["questions"]["valid"]
+    assert set(asked["criteria"]) == {"VALID", "INVALID"}
+    assert "VERDICT:" not in asked["instructions"]
+
+
+@pytest.mark.parametrize("reply, error", [
+    ({"answers": {"valid": {"choice": "MAYBE"}}}, None),
+    ({"answers": {}}, None),
+    (None, OSError("connection reset")),
+])
+def test_jev_abstains_rather_than_inventing_a_verdict(monkeypatch, reply, error):
+    judge_, _ = _jev_replying(monkeypatch, reply, error)
+    got = judge_.evaluate("state", [validation._SANITY])["valid"]
+    assert got["value"] is None and got["reason"]
+
+
+def test_jev_abstains_without_a_key_or_on_a_score_question(monkeypatch):
+    from reasoning_core.task_search import judge_jev
+
+    monkeypatch.delenv(judge_jev.KEY_VAR, raising=False)
+    assert judge_jev.JevJudge().evaluate("s", [validation._SANITY])["valid"]["value"] is None
+    judge_, sent = _jev_replying(monkeypatch, {"answers": {}})
+    scored = judge_.evaluate("s", [Question("novelty", "ask", score=(1, 5))])["novelty"]
+    assert scored["value"] is None and not sent
+
+
+def test_the_jev_backend_is_selectable_per_purpose(monkeypatch):
+    from reasoning_core.task_search.judge_jev import JevJudge
+
+    monkeypatch.setenv("TASK_SEARCH_FIDELITY_BACKEND", "jev")
+    assert isinstance(judge.get_judge("fidelity"), JevJudge)

@@ -18,32 +18,15 @@ from __future__ import annotations
 import json
 import os
 import re
-import time
-import urllib.error
 import urllib.request
 
-from .judge import abstain, answer
+from .judge import abstain, answer, post_json
 
-# The reviewer shares its provider quota with the workers it reviews, so a wave running
-# eight at a time draws 429s that clear in seconds. One of those used to cost a trial its
-# whole review -- the call fails open, so the gate passed the task unread rather than
-# failing it. Wait the spike out instead.
-RETRY_AFTER = (5, 20, 60)
-TIMEOUT_SECONDS = 180
 MAX_TOKENS = 512
 
 
 def _post(request):
-    for wait in RETRY_AFTER:
-        try:
-            with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-                return json.load(response)["choices"][0]["message"].get("content")
-        except urllib.error.HTTPError as error:
-            if error.code != 429 and error.code < 500:
-                raise
-            time.sleep(wait)
-    with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-        return json.load(response)["choices"][0]["message"].get("content")
+    return post_json(request)["choices"][0]["message"].get("content")
 
 
 class LLMJudge:
