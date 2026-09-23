@@ -1,17 +1,7 @@
 """The judgment backend that asks a chat model, one question per call.
 
-This is the transport the sanity and fidelity gates already used, moved behind the seam
-without a byte of the request changing: same endpoint and model from the environment, same
-temperature and budget, the question's instruction as the system message and the state as
-the user message, and the same `VERDICT:` / `WHY:` pair read back out. That sameness is the
-point -- it is what lets a second backend be measured against this one rather than against
-a rewrite of it.
-
-One question per call, because that is what the gates using it ask and inventing a
-multi-question wire format with no caller would be guessing at requirements. The novelty
-critic does batch, over candidates rather than questions, and it brings a JSON protocol of
-its own that has survived several waves; when it moves behind this seam it arrives as a
-second rendering here, written against what it actually needs.
+The request is the one the gates always sent -- the question's prose as the system message,
+the state as the user message -- and the `VERDICT:` / `WHY:` pair is read back out.
 """
 from __future__ import annotations
 
@@ -67,24 +57,13 @@ class LLMJudge:
 
 
 def _read(text, question):
-    """The verdict and the reason, or an abstention when the answer is unreadable.
+    """The verdict and reason, or an abstention that keeps the model's words.
 
-    A model answering in a vocabulary nobody asked for is indistinguishable from one that
-    did not answer, and has to be: every fidelity verdict recorded before the parser knew
-    that gate's own words was `None`, silently, because it was still looking for `VALID`.
-    So the question's outcomes are what the pattern is built from, and the reason survives
-    either way -- an abstention that carries the model's own words back is what makes an
-    unreviewed trial explainable afterwards.
+    The pattern is built from the question's own choices: a parser hardcoded to one gate's
+    vocabulary once read every fidelity verdict as None, silently, because the gate fails open.
     """
     reason = re.search(r"WHY:\s*(.+)", text)
     said = (reason.group(1).strip() if reason else text.strip())[:400]
-    if question.score is not None:
-        found = re.search(r"VERDICT:\s*(-?\d+)\b", text)
-        low, high = question.score
-        value = int(found.group(1)) if found else None
-        if value is None or not low <= value <= high:
-            return abstain(said)
-        return answer(value=value, reason=said)
     found = re.search(r"VERDICT:\s*(" + "|".join(map(re.escape, question.choices)) + r")\b",
                       text)
     if not found:

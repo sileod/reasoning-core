@@ -1,13 +1,9 @@
-"""The judgment backend that asks Jev, TypeSafe's typed-decision model, through OpenRouter.
+"""The judgment backend that asks TypeSafe's Jev through OpenRouter's decisions endpoint.
 
-Jev takes a state and named typed questions and returns a choice with a distribution over
-the options, not text to parse, so this backend has no grammar to get wrong: the only
-unreadable answer is a missing one. It is not a chat model -- OpenRouter refuses it on
-`chat/completions` -- and every question in one `evaluate` goes out in a single request.
-
-What it lacks is a reason. The gates record one with every verdict, so the reason here is
-the distribution itself, which is what an operator reading a verdict later would want to
-know about a model that does not explain itself.
+Jev returns a typed choice with a distribution, not text, and gives no reason, so the
+recorded reason is the distribution. All questions in one `evaluate` go in one request.
+Measured against the LLM judge (2026-09-23): it tracks a blind LLM recheck on fidelity and
+cannot tell right answers from wrong ones on sanity, which needs arithmetic it does not do.
 """
 from __future__ import annotations
 
@@ -26,7 +22,7 @@ CHAT_FORMAT = "\n\nAnswer in this exact shape"
 
 
 class JevJudge:
-    """Answers choice questions with a distribution; abstains on anything else."""
+    """Answers choice questions with a distribution."""
 
     def __init__(self, key=None, model=None):
         self.key = key or os.environ.get(KEY_VAR, "")
@@ -35,11 +31,6 @@ class JevJudge:
     def evaluate(self, state, questions):
         if not self.key:
             return {question.name: abstain(f"{KEY_VAR} is not set") for question in questions}
-        typed = [question for question in questions if question.choices]
-        answers = {question.name: abstain("jev backend answers choice questions only")
-                   for question in questions if not question.choices}
-        if not typed:
-            return answers
         body = json.dumps({
             "model": self.model,
             "state": state,
@@ -47,7 +38,7 @@ class JevJudge:
                 "type": "choice",
                 "instructions": question.instruction.split(CHAT_FORMAT, 1)[0],
                 "criteria": {choice: choice for choice in question.choices},
-            } for question in typed},
+            } for question in questions},
         }).encode()
         request = urllib.request.Request(
             ENDPOINT, body,
@@ -55,11 +46,9 @@ class JevJudge:
         try:
             replies = post_json(request).get("answers") or {}
         except Exception as error:  # noqa: BLE001 - any transport fault is an abstention
-            return {**answers, **{question.name: abstain(f"jev unreachable: {error}")
-                                  for question in typed}}
-        for question in typed:
-            answers[question.name] = _read(replies.get(question.name), question)
-        return answers
+            return {question.name: abstain(f"jev unreachable: {error}") for question in questions}
+        return {question.name: _read(replies.get(question.name), question)
+                for question in questions}
 
 
 def _read(reply, question):

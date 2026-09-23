@@ -24,15 +24,10 @@ class FakeJudge:
         return {question.name: reply for question in questions}
 
 
-def test_a_question_is_a_choice_or_a_score_and_never_both_or_neither():
+def test_a_question_needs_choices():
     Question("valid", "ask", choices=("VALID", "INVALID"))
-    Question("novelty", "ask", score=(1, 5))
     with pytest.raises(ValueError):
-        Question("confused", "ask", choices=("A", "B"), score=(1, 5))
-    with pytest.raises(ValueError):
-        Question("empty", "ask")
-    with pytest.raises(ValueError):
-        Question("lopsided", "ask", score=(1,))
+        Question("empty", "ask", choices=())
 
 
 def test_an_abstention_carries_a_reason_and_never_a_verdict():
@@ -166,14 +161,11 @@ def test_jev_abstains_rather_than_inventing_a_verdict(monkeypatch, reply, error)
     assert got["value"] is None and got["reason"]
 
 
-def test_jev_abstains_without_a_key_or_on_a_score_question(monkeypatch):
+def test_jev_abstains_without_a_key(monkeypatch):
     from reasoning_core.task_search import judge_jev
 
     monkeypatch.delenv(judge_jev.KEY_VAR, raising=False)
     assert judge_jev.JevJudge().evaluate("s", [validation._SANITY])["valid"]["value"] is None
-    judge_, sent = _jev_replying(monkeypatch, {"answers": {}})
-    scored = judge_.evaluate("s", [Question("novelty", "ask", score=(1, 5))])["novelty"]
-    assert scored["value"] is None and not sent
 
 
 def test_the_jev_backend_is_selectable_per_purpose(monkeypatch):
