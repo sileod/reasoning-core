@@ -20,6 +20,7 @@ from pathlib import Path
 
 import yaml
 
+from .implementation_runner import default_runs_root
 from .trajectory import trial_directories
 # The tally format belongs to the module that writes it.
 from .wave_proposer import TALLY
@@ -106,8 +107,7 @@ def arm_report(repo_root, runs_root=None):
     # Resolved, because the sibling runs directory is named after the repo directory and
     # a relative `.` has no name to be named after.
     repo_root = Path(repo_root).resolve()
-    runs_root = (Path(runs_root) if runs_root
-                 else repo_root.parent / f".{repo_root.name}-task-search")
+    runs_root = Path(runs_root) if runs_root else default_runs_root(repo_root)
     guidance = _guidance(repo_root)
     compared = {plan for plan, _ in guidance}
     outcomes, guided = {}, {}

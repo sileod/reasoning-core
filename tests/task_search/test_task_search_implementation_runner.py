@@ -510,3 +510,14 @@ def test_a_settled_idea_skips_the_drafts_that_have_not_started():
                                  "trial_id": "P001v2", "status": "superseded",
                                  "superseded_by": "P001v1"}
     assert results["P002v3"]["superseded_by"] == "P002v2"
+
+
+def test_the_runs_root_is_a_machine_setting_with_the_checkout_as_fallback(tmp_path, monkeypatch):
+    from reasoning_core.task_search.implementation_runner import RUNS_ROOT_VAR, default_runs_root
+
+    repo = tmp_path / "reasoning_core"
+    repo.mkdir()
+    monkeypatch.delenv(RUNS_ROOT_VAR, raising=False)
+    assert default_runs_root(repo) == tmp_path / ".reasoning_core-task-search"
+    monkeypatch.setenv(RUNS_ROOT_VAR, str(tmp_path / "local"))
+    assert default_runs_root(repo) == tmp_path / "local"

@@ -102,8 +102,10 @@ directory and private runtime. The coordinator independently checks scope, prove
 discovery, contract behavior, samples, reproducibility, validation commands,
 gameability, semantics, and candidate stability in a fixed order.
 
-Runs default to `.reasoning_core-task-search/<wave>/<timestamp>/` beside the checkout.
-They retain prompts, harness output, validation logs, candidate hashes, `run.json`, and
+Runs go to `$TASK_SEARCH_RUNS_ROOT/<wave>/<timestamp>/`, or to
+`.reasoning_core-task-search/` beside the checkout when it is unset. Point it at local
+disk when the checkout is on NFS: every trial checks out the whole repository, which takes
+six and a half minutes over NFS and sixteen seconds locally. They retain prompts, harness output, validation logs, candidate hashes, `run.json`, and
 an incrementally updated `summary.json`. See `BABYSITTING.md` for safe monitoring.
 The runner prints the artifact directory at startup. Custom `--runs-root` paths
 must be outside `/tmp` and `/run`, which are hidden by the sandbox.

@@ -28,15 +28,15 @@ import time
 
 import yaml
 
+from reasoning_core.task_search.implementation_runner import default_runs_root
 from reasoning_core.task_search.backlog import (
     next_round, pending, plan_name, unimplemented)
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHIVE = ROOT / "reasoning_core" / "task_search" / "proposals" / "archive"
 PLANS = ROOT / "reasoning_core" / "task_search" / "plans"
-# Where `run` puts a wave's trials, and where `land` looks for them. Kept in step with
-# implementation_runner.run_plan, which defaults runs_root to the same path.
-RUNS = ROOT.parent / f".{ROOT.name}-task-search"
+# Where `run` puts a wave's trials, and where `land` looks for them.
+RUNS = default_runs_root(ROOT)
 # Consecutive wave failures that mean the machine or the provider is gone rather than one
 # wave being unlucky. Without it an overnight service fails identically until morning.
 GIVE_UP_AFTER = 3

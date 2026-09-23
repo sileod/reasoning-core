@@ -679,6 +679,22 @@ def _retryable_harness_failure(result):
     return None
 
 
+RUNS_ROOT_VAR = "TASK_SEARCH_RUNS_ROOT"
+
+
+def default_runs_root(repo_root):
+    """Where trials are built: `TASK_SEARCH_RUNS_ROOT`, else beside the checkout.
+
+    A machine fact, like the provider. Every trial checks out the whole repository, and
+    on NFS that is ~3,000 small writes taking six and a half minutes -- most of a median
+    eight-minute trial. The same checkout on local disk takes sixteen seconds.
+    """
+    configured = os.environ.get(RUNS_ROOT_VAR)
+    repo_root = Path(repo_root).resolve()
+    return (Path(configured).resolve() if configured
+            else repo_root.parent / f".{repo_root.name}-task-search")
+
+
 def _siblings_last(trials):
     """Every idea's first draft before any idea's second, so a settled idea skips the rest."""
     seen = {}
@@ -756,11 +772,7 @@ def run_plan(
         raise ValueError("retry count and backoff must be non-negative")
     plan = load_plan(plan_path)
     repo_root = Path(repo_root).resolve() if repo_root else _repo_root(plan.path.parent)
-    root = (
-        Path(runs_root).resolve()
-        if runs_root
-        else repo_root.parent / f".{repo_root.name}-task-search"
-    )
+    root = Path(runs_root).resolve() if runs_root else default_runs_root(repo_root)
     _check_sandbox_location(root, "runs root")
     selected = _siblings_last(_select_trials(plan, trial_ids, queue_names))
     base_commit = subprocess.check_output(
@@ -887,6 +899,11 @@ def run_plan(
                 time.sleep(_retry_delay(retry_backoff_seconds, provider_retries))
 
     write_summary()
+    # What actually ran, kept where the backlog can find it after this run tree is
+    # retired, and written as trials finish rather than when the run does. A plan with no
+    # record reads as having run every trial, so a restart mid-wave used to spend one of
+    # each idea's attempts on trials that never finished; an empty record says the run began.
+    record_outcomes(repo_root, plan.name, {})
     print(f"Run artifacts: {invocation}", file=sys.stderr, flush=True)
     run_one = _skipping_settled(plan, run_trial_retrying)
     with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
@@ -944,11 +961,6 @@ def run_plan(
                 }
             results.append(result)
             write_summary()
-    # What actually ran, kept where the backlog can find it after this run tree is
-    # retired. Without it a plan is only a statement of intent, and the backlog cannot
-    # tell a trial that failed from one that never launched.
-    if results:
-        record_outcomes(repo_root, plan.name,
-                        {row["trial_id"]: row.get("status") or "unknown"
-                         for row in results})
+            record_outcomes(repo_root, plan.name,
+                            {trial_id: result.get("status") or "unknown"})
     return sorted(results, key=lambda item: item["trial_id"])
