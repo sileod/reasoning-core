@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 
+import shutil
+
 import pytest
 
 from reasoning_core.task_search import prior_audit, trajectory, validation
@@ -71,6 +73,11 @@ SAMPLE_BODY = "".join(
     for index, level in enumerate(("0", "2", "5"))
 )
 
+
+needs_bwrap = pytest.mark.skipif(shutil.which("bwrap") is None,
+                                 reason="bubblewrap is not installed")
+
+@needs_bwrap
 def test_bubblewrap_makes_only_owned_path_and_runtime_writable(tmp_path):
     # Strict sandboxes intentionally hide host /tmp, so place this integration
     # fixture on the same non-/tmp filesystem used by real task-search runs.
@@ -104,6 +111,7 @@ def test_bubblewrap_makes_only_owned_path_and_runtime_writable(tmp_path):
         assert (owned / "result.txt").read_text() == "allowed"
         assert (worktree / "sibling.txt").read_text() == "original\n"
 
+@needs_bwrap
 def test_bubblewrap_can_overlay_one_harness_runtime_file():
     with tempfile.TemporaryDirectory(prefix=".task-search-test-", dir=ROOT) as root:
         root = Path(root)
@@ -147,6 +155,7 @@ def test_systemd_resource_wrapper_records_hard_limits():
     assert "CPUQuota=400%" in command
     assert command[-2:] == ["bwrap", "true"]
 
+@needs_bwrap
 def test_independent_validation_times_out(tmp_path):
     with tempfile.TemporaryDirectory(prefix=".task-search-test-", dir=ROOT) as root:
         root = Path(root)
@@ -199,6 +208,7 @@ def test_validation_is_given_no_credential_at_all():
     """Candidate code is the one process here with no reason to reach a provider."""
     assert "PROVIDER_API_KEY" not in _minimal_environment()
 
+@needs_bwrap
 def test_sandboxed_validation_does_not_receive_named_credential(monkeypatch):
     monkeypatch.setenv("PROVIDER_API_KEY", "secret")
     with tempfile.TemporaryDirectory(prefix=".task-search-test-", dir=ROOT) as root:
@@ -220,6 +230,7 @@ def test_sandboxed_validation_does_not_receive_named_credential(monkeypatch):
     assert results[0]["exit_code"] == 0
 
 
+@needs_bwrap
 def test_the_worker_is_told_no_path_that_describes_this_machine(tmp_path):
     """Two runs of one trial on two machines should differ by the work, not the paths.
 
@@ -256,6 +267,7 @@ def test_the_worker_is_told_no_path_that_describes_this_machine(tmp_path):
     assert handed == []
 
 
+@needs_bwrap
 def test_agy_keeps_the_real_home_because_it_authenticates_through_it(tmp_path):
     """Stated in a test rather than discovered when an AGY wave lands nothing."""
     worktree = tmp_path / "worktree"
