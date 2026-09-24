@@ -108,14 +108,18 @@ def strip_variant(target, name):
     def declassify(match):
         return match.group(1) if prepr_task_name(match.group(0)) == name else match.group(0)
 
+    # The name as a token, not a substring: `graph_v1` must not rewrite `graph_v10` or
+    # `subgraph_v1`. A leading underscore still matches, as in `test_graph_v1`.
+    whole = re.compile(rf"(?<![A-Za-z0-9]){re.escape(name)}(?![0-9])")
+
     for path in sorted(target.rglob("*"), key=lambda p: len(p.parts), reverse=True):
         if path.suffix in TEXT:
             body = path.read_text()
-            rewritten = CLASS_VARIANT.sub(declassify, body.replace(name, base))
+            rewritten = CLASS_VARIANT.sub(declassify, whole.sub(base, body))
             if rewritten != body:
                 path.write_text(rewritten)
-        if name in path.name:
-            path.rename(path.with_name(path.name.replace(name, base)))
+        if whole.search(path.name):
+            path.rename(path.with_name(whole.sub(base, path.name)))
 
 
 # What the package already answered to before this run copied anything. Two waves do

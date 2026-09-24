@@ -103,6 +103,8 @@ SAMPLE_EXAMPLES = 2
 
 SAMPLE_PROMPT_CHARS = 100
 
+ANSWER_LINE = re.compile(r"[\s#>*_-]*(?:gold\s+|expected\s+)?answer\b")
+
 
 def sample_shortfall(body):
     """Which required levels does the samples file not actually show twice, with prompts?
@@ -125,10 +127,13 @@ def sample_shortfall(body):
     for index, (position, level) in enumerate(hits):
         end = hits[index + 1][0] if index + 1 < len(hits) else len(body)
         section = body[position:end]
-        counts[level] += section.count("answer")
+        lines = section.splitlines()
+        # Answer markers, not the word: most prompts say "the answer is ...", which made one
+        # example per level count as two.
+        counts[level] += sum(bool(ANSWER_LINE.match(line)) for line in lines)
         prompts = [
             line
-            for line in section.splitlines()
+            for line in lines
             if not line.lstrip().startswith(("#", "answer", "**answer"))
         ]
         chars[level] += len(re.sub(r"\s", "", "".join(prompts)))
@@ -629,8 +634,10 @@ for offset, (module_name, class_name) in enumerate(classes):
         module_name, class_name,
         "validate() never reached Task.validate: a task may extend it by calling"
         " super().validate(...), it may not replace it")
+    entries = []
     for sample in range(64):
         entry = task.generate_example()
+        entries.append(entry)
         assert task.score_answer(entry.answer, entry) == 1, (
             module_name, class_name, sample, "gold answer rejected")
         for bad in ("", " ", "reajrjrje9595!"):
@@ -649,6 +656,19 @@ for offset, (module_name, class_name) in enumerate(classes):
             if shadowed:
                 print(f"SHADOWED_METADATA {module_name}.{class_name}"
                       f" {', '.join(shadowed)}")
+
+    # A well-formed answer to another instance is the likeliest wrong answer a model gives,
+    # and junk strings do not reach the parser paths it does: parallel_copy_sequentialization
+    # raised KeyError on a register the instance lacked. Scoring it must return, not raise.
+    for index, entry in enumerate(entries):
+        for other in entries[index + 1:index + 9]:
+            try:
+                task.score_answer(other.answer, entry)
+            except Exception as error:
+                raise AssertionError((
+                    module_name, class_name, index,
+                    f"score_answer raised {type(error).__name__}: {error} on another"
+                    f" instance's answer {str(other.answer)[:80]!r}")) from error
 
     # Every gate above audits generate_example; every consumer calls
     # generate_balanced_batch. That seam has already produced false rejections in the
@@ -743,7 +763,10 @@ def _run_contract_audit(
 
 
 # Worker-facing self-check uses the same gates and constants as the coordinator.
-DEADLINE = time.monotonic() + 240
+SELFCHECK_SECONDS = 240
+# Reset when the self-check starts: set at import, the budget ran from whenever the
+# coordinator first imported this module.
+DEADLINE = time.monotonic() + SELFCHECK_SECONDS
 
 CONTRACT_EXAMPLES = 64
 
@@ -843,6 +866,8 @@ def selfcheck_main(argv=None):
     parser.add_argument("trial_id")
     parser.add_argument("--n", type=int, default=30, help="gameability sample count")
     args = parser.parse_args(argv)
+    global DEADLINE
+    DEADLINE = time.monotonic() + SELFCHECK_SECONDS
     owned, trial = args.owned_path.rstrip("/"), args.trial_id
     generator = f"{owned}/generate_samples_{trial}.py"
     samples = Path(owned) / f"samples_{trial}.md"

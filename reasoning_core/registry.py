@@ -290,10 +290,10 @@ def task_catalog(query="", include_generated=False, include_mutated=False, inclu
 
 
 def get_score_answer_fn(task_name, *args, **kwargs):
-    task_name = match_task_name(task_name)
+    task_name = match_task_name(task_name, include_dev=True)
     if task_name in COLLECTIONS:
         return get_task(task_name).score_answer
-    scorer = DATASETS[task_name].score_answer
+    scorer = (DATASETS if task_name in DATASETS else DEV_DATASETS)[task_name].score_answer
     return lambda answer, entry: scorer(SelfMock(), answer, entry)
 
 

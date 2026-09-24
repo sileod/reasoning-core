@@ -81,7 +81,10 @@ def _parse_answer(answer):
 
 
 def _compare_answer(answer, entry):
-    parsed = _parse_answer(answer)
+    try:
+        parsed = _parse_answer(answer)
+    except ValueError:  # malformed range or transfer spec is a wrong answer, not a crash
+        return 0.0
     if parsed is None:
         return 0.0
     moved, unchanged = parsed
@@ -97,7 +100,7 @@ class ConsistentHashRingChurn(Task):
     summary = "Place keys and nodes at given ring positions with successor ownership, process node joins and failures, and answer which key ranges move and each key's new owner while untouched ranges stay put."
     design_choice = "Represent keys as contiguous ranges with variable lengths, so moves are reported per range, and untouched ranges are explicitly listed as unchanged."
     config_cls = ConsistentHashRingChurnV2Config
-    task_version = 2
+    task_version = 3
 
     def generate_entry(self):
         cfg = self.config

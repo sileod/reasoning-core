@@ -13,6 +13,7 @@ from reasoning_core import list_tasks, get_task
 import numpy as np
 
 MEM_LIMIT_GB, MEM_WARN_RATIO = 50, 0.8
+STALE_LOCK_S = 6 * 3600
 def get_rss_gb():
     try:
         with open('/proc/self/status') as f:
@@ -79,7 +80,11 @@ def run_task(name, idx, level, out_path, batch_size, max_tokens):
         # JSON serializable') left a 0-byte .jsonl indistinguishable from a real empty batch --
         # and because the file existed, the worker never retried that batch.
         payload = ''.join(json.dumps(serialize_example(x)) + '\n' for x in examples)
-        (Path(out_path) / f'{name}-{idx}.jsonl').write_text(payload)
+        # Atomic: a worker killed mid-write must not leave a partial file that exists() skips.
+        final = Path(out_path) / f'{name}-{idx}.jsonl'
+        staged = final.with_suffix(f'.{os.getpid()}.tmp')
+        staged.write_text(payload)
+        os.replace(staged, final)
         log_batch(out_path, name, level, dt, len(examples), 'OK')
         return True, 'OK'
     except Exception as e:
@@ -108,12 +113,13 @@ def main(args):
                 lock_f = out_path / f'{d_name}-{idx}.lock'
 
                 if final_f.exists(): continue
-                # Clean stale locks (older than 900s = before worker timeout)
+                # A lock is stale only once no batch could still be running under it: the
+                # per-example timeout grows with level and retries, so a fixed 900s was not.
                 if lock_f.exists():
                     try:
-                        if time.time() - lock_f.stat().st_mtime > 900: lock_f.unlink()
+                        if time.time() - lock_f.stat().st_mtime > STALE_LOCK_S: lock_f.unlink()
                         else: continue
-                    except: continue
+                    except OSError: continue
 
                 try:
                     fd = os.open(lock_f, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -121,7 +127,6 @@ def main(args):
                 except OSError:
                     continue
 
-                claimed_any = True
                 max_l = max(args.levels)
 
                 custom_max = {
@@ -136,7 +141,12 @@ def main(args):
                      max_l = min(max_l, custom_max[d_name])
 
 
-                level = random.choice([l for l in args.levels if l <= max_l])
+                allowed = [l for l in args.levels if l <= max_l]
+                if not allowed:
+                    lock_f.unlink()
+                    continue
+                claimed_any = True
+                level = random.choice(allowed)
                 task_str = f"{d_name}-{level}"
                 t0 = time.time()
                 status_file.write_text(f"Worker {args.id:>3} | {task_str:<40} | running | Done: {tasks_done:<5} | ts:{int(t0)}")
@@ -153,7 +163,8 @@ def main(args):
                     with open(error_log, 'a') as f:
                         f.write(f"Worker {args.id} | {task_str}: CRASH: {type(e).__name__}: {e}\n")
                 finally:
-                    if lock_f.exists(): lock_f.unlink()
+                    try: lock_f.unlink()
+                    except FileNotFoundError: pass
 
             if not claimed_any: break
     finally:

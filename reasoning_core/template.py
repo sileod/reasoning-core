@@ -133,8 +133,10 @@ class Task:
     _distractor_saturation_patience = 8
 
     def __init_subclass__(cls):
-        cls.task_name = getattr(cls, 'task_name', prepr_task_name(cls.__name__))
-        cls.category_name = getattr(cls, 'category_name', cls.__module__.split('.')[-1])
+        # Read the class's own namespace: getattr would inherit a parent's name, so every
+        # DevTask became "dev_task" and a subclass of a task overwrote its parent's entry.
+        cls.task_name = vars(cls).get('task_name', prepr_task_name(cls.__name__))
+        cls.category_name = vars(cls).get('category_name', cls.__module__.split('.')[-1])
         register_dataset(cls.task_name, cls)
 
 
@@ -149,6 +151,9 @@ class Task:
         self.task_name = prepr_task_name(self.__class__.task_name)
         for k,v in kwa.items():
             setattr(self.config, k, v)
+        if kwa and hasattr(self.config, "_base_config_dict"):
+            # set_level restores the base snapshot, so overrides must live in it too.
+            self.config._base_config_dict.update(copy.deepcopy(kwa))
         self.balancing_key_ratio = 0.5
         self.tokenizer = _load_tokenizer()
         self._config_level_seen = getattr(self.config, "level", None)
@@ -444,13 +449,13 @@ class Task:
                     # unchanged -- only the reported metric is fixed.
                     _cot = problem.metadata.get('cot','') or ''
                     cot_tokens = len(self.tokenizer.encode(_cot))
-                    answer_tokens = len(self.tokenizer.encode(problem.answer))
+                    answer_tokens = len(self.tokenizer.encode(str(problem.answer)))
                     # the FILTER keeps the original expression verbatim -- tok(cot+answer) is not
                     # tok(cot)+tok(answer) (tokenizers merge across the join), so recomputing it from
                     # the parts would shift the threshold and change which examples are kept.
                     if max_tokens and prompt_tokens > max_tokens:
                         continue
-                    if max_tokens and len(self.tokenizer.encode(_cot + problem.answer)) > max_tokens:
+                    if max_tokens and len(self.tokenizer.encode(_cot + str(problem.answer))) > max_tokens:
                         continue
                     break
                 else:
@@ -566,7 +571,8 @@ class Task:
 class DevTask(Task):
     """Task subclass for development/experimental tasks that won't be auto-registered."""
     def __init_subclass__(cls):
-        cls.task_name = getattr(cls, 'task_name', prepr_task_name(cls.__name__))
+        cls.task_name = vars(cls).get('task_name', prepr_task_name(cls.__name__))
+        cls.category_name = vars(cls).get('category_name', cls.__module__.split('.')[-1])
         # Don't call register_dataset - skip auto-registration
 
 

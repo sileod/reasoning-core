@@ -52,6 +52,10 @@ dependencies = [
     "psutil",
     "nfsdict",
     "xxhash",
+    "problog",
+    "inflect",
+    "babel",
+    "lark",
 ]
 
 [project.optional-dependencies]

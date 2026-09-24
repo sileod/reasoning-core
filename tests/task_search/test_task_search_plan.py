@@ -154,6 +154,9 @@ def test_plan_problems_are_the_ones_check_used_to_miss():
     fail to read, and a base_ref that names nothing.
     """
     plan = load_plan(PLAN)
+    if subprocess.run(["git", "cat-file", "-e", f"{plan.base_ref}^{{commit}}"], cwd=ROOT,
+                      capture_output=True).returncode:
+        pytest.skip(f"base_ref {plan.base_ref} is not in this clone (shallow checkout)")
     assert _plan_problems(plan, ROOT) == []
 
     misplaced = dataclasses.replace(

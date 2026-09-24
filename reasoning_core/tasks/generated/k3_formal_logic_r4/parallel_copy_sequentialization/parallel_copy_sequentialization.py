@@ -180,6 +180,10 @@ def _verify(transfers, moves, n_regs):
             a, b = m.split("=")
         da = n_regs if a == "t" else int(a[1:])
         sb = n_regs if b == "t" else int(b[1:])
+        # A register outside the instance is a wrong answer, not a crash; r{n_regs} would
+        # otherwise alias the scratch slot t.
+        if (a != "t" and da >= n_regs) or (b != "t" and sb >= n_regs):
+            return False
         val[da] = val[sb]
     for d, s in transfers.items():
         if val[d] != s:
@@ -199,7 +203,7 @@ class ParallelCopySequentialization(Task):
         "only the final contents of a designated scratch register as an integer."
     )
     config_cls = ParallelCopySequentializationConfig
-    task_version = 2
+    task_version = 3
 
     def generate_entry(self):
         n_regs = self.config.n_regs
@@ -274,7 +278,7 @@ def _parse_moves(s):
         p = p.strip()
         if not p:
             continue
-        if "=" not in p:
+        if p.count("=") != 1:
             return None
         a, b = p.split("=")
         a = a.strip()
