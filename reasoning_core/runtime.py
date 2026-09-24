@@ -107,6 +107,15 @@ def validation_store():
     return NfsDict(name="examples", base_dir=base_dir, serializer="json")
 
 
+def _process_clock():
+    """Now, on the clock psutil's create_time uses (boot time + uptime on Linux)."""
+    try:
+        with open("/proc/uptime") as uptime:
+            return _psutil().boot_time() + float(uptime.read().split()[0]) - 0.01
+    except (OSError, ValueError):
+        return time.time()
+
+
 class TimeoutException(TimeoutError):
     pass
 
@@ -133,6 +142,9 @@ def timeout_retry(seconds=15, attempts=10):
                     return
                 raise TimeoutException()
 
+            # Only processes this call spawned are ours to kill on timeout; anything the
+            # caller already ran (pool workers, dataloaders, a notebook's kernels) is not.
+            started = _process_clock()
             for attempt in range(1, attempts + 1):
                 if on_main:
                     old_handler = signal.signal(signal.SIGALRM, handler)
@@ -146,7 +158,8 @@ def timeout_retry(seconds=15, attempts=10):
                     if on_main:
                         signal.alarm(0)
                     try:
-                        children = _psutil().Process().children(recursive=True)
+                        children = [child for child in _psutil().Process().children(recursive=True)
+                                    if child.create_time() >= started]
                         for child in children:
                             child.kill()
                         _psutil().wait_procs(children, timeout=1)
