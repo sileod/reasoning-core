@@ -106,14 +106,6 @@ Go from a single example to large pre-training, post-training, and evaluation co
   year={2026},
   url={https://arxiv.org/abs/2608.05148}
 }
-
-@article{reasoningcore2026,
-  title={Reasoning Core: A Scalable Procedural Data Generation Suite for Symbolic Pre-training and Post-Training},
-  author={Lacombe, Valentin and Quesnel, Valentin and Sileo, Damien},
-  journal={arXiv preprint arXiv:2603.02208},
-  year={2026},
-  url={https://arxiv.org/abs/2603.02208}
-}
 ```
-https://arxiv.org/abs/2608.05148 · https://arxiv.org/abs/2603.02208  
+https://arxiv.org/abs/2608.05148  
 Contact: damien.sileo@inria.fr

@@ -84,12 +84,4 @@ If you use this environment, cite the Reasoning Core paper:
   year={2026},
   url={https://arxiv.org/abs/2608.05148}
 }
-
-@article{reasoningcore2026,
-  title={Reasoning Core: A Scalable Procedural Data Generation Suite for Symbolic Pre-training and Post-Training},
-  author={Lacombe, Valentin and Quesnel, Valentin and Sileo, Damien},
-  journal={arXiv preprint arXiv:2603.02208},
-  year={2026},
-  url={https://arxiv.org/abs/2603.02208}
-}
 ```
