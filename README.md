@@ -99,6 +99,14 @@ Go from a single example to large pre-training, post-training, and evaluation co
 ## Citation and paper
 
 ```bibtex
+@article{sileo2026reasoning,
+  title={Reasoning Core: Designing Broad Procedural Data for Completion-Supervised Reasoning Training},
+  author={Sileo, Damien and Lacombe, Valentin and Kachler, Dimitri},
+  journal={arXiv preprint arXiv:2608.05148},
+  year={2026},
+  url={https://arxiv.org/abs/2608.05148}
+}
+
 @article{reasoningcore2026,
   title={Reasoning Core: A Scalable Procedural Data Generation Suite for Symbolic Pre-training and Post-Training},
   author={Lacombe, Valentin and Quesnel, Valentin and Sileo, Damien},
@@ -107,5 +115,5 @@ Go from a single example to large pre-training, post-training, and evaluation co
   url={https://arxiv.org/abs/2603.02208}
 }
 ```
-https://arxiv.org/abs/2603.02208  
+https://arxiv.org/abs/2608.05148 · https://arxiv.org/abs/2603.02208  
 Contact: damien.sileo@inria.fr

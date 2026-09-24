@@ -77,6 +77,14 @@ health information at `/health`, and the persistent environment API at `/ws`.
 If you use this environment, cite the Reasoning Core paper:
 
 ```bibtex
+@article{sileo2026reasoning,
+  title={Reasoning Core: Designing Broad Procedural Data for Completion-Supervised Reasoning Training},
+  author={Sileo, Damien and Lacombe, Valentin and Kachler, Dimitri},
+  journal={arXiv preprint arXiv:2608.05148},
+  year={2026},
+  url={https://arxiv.org/abs/2608.05148}
+}
+
 @article{reasoningcore2026,
   title={Reasoning Core: A Scalable Procedural Data Generation Suite for Symbolic Pre-training and Post-Training},
   author={Lacombe, Valentin and Quesnel, Valentin and Sileo, Damien},
