@@ -60,7 +60,13 @@ def stochastic_rounding(value, seed=_ROUNDING_SEED_UNSET):
     if seed is _ROUNDING_SEED_UNSET:
         seed = _ROUNDING_SEED.get()
     floor_val = int(value)
-    return floor_val + (1 if random.Random(seed).random() < (value - floor_val) else 0)
+    frac = value - floor_val
+    if not frac:
+        return floor_val  # no draw: an integral value must not advance the RNG (level 0 stays put)
+    # random.Random(None) seeds from os.urandom, so a seedless task rounded differently on every
+    # run and random.seed() could not pin it; the global RNG can be pinned.
+    rng = random if seed is None else random.Random(seed)
+    return floor_val + (1 if rng.random() < frac else 0)
 
 
 

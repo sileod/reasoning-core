@@ -32,7 +32,7 @@ IGNORED = DEPRECATED | {"reasonining_gym", "count_elements"}
 # roster by name (its file stays put, so its module path and identity do not change), and a
 # retired task leaves list_tasks() while staying loadable for the data already measured on it.
 PROMOTED = {"rule_switching", "finite_automaton_execution", "shift_reduce_parsing",
-            "controlled_code_execution"}
+            "controlled_code_execution", "dynamic_programming"}
 RETIRED = {"code_execution"}  # superseded by controlled_code_execution: same influence, ~15x faster
 
 
