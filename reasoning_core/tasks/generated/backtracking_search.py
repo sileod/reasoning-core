@@ -124,8 +124,9 @@ def _render_constraint(c):
 
 
 class BacktrackingSearch(Task):
-    summary = "Report Xn from the first finite-domain solution under deterministic backtracking with forward checking."
+    summary = "Report the first finite-domain solution found by deterministic backtracking with forward checking."
     config_cls = BacktrackingSearchConfig
+    task_version = 1  # v1: answer the whole assignment; Xn alone was ~45% guessable as "1"
 
     def generate_entry(self):
         cfg = self.config
@@ -153,7 +154,7 @@ class BacktrackingSearch(Task):
                 continue
             if _count_csp_models(cfg.n_vars, cfg.domain_size, constraints) < 2:
                 continue
-            answer = str(model[cfg.n_vars - 1])
+            answer = " ".join(str(model[i]) for i in range(cfg.n_vars))
             metadata = edict(constraints=constraints, n_vars=cfg.n_vars, domain_size=cfg.domain_size, stats=stats)
             return Entry(metadata=metadata, answer=answer)
         raise RuntimeError("Failed to generate a nontrivial backtracking instance")
@@ -165,7 +166,7 @@ class BacktrackingSearch(Task):
             f"Constraints: {constraints}\n"
             "Search depth-first: assign X1..Xn in order; try remaining values ascending; "
             "after setting Xi, delete later-domain values violating a constraint with Xi; backtrack if a domain empties. "
-            "The answer is Xn's value in the first complete solution."
+            "The answer is the first complete solution: the values of X1..Xn in order, space-separated."
         )
 
     def score_answer(self, answer, entry):

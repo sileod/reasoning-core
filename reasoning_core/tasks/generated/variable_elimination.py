@@ -39,7 +39,8 @@ def _eliminate_rows(rows, n_eliminate):
     history = []
     for col in range(n_eliminate):
         pivot_i = next((i for i in range(col, len(rows)) if rows[i][col]), None)
-        if pivot_i is None:
+        # A swap renumbers rows the prompt never says moved, making "row t" ambiguous: reject.
+        if pivot_i != col:
             return None, history
         rows[col], rows[pivot_i] = rows[pivot_i], rows[col]
         pivot = rows[col]
@@ -69,6 +70,7 @@ def _equation_text(row, names):
 class VariableElimination(Task):
     summary = "Execute deterministic fraction-free elimination and report a compact residual equation."
     config_cls = VariableEliminationConfig
+    task_version = 1  # v1: no row swaps, so row numbers in the question match the prompt
 
     def generate_entry(self):
         cfg = self.config
@@ -100,7 +102,7 @@ class VariableElimination(Task):
         eliminated = ", ".join(metadata.names[:metadata.eliminate])
         return (
             f"Equations:\n{equations}\n"
-            f"Eliminate {eliminated} in that order. For each variable, use the first remaining equation with a nonzero coefficient as pivot. "
+            f"Eliminate {eliminated} in that order. For the k-th variable, equation k is the pivot. "
             "For every later row with coefficient b and pivot coefficient a, replace it by a*row - b*pivot; then divide the entire row by the gcd of its integer coefficients and make its first nonzero coefficient positive.\n"
             f"After these eliminations, what is row {metadata.target}? The answer is one simplified equation."
         )
