@@ -115,6 +115,7 @@ coin_selection
 collision_free_moment_extraction
 color_refinement_signature
 combinatorics_formula
+common_polyhedral_net
 comparator_zero_one_verification
 composed_lens_update
 compound_cue_weight_updates
@@ -616,6 +617,7 @@ regex_following
 regex_reasoning
 registration_waitlist_replay
 regular_language_counting
+reidemeister_reduction_plan
 relation_residuation
 relational_gadget_synthesis
 relational_join
