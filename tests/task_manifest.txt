@@ -399,6 +399,7 @@ linear_extension_count
 linear_recurrence
 linear_scan_register_allocation
 linearizability_check
+liquidity_range_updates
 ll1_predictive_parsing
 local_blowup_strict_transform
 local_interaction_energy_delta
@@ -502,6 +503,7 @@ online_multiplicative_weights
 online_nondeterminism_resolution
 open_addressing_slot
 optimality_theory_tableau_ranking
+orbital_impulse_rebaselining
 order_independent_tile_seeding
 ordered_greedy_coloring
 ordered_rule_surface_derivation
@@ -786,6 +788,7 @@ transformation_semigroup_closure
 transitive_reduction
 tree_axis_navigation
 tree_canonical_form
+tree_pair_group_product
 tree_pattern_occurrence_count
 tree_reconstruction
 tree_reroot_distances
