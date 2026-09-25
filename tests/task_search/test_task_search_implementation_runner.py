@@ -521,3 +521,52 @@ def test_the_runs_root_is_a_machine_setting_with_the_checkout_as_fallback(tmp_pa
     assert default_runs_root(repo) == tmp_path / ".reasoning_core-task-search"
     monkeypatch.setenv(RUNS_ROOT_VAR, str(tmp_path / "local"))
     assert default_runs_root(repo) == tmp_path / "local"
+
+
+def test_the_driver_commits_its_landing_and_nothing_else(tmp_path, monkeypatch):
+    """A dataset build syncs only from a clean tracked tree; the landing is the service's
+    to commit, and another session's staged work is not."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "run_implementors", Path(__file__).parents[2] / "scripts" / "run_implementors.py")
+    driver = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(driver)
+    for name, value in (("GIT_AUTHOR_NAME", "t"), ("GIT_AUTHOR_EMAIL", "t@t"),
+                        ("GIT_COMMITTER_NAME", "t"), ("GIT_COMMITTER_EMAIL", "t@t")):
+        monkeypatch.setenv(name, value)
+
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=tmp_path, check=True,
+                              capture_output=True, text=True).stdout
+
+    git("init", "-q")
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "task_manifest.txt").write_text("old_task\n")
+    (tmp_path / "other.py").write_text("a = 1\n")
+    git("add", ".")
+    git("commit", "-q", "-m", "base")
+    plans = tmp_path / "reasoning_core" / "task_search" / "plans"
+    (plans / "outcomes").mkdir(parents=True)
+    (plans / "w_r1.yaml").write_text("name: w_r1\n")
+    (plans / "outcomes" / "w_r1.yaml").write_text("P001v1: success\n")
+    task = tmp_path / "reasoning_core" / "tasks" / "generated" / "w_r1" / "new_task"
+    task.mkdir(parents=True)
+    (task / "new_task.py").write_text("x = 1\n")
+    (tmp_path / "tests" / "task_manifest.txt").write_text("new_task\nold_task\n")
+    (tmp_path / "other.py").write_text("a = 2\n")
+    git("add", "other.py")
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "w_r1.landed.json").write_text('{"landed": [{}], "skipped": []}')
+    monkeypatch.setattr(driver, "ROOT", tmp_path)
+    monkeypatch.setattr(driver, "PLANS", plans)
+
+    driver.commit_landing("w_r1", tmp_path / "logs")
+
+    assert git("log", "-1", "--format=%s").strip() == "land 1 task from w_r1 (implementor service)"
+    committed = set(git("show", "--name-only", "--format=", "HEAD").split())
+    assert committed == {"tests/task_manifest.txt",
+                         "reasoning_core/task_search/plans/w_r1.yaml",
+                         "reasoning_core/task_search/plans/outcomes/w_r1.yaml",
+                         "reasoning_core/tasks/generated/w_r1/new_task/new_task.py"}
+    assert git("diff", "--cached", "--name-only").split() == ["other.py"]

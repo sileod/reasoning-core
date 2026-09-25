@@ -255,7 +255,9 @@ also drops the ideas N plan trials have already failed at.
 
 `scripts/run_implementors.py` is that loop as a service: one wave at a time, `plan` then
 `run` then `land --apply`, sleeping when nothing is owed and picking up archives as the
-proposer writes them. It keeps no state, so it can be killed at any point.
+proposer writes them. It keeps no state, so it can be killed at any point. After each wave
+it commits that wave's tasks, plan, outcomes and the manifest, and only those paths, so the
+tracked tree stays clean for dataset builds; it never pushes.
 
 ```bash
 scripts/run_implementors.py --once --dry-run     # what it would do

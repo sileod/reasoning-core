@@ -19,6 +19,7 @@ Provider and credential come from the environment the CLI already reads
 (TASK_SEARCH_PROVIDER, TASK_SEARCH_KEY_ENV), so this stays provider-agnostic.
 """
 import argparse
+import json
 from collections import Counter
 from pathlib import Path
 import shutil
@@ -120,14 +121,60 @@ def steps(arguments, wave, name):
     return [("plan", build, True), ("run", run, False), ("land", land, True)]
 
 
+def commit_landing(name, log_dir, attempts=3):
+    """Commit what this wave wrote to tracked files, and nothing else.
+
+    `land` rewrites tests/task_manifest.txt, and a dataset build syncs only from a clean
+    tracked tree: twice in one day the build waited on a landing nobody had committed. The
+    commit names its paths, so anything else staged in this shared checkout stays staged
+    and uncommitted. It is local; pushing stays with whoever reviews the landings.
+    """
+    paths = [path for path in (Path("tests") / "task_manifest.txt",
+                               Path("reasoning_core") / "tasks" / "generated" / name,
+                               PLANS.relative_to(ROOT) / f"{name}.yaml",
+                               PLANS.relative_to(ROOT) / "outcomes" / f"{name}.yaml")
+             if (ROOT / path).exists()]
+    if not paths:
+        return
+    names = [str(path) for path in paths]
+    try:
+        landed = len(json.loads((log_dir / f"{name}.landed.json").read_text())["landed"])
+    except (OSError, ValueError, KeyError):
+        landed = 0
+    message = f"land {landed} task{'s' * (landed != 1)} from {name} (implementor service)"
+    for attempt in range(attempts):
+        subprocess.run(["git", "add", "--", *names], cwd=ROOT, capture_output=True)
+        if subprocess.run(["git", "diff", "--cached", "--quiet", "--", *names],
+                          cwd=ROOT).returncode == 0:
+            return
+        done = subprocess.run(["git", "commit", "-q", "-m", message, "--", *names],
+                              cwd=ROOT, capture_output=True, text=True)
+        if done.returncode == 0:
+            print(f"    commit ok: {message}", flush=True)
+            return
+        # Another session's commit holds index.lock for as long as NFS takes to write it.
+        if attempt + 1 < attempts:
+            time.sleep(60 * (attempt + 1))
+    tail = (done.stderr or done.stdout).strip().splitlines()
+    print(f"    commit FAILED: {tail[-1] if tail else 'no output'}", flush=True)
+
+
 def implement(arguments, wave, log_dir):
-    """Plan, run and land one wave. True unless a step failed."""
+    """Plan, run and land one wave, then commit it. True unless a step failed."""
     owed = still_owed(arguments, wave)
     if not owed:
         print("    nothing left to implement", flush=True)
         return True
     name = plan_name(wave, next_round(ROOT, wave))
     print(f"  {time.strftime('%H:%M')} {name}", flush=True)
+    try:
+        return _implement_steps(arguments, wave, name, log_dir)
+    finally:
+        if not arguments.dry_run:
+            commit_landing(name, log_dir)
+
+
+def _implement_steps(arguments, wave, name, log_dir):
     for label, command, decides in steps(arguments, wave, name):
         if arguments.dry_run:
             print(f"    would {label}: {' '.join(command[2:])}", flush=True)
