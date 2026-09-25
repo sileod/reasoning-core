@@ -526,6 +526,7 @@ partial_fraction_decomposition
 partial_identification_bounds
 partition_rim_strip_cancellation
 partitioned_block_surface_signatures
+path_intervention_world_consistency
 pattern_induction
 pattern_match_exhaustiveness
 paxos_chosen_value
