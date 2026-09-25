@@ -206,6 +206,7 @@ diagnostic_test_selection
 diff_patch_application
 difference_array2_d
 differential_form_pullback
+differential_shaft_propagation
 diffraction_motif_abduction
 dimensional_analysis
 dimensional_consistency

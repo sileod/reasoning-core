@@ -1,0 +1,75 @@
+version: 1
+name: ua_relevance_separation_r5
+proposal_wave: ua_relevance-separation
+defaults:
+  base_ref: cda5cb5ff40a9109c2ae860c7b65bae72218dfd8
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P002v1
+  v2:
+  - P002v2
+  v3:
+  - P002v3
+  pilot:
+  - P002v1
+trials:
+- id: P002v1
+  hypothesis: P002
+  idea: differential_shaft_propagation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v1
+  instruction: |-
+    Author a new task from scratch: differential_shaft_propagation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate exact rotations through external and internal gear meshes, shared shafts, planetary carriers, and clutch locks; return queried shaft motion or identify incompatible imposed rotations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v1
+  design_choice: 'Answer format: return the signed rotation count as a reduced fraction for each queried
+    shaft, or the string ''LOCKED'' if any loop constraint fails.'
+- id: P002v2
+  hypothesis: P002
+  idea: differential_shaft_propagation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v2
+  instruction: |-
+    Author a new task from scratch: differential_shaft_propagation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate exact rotations through external and internal gear meshes, shared shafts, planetary carriers, and clutch locks; return queried shaft motion or identify incompatible imposed rotations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v2
+  design_choice: 'Difficulty source: include a planetary stage where the carrier is driven by one shaft
+    and the sun/ring are coupled to others, forcing solvers to handle the Willis equation exactly.'
+- id: P002v3
+  hypothesis: P002
+  idea: differential_shaft_propagation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v3
+  instruction: |-
+    Author a new task from scratch: differential_shaft_propagation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Propagate exact rotations through external and internal gear meshes, shared shafts, planetary carriers, and clutch locks; return queried shaft motion or identify incompatible imposed rotations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relevance_separation_r5/differential_shaft_propagation_v3
