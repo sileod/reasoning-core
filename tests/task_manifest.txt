@@ -81,6 +81,7 @@ call_stack_trace
 candidate_key_minimality
 canonical_huffman
 canonical_huffman_code
+capstan_holding_bounds
 capture_recapture_unseen_mass
 cartesian_tree_construction
 case_government_assignment
@@ -556,6 +557,7 @@ planning_graph_mutex_expansion
 plucker_chart_transfer
 plural_predication_readings
 polarity_item_licensing
+polarization_projection_cascade
 policy_determination
 poly_euclid
 polygon_area_point_location
@@ -609,6 +611,7 @@ quorum_intersection
 quorum_read_write_resolution
 quotation_reference_composition
 raft_vote_eligibility
+ratchet_motion_rectification
 rate_limit_token_bucket
 rational_interval_arithmetic
 rational_plane_geometry
