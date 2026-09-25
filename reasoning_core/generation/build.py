@@ -332,16 +332,18 @@ def check_syntax(root=PACKAGE):
 
 
 def _oarsub(oarsub, name, walltime, logs, command, array=None, dry_run=False):
+    # OAR rejects '@' (in the Lille storage path) in -O/-E, so name the files relative to
+    # the logs directory and submit from there.
     argv = [oarsub, "-n", name, "-t", "besteffort", "-t", "idempotent",
             "-l", f"/nodes=1,walltime={walltime}",
-            "-O", str(logs / f"{name}.%jobid%.out"), "-E", str(logs / f"{name}.%jobid%.err")]
+            "-O", f"{name}.%jobid%.out", "-E", f"{name}.%jobid%.err"]
     if array:
         argv += ["--array", str(array)]
     argv.append(command)
-    print("$ " + shlex.join(argv), flush=True)
+    print(f"$ cd {shlex.quote(str(logs))} && " + shlex.join(argv), flush=True)
     if dry_run:
         return None
-    result = subprocess.run(argv, capture_output=True, text=True)
+    result = subprocess.run(argv, capture_output=True, text=True, cwd=logs)
     print(result.stdout + result.stderr, end="", flush=True)
     if result.returncode != 0 or "OAR_JOB_ID=" not in result.stdout:
         raise SystemExit(f"oarsub {name}: no job id (exit {result.returncode}); check oarstat before retrying")

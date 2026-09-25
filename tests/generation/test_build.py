@@ -115,8 +115,8 @@ def test_collect_uploads_the_version_folder(run, monkeypatch):
 def fake_oarsub(tmp_path):
     calls = tmp_path / "oarsub.calls"
     script = tmp_path / "oarsub"
-    script.write_text(f"#!{sys.executable}\nimport json, sys\n"
-                      f"open({str(calls)!r}, 'a').write(json.dumps(sys.argv[1:]) + '\\n')\n"
+    script.write_text(f"#!{sys.executable}\nimport json, os, sys\n"
+                      f"open({str(calls)!r}, 'a').write(json.dumps(sys.argv[1:] + [os.getcwd()]) + '\\n')\n"
                       "print('OAR_JOB_ID=42')\n")
     script.chmod(script.stat().st_mode | stat.S_IEXEC)
     return script, calls
@@ -130,6 +130,8 @@ def test_submit_queues_a_besteffort_array_and_a_collector(tmp_path, fake_oarsub)
          "--oarsub", str(oarsub)])
     gen, col = [json.loads(line) for line in calls.read_text().splitlines()]
     for argv in (gen, col):
+        cwd = argv.pop()  # OAR rejects '@' in -O/-E paths: bare names, submitted from logs/
+        assert cwd == str(run_dir / "logs") and "/" not in argv[argv.index("-O") + 1]
         assert argv.count("-t") == 2 and "besteffort" in argv and "idempotent" in argv
         assert f"--run-dir {run_dir}" in argv[-1] and "HOME=/storage" in argv[-1]
     assert gen[gen.index("--array") + 1] == "3" and " generate " in gen[-1]
@@ -141,7 +143,7 @@ def test_smoke_submit_is_one_small_node_without_upload(tmp_path, fake_oarsub):
     oarsub, calls = fake_oarsub
     run_dir = tmp_path / "runs" / "rcT"
     cli(["submit", "--run-dir", str(run_dir), "--version", "rcT", "--smoke", "--oarsub", str(oarsub)])
-    [gen] = [json.loads(line) for line in calls.read_text().splitlines()]
+    [gen] = [json.loads(line)[:-1] for line in calls.read_text().splitlines()]
     assert gen[gen.index("--array") + 1] == "1" and "walltime=1:00:00" in gen[gen.index("-l") + 1]
     manifest = build.load_manifest(tmp_path / "runs" / "rcT-smoke")
     assert manifest["version"] == "rcT-smoke" and manifest["rows_per_task"] == 2 * manifest["batch_size"]
