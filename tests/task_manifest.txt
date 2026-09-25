@@ -20,6 +20,7 @@ announcement_round_deduction
 answer_relevant_change
 antecedent_binding_legality
 antichain_progress
+antichain_progress_completion
 anyon_fusion_reassociation
 approval_voting_winner
 arc_consistency_reduction
@@ -33,6 +34,7 @@ articulation_bridges
 articulation_vertices
 aspectual_class_entailment
 asymptotic_cancellation_order
+attentional_blink_gating
 attribute_grammar_evaluation
 automaton_word_counting
 axis_separable_transitions
@@ -547,6 +549,7 @@ phase_change_equilibration
 phi_sensitive_ssa
 phylo_network_reconciliation
 pickup_delivery_route_search
+piece_table_provenance
 pipeline_hazard_trace
 pitch_class_prime_normal_forms
 pivot_rotation_fixture_building
