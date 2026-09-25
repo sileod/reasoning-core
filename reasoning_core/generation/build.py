@@ -119,6 +119,13 @@ def init(run_dir, version, roster=None, git_rev=None, **settings):
         if clash:
             raise SystemExit(f"{path} exists with different settings {clash}; "
                              "use a new version or run directory")
+        rev = git_rev or git_revision()
+        if rev and rev != manifest.get("git") and rev not in manifest.get("resumed_at", []):
+            # Resuming with newer code is allowed (hotfixes), but the run must say so: rows
+            # written after this point come from `rev`, not from the revision it started at.
+            print(f"warning: {path} started at {manifest.get('git')}, resuming at {rev}", flush=True)
+            manifest.setdefault("resumed_at", []).append(rev)
+            _write_manifest(path, manifest)
         return manifest
     from reasoning_core import list_tasks
     manifest = {
@@ -132,10 +139,14 @@ def init(run_dir, version, roster=None, git_rev=None, **settings):
     for sub in ("logs", "upload_state"):
         (Path(run_dir) / sub).mkdir(parents=True, exist_ok=True)
     data_dir(run_dir, manifest).mkdir(parents=True, exist_ok=True)
+    _write_manifest(path, manifest)
+    return manifest
+
+
+def _write_manifest(path, manifest):
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(manifest, indent=1) + "\n")
     os.replace(tmp, path)
-    return manifest
 
 
 def batch_jobs(manifest):

@@ -36,7 +36,9 @@ def rows(run_dir):
 def test_init_freezes_the_run_and_refuses_different_settings(run, tmp_path):
     manifest = build.load_manifest(run)
     assert manifest["tasks"] == TASKS and manifest["rows_per_task"] == 8
-    assert build.init(run, "rcT", rows_per_task=8) == manifest  # resubmit: no-op
+    assert build.init(run, "rcT", rows_per_task=8, git_rev=manifest["git"]) == manifest  # resubmit: no-op
+    resumed = build.init(run, "rcT", git_rev="newer")  # newer code may resume, on the record
+    assert resumed["resumed_at"] == ["newer"] and build.load_manifest(run)["resumed_at"] == ["newer"]
     with pytest.raises(SystemExit, match="different settings"):
         build.init(run, "rcT", rows_per_task=16)
     bad = tmp_path / "bad.txt"
