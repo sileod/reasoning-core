@@ -1,0 +1,134 @@
+version: 1
+name: ua_counterfactual_r5
+proposal_wave: ua_counterfactual
+defaults:
+  base_ref: 30073a8a1d8acd9aaa397f2097907cafc42dae31
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P008v1
+  v2:
+  - P001v2
+  - P008v2
+  v3:
+  - P001v3
+  - P008v3
+  pilot:
+  - P001v1
+  - P008v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: bounded_geometric_construction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v1
+  instruction: |-
+    Author a new task from scratch: bounded_geometric_construction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search straightedge-and-compass constructions using lines, circles and intersections from existing points under supplied move restrictions; reach designated exact targets and return a shortest construction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v1
+  design_choice: Instance targets are specified as exact algebraic points (e.g., cube root or golden ratio)
+    on a fixed grid, forcing non-trivial constructions rather than simple bisections.
+- id: P001v2
+  hypothesis: P001
+  idea: bounded_geometric_construction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v2
+  instruction: |-
+    Author a new task from scratch: bounded_geometric_construction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search straightedge-and-compass constructions using lines, circles and intersections from existing points under supplied move restrictions; reach designated exact targets and return a shortest construction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v2
+  design_choice: The move restriction is expressed as a forbidden operation (e.g., no circle-circle intersection),
+    making some classical constructions impossible and requiring alternative paths.
+- id: P001v3
+  hypothesis: P001
+  idea: bounded_geometric_construction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v3
+  instruction: |-
+    Author a new task from scratch: bounded_geometric_construction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Search straightedge-and-compass constructions using lines, circles and intersections from existing points under supplied move restrictions; reach designated exact targets and return a shortest construction.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r5/bounded_geometric_construction_v3
+- id: P008v1
+  hypothesis: P008
+  idea: event_time_intervention_sensitivity_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v1
+  instruction: |-
+    Author a new task from scratch: event_time_intervention_sensitivity_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perturb initial states or thresholds in piecewise-affine flows with guards and resets; propagate shifts in event times as well as states and return the exact one-sided sensitivity of a terminal quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v1
+  design_choice: Represent terminal quantity as the time of the last event, and return sensitivity of
+    that event time to an initial state component.
+- id: P008v2
+  hypothesis: P008
+  idea: event_time_intervention_sensitivity_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v2
+  instruction: |-
+    Author a new task from scratch: event_time_intervention_sensitivity_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perturb initial states or thresholds in piecewise-affine flows with guards and resets; propagate shifts in event times as well as states and return the exact one-sided sensitivity of a terminal quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v2
+  design_choice: Use a terminal linear combination of state variables at a fixed final clock time, and
+    return sensitivity of that scalar to a threshold parameter.
+- id: P008v3
+  hypothesis: P008
+  idea: event_time_intervention_sensitivity_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v3
+  instruction: |-
+    Author a new task from scratch: event_time_intervention_sensitivity_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Perturb initial states or thresholds in piecewise-affine flows with guards and resets; propagate shifts in event times as well as states and return the exact one-sided sensitivity of a terminal quantity.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_counterfactual_r5/event_time_intervention_sensitivity_v3

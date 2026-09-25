@@ -245,6 +245,7 @@ event_driven_gate_simulation
 event_order_reconstruction
 event_queue_simulation
 event_structure_residualization
+event_time_intervention_sensitivity
 evidence_reuse_equivalence
 evidential_felicity_verdicts
 exact_cover_selection
