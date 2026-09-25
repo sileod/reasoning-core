@@ -37,6 +37,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+import psutil
+
 REPO = Path(__file__).resolve().parents[2]
 PACKAGE = REPO / "reasoning_core"
 
@@ -186,8 +188,30 @@ def _claim(out, task, idx):
     return lock
 
 
+def _kill_children(pid):
+    """Kill every descendant of `pid`. Generators start helpers in their own session (the Lean
+    REPL), so they outlive a killed or exiting worker unless reaped here."""
+    try:
+        children = psutil.Process(pid).children(recursive=True)
+    except psutil.NoSuchProcess:
+        return
+    for child in children:
+        try:
+            child.kill()
+        except psutil.NoSuchProcess:
+            pass
+    psutil.wait_procs(children, timeout=5)
+
+
 def _work(run_dir, manifest, current, started, lifetime, mem_gb):
     """One worker process: claim and run batches until none is left or the lifetime is spent."""
+    try:
+        _work_loop(run_dir, manifest, current, started, lifetime, mem_gb)
+    finally:
+        _kill_children(os.getpid())
+
+
+def _work_loop(run_dir, manifest, current, started, lifetime, mem_gb):
     from reasoning_core.generation.worker import run_task
     if mem_gb:
         limit = int(mem_gb * 1024 ** 3)
@@ -253,6 +277,7 @@ def generate(run_dir, workers=None, lifetime=900, batch_timeout=1200, mem_gb=50,
             if proc is not None and proc.is_alive():
                 job_i = slot["current"].value
                 if job_i >= 0 and now - slot["started"].value > batch_timeout:
+                    _kill_children(proc.pid)
                     proc.kill()
                     proc.join()
                     task, idx = jobs[job_i]

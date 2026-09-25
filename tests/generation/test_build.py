@@ -85,6 +85,33 @@ def test_a_hung_batch_is_killed_and_eventually_given_up(run, monkeypatch):
     assert not list((run / "generated_data" / "rcT").glob("*.lock"))
 
 
+def _spawn_helper(pids, then):
+    """A generator that starts a helper in its own session, like the Lean REPL."""
+    def run_task(name, idx, level, out, *a, **k):
+        helper = subprocess.Popen(["sleep", "300"], start_new_session=True)
+        with open(pids, "a") as f:
+            f.write(f"{helper.pid}\n")
+        return then(Path(out) / f"{name}-{idx}.jsonl")
+    return run_task
+
+
+def _alive(pids):
+    import psutil
+    return [int(p) for p in pids.read_text().split()
+            if psutil.pid_exists(int(p)) and psutil.Process(int(p)).status() != psutil.STATUS_ZOMBIE]
+
+
+@pytest.mark.parametrize("then, timeout", [
+    (lambda path: (path.write_text("{}\\n"), (True, "ok"))[1], 1200),
+    (lambda path: time.sleep(60), 0.5)])
+def test_helpers_die_with_their_worker(run, monkeypatch, tmp_path, then, timeout):
+    # recycled after each batch (lifetime=0), or killed mid-batch (timeout 0.5s)
+    pids = tmp_path / "helpers"
+    monkeypatch.setattr(worker, "run_task", _spawn_helper(pids, then))
+    build.generate(run, workers=2, lifetime=0, batch_timeout=timeout, report_every=3600)
+    assert pids.read_text() and not _alive(pids)
+
+
 def test_a_worker_that_keeps_crashing_is_retired(run, monkeypatch):
     monkeypatch.setattr(worker, "run_task", lambda *a, **k: os._exit(3))
     done, _, _ = build.generate(run, workers=1, report_every=3600)  # must return, not spin
