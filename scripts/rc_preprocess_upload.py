@@ -171,6 +171,13 @@ def normalize_row(row):
     }
 
 
+def staging_files(args):
+    """Restrict staging to one build's folder; without it, every version ever collected is read."""
+    if not args.source_version:
+        return {}
+    return {"data_files": {"train": f"data/{args.source_version}/*.parquet"}}
+
+
 def source_iter(args):
     cache_dir = os.path.join(args.run_dir, "huggingface", "datasets")
     if args.source == "staging":
@@ -180,6 +187,7 @@ def source_iter(args):
             streaming=True,
             revision=args.source_revision,
             cache_dir=cache_dir,
+            **staging_files(args),
         )
         iterator = ds
     elif os.path.isfile(args.source):
@@ -219,6 +227,7 @@ def source_total(args):
             builder = load_dataset_builder(
                 "reasoning-core/staging",
                 revision=args.source_revision,
+                **staging_files(args),
                 cache_dir=os.path.join(args.run_dir, "huggingface", "datasets"),
             )
             split = builder.info.splits.get("train") if builder.info.splits else None
@@ -883,6 +892,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", default="staging")
     ap.add_argument("--source_revision", default=None)
+    ap.add_argument("--source_version", default=None,
+                    help="read only staging's data/<version>/ folder, as written by the G5K build")
     ap.add_argument("--dataset_name", default="procedural-pile")
     ap.add_argument("--work_root", default=os.path.join(os.environ.get("TMPDIR", os.path.expanduser("~/tmp")), "rc_streaming"))
     ap.add_argument("--resume_run_dir",
@@ -903,9 +914,9 @@ def main():
     ap.add_argument("--max_prompt_chars", type=int, default=50_000)
     ap.add_argument("--answer_pool_max_per_task", type=int, default=8192)
     ap.add_argument("--few_shot_pool_per_task", type=int, default=512)
-    ap.add_argument("--few_shot_ratio", type=float, default=0.07)
+    ap.add_argument("--few_shot_ratio", type=float, default=0.0)  # legacy mode, off since rc13
     ap.add_argument("--cot_ratio", type=float, default=0.0)
-    ap.add_argument("--verif_ratio", type=float, default=0.125)
+    ap.add_argument("--verif_ratio", type=float, default=0.0)  # legacy mode, off since rc13
     ap.add_argument("--test_ratio", type=float, default=0.01)
     ap.add_argument("--verif_max_tries", type=int, default=2)
     ap.add_argument("--verif_workers", type=int, default=6)

@@ -33,6 +33,8 @@ printf -v WORKER_ARGS '%q ' "${worker_args[@]}"
 [[ -z "$threads" ]] && threads=$(python3 -c "import math, os; print(math.ceil(os.cpu_count() * 0.4))")
 
 
+# Array nodes share script_dir; each passes its own JOBLOG so they don't interleave one file.
+JOBLOG="${JOBLOG:-$script_dir/generation.log}"
 STATUS_DIR="/dev/shm/gen_status_$$"
 trap 'rm -rf "$STATUS_DIR" "$HF_HOME" "$NUMBA_CACHE_DIR"' EXIT
 mkdir -p "$STATUS_DIR"
@@ -54,7 +56,7 @@ MEM_LIMIT_KB=$((50*1024*1024))  # 50GB in KB
 seq $((threads * 200)) | parallel \
   --workdir "$PWD" \
   -j"$threads" \
-  --joblog "$script_dir/generation.log" \
+  --joblog "$JOBLOG" \
   --line-buffer \
   'ulimit -v '"$MEM_LIMIT_KB"' 2>/dev/null; timeout --signal=KILL 1000 python -m reasoning_core.generation.worker --id {} --status_dir '"$STATUS_DIR"' --out_path "'"$script_dir"'/generated_data" '"$WORKER_ARGS"'' &
 
@@ -64,7 +66,7 @@ if [[ -z "$OAR_JOB_ID" && "$BATCH" -eq 0 ]]; then
   while ps -p $PARALLEL_PID > /dev/null; do
     clear
     curr_ts=$(date +%s); elapsed=$(( curr_ts - start_ts ))
-    errs=$(awk 'NR>1 && $7!=0' generation.log 2>/dev/null | wc -l)
+    errs=$(awk 'NR>1 && $7!=0' "$JOBLOG" 2>/dev/null | wc -l)
     echo "--- Dashboard | Elapsed: ${elapsed}s | Errors: ${errs} ---"
     for f in "$STATUS_DIR"/*; do
       [ -f "$f" ] || continue

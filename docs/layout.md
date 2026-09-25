@@ -5,7 +5,8 @@
 | `reasoning_core/tasks/`, core modules | Procedural generators, discovery, scoring contract |
 | `reasoning_core/evaluation/` | Zero-shot evaluation, metrics, batteries, intrinsic rewards, influence, composition |
 | `reasoning_core/evaluation/training/` | Data mixing, arm execution, optimization, checkpoints |
-| `reasoning_core/generation/` | Generation workers and collection |
+| `reasoning_core/generation/` | Generation workers and collection; `g5k/` submits a staging build |
+| `datasets/` | Hub dataset cards (source of truth) and their generated stats |
 | `reasoning_core/integrations/` | Optional Python adapters |
 | `reasoning_core/resources/` | Shipped data: battery manifests and frozen eval legs |
 | root `integrations/` | Independently packaged OpenEnv and Prime Intellect applications |

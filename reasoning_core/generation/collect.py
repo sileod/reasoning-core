@@ -23,6 +23,8 @@ def parse_args(argv=None):
     parser.add_argument("--batch", type=int, default=10_000)
     parser.add_argument("--num_proc", type=int, default=24)
     parser.add_argument("--version", default="*")
+    parser.add_argument("--prefix", default="data",
+                        help="repo folder for shards; data/<version> keeps each build separable")
     parser.add_argument("--delete", action=argparse.BooleanOptionalAction, default=True, help="Delete files after upload")
     return parser.parse_args(argv)
 
@@ -161,8 +163,8 @@ def _load_file(path):
             rows.append({**ex, **fields})
     return rows
 
-def upload_shard(files, bid, api, repo, num_proc):
-    shard = f"data/shard-{bid}.parquet"
+def upload_shard(files, bid, api, repo, num_proc, prefix="data"):
+    shard = f"{prefix.strip('/')}/shard-{bid}.parquet"
     if api.file_exists(repo_id=repo, filename=shard, repo_type="dataset"):
         print(f"  ↺ {shard} exists on hub"); return shard, None
 
@@ -219,6 +221,7 @@ def main(args):
     print(f"🕷️  collect → {repo}")
     print(f"   rc_path  = {args.rc_path}")
     print(f"   version  = {args.version}")
+    print(f"   prefix   = {args.prefix}")
     print(f"   batch    = {args.batch}")
     print(f"   num_proc = {args.num_proc}")
     print(f"   delete   = {args.delete}")
@@ -259,7 +262,7 @@ def main(args):
             if good:
                 print(f"🔄 Resuming {pid} ({len(good)} files)")
                 bid = batch_id(good)
-                shard, rows = upload_shard(good, bid, api, repo, args.num_proc)
+                shard, rows = upload_shard(good, bid, api, repo, args.num_proc, args.prefix)
                 mark_batch_done(state, good, shard, done, delete=args.delete)
                 d, b = stats(state, done, bad)
                 print(f"  ✓ {d} done, {b} bad" +
@@ -292,7 +295,7 @@ def main(args):
             d, b = stats(state, done, bad)
             print(f"\n📤 #{n} [{bid}] {len(batch_files):,} files  ({d} done, {b} bad)")
 
-            shard, rows = upload_shard(batch_files, bid, api, repo, args.num_proc)
+            shard, rows = upload_shard(batch_files, bid, api, repo, args.num_proc, args.prefix)
             mark_batch_done(state, batch_files, shard, done, delete=args.delete)
             if "__pending__" in state:
                 del state["__pending__"]

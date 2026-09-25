@@ -45,7 +45,7 @@ python -m reasoning_core sample arithmetics --count 3 --level 0 --output /tmp/rc
 ```
 
 This checks each reference answer scores 1, then writes JSONL with `prompt`,
-`answer`, `task`, `metadata`, and `cot`. The command prints the output path and row
+`answer`, `task`, and `metadata` (which holds `cot` where a task provides one). The command prints the output path and row
 count. Existing output files are refused; choose a new path for each run.
 Sampling uses each task's random generation and does not promise identical rows
 between runs. Preserve the generated file when comparing models.
@@ -54,7 +54,7 @@ For larger balanced batches, use `get_task(name).generate_balanced_batch(...)`.
 The production worker and Linux/GNU Parallel launcher are
 `reasoning_core/generation/worker.py` and `reasoning_core/generation/run_generate.sh`.
 Inspect worker options with `python -m reasoning_core.generation.worker --help`.
-Uploading is a separate operation: install `python -m pip install -e '.[collection]'`
+[release.md](release.md) covers the Grid'5000 build into staging and the pile. Uploading is a separate operation: install `python -m pip install -e '.[collection]'`
 and inspect `python -m reasoning_core.generation.collect --help`. Uploads require Hub
 credentials; the collector deletes uploaded input files by default (`--no-delete`
 preserves them).

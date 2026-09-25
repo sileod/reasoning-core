@@ -39,10 +39,11 @@ size_categories:
 
 Procedural Pile contains <!-- stat:n_rows -->30,161,594<!-- /stat --> problems from <!-- stat:n_tasks -->50<!-- /stat --> task families: arithmetic and equation systems, first-order logic, planning, graph search, grammars and regular expressions, SQL over tables, program execution, games, causal and probabilistic inference, theorem proving in Lean and Metamath, and more. Every answer is computed by a solver or checked by a verifier. None are written by a language model.
 
-Procedural Pile is designed for supervised fine-tuning and mid-training. It is not an RL environment that was later reused for SFT. In [the Reasoning Core paper](https://arxiv.org/abs/2608.05148), a 3B model trained on this data reaches the highest mean scores on DROP, LogiQA, and ARC-Challenge. It beats a matched baseline without procedural data, and it beats three other procedural collections: Reasoning Gym, SynLogic, and Procedural Warmup.
+Most procedural reasoning collections are built as RL environments. Procedural Pile is built as **training data**: for pretraining, mid-training, and supervised fine-tuning. Every task and difficulty range was kept because its measured effect as SFT data justified it. In [the Reasoning Core paper](https://arxiv.org/abs/2608.05148), a 3B model trained on this data reaches the highest mean scores on DROP, LogiQA, and ARC-Challenge. It beats a matched baseline without procedural data, and it beats three other procedural collections: Reasoning Gym, SynLogic, and Procedural Warmup.
 
-## What makes it good training data
+## Designed for SFT, and measured as SFT
 
+- **Measured SFT transfer.** Each task is fine-tuned in isolation, and its effect on held-out reasoning and on general text likelihood is measured. These measurements decide which tasks are kept, how difficult they are, and how their answers are written. They are not proxies such as solver accuracy or diversity scores.
 - **Broad structure, not surface variation.** Generators sample the underlying structure of each problem: expression trees, logical forms, grammars, and program structures. Planning and game tasks draw new rule systems, not just new instances of Blocksworld or tic-tac-toe.
 - **Compact, canonical targets.** Answers are short: a number, a label, a set, a plan, a proof step, a short program. When several answers are valid, one canonical answer is the training target. The token budget goes to more distinct problems, not to explanations. In the paper, step-by-step solver traces trained *worse* than the answers they compute.
 - **Calibrated difficulty.** Each task has a continuous difficulty knob mapped to its own parameters, such as derivation depth, plan length, or branching factor. Levels are tuned so that tasks stay learnable.
