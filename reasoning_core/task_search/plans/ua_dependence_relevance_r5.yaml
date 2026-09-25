@@ -1,0 +1,75 @@
+version: 1
+name: ua_dependence_relevance_r5
+proposal_wave: ua_dependence-relevance
+defaults:
+  base_ref: 8ede1132c95a2194717b6c2e3d58b023e0930a54
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P003v1
+  v2:
+  - P003v2
+  v3:
+  - P003v3
+  pilot:
+  - P003v1
+trials:
+- id: P003v1
+  hypothesis: P003
+  idea: heap_assertion_separability_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v1
+  instruction: |-
+    Author a new task from scratch: heap_assertion_separability_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate spatial assertions over bounded heaps using disjoint ownership and separating implication; vary aliasing, nested connectives, and empty ownership; answer truth or a witnessing heap split or extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v1
+  design_choice: 'Answer format: fixed binary truth value with no witness, forcing solvers to decide satisfiability
+    of the whole assertion over a given heap diagram.'
+- id: P003v2
+  hypothesis: P003
+  idea: heap_assertion_separability_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v2
+  instruction: |-
+    Author a new task from scratch: heap_assertion_separability_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate spatial assertions over bounded heaps using disjoint ownership and separating implication; vary aliasing, nested connectives, and empty ownership; answer truth or a witnessing heap split or extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v2
+  design_choice: 'Answer format: a canonical split string like ''left|right'' listing disjoint heap cells
+    owned by each side of a separating conjunction, with truth inferred from existence of such a split.'
+- id: P003v3
+  hypothesis: P003
+  idea: heap_assertion_separability_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v3
+  instruction: |-
+    Author a new task from scratch: heap_assertion_separability_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate spatial assertions over bounded heaps using disjoint ownership and separating implication; vary aliasing, nested connectives, and empty ownership; answer truth or a witnessing heap split or extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r5/heap_assertion_separability_v3
