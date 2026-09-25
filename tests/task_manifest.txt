@@ -287,6 +287,7 @@ fixpoint_iteration
 floor_quotient_blocks
 flow_path_decomposition
 fluent_persistence_windows
+focus_alternative_projection
 focus_particle_equivalence
 forecast_diagnostic_decomposition
 formal_concept_closure
@@ -561,6 +562,7 @@ polynomial_gcd
 polynomial_radical_consequence
 pooled_distinctness_reconstruction
 pooled_test_status_decode
+portmanteau_spellout
 poset_cover_query
 posix_acl_permission
 post_tag_system_evolution
