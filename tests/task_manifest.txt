@@ -693,6 +693,7 @@ simplicial_boundary_matrices
 simplicial_link_condition
 simplicial_operator_normalization
 simpson_reversal_detection
+singular_residue_lift_survival
 sir_vaccination_delta
 skip_list_search_path
 skyline_dominance_query
