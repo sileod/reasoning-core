@@ -250,6 +250,7 @@ exact_cover_selection
 exact_relabeling_tail_count
 exact_rounding_pipeline
 exact_verifier_set_evaluation
+exemplar_similarity_generalization
 expected_utility_choice
 experiment_garbling_order
 extensive_form_to_bimatrix
@@ -513,12 +514,14 @@ parsing_derivation
 partial_fraction_decomposition
 partial_identification_bounds
 partition_rim_strip_cancellation
+partitioned_block_surface_signatures
 pattern_induction
 pattern_match_exhaustiveness
 paxos_chosen_value
 pedigree_genotype_consistency
 penalty_recomputed_transport_assignment
 perceptron_update_trace
+perceptual_rivalry_adaptation
 periodic_density_equivalence
 periodic_weave_reconstruction
 permutation_interval_inflation
@@ -562,6 +565,7 @@ principal_type
 priority
 probability_tree
 probability_tree_marginal
+process_dissociation_routes
 process_state
 program_slice_dependencies
 program_synthesis
