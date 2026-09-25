@@ -1,0 +1,317 @@
+version: 1
+name: ua_cognitive_psychology_r4
+proposal_wave: ua_cognitive-psychology
+defaults:
+  base_ref: 7048a5643cd0dc402993fd7646cb5489562a4b2e
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: loss_coverage_equivalence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v1
+  instruction: |-
+    Author a new task from scratch: loss_coverage_equivalence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare coverage clauses with per-item and per-occurrence deductibles, aggregate caps, exclusions and limit reinstatement; decide whether reordered or regrouped descriptions yield identical payouts across loss histories.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v1
+  design_choice: Represent coverage as symbolic expressions with named clauses; solvers must verify equivalence
+    via algebraic normalization, not numeric simulation.
+- id: P001v2
+  hypothesis: P001
+  idea: loss_coverage_equivalence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v2
+  instruction: |-
+    Author a new task from scratch: loss_coverage_equivalence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare coverage clauses with per-item and per-occurrence deductibles, aggregate caps, exclusions and limit reinstatement; decide whether reordered or regrouped descriptions yield identical payouts across loss histories.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v2
+  design_choice: Present two insurance policy texts with shuffled clause order and reworded synonyms;
+    solvers answer 'same payout' or 'different' via semantic comparison.
+- id: P001v3
+  hypothesis: P001
+  idea: loss_coverage_equivalence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v3
+  instruction: |-
+    Author a new task from scratch: loss_coverage_equivalence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare coverage clauses with per-item and per-occurrence deductibles, aggregate caps, exclusions and limit reinstatement; decide whether reordered or regrouped descriptions yield identical payouts across loss histories.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/loss_coverage_equivalence_v3
+- id: P002v1
+  hypothesis: P002
+  idea: question_partition_equivalence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v1
+  instruction: |-
+    Author a new task from scratch: question_partition_equivalence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Polar, alternative and constituent questions over finite possible worlds, including coordinated and restricted questions; compute their induced answer partitions and decide whether they ask the same thing.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v1
+  design_choice: Represent worlds as bitstrings and questions as Boolean formulas; the answer is 'yes'
+    iff the two formulas induce identical partitions, with no need to enumerate worlds explicitly.
+- id: P002v2
+  hypothesis: P002
+  idea: question_partition_equivalence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v2
+  instruction: |-
+    Author a new task from scratch: question_partition_equivalence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Polar, alternative and constituent questions over finite possible worlds, including coordinated and restricted questions; compute their induced answer partitions and decide whether they ask the same thing.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v2
+  design_choice: Enumerate all worlds explicitly as small integers and compute partitions by evaluating
+    each question against each world; the answer is a canonical list of partition blocks, and equivalence
+    is determined by set equality.
+- id: P002v3
+  hypothesis: P002
+  idea: question_partition_equivalence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v3
+  instruction: |-
+    Author a new task from scratch: question_partition_equivalence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Polar, alternative and constituent questions over finite possible worlds, including coordinated and restricted questions; compute their induced answer partitions and decide whether they ask the same thing.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/question_partition_equivalence_v3
+- id: P003v1
+  hypothesis: P003
+  idea: redundant_signal_race_bounds_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v1
+  instruction: |-
+    Author a new task from scratch: redundant_signal_race_bounds_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Bound redundant-target response distributions under separate-channel racing without assuming independence; vary channel counts, time points, and missing probabilities; answer feasible intervals or violated bounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v1
+  design_choice: Generate bounds as closed-form intervals from per-channel survival functions sampled
+    at discrete time points, with missing channels treated as never finishing, and ask for min/max feasible
+    probability values.
+- id: P003v2
+  hypothesis: P003
+  idea: redundant_signal_race_bounds_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v2
+  instruction: |-
+    Author a new task from scratch: redundant_signal_race_bounds_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Bound redundant-target response distributions under separate-channel racing without assuming independence; vary channel counts, time points, and missing probabilities; answer feasible intervals or violated bounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v2
+  design_choice: Present a set of candidate race-model bounds (e.g., Miller, Grice, or union) and ask
+    the solver to select which are violated by a given joint distribution table, with answers as a sorted
+    list of violated bound names.
+- id: P003v3
+  hypothesis: P003
+  idea: redundant_signal_race_bounds_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v3
+  instruction: |-
+    Author a new task from scratch: redundant_signal_race_bounds_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Bound redundant-target response distributions under separate-channel racing without assuming independence; vary channel counts, time points, and missing probabilities; answer feasible intervals or violated bounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/redundant_signal_race_bounds_v3
+- id: P004v1
+  hypothesis: P004
+  idea: episodic_feature_binding_retrieval_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v1
+  instruction: |-
+    Author a new task from scratch: episodic_feature_binding_retrieval_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Retrieve feature-response bindings from prior episodes using stated overlap and recency rules; vary partial repetitions, overwritten bindings, and competing episodes; answer the retrieved response or conflict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v1
+  design_choice: Represent episodes as triples of (feature, value, response) and ask for the response
+    bound to a queried feature under a recency rule that selects the latest episode containing that feature,
+    with distractors in older episodes.
+- id: P004v2
+  hypothesis: P004
+  idea: episodic_feature_binding_retrieval_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v2
+  instruction: |-
+    Author a new task from scratch: episodic_feature_binding_retrieval_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Retrieve feature-response bindings from prior episodes using stated overlap and recency rules; vary partial repetitions, overwritten bindings, and competing episodes; answer the retrieved response or conflict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v2
+  design_choice: Represent episodes as (cue, feature, response) triples; answer requires applying a recency
+    rule when a feature appears in multiple episodes with different responses.
+- id: P004v3
+  hypothesis: P004
+  idea: episodic_feature_binding_retrieval_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v3
+  instruction: |-
+    Author a new task from scratch: episodic_feature_binding_retrieval_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Retrieve feature-response bindings from prior episodes using stated overlap and recency rules; vary partial repetitions, overwritten bindings, and competing episodes; answer the retrieved response or conflict.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/episodic_feature_binding_retrieval_v3
+- id: P005v1
+  hypothesis: P005
+  idea: visual_crowding_feature_pooling_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v1
+  instruction: |-
+    Author a new task from scratch: visual_crowding_feature_pooling_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover reported target features under stated spatial pooling rules; vary eccentricity-dependent neighborhoods, segmentation barriers, weighted flankers, and successive pooling stages; answer the perceived feature.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v1
+  design_choice: Answer as a canonical feature symbol (e.g., 'red' or '45deg') chosen from a fixed small
+    set, with the perceived feature derived by weighted averaging of target and flanker features within
+    a defined neighborhood.
+- id: P005v2
+  hypothesis: P005
+  idea: visual_crowding_feature_pooling_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v2
+  instruction: |-
+    Author a new task from scratch: visual_crowding_feature_pooling_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover reported target features under stated spatial pooling rules; vary eccentricity-dependent neighborhoods, segmentation barriers, weighted flankers, and successive pooling stages; answer the perceived feature.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v2
+  design_choice: Answer as a single integer index (0..k-1) into a predefined feature list, where the correct
+    index is computed by iterative pooling over successive stages, with each stage's neighborhood depending
+    on eccentricity and segmentation barriers.
+- id: P005v3
+  hypothesis: P005
+  idea: visual_crowding_feature_pooling_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v3
+  instruction: |-
+    Author a new task from scratch: visual_crowding_feature_pooling_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover reported target features under stated spatial pooling rules; vary eccentricity-dependent neighborhoods, segmentation barriers, weighted flankers, and successive pooling stages; answer the perceived feature.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_cognitive_psychology_r4/visual_crowding_feature_pooling_v3

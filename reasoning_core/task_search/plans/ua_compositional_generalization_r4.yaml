@@ -1,0 +1,718 @@
+version: 1
+name: ua_compositional_generalization_r4
+proposal_wave: ua_compositional-generalization
+defaults:
+  base_ref: 7c11382659a31fad78f5105fc6ebe94d8824b9e0
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  - P011v1
+  - P012v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  - P011v2
+  - P012v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  - P011v3
+  - P012v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: hysteresis_reversal_memory_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v1
+  instruction: |-
+    Author a new task from scratch: hysteresis_reversal_memory_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce reversal histories under return-point memory: close nested excursions, erase enclosed extrema, and saturate at stated bounds across alternating drives; return surviving extrema or the active branch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v1
+  design_choice: 'Answer format: return a canonical string listing surviving extrema in chronological
+    order, or the literal ''active'' when no extrema survive.'
+- id: P001v2
+  hypothesis: P001
+  idea: hysteresis_reversal_memory_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v2
+  instruction: |-
+    Author a new task from scratch: hysteresis_reversal_memory_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce reversal histories under return-point memory: close nested excursions, erase enclosed extrema, and saturate at stated bounds across alternating drives; return surviving extrema or the active branch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v2
+  design_choice: 'Input representation: encode the drive as a sequence of parenthesized reversal pairs
+    with explicit upper/lower bound markers, where nested groups denote excursions.'
+- id: P001v3
+  hypothesis: P001
+  idea: hysteresis_reversal_memory_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v3
+  instruction: |-
+    Author a new task from scratch: hysteresis_reversal_memory_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Reduce reversal histories under return-point memory: close nested excursions, erase enclosed extrema, and saturate at stated bounds across alternating drives; return surviving extrema or the active branch.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/hysteresis_reversal_memory_v3
+- id: P002v1
+  hypothesis: P002
+  idea: composed_lens_update_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v1
+  instruction: |-
+    Author a new task from scratch: composed_lens_update_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Push view edits backward through composed projection, renaming, pairing, and tagged-union lenses while preserving hidden source fields; return the revised source or a rejected update.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v1
+  design_choice: Represent the source as a nested record with hidden fields, and require the solver to
+    output the full updated record including unchanged hidden fields.
+- id: P002v2
+  hypothesis: P002
+  idea: composed_lens_update_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v2
+  instruction: |-
+    Author a new task from scratch: composed_lens_update_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Push view edits backward through composed projection, renaming, pairing, and tagged-union lenses while preserving hidden source fields; return the revised source or a rejected update.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v2
+  design_choice: Represent the update as a canonical lens-application call string (e.g., 'set(lens, value,
+    source)') and require the solver to output the equivalent source-level update call string.
+- id: P002v3
+  hypothesis: P002
+  idea: composed_lens_update_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v3
+  instruction: |-
+    Author a new task from scratch: composed_lens_update_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Push view edits backward through composed projection, renaming, pairing, and tagged-union lenses while preserving hidden source fields; return the revised source or a rejected update.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/composed_lens_update_v3
+- id: P003v1
+  hypothesis: P003
+  idea: chromatid_segment_ancestry_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v1
+  instruction: |-
+    Author a new task from scratch: chromatid_segment_ancestry_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track segment ancestry through reciprocal crossovers and directed gene-conversion tracts on labeled chromatids, with overlapping events and changing partners; return a queried chromatid or marker phase.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v1
+  design_choice: 'Answer format: return the full ordered haplotype string of a queried chromatid after
+    all events, with alleles as 0/1 and segment boundaries implicit in runs.'
+- id: P003v2
+  hypothesis: P003
+  idea: chromatid_segment_ancestry_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v2
+  instruction: |-
+    Author a new task from scratch: chromatid_segment_ancestry_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track segment ancestry through reciprocal crossovers and directed gene-conversion tracts on labeled chromatids, with overlapping events and changing partners; return a queried chromatid or marker phase.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v2
+  design_choice: 'Answer format: return the ancestry label (parental origin A or B) of a specific queried
+    marker position, given its coordinate and chromatid ID.'
+- id: P003v3
+  hypothesis: P003
+  idea: chromatid_segment_ancestry_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v3
+  instruction: |-
+    Author a new task from scratch: chromatid_segment_ancestry_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Track segment ancestry through reciprocal crossovers and directed gene-conversion tracts on labeled chromatids, with overlapping events and changing partners; return a queried chromatid or marker phase.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/chromatid_segment_ancestry_v3
+- id: P004v1
+  hypothesis: P004
+  idea: surface_seam_composition_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v1
+  instruction: |-
+    Author a new task from scratch: surface_seam_composition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sew labeled boundary arcs of polygonal surfaces with preserving or reversing orientation, including twists and self-seams; return boundary count, orientability, or Euler characteristic of a component.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v1
+  design_choice: Instances give a list of arc-label pairings with twist counts; answer is the number of
+    boundary components of the glued surface.
+- id: P004v2
+  hypothesis: P004
+  idea: surface_seam_composition_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v2
+  instruction: |-
+    Author a new task from scratch: surface_seam_composition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sew labeled boundary arcs of polygonal surfaces with preserving or reversing orientation, including twists and self-seams; return boundary count, orientability, or Euler characteristic of a component.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v2
+  design_choice: Instances give a set of polygonal faces with boundary edges labeled; answer is whether
+    the resulting surface is orientable (yes/no).
+- id: P004v3
+  hypothesis: P004
+  idea: surface_seam_composition_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v3
+  instruction: |-
+    Author a new task from scratch: surface_seam_composition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Sew labeled boundary arcs of polygonal surfaces with preserving or reversing orientation, including twists and self-seams; return boundary count, orientability, or Euler characteristic of a component.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/surface_seam_composition_v3
+- id: P005v1
+  hypothesis: P005
+  idea: nested_port_wiring_substitution_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v1
+  instruction: |-
+    Author a new task from scratch: nested_port_wiring_substitution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested wiring templates by grafting instances into ordered port boundaries, including reversed ports, repeated instances, and feedback; return a terminal's mate or closed-wire count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v1
+  design_choice: 'Answer as a canonical mate-path string: list port labels in traversal order from a given
+    terminal to its mate, with ''R'' marking reversed port crossings.'
+- id: P005v2
+  hypothesis: P005
+  idea: nested_port_wiring_substitution_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v2
+  instruction: |-
+    Author a new task from scratch: nested_port_wiring_substitution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested wiring templates by grafting instances into ordered port boundaries, including reversed ports, repeated instances, and feedback; return a terminal's mate or closed-wire count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v2
+  design_choice: Answer as an integer count of closed wires after substitution, where each feedback loop
+    contributes 1 and each open wire contributes 0, requiring full expansion to count.
+- id: P005v3
+  hypothesis: P005
+  idea: nested_port_wiring_substitution_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v3
+  instruction: |-
+    Author a new task from scratch: nested_port_wiring_substitution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand nested wiring templates by grafting instances into ordered port boundaries, including reversed ports, repeated instances, and feedback; return a terminal's mate or closed-wire count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/nested_port_wiring_substitution_v3
+- id: P006v1
+  hypothesis: P006
+  idea: wash_sale_basis_transport_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v1
+  instruction: |-
+    Author a new task from scratch: wash_sale_basis_transport_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Carry disallowed losses into replacement-lot basis across partial sales, overlapping wash windows, later resales, and ordered lot-selection rules; return recognized loss or a queried lot's adjusted basis.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v1
+  design_choice: 'Answer form: a single integer for recognized loss amount, with lot basis queried only
+    via a second optional parameter that toggles output mode.'
+- id: P006v2
+  hypothesis: P006
+  idea: wash_sale_basis_transport_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v2
+  instruction: |-
+    Author a new task from scratch: wash_sale_basis_transport_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Carry disallowed losses into replacement-lot basis across partial sales, overlapping wash windows, later resales, and ordered lot-selection rules; return recognized loss or a queried lot's adjusted basis.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v2
+  design_choice: 'Answer form: a compact canonical string like ''R<recognized>|B<lotID>:<basis>'' that
+    encodes both recognized loss and adjusted basis for a specified lot in one call.'
+- id: P006v3
+  hypothesis: P006
+  idea: wash_sale_basis_transport_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v3
+  instruction: |-
+    Author a new task from scratch: wash_sale_basis_transport_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Carry disallowed losses into replacement-lot basis across partial sales, overlapping wash windows, later resales, and ordered lot-selection rules; return recognized loss or a queried lot's adjusted basis.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/wash_sale_basis_transport_v3
+- id: P007v1
+  hypothesis: P007
+  idea: free_cumulant_recovery_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v1
+  instruction: |-
+    Author a new task from scratch: free_cumulant_recovery_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover free cumulants from supplied moments by removing contributions of noncrossing partitions; vary scalar and ordered mixed moments, returning a queried cumulant or missing moment.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v1
+  design_choice: Return the requested free cumulant as a reduced fraction in lowest terms, given integer
+    moments.
+- id: P007v2
+  hypothesis: P007
+  idea: free_cumulant_recovery_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v2
+  instruction: |-
+    Author a new task from scratch: free_cumulant_recovery_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover free cumulants from supplied moments by removing contributions of noncrossing partitions; vary scalar and ordered mixed moments, returning a queried cumulant or missing moment.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v2
+  design_choice: Return the missing moment value as an integer, derived from the cumulant-moment relation
+    with noncrossing partitions.
+- id: P007v3
+  hypothesis: P007
+  idea: free_cumulant_recovery_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v3
+  instruction: |-
+    Author a new task from scratch: free_cumulant_recovery_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover free cumulants from supplied moments by removing contributions of noncrossing partitions; vary scalar and ordered mixed moments, returning a queried cumulant or missing moment.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/free_cumulant_recovery_v3
+- id: P008v1
+  hypothesis: P008
+  idea: graph_rewriting_system_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v1
+  instruction: |-
+    Author a new task from scratch: graph_rewriting_system_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply graph rewriting rules with node matching and replacement, including dangling edges and negative application conditions; modes ask for the final graph, the number of rule applications, or whether a target subgraph appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v1
+  design_choice: Represent graphs as adjacency lists with labeled edges; final graph output is a canonical
+    sorted list of edges.
+- id: P008v2
+  hypothesis: P008
+  idea: graph_rewriting_system_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v2
+  instruction: |-
+    Author a new task from scratch: graph_rewriting_system_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply graph rewriting rules with node matching and replacement, including dangling edges and negative application conditions; modes ask for the final graph, the number of rule applications, or whether a target subgraph appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v2
+  design_choice: Use string-encoded graphs where nodes are integers and edges are pairs; answers are strings
+    like 'G1->G2' for rule sequences.
+- id: P008v3
+  hypothesis: P008
+  idea: graph_rewriting_system_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v3
+  instruction: |-
+    Author a new task from scratch: graph_rewriting_system_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply graph rewriting rules with node matching and replacement, including dangling edges and negative application conditions; modes ask for the final graph, the number of rule applications, or whether a target subgraph appears.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/graph_rewriting_system_v3
+- id: P009v1
+  hypothesis: P009
+  idea: simplest_surreal_separator_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v1
+  instruction: |-
+    Author a new task from scratch: simplest_surreal_separator_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate finite surreal cuts by finding the earliest-born number strictly between their left and right options; vary negative values, dyadic gaps, and nested cuts, returning the value or an invalid-cut finding.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v1
+  design_choice: Answer as a canonical surreal number string in birthday-normal form, e.g. '3/4', '-1/2',
+    '0', with explicit 'invalid' for non-gap cuts.
+- id: P009v2
+  hypothesis: P009
+  idea: simplest_surreal_separator_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v2
+  instruction: |-
+    Author a new task from scratch: simplest_surreal_separator_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate finite surreal cuts by finding the earliest-born number strictly between their left and right options; vary negative values, dyadic gaps, and nested cuts, returning the value or an invalid-cut finding.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v2
+  design_choice: Answer as the integer birthday of the simplest separator, plus a flag 'valid'/'invalid',
+    forcing solvers to compute birth order without emitting the value.
+- id: P009v3
+  hypothesis: P009
+  idea: simplest_surreal_separator_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v3
+  instruction: |-
+    Author a new task from scratch: simplest_surreal_separator_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate finite surreal cuts by finding the earliest-born number strictly between their left and right options; vary negative values, dyadic gaps, and nested cuts, returning the value or an invalid-cut finding.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/simplest_surreal_separator_v3
+- id: P010v1
+  hypothesis: P010
+  idea: fermionic_normal_ordering_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v1
+  instruction: |-
+    Author a new task from scratch: fermionic_normal_ordering_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Normalize products of fermionic creation and annihilation operators using anticommutation and contraction rules; vary repeated modes, nested products, and sums, returning the collected operator expression.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v1
+  design_choice: Answer as a canonical sum of uniquely ordered monomials with integer coefficients, where
+    each monomial lists creation operators before annihilation operators and modes in ascending order.
+- id: P010v2
+  hypothesis: P010
+  idea: fermionic_normal_ordering_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v2
+  instruction: |-
+    Author a new task from scratch: fermionic_normal_ordering_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Normalize products of fermionic creation and annihilation operators using anticommutation and contraction rules; vary repeated modes, nested products, and sums, returning the collected operator expression.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v2
+  design_choice: Answer as a single canonical string with operators sorted by a fixed mode order, applying
+    anticommutation signs and omitting zero terms, with coefficients as integers.
+- id: P010v3
+  hypothesis: P010
+  idea: fermionic_normal_ordering_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v3
+  instruction: |-
+    Author a new task from scratch: fermionic_normal_ordering_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Normalize products of fermionic creation and annihilation operators using anticommutation and contraction rules; vary repeated modes, nested products, and sums, returning the collected operator expression.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/fermionic_normal_ordering_v3
+- id: P011v1
+  hypothesis: P011
+  idea: rooted_tree_series_composition_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v1
+  instruction: |-
+    Author a new task from scratch: rooted_tree_series_composition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose formal series indexed by rooted trees by summing admissible cuts and forest contributions; vary branching, repeated subtrees, and nested composition, returning a queried tree coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v1
+  design_choice: Coefficient answer is a reduced fraction; instances vary by composing two series with
+    integer coefficients and querying a tree coefficient that forces nontrivial denominator cancellation.
+- id: P011v2
+  hypothesis: P011
+  idea: rooted_tree_series_composition_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v2
+  instruction: |-
+    Author a new task from scratch: rooted_tree_series_composition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose formal series indexed by rooted trees by summing admissible cuts and forest contributions; vary branching, repeated subtrees, and nested composition, returning a queried tree coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v2
+  design_choice: Answer is an integer; instances choose series so that all intermediate forest sums cancel
+    exactly, requiring solvers to track admissible cut multiplicities without modular arithmetic.
+- id: P011v3
+  hypothesis: P011
+  idea: rooted_tree_series_composition_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v3
+  instruction: |-
+    Author a new task from scratch: rooted_tree_series_composition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compose formal series indexed by rooted trees by summing admissible cuts and forest contributions; vary branching, repeated subtrees, and nested composition, returning a queried tree coefficient.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/rooted_tree_series_composition_v3
+- id: P012v1
+  hypothesis: P012
+  idea: iterated_integral_shuffle_expansion_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v1
+  instruction: |-
+    Author a new task from scratch: iterated_integral_shuffle_expansion_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand products of iterated integrals by interleaving their ordered integration words while retaining multiplicities; vary repeated letters and nested products, returning coefficients or the collected expansion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v1
+  design_choice: Return the expansion as a canonical sum of distinct words with integer coefficients,
+    sorted lexicographically, with like terms collected.
+- id: P012v2
+  hypothesis: P012
+  idea: iterated_integral_shuffle_expansion_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v2
+  instruction: |-
+    Author a new task from scratch: iterated_integral_shuffle_expansion_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand products of iterated integrals by interleaving their ordered integration words while retaining multiplicities; vary repeated letters and nested products, returning coefficients or the collected expansion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v2
+  design_choice: Return only the multiset of resulting words, omitting coefficients, so solvers must infer
+    multiplicities from interleaving counts.
+- id: P012v3
+  hypothesis: P012
+  idea: iterated_integral_shuffle_expansion_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v3
+  instruction: |-
+    Author a new task from scratch: iterated_integral_shuffle_expansion_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Expand products of iterated integrals by interleaving their ordered integration words while retaining multiplicities; vary repeated letters and nested products, returning coefficients or the collected expansion.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_compositional_generalization_r4/iterated_integral_shuffle_expansion_v3

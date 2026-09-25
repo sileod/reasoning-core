@@ -1,0 +1,255 @@
+version: 1
+name: ua_parsing_and_agreement_r4
+proposal_wave: ua_parsing-and-agreement
+defaults:
+  base_ref: 7048a5643cd0dc402993fd7646cb5489562a4b2e
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: synchronous_tuple_derivation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v1
+  instruction: |-
+    Author a new task from scratch: synchronous_tuple_derivation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute supplied derivations whose productions transform tuples of strings by permuting, interleaving, or wrapping components; track linked occurrences through nesting and return the requested output component.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v1
+  design_choice: Instances present the derivation as a sequence of named production rules applied to an
+    initial tuple; the answer is the final tuple after all rules, with components separated by a canonical
+    delimiter.
+- id: P001v2
+  hypothesis: P001
+  idea: synchronous_tuple_derivation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v2
+  instruction: |-
+    Author a new task from scratch: synchronous_tuple_derivation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute supplied derivations whose productions transform tuples of strings by permuting, interleaving, or wrapping components; track linked occurrences through nesting and return the requested output component.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v2
+  design_choice: The derivation includes nested parentheses that group components; the requested output
+    is a specific component referenced by its original index after multiple wrapping and interleaving
+    steps.
+- id: P001v3
+  hypothesis: P001
+  idea: synchronous_tuple_derivation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v3
+  instruction: |-
+    Author a new task from scratch: synchronous_tuple_derivation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Execute supplied derivations whose productions transform tuples of strings by permuting, interleaving, or wrapping components; track linked occurrences through nesting and return the requested output component.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/synchronous_tuple_derivation_v3
+- id: P002v1
+  hypothesis: P002
+  idea: switch_reference_chains_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v1
+  instruction: |-
+    Author a new task from scratch: switch_reference_chains_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign same-subject or different-subject linkers across clause chains with omitted subjects, coordinated subjects and designated comparison pivots; answers give the linker sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v1
+  design_choice: Vary chain length from 2 to 5 clauses, with answer as a string of 'S'/'D' per adjacent
+    clause pair.
+- id: P002v2
+  hypothesis: P002
+  idea: switch_reference_chains_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v2
+  instruction: |-
+    Author a new task from scratch: switch_reference_chains_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign same-subject or different-subject linkers across clause chains with omitted subjects, coordinated subjects and designated comparison pivots; answers give the linker sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v2
+  design_choice: Use either a fixed set of 3 pronouns (he/she/it) or 2 names per chain, forcing subject-tracking
+    without lexical overlap.
+- id: P002v3
+  hypothesis: P002
+  idea: switch_reference_chains_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v3
+  instruction: |-
+    Author a new task from scratch: switch_reference_chains_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Assign same-subject or different-subject linkers across clause chains with omitted subjects, coordinated subjects and designated comparison pivots; answers give the linker sequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/switch_reference_chains_v3
+- id: P003v1
+  hypothesis: P003
+  idea: case_stacking_realization_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v1
+  instruction: |-
+    Author a new task from scratch: case_stacking_realization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Realize stacked case on nested possessors and nominal modifiers under stated inheritance, boundary and suffix-fusion rules; answers give the ordered case exponents on a queried nominal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v1
+  design_choice: Vary the depth of the nominal stack from 1 to 4 possessors, with the queried nominal
+    placed at a random depth, requiring the solver to track inheritance order across all levels.
+- id: P003v2
+  hypothesis: P003
+  idea: case_stacking_realization_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v2
+  instruction: |-
+    Author a new task from scratch: case_stacking_realization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Realize stacked case on nested possessors and nominal modifiers under stated inheritance, boundary and suffix-fusion rules; answers give the ordered case exponents on a queried nominal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v2
+  design_choice: Introduce a boundary rule where a possessive suffix fuses with a preceding case exponent
+    only if the boundary is sonorant, otherwise the exponent is repeated, forcing the solver to apply
+    the fusion condition per boundary.
+- id: P003v3
+  hypothesis: P003
+  idea: case_stacking_realization_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v3
+  instruction: |-
+    Author a new task from scratch: case_stacking_realization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Realize stacked case on nested possessors and nominal modifiers under stated inheritance, boundary and suffix-fusion rules; answers give the ordered case exponents on a queried nominal.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/case_stacking_realization_v3
+- id: P004v1
+  hypothesis: P004
+  idea: suspended_affix_reconstruction_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v1
+  instruction: |-
+    Author a new task from scratch: suspended_affix_reconstruction_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover omitted morphology in coordinated words where prefixes or suffixes take shared scope; vary nested coordination, affix compatibility and suspension boundaries; answers give each conjunct's full form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v1
+  design_choice: Each instance presents a bare coordinated stem list (e.g., 'pre- and post-war') and the
+    answer is the full expanded forms of all conjuncts in fixed order.
+- id: P004v2
+  hypothesis: P004
+  idea: suspended_affix_reconstruction_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v2
+  instruction: |-
+    Author a new task from scratch: suspended_affix_reconstruction_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover omitted morphology in coordinated words where prefixes or suffixes take shared scope; vary nested coordination, affix compatibility and suspension boundaries; answers give each conjunct's full form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v2
+  design_choice: 'Vary the suspension type: prefix-sharing (e.g., ''over- and undercooked''), suffix-sharing
+    (e.g., ''walked and talk-ed''), or both, with a small label set for the type.'
+- id: P004v3
+  hypothesis: P004
+  idea: suspended_affix_reconstruction_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v3
+  instruction: |-
+    Author a new task from scratch: suspended_affix_reconstruction_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Recover omitted morphology in coordinated words where prefixes or suffixes take shared scope; vary nested coordination, affix compatibility and suspension boundaries; answers give each conjunct's full form.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_parsing_and_agreement_r4/suspended_affix_reconstruction_v3

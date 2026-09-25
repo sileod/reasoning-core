@@ -1,0 +1,547 @@
+version: 1
+name: ua_dependence_relevance_r4
+proposal_wave: ua_dependence-relevance
+defaults:
+  base_ref: 7048a5643cd0dc402993fd7646cb5489562a4b2e
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P008v1
+  - P009v1
+  - P010v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P008v2
+  - P009v2
+  - P010v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P008v3
+  - P009v3
+  - P010v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: ephemeron_liveness_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v1
+  instruction: |-
+    Author a new task from scratch: ephemeron_liveness_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve object retention with strong references, weak references, and ephemerons whose values survive only when both container and key survive; vary rooted cycles and chained activations; answer surviving objects.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v1
+  design_choice: Present a graph of objects with marked roots and edges; solver lists objects reachable
+    from roots after applying ephemeron value-retention rules to weak edges.
+- id: P001v2
+  hypothesis: P001
+  idea: ephemeron_liveness_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v2
+  instruction: |-
+    Author a new task from scratch: ephemeron_liveness_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve object retention with strong references, weak references, and ephemerons whose values survive only when both container and key survive; vary rooted cycles and chained activations; answer surviving objects.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v2
+  design_choice: Present a sequence of object creation and reference assignments ending in a snapshot;
+    solver states which objects are alive at the snapshot, given ephemeron semantics.
+- id: P001v3
+  hypothesis: P001
+  idea: ephemeron_liveness_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v3
+  instruction: |-
+    Author a new task from scratch: ephemeron_liveness_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Resolve object retention with strong references, weak references, and ephemerons whose values survive only when both container and key survive; vary rooted cycles and chained activations; answer surviving objects.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/ephemeron_liveness_v3
+- id: P002v1
+  hypothesis: P002
+  idea: gaussian_dependence_cancellation_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v1
+  instruction: |-
+    Author a new task from scratch: gaussian_dependence_cancellation_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine exact independence after observing and marginalizing variables in rational Gaussian systems; vary covariance and precision inputs, latent paths, and coefficient cancellations; answer queried relations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v1
+  design_choice: "Instances give a covariance matrix with symbolic rational entries and a query like 'X\u22A5\
+    Y|Z'; solvers compute whether the Schur complement entry is exactly zero and answer 'yes' or 'no'."
+- id: P002v2
+  hypothesis: P002
+  idea: gaussian_dependence_cancellation_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v2
+  instruction: |-
+    Author a new task from scratch: gaussian_dependence_cancellation_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine exact independence after observing and marginalizing variables in rational Gaussian systems; vary covariance and precision inputs, latent paths, and coefficient cancellations; answer queried relations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v2
+  design_choice: "Instances specify a precision matrix and a query involving marginalization (e.g., 'X\u22A5\
+    Y after summing out Z'); solvers derive the marginal covariance and check zero partial correlation,\
+    \ answering 'independent' or 'dependent'."
+- id: P002v3
+  hypothesis: P002
+  idea: gaussian_dependence_cancellation_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v3
+  instruction: |-
+    Author a new task from scratch: gaussian_dependence_cancellation_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine exact independence after observing and marginalizing variables in rational Gaussian systems; vary covariance and precision inputs, latent paths, and coefficient cancellations; answer queried relations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/gaussian_dependence_cancellation_v3
+- id: P003v1
+  hypothesis: P003
+  idea: heap_assertion_separability_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v1
+  instruction: |-
+    Author a new task from scratch: heap_assertion_separability_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate spatial assertions over bounded heaps using disjoint ownership and separating implication; vary aliasing, nested connectives, and empty ownership; answer truth or a witnessing heap split or extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v1
+  design_choice: Answer as a canonical truth value (true/false) for each assertion, with instances generated
+    to balance true/false across all structural variants.
+- id: P003v2
+  hypothesis: P003
+  idea: heap_assertion_separability_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v2
+  instruction: |-
+    Author a new task from scratch: heap_assertion_separability_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate spatial assertions over bounded heaps using disjoint ownership and separating implication; vary aliasing, nested connectives, and empty ownership; answer truth or a witnessing heap split or extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v2
+  design_choice: Answer as a witnessing split pair of disjoint heap fragments (each a canonical set of
+    pointer pairs) when the assertion is satisfiable, else the literal 'false'.
+- id: P003v3
+  hypothesis: P003
+  idea: heap_assertion_separability_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v3
+  instruction: |-
+    Author a new task from scratch: heap_assertion_separability_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate spatial assertions over bounded heaps using disjoint ownership and separating implication; vary aliasing, nested connectives, and empty ownership; answer truth or a witnessing heap split or extension.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/heap_assertion_separability_v3
+- id: P004v1
+  hypothesis: P004
+  idea: intransitive_information_purge_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v1
+  instruction: |-
+    Author a new task from scratch: intransitive_information_purge_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Filter action traces under directed information-flow policies where permission need not be transitive; retain actions that can reach an observer through later permitted transmissions; answer the retained subsequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v1
+  design_choice: Represent policies as a directed graph among agents; each action has a source and listener;
+    retain actions whose source can reach the observer via a path of later actions' permitted edges.
+- id: P004v2
+  hypothesis: P004
+  idea: intransitive_information_purge_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v2
+  instruction: |-
+    Author a new task from scratch: intransitive_information_purge_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Filter action traces under directed information-flow policies where permission need not be transitive; retain actions that can reach an observer through later permitted transmissions; answer the retained subsequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v2
+  design_choice: Encode each action as a triple (sender, receiver, content) with a global permission matrix;
+    answer the chronological subsequence of actions where content can be forwarded to the target through
+    any sequence of future permitted sends.
+- id: P004v3
+  hypothesis: P004
+  idea: intransitive_information_purge_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v3
+  instruction: |-
+    Author a new task from scratch: intransitive_information_purge_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Filter action traces under directed information-flow policies where permission need not be transitive; retain actions that can reach an observer through later permitted transmissions; answer the retained subsequence.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/intransitive_information_purge_v3
+- id: P005v1
+  hypothesis: P005
+  idea: rely_guarantee_compatibility_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v1
+  instruction: |-
+    Author a new task from scratch: rely_guarantee_compatibility_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Check compositional invariant claims for finite-state components whose environment assumptions must cover peer guarantees; vary shared variables and mutual assumptions; answer the failed compatibility or preservation obligations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v1
+  design_choice: Present components as labeled transition systems with explicit assume/guarantee annotations,
+    and ask the solver to identify which peer guarantee is violated by a given environment assumption.
+- id: P005v2
+  hypothesis: P005
+  idea: rely_guarantee_compatibility_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v2
+  instruction: |-
+    Author a new task from scratch: rely_guarantee_compatibility_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Check compositional invariant claims for finite-state components whose environment assumptions must cover peer guarantees; vary shared variables and mutual assumptions; answer the failed compatibility or preservation obligations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v2
+  design_choice: Encode each component as a set of guarded commands over shared variables, and require
+    the solver to output the minimal set of shared variables whose value changes invalidate the compatibility
+    obligation.
+- id: P005v3
+  hypothesis: P005
+  idea: rely_guarantee_compatibility_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v3
+  instruction: |-
+    Author a new task from scratch: rely_guarantee_compatibility_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Check compositional invariant claims for finite-state components whose environment assumptions must cover peer guarantees; vary shared variables and mutual assumptions; answer the failed compatibility or preservation obligations.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/rely_guarantee_compatibility_v3
+- id: P006v1
+  hypothesis: P006
+  idea: conditional_model_pasting_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v1
+  instruction: |-
+    Author a new task from scratch: conditional_model_pasting_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Close finite sets of probability models under recombining one model's partition masses with other models' within-cell conditionals; vary zero-mass cells and permitted donors; answer membership or newly admitted models.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v1
+  design_choice: Represent each model as a full probability table over a fixed finite grid and answer
+    whether a queried table is in the closure after iterative pasting.
+- id: P006v2
+  hypothesis: P006
+  idea: conditional_model_pasting_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v2
+  instruction: |-
+    Author a new task from scratch: conditional_model_pasting_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Close finite sets of probability models under recombining one model's partition masses with other models' within-cell conditionals; vary zero-mass cells and permitted donors; answer membership or newly admitted models.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v2
+  design_choice: Encode the closure as a graph where nodes are models and edges allow pasting, then answer
+    by listing all newly admitted model indices in canonical order.
+- id: P006v3
+  hypothesis: P006
+  idea: conditional_model_pasting_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v3
+  instruction: |-
+    Author a new task from scratch: conditional_model_pasting_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Close finite sets of probability models under recombining one model's partition masses with other models' within-cell conditionals; vary zero-mass cells and permitted donors; answer membership or newly admitted models.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/conditional_model_pasting_v3
+- id: P008v1
+  hypothesis: P008
+  idea: missingness_pattern_ignorability_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v1
+  instruction: |-
+    Author a new task from scratch: missingness_pattern_ignorability_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify finite missing-data mechanisms by whether each mask probability depends on values visible under that mask; vary structural zeros and realized versus all compatible records; answer the applicable ignorability class.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v1
+  design_choice: Represent each mechanism by a small truth table over all possible full-data records,
+    and ask for the ignorability class (MCAR/MAR/MNAR) with structural zeros marked as impossible records.
+- id: P008v2
+  hypothesis: P008
+  idea: missingness_pattern_ignorability_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v2
+  instruction: |-
+    Author a new task from scratch: missingness_pattern_ignorability_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify finite missing-data mechanisms by whether each mask probability depends on values visible under that mask; vary structural zeros and realized versus all compatible records; answer the applicable ignorability class.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v2
+  design_choice: Represent each mechanism by a generative rule (e.g., 'mask if Y1>2') and ask for the
+    class after enumerating only realized records from a provided sample, ignoring unobserved combinations.
+- id: P008v3
+  hypothesis: P008
+  idea: missingness_pattern_ignorability_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v3
+  instruction: |-
+    Author a new task from scratch: missingness_pattern_ignorability_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Classify finite missing-data mechanisms by whether each mask probability depends on values visible under that mask; vary structural zeros and realized versus all compatible records; answer the applicable ignorability class.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/missingness_pattern_ignorability_v3
+- id: P009v1
+  hypothesis: P009
+  idea: independence_restoring_mixtures_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v1
+  instruction: |-
+    Author a new task from scratch: independence_restoring_mixtures_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Mix finite joint distributions with an unknown rational weight, including mixtures within conditioning strata; find all weights that make designated variables independent or conditionally independent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v1
+  design_choice: Answer as a sorted list of rational weights in lowest terms, e.g., '1/3 2/3', where no
+    weight is repeated and all are valid.
+- id: P009v2
+  hypothesis: P009
+  idea: independence_restoring_mixtures_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v2
+  instruction: |-
+    Author a new task from scratch: independence_restoring_mixtures_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Mix finite joint distributions with an unknown rational weight, including mixtures within conditioning strata; find all weights that make designated variables independent or conditionally independent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v2
+  design_choice: Answer as a single canonical interval of weights (e.g., '0<=w<=1/2') when the independence
+    holds for a continuous range, or a point otherwise.
+- id: P009v3
+  hypothesis: P009
+  idea: independence_restoring_mixtures_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v3
+  instruction: |-
+    Author a new task from scratch: independence_restoring_mixtures_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Mix finite joint distributions with an unknown rational weight, including mixtures within conditioning strata; find all weights that make designated variables independent or conditionally independent.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_restoring_mixtures_v3
+- id: P010v1
+  hypothesis: P010
+  idea: independence_axiom_entailment_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v1
+  instruction: |-
+    Author a new task from scratch: independence_axiom_entailment_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive conditional independence claims from supplied premises using symmetry, decomposition, weak union, and contraction, with intersection enabled only under positivity; answer which queries follow.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v1
+  design_choice: Queries are yes/no on whether each conditional independence statement follows; premises
+    are fixed-size lists of triples over a small variable set.
+- id: P010v2
+  hypothesis: P010
+  idea: independence_axiom_entailment_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v2
+  instruction: |-
+    Author a new task from scratch: independence_axiom_entailment_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive conditional independence claims from supplied premises using symmetry, decomposition, weak union, and contraction, with intersection enabled only under positivity; answer which queries follow.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v2
+  design_choice: Answer is a canonical subset of query indices that follow, where each instance randomizes
+    premise order and query count across a fixed variable pool.
+- id: P010v3
+  hypothesis: P010
+  idea: independence_axiom_entailment_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v3
+  instruction: |-
+    Author a new task from scratch: independence_axiom_entailment_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Derive conditional independence claims from supplied premises using symmetry, decomposition, weak union, and contraction, with intersection enabled only under positivity; answer which queries follow.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_dependence_relevance_r4/independence_axiom_entailment_v3

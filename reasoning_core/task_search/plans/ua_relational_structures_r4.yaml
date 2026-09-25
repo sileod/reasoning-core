@@ -1,0 +1,606 @@
+version: 1
+name: ua_relational_structures_r4
+proposal_wave: ua_relational-structures
+defaults:
+  base_ref: 7048a5643cd0dc402993fd7646cb5489562a4b2e
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+  - P007v1
+  - P008v1
+  - P009v1
+  - P010v1
+  v2:
+  - P001v2
+  - P002v2
+  - P003v2
+  - P004v2
+  - P005v2
+  - P006v2
+  - P007v2
+  - P008v2
+  - P009v2
+  - P010v2
+  v3:
+  - P001v3
+  - P002v3
+  - P003v3
+  - P004v3
+  - P005v3
+  - P006v3
+  - P007v3
+  - P008v3
+  - P009v3
+  - P010v3
+  pilot:
+  - P001v1
+  - P002v1
+  - P003v1
+  - P004v1
+  - P005v1
+  - P006v1
+trials:
+- id: P001v1
+  hypothesis: P001
+  idea: branch_sensitive_resource_audit_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v1
+  instruction: |-
+    Author a new task from scratch: branch_sensitive_resource_audit_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Audit resource use in nested sequential, exclusive-choice, and parallel blocks; vary linear and affine obligations plus local creation and transfer; identify resources whose usage violates the stated discipline.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v1
+  design_choice: Answer as a canonical list of resource identifiers whose usage violates the stated discipline,
+    with each identifier as a bracketed token.
+- id: P001v2
+  hypothesis: P001
+  idea: branch_sensitive_resource_audit_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v2
+  instruction: |-
+    Author a new task from scratch: branch_sensitive_resource_audit_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Audit resource use in nested sequential, exclusive-choice, and parallel blocks; vary linear and affine obligations plus local creation and transfer; identify resources whose usage violates the stated discipline.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v2
+  design_choice: Answer as a binary string of fixed length, one bit per resource in canonical order, where
+    1 marks a violation.
+- id: P001v3
+  hypothesis: P001
+  idea: branch_sensitive_resource_audit_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v3
+  instruction: |-
+    Author a new task from scratch: branch_sensitive_resource_audit_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Audit resource use in nested sequential, exclusive-choice, and parallel blocks; vary linear and affine obligations plus local creation and transfer; identify resources whose usage violates the stated discipline.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/branch_sensitive_resource_audit_v3
+- id: P002v1
+  hypothesis: P002
+  idea: guillotine_layout_extent_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v1
+  instruction: |-
+    Author a new task from scratch: guillotine_layout_extent_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine enclosing dimensions for recursively sliced layouts with rotatable leaf rectangles, cut gutters, and alignment constraints; vary horizontal and vertical nesting; answer the minimum-area feasible dimensions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v1
+  design_choice: Leaf rectangles have fixed aspect ratios but vary in size, and solvers must choose orientation
+    to minimize area under guillotine cuts with gutter widths.
+- id: P002v2
+  hypothesis: P002
+  idea: guillotine_layout_extent_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v2
+  instruction: |-
+    Author a new task from scratch: guillotine_layout_extent_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine enclosing dimensions for recursively sliced layouts with rotatable leaf rectangles, cut gutters, and alignment constraints; vary horizontal and vertical nesting; answer the minimum-area feasible dimensions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v2
+  design_choice: Alignment constraints require leaf edges to align with cut lines across sibling subtrees,
+    so solvers must adjust dimensions to satisfy shared boundaries.
+- id: P002v3
+  hypothesis: P002
+  idea: guillotine_layout_extent_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v3
+  instruction: |-
+    Author a new task from scratch: guillotine_layout_extent_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine enclosing dimensions for recursively sliced layouts with rotatable leaf rectangles, cut gutters, and alignment constraints; vary horizontal and vertical nesting; answer the minimum-area feasible dimensions.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/guillotine_layout_extent_v3
+- id: P003v1
+  hypothesis: P003
+  idea: hydra_cut_regrowth_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v1
+  instruction: |-
+    Author a new task from scratch: hydra_cut_regrowth_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply leaf-cut and ancestor-copy rules to hydra trees, varying cut depth, sibling order, move-dependent regrowth, and successive cuts; determine the resulting tree or remaining head count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v1
+  design_choice: Represent the hydra as a nested list of child subtrees and return the canonical list
+    after applying all cuts, with leaves identified by empty lists.
+- id: P003v2
+  hypothesis: P003
+  idea: hydra_cut_regrowth_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v2
+  instruction: |-
+    Author a new task from scratch: hydra_cut_regrowth_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply leaf-cut and ancestor-copy rules to hydra trees, varying cut depth, sibling order, move-dependent regrowth, and successive cuts; determine the resulting tree or remaining head count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v2
+  design_choice: Return only the final number of heads as an integer, using a fixed global rule that each
+    cut at depth d regrows d copies of the parent's siblings.
+- id: P003v3
+  hypothesis: P003
+  idea: hydra_cut_regrowth_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v3
+  instruction: |-
+    Author a new task from scratch: hydra_cut_regrowth_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Apply leaf-cut and ancestor-copy rules to hydra trees, varying cut depth, sibling order, move-dependent regrowth, and successive cuts; determine the resulting tree or remaining head count.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/hydra_cut_regrowth_v3
+- id: P004v1
+  hypothesis: P004
+  idea: recursive_path_order_comparison_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v1
+  instruction: |-
+    Author a new task from scratch: recursive_path_order_comparison_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare term trees under symbol precedence and argument status, combining subterm dominance with lexicographic or multiset extensions; determine whether terms are greater, less, equivalent, or incomparable.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v1
+  design_choice: Generate pairs of ground terms over a fixed signature, where precedence is total and
+    all symbols are unary, so comparisons reduce to lexicographic order on symbol sequences.
+- id: P004v2
+  hypothesis: P004
+  idea: recursive_path_order_comparison_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v2
+  instruction: |-
+    Author a new task from scratch: recursive_path_order_comparison_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare term trees under symbol precedence and argument status, combining subterm dominance with lexicographic or multiset extensions; determine whether terms are greater, less, equivalent, or incomparable.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v2
+  design_choice: Use a signature with both unary and binary symbols, assign argument statuses (lex or
+    mul) per symbol, and ask for the relation by comparing root symbols, then recursively comparing subterm
+    lists.
+- id: P004v3
+  hypothesis: P004
+  idea: recursive_path_order_comparison_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v3
+  instruction: |-
+    Author a new task from scratch: recursive_path_order_comparison_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare term trees under symbol precedence and argument status, combining subterm dominance with lexicographic or multiset extensions; determine whether terms are greater, less, equivalent, or incomparable.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/recursive_path_order_comparison_v3
+- id: P005v1
+  hypothesis: P005
+  idea: nested_membrane_evolution_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v1
+  instruction: |-
+    Author a new task from scratch: nested_membrane_evolution_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evolve nested compartments through simultaneous token consumption, inward or outward transport, division, and deferred dissolution under stated rule priorities; determine compartment contents after successive rounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v1
+  design_choice: Answer as a canonical string of compartment IDs after each round, e.g., 'A:BC;D:E' with
+    empty as '-'
+- id: P005v2
+  hypothesis: P005
+  idea: nested_membrane_evolution_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v2
+  instruction: |-
+    Author a new task from scratch: nested_membrane_evolution_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evolve nested compartments through simultaneous token consumption, inward or outward transport, division, and deferred dissolution under stated rule priorities; determine compartment contents after successive rounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v2
+  design_choice: 'Difficulty from competing rules: transport vs division priority conflicts resolved by
+    fixed precedence table'
+- id: P005v3
+  hypothesis: P005
+  idea: nested_membrane_evolution_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v3
+  instruction: |-
+    Author a new task from scratch: nested_membrane_evolution_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evolve nested compartments through simultaneous token consumption, inward or outward transport, division, and deferred dissolution under stated rule priorities; determine compartment contents after successive rounds.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/nested_membrane_evolution_v3
+- id: P006v1
+  hypothesis: P006
+  idea: event_structure_residualization_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v1
+  instruction: |-
+    Author a new task from scratch: event_structure_residualization_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Residualize finite event structures after a configuration: discharge completed causes, exclude conflicting alternatives, and retain inherited conflicts; answer which events remain enabled.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v1
+  design_choice: Represent each event as a unique integer ID, with the residual structure encoded as a
+    set of integer pairs for causal edges and a set of integer triples for conflict edges, and the answer
+    as a sorted list of enabled event IDs.
+- id: P006v2
+  hypothesis: P006
+  idea: event_structure_residualization_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v2
+  instruction: |-
+    Author a new task from scratch: event_structure_residualization_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Residualize finite event structures after a configuration: discharge completed causes, exclude conflicting alternatives, and retain inherited conflicts; answer which events remain enabled.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v2
+  design_choice: Use a textual notation where events are single lowercase letters, dependencies are written
+    as 'a<b', conflicts as 'a#b', and the answer is a comma-separated string of letters in alphabetical
+    order.
+- id: P006v3
+  hypothesis: P006
+  idea: event_structure_residualization_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v3
+  instruction: |-
+    Author a new task from scratch: event_structure_residualization_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Residualize finite event structures after a configuration: discharge completed causes, exclude conflicting alternatives, and retain inherited conflicts; answer which events remain enabled.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/event_structure_residualization_v3
+- id: P007v1
+  hypothesis: P007
+  idea: matroid_two_sum_independence_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v1
+  instruction: |-
+    Author a new task from scratch: matroid_two_sum_independence_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine independence in matroids assembled by nested two-sums along shared marked elements, with components supplied by bases or rank tables; answer independence or the rank of a queried subset.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v1
+  design_choice: Present matroids via explicit basis lists, requiring solvers to verify whether a queried
+    subset is contained in any basis of the two-sum composition.
+- id: P007v2
+  hypothesis: P007
+  idea: matroid_two_sum_independence_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v2
+  instruction: |-
+    Author a new task from scratch: matroid_two_sum_independence_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine independence in matroids assembled by nested two-sums along shared marked elements, with components supplied by bases or rank tables; answer independence or the rank of a queried subset.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v2
+  design_choice: Supply rank tables for each component and a marked-element pairing, asking solvers to
+    compute the rank of a queried subset using the two-sum rank formula.
+- id: P007v3
+  hypothesis: P007
+  idea: matroid_two_sum_independence_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v3
+  instruction: |-
+    Author a new task from scratch: matroid_two_sum_independence_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Determine independence in matroids assembled by nested two-sums along shared marked elements, with components supplied by bases or rank tables; answer independence or the rank of a queried subset.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/matroid_two_sum_independence_v3
+- id: P008v1
+  hypothesis: P008
+  idea: simplicial_link_condition_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v1
+  instruction: |-
+    Author a new task from scratch: simplicial_link_condition_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare an edge link with the intersection of its endpoint links in simplicial complexes given by facets; return the candidate contractions satisfying equality or the obstructing faces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v1
+  design_choice: Return only the list of edges whose link equals the intersection, with no obstructing-face
+    detail.
+- id: P008v2
+  hypothesis: P008
+  idea: simplicial_link_condition_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v2
+  instruction: |-
+    Author a new task from scratch: simplicial_link_condition_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare an edge link with the intersection of its endpoint links in simplicial complexes given by facets; return the candidate contractions satisfying equality or the obstructing faces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v2
+  design_choice: Return a canonical string listing the obstructing faces when equality fails, and the
+    empty string when it holds.
+- id: P008v3
+  hypothesis: P008
+  idea: simplicial_link_condition_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v3
+  instruction: |-
+    Author a new task from scratch: simplicial_link_condition_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Compare an edge link with the intersection of its endpoint links in simplicial complexes given by facets; return the candidate contractions satisfying equality or the obstructing faces.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/simplicial_link_condition_v3
+- id: P009v1
+  hypothesis: P009
+  idea: interval_doubled_posets_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v1
+  instruction: |-
+    Author a new task from scratch: interval_doubled_posets_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Replace selected intervals of finite posets by ordered two-layer copies while inheriting outside comparisons; compose overlapping doublings and answer comparability or cover queries between resulting elements.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v1
+  design_choice: Each doubling replaces an interval with two copies where upper copy > lower copy, and
+    outside elements compare identically to both copies; queries ask whether two given elements are comparable.
+- id: P009v2
+  hypothesis: P009
+  idea: interval_doubled_posets_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v2
+  instruction: |-
+    Author a new task from scratch: interval_doubled_posets_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Replace selected intervals of finite posets by ordered two-layer copies while inheriting outside comparisons; compose overlapping doublings and answer comparability or cover queries between resulting elements.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v2
+  design_choice: Doublings are applied sequentially with intervals chosen from the current poset, and
+    the answer is a canonical cover relation (cover or not) between two elements, using a fixed element-labeling
+    scheme.
+- id: P009v3
+  hypothesis: P009
+  idea: interval_doubled_posets_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v3
+  instruction: |-
+    Author a new task from scratch: interval_doubled_posets_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Replace selected intervals of finite posets by ordered two-layer copies while inheriting outside comparisons; compose overlapping doublings and answer comparability or cover queries between resulting elements.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/interval_doubled_posets_v3
+- id: P010v1
+  hypothesis: P010
+  idea: contact_algebra_relations_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v1
+  instruction: |-
+    Author a new task from scratch: contact_algebra_relations_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate contact, overlap, inclusion, and tangential containment between regions built by regularized Boolean operations on finite cell complexes; return the queried qualitative relation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v1
+  design_choice: Answer is the relation symbol among disjoint, meet, overlap, contains, inside, covers,
+    coveredBy, equal, chosen from a fixed canonical set of eight RCC-8 relations.
+- id: P010v2
+  hypothesis: P010
+  idea: contact_algebra_relations_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v2
+  instruction: |-
+    Author a new task from scratch: contact_algebra_relations_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate contact, overlap, inclusion, and tangential containment between regions built by regularized Boolean operations on finite cell complexes; return the queried qualitative relation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v2
+  design_choice: Present a picture of two composite regions and ask for the relation using a fixed 3x3
+    grid of yes/no questions about cell adjacency and containment.
+- id: P010v3
+  hypothesis: P010
+  idea: contact_algebra_relations_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v3
+  instruction: |-
+    Author a new task from scratch: contact_algebra_relations_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Evaluate contact, overlap, inclusion, and tangential containment between regions built by regularized Boolean operations on finite cell complexes; return the queried qualitative relation.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_relational_structures_r4/contact_algebra_relations_v3

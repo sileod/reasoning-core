@@ -1,0 +1,39 @@
+import random
+import sys
+from pathlib import Path
+
+OUT = Path(__file__).with_name("samples_P006v1.md")
+
+
+def main():
+    seed = 798610012
+    random.seed(seed)
+    sys.path.insert(0, str(Path(__file__).parent))
+    from reasoning_core.tasks.generated.ua_uncertainty_r4.ballot_clone_counterfactuals.ballot_clone_counterfactuals import (
+        BallotCloneCounterfactuals,
+    )
+
+    task = BallotCloneCounterfactuals()
+    lines = ["# Samples P006v1", ""]
+    for level in (0, 2, 5):
+        lines.append(f"## Level {level}")
+        lines.append("")
+        task.config.set_level(level)
+        for _ in range(2):
+            x = task.generate_example()
+            prompt = task.render_prompt(x.metadata)
+            lines.append("**Prompt:**")
+            lines.append("")
+            for pl in prompt.split("\n"):
+                lines.append(f"    {pl}")
+            lines.append("")
+            lines.append("**Answer:**")
+            lines.append("")
+            lines.append(f"    {x.answer}")
+            lines.append("")
+    OUT.write_text("\n".join(lines) + "\n")
+    print(f"wrote {OUT}")
+
+
+if __name__ == "__main__":
+    main()
