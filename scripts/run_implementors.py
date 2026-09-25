@@ -159,6 +159,26 @@ def commit_landing(name, log_dir, attempts=3):
     print(f"    commit FAILED: {tail[-1] if tail else 'no output'}", flush=True)
 
 
+def shed_trials(name):
+    """Delete a finished wave's bulk and keep its record.
+
+    A trial is a full checkout plus the harness's synthetic home: ~7,000 files and ~220M,
+    of which the worker wrote one directory. Land has already copied what it wanted, so
+    each trial keeps its logs, run.json and the task directory it wrote (as `candidate/`),
+    and the checkout, runtime and validation runtime go. Waiting for the 7-day retirement
+    instead let 154G and 5,000 stale registrations pile up, which every `git worktree add`
+    then read.
+    """
+    owned = Path("reasoning_core") / "tasks" / "generated" / name
+    for trial in (RUNS / name).glob("*/P*"):
+        written = trial / "worktree" / owned
+        if written.is_dir() and not (trial / "candidate").exists():
+            written.rename(trial / "candidate")
+        for bulk in ("worktree", "runtime", "validation_runtime"):
+            shutil.rmtree(trial / bulk, ignore_errors=True)
+    subprocess.run(["git", "worktree", "prune"], cwd=ROOT, check=False)
+
+
 def implement(arguments, wave, log_dir):
     """Plan, run and land one wave, then commit it. True unless a step failed."""
     owed = still_owed(arguments, wave)
@@ -172,6 +192,7 @@ def implement(arguments, wave, log_dir):
     finally:
         if not arguments.dry_run:
             commit_landing(name, log_dir)
+            shed_trials(name)
 
 
 def _implement_steps(arguments, wave, name, log_dir):

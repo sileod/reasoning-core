@@ -570,3 +570,29 @@ def test_the_driver_commits_its_landing_and_nothing_else(tmp_path, monkeypatch):
                          "reasoning_core/task_search/plans/outcomes/w_r1.yaml",
                          "reasoning_core/tasks/generated/w_r1/new_task/new_task.py"}
     assert git("diff", "--cached", "--name-only").split() == ["other.py"]
+
+
+def test_a_landed_wave_sheds_its_checkouts_and_keeps_its_record(tmp_path, monkeypatch):
+    """Each trial is ~7,000 files of which the worker wrote one directory; keeping the
+    rest until retirement is what piled up 154G."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "run_implementors", Path(__file__).parents[2] / "scripts" / "run_implementors.py")
+    driver = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(driver)
+    trial = tmp_path / "runs" / "w_r1" / "20260101T000000Z" / "P001v1"
+    written = trial / "worktree" / "reasoning_core" / "tasks" / "generated" / "w_r1" / "t"
+    written.mkdir(parents=True)
+    (written / "t.py").write_text("x = 1\n")
+    (trial / "worktree" / "README.md").write_text("repo copy\n")
+    for bulk in ("runtime", "validation_runtime"):
+        (trial / bulk / "home").mkdir(parents=True)
+    (trial / "run.json").write_text("{}")
+    monkeypatch.setattr(driver, "RUNS", tmp_path / "runs")
+    monkeypatch.setattr(driver, "ROOT", tmp_path)
+
+    driver.shed_trials("w_r1")
+
+    assert sorted(path.name for path in trial.iterdir()) == ["candidate", "run.json"]
+    assert (trial / "candidate" / "t" / "t.py").read_text() == "x = 1\n"

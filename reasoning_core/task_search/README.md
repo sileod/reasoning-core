@@ -257,7 +257,9 @@ also drops the ideas N plan trials have already failed at.
 `run` then `land --apply`, sleeping when nothing is owed and picking up archives as the
 proposer writes them. It keeps no state, so it can be killed at any point. After each wave
 it commits that wave's tasks, plan, outcomes and the manifest, and only those paths, so the
-tracked tree stays clean for dataset builds; it never pushes.
+tracked tree stays clean for dataset builds; it never pushes. Then it deletes each trial's
+checkout and runtime, keeping the logs, `run.json` and the task directory the worker wrote
+(`candidate/`).
 
 ```bash
 scripts/run_implementors.py --once --dry-run     # what it would do
