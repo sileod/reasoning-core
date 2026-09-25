@@ -1,0 +1,135 @@
+version: 1
+name: ua_state_tracking_r5
+proposal_wave: ua_state-tracking
+defaults:
+  base_ref: 5fe760c15d92f1b10add8f51818820af09596b87
+context_files:
+- AGENTS.md
+- TASK_AUTHORING_GUIDE.md
+- reasoning_core/task_search/CONTEXT.md
+- reasoning_core/task_search/AUTHORING_RULES.md
+queues:
+  v1:
+  - P007v1
+  - P008v1
+  v2:
+  - P007v2
+  - P008v2
+  v3:
+  - P007v3
+  - P008v3
+  pilot:
+  - P007v1
+  - P008v1
+trials:
+- id: P007v1
+  hypothesis: P007
+  idea: mean_preserving_spread_order_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v1
+  instruction: |-
+    Author a new task from scratch: mean_preserving_spread_order_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Finite weighted outcome distributions with unequal supports and shared means; compare integrated tails to decide whether mean-preserving redistribution is possible or identify a violated strike inequality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v1
+  design_choice: Generate pairs where the two distributions have equal means but different supports, and
+    the solver must output whether one is a mean-preserving spread of the other via a canonical yes/no
+    string.
+- id: P007v2
+  hypothesis: P007
+  idea: mean_preserving_spread_order_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v2
+  instruction: |-
+    Author a new task from scratch: mean_preserving_spread_order_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Finite weighted outcome distributions with unequal supports and shared means; compare integrated tails to decide whether mean-preserving redistribution is possible or identify a violated strike inequality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v2
+  design_choice: Present a single distribution and a target mean; the solver must compute the minimal
+    integrated tail difference to a benchmark uniform, returning a reduced fraction as the answer.
+- id: P007v3
+  hypothesis: P007
+  idea: mean_preserving_spread_order_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v3
+  instruction: |-
+    Author a new task from scratch: mean_preserving_spread_order_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Finite weighted outcome distributions with unequal supports and shared means; compare integrated tails to decide whether mean-preserving redistribution is possible or identify a violated strike inequality.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r5/mean_preserving_spread_order_v3
+- id: P008v1
+  hypothesis: P008
+  idea: marginal_extension_consistency_v1 (variant 1 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v1
+  instruction: |-
+    Author a new task from scratch: marginal_extension_consistency_v1.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine probability tables on overlapping variable subsets into constraints on one joint distribution; determine compatibility or the attainable range of an unreported event probability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v1
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v1
+  design_choice: 'Answer as a single integer: the minimal and maximal attainable probability of a specified
+    event, given as a fraction pair like ''3/7 4/7''.'
+- id: P008v2
+  hypothesis: P008
+  idea: marginal_extension_consistency_v2 (variant 2 of 3)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v2
+  instruction: |-
+    Author a new task from scratch: marginal_extension_consistency_v2.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine probability tables on overlapping variable subsets into constraints on one joint distribution; determine compatibility or the attainable range of an unreported event probability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v2
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v2
+  design_choice: 'Answer as a canonical compatibility string: ''COMPATIBLE'' or ''INCOMPATIBLE'', with
+    instances balanced across both labels.'
+- id: P008v3
+  hypothesis: P008
+  idea: marginal_extension_consistency_v3 (variant 3 of 3, unguided baseline)
+  changes: new task in reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v3
+  instruction: |-
+    Author a new task from scratch: marginal_extension_consistency_v3.
+
+    Cover exactly this, and put this line -- adapted to what you actually build -- in the class `summary`:
+
+      Combine probability tables on overlapping variable subsets into constraints on one joint distribution; determine compatibility or the attainable range of an unreported event probability.
+
+    Every decision the summary does not fix is yours: instance family, generator, verifier, difficulty scaling, prompt wording and answer format. Other trials in this wave are implementing the same summary independently and are not coordinating with you. Make the choices you believe produce the best training data.
+
+    AUTHORING_RULES.md lists the checks generate_entry must perform and the failure modes that sank earlier waves -- read it before writing code, and treat it as part of this instruction.
+  owned_path: reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v3
+  validation:
+  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --import-mode=importlib reasoning_core/tasks/generated/ua_state_tracking_r5/marginal_extension_consistency_v3

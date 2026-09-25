@@ -410,6 +410,7 @@ lyndon_factorization_duval
 lz77_tokenization
 macro_hygiene_expansion
 manacher_palindrome_radii
+marginal_extension_consistency
 markov_algorithm
 markov_chain_distribution
 masked_stencil_identification
@@ -426,6 +427,7 @@ maximum_flow
 mealy_composition_run
 mealy_moore_machine_conversion
 mealy_trace_machine_induction
+mean_preserving_spread_order
 measurement_uncertainty_propagation
 mechanical_backlash_induction
 melodic_transposition_spelling
