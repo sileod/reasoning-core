@@ -759,6 +759,7 @@ table_qa
 table_statistics
 tag_adjunction_derivation
 take_grant_rights_derivation
+team_semantics_evaluation
 temporal_connective_equivalence
 temporal_logic_monitoring
 temporal_perspective
