@@ -1,0 +1,88 @@
+{
+ "repo": "reasoning-core/procedural-pile",
+ "revision": "b0aa4eaff45cfec6f357de109911ac64c950bbf3",
+ "features": [
+  {
+   "name": "task",
+   "dtype": "large_string"
+  },
+  {
+   "name": "prompt",
+   "dtype": "large_string"
+  },
+  {
+   "name": "answer",
+   "dtype": "large_string"
+  },
+  {
+   "name": "metadata",
+   "dtype": "large_string"
+  },
+  {
+   "name": "level",
+   "dtype": "int64"
+  },
+  {
+   "name": "mode",
+   "dtype": "large_string"
+  }
+ ],
+ "splits": {
+  "test": 301482,
+  "train": 29860112
+ },
+ "tasks": {
+  "analogical_case_matching": 649145,
+  "arithmetics": 649145,
+  "belief_tracking": 649145,
+  "code_analysis": 649145,
+  "code_execution": 649145,
+  "code_runnability": 649145,
+  "combinatorics_formula_selection": 163719,
+  "constrained_continuation": 649145,
+  "constraint_satisfaction": 649145,
+  "defeasible_nli": 649145,
+  "equation_system": 649145,
+  "game_best_move": 649145,
+  "game_forced_win": 649145,
+  "graph_pathfinding": 649145,
+  "graph_successors": 649145,
+  "grid_navigation": 649145,
+  "lambda_reduction": 649145,
+  "lean_candidate_compilation": 265378,
+  "lean_missing_line": 649145,
+  "logic_formalization": 649145,
+  "logic_nli": 649145,
+  "logic_qa": 649145,
+  "math_word_problem": 649145,
+  "metamath_core_select": 649145,
+  "metamath_entailment": 538477,
+  "most_probable_evidence": 573567,
+  "most_probable_outcome": 58073,
+  "multistep_abduction": 649145,
+  "multistep_evidence_retrieval": 649145,
+  "multistep_nli": 649145,
+  "parsing_derivation": 649145,
+  "planar_geometry_relations": 649145,
+  "planning": 649145,
+  "program_synthesis": 649145,
+  "qualitative_causal_reasoning": 649145,
+  "qualitative_reasoning": 649145,
+  "reference_tracking": 649145,
+  "regex_following": 649145,
+  "regex_reasoning": 649145,
+  "rewrite_system": 649145,
+  "sequential_induction": 649145,
+  "set_expression": 649145,
+  "set_missing_element": 649145,
+  "string_transduction": 649145,
+  "syntax_error_detection": 649145,
+  "table_equivalence": 649145,
+  "table_qa": 649145,
+  "table_statistics": 649145,
+  "unification_entailment": 649145
+ },
+ "modes": {
+  "instruct": 30161594
+ }
+}

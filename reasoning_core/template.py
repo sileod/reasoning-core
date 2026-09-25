@@ -81,8 +81,7 @@ class Entry(Mapping):
             'answer': self.answer,
             'metadata': self.metadata,
             'task': self.task,
-            'cot': self.metadata.get('cot','')
-        }
+        }  # cot lives in metadata only; a top-level copy became a special column in staging
         
     @classmethod
     def from_dict(cls, d):

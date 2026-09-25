@@ -54,6 +54,11 @@ def process_row(ex: dict) -> dict:
         except Exception: obj = {}
     else:
         obj, raw = raw, json.dumps(raw, ensure_ascii=False)
+    # Rows written before Entry.to_dict dropped `cot` carry it top-level; keep it in metadata only.
+    cot = ex.pop("cot", None)
+    if cot and isinstance(obj, dict) and not obj.get("cot"):
+        obj["cot"] = cot
+        raw = json.dumps(obj, ensure_ascii=False)
     return {
         "metadata": raw,
         "level": obj.get("_level") if isinstance(obj, dict) else None,
@@ -152,7 +157,8 @@ def _load_file(path):
             if not line.strip(): continue
             ex = json.loads(line)
             if len(ex.get("prompt", "")) >= 50_000: continue
-            rows.append({**ex, **process_row(ex)})
+            fields = process_row(ex)  # pops legacy top-level cot first
+            rows.append({**ex, **fields})
     return rows
 
 def upload_shard(files, bid, api, repo, num_proc):

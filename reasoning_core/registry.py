@@ -298,6 +298,8 @@ def get_score_answer_fn(task_name, *args, **kwargs):
 
 
 def score_answer(answer, entry):
+    if not hasattr(entry, "metadata"):  # plain dict row, e.g. from `datasets`
+        entry = edict(dict(entry))
     if isinstance(entry.metadata, str):
         entry = edict(dict(entry))
         entry.metadata = json.loads(entry.metadata)
