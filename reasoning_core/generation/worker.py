@@ -1,30 +1,14 @@
-#!/usr/bin/env python3
-"""Generation worker - runs tasks directly (no internal multiprocessing)."""
-import random, argparse, os, time, json, math
+"""Generate one batch of one task and write it atomically. Scheduling lives in build.py."""
+import random, os, time, json
 from pathlib import Path
-from datetime import datetime
 
 # Thread controls (must be before numpy/scipy imports)
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
-from reasoning_core import list_tasks, get_task
+from reasoning_core import get_task
 import numpy as np
-
-MEM_LIMIT_GB, MEM_WARN_RATIO = 50, 0.8
-STALE_LOCK_S = 6 * 3600
-def get_rss_gb():
-    try:
-        with open('/proc/self/status') as f:
-            for l in f:
-                if l.startswith('VmRSS:'): return int(l.split()[1]) / 1024 / 1024
-    except: pass
-    return 0
-def check_mem(log_file, worker_id, task_str):
-    rss = get_rss_gb()
-    if rss > MEM_LIMIT_GB * MEM_WARN_RATIO:
-        with open(log_file, 'a') as f: f.write(f"Worker {worker_id} | {task_str}: MEM_WARN {rss:.1f}GB\n")
 
 def serialize_example(example):
     row = example.to_dict()
@@ -34,22 +18,23 @@ def serialize_example(example):
         row['metadata'] = json.dumps(metadata)
     return row
 
-def log_batch(out_path, name, level, dt, n, status):
+def log_batch(log_path, name, level, dt, n, status):
     '''One line per BATCH attempt, including the ones that produce no rows.
 
     Row-level `_time` only covers accepted rows, so it silently omits rejected candidates and
     entirely-failed batches -- i.e. exactly the tasks that are expensive. This is the honest cost.
     '''
     try:
-        with open(Path(out_path).parent / 'batches.jsonl', 'a') as f:
+        with open(log_path, 'a') as f:
             f.write(json.dumps({'task': name, 'level': level, 'batch_time_s': round(dt, 4),
                                 'rows': n, 'status': status, 'ts': time.time()}) + '\n')
     except Exception:
         pass
 
 
-def run_task(name, idx, level, out_path, batch_size, max_tokens):
+def run_task(name, idx, level, out_path, batch_size, max_tokens, log_path=None):
     '''Run a single task batch, return (success, message).'''
+    log_path = log_path or Path(out_path).parent / 'batches.jsonl'
     t0 = time.perf_counter()
     try:
         T = get_task(name)
@@ -65,7 +50,7 @@ def run_task(name, idx, level, out_path, batch_size, max_tokens):
         dt = time.perf_counter() - t0
 
         if not examples:
-            log_batch(out_path, name, level, dt, 0, 'EMPTY')
+            log_batch(log_path, name, level, dt, 0, 'EMPTY')
             return False, 'EMPTY'
 
         for x in examples:
@@ -85,104 +70,8 @@ def run_task(name, idx, level, out_path, batch_size, max_tokens):
         staged = final.with_suffix(f'.{os.getpid()}.tmp')
         staged.write_text(payload)
         os.replace(staged, final)
-        log_batch(out_path, name, level, dt, len(examples), 'OK')
+        log_batch(log_path, name, level, dt, len(examples), 'OK')
         return True, 'OK'
     except Exception as e:
-        log_batch(out_path, name, level, time.perf_counter() - t0, 0, 'ERR:' + type(e).__name__)
+        log_batch(log_path, name, level, time.perf_counter() - t0, 0, 'ERR:' + type(e).__name__)
         return False, f'ERR: {type(e).__name__}: {e}'
-
-def main(args):
-    out_path = Path(args.out_path) / args.version
-    out_path.mkdir(parents=True, exist_ok=True)
-    error_log = Path('errors.log')
-    status_file = Path(args.status_dir) / f"worker_{int(args.id):03d}.status"
-
-    blocklist = {'float_counterfactual', 'theorem_premise_selection'}
-    tasks = [t for t in (args.tasks or list_tasks()) if t.lower() not in blocklist]
-
-    target_per_task = math.ceil(args.num_examples / (args.batch_size * len(tasks) or 1))
-    all_jobs = [(t, i) for t in tasks for i in range(target_per_task)]
-    random.shuffle(all_jobs)
-
-    tasks_done = 0
-    try:
-        while True:
-            claimed_any = False
-            for d_name, idx in all_jobs:
-                final_f = out_path / f'{d_name}-{idx}.jsonl'
-                lock_f = out_path / f'{d_name}-{idx}.lock'
-
-                if final_f.exists(): continue
-                # A lock is stale only once no batch could still be running under it: the
-                # per-example timeout grows with level and retries, so a fixed 900s was not.
-                if lock_f.exists():
-                    try:
-                        if time.time() - lock_f.stat().st_mtime > STALE_LOCK_S: lock_f.unlink()
-                        else: continue
-                    except OSError: continue
-
-                try:
-                    fd = os.open(lock_f, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-                    os.close(fd)
-                except OSError:
-                    continue
-
-                max_l = max(args.levels)
-
-                custom_max = {
-                    'proof_reconstruction': 2,
-                    'bayesian_association': 0,
-                    'bayesian_intervention': 0,
-                    'logic_nli': 3,
-                    'evidence_retrieval': 3,
-                    'table_conversion': 4,
-                }
-                if d_name in custom_max:
-                     max_l = min(max_l, custom_max[d_name])
-
-
-                allowed = [l for l in args.levels if l <= max_l]
-                if not allowed:
-                    lock_f.unlink()
-                    continue
-                claimed_any = True
-                level = random.choice(allowed)
-                task_str = f"{d_name}-{level}"
-                t0 = time.time()
-                status_file.write_text(f"Worker {args.id:>3} | {task_str:<40} | running | Done: {tasks_done:<5} | ts:{int(t0)}")
-
-                try:
-                    success, msg = run_task(d_name, idx, level, out_path, args.batch_size, args.max_tokens)
-                    check_mem(error_log, args.id, task_str)
-                    if success:
-                        tasks_done += 1
-                    else:
-                        with open(error_log, 'a') as f:
-                            f.write(f"Worker {args.id} | {task_str}: {msg}\n")
-                except Exception as e:
-                    with open(error_log, 'a') as f:
-                        f.write(f"Worker {args.id} | {task_str}: CRASH: {type(e).__name__}: {e}\n")
-                finally:
-                    try: lock_f.unlink()
-                    except FileNotFoundError: pass
-
-            if not claimed_any: break
-    finally:
-        if status_file.exists(): status_file.unlink()
-
-if __name__ == '__main__':
-    date = int(datetime.now().timestamp())
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--num_examples', default=10_000_000, type=int)
-    parser.add_argument('-f', default=None)
-    parser.add_argument('--id', required=True, type=str)
-    parser.add_argument('--version', default=f'rc-{date}', type=str)
-    parser.add_argument('--out_path', default='generated_data', type=str)
-    parser.add_argument('--batch_size', default=16, type=int)
-    parser.add_argument('--levels', nargs='+', type=int, default=[0,1,2])
-    parser.add_argument('--status_dir', required=True, type=str)
-    parser.add_argument('--tasks', nargs='+', type=str, default=[])
-    parser.add_argument('--max_tokens', default=5_000, type=int)
-
-    args, _ = parser.parse_known_args()
-    main(args)

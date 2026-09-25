@@ -51,13 +51,10 @@ Sampling uses each task's random generation and does not promise identical rows
 between runs. Preserve the generated file when comparing models.
 
 For larger balanced batches, use `get_task(name).generate_balanced_batch(...)`.
-The production worker and Linux/GNU Parallel launcher are
-`reasoning_core/generation/worker.py` and `reasoning_core/generation/run_generate.sh`.
-Inspect worker options with `python -m reasoning_core.generation.worker --help`.
-[release.md](release.md) covers the Grid'5000 build into staging and the pile. Uploading is a separate operation: install `python -m pip install -e '.[collection]'`
-and inspect `python -m reasoning_core.generation.collect --help`. Uploads require Hub
-credentials; the collector deletes uploaded input files by default (`--no-delete`
-preserves them).
+Dataset versions are built with `python -m reasoning_core.generation`
+(`init`, `generate`, `collect`, `submit`); [release.md](release.md) covers the
+Grid'5000 build into staging, the pile, and the dataset card. Uploading needs
+`python -m pip install -e '.[collection]'` and Hub credentials.
 
 ## Implement and validate a task
 
