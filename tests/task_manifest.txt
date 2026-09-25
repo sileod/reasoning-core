@@ -147,6 +147,7 @@ constrained_surface_flip_paths
 constraint_based_skeleton_orientation
 constraint_release_response
 constraint_satisfaction
+contact_algebra_relations
 contact_chain_displacement
 continued_fraction
 continued_fractions
