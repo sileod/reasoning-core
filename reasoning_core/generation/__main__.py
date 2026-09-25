@@ -28,7 +28,7 @@ def main(argv=None):
     run_settings(command("init", "freeze a run's configuration into run.json"))
 
     p = command("generate", "run this machine's workers until no batch is left")
-    p.add_argument("--workers", type=int, help="default: 40%% of CPUs")
+    p.add_argument("--workers", type=int, help="default: 40%% of CPUs, at most one per 4 GB of RAM")
     p.add_argument("--lifetime", type=float, default=900, help="seconds before a worker is recycled")
     p.add_argument("--batch-timeout", type=float, default=1200, help="seconds before a batch is killed")
     p.add_argument("--mem-gb", type=float, default=50, help="address-space cap per worker")

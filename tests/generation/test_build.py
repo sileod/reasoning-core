@@ -58,6 +58,14 @@ def test_generate_writes_every_batch_and_no_cot_column(run):
     assert list((run / "logs").glob("*.batches.jsonl"))
 
 
+@pytest.mark.parametrize("cpus, ram_gb, workers", [(64, 187, 26), (40, 31, 7), (512, 1003, 205), (2, 2, 1)])
+def test_default_workers_fit_cpus_and_memory(monkeypatch, cpus, ram_gb, workers):
+    import psutil
+    monkeypatch.setattr(os, "cpu_count", lambda: cpus)
+    monkeypatch.setattr(psutil, "virtual_memory", lambda: type("m", (), {"total": ram_gb * 1024 ** 3}))
+    assert build.default_workers() == workers
+
+
 def test_generate_resumes_and_respects_other_claims(run):
     out = run / "generated_data" / "rcT"
     (out / "arithmetics-0.jsonl").write_text("kept\n")          # finished earlier

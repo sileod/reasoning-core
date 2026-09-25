@@ -60,6 +60,7 @@ LEVEL_CAPS = {
     "table_conversion": 4,
 }
 MAX_ATTEMPTS = 3            # failed attempts before a batch is given up on
+WORKER_RAM_GB = 4           # the heavier generators peak around here; small-RAM nodes get fewer workers
 LOCK_MARGIN_S = 600         # a lock older than batch_timeout + this was left by a dead node
 EXIT_RECYCLE = 10           # worker reached its lifetime; the supervisor starts a fresh one
 MAX_CRASHES = 5             # abnormal exits per worker slot before it is retired
@@ -267,6 +268,14 @@ def _work_loop(run_dir, manifest, current, started, lifetime, mem_gb, stale_afte
             return  # nothing claimable: done here
 
 
+def default_workers():
+    """40% of the CPUs, but no more than one worker per WORKER_RAM_GB of memory: a 40-core node
+    with 31 GB would otherwise run 16 workers and have the OOM killer take the heavy batches."""
+    by_cpu = math.ceil((os.cpu_count() or 1) * 0.4)
+    by_ram = int(psutil.virtual_memory().total / 1024 ** 3 / WORKER_RAM_GB)
+    return max(1, min(by_cpu, by_ram))
+
+
 def _release(out, task, idx, failed):
     if failed:
         with open(out / f"{task}-{idx}.fail", "a") as f:
@@ -283,7 +292,7 @@ def generate(run_dir, workers=None, lifetime=900, batch_timeout=1200, mem_gb=50,
     once; a lock older than `batch_timeout` + LOCK_MARGIN_S was left by a dead node and is
     reclaimed by any worker. Returns progress() at exit."""
     manifest = load_manifest(run_dir)
-    workers = workers or max(1, math.ceil((os.cpu_count() or 1) * 0.4))
+    workers = workers or default_workers()
     jobs = batch_jobs(manifest)
     out = data_dir(run_dir, manifest)
     ctx = mp.get_context("fork")
