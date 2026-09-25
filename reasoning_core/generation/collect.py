@@ -9,6 +9,7 @@ from tqdm import tqdm
 import random
 from io import BytesIO
 from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -30,11 +31,10 @@ def parse_args(argv=None):
 
 
 def file_key(p: str) -> str:
-    try:
-        st = os.stat(p)
-        return hashlib.sha1(f"{p}\0{st.st_size}\0{st.st_mtime_ns}".encode()).hexdigest()[:20]
-    except OSError:
-        return hashlib.sha1(p.encode()).hexdigest()[:20]
+    # Workers publish a batch with os.replace, so a visible .jsonl is complete and never
+    # rewritten: the path identifies it. (A stat per file costs a round trip on a remote mount,
+    # repeated for every uploaded file on each pass of a looping collector.)
+    return hashlib.sha1(p.encode()).hexdigest()[:20]
 
 
 def validate_jsonl(path: str) -> tuple[bool, str | None]:
@@ -108,24 +108,31 @@ def file_iterator(rc_path: str, version: str, done: set[str], bad: set[str],
                 pass
 
 
-def build_batch(file_iter, known: set[str], size: int, pbar: tqdm):
-    """Pull exactly `size` good files from the *shared* iterator."""
+def build_batch(file_iter, known: set[str], size: int, pbar: tqdm, threads: int = 32):
+    """Pull exactly `size` good files from the *shared* iterator.
+
+    Files are validated `threads` at a time: on a remote NFS mount each read is a network
+    round trip, so a serial scan manages ~10 files/s."""
     batch, bad = [], {}
-    for p in file_iter:
-        pbar.update(1)
-        k = file_key(p)
-        if k in known:
-            continue
-        ok, err = validate_jsonl(p)
-        if ok:
-            batch.append(p)
+    with ThreadPool(threads) as pool:
+        while len(batch) < size:
+            chunk = []
+            for p in file_iter:
+                k = file_key(p)
+                if k not in known:
+                    chunk.append((p, k))
+                if len(chunk) >= min(4 * threads, size - len(batch)):
+                    break
+            if not chunk:
+                break
+            for (p, k), (ok, err) in zip(chunk, pool.map(lambda pk: validate_jsonl(pk[0]), chunk)):
+                pbar.update(1)
+                if ok:
+                    batch.append(p)
+                else:
+                    bad[k] = (err or "invalid")[:200]
+                    known.add(k)
             pbar.set_postfix(good=len(batch), bad=len(bad), refresh=False)
-        else:
-            bad[k] = (err or "invalid")[:200]
-            known.add(k)
-            pbar.set_postfix(good=len(batch), bad=len(bad), refresh=False)
-        if len(batch) >= size:
-            break
     return batch, bad
 
 

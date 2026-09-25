@@ -190,3 +190,19 @@ def test_pile_builder_reads_a_run_and_keeps_every_row_instruct(run, tmp_path):
     tables = [pq.read_table(f) for f in work.glob("*/output/*.parquet")]
     modes = {m for t in tables for m in t["mode"].to_pylist()}
     assert sum(t.num_rows for t in tables) == 16 and modes == {"instruct"}
+
+
+def test_collect_batches_are_exact_and_skip_bad_files(tmp_path):
+    from tqdm import tqdm
+    files = []
+    for i in range(50):
+        f = tmp_path / f"t-{i}.jsonl"
+        f.write_text("not json\n" if i % 10 == 3 else '{"prompt": "p"}\n')
+        files.append(str(f))
+    it, known, pbar = iter(files), set(), tqdm(disable=True)
+    first, bad = collect.build_batch(it, known, 20, pbar, threads=4)
+    rest, bad2 = collect.build_batch(it, known, 100, pbar, threads=4)
+    assert len(first) == 20 and len(rest) == 25
+    broken = {f for i, f in enumerate(files) if i % 10 == 3}
+    assert set(first) | set(rest) == set(files) - broken and not set(first) & set(rest)
+    assert len(bad) + len(bad2) == len(broken)
