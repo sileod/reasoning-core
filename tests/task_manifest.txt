@@ -564,6 +564,7 @@ polarization_projection_cascade
 policy_determination
 poly_euclid
 polygon_area_point_location
+polyhedral_plane_sections
 polynomial_euclidean_algorithm
 polynomial_expansion
 polynomial_gcd
