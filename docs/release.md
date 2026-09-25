@@ -40,7 +40,9 @@ g5k.sh build rc13             # sync, then 16 besteffort nodes + a looping colle
 `build` syncs the code to the Lille storage and runs `submit` on the Lille frontend,
 with the run directory at `$ST/runs/<version>`. Logs are in `$ST/runs/<version>/logs/`.
 When generation ends, run the final collect command that `submit` printed. It is a
-single pass and deletes what it uploads.
+single pass and deletes what it uploads. Then add the version as a configuration in
+`datasets/staging/README.md` (make it the default) and upload that file as the staging
+repo's `README.md`.
 
 The same commands work locally, for instance
 `python -m reasoning_core.generation init --run-dir /tmp/r --version test` followed by
