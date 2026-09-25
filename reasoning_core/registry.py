@@ -28,6 +28,12 @@ COLLECTIONS = {
 }
 DEPRECATED = {"symbolic_arithmetics", "graph_node_centrality"}
 IGNORED = DEPRECATED | {"reasonining_gym", "count_elements"}
+# Roster membership is decided here, not by where a file sits: a generated task joins the shipped
+# roster by name (its file stays put, so its module path and identity do not change), and a
+# retired task leaves list_tasks() while staying loadable for the data already measured on it.
+PROMOTED = {"rule_switching", "finite_automaton_execution", "shift_reduce_parsing",
+            "controlled_code_execution"}
+RETIRED = {"code_execution"}  # superseded by controlled_code_execution: same influence, ~15x faster
 
 
 def register_dataset(name, dataset_cls):
@@ -244,9 +250,9 @@ def list_tasks(include_mutated=False, include_generated=False):
     """Return the shipped roster; optionally include experimental task families."""
     return [
         name for name, (module_name, _) in _task_to_module_map.items()
-        if name not in IGNORED
+        if name not in IGNORED and name not in RETIRED
         and (include_mutated or module_name.split(".", 1)[0] != "mutated")
-        and (include_generated or module_name.split(".", 1)[0] != "generated")
+        and (include_generated or name in PROMOTED or module_name.split(".", 1)[0] != "generated")
     ]
 
 
