@@ -134,6 +134,7 @@ conformant_action_synthesis
 congruence_closure
 congruence_system
 conjunctive_logic_qa
+consensus_cut_min1
 consensus_log_commit
 conservative_mesh_remapping
 conserved_resource_bound
@@ -370,6 +371,7 @@ knockout_agenda_control
 kraft_feasibility
 kripke_knowledge_evaluation
 lambda_reduction
+laminated_section_moments
 lamport_clock
 language_separation
 lattice_join_meet
