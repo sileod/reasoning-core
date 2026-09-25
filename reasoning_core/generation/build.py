@@ -23,6 +23,7 @@ for _var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
     os.environ.setdefault(_var, "1")  # before numpy; one BLAS thread per worker process
 
 import ast
+import ctypes
 import fcntl
 import json
 import math
@@ -59,7 +60,7 @@ LEVEL_CAPS = {
     "table_conversion": 4,
 }
 MAX_ATTEMPTS = 3            # failed attempts before a batch is given up on
-STALE_LOCK_S = 6 * 3600     # a lock older than any batch can run is left by a dead process
+LOCK_MARGIN_S = 600         # a lock older than batch_timeout + this was left by a dead node
 EXIT_RECYCLE = 10           # worker reached its lifetime; the supervisor starts a fresh one
 MAX_CRASHES = 5             # abnormal exits per worker slot before it is retired
 
@@ -169,7 +170,7 @@ def progress(run_dir, manifest):
 
 # ----------------------------------------------------------------------------------- generate
 
-def _claim(out, task, idx):
+def _claim(out, task, idx, stale_after):
     """Lock a batch nobody finished, gave up on, or holds; None when it is not ours to run."""
     stem = out / f"{task}-{idx}"
     final, lock, fail = (stem.with_suffix(s) for s in (".jsonl", ".lock", ".fail"))
@@ -179,7 +180,7 @@ def _claim(out, task, idx):
         if fail.exists() and fail.stat().st_size >= MAX_ATTEMPTS:
             return None
         if lock.exists():
-            if time.time() - lock.stat().st_mtime <= STALE_LOCK_S:
+            if time.time() - lock.stat().st_mtime <= stale_after:
                 return None
             lock.unlink()
         os.close(os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
@@ -203,16 +204,28 @@ def _kill_children(pid):
     psutil.wait_procs(children, timeout=5)
 
 
-def _work(run_dir, manifest, current, started, lifetime, mem_gb):
+def _limit_malloc_arenas(n=4):
+    """glibc reserves up to 8 malloc arenas per core, 64 MB of address space each. On a 512-core
+    node that alone exceeds the RLIMIT_AS cap and threads fail to start ("cannot allocate memory
+    for thread-local data"). Cap them here and in the helpers a generator starts."""
+    os.environ["MALLOC_ARENA_MAX"] = str(n)
+    try:
+        ctypes.CDLL("libc.so.6").mallopt(-8, n)  # M_ARENA_MAX
+    except OSError:
+        pass  # not glibc
+
+
+def _work(run_dir, manifest, current, started, lifetime, mem_gb, stale_after):
     """One worker process: claim and run batches until none is left or the lifetime is spent."""
     try:
-        _work_loop(run_dir, manifest, current, started, lifetime, mem_gb)
+        _work_loop(run_dir, manifest, current, started, lifetime, mem_gb, stale_after)
     finally:
         _kill_children(os.getpid())
 
 
-def _work_loop(run_dir, manifest, current, started, lifetime, mem_gb):
+def _work_loop(run_dir, manifest, current, started, lifetime, mem_gb, stale_after):
     from reasoning_core.generation.worker import run_task
+    _limit_malloc_arenas()
     if mem_gb:
         limit = int(mem_gb * 1024 ** 3)
         resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
@@ -229,7 +242,7 @@ def _work_loop(run_dir, manifest, current, started, lifetime, mem_gb):
         claimed = False
         for job_i in order:
             task, idx = jobs[job_i]
-            lock = _claim(out, task, idx)
+            lock = _claim(out, task, idx, stale_after)
             if lock is None:
                 continue
             claimed = True
@@ -254,12 +267,21 @@ def _work_loop(run_dir, manifest, current, started, lifetime, mem_gb):
             return  # nothing claimable: done here
 
 
+def _release(out, task, idx, failed):
+    if failed:
+        with open(out / f"{task}-{idx}.fail", "a") as f:
+            f.write("x")
+    (out / f"{task}-{idx}.lock").unlink(missing_ok=True)
+
+
 def generate(run_dir, workers=None, lifetime=900, batch_timeout=1200, mem_gb=50, report_every=60):
     """Supervise worker processes on this machine until no batch is left to claim.
 
     Workers are recycled after `lifetime` seconds (generators can leak), a batch running past
-    `batch_timeout` gets its worker killed and its lock released, and each worker is capped at
-    `mem_gb` of address space. Returns progress() at exit."""
+    `batch_timeout` gets its worker killed, and each worker is capped at `mem_gb` of address
+    space. A killed or crashed worker's batch counts as a failed attempt and is released at
+    once; a lock older than `batch_timeout` + LOCK_MARGIN_S was left by a dead node and is
+    reclaimed by any worker. Returns progress() at exit."""
     manifest = load_manifest(run_dir)
     workers = workers or max(1, math.ceil((os.cpu_count() or 1) * 0.4))
     jobs = batch_jobs(manifest)
@@ -274,6 +296,8 @@ def generate(run_dir, workers=None, lifetime=900, batch_timeout=1200, mem_gb=50,
         now = time.time()
         for slot in slots:
             proc = slot["proc"]
+            if slot["finished"]:
+                continue
             if proc is not None and proc.is_alive():
                 job_i = slot["current"].value
                 if job_i >= 0 and now - slot["started"].value > batch_timeout:
@@ -281,9 +305,7 @@ def generate(run_dir, workers=None, lifetime=900, batch_timeout=1200, mem_gb=50,
                     proc.kill()
                     proc.join()
                     task, idx = jobs[job_i]
-                    with open(out / f"{task}-{idx}.fail", "a") as f:
-                        f.write("x")
-                    (out / f"{task}-{idx}.lock").unlink(missing_ok=True)
+                    _release(out, task, idx, failed=True)
                     print(f"killed {task}-{idx}: over {batch_timeout}s", flush=True)
                     slot["proc"] = None
                 continue
@@ -294,11 +316,14 @@ def generate(run_dir, workers=None, lifetime=900, batch_timeout=1200, mem_gb=50,
                 # otherwise be restarted forever.
                 slot["crashes"] += 1
                 print(f"worker exited with {proc.exitcode} ({slot['crashes']}/{MAX_CRASHES})", flush=True)
+                if slot["current"].value >= 0:  # it died mid-batch: count the attempt, free the batch
+                    _release(out, *jobs[slot["current"].value], failed=True)
                 slot["finished"] = slot["crashes"] >= MAX_CRASHES
             if not slot["finished"]:
                 slot["current"].value = -1
-                slot["proc"] = ctx.Process(target=_work, args=(run_dir, manifest, slot["current"],
-                                                               slot["started"], lifetime, mem_gb))
+                slot["proc"] = ctx.Process(target=_work, args=(
+                    run_dir, manifest, slot["current"], slot["started"], lifetime, mem_gb,
+                    batch_timeout + LOCK_MARGIN_S))
                 slot["proc"].start()
         if all(s["finished"] for s in slots):
             break

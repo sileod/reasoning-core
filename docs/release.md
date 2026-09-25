@@ -25,8 +25,9 @@ SHA, so the older version stays loadable (`paper-2608.05148` is one such tag).
 
 Any number of machines can run `generate` on the same directory. Workers claim
 batches with lock files, skip finished ones, retry a failed batch up to three times,
-and are recycled every 15 minutes. A batch running over 20 minutes is killed. So a
-preempted or resubmitted node resumes where it stopped. The roster is
+and are recycled every 15 minutes. A batch running over 20 minutes is killed. Locks
+left by a node that died are reclaimed after 30 minutes. So a preempted or resubmitted
+node resumes where it stopped. The roster is
 `list_tasks()` unless `--roster` names a file (one task per line). Re-running
 `init` or `submit` with different settings for an existing run is refused.
 

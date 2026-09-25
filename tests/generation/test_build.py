@@ -64,7 +64,7 @@ def test_generate_resumes_and_respects_other_claims(run):
     (out / "arithmetics-1.lock").touch()                        # held by a live node
     stale = out / "set_missing_element-0.lock"                  # left by a dead node
     stale.touch()
-    os.utime(stale, (time.time() - build.STALE_LOCK_S - 1,) * 2)
+    os.utime(stale, (time.time() - 1200 - build.LOCK_MARGIN_S - 1,) * 2)  # default batch_timeout
     (out / "set_missing_element-1.fail").write_text("x" * build.MAX_ATTEMPTS)  # given up
 
     done, failed, _ = build.generate(run, workers=1, report_every=3600)
@@ -112,10 +112,14 @@ def test_helpers_die_with_their_worker(run, monkeypatch, tmp_path, then, timeout
     assert pids.read_text() and not _alive(pids)
 
 
-def test_a_worker_that_keeps_crashing_is_retired(run, monkeypatch):
+def test_a_worker_that_keeps_crashing_is_retired(run, monkeypatch, capsys):
     monkeypatch.setattr(worker, "run_task", lambda *a, **k: os._exit(3))
     done, _, _ = build.generate(run, workers=1, report_every=3600)  # must return, not spin
     assert done == 0
+    assert capsys.readouterr().out.count("worker exited") == build.MAX_CRASHES  # retired: silent
+    out = run / "generated_data" / "rcT"
+    assert not list(out.glob("*.lock"))  # each crash released its batch...
+    assert sum(len(f.read_text()) for f in out.glob("*.fail")) == build.MAX_CRASHES  # ...as a failed attempt
 
 
 def test_collect_uploads_the_version_folder(run, monkeypatch):
