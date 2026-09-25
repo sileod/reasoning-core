@@ -1,3 +1,4 @@
+abacus_partition_transfer
 abstract_interval_analysis
 access_control_evaluation
 access_control_policy_evaluation
@@ -831,6 +832,7 @@ weakest_precondition_computation
 weight_sensitive_stress_parse
 weighted_vote_realization
 which_path_intervention
+winding_region_repair
 window_function
 window_function_execution
 witness_uniformity_semantics
