@@ -742,6 +742,7 @@ strongly_connected_component
 strongly_connected_components
 struct_layout_alignment
 subset_zeta_transform
+substitution_uniform_recurrence
 suffix_array_rank
 suffix_automaton_growth_trace
 sumcheck_transcript_audit
