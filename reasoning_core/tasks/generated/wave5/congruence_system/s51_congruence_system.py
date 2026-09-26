@@ -55,30 +55,22 @@ class CongruenceSystemConfig(Config):
 
 class CongruenceSystem(Task):
     config_cls = CongruenceSystemConfig
+    # v2: the answer is the smallest solution the prompt asks for; v1 lifted it past 10**6
+    # by adding multiples of the lcm, which left the residues -- and the true answer -- alone.
+    task_version = 2
 
     def generate_entry(self):
         cfg = self.config
         n = random.randint(cfg.n_min, cfg.n_max)
 
         # build a jointly consistent baseline with overlapping moduli
-        congruences, lcm = self._build_consistent(n)
+        congruences, _lcm = self._build_consistent(n)
 
         inconsistent = random.random() < 0.25
         if inconsistent:
             congruences = self._make_inconsistent(congruences, n)
 
         answer = canonical_answer(congruences)
-        if answer != "none":
-            # answer must reach six digits at the top level so it cannot be guessed
-            padded = int(answer)
-            if padded < 10 ** 6:
-                # lift to a large representative of the same residue class, with
-                # a spread that grows with difficulty so answers stay varied
-                span = cfg.base_bits
-                k = (10 ** 6 - padded) // lcm + random.randrange(0, span * 3)
-                padded += k * lcm
-            answer = str(padded)
-            congruences = [(m, padded % m) for (m, r) in congruences]
 
         items = []
         for m, r in congruences:

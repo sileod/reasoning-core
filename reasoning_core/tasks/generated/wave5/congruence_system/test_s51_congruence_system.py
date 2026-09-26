@@ -21,31 +21,32 @@ def _brute(congruences):
 
 
 def _merge_all(congruences):
-    from reasoning_core.tasks.generated.wave5.s51_congruence_system.s51_congruence_system import merge_all as ma
+    from reasoning_core.tasks.generated.wave5.congruence_system.s51_congruence_system import merge_all as ma
     return ma(congruences)
 
 
 def _solver_congruences(congruences):
-    from reasoning_core.tasks.generated.wave5.s51_congruence_system.s51_congruence_system import canonical_answer
+    from reasoning_core.tasks.generated.wave5.congruence_system.s51_congruence_system import canonical_answer
     return canonical_answer(congruences)
 
 
-def test_consistent_reaches_six_digits():
-    from reasoning_core.tasks.generated.wave5.s51_congruence_system.s51_congruence_system import CongruenceSystem
+def test_the_answer_is_the_smallest_solution():
+    # v1 answered 1001034 for x = 42 mod 96, x = 10 mod 32, whose smallest solution is 42.
+    from reasoning_core.tasks.generated.wave5.congruence_system.s51_congruence_system import CongruenceSystem
     t = CongruenceSystem()
-    t.config.set_level(5)
-    for _ in range(40):
-        t.config.n_min = 6
-        t.config.n_max = 6
-        t.config.base_bits = 11
-        e = t.generate_entry()
-        if e.answer != "none":
-            assert len(e.answer) >= 6, e.answer
-        assert t.score_answer(e.answer, e) == 1.0
+    for level in (0, 2):
+        for _ in range(20):
+            e = t.generate_example(level=level)
+            if e.answer != "none":
+                system = e.metadata.system
+                fits = lambda x: all(x % m == r % m for m, r in system)
+                assert fits(int(e.answer))
+                assert not any(fits(x) for x in range(int(e.answer)))
+            assert t.score_answer(e.answer, e) == 1.0
 
 
 def test_inconsistency_is_non_adjacent():
-    from reasoning_core.tasks.generated.wave5.s51_congruence_system.s51_congruence_system import CongruenceSystem, merge_all
+    from reasoning_core.tasks.generated.wave5.congruence_system.s51_congruence_system import CongruenceSystem, merge_all
     t = CongruenceSystem()
     t.config.set_level(4)
     for _ in range(200):
@@ -63,7 +64,7 @@ def test_inconsistency_is_non_adjacent():
 
 
 def test_brute_matches_solver():
-    from reasoning_core.tasks.generated.wave5.s51_congruence_system.s51_congruence_system import CongruenceSystem, merge_all
+    from reasoning_core.tasks.generated.wave5.congruence_system.s51_congruence_system import CongruenceSystem, merge_all
     t = CongruenceSystem()
     t.config.set_level(0)
     for _ in range(300):
@@ -85,7 +86,7 @@ def test_brute_matches_solver():
 
 
 def test_score_rejects_junk():
-    from reasoning_core.tasks.generated.wave5.s51_congruence_system.s51_congruence_system import CongruenceSystem
+    from reasoning_core.tasks.generated.wave5.congruence_system.s51_congruence_system import CongruenceSystem
     t = CongruenceSystem()
     for _ in range(20):
         e = t.generate_entry()
@@ -95,7 +96,7 @@ def test_score_rejects_junk():
 
 
 def test_gold_scores_one():
-    from reasoning_core.tasks.generated.wave5.s51_congruence_system.s51_congruence_system import CongruenceSystem
+    from reasoning_core.tasks.generated.wave5.congruence_system.s51_congruence_system import CongruenceSystem
     t = CongruenceSystem()
     for level in (0, 1, 2, 3, 4, 5):
         t.config.set_level(level)
