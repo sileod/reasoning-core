@@ -11,6 +11,7 @@ from collections import defaultdict
 import math
 
 import numpy as np
+from scipy.stats import rankdata
 
 LENGTHS = ("log_prompt_chars", "log_answer_chars")
 
@@ -54,7 +55,9 @@ def task_profiles(rows):
 
 
 def spearman(x, y):
-    rx, ry = (np.argsort(np.argsort(v)).astype(float) for v in (x, y))
+    # Average ranks: a ladder's solve rates tie often (0%, 0%, 0%), and breaking ties by
+    # position would score the order the rows happened to be listed in.
+    rx, ry = rankdata(x), rankdata(y)
     if rx.std() == 0 or ry.std() == 0:
         return float("nan")
     return float(np.corrcoef(rx, ry)[0, 1])
@@ -120,7 +123,7 @@ def held_out_fit(profiles, targets, features, **options):
                     np.array([targets[k] for k in keys])), len(keys)
 
 
-def report(rows, targets, *, top=20, judges=("jev", "span")):
+def report(rows, targets, *, top=20, judges=("jev",)):
     profiles = task_profiles(rows)
     lines = [f"{len(profiles)} profiled tasks, {sum(t in targets for t in profiles)} with a target"]
     lines += [f"  {rho:+.2f}  n={n:<4} {feature}"

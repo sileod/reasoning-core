@@ -77,13 +77,10 @@ def make_judge(name, purpose="signals"):
         from .judge_llm import LLMJudge
 
         return LLMJudge()
-    if name == "jev":
-        from .judge_jev import JevJudge
+    if name in ("jev", "kev"):
+        from .judge_jev import JevJudge, KEV_MODEL
 
-        return JevJudge()
-    if name == "span":
-        from .judge_span import SpanJudge
-
-        return SpanJudge()
+        # Kev answers the same decisions API; only the model differs.
+        return JevJudge(model=KEV_MODEL if name == "kev" else None)
     raise ValueError(
-        f"unknown judge backend {name!r} for {purpose}: known backends are llm, jev, span")
+        f"unknown judge backend {name!r} for {purpose}: known backends are llm, jev, kev")

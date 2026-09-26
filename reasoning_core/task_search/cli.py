@@ -261,7 +261,7 @@ def _parser():
     signals.add_argument("--levels", nargs="+", type=int, default=[0, 2, 4, 6])
     signals.add_argument("--n", type=int, default=3, help="examples per task and level")
     signals.add_argument("--seed", type=int, default=43)
-    signals.add_argument("--judges", nargs="+", default=["jev", "span"])
+    signals.add_argument("--judges", nargs="+", default=["jev"])
     report = subparsers.add_parser(
         "signals-report", help="rank signals against a {task: value} target")
     report.add_argument("rows")
@@ -616,13 +616,15 @@ def main(argv=None):
                 for (task, level), value in predicted.items()})
         return
     if args.command == "answer-audit":
-        from .answer_audit import audit
+        from .answer_audit import add_choice, audit
 
         rows = [json.loads(line) for line in Path(args.rows).read_text().splitlines()]
+        add_choice(rows, args.rows)
         verdicts = audit(rows, args.out, per_task=args.per_task, below=args.below)
-        wrong = sorted({v["task"] for v in verdicts if v["verdict"] == "WRONG"})
-        print(f"{len(verdicts)} adjudicated; {len(wrong)} tasks with a confirmed wrong answer:"
-              + "".join(f"\n  {task}" for task in wrong))
+        for kind in ("WRONG", "STRICT"):
+            tasks = sorted({v["task"] for v in verdicts if v["verdict"] == kind})
+            print(f"{kind}: {len(tasks)} tasks" + "".join(f"\n  {task}" for task in tasks))
+        print(f"{len(verdicts)} adjudicated")
         return
 
     credential_env_names = ()

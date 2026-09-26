@@ -157,10 +157,9 @@ gate can be moved on its own with `TASK_SEARCH_<PURPOSE>_BACKEND` (`SANITY`, `FI
 so a new judge can be measured against the gates that did not move rather than against a
 memory of how the old one scored.
 
-`span` asks Respan's Span-01 (`RESPAN_API_KEY`; the free tier has a daily cap) and answers
-two-way questions only. Both decision models also serve `signals`, which profiles generated
-examples along named dimensions -- difficulty, step count, formality, whether the reference
-answer is correct -- each one a question whose probability is a coordinate:
+`kev` is the same API with `jaredpalmer/kev-4b`. Both serve `signals`, which profiles
+generated examples along named dimensions -- difficulty, step count, formality, whether the
+reference answer is correct -- each one a question whose probability is a coordinate:
 
 ```bash
 python -m reasoning_core.task_search signals runs/signals/out.jsonl --tasks arithmetics

@@ -1,5 +1,11 @@
 """Find generators whose reference answers are wrong: a cheap screen, then two blind solves.
 
+The screen is Jev twice. `correct` (from `signals`) asks yes or no about the reference;
+`choice` asks it to pick the reference out from wrong answers the task's own scorer rejects
+(`Task.generate_distractors`). On 494 claims, half with a sibling's wrong answer swapped in,
+their AUROCs were 0.866 and 0.909 and their product's 0.916 (2026-09-26), so suspects are
+ranked by the product.
+
 A generator can be wrong in a way no gate sees -- self-consistent, reproducible, and wrong
 on the instances a sample file happens not to show. Recomputing every answer with a
 reasoning model is too slow to run across the registry; Jev's p(correct) costs a fraction
@@ -17,10 +23,15 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 import json
+import math
 from pathlib import Path
+import random
 import re
 
+from .judge import Question
+from .judge_jev import JevJudge
 from .judge_llm import LLMJudge
+from .signals import MAX_STATE_CHARS, write_rows
 
 SOLVE = """Solve the problem. Work it out step by step, following only the rules the
 problem states. Then give your final answer on the last line, in exactly the form the
@@ -34,6 +45,12 @@ SOLVE_TEMPERATURE = 0.7   # two draws, so two samples rather than one answer rea
 
 def normalized(answer):
     return re.sub(r"[\s.]+$", "", re.sub(r"\s+", " ", str(answer).strip().lower()))
+
+
+def compact(answer):
+    """The answer with spacing, markup and grouping stripped: equal compact forms differ
+    only in how they are written."""
+    return re.sub(r"[\s`*{}\[\]()]", "", str(answer)).lower()
 
 
 def matcher(row):
@@ -60,11 +77,63 @@ def _score(task, said, entry):
         return 0
 
 
+DISTRACTORS = 3
+LABELS = "ABCD"
+
+
+def choose(row, distractors, judge):
+    """Jev's probability on the reference among it and `distractors`, in a fixed shuffle."""
+    options = [str(row["answer"])] + distractors[:DISTRACTORS]
+    random.Random(row["prompt"]).shuffle(options)
+    labels = tuple(LABELS[:len(options)])
+    state = (f"PROBLEM:\n{row['prompt']}\n\nCANDIDATE ANSWERS:\n"
+             + "\n".join(f"{label}) {option}" for label, option in zip(labels, options)))
+    question = Question("pick", "Which candidate answer is the correct answer to the PROBLEM?",
+                        labels)
+    probs = judge.evaluate(state[:MAX_STATE_CHARS], [question])["pick"]["probs"]
+    return None if probs is None else probs[labels[options.index(str(row["answer"]))]]
+
+
+def add_choice(rows, path, *, workers=8, log=lambda line: print(line, flush=True)):
+    """Fill `jev:choice` on every row lacking it, and save. Distractors are drawn on the main
+    thread, since a generator's deadline is a signal; only the judge calls are pooled."""
+    import reasoning_core
+    from reasoning_core.template import Entry
+
+    judge, tasks, pending = JevJudge(), {}, []
+    with ThreadPoolExecutor(workers) as pool:
+        for row in rows:
+            jev = (row.get("signals") or {}).get("jev") or {}
+            if "prompt" not in row or "choice" in jev or not row.get("metadata"):
+                continue
+            try:
+                task = tasks.get(row["task"]) or tasks.setdefault(
+                    row["task"], reasoning_core.get_task(row["task"]))
+                distractors = task.generate_distractors(Entry.from_dict(row), n=DISTRACTORS,
+                                                        max_candidates=16)
+            except Exception:  # noqa: BLE001 - no distractors, no choice question
+                continue
+            if distractors:
+                pending.append((jev, pool.submit(choose, row, distractors, judge)))
+        for jev, future in pending:
+            if future.result() is not None:
+                jev["choice"] = future.result()
+    write_rows(Path(path), rows)
+    log(f"choice asked of {len(pending)} examples")
+
+
+def plausibility(row, judge="jev"):
+    """p(correct) times p(choice) where both exist, else whichever does."""
+    values = [v for k, v in ((row.get("signals") or {}).get(judge) or {}).items()
+              if k in ("correct", "choice") and v is not None]
+    return None if not values else float(math.prod(values))
+
+
 def suspects(rows, *, per_task=2, below=0.5, judge="jev"):
-    """Each task's least plausible examples by `judge`'s p(correct), under `below`."""
+    """Each task's least plausible examples, under `below`."""
     by_task = {}
     for row in rows:
-        p = ((row.get("signals") or {}).get(judge) or {}).get("correct")
+        p = plausibility(row, judge)
         if "prompt" in row and p is not None and p < below:
             by_task.setdefault(row["task"], []).append((p, row))
     return [row for scored in by_task.values()
@@ -78,36 +147,47 @@ def solve(solver, prompt):
     except Exception:  # noqa: BLE001 - an unreachable solver is a missing vote
         return None
     found = re.findall(r"FINAL:\s*(.+)", text)
-    return found[-1].strip() if found else None
+    return found[-1].strip().strip("*`").strip() if found else None
 
 
-def adjudicate(row, solver, judge="jev"):
-    """WRONG when two blind solves agree with each other and not with the reference;
-    CORRECT when either matches it; UNSURE otherwise."""
-    solves = [solve(solver, row["prompt"]) for _ in range(2)]
+def decide(row, solves):
+    """CORRECT when a solve earns the reference's score; STRICT when both solves agree and
+    differ from the reference only in formatting the task's scorer refuses; WRONG when they
+    agree on something else; UNSURE otherwise."""
     said = [s for s in solves if s is not None]
     right = matcher(row)
     if any(right(s) for s in said):
-        verdict = "CORRECT"
-    elif len(said) == 2 and normalized(said[0]) == normalized(said[1]):
-        verdict = "WRONG"
-    else:
-        verdict = "UNSURE"
+        return "CORRECT"
+    if len(said) == 2 and normalized(said[0]) == normalized(said[1]):
+        return "STRICT" if compact(said[0]) == compact(row["answer"]) else "WRONG"
+    return "UNSURE"
+
+
+def adjudicate(row, solver, judge="jev"):
+    solves = [solve(solver, row["prompt"]) for _ in range(2)]
     return {"task": row["task"], "level": row["level"], "index": row["index"],
-            "p_correct": row["signals"][judge]["correct"], "reference": row["answer"],
-            "solves": solves, "verdict": verdict}
+            "plausibility": plausibility(row, judge), "reference": row["answer"],
+            "solves": solves, "verdict": decide(row, solves)}
 
 
-def audit(rows, out, *, per_task=2, below=0.5, workers=4, solver=None, log=print):
+def audit(rows, out, *, per_task=2, below=0.5, workers=4, solver=None,
+          log=lambda line: print(line, flush=True)):
     """Adjudicate the suspects not already in `out` (JSONL); return every verdict held."""
     out = Path(out)
     solver = solver or LLMJudge()
     done = ([json.loads(line) for line in out.read_text().splitlines()]
             if out.exists() else [])
+    by_key = {(row["task"], row["level"], row.get("index")): row for row in rows}
+    for verdict in done:   # verdicts follow the current rule; the solves are what is kept
+        row = by_key.get((verdict["task"], verdict["level"], verdict["index"]))
+        if row:
+            verdict["verdict"] = decide(row, [str(s).strip("*`").strip() if s else s
+                                              for s in verdict["solves"]])
     seen = {(v["task"], v["level"], v["index"]) for v in done}
     todo = [row for row in suspects(rows, per_task=per_task, below=below)
             if (row["task"], row["level"], row["index"]) not in seen]
     log(f"{len(todo)} suspects to adjudicate, {len(done)} already judged")
+    write_rows(out, done)
     with ThreadPoolExecutor(workers) as pool, out.open("a") as sink:
         for verdict in pool.map(lambda row: adjudicate(row, solver), todo):
             sink.write(json.dumps(verdict, sort_keys=True) + "\n")

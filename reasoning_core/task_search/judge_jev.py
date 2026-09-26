@@ -16,6 +16,7 @@ from .judge import abstain, answer, post_json
 
 ENDPOINT = "https://openrouter.ai/api/alpha/decisions"
 DEFAULT_MODEL = "typesafe/jev-1.13"
+KEV_MODEL = "jaredpalmer/kev-4b"
 KEY_VAR = "JEV_OPENROUTER_API_KEY"
 # The key is shared with other OpenRouter use, so its dashboard total cannot say what Jev
 # spent. Every call appends its reported cost here, and past the budget Jev abstains.

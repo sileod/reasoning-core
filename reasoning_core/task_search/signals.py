@@ -10,8 +10,8 @@ is there because a generator can be wrong, and `correct` is how that shows: a lo
 is an adjudication target, not a verdict, since Jev does not do arithmetic.
 
 Examples are stored with their profiles, so a dimension added later is asked of the same
-examples rather than of new draws, and a judge that fails (Span's free tier has a daily
-cap) leaves its own columns empty without holding up the others.
+examples rather than of new draws, and a judge that fails leaves its own columns empty
+without holding up the others.
 """
 from __future__ import annotations
 
@@ -116,16 +116,13 @@ def profile(example, judges, dimensions=DIMENSIONS):
 
 
 def _missing(row, judges, dimensions):
-    """Judges owing an answer. A judge may declare what it `answers` (Span: two-way only);
-    one that cannot answer a dimension is never asked it again."""
+    """Judges owing an answer to any dimension."""
     have = row.get("signals") or {}
-    return {name for name, judge in judges.items()
-            if any((have.get(name) or {}).get(d.name) is None
-                   and getattr(judge, "answers", lambda _: True)(d.question_())
-                   for d in dimensions)}
+    return {name for name in judges
+            if any((have.get(name) or {}).get(d.name) is None for d in dimensions)}
 
 
-def collect(tasks, out, *, levels=(0, 2, 4, 6), n=3, seed=43, judges=("jev", "span"),
+def collect(tasks, out, *, levels=(0, 2, 4, 6), n=3, seed=43, judges=("jev",),
             dimensions=DIMENSIONS, workers=8, log=lambda line: print(line, flush=True)):
     """Sample, profile and store every (task, level); resumable, and re-asks only the gaps.
 
@@ -172,12 +169,12 @@ def collect(tasks, out, *, levels=(0, 2, 4, 6), n=3, seed=43, judges=("jev", "sp
                             "behavior_hash": behavior, **example}
             mine = [row for key, row in rows.items() if key[0] == task_name and "prompt" in row]
             list(pool.map(ask, mine))
-            _write(out, rows.values())
+            write_rows(out, rows.values())
             log(f"  {task_name}: {len(mine)} examples")
     return list(rows.values())
 
 
-def _write(path, rows):
+def write_rows(path, rows):
     staged = path.with_suffix(path.suffix + ".tmp")
     staged.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
     staged.replace(path)

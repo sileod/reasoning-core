@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from reasoning_core.task_search import judge_span, signals
+from reasoning_core.task_search import signals
 from reasoning_core.task_search.judge import Question, abstain, answer
 
 
@@ -15,50 +15,16 @@ def test_a_dimension_reads_its_distribution_as_one_number():
     assert yes_no.value(None) is None
 
 
-def _span_replying(monkeypatch, reply=None, error=None):
-    sent = []
-
-    def opener(request, timeout=None):
-        sent.append(json.loads(request.data))
-        if error:
-            raise error
-        return io.BytesIO(json.dumps(reply).encode())
-
-    monkeypatch.setattr(judge_span.urllib.request, "urlopen", opener)
-    return judge_span.SpanJudge(key="k"), sent
-
-
-def test_span_renormalises_present_against_absent_and_declines_wider_questions(monkeypatch):
-    judge_, sent = _span_replying(monkeypatch, {"results": [
-        {"id": "two", "p_present": 0.6, "p_absent": 0.2, "p_not_observable": 0.2}]})
-    got = judge_.evaluate("state", [Question("two", "Is it?", ("yes", "no")),
-                                    Question("three", "Which?", ("a", "b", "c"))])
-    assert got["two"]["probs"] == pytest.approx({"yes": 0.75, "no": 0.25})
-    assert got["three"]["value"] is None
-    assert [b["id"] for b in sent[0]["behaviors"]] == ["two"]
-
-
-def test_a_failing_span_stops_asking_instead_of_holding_up_the_run(monkeypatch):
-    judge_, sent = _span_replying(monkeypatch, error=OSError("daily cap"))
-    question = Question("q", "Is it?", ("yes", "no"))
-    assert judge_.evaluate("s", [question])["q"]["value"] is None
-    assert judge_.evaluate("s", [question])["q"]["reason"].startswith("span unreachable")
-    assert len(sent) == 1
-
-
 class _Judge:
-    def __init__(self, p=None, two_way=False):
-        self.p, self.calls, self.two_way = p, 0, two_way
-
-    def answers(self, question):
-        return not self.two_way or len(question.choices) == 2
+    def __init__(self, p=None):
+        self.p, self.calls = p, 0
 
     def evaluate(self, state, questions):
         self.calls += 1
         if self.p is None:
             return {q.name: abstain("down") for q in questions}
         return {q.name: answer(value=q.choices[0], probs={q.choices[0]: self.p})
-                if self.answers(q) else abstain("two-way only") for q in questions}
+                for q in questions}
 
 
 def test_collect_resumes_asking_only_what_is_missing(monkeypatch, tmp_path):
@@ -69,24 +35,22 @@ def test_collect_resumes_asking_only_what_is_missing(monkeypatch, tmp_path):
 
     monkeypatch.setattr(signals, "sample", sample)
     dims = (signals.Dimension("d", "q?"), signals.Dimension("w", "q?", ("a", "b", "c")))
-    jev, span = _Judge(0.9), _Judge(None, two_way=True)
-    monkeypatch.setattr(signals, "make_judge", {"jev": jev, "span": span}.get)
+    jev, kev = _Judge(0.9), _Judge(None)
+    monkeypatch.setattr(signals, "make_judge", {"jev": jev, "kev": kev}.get)
     out = tmp_path / "signals.jsonl"
 
     rows = signals.collect(["ok", "broken"], out, levels=(0,), n=2, dimensions=dims,
-                           log=lambda *_: None)
+                           judges=("jev", "kev"), log=lambda *_: None)
     assert {row.get("error", "")[:12] for row in rows} == {"", "RuntimeError"}
-    assert jev.calls == 2 and span.calls == 2
+    assert jev.calls == 2 and kev.calls == 2
 
-    span.p = 0.3   # Span is back: only Span is asked again, and Jev's answers survive
+    kev.p = 0.3   # Kev is back: only Kev is asked again, and Jev's answers survive
     signals.collect(["ok", "broken"], out, levels=(0,), n=2, dimensions=dims,
-                    log=lambda *_: None)
-    assert jev.calls == 2 and span.calls == 4
+                    judges=("jev", "kev"), log=lambda *_: None)
+    assert jev.calls == 2 and kev.calls == 4
     stored = [json.loads(line) for line in out.read_text().splitlines() if "prompt" in line]
-    assert all(row["signals"] == {"jev": {"d": 0.9, "w": 0.9}, "span": {"d": 0.3}}
+    assert all(row["signals"] == {"jev": {"d": 0.9, "w": 0.9}, "kev": {"d": 0.3, "w": 0.3}}
                for row in stored)
-    signals.collect(["ok"], out, levels=(0,), n=2, dimensions=dims, log=lambda *_: None)
-    assert jev.calls == 2 and span.calls == 4, "a question Span cannot answer is not re-asked"
 
 
 def test_the_audit_reads_only_each_tasks_least_plausible_answers(monkeypatch, tmp_path):
@@ -117,6 +81,15 @@ def test_the_audit_reads_only_each_tasks_least_plausible_answers(monkeypatch, tm
     assert solver.calls == 4, "a judged suspect is not solved again"
 
 
+def test_a_formatting_variant_the_scorer_refuses_is_strict_not_wrong():
+    from reasoning_core.task_search import answer_audit
+
+    row = {"task": "t", "level": 0, "index": 0, "prompt": "p", "answer": "8,17"}
+    assert answer_audit.decide(row, ["8, 17", "8, 17"]) == "STRICT"
+    assert answer_audit.decide(row, ["8, 18", "8, 18"]) == "WRONG"
+    assert answer_audit.decide(row, ["8,17", "9"]) == "CORRECT"
+
+
 def test_disagreeing_solves_accuse_nothing():
     from reasoning_core.task_search import answer_audit
 
@@ -145,3 +118,42 @@ def test_a_ladder_calibrated_on_a_probe_is_judged_on_tasks_it_never_saw():
     assert len(predicted) == 48 and stats["cells"] == 48
     assert stats["cell_rho"] > 0.99 and stats["within_task_rho"] > 0.99
     assert stats["direction"] == "12/12"
+
+
+def test_the_choice_screen_asks_jev_to_pick_the_reference_among_scored_wrong_answers(
+        monkeypatch, tmp_path):
+    import reasoning_core
+    from reasoning_core.task_search import answer_audit
+
+    class Task:
+        def generate_distractors(self, entry, n, max_candidates):
+            return ["7", "8"]
+
+    asked = []
+
+    class Jev:
+        def evaluate(self, state, questions):
+            asked.append(state)
+            labels = questions[0].choices
+            reference = next(l for l in labels if f"{l}) 1" in state)
+            return {"pick": answer(value=reference, probs={l: 0.6 if l == reference else 0.2
+                                                          for l in labels})}
+
+    monkeypatch.setattr(reasoning_core, "get_task", lambda name: Task())
+    monkeypatch.setattr(answer_audit, "JevJudge", Jev)
+    rows = [{"task": "t", "level": 0, "index": 0, "prompt": "p", "answer": "1",
+             "metadata": {"x": 1}, "signals": {"jev": {"correct": 0.5}}}]
+    path = tmp_path / "rows.jsonl"
+    answer_audit.add_choice(rows, path, log=lambda *_: None)
+    assert rows[0]["signals"]["jev"]["choice"] == pytest.approx(0.6)
+    assert answer_audit.plausibility(rows[0]) == pytest.approx(0.3)
+    assert all(option in asked[0] for option in (") 1", ") 7", ") 8"))
+    answer_audit.add_choice(rows, path, log=lambda *_: None)
+    assert len(asked) == 1 and json.loads(path.read_text())["signals"]["jev"]["choice"]
+
+
+def test_tied_ranks_score_nothing_by_row_order():
+    from reasoning_core.task_search.signal_report import spearman
+
+    floor = [0.0, 0.0, 0.0, 0.5]   # a ladder that only moves at the top
+    assert spearman([1, 2, 3, 4], floor) == pytest.approx(spearman([3, 2, 1, 4], floor))
