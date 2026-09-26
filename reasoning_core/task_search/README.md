@@ -157,6 +157,18 @@ gate can be moved on its own with `TASK_SEARCH_<PURPOSE>_BACKEND` (`SANITY`, `FI
 so a new judge can be measured against the gates that did not move rather than against a
 memory of how the old one scored.
 
+`span` asks Respan's Span-01 (`RESPAN_API_KEY`; the free tier has a daily cap) and answers
+two-way questions only. Both decision models also serve `signals`, which profiles generated
+examples along named dimensions -- difficulty, step count, formality, whether the reference
+answer is correct -- each one a question whose probability is a coordinate:
+
+```bash
+python -m reasoning_core.task_search signals runs/signals/out.jsonl --tasks arithmetics
+```
+
+The rows keep their examples, so a dimension added later is asked of the same draws, and a
+judge that is down leaves only its own columns empty for the next resume to fill.
+
 `run` defaults `--model` to `deepseek-v4-flash`, the implementor every landed wave
 was built with. It has no default provider: which host serves that model is a fact
 about a machine, so set `TASK_SEARCH_PROVIDER` in the env file and `run` and `doctor`

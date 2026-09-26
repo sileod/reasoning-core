@@ -69,7 +69,10 @@ def backend_name(purpose):
 
 
 def get_judge(purpose):
-    name = backend_name(purpose)
+    return make_judge(backend_name(purpose), purpose)
+
+
+def make_judge(name, purpose="signals"):
     if name == "llm":
         from .judge_llm import LLMJudge
 
@@ -78,5 +81,9 @@ def get_judge(purpose):
         from .judge_jev import JevJudge
 
         return JevJudge()
+    if name == "span":
+        from .judge_span import SpanJudge
+
+        return SpanJudge()
     raise ValueError(
-        f"unknown judge backend {name!r} for {purpose}: known backends are llm, jev")
+        f"unknown judge backend {name!r} for {purpose}: known backends are llm, jev, span")

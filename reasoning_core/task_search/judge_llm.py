@@ -33,27 +33,31 @@ class LLMJudge:
         return {question.name: self._ask(state, question) for question in questions}
 
     def _ask(self, state, question):
-        if not self.key or not self.endpoint or not self.model:
-            return abstain("reviewer is not configured")
-        body = json.dumps({
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": MAX_TOKENS,
-            "messages": [
-                {"role": "system", "content": question.instruction},
-                {"role": "user", "content": state},
-            ],
-        }).encode()
-        request = urllib.request.Request(
-            self.endpoint, body,
-            {"Authorization": "Bearer " + self.key, "Content-Type": "application/json"})
         try:
-            text = _post(request)
+            text = self.complete(question.instruction, state)
         except Exception as error:  # noqa: BLE001 - any transport fault is an abstention
             return abstain(f"reviewer unreachable: {error}")
         if not isinstance(text, str) or not text.strip():
             return abstain("reviewer returned no text")
         return _read(text, question)
+
+    def complete(self, system, user, *, max_tokens=MAX_TOKENS, temperature=0):
+        """The model's reply text; raises when unconfigured or unreachable."""
+        if not self.key or not self.endpoint or not self.model:
+            raise RuntimeError("reviewer is not configured")
+        body = json.dumps({
+            "model": self.model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+        }).encode()
+        request = urllib.request.Request(
+            self.endpoint, body,
+            {"Authorization": "Bearer " + self.key, "Content-Type": "application/json"})
+        return _post(request)
 
 
 def _read(text, question):

@@ -254,6 +254,34 @@ def _parser():
     catalog.add_argument(
         "--output", help="optionally write the complete catalog as JSON"
     )
+    signals = subparsers.add_parser(
+        "signals", help="profile generated examples with cheap judges (resumable JSONL)")
+    signals.add_argument("out")
+    signals.add_argument("--tasks", nargs="+", help="task names; default: every registry task")
+    signals.add_argument("--levels", nargs="+", type=int, default=[0, 2, 4, 6])
+    signals.add_argument("--n", type=int, default=3, help="examples per task and level")
+    signals.add_argument("--seed", type=int, default=43)
+    signals.add_argument("--judges", nargs="+", default=["jev", "span"])
+    report = subparsers.add_parser(
+        "signals-report", help="rank signals against a {task: value} target")
+    report.add_argument("rows")
+    report.add_argument("targets", help="JSON object mapping task name to a measured value")
+    report.add_argument("--top", type=int, default=20)
+    ladder = subparsers.add_parser(
+        "signals-ladder", help="predict per-level solve rates, calibrated on a real probe")
+    ladder.add_argument("rows")
+    ladder.add_argument("measured", help="zeroshot_probe cache (task|level|model -> cell)")
+    ladder.add_argument("--probe-model", default="deepseek-v4-flash")
+    ladder.add_argument("--judge", default="jev")
+    ladder.add_argument("--out", help="write predictions as probe cells under model "
+                                      "signals:<judge>, for difficulty_tune to read")
+    answers = subparsers.add_parser(
+        "answer-audit", help="adjudicate the least plausible reference answers per task")
+    answers.add_argument("rows")
+    answers.add_argument("out")
+    answers.add_argument("--per-task", type=int, default=2)
+    answers.add_argument("--below", type=float, default=0.5,
+                         help="only examples whose p(correct) is under this")
     run = subparsers.add_parser("run", help="launch folder-scoped coding workers")
     run.add_argument("plan")
     run.add_argument("--model", default=IMPLEMENTOR_MODEL,
@@ -555,6 +583,46 @@ def main(argv=None):
         print(json.dumps(record, indent=2, sort_keys=True))
         if args.output:
             _write_json(Path(args.output), [entry.as_dict() for entry in entries])
+        return
+
+    if args.command == "signals":
+        from .signals import collect
+        import reasoning_core
+
+        collect(args.tasks or sorted(reasoning_core.list_tasks()), args.out,
+                levels=tuple(args.levels), n=args.n, seed=args.seed, judges=tuple(args.judges))
+        return
+
+    if args.command == "signals-report":
+        from .signal_report import report
+
+        rows = [json.loads(line) for line in Path(args.rows).read_text().splitlines()]
+        print(report(rows, json.loads(Path(args.targets).read_text()), top=args.top))
+        return
+    if args.command == "signals-ladder":
+        from .signal_report import ladder
+
+        rows = [json.loads(line) for line in Path(args.rows).read_text().splitlines()]
+        cells = json.loads(Path(args.measured).read_text())
+        measured = {(c["task"], c["level"]): c["solve_rate"] for c in cells.values()
+                    if c.get("model") == args.probe_model and c.get("status") == "ok"}
+        predicted, stats = ladder(rows, measured, judge=args.judge)
+        print(json.dumps(stats, indent=1))
+        if args.out:
+            model = f"signals:{args.judge}"
+            _write_json(Path(args.out), {
+                f"{task}|{level}|{model}": {"task": task, "level": level, "model": model,
+                                            "status": "ok", "n": 3, "solve_rate": value}
+                for (task, level), value in predicted.items()})
+        return
+    if args.command == "answer-audit":
+        from .answer_audit import audit
+
+        rows = [json.loads(line) for line in Path(args.rows).read_text().splitlines()]
+        verdicts = audit(rows, args.out, per_task=args.per_task, below=args.below)
+        wrong = sorted({v["task"] for v in verdicts if v["verdict"] == "WRONG"})
+        print(f"{len(verdicts)} adjudicated; {len(wrong)} tasks with a confirmed wrong answer:"
+              + "".join(f"\n  {task}" for task in wrong))
         return
 
     credential_env_names = ()
