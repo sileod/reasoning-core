@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures.process import BrokenProcessPool
 import json
 from pathlib import Path
 
@@ -28,7 +29,6 @@ from .signals import SAMPLE_SECONDS, write_rows
 LEVELS = (0, 2, 4, 6)
 SAMPLES = 8
 SEEDS = 4
-MAX_TASKS_PER_CHILD = 20   # a fresh interpreter now and then: generators leak state and memory
 
 
 def moved_fields(task, levels=LEVELS):
@@ -76,23 +76,29 @@ def inspect(task_name, levels=LEVELS, samples=SAMPLES):
 
 def collect(tasks, out, *, levels=LEVELS, samples=SAMPLES, workers=8,
             log=lambda line: print(line, flush=True)):
-    """Inspect every task not already in `out` (JSONL); return every record held. Each task
-    runs in a worker process, on its main thread, so a generator that crashes or hangs past
-    its deadline costs that task and not the run."""
+    """Inspect every task not already in `out` (JSONL); return every record held.
+
+    Tasks run in worker processes, each generator on a main thread for its deadline signal.
+    A task's own failure is part of its record; a worker dying breaks the whole pool, so the
+    run stops there and the next one resumes. (Recycling workers with max_tasks_per_child
+    hung the pool with every worker gone on Python 3.12.)
+    """
     out = Path(out)
     records = {r["task"]: r for r in map(json.loads, out.read_text().splitlines())} \
         if out.exists() else {}
     todo = [name for name in tasks if name not in records]
-    with ProcessPoolExecutor(workers, max_tasks_per_child=MAX_TASKS_PER_CHILD) as pool:
+    with ProcessPoolExecutor(workers) as pool:
         running = {pool.submit(inspect, name, levels, samples): name for name in todo}
-        for future in as_completed(running):
-            name = running[future]
-            try:
+        try:
+            for future in as_completed(running):
+                name = running[future]
                 records[name] = future.result()
-            except Exception as error:  # noqa: BLE001 - the worker died with its task
-                records[name] = {"task": name, "error": f"{type(error).__name__}: {error}"[:300]}
-            write_rows(out, records.values())
-            log(f"  {name}: {'; '.join(findings(records[name])) or 'ok'}")
+                write_rows(out, records.values())
+                log(f"  {name}: {'; '.join(findings(records[name])) or 'ok'}")
+        except BrokenProcessPool:
+            log(f"  a worker died; rerun to resume the {sum(n not in records for n in todo)} "
+                f"tasks left")
+            pool.shutdown(cancel_futures=True)
     return list(records.values())
 
 
