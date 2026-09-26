@@ -55,9 +55,10 @@ class RateLimitTokenBucket(Task):
                "rules, returning accepted request times or the final token balance; modes vary "
                "the bucket refill semantics and per-request consumption.")
     config_cls = RateLimitTokenBucketConfig
+    task_version = 2  # v2: reads its levelled config; v1 read the class defaults at every level
 
     def generate_entry(self):
-        cfg = self.config_cls
+        cfg = self.config
         mode = random.choice([MODE_ACCEPT, MODE_BALANCE])
         capacity = random.randint(1, cfg.max_capacity)
         refill_rate = random.randint(1, cfg.max_refill)

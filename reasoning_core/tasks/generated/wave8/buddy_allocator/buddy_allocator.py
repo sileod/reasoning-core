@@ -127,14 +127,16 @@ class BuddyAllocator(Task):
                "(count per size, sizes desc, or 'empty'), across orders 1-9 with random splits, "
                "frees and buddy merges.")
     config_cls = BuddyConfig
+    task_version = 2  # v2: the level reaches the generator; v1 hardcoded level 0's ranges
 
     def generate_entry(self):
-        max_order = random.randrange(4, 9)
+        cfg = self.config
+        max_order = random.randrange(4, cfg.order_cap + 2)
         order = random.randrange(1, max_order + 1)
         b = Buddy(order)
         total = b.total
 
-        setup = random.randrange(2, 9)
+        setup = random.randrange(2, cfg.setup_ops + 3)
         for _ in range(setup):
             if random.random() < 0.6:
                 sizes = b.free_sizes()

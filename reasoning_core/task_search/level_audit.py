@@ -28,7 +28,7 @@ from .signals import SAMPLE_SECONDS, write_rows
 
 LEVELS = (0, 2, 4, 6)
 SAMPLES = 8
-SEEDS = 4
+SEEDS = 16   # a probabilistic knob (a share of instances) needs a few draws to show
 
 
 def moved_fields(task, levels=LEVELS):
