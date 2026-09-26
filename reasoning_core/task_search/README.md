@@ -150,7 +150,9 @@ Those three variables say where the reviewer lives; `TASK_SEARCH_JUDGE_BACKEND` 
 kind of thing answers it. `llm` is the default: it asks a chat model for a `VERDICT:` and
 a `WHY:`, which is what the gates have always done. `jev` asks TypeSafe's Jev through
 OpenRouter's decisions endpoint and gets a typed choice with a distribution instead; it
-reads `JEV_OPENROUTER_API_KEY`, a paid key, which is why it is never the default. A single
+reads `JEV_OPENROUTER_API_KEY`, a paid key, which is why it is never the default. Each call's cost goes to
+`~/.local/share/reasoning_core/jev_spend.tsv`, and past `JEV_BUDGET_USD` (default 5) Jev
+abstains. A single
 gate can be moved on its own with `TASK_SEARCH_<PURPOSE>_BACKEND` (`SANITY`, `FIDELITY`),
 so a new judge can be measured against the gates that did not move rather than against a
 memory of how the old one scored.

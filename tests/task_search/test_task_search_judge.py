@@ -118,10 +118,12 @@ def test_an_abstaining_backend_leaves_the_trial_unreviewed(monkeypatch):
     assert verdict == {"verdict": None, "why": "reviewer unreachable: timed out"}
 
 
-def _jev_replying(monkeypatch, reply=None, error=None):
+def _jev_replying(monkeypatch, reply=None, error=None, ledger=None):
     """Fake the decisions endpoint; return the list of request bodies it received."""
     import io
     import json
+    import tempfile
+    from pathlib import Path
 
     from reasoning_core.task_search import judge_jev
 
@@ -134,7 +136,8 @@ def _jev_replying(monkeypatch, reply=None, error=None):
         return io.BytesIO(json.dumps(reply).encode())
 
     monkeypatch.setattr(judge_jev.urllib.request, "urlopen", opener)
-    return judge_jev.JevJudge(key="k"), sent
+    ledger = ledger or Path(tempfile.mkdtemp()) / "spend.tsv"
+    return judge_jev.JevJudge(key="k", ledger=ledger), sent
 
 
 def test_jev_asks_every_question_in_one_request_without_the_chat_format(monkeypatch):
@@ -173,3 +176,21 @@ def test_the_jev_backend_is_selectable_per_purpose(monkeypatch):
 
     monkeypatch.setenv("TASK_SEARCH_FIDELITY_BACKEND", "jev")
     assert isinstance(judge.get_judge("fidelity"), JevJudge)
+
+
+def test_jev_stops_at_its_budget_across_processes(monkeypatch, tmp_path):
+    """The key is shared, so Jev's own ledger is the only record of what Jev spent."""
+    from reasoning_core.task_search import judge_jev
+
+    monkeypatch.setenv(judge_jev.BUDGET_VAR, "0.001")
+    ledger = tmp_path / "spend.tsv"
+    reply = {"answers": {"q": {"choice": "yes", "probabilities": {"yes": 0.9, "no": 0.1}}},
+             "usage": {"cost": 0.0006}}
+    question = Question("q", "Is it?", ("yes", "no"))
+    first, sent = _jev_replying(monkeypatch, reply, ledger=ledger)
+    assert first.evaluate("s", [question])["q"]["value"] == "yes"
+    second, _ = _jev_replying(monkeypatch, reply, ledger=ledger)
+    assert second.evaluate("s", [question])["q"]["value"] == "yes"
+    third, sent = _jev_replying(monkeypatch, reply, ledger=ledger)
+    verdict = third.evaluate("s", [question])["q"]
+    assert verdict["value"] is None and "budget" in verdict["reason"] and not sent
