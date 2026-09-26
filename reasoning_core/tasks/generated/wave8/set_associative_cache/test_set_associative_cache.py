@@ -74,3 +74,12 @@ def test_wrong_format_not_one():
     entry = task.generate_example()
     assert task.score_answer("HIT set 0 way 0 extra", entry) < 1.0
     assert task.score_answer("hit set 0 way 0", entry) < 1.0
+
+
+def test_a_way_is_the_slot_filled_lowest_empty_first():
+    from reasoning_core.tasks.generated.wave8.set_associative_cache.set_associative_cache import (
+        _compute_gold)
+    # v1 said "way 1" here (block 21 mod 5); 14 and 0 hold ways 0 and 1, so 21 fills way 2.
+    assert _compute_gold(7, 5, [14, 16, 25, 24, 12, 11, 16, 0, 26, 24, 3, 22, 21], 1) == (0, 0, 2)
+    assert _compute_gold(1, 2, [0, 1, 0, 2, 0], 0) == (1, 0, 0)   # LRU: the hit kept 0, 1 left
+    assert _compute_gold(1, 2, [0, 1, 0, 2, 0], 1) == (0, 0, 1)   # FIFO: 0 left, 1 is next out

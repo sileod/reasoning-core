@@ -33,36 +33,28 @@ def _set_label(block, n_sets):
 
 
 def _compute_gold(n_sets, n_ways, accesses, policy):
-    sets = [dict() for _ in range(n_sets)]
-    last_idx = len(accesses) - 1
-    for idx in range(last_idx):
-        block = accesses[idx]
-        s = block % n_sets
-        ws = sets[s]
-        if block in ws:
-            ws[block] = idx
-            continue
-        if len(ws) < n_ways:
-            ws[block] = idx
-            continue
-        if policy == 0:
-            victim = max(ws, key=ws.get)
-        else:
-            victim = min(ws, key=ws.get)
-        del ws[victim]
-        ws[block] = idx
-    last_block = accesses[last_idx]
-    last_set = last_block % n_sets
-    last_ws = sets[last_set]
-    if last_block in last_ws:
-        return 1, last_set, last_block % n_ways
-    if len(last_ws) < n_ways:
-        return 0, last_set, last_block % n_ways
-    if policy == 0:
-        victim = max(last_ws, key=last_ws.get)
-    else:
-        victim = min(last_ws, key=last_ws.get)
-    return 0, last_set, victim % n_ways
+    """(hit, set, way) for the last access. Ways are slots 0..n_ways-1: a miss fills the
+    lowest empty one, else overwrites the victim -- least recently used (policy 0) or
+    oldest loaded (policy 1). Only LRU counts a hit as a use."""
+    sets = [[None] * n_ways for _ in range(n_sets)]   # each way: [block, stamp] or None
+
+    def locate(block):
+        ways = sets[block % n_sets]
+        for way, slot in enumerate(ways):
+            if slot and slot[0] == block:
+                return ways, way, True
+        if None in ways:
+            return ways, ways.index(None), False
+        return ways, min(range(n_ways), key=lambda way: ways[way][1]), False
+
+    for idx, block in enumerate(accesses[:-1]):
+        ways, way, hit = locate(block)
+        if not hit:
+            ways[way] = [block, idx]
+        elif policy == 0:
+            ways[way][1] = idx
+    _ways, way, hit = locate(accesses[-1])
+    return int(hit), accesses[-1] % n_sets, way
 
 
 _pattern_cache = None
@@ -108,6 +100,9 @@ class SetAssociativeCache(Task):
                "set-associative LRU/FIFO placement with varied sets, ways and access sequences.")
 
     config_cls = SetAssociativeCacheConfig
+    # v2: a way is a slot, filled lowest-empty-first; v1 answered block mod ways, and its LRU
+    # evicted the most recently used block.
+    task_version = 2
 
     def generate_entry(self):
         c = self.config
@@ -162,14 +157,15 @@ class SetAssociativeCache(Task):
     def render_prompt(self, metadata):
         block_lst = ", ".join(str(b) for b in metadata.payload["accesses"])
         policy = metadata.payload["policy"]
-        victim_desc = ("the least-recently-used way" if policy == "LRU"
-                       else "the oldest-loaded way")
+        victim_desc = ("the least recently used block (a hit counts as a use)" if policy == "LRU"
+                       else "the block loaded longest ago (a hit changes nothing)")
         return (
             f"A {metadata.payload['n_sets']}-set {metadata.payload['n_ways']}-way set-associative "
             f"cache with {policy} replacement holds blocks numbered 0.."
             f"{metadata.payload['block_count'] - 1}. Block B maps to set B mod "
-            f"{metadata.payload['n_sets']}. When a block is loaded into a full set, {victim_desc} "
-            f"is evicted, unless the block is already in the set, which refreshes it instead. "
+            f"{metadata.payload['n_sets']}, and each set has ways numbered 0.."
+            f"{metadata.payload['n_ways'] - 1}. A block not in its set is loaded into the "
+            f"lowest-numbered empty way; in a full set it overwrites {victim_desc}. "
             f"The cache starts empty. The access sequence is\n\n{block_lst}\n\n"
             f"Process every access except the last to settle the cache state, then read the final "
             f"access against that state. The answer is 'HIT set S way W' if the final access's "
