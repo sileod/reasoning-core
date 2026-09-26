@@ -157,3 +157,31 @@ def test_tied_ranks_score_nothing_by_row_order():
 
     floor = [0.0, 0.0, 0.0, 0.5]   # a ladder that only moves at the top
     assert spearman([1, 2, 3, 4], floor) == pytest.approx(spearman([3, 2, 1, 4], floor))
+
+
+def test_the_level_audit_names_a_dead_knob_a_broken_rung_and_a_bad_curve():
+    from reasoning_core.task_search.level_audit import findings
+
+    record = {"task": "t", "fields": {}, "responds": False, "generation": {
+        "0": {"max_prompt_tokens": 100}, "6": {"error": "headroom level 6: prompt has 3000 tokens"}}}
+    found = findings(record, {0: 0.1, 6: 0.05}, "jev")
+    assert found[0] == "L6 generation: prompt has 3000 tokens"
+    assert found[1].startswith("static")
+    assert found[2].startswith("jev too-hard")
+    reads_level = {**record, "responds": True, "generation": {"0": {}, "6": {}}}
+    assert findings(reads_level, {0: 0.9, 6: 0.1}) == []   # no field moved, yet the problem did
+
+
+def test_a_level_that_changes_nothing_is_caught_from_one_seed():
+    import random
+    from reasoning_core.task_search import level_audit
+
+    class Task:
+        def __init__(self, uses_level):
+            self.uses_level = uses_level
+
+        def generate_example(self, level, timeout):
+            return type("E", (), {"prompt": f"{random.random()}:{level * self.uses_level}"})
+
+    assert level_audit.responds(Task(uses_level=1))
+    assert not level_audit.responds(Task(uses_level=0))

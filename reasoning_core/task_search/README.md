@@ -168,6 +168,16 @@ python -m reasoning_core.task_search signals runs/signals/out.jsonl --tasks arit
 The rows keep their examples, so a dimension added later is asked of the same draws, and a
 judge that is down leaves only its own columns empty for the next resume to fill.
 
+Two audits read those rows. `answer-audit` recomputes the least plausible reference
+answers with two blind solves; `level-audit` checks every difficulty ladder -- the fields
+the level moves, generation headroom at each level, and the solve-rate curve, measured
+where the probe has it and predicted from Jev elsewhere:
+
+```bash
+python -m reasoning_core.task_search level-audit runs/signals/levels.jsonl \
+  --rows runs/signals/out.jsonl --probe <zeroshot_probe cache>
+```
+
 `run` defaults `--model` to `deepseek-v4-flash`, the implementor every landed wave
 was built with. It has no default provider: which host serves that model is a fact
 about a machine, so set `TASK_SEARCH_PROVIDER` in the env file and `run` and `doctor`

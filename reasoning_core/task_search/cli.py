@@ -282,6 +282,13 @@ def _parser():
     answers.add_argument("--per-task", type=int, default=2)
     answers.add_argument("--below", type=float, default=0.5,
                          help="only examples whose p(correct) is under this")
+    levels = subparsers.add_parser(
+        "level-audit", help="check every task's difficulty ladder: config, generation, curve")
+    levels.add_argument("out", help="resumable JSONL of per-task config and generation checks")
+    levels.add_argument("--tasks", nargs="+", help="task names; default: every registry task")
+    levels.add_argument("--rows", help="signals JSONL, for Jev-predicted curves")
+    levels.add_argument("--probe", help="zeroshot_probe cache, for measured curves")
+    levels.add_argument("--probe-model", default="deepseek-v4-flash")
     run = subparsers.add_parser("run", help="launch folder-scoped coding workers")
     run.add_argument("plan")
     run.add_argument("--model", default=IMPLEMENTOR_MODEL,
@@ -614,6 +621,16 @@ def main(argv=None):
                 f"{task}|{level}|{model}": {"task": task, "level": level, "model": model,
                                             "status": "ok", "n": 3, "solve_rate": value}
                 for (task, level), value in predicted.items()})
+        return
+    if args.command == "level-audit":
+        from .level_audit import collect, report
+        import reasoning_core
+
+        records = collect(args.tasks or sorted(reasoning_core.list_tasks()), args.out)
+        rows = ([json.loads(line) for line in Path(args.rows).read_text().splitlines()]
+                if args.rows else ())
+        cache = json.loads(Path(args.probe).read_text()) if args.probe else None
+        print(report(records, rows, cache, args.probe_model))
         return
     if args.command == "answer-audit":
         from .answer_audit import add_choice, audit
