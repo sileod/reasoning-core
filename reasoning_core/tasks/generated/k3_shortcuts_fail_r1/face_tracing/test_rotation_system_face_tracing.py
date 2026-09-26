@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.k3_shortcuts_fail_r1.rotation_system_face_tracing.rotation_system_face_tracing import (
+from reasoning_core.tasks.generated.k3_shortcuts_fail_r1.face_tracing.rotation_system_face_tracing import (
     FaceTracing,
     enumerate_faces,
     sample_rotation,

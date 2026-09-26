@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave4.s40_canonical_huffman.canonical_huffman import (
+from reasoning_core.tasks.generated.wave4.canonical_huffman.canonical_huffman import (
     CanonicalHuffman,
 )
 

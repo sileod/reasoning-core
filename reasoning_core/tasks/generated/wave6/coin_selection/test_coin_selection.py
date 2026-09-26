@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave6.s64_coin_selection.coin_selection import (
+from reasoning_core.tasks.generated.wave6.coin_selection.coin_selection import (
     CoinSelection,
     _unbounded_min_count,
     _greedy_count,

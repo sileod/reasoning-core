@@ -1,6 +1,6 @@
 import re
 
-import reasoning_core.tasks.generated.k3_language_implementation_r4.generator_reentry_trace.generator_reentry_trace as m
+import reasoning_core.tasks.generated.k3_language_implementation_r4.reentry_trace.generator_reentry_trace as m
 
 
 def _ex(level):

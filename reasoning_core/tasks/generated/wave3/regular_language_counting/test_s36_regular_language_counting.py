@@ -1,7 +1,7 @@
 import itertools
 import random
 
-from reasoning_core.tasks.generated.wave3.s36_regular_language_counting.s36_regular_language_counting import (
+from reasoning_core.tasks.generated.wave3.regular_language_counting.s36_regular_language_counting import (
     _count_matches,
     _rand_pattern,
     _ALPHABETS,

@@ -2,7 +2,7 @@ from fractions import Fraction
 import json
 import random
 
-from reasoning_core.tasks.generated.ua_global_over_greedy_r4.catalytic_majorization_search. \
+from reasoning_core.tasks.generated.ua_global_over_greedy_r4.cat_maj_search. \
     catalytic_majorization_search import (
     CatMajSearch, _majorized_by, _min_dim, _compositions,
 )

@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave4.s46_voting_rules.voting_rules import (
+from reasoning_core.tasks.generated.wave4.voting_rules.voting_rules import (
     VotingRules, _runoff_order, _borda,
 )
 

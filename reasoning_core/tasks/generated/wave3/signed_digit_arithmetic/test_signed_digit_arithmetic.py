@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave3.s33_signed_digit_arithmetic.signed_digit_arithmetic import (
+from reasoning_core.tasks.generated.wave3.signed_digit_arithmetic.signed_digit_arithmetic import (
     SignedDigitArithmetic,
     _from_balanced_ternary,
     _to_balanced_ternary,

@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave10.information_seeking.information_seeking import (
+from reasoning_core.tasks.generated.wave10.info_seeking.information_seeking import (
     InfoSeeking,
     InfoSeekingConfig,
     _best_position,

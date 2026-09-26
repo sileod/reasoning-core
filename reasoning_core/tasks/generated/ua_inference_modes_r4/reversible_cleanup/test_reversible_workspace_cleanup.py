@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_inference_modes_r4.reversible_workspace_cleanup.reversible_workspace_cleanup import (
+from reasoning_core.tasks.generated.ua_inference_modes_r4.reversible_cleanup.reversible_workspace_cleanup import (
     ReversibleCleanupV2,
     WorkspaceConfig,
 )
@@ -71,7 +71,7 @@ def test_validate():
 
 
 def test_answer_matches_brute_force_small():
-    from reasoning_core.tasks.generated.ua_inference_modes_r4.reversible_workspace_cleanup.reversible_workspace_cleanup import (
+    from reasoning_core.tasks.generated.ua_inference_modes_r4.reversible_cleanup.reversible_workspace_cleanup import (
         _build,
         _verify,
     )

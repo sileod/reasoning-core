@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_representation_transfer_r4.event_configuration_recovery.event_configuration_recovery import (
+from reasoning_core.tasks.generated.ua_representation_transfer_r4.event_config_recovery.event_configuration_recovery import (
     EventConfigRecoveryConfig,
     EventConfigRecoveryV3,
 )

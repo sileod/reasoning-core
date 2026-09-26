@@ -1,6 +1,6 @@
 import pytest
 
-from reasoning_core.tasks.generated.wave3.s27_term_unification.term_unification import (
+from reasoning_core.tasks.generated.wave3.term_unification.term_unification import (
     TermUnification,
     TermUnificationConfig,
     unify,

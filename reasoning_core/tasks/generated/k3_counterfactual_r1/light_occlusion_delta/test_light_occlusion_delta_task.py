@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from reasoning_core.tasks.generated.k3_counterfactual_r1.grid_light_occlusion_delta.light_occlusion_delta_task import (
+from reasoning_core.tasks.generated.k3_counterfactual_r1.light_occlusion_delta.light_occlusion_delta_task import (
     LightOcclusionDelta,
     LightDeltaConfig,
     _cast,

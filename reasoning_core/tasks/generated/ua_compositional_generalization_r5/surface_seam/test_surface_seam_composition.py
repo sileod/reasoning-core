@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_compositional_generalization_r5.surface_seam_composition.surface_seam_composition import (
+from reasoning_core.tasks.generated.ua_compositional_generalization_r5.surface_seam.surface_seam_composition import (
     SurfaceSeamV1,
     boundary_components,
     generate_structure,

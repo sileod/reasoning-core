@@ -1,7 +1,7 @@
 import json
 import random
 
-from reasoning_core.tasks.generated.k3_synthetic_grammars_r1.markov_algorithm_execution.markov_algorithm import (
+from reasoning_core.tasks.generated.k3_synthetic_grammars_r1.markov_algorithm.markov_algorithm import (
     MarkovAlgorithm,
     MarkovAlgorithmConfig,
     _simulate,

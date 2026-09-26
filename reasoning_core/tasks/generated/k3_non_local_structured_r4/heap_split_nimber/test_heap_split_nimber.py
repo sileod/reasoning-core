@@ -1,6 +1,6 @@
 import pytest
 
-from reasoning_core.tasks.generated.k3_non_local_structured_r4.heap_splitting_nimber_recursion.heap_split_nimber import (
+from reasoning_core.tasks.generated.k3_non_local_structured_r4.heap_split_nimber.heap_split_nimber import (
     HeapSplitNimber,
     _NimberSolver,
     _xor,

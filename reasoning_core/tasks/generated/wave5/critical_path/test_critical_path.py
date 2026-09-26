@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave5.s56_critical_path.critical_path_task import (
+from reasoning_core.tasks.generated.wave5.critical_path.critical_path_task import (
     CriticalPath, CriticalPathConfig, analyze,
 )
 

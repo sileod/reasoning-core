@@ -1,7 +1,7 @@
 import random
 from fractions import Fraction
 
-from reasoning_core.tasks.generated.k3_global_from_local_r4.positional_weight_station_packing.positional_weight_station_packing import (
+from reasoning_core.tasks.generated.k3_global_from_local_r4.station_packing.positional_weight_station_packing import (
     StationPacking,
     _solve,
 )

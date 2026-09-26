@@ -1,7 +1,7 @@
 import random
 from math import factorial
 
-from reasoning_core.tasks.generated.k3_inference_modes_r4.linear_extension_counting.linear_extension_counting import (
+from reasoning_core.tasks.generated.k3_inference_modes_r4.linear_extension_count.linear_extension_counting import (
     LinearExtensionCountV1,
     _count_linear_extensions,
     _hook_length_count,

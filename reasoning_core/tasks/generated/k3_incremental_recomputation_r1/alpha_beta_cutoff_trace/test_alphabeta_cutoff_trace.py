@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from reasoning_core.tasks.generated.k3_incremental_recomputation_r1.alphabeta_cutoff_trace.alphabeta_cutoff_trace import (
+from reasoning_core.tasks.generated.k3_incremental_recomputation_r1.alpha_beta_cutoff_trace.alphabeta_cutoff_trace import (
     AlphaBetaConfig,
     AlphaBetaCutoffTraceV2,
     _parse_tree_string,

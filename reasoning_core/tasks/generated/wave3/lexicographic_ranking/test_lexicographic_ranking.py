@@ -1,7 +1,7 @@
 import math
 import random
 
-from reasoning_core.tasks.generated.wave3.s32_lexicographic_ranking.lexicographic_ranking import (
+from reasoning_core.tasks.generated.wave3.lexicographic_ranking.lexicographic_ranking import (
     LexicographicRanking,
     _counts,
     _total_arrangements,

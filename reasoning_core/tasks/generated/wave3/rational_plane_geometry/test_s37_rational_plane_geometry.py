@@ -1,6 +1,6 @@
 from fractions import Fraction
 
-from reasoning_core.tasks.generated.wave3.s37_rational_plane_geometry.s37_rational_plane_geometry import (
+from reasoning_core.tasks.generated.wave3.rational_plane_geometry.s37_rational_plane_geometry import (
     RationalPlaneGeometry,
 )
 

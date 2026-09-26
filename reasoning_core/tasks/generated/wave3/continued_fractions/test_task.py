@@ -2,7 +2,7 @@ import random
 from fractions import Fraction
 
 from reasoning_core.template import edict
-from reasoning_core.tasks.generated.wave3.s26_continued_fractions.task import (
+from reasoning_core.tasks.generated.wave3.continued_fractions.task import (
     ContinuedFractions,
     ContinuedFractionsConfig,
 )
@@ -36,7 +36,7 @@ def test_score_rejects_junk():
 
 
 def test_convergent_correctness():
-    from reasoning_core.tasks.generated.wave3.s26_continued_fractions.task import _convergent
+    from reasoning_core.tasks.generated.wave3.continued_fractions.task import _convergent
 
     random.seed(SEED)
     task = ContinuedFractions(config_cls=ContinuedFractionsConfig)

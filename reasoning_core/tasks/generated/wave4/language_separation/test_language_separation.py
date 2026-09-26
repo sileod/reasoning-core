@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave4.s38_language_separation.language_separation import (
+from reasoning_core.tasks.generated.wave4.language_separation.language_separation import (
     LanguageSeparation,
     _build_one,
     _shortest_witness,

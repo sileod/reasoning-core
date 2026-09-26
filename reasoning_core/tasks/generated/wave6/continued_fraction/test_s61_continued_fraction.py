@@ -1,7 +1,7 @@
 import random
 from fractions import Fraction
 
-from reasoning_core.tasks.generated.wave6.s61_continued_fraction.s61_continued_fraction import (
+from reasoning_core.tasks.generated.wave6.continued_fraction.s61_continued_fraction import (
     ContinuedFraction, ContinuedFractionConfig, _list_to_fraction)
 
 

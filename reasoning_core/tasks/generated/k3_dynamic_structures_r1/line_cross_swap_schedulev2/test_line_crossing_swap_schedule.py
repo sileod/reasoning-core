@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.k3_dynamic_structures_r1.line_crossing_swap_schedule.line_crossing_swap_schedule import (
+from reasoning_core.tasks.generated.k3_dynamic_structures_r1.line_cross_swap_schedulev2.line_crossing_swap_schedule import (
     LineCrossSwapSchedulev2,
 )
 

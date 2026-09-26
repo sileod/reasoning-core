@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_formal_semantics_r4.tilted_vessel_spillage.tilted_vessel_spillage import (
+from reasoning_core.tasks.generated.ua_formal_semantics_r4.tilted_vessel.tilted_vessel_spillage import (
     TiltedVessel,
     _area,
     _cap,

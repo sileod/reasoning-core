@@ -1,7 +1,7 @@
 import random
 from fractions import Fraction
 
-from reasoning_core.tasks.generated.wave5.s54_polynomial_gcd.s54_polynomial_gcd import (
+from reasoning_core.tasks.generated.wave5.polynomial_gcd.s54_polynomial_gcd import (
     PolynomialGcd, PolynomialGcdConfig, _gcd_poly, _monic
 )
 

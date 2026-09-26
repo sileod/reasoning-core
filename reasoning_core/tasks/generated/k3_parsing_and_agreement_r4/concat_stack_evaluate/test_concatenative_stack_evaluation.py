@@ -3,7 +3,7 @@ import random
 import pytest
 
 from reasoning_core.template import Config, Entry
-from reasoning_core.tasks.generated.k3_parsing_and_agreement_r4.concatenative_stack_evaluation.concatenative_stack_evaluation import (
+from reasoning_core.tasks.generated.k3_parsing_and_agreement_r4.concat_stack_evaluate.concatenative_stack_evaluation import (
     WORDS,
     ConcatStackConfig,
     ConcatStackEvaluate,

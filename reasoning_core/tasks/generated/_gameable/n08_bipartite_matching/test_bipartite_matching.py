@@ -1,7 +1,7 @@
 import random
 import networkx as nx
 
-from reasoning_core.tasks.generated.wave0.n08_bipartite_matching.bipartite_matching import BipartiteMatching
+from reasoning_core.tasks.generated._gameable.n08_bipartite_matching.bipartite_matching import BipartiteMatching
 
 
 def _max_card(edges, left, right):

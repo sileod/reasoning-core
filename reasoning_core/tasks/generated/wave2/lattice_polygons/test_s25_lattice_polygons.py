@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave2.s25_lattice_polygons.s25_lattice_polygons import (
+from reasoning_core.tasks.generated.wave2.lattice_polygons.s25_lattice_polygons import (
     LatticePolygons,
     LatticePolygonsConfig,
     _is_simple,

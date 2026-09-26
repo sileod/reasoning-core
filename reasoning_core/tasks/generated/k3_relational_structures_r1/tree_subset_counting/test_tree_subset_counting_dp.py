@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.k3_relational_structures_r1.tree_subset_counting_dp.tree_subset_counting_dp import (
+from reasoning_core.tasks.generated.k3_relational_structures_r1.tree_subset_counting.tree_subset_counting_dp import (
     TreeSubsetCounting,
     _dp,
     _bruteforce,

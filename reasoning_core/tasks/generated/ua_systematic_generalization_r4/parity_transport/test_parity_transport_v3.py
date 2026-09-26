@@ -1,7 +1,7 @@
 import random
 
 from reasoning_core.template import Entry
-from reasoning_core.tasks.generated.ua_systematic_generalization_r4.stereochemical_parity_transport.parity_transport_v3 import (
+from reasoning_core.tasks.generated.ua_systematic_generalization_r4.parity_transport.parity_transport_v3 import (
     ParityTransportConfig,
     ParityTransportV3,
     _chirality,

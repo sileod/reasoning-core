@@ -1,7 +1,7 @@
 import random
 import re
 
-from reasoning_core.tasks.generated.wave2.s21_policy_determination.policy_determination import (
+from reasoning_core.tasks.generated.wave2.policy_determination.policy_determination import (
     PolicyDetermination,
     PolicyConfig,
     total_amount,

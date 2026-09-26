@@ -1,7 +1,7 @@
 import json
 import re
 
-from reasoning_core.tasks.generated.k3_language_implementation_r4.constructor_slot_initialization.constructor_slot_initialization import (
+from reasoning_core.tasks.generated.k3_language_implementation_r4.slot_init_writes.constructor_slot_initialization import (
     SlotInitWrites,
 )
 

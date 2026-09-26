@@ -1,6 +1,6 @@
 import math
 
-from reasoning_core.tasks.generated.wave9.modular_constraint_solver.modular_constraint_solver import (
+from reasoning_core.tasks.generated.wave9.modular_constraint.modular_constraint_solver import (
     ModularConstraint, _solve_system, _reduce_by_gcd,
 )
 

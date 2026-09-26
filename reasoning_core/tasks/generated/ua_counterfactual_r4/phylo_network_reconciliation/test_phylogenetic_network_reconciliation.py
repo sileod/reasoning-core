@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_counterfactual_r4.phylogenetic_network_reconciliation.phylogenetic_network_reconciliation import (
+from reasoning_core.tasks.generated.ua_counterfactual_r4.phylo_network_reconciliation.phylogenetic_network_reconciliation import (
     build_pair,
     hybrid_number,
     _newick,

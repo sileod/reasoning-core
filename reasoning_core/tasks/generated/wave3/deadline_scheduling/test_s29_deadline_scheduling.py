@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave3.s29_deadline_scheduling.s29_deadline_scheduling import (
+from reasoning_core.tasks.generated.wave3.deadline_scheduling.s29_deadline_scheduling import (
     DeadlineScheduling,
     _moore_hodgson,
 )

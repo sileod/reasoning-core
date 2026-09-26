@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.k3_multi_relation_integration_r4.match_clear_cascade_resolution.match_clear_cascade_resolution import (
+from reasoning_core.tasks.generated.k3_multi_relation_integration_r4.match_clear_cascade_resolver.match_clear_cascade_resolution import (
     _norm,
     _simulate,
     MatchClearCascadeResolver,

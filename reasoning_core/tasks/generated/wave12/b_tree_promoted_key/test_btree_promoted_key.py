@@ -1,7 +1,7 @@
 import copy
 import random
 
-from reasoning_core.tasks.generated.wave12.btree_promoted_key.btree_promoted_key import (
+from reasoning_core.tasks.generated.wave12.b_tree_promoted_key.btree_promoted_key import (
     BTreePromotedKey,
     _insert_btree,
 )

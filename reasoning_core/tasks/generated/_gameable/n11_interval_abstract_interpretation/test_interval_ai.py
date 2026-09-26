@@ -1,5 +1,5 @@
 import random
-from reasoning_core.tasks.generated.wave0.n11_interval_abstract_interpretation.interval_ai import (
+from reasoning_core.tasks.generated._gameable.n11_interval_abstract_interpretation.interval_ai import (
     IntervalAI,
     _interp_interval,
 )

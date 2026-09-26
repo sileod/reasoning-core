@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.ua_inference_modes_r4.stoichiometric_bootstrap_planning.stoichiometric_bootstrap_planning import (
+from reasoning_core.tasks.generated.ua_inference_modes_r4.stoichiometric_bootstrap_planner.stoichiometric_bootstrap_planning import (
     StoichiometricBootstrapPlannerV2,
     _check_solution,
     _canon_answer,

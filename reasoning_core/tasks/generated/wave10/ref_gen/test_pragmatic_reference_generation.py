@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave10.pragmatic_reference_generation.pragmatic_reference_generation import (
+from reasoning_core.tasks.generated.wave10.ref_gen.pragmatic_reference_generation import (
     RefGenTask, RefConfig, _identifies,
 )
 

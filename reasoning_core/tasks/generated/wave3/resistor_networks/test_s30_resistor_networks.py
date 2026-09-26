@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave3.s30_resistor_networks.s30_resistor_networks import (
+from reasoning_core.tasks.generated.wave3.resistor_networks.s30_resistor_networks import (
     ResistorNetworks,
     ResistorNetworkConfig,
     evaluate,

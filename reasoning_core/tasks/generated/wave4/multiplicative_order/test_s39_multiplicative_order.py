@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave4.s39_multiplicative_order.s39_multiplicative_order import (
+from reasoning_core.tasks.generated.wave4.multiplicative_order.s39_multiplicative_order import (
     _bsgs,
     _is_primitive_root,
     _multiplicative_order,

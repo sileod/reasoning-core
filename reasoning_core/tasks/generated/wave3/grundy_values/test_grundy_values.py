@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave3.s31_grundy_values.grundy_values import (
+from reasoning_core.tasks.generated.wave3.grundy_values.grundy_values import (
     GrundyValues,
     GrundyValuesConfig,
     _grundy_table,

@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))
 
-from reasoning_core.tasks.generated.wave4.s42_schema_validation.s42_schema_validation import (
+from reasoning_core.tasks.generated.wave4.schema_validation.s42_schema_validation import (
     SchemaValidation, S42SchemaValidationConfig
 )
 

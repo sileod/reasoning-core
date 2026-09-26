@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from reasoning_core.tasks.generated.wave10.instruction_priority.instruction_priority import (
+from reasoning_core.tasks.generated.wave10.priority.instruction_priority import (
     Priority, PriorityConfig, _resolve, _RANK)
 
 
@@ -51,6 +51,6 @@ def test_answer_is_stated_value():
 
 
 def test_meta_present():
-    from reasoning_core.tasks.generated.wave10.instruction_priority import (
+    from reasoning_core.tasks.generated.wave10.priority.instruction_priority import (
         instruction_priority as m)
     assert m.TASK_META["hypothesis"] == "ASTRA0-01"

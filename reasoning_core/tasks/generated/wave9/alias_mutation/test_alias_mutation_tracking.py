@@ -1,6 +1,6 @@
 import ast
 
-import reasoning_core.tasks.generated.wave9.alias_mutation_tracking.alias_mutation_tracking as mod
+import reasoning_core.tasks.generated.wave9.alias_mutation.alias_mutation_tracking as mod
 
 
 def _simulate(name, entry):

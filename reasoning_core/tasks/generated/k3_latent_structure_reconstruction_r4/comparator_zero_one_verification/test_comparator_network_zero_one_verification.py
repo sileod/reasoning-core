@@ -1,7 +1,7 @@
 import random
 from itertools import product
 
-from reasoning_core.tasks.generated.k3_latent_structure_reconstruction_r4.comparator_network_zero_one_verification.comparator_network_zero_one_verification import (
+from reasoning_core.tasks.generated.k3_latent_structure_reconstruction_r4.comparator_zero_one_verification.comparator_network_zero_one_verification import (
     ComparatorZeroOneVerification,
     _sorts_all,
 )

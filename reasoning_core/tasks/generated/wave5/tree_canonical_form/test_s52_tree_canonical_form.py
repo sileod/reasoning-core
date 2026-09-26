@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave5.s52_tree_canonical_form.s52_tree_canonical_form import (
+from reasoning_core.tasks.generated.wave5.tree_canonical_form.s52_tree_canonical_form import (
     TreeCanonicalForm, TreeCanonicalFormConfig, canonical, build_tree, relabeled_parents
 )
 import random

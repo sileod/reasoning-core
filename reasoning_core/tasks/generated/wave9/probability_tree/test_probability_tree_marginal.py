@@ -2,7 +2,7 @@ from fractions import Fraction
 import random
 import os
 
-from reasoning_core.tasks.generated.wave9.probability_tree_marginal.probability_tree_marginal import (
+from reasoning_core.tasks.generated.wave9.probability_tree.probability_tree_marginal import (
     ProbabilityTree, _parse_frac)
 
 

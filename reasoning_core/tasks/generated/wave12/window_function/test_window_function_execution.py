@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave12.window_function_execution.window_function_execution import (
+from reasoning_core.tasks.generated.wave12.window_function.window_function_execution import (
     WindowFunctionV3,
 )
 
@@ -36,7 +36,7 @@ def test_garbage_scores_zero():
 
 
 def test_gold_is_recomputable():
-    from reasoning_core.tasks.generated.wave12.window_function_execution.window_function_execution import (
+    from reasoning_core.tasks.generated.wave12.window_function.window_function_execution import (
         compute_answer,
     )
 

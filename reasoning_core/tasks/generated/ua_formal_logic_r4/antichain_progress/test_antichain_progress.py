@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_formal_logic_r4.antichain_progress_completion.antichain_progress import (
+from reasoning_core.tasks.generated.ua_formal_logic_r4.antichain_progress.antichain_progress import (
     AntichainProgress,
     _reaches,
 )

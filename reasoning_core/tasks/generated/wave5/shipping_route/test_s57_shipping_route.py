@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave5.s57_shipping_route.s57_shipping_route import ShippingRoute
+from reasoning_core.tasks.generated.wave5.shipping_route.s57_shipping_route import ShippingRoute
 
 
 def test_gold_scores_one():

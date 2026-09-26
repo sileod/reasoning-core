@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.k3_rule_induction_r1.functional_graph_cycle_finding.functional_graph_cycle_finding import (
+from reasoning_core.tasks.generated.k3_rule_induction_r1.cycle_finder.functional_graph_cycle_finding import (
     CycleConfig,
     CycleFinder,
     _simulate,

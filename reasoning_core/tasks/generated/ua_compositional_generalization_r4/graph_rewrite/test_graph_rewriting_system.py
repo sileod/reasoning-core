@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_compositional_generalization_r4.graph_rewriting_system.graph_rewriting_system import (
+from reasoning_core.tasks.generated.ua_compositional_generalization_r4.graph_rewrite.graph_rewriting_system import (
     GraphRewriteV2,
     _apply,
     _contains,

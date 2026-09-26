@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave4.s47_dimensional_analysis.s47_dimensional_analysis import (
+from reasoning_core.tasks.generated.wave4.dimensional_analysis.s47_dimensional_analysis import (
     DimensionalAnalysisTask,
 )
 

@@ -1,6 +1,6 @@
 import ast
 
-from reasoning_core.tasks.generated.k3_operations_research_r4.maxmin_waterfilling_allocation.waterfilling_alloc import (
+from reasoning_core.tasks.generated.k3_operations_research_r4.waterfilling_allocation.waterfilling_alloc import (
     WaterfillingAllocation,
     waterfill_allocation,
 )

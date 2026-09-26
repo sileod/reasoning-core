@@ -3,7 +3,7 @@ import random
 import pytest
 from sympy import Rational
 
-from reasoning_core.tasks.generated.k3_hierarchical_recursive_r1.symmetric_polynomial_to_elementary.symmetric_polynomial_to_elementary import (
+from reasoning_core.tasks.generated.k3_hierarchical_recursive_r1.symmetric_poly_to_elementary.symmetric_polynomial_to_elementary import (
     SymmetricPolyToElementary,
     e_monomial,
     parse_answer,

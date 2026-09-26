@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave4.s43_three_way_merge.three_way_merge import (
+from reasoning_core.tasks.generated.wave4.three_way_merge.three_way_merge import (
     ThreeWayMerge,
     ThreeWayMergeConfig,
     build_merged,

@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave9.transaction_serializability.transaction_serializability import (
+from reasoning_core.tasks.generated.wave9.serializability.transaction_serializability import (
     Serializability, _serialize, _cycle_core, _precedence_edges,
 )
 

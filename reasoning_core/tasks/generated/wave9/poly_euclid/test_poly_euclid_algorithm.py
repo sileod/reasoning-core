@@ -2,7 +2,7 @@
 
 import random
 
-from reasoning_core.tasks.generated.wave9.polynomial_euclidean_algorithm.poly_euclid_algorithm import (
+from reasoning_core.tasks.generated.wave9.poly_euclid.poly_euclid_algorithm import (
     PolyEuclid,
     _monic_str,
     _gcd_poly_mod,

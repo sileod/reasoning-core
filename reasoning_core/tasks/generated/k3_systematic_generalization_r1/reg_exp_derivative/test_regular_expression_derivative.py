@@ -1,6 +1,6 @@
-import reasoning_core.tasks.generated.k3_systematic_generalization_r1.regular_expression_derivative.regular_expression_derivative as mod
+import reasoning_core.tasks.generated.k3_systematic_generalization_r1.reg_exp_derivative.regular_expression_derivative as mod
 from reasoning_core.template import Task
-from reasoning_core.tasks.generated.k3_systematic_generalization_r1.regular_expression_derivative.regular_expression_derivative import (
+from reasoning_core.tasks.generated.k3_systematic_generalization_r1.reg_exp_derivative.regular_expression_derivative import (
     _deriv, _gen, _matches, _nullable, _render, _simplify, _verify, _all_words,
 )
 

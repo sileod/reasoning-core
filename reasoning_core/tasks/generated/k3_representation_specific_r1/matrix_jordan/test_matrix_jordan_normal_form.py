@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from reasoning_core.tasks.generated.k3_representation_specific_r1.matrix_jordan_normal_form.matrix_jordan_normal_form import (
+from reasoning_core.tasks.generated.k3_representation_specific_r1.matrix_jordan.matrix_jordan_normal_form import (
     MatrixJordan,
     MatrixJordanConfig,
     _char_poly,

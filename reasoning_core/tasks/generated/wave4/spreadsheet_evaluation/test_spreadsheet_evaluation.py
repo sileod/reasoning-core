@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave4.s44_spreadsheet_evaluation.spreadsheet_evaluation import (
+from reasoning_core.tasks.generated.wave4.spreadsheet_evaluation.spreadsheet_evaluation import (
     SpreadsheetEvaluation, SpreadsheetEvaluationConfig)
 
 

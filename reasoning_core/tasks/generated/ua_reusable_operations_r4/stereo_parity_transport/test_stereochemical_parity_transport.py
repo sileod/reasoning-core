@@ -2,7 +2,7 @@
 
 import itertools
 
-from reasoning_core.tasks.generated.ua_reusable_operations_r4.stereochemical_parity_transport.stereochemical_parity_transport import (
+from reasoning_core.tasks.generated.ua_reusable_operations_r4.stereo_parity_transport.stereochemical_parity_transport import (
     POSITIONS,
     StereoParityTransport,
     _apply_parity,

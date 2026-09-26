@@ -4,7 +4,7 @@ import random
 import pytest
 
 from reasoning_core.template import Entry
-from reasoning_core.tasks.generated.ua_parsing_and_agreement_r4.synchronous_tuple_derivation.synchronous_tuple_derivation import (
+from reasoning_core.tasks.generated.ua_parsing_and_agreement_r4.sync_tuple_derivation.synchronous_tuple_derivation import (
     SyncTupleDerivationV2,
     SyncTupleConfig,
     _interleave,
@@ -12,7 +12,7 @@ from reasoning_core.tasks.generated.ua_parsing_and_agreement_r4.synchronous_tupl
     _render,
 )
 
-MOD = "reasoning_core.tasks.generated.ua_parsing_and_agreement_r4.synchronous_tuple_derivation.synchronous_tuple_derivation"
+MOD = "reasoning_core.tasks.generated.ua_parsing_and_agreement_r4.sync_tuple_derivation.synchronous_tuple_derivation"
 
 
 def _module():

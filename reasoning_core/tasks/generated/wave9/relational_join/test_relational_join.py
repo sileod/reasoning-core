@@ -1,7 +1,7 @@
 import random
 import pytest
 
-from reasoning_core.tasks.generated.wave9.relational_join_execution.relational_join import (
+from reasoning_core.tasks.generated.wave9.relational_join.relational_join import (
     RelationalJoin, _score_inner, _score_left, _score_semi,
     _score_anti,
 )

@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave2.s24_version_resolution.version_resolution import (
+from reasoning_core.tasks.generated.wave2.version_resolution.version_resolution import (
     VersionResolution,
     _in_range,
     _resolve,

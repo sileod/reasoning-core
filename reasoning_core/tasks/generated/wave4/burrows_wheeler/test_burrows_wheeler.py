@@ -2,7 +2,7 @@ import random
 
 from reasoning_core.template import Task
 
-from reasoning_core.tasks.generated.wave4.s41_burrows_wheeler.burrows_wheeler import (
+from reasoning_core.tasks.generated.wave4.burrows_wheeler.burrows_wheeler import (
     BurrowsWheeler,
     _bwt_forward,
     _bwt_inverse,

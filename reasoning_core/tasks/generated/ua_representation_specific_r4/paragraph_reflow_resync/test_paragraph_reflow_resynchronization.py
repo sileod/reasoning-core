@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_representation_specific_r4.paragraph_reflow_resynchronization.paragraph_reflow_resynchronization import (
+from reasoning_core.tasks.generated.ua_representation_specific_r4.paragraph_reflow_resync.paragraph_reflow_resynchronization import (
     ParagraphReflowResync,
     ParagraphReflowResyncConfig,
 )

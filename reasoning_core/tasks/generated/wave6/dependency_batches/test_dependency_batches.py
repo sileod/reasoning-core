@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave6.s60_dependency_batches.dependency_batches import (
+from reasoning_core.tasks.generated.wave6.dependency_batches.dependency_batches import (
     DependencyBatches,
     DependencyBatchesConfig,
 )

@@ -1,7 +1,7 @@
 import random
 from fractions import Fraction
 
-from reasoning_core.tasks.generated.ua_uncertainty_r4.causal_contingency_responsibility.causal_contingency_responsibility import (
+from reasoning_core.tasks.generated.ua_uncertainty_r4.causal_contingency_res.causal_contingency_responsibility import (
     CausalContingencyResV3,
     NONCAUSE,
     minimal_contingency,

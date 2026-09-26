@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave9.access_control_policy_evaluation.access_control_policy_evaluation import (
+from reasoning_core.tasks.generated.wave9.access_control_evaluation.access_control_policy_evaluation import (
     AccessControlEvaluation,
     _traverse,
     _decision,

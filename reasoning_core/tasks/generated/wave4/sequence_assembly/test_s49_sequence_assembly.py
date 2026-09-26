@@ -2,7 +2,7 @@ import random
 import pytest
 from collections import Counter
 
-from reasoning_core.tasks.generated.wave4.s49_sequence_assembly.s49_sequence_assembly import (
+from reasoning_core.tasks.generated.wave4.sequence_assembly.s49_sequence_assembly import (
     SequenceAssembly, ArrayConfig, build_graph, count_eulerian_trails,
 )
 

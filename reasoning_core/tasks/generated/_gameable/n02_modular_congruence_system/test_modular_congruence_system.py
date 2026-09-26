@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave0.n02_modular_congruence_system.modular_congruence_system import (
+from reasoning_core.tasks.generated._gameable.n02_modular_congruence_system.modular_congruence_system import (
     ModularCongruenceSystem,
     _consistent_system,
     _inconsistent_system,

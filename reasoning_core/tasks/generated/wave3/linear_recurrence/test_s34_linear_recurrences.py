@@ -1,5 +1,5 @@
 import random
-from reasoning_core.tasks.generated.wave3.s34_linear_recurrences.s34_linear_recurrences import (
+from reasoning_core.tasks.generated.wave3.linear_recurrence.s34_linear_recurrences import (
     LinearRecurrence,
     LinearRecurrenceConfig,
     _recurrence_term,

@@ -1,6 +1,6 @@
 from fractions import Fraction
 
-from reasoning_core.tasks.generated.wave3.s35_conditional_probability.conditional_probability import (
+from reasoning_core.tasks.generated.wave3.conditional_probability.conditional_probability import (
     ConditionalProbability,
     _parse_frac,
 )

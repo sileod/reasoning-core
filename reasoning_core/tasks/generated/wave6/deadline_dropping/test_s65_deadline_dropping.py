@@ -1,5 +1,5 @@
 import random
-from reasoning_core.tasks.generated.wave6.s65_deadline_dropping.s65_deadline_dropping import DeadlineDropping, DeadlineDroppingConfig
+from reasoning_core.tasks.generated.wave6.deadline_dropping.s65_deadline_dropping import DeadlineDropping, DeadlineDroppingConfig
 
 random.seed(65042966)
 

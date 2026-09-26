@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.wave6.s59_interval_stabbing.interval_stabbing import (
+from reasoning_core.tasks.generated.wave6.interval_stabbing.interval_stabbing import (
     IntervalStabbing,
     _greedy_stab,
     _brute_min,

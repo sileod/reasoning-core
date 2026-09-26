@@ -3,7 +3,7 @@ from fractions import Fraction
 
 import pytest
 
-from reasoning_core.tasks.generated.wave4.s48_layered_tariffs.s48_layered_tariffs import (
+from reasoning_core.tasks.generated.wave4.layered_tariffs.s48_layered_tariffs import (
     LayeredTariffs, _compute,
 )
 

@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.k3_global_over_greedy_r3.difference_array_2d.difference_array_2d import (
+from reasoning_core.tasks.generated.k3_global_over_greedy_r3.difference_array2_d.difference_array_2d import (
     DifferenceArray2D,
     _apply_rectangles,
     _apply_rectangle_naive,

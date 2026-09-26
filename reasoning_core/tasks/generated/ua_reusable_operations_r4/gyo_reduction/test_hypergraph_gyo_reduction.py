@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_reusable_operations_r4.hypergraph_gyo_reduction.hypergraph_gyo_reduction import (
+from reasoning_core.tasks.generated.ua_reusable_operations_r4.gyo_reduction.hypergraph_gyo_reduction import (
     GyoReduction,
     gyo_reduce,
 )

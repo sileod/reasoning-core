@@ -1,4 +1,4 @@
-from reasoning_core.tasks.generated.wave3.s28_principal_type.s28_principal_type import PrincipalType, principal
+from reasoning_core.tasks.generated.wave3.principal_type.s28_principal_type import PrincipalType, principal
 
 
 def test_gold_scores_one():

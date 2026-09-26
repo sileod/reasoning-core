@@ -1,6 +1,6 @@
 import json
 
-from reasoning_core.tasks.generated.wave2.s20_syndrome_decoding.syndrome_decoding import (
+from reasoning_core.tasks.generated.wave2.syndrome_decoding.syndrome_decoding import (
     SyndromeDecoding,
     SyndromeDecodingConfig,
 )

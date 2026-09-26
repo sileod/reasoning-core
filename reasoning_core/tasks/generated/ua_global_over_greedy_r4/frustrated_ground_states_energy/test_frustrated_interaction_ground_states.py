@@ -3,7 +3,7 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
-from reasoning_core.tasks.generated.ua_global_over_greedy_r4.frustrated_interaction_ground_states.frustrated_interaction_ground_states import (
+from reasoning_core.tasks.generated.ua_global_over_greedy_r4.frustrated_ground_states_energy.frustrated_interaction_ground_states import (
     FrustratedGroundStatesEnergy, FrustratedConfig, _parse_answer,
 )
 

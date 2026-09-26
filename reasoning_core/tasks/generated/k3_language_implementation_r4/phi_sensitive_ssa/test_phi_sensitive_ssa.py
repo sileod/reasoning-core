@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.k3_language_implementation_r4.phi_sensitive_ssa_evaluation.phi_sensitive_ssa import (
+from reasoning_core.tasks.generated.k3_language_implementation_r4.phi_sensitive_ssa.phi_sensitive_ssa import (
     PhiSensitiveSSA,
     _apply,
     _eval_expr,

@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.ua_semantics_preserving_translation_r4.graph_local_complementation.task_graph_local_complementation import (
+from reasoning_core.tasks.generated.ua_semantics_preserving_translation_r4.graph_local_complement.task_graph_local_complementation import (
     GraphLocalComplementV1,
 )
 

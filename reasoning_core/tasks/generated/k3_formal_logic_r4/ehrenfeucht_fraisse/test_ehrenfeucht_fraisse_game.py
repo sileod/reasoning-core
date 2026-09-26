@@ -1,6 +1,6 @@
 import random
 
-from reasoning_core.tasks.generated.k3_formal_logic_r4.ehrenfeucht_fraisse_game \
+from reasoning_core.tasks.generated.k3_formal_logic_r4.ehrenfeucht_fraisse \
     import ehrenfeucht_fraisse_game as m
 from reasoning_core.template import Task
 
