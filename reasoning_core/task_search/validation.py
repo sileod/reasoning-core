@@ -596,7 +596,7 @@ import random
 import sys
 
 import reasoning_core.template
-from reasoning_core.evaluation.difficulty import check_headroom
+from reasoning_core.evaluation.difficulty import check_headroom, check_level_responds
 
 # Most of the contract lives inside Task.validate -- the JSON round trip, the junk
 # answer probes, the level knob. A task that replaces it rather than extending it
@@ -627,6 +627,7 @@ for offset, (module_name, class_name) in enumerate(classes):
     task = task_class()
     random.seed(seed + offset)
     print("HEADROOM " + json.dumps(check_headroom(task)), flush=True)
+    check_level_responds(task)   # validate() sees the config change, not the problem
     task = task_class()
     del _reached[:]
     task.validate(n_samples=10)

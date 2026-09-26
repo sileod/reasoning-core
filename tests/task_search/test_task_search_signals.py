@@ -174,14 +174,16 @@ def test_the_level_audit_names_a_dead_knob_a_broken_rung_and_a_bad_curve():
 
 def test_a_level_that_changes_nothing_is_caught_from_one_seed():
     import random
-    from reasoning_core.task_search import level_audit
+    from reasoning_core.evaluation.difficulty import check_level_responds
 
     class Task:
         def __init__(self, uses_level):
             self.uses_level = uses_level
+            self.config = type("C", (), {"set_level": lambda self, level: None})()
 
-        def generate_example(self, level, timeout):
+        def generate_example(self, level, max_tokens, timeout):
             return type("E", (), {"prompt": f"{random.random()}:{level * self.uses_level}"})
 
-    assert level_audit.responds(Task(uses_level=1))
-    assert not level_audit.responds(Task(uses_level=0))
+    check_level_responds(Task(uses_level=1))
+    with pytest.raises(ValueError, match="changes nothing"):
+        check_level_responds(Task(uses_level=0))

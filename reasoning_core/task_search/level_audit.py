@@ -22,13 +22,12 @@ from concurrent.futures.process import BrokenProcessPool
 import json
 from pathlib import Path
 
-from ..evaluation.difficulty import check_headroom, curve, diagnose
+from ..evaluation.difficulty import check_headroom, check_level_responds, curve, diagnose
 from .signal_report import ladder
 from .signals import SAMPLE_SECONDS, write_rows
 
 LEVELS = (0, 2, 4, 6)
 SAMPLES = 8
-SEEDS = 16   # a probabilistic knob (a share of instances) needs a few draws to show
 
 
 def moved_fields(task, levels=LEVELS):
@@ -43,17 +42,6 @@ def moved_fields(task, levels=LEVELS):
                    for v in values)}
 
 
-def responds(task, levels=LEVELS, seeds=SEEDS):
-    """Whether some seed renders a different prompt at the top level than at the bottom."""
-    import random
-
-    def prompt(seed, level):
-        random.seed(seed)
-        return task.generate_example(level=level, timeout=SAMPLE_SECONDS).prompt
-
-    return any(prompt(seed, levels[0]) != prompt(seed, levels[-1]) for seed in range(seeds))
-
-
 def inspect(task_name, levels=LEVELS, samples=SAMPLES):
     import reasoning_core
 
@@ -61,7 +49,11 @@ def inspect(task_name, levels=LEVELS, samples=SAMPLES):
     try:
         task = reasoning_core.get_task(task_name)
         record["fields"] = json.loads(json.dumps(moved_fields(task, levels), default=str))
-        record["responds"] = responds(task, levels)
+        try:
+            check_level_responds(task, levels=(levels[0], levels[-1]), timeout_seconds=SAMPLE_SECONDS)
+            record["responds"] = True
+        except ValueError:
+            record["responds"] = False
     except Exception as error:  # noqa: BLE001 - a ladder that cannot be climbed is the finding
         return {**record, "error": f"{type(error).__name__}: {error}"[:300]}
     record["generation"] = {}

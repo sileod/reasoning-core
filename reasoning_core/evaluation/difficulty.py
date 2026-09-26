@@ -58,6 +58,26 @@ def check_headroom(task, *, levels=(0, 6), samples=16, max_prompt_tokens=2048,
     return measurements
 
 
+def check_level_responds(task, *, levels=(0, 6), seeds=16, timeout_seconds=3):
+    """Raise ValueError if every seed gives the same prompt at both levels.
+
+    Task.validate only asks that the config object change with the level, and `level` is
+    itself a field, so a method that sets nothing, fields the generator never reads, or a
+    generator that ignores its config all pass it. This asks the generator. It stops at the
+    first seed that differs; a knob that sets a share of instances needs a few seeds to show.
+    """
+    import random
+
+    def prompt(seed, level):
+        random.seed(seed)
+        return task.generate_example(level=level, max_tokens=0, timeout=timeout_seconds).prompt
+
+    if not any(prompt(seed, levels[0]) != prompt(seed, levels[-1]) for seed in range(seeds)):
+        raise ValueError(f"levels {levels[0]} and {levels[-1]} give the same problem from each "
+                         f"of {seeds} seeds: the level changes nothing the generator reads")
+    task.config.set_level(0)
+
+
 def curve(cache, model, min_n=MIN_N):
     """{task: (points, holes)} for one model, from the probe cache.
 
