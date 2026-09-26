@@ -149,5 +149,9 @@ BANDS = {
     "0-4":   [0, 1, 2, 3, 4],   # the whole ladder -- the current default
     "0-1-2": [0, 1, 2],         # three levels, bottom of the ladder
     "0-2-4": [0, 2, 4],         # three levels, full span at stride 2
+    # Single levels, for per-difficulty transfer (does training on hard instances transfer better?).
+    # Write their cells OUTSIDE per_task_results/ (--results-subdir): measured_ext reads that
+    # directory as the canonical 0-4 score, and a one-level arm is a different question.
+    "0": [0], "1": [1], "4": [4], "6": [6],
 }
 DEFAULT_BANDS = ("0-4",)
