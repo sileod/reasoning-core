@@ -33,7 +33,14 @@ IGNORED = DEPRECATED | {"reasonining_gym", "count_elements"}
 # retired task leaves list_tasks() while staying loadable for the data already measured on it.
 PROMOTED = {"rule_switching", "finite_automaton_execution", "shift_reduce_parsing",
             "controlled_code_execution", "dynamic_programming"}
-RETIRED = {"code_execution"}  # superseded by controlled_code_execution: same influence, ~15x faster
+RETIRED = {
+    "code_execution",  # superseded by controlled_code_execution: same influence, ~15x faster
+    # No working difficulty knob: the same seed gives the same problem at every level
+    # (evaluation.difficulty.check_level_responds, now a landing gate).
+    "aspectual_class_entailment", "joint_share_information", "ellipsis_reconstruction",
+    "inversion_trigger_linearization",
+    "incremental_build_rebuild_set",  # no longer imports: Task has no attribute 'register'
+}
 
 
 def register_dataset(name, dataset_cls):
