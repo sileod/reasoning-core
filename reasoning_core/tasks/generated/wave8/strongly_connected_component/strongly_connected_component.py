@@ -36,7 +36,7 @@ class SCCConfig(Config):
     def apply_difficulty(self, level):
         self.n_min = int(self.n_min + level)
         self.n_max = int(self.n_max + level)
-        self.p = min(0.65, self.p + 0.05 * level)
+        self.p = max(0.1, self.p - 0.05 * level)
 
 
 def _parse_answer(answer):
@@ -49,6 +49,7 @@ def _parse_answer(answer):
 class StronglyConnectedComponent(Task):
     summary = "Given a directed random graph and a designated node, output the sorted integer member list of the node's strongly connected component across varied sizes and densities."
     config_cls = SCCConfig
+    task_version = 2  # retuned ladder (difficulty_tune, measured deepseek-v4-flash curve)
 
     def generate_entry(self):
         c = self.config

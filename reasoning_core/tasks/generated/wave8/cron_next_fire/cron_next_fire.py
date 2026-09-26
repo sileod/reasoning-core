@@ -72,7 +72,7 @@ class CronNextFireConfig(Config):
     fixed_count: int = 2
 
     def apply_difficulty(self, level):
-        self.fixed_count = self.fixed_count + level
+        self.fixed_count = self.fixed_count + 2 * level
 
 
 class CronNextFire(Task):
@@ -81,7 +81,7 @@ class CronNextFire(Task):
                "the next matching timestamp strictly after it; difficulty scales the number "
                "of fixed fields so the gap spans minutes to nearly a year.")
     config_cls = CronNextFireConfig
-    task_version = 2
+    task_version = 3  # retuned ladder (difficulty_tune, measured deepseek-v4-flash curve)
 
     def generate_entry(self):
         n_fixed = int(self.config.fixed_count)

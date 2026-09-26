@@ -51,8 +51,8 @@ class VectorClockOrderConfig(Config):
     vmax: int = 2
 
     def apply_difficulty(self, level):
-        self.length = sround(self.length + level)
-        self.vmax = sround(self.vmax + level)
+        self.length = sround(self.length + 2 * level)
+        self.vmax = sround(self.vmax + 2 * level)
 
 
 class VectorClockOrder(Task):
@@ -60,6 +60,7 @@ class VectorClockOrder(Task):
                "before, after, or concurrent, over balanced relations, varied "
                "lengths and clock-value ranges.")
     config_cls = VectorClockOrderConfig
+    task_version = 2  # retuned ladder (difficulty_tune, measured deepseek-v4-flash curve)
 
     def generate_entry(self):
         rel = random.choice(["equal", "before", "after", "concurrent"])

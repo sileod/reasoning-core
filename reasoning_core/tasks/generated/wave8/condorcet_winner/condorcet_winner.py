@@ -13,9 +13,9 @@ class CondorcetWinnerConfig(Config):
     max_ballots_per_group: int = 6
 
     def apply_difficulty(self, level):
-        self.n_candidates = 3 + level
-        self.n_ballots = 4 + 2 * level
-        self.max_ballots_per_group = 3 + level
+        self.n_candidates = self.n_candidates + 2 * level
+        self.n_ballots = self.n_ballots + 2 * level
+        self.max_ballots_per_group = self.max_ballots_per_group + level
 
 
 def _parse_answer(answer):
@@ -39,7 +39,7 @@ class CondorcetWinner(Task):
         "majority of pairwise contests) and output that candidate or None."
     )
     config_cls = CondorcetWinnerConfig
-    task_version = 2
+    task_version = 3  # retuned ladder (difficulty_tune, measured deepseek-v4-flash curve)
 
     def generate_entry(self):
         cfg = self.config

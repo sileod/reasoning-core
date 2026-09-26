@@ -171,12 +171,13 @@ class TermUnificationConfig(Config):
     n_vars: int = 3
 
     def apply_difficulty(self, level):
-        self.max_depth = sround(int(self.max_depth) + level)
-        self.n_vars = sround(int(self.n_vars) + level)
+        self.max_depth = sround(int(self.max_depth) + 2 * level)
+        self.n_vars = sround(int(self.n_vars) + 2 * level)
 
 
 class TermUnification(Task):
     config_cls = TermUnificationConfig
+    task_version = 2  # retuned ladder (difficulty_tune, measured deepseek-v4-flash curve)
 
     def generate_entry(self):
         cfg = self.config

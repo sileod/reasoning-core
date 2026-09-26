@@ -10,8 +10,8 @@ class LexicalScopeResolutionV1Config(Config):
     n_decls: int = 4
 
     def apply_difficulty(self, level):
-        self.n_scopes = sround(self.n_scopes + level)
-        self.n_decls = sround(self.n_decls + level)
+        self.n_scopes = sround(self.n_scopes + 2 * level)
+        self.n_decls = sround(self.n_decls + 3 * level)
 
 
 NAME_POOL = [
@@ -88,6 +88,7 @@ def build_instance(n_scopes, n_decls, rng):
 class LexicalScopeResolution(Task):
     summary = "Given nested scopes and declarations, output the declaration bound to a queried identifier occurrence."
     config_cls = LexicalScopeResolutionV1Config
+    task_version = 2  # retuned ladder (difficulty_tune, measured deepseek-v4-flash curve)
 
     def generate_entry(self, level=None):
         cfg = self.config
