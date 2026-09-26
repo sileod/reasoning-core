@@ -114,6 +114,7 @@ def generate_sequence(level):
 class TwoPhaseLockBlocker(Task):
     summary = "Given lock requests under strict 2PL, output the transaction blocking a queried request or None."
     config_cls = TwoPhaseLockBlockerConfig
+    task_version = 2  # v2: metadata key 'items' shadowed dict.items, so no example could be serialized
 
     def generate_entry(self):
         level = self.config.level
@@ -127,7 +128,7 @@ class TwoPhaseLockBlocker(Task):
         metadata = edict({
             "sequence": sequence,
             "txns": txns,
-            "items": items,
+            "data_items": items,
             "final": sequence[-1],
             "blockers": blockers,
         })

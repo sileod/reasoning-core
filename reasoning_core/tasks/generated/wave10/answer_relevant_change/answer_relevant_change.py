@@ -46,6 +46,7 @@ class AnswerRelevantChange(Task):
                "the labels whose rank order changes after the correction; labels unchanged in "
                "relative order are omitted.")
     config_cls = AnswerRelevantChangeConfig
+    task_version = 2  # v2: metadata key 'items' shadowed dict.items, so no example could be serialized
 
     def generate_entry(self):
         while True:
@@ -88,7 +89,7 @@ class AnswerRelevantChange(Task):
                 continue
 
             metadata = edict({
-                "items": [{"label": f"item {lab}", "value": val} for lab, val in items],
+                "answer_items": [{"label": f"item {lab}", "value": val} for lab, val in items],
                 "ranked": [lab for lab, _ in base_rank],
                 "correction_index": correct_idx,
                 "old_value": old_val,
