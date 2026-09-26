@@ -131,7 +131,9 @@ class CausalIdentification(Task):
                "sorted candidate-name list whose XOR/bias outcomes match every step across "
                "varied DAG topologies, candidate counts, and intervention depths.")
     config_cls = CausalIdentificationConfig
-    task_version = 2
+    # v3: only roots carry a constant, as the prompt says; v2 also XORed a hidden bit into
+    # non-roots, so the observations could contradict every candidate shown.
+    task_version = 3
 
     def generate_entry(self):
         import random
@@ -158,7 +160,8 @@ class CausalIdentification(Task):
                 n_par = random.randint(1, max_par)
                 for p in random.sample(perm[:i], n_par):
                     edges.append((p, node))
-            bias = {v: random.randint(0, 1) for v in var_names}
+            children = {b for _a, b in edges}   # a variable with parents is only their XOR
+            bias = {v: random.randint(0, 1) for v in var_names if v not in children}
             candidates.append((tuple(sorted(edges)), bias))
 
         true_idx = random.randrange(n_c)

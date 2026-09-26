@@ -80,3 +80,30 @@ def test_gold_possible_across_levels():
         for _ in range(30):
             e = t.generate_example()
             assert e.answer == "none" or all(c.startswith("C") for c in e.answer.split(","))
+
+
+def test_the_true_mechanism_as_shown_explains_every_observation():
+    import re
+    from reasoning_core.tasks.generated.wave11.causal_identification.causal_identification import (
+        CausalIdentification)
+
+    def run(mechanism, var, value):
+        rules = dict(rule.split(" = ") for rule in mechanism.split("; "))
+        values = {var: value}
+        while len(values) < len(rules):
+            for v, rule in rules.items():
+                parents = rule[4:-1].split(", ") if rule.startswith("XOR") else []
+                if v not in values and all(p in values for p in parents):
+                    values[v] = sum(values[p] for p in parents) % 2 if parents else int(rule)
+        return values
+
+    task = CausalIdentification()
+    for level in (0, 6):
+        for _ in range(20):
+            e = task.generate_example(level=level)
+            shown = dict(re.findall(r"  (C\d+): (.+)", e.prompt))
+            truth = shown[f"C{e.metadata.true_index}"]
+            for (var, value), outcome in zip(e.metadata.ops, e.metadata.outcomes):
+                seen = {k: int(n) for k, n in (t.split("=") for t in outcome.split())}
+                assert run(truth, var, value) == seen
+            assert f"C{e.metadata.true_index}" in e.answer.split(",")
