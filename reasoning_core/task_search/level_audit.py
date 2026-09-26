@@ -11,12 +11,13 @@
   triage: on 82 probed ladders it matched the measured one 38 times (2026-09-26), reliably
   on too-hard and on direction (28/33), and it over-calls flat.
 
-Only the first two touch the generator, on the main thread (its deadline is a signal), and
-they are stored per task, so the difficulty verdict can be redone as probes land.
+Only the first two touch the generator, and they are stored per task, so the difficulty
+verdict can be redone as probes land.
 """
 from __future__ import annotations
 
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import json
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from .signals import SAMPLE_SECONDS, write_rows
 LEVELS = (0, 2, 4, 6)
 SAMPLES = 8
 SEEDS = 4
+MAX_TASKS_PER_CHILD = 20   # a fresh interpreter now and then: generators leak state and memory
 
 
 def moved_fields(task, levels=LEVELS):
@@ -72,15 +74,23 @@ def inspect(task_name, levels=LEVELS, samples=SAMPLES):
     return record
 
 
-def collect(tasks, out, *, levels=LEVELS, samples=SAMPLES,
+def collect(tasks, out, *, levels=LEVELS, samples=SAMPLES, workers=8,
             log=lambda line: print(line, flush=True)):
-    """Inspect every task not already in `out` (JSONL); return every record held."""
+    """Inspect every task not already in `out` (JSONL); return every record held. Each task
+    runs in a worker process, on its main thread, so a generator that crashes or hangs past
+    its deadline costs that task and not the run."""
     out = Path(out)
     records = {r["task"]: r for r in map(json.loads, out.read_text().splitlines())} \
         if out.exists() else {}
-    for name in tasks:
-        if name not in records:
-            records[name] = inspect(name, levels, samples)
+    todo = [name for name in tasks if name not in records]
+    with ProcessPoolExecutor(workers, max_tasks_per_child=MAX_TASKS_PER_CHILD) as pool:
+        running = {pool.submit(inspect, name, levels, samples): name for name in todo}
+        for future in as_completed(running):
+            name = running[future]
+            try:
+                records[name] = future.result()
+            except Exception as error:  # noqa: BLE001 - the worker died with its task
+                records[name] = {"task": name, "error": f"{type(error).__name__}: {error}"[:300]}
             write_rows(out, records.values())
             log(f"  {name}: {'; '.join(findings(records[name])) or 'ok'}")
     return list(records.values())

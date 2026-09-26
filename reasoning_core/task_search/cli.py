@@ -285,7 +285,9 @@ def _parser():
     levels = subparsers.add_parser(
         "level-audit", help="check every task's difficulty ladder: config, generation, curve")
     levels.add_argument("out", help="resumable JSONL of per-task config and generation checks")
-    levels.add_argument("--tasks", nargs="+", help="task names; default: every registry task")
+    levels.add_argument("--tasks", nargs="+",
+                        help="task names; default: every registry task, generated ones included")
+    levels.add_argument("--workers", type=int, default=8, help="generator processes")
     levels.add_argument("--rows", help="signals JSONL, for Jev-predicted curves")
     levels.add_argument("--probe", help="zeroshot_probe cache, for measured curves")
     levels.add_argument("--probe-model", default="deepseek-v4-flash")
@@ -626,7 +628,8 @@ def main(argv=None):
         from .level_audit import collect, report
         import reasoning_core
 
-        records = collect(args.tasks or sorted(reasoning_core.list_tasks()), args.out)
+        records = collect(args.tasks or sorted(reasoning_core.list_tasks(include_generated=True)),
+                          args.out, workers=args.workers)
         rows = ([json.loads(line) for line in Path(args.rows).read_text().splitlines()]
                 if args.rows else ())
         cache = json.loads(Path(args.probe).read_text()) if args.probe else None
