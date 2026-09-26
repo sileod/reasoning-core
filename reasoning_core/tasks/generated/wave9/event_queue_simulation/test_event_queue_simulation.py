@@ -3,17 +3,26 @@ from reasoning_core.tasks.generated.wave9.event_queue_simulation.event_queue_sim
 
 
 def _solve(arrivals, n_procs):
-    jobs = {}
-    for idx, (t, p, w, pr) in enumerate(arrivals):
-        jobs.setdefault(p, []).append((t, w, pr, idx))
-    total = 0
-    for p, plist in jobs.items():
-        order = sorted(plist, key=lambda j: (j[2], j[3]))
-        free = 0
-        for (t, w, pr, i) in order:
-            free = max(free, t) + w
-        total = max(total, free)
-    return total
+    """Tick by tick: a free processor starts the best job that has already arrived."""
+    pending = [(pr, t, idx, p, w) for idx, (t, p, w, pr) in enumerate(arrivals)]
+    busy_until, finished, clock = [0] * n_procs, [0] * n_procs, 0
+    while pending:
+        for proc in range(n_procs):
+            ready = [job for job in pending if job[3] == proc and job[1] <= clock]
+            if busy_until[proc] <= clock and ready:
+                job = min(ready)
+                pending.remove(job)
+                busy_until[proc] = finished[proc] = clock + job[4]
+        clock += 1
+    return max(finished)
+
+
+def test_a_processor_does_not_wait_for_a_job_still_to_come():
+    # The v1 generator ran jobs in priority order regardless of arrival and answered 33:
+    # processor 2 idled until the time-23 job, then ran the one that arrived at time 1.
+    arrivals = [[1, 2, 6, 5], [17, 0, 1, 1], [11, 0, 3, 1], [12, 1, 6, 3], [23, 2, 4, 4],
+                [29, 0, 1, 4]]
+    assert _solve(arrivals, 3) == 30
 
 
 def test_gold_scores_one():

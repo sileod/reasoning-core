@@ -55,6 +55,7 @@ class GregorianWeekday(Task):
                "one of Monday..Sunday; the date ranges across a wide span of years so "
                "century/leap-year shift rules matter.")
     config_cls = GregorianWeekdayConfig
+    task_version = 2  # v2: the date is ISO; "9 7 2074" read as either 9 July or 7 September
 
     def generate_entry(self):
         year, month, day = _pick_year(self.config)
@@ -70,7 +71,7 @@ class GregorianWeekday(Task):
 
     def render_prompt(self, metadata):
         return (f"Using the standard Gregorian calendar, what weekday is "
-                f"{metadata.day} {metadata.month} {metadata.year}? "
+                f"{metadata.year:04d}-{metadata.month:02d}-{metadata.day:02d} (YYYY-MM-DD)? "
                 f"The answer is the weekday name, one of Monday, Tuesday, Wednesday, "
                 f"Thursday, Friday, Saturday, Sunday.")
 

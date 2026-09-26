@@ -58,7 +58,10 @@ def _month_date(y, m, spec):
         lastd = calendar.monthrange(y, m)[1]
         last = date(y, m, lastd)
         return last - timedelta(days=(last.weekday() - wd) % 7)
-    return date(y, m, calendar.monthrange(y, m)[1])
+    last = date(y, m, calendar.monthrange(y, m)[1])
+    if spec[0] == "lastweekday":   # the month's last Monday-to-Friday day
+        return last - timedelta(days=max(0, last.weekday() - 4))
+    return last
 
 
 def _business(d):
@@ -79,6 +82,7 @@ class CalendarRecurrenceConfig(Config):
 
 class CalendarRecurrence(Task):
     config_cls = CalendarRecurrenceConfig
+    task_version = 2  # v2: month-end rules state their period, and "last weekday" is one fixed rule
 
     def generate_entry(self):
         level = self.config.level
@@ -129,23 +133,19 @@ class CalendarRecurrence(Task):
             kind = random.choice(["day", "weekday"])
             start_y = random.randint(2015, 2030)
             start_m = random.randint(1, 12)
+            spec = ("lastday",) if kind == "day" else ("lastweekday",)
             dates = []
-            last_spec = None
             y, m = start_y, start_m
             for _ in range(n):
-                if kind == "day":
-                    last_spec = ("lastday",)
-                else:
-                    wd = random.randint(0, 4)
-                    last_spec = ("last", wd)
-                dates.append(_month_date(y, m, last_spec))
+                dates.append(_month_date(y, m, spec))
                 y, m = _add_months(y, m, K)
-            basis = "the last day" if kind == "day" else "the last weekday"
+            basis = "the last {} of {}".format(
+                "day" if kind == "day" else "weekday (Monday to Friday)", _fmt_months(K))
             when = "starting in {} {}".format(MONTH_NAMES[start_m - 1],
                                               start_y)
             skip = ""
             extra = dict(family=family, K=K, kind=kind,
-                         year=start_y, month=start_m, spec=tuple(last_spec))
+                         year=start_y, month=start_m, spec=spec)
 
         answer = dates[n - 1]
         clause = "{}, {}{}.".format(basis, when, skip)
@@ -160,7 +160,7 @@ class CalendarRecurrence(Task):
         return Entry(metadata=metadata, answer=answer.isoformat())
 
     def render_prompt(self, metadata):
-        return ("{} What is the date (YYYY-MM-DD) of the {} occurrence? "
+        return ("An event recurs on this rule: {} What is the date (YYYY-MM-DD) of the {} occurrence? "
                 "The answer is a date in the format YYYY-MM-DD.".format(
                     metadata.clause, _ordinal(metadata.n)))
 

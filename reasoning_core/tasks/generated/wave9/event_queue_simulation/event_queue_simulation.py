@@ -41,6 +41,7 @@ class EventQueueSimulation(Task):
     summary = "Execute timestamped discrete events whose handlers schedule later events under stated priority rules, returning a queried terminal system state."
 
     config_cls = EventQueueSimConfig
+    task_version = 2  # v2: a processor never waits for a job that has not arrived
 
     def generate_entry(self):
         cfg = self.config
@@ -75,12 +76,14 @@ class EventQueueSimulation(Task):
 
         total_completion = 0
         for p, plist in jobs.items():
-            # Sort by (priority, arrival_index) = processing order.
-            order = sorted(plist, key=lambda j: (j[2], j[3]))
+            # Only jobs that have arrived are pending; an idle processor waits for the next.
             free = 0
-            for (t, w, pr, i) in order:
-                start = max(free, t)
-                free = start + w
+            while plist:
+                free = max(free, min(job[0] for job in plist))
+                job = min((job for job in plist if job[0] <= free),
+                          key=lambda job: (job[2], job[0], job[3]))
+                plist.remove(job)
+                free += job[1]
             total_completion = max(total_completion, free)
 
         # Domain check: non-negative integer.
