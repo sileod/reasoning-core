@@ -240,6 +240,9 @@ def main(args):
         serializer="json",
         progress_bar=True,
     )
+    # NfsDict trusts its key index, which is only flushed at a clean exit; a preempted collector
+    # leaves it stale, and batches it uploaded would be uploaded again. Rescan the records.
+    state.sync()
     done, bad = load_file_state(state)
 
     d, b = stats(state, done, bad)

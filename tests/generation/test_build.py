@@ -152,6 +152,28 @@ def test_collect_uploads_the_version_folder(run, monkeypatch):
     assert not list((run / "generated_data" / "rcT").glob("*.jsonl"))  # single pass deletes
 
 
+def test_a_collector_killed_before_saving_its_index_does_not_upload_twice(run, monkeypatch):
+    # A preempted collector never flushes NfsDict's key index; its successor must still see
+    # every batch already uploaded, or it re-uploads them under new shard names.
+    build.generate(run, workers=2, report_every=3600)
+    uploaded = []
+
+    class Api:
+        def create_repo(self, **kwargs): pass
+        def file_exists(self, **kwargs): return False
+
+    monkeypatch.setattr(collect, "HfApi", Api)
+    monkeypatch.setattr(collect, "upload_with_retry", lambda api, buf, remote, *a: uploaded.append(remote))
+    monkeypatch.setenv("HOME", str(run.parent))
+    argv = ["--rc_path", str(run), "--version", "rcT", "--prefix", "data/rcT", "--no-delete", "--batch", "2"]
+    collect.main(collect.parse_args(argv))
+    assert len(uploaded) == 2
+    for index in (run / "upload_state").rglob("_index.json"):
+        index.write_text("[]")  # as left by a kill before the index was flushed
+    collect.main(collect.parse_args(argv))
+    assert len(uploaded) == 2
+
+
 @pytest.fixture
 def fake_oarsub(tmp_path):
     calls = tmp_path / "oarsub.calls"
