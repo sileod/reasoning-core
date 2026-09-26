@@ -1,6 +1,6 @@
 import re
 
-from reasoning_core.tasks.generated.wave10.instruction_data_boundary import (
+from reasoning_core.tasks.generated.wave10.instruction_boundary import (
     instruction_data_boundary as mod,
 )
 
@@ -51,3 +51,13 @@ def test_components_in_json():
     task = mod.InstructionBoundary()
     e = task.generate_example()
     json.dumps(e.metadata.to_dict() if hasattr(e.metadata, "to_dict") else dict(e.metadata))
+
+
+def test_the_quoted_commands_are_data_not_steps():
+    # v1 answered 8807 here by running every quoted command; the numbers total 823.
+    task = mod.InstructionBoundary()
+    for _ in range(30):
+        e = task.generate_example()
+        total = sum(target for _op, target in e.metadata.components)
+        assert int(e.answer) == mod.do_op(e.metadata.framed_op, total)
+    assert mod.do_op("halve", 129 + 200 + 211 + 159 + 124) == 411

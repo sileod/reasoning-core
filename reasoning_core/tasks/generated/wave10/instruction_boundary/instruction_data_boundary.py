@@ -36,26 +36,15 @@ OP_NAMES = ("add", "double", "halve", "triple", "square", "increment")
 
 
 def do_op(name, arg):
-    law = name[0]
-    if law == "a":
-        return arg + random.randint(1, 20)
-    if law == "d" and name == "double":
-        return arg * 2
-    if law == "h":
-        return arg // 2
-    if law == "t":
-        return arg * 3
-    if law == "s":
-        return arg ** 2
-    if law == "i":
-        return arg + 1
-    raise ValueError(name)
+    """The framing operation on the total; the quoted commands are never run."""
+    return {"add": arg, "double": arg * 2, "halve": arg // 2, "triple": arg * 3,
+            "square": arg ** 2, "increment": arg + 1}[name]
 
 
 FRAME_TMPL = {
     "add": "add them together",
     "double": "double their total",
-    "halve": "halve their total",
+    "halve": "halve their total, rounding down",
     "triple": "triple their total",
     "square": "square their total",
     "increment": "increase their total by one",
@@ -80,6 +69,9 @@ class InstructionBoundary(Task):
                "quoted command tokens over add/double/halve/triple/square/"
                "increment.")
     config_cls = InstructionBoundaryConfig
+    # v2: the answer frames the quoted numbers; v1 ran the quoted commands the prompt says not
+    # to follow, "add" by an amount the prompt never showed.
+    task_version = 2
 
     def generate_entry(self):
         cfg = self.config
@@ -90,14 +82,14 @@ class InstructionBoundary(Task):
         for _ in range(n_quotes):
             op = random.choice(OP_NAMES)
             target = random.randint(start, start + max_start)
-            components.append((op, target, do_op(op, target)))
+            components.append((op, target))
 
         framed = random.choice(OP_NAMES)
-        total = sum(c for _o, _t, c in components)
+        total = sum(target for _op, target in components)
         final = do_op(framed, total)
 
         quote_str = " and ".join(
-            f'\'{op} the number {target}\'' for op, target, _c in components
+            f'\'{op} the number {target}\'' for op, target in components
         )
         prompt_text = (
             f"The machine printed the tokens {quote_str}.  Those quoted "

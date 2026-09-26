@@ -49,6 +49,9 @@ FUN_ARITH = {
 
 class CongruenceClosure(Task):
     config_cls = CongruenceClosureConfig
+    # v2: the functions' definitions are stated (v1 called them uninterpreted and scored with
+    # them anyway), and any satisfying assignment scores, not only z3's witness.
+    task_version = 2
 
     def generate_entry(self):
         cfg = self.config
@@ -114,7 +117,7 @@ class CongruenceClosure(Task):
             if want_yes:
                 chosen = None
                 for a in range(len(terms)):
-                    for b in range(a + 1, len(terms)):
+                    for b in range(a + 2, len(terms)):  # a neighbour is a given equality
                         if entail(s, terms[a], terms[b]):
                             chosen = (terms[a], terms[b])
                             break
@@ -127,7 +130,7 @@ class CongruenceClosure(Task):
             else:
                 chosen = None
                 for a in range(len(terms)):
-                    for b in range(a + 1, len(terms)):
+                    for b in range(a + 2, len(terms)):  # a neighbour is a given equality
                         if not entail(s, terms[a], terms[b]):
                             chosen = (terms[a], terms[b])
                             break
@@ -163,33 +166,35 @@ class CongruenceClosure(Task):
 
     def render_prompt(self, metadata):
         p = metadata.payload
-        lines = []
-        for i, (a, b) in enumerate(p["equalities"]):
-            lines.append("= %s %s" % (a, b))
-        head = "\n".join(lines)
+        query = p["query"]
+        lines = ["%s = %s" % (a, b) for a, b in p["equalities"]]
+        lines.append("%s %s %s" % (query["left"], "=" if query["entailed"] else "!=",
+                                   query["right"]))
         return (
-            "%s\n\n"
-            "The equalities above relate terms built from the uninterpreted-like functions "
-            "{f,g,h} and base constants {a,b,c,d,e}. For the query term pair "
-            "(L = %s, R = %s), determine whether L and R are in the same equivalence class "
-            "forced by congruence closure, and then give a concrete integer assignment to "
-            "the base constants a..e that certifies it: if L == R is entailed, the "
-            "assignment must satisfy the equalities and L == R; if not, it must satisfy the "
-            "equalities while keeping L and R unequal. Answer exactly as "
-            "'a=.. b=.. c=.. d=.. e=..' with integer values."
-            % (head, p["query"]["left"], p["query"]["right"])
+            "Over the integers, f(x) = x + 1, g(x) = 2x and h(x) = x - 3. Find integers "
+            "a, b, c, d, e that satisfy all of:\n%s\n\n"
+            "Answer exactly as 'a=.. b=.. c=.. d=.. e=..' with integer values."
+            % "\n".join("  " + line for line in lines)
         )
 
     def score_answer(self, answer, entry):
+        """Any assignment satisfying the constraints; a witness is only one of them."""
         try:
-            assign = {}
-            for tok in (answer or "").split():
-                if "=" in tok:
-                    k, _, v = tok.partition("=")
-                    assign[k.strip()] = int(v.strip())
-        except Exception:
+            assign = {k.strip(): int(v) for k, _, v in
+                      (tok.partition("=") for tok in str(answer or "").split() if "=" in tok)}
+        except ValueError:
             return 0.0
-        if not assign:
+        if set(assign) != set("abcde"):
             return 0.0
-        expected = entry.metadata.witness
-        return 1.0 if assign == expected else 0.0
+        meta = entry.metadata
+        if not all(_value(a, assign) == _value(b, assign) for a, b in meta.equalities):
+            return 0.0
+        same = _value(meta.left, assign) == _value(meta.right, assign)
+        return 1.0 if same == bool(meta.entailed) else 0.0
+
+
+def _value(term, assign):
+    """A rendered term such as 'f(g(a))' under an assignment to the constants."""
+    if len(term) == 1:
+        return assign[term]
+    return FUN_ARITH[term[0]](_value(term[2:-1], assign))

@@ -44,3 +44,18 @@ def test_difficulty_changes():
     l0 = task.config.n_equalities
     task.config.set_level(5)
     assert task.config.n_equalities >= l0
+
+
+def test_any_assignment_meeting_the_constraints_scores():
+    import random
+    from reasoning_core.tasks.generated.wave0.n01_congruence_closure.n01_congruence_closure import (
+        CongruenceClosure)
+    from reasoning_core.template import Entry, edict
+
+    meta = edict(equalities=[["f(d)", "h(e)"], ["h(e)", "g(e)"]], left="f(d)", right="h(e)",
+                 entailed=True, witness={})
+    entry = Entry(metadata=meta, answer="a=0 b=0 c=0 d=-7 e=-3")
+    task = CongruenceClosure()
+    assert task.score_answer("a=0 b=0 c=0 d=-7 e=-3", entry) == 1.0
+    assert task.score_answer("a=5 b=1 c=9 d=-7 e=-3", entry) == 1.0   # free constants are free
+    assert task.score_answer("a=0 b=0 c=0 d=1 e=2", entry) == 0.0     # h(2) = -1, g(2) = 4
