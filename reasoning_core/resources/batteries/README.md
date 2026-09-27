@@ -4,8 +4,10 @@ A manifest is ordered data: a list of legs, each a frozen `.jsonl` file plus the
 scoring applied to it. The runner lives in `reasoning_core/evaluation/battery.py`; nothing
 here is code.
 
-`copyfree_battery_v8_tiny.json` is what current results are measured on, through
-`default_battery()`. `paper_battery.json` is the 21-leg suite of the first influence paper,
+`copyfree_battery_v11_tiny.json` is what the rg75 protocol measures on since 2026-09-27: v8_tiny
+with `ts_dpo` replaced by four tasksource legs (`ts_mc`, `ts_nli`, `ts_cls`, `ts_pref`), every other
+leg byte-identical. `copyfree_battery_v8_tiny.json` is what `default_battery()` returns and what every
+earlier tiny-battery result was measured on. `paper_battery.json` is the 21-leg suite of the first influence paper,
 reachable through `paper_battery()`. Everything else is archived: kept so an old
 measurement can be rebuilt, referenced by nothing.
 
