@@ -29,7 +29,9 @@ HUB = Path("~/.cache/huggingface/hub").expanduser()
 REVISIONS = {
     "nvidia/HelpSteer2": "990b2711a36180dd19d9c94b8627844866f8982a",
     "trl-lib/ultrafeedback_binarized": "47124cb5778f5d50de1c7676a412828f3ea7c555",
-    "tasksource/tasksource_dpo_pairs": "ebeb6a3f0160d90d6dc00b8d4e59ebcdaa7a5b2d",
+    # ts_dpo (v5-v8) was built at ebeb6a3f0160 (2024-07, 435 tasks); the ts_mc/ts_nli/ts_cls legs at
+    # the 2026-09-26 rebuild (465 tasks, per-row license_use).
+    "tasksource/tasksource_dpo_pairs": "f49d6ee639c9d9b667c591e9f342e535fce92095",
     "allenai/llama-3.1-tulu-3-8b-preference-mixture": "78a6f00785946cd24276c5dd075f83a143a3b1e6",
     "aladinDJ/ultramix-DPO-annotated": "3fb2a270ec7c4756fa518b9452da2ddc967da2a2",
     "project-themis/Themis-CodePreference": "7c366b23590cc9ff8d372bb47280fcd474536344",
@@ -98,22 +100,51 @@ def tasksource_pairs(a):
     symmetrically it shifts both NLLs together and cancels in the MARGIN. That is exactly what a
     margin is for. Read the margin, not the gold NLL.
 
-    Stratified by task so no single one of the 435 dominates. Validation split by default -- 130547
-    rows means the scarcity that forced HelpSteer2 onto train does not apply.
+    Stratified by task so no single one dominates. --ts-subset splits by ROW into answer formats:
+    `pref` (real preference sources as A/B judge questions, TS_PREF), `mc` (letter options), `nli`
+    (entailment option menu) and `cls` (every other label set). --ts-exclude drops tasks another
+    battery leg already measures.
     """
     import collections
-    d = _load("tasksource/tasksource_dpo_pairs", split=a.split)
+    # data_files: the split's own shards only -- the bare split= downloads all of train (~3GB) first.
+    d = _load("tasksource/tasksource_dpo_pairs", split=a.split,
+              data_files={a.split: f"data/{a.split}-*.parquet"}, verification_mode="no_checks")
     per, seen = a.per_task, collections.Counter()
+    excl = [x for x in a.ts_exclude.split(",") if x]
     for r in d:
         t = str(r.get("task") or "?")
-        if seen[t] >= per:
+        if seen[t] >= per or any(t == x or t.startswith(x + "/") for x in excl):
+            continue
+        if a.ts_subset != "all" and _ts_subset(r) != a.ts_subset:
             continue
         ch, rj, pr = str(r["chosen"]).strip(), str(r["rejected"]).strip(), str(r["prompt"]).strip()
         if not ch or not rj or ch == rj or not pr:
             continue
+        # Length-filter BEFORE counting, or a task with long prompts spends its cap on dropped rows.
+        if a.max_prompt_tokens and len(a.tok(pr, add_special_tokens=False).input_ids) > a.max_prompt_tokens:
+            continue
         seen[t] += 1
         mk = lambda text, s: {"prompt": pr, "response": text, a.axis: float(s), "complexity": 0}
         yield mk(ch, 1.0), mk(rj, 0.0)
+
+
+# Real preference data, which tasksource frames as an A/B JUDGE question (both responses in the prompt).
+# Sources another leg already measures are left to --ts-exclude (HelpSteer* -> hs2_short,
+# UltraFeedback-paired -> uf_short), so one source is never counted in two legs.
+TS_PREF = ("hh-rlhf", "SHP", "PKU-SafeRLHF", "oasst2_pairwise_rlhf_reward", "chatbot_arena_conversations",
+           "webgpt_comparisons", "summarize_from_feedback", "prm800k_dpo", "HelpSteer3", "UltraFeedback-paired")
+
+
+def _ts_subset(r):
+    t = str(r.get("task") or "")
+    if any(t == x or t.startswith(x + "/") for x in TS_PREF):
+        return "pref"
+    if "chose the best option from" in r["prompt"]:
+        return "mc"
+    # NLI by the option MENU (the instruction line), not the gold label: "neutral." is also a
+    # sentiment label, and a per-label test would split one task across two legs.
+    menu = r["prompt"].split("\n", 1)[0].lower()
+    return "nli" if "entail" in menu or "contradict" in menu else "cls"
 
 
 def tulu3_pairs(a):
@@ -216,6 +247,9 @@ def main():
                     choices=["helpsteer2", "ultrafeedback", "tasksource", "tulu3", "ultramix",
                              "themis_code", "python_dpo"])
     ap.add_argument("--per-task", type=int, default=6, help="tasksource: cap rows per task")
+    ap.add_argument("--ts-subset", default="all", choices=["all", "mc", "nli", "cls", "pref"])
+    ap.add_argument("--ts-exclude", default="", help="tasksource: comma-separated task ids (or "
+                    "prefixes before a '/') to drop, e.g. those another leg already measures")
     ap.add_argument("--split", default="train")
     ap.add_argument("--axis", default="correctness")
     ap.add_argument("--min-delta", type=float, default=2)
@@ -251,6 +285,7 @@ def main():
 
     from transformers import AutoTokenizer
     tok = AutoTokenizer.from_pretrained(TOKM, revision=TOKR)
+    a.tok = tok
     rng = random.Random(a.seed)
     if not a.prompt_cap:                       # leave headroom for the answer + a few join tokens
         a.prompt_cap = max(64, a.max_length - max(a.trunc, 0) - 16)
