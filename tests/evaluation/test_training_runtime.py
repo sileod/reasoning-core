@@ -214,6 +214,25 @@ def test_exact_token_filter_rejects_overlong_aux(tmp_path):
     assert [row["_source_index"] for row in rows] == [0]
 
 
+def test_cycling_stream_with_no_fitting_row_raises_instead_of_spinning(tmp_path):
+    path = tmp_path / "aux.jsonl"
+    path.write_text('{"prompt":"one two three four","answer":"too long"}\n')
+
+    class Tokenizer:
+        eos_token = "<eos>"
+
+        def __call__(self, text, add_special_tokens):
+            ids = text.replace("<eos>", " <eos>").split()
+            return {"input_ids": ([0] if add_special_tokens else []) + list(range(len(ids)))}
+
+    with pytest.raises(ValueError, match="spin forever"):
+        load_stream(StreamSpec(str(path), "influence_legacy_v1", cycle=True),
+                    Tokenizer(), max_length=100, max_tokens=4)
+    rows = load_stream(StreamSpec(str(path), "influence_legacy_v1", cycle=True),
+                       Tokenizer(), max_length=100, max_tokens=40)
+    assert next(iter(rows))["_source_index"] == 0
+
+
 def test_local_content_id_changes_with_file_and_directory_contents(tmp_path):
     path = tmp_path / "data.jsonl"
     path.write_text('{"value":1}\n')

@@ -92,7 +92,17 @@ def load_stream(spec, tokenizer, max_length=None, chars_per_token=4.0, max_token
         )
     if max_tokens:
         stream = stream.filter(lambda row: formatted_length(row, tokenizer) <= max_tokens)
-    return stream.repeat(None) if spec.cycle else stream
+    if not spec.cycle:
+        return stream
+    # Repeating a stream the filters leave empty never yields and never ends: the loader spins at
+    # 100% CPU until walltime. version_resolution L6 (0/64 rows under 1024 tokens) did that to four
+    # jobs, ~40 GPU-h, 2026-09-27. One pass to the first surviving row costs a read, not a scan.
+    if next(iter(stream), None) is None:
+        raise ValueError(
+            f"no row of {spec.source} passes the filters (task={spec.task}, mode={spec.mode}, "
+            f"max_level={spec.max_level}, max_tokens={max_tokens}, max_chars={max_chars}); "
+            "cycling it would spin forever")
+    return stream.repeat(None)
 
 
 def mix_streams(main, aux=None, aux_fraction=0.0, seed=42, *, shuffle_buffer):
