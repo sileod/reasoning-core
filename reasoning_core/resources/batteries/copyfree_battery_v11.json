@@ -1,0 +1,385 @@
+{
+ "name": "copyfree_battery_v11",
+ "max_length": 512,
+ "legs": [
+  {
+   "name": "dolci",
+   "path": "dolci_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "dolci_nll",
+   "limit": 200
+  },
+  {
+   "name": "fw",
+   "path": "fw_eval.jsonl",
+   "kind": "lm_nll",
+   "output_key": "fw_nll",
+   "limit": 200,
+   "max_chars": 1500
+  },
+  {
+   "name": "flan",
+   "path": "flan_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "flan_nll",
+   "limit": 200
+  },
+  {
+   "name": "mbpp",
+   "path": "mbpp_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "mbpp_nll",
+   "limit": 257
+  },
+  {
+   "name": "mmlu_math_cloze",
+   "path": "mmlu_math_cloze_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "mmlu_math_cloze_nll",
+   "accuracy_key": "mmlu_math_mc_cloze_acc",
+   "margin_key": "mmlu_math_mc_cloze_margin",
+   "limit": 270
+  },
+  {
+   "name": "mmlu_logic_cloze",
+   "path": "mmlu_logic_cloze_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "mmlu_logic_cloze_nll",
+   "accuracy_key": "mmlu_logic_mc_cloze_acc",
+   "margin_key": "mmlu_logic_mc_cloze_margin",
+   "limit": 126
+  },
+  {
+   "name": "drop",
+   "path": "drop_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "drop_nll",
+   "limit": 300
+  },
+  {
+   "name": "gsm8k",
+   "path": "gsm8k_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "gsm8k_nll",
+   "limit": 300
+  },
+  {
+   "name": "arc_easy",
+   "path": "arc_easy_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "arc_easy_nll",
+   "limit": 500
+  },
+  {
+   "name": "arc_challenge",
+   "path": "arc_challenge_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "arc_challenge_nll",
+   "limit": 500
+  },
+  {
+   "name": "blimp",
+   "path": "blimp_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "blimp_nll",
+   "limit": 400
+  },
+  {
+   "name": "folio",
+   "path": "folio_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "folio_nll",
+   "limit": 203
+  },
+  {
+   "name": "mmlu_other_cloze",
+   "path": "mmlu_other_cloze_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "mmlu_other_cloze_nll",
+   "limit": 400
+  },
+  {
+   "name": "mmlu_math_macro",
+   "path": "mmlu_math_macro_cloze_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "mmlu_math_macro_nll",
+   "limit": 500
+  },
+  {
+   "name": "bbh_dev",
+   "path": "bbh_dev_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "bbh_dev_nll",
+   "limit": 240
+  },
+  {
+   "name": "bbh_dev_cloze",
+   "path": "bbh_dev_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_dev_cloze_nll",
+   "accuracy_key": "bbh_dev_mc_cloze_acc",
+   "margin_key": "bbh_dev_mc_cloze_margin",
+   "limit": 240
+  },
+  {
+   "name": "bbh_test",
+   "path": "bbh_test_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "bbh_test_nll",
+   "limit": 220
+  },
+  {
+   "name": "bbh_test_cloze",
+   "path": "bbh_test_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_test_cloze_nll",
+   "accuracy_key": "bbh_test_mc_cloze_acc",
+   "margin_key": "bbh_test_mc_cloze_margin",
+   "limit": 220
+  },
+  {
+   "name": "bbh_open",
+   "path": "bbh_open_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "bbh_open_nll",
+   "limit": 160
+  },
+  {
+   "name": "bbh_test_open",
+   "path": "bbh_test_open_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "bbh_test_open_nll",
+   "limit": 200
+  },
+  {
+   "name": "commonsenseqa",
+   "path": "commonsenseqa_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "commonsenseqa_nll",
+   "limit": 400,
+   "accuracy_key": "commonsenseqa_mc_cloze_acc",
+   "margin_key": "commonsenseqa_mc_cloze_margin"
+  },
+  {
+   "name": "openbookqa",
+   "path": "openbookqa_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "openbookqa_nll",
+   "limit": 400,
+   "accuracy_key": "openbookqa_mc_cloze_acc",
+   "margin_key": "openbookqa_mc_cloze_margin"
+  },
+  {
+   "name": "sciq",
+   "path": "sciq_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "sciq_nll",
+   "limit": 400,
+   "accuracy_key": "sciq_mc_cloze_acc",
+   "margin_key": "sciq_mc_cloze_margin"
+  },
+  {
+   "name": "svamp",
+   "path": "svamp_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "svamp_nll",
+   "limit": 300
+  },
+  {
+   "name": "asdiv",
+   "path": "asdiv_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "asdiv_nll",
+   "limit": 400
+  },
+  {
+   "name": "fw_recent",
+   "path": "fw_recent_eval.jsonl",
+   "kind": "lm_nll",
+   "output_key": "fw_recent_nll",
+   "limit": 200,
+   "max_chars": 1500
+  },
+  {
+   "name": "triviaqa",
+   "path": "triviaqa_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "triviaqa_nll",
+   "limit": 400
+  },
+  {
+   "name": "balanced_copa",
+   "path": "balanced_copa_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "balanced_copa_nll",
+   "accuracy_key": "balanced_copa_mc_cloze_acc",
+   "margin_key": "balanced_copa_mc_cloze_margin",
+   "limit": 500
+  },
+  {
+   "name": "winogrande",
+   "path": "winogrande_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "winogrande_nll",
+   "accuracy_key": "winogrande_mc_cloze_acc",
+   "margin_key": "winogrande_mc_cloze_margin",
+   "limit": 600
+  },
+  {
+   "name": "bbh_dev_nomenu",
+   "path": "bbh_dev_nomenu_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_dev_nomenu_nll",
+   "accuracy_key": "bbh_dev_nomenu_mc_cloze_acc",
+   "margin_key": "bbh_dev_nomenu_mc_cloze_margin",
+   "limit": 240
+  },
+  {
+   "name": "bbh_test_nomenu",
+   "path": "bbh_test_nomenu_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_test_nomenu_nll",
+   "accuracy_key": "bbh_test_nomenu_mc_cloze_acc",
+   "margin_key": "bbh_test_nomenu_mc_cloze_margin",
+   "limit": 140
+  },
+  {
+   "name": "hs2_short",
+   "path": "hs2_short_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "hs2_short_nll",
+   "accuracy_key": "hs2_short_mc_cloze_acc",
+   "margin_key": "hs2_short_mc_cloze_margin",
+   "limit": 127
+  },
+  {
+   "name": "uf_short",
+   "path": "uf_short_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "uf_short_nll",
+   "accuracy_key": "uf_short_mc_cloze_acc",
+   "margin_key": "uf_short_mc_cloze_margin",
+   "limit": 1200
+  },
+  {
+   "name": "mmlu_math_nomenu",
+   "path": "mmlu_math_nomenu_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "mmlu_math_nomenu_nll",
+   "accuracy_key": "mmlu_math_nomenu_mc_cloze_acc",
+   "margin_key": "mmlu_math_nomenu_mc_cloze_margin",
+   "limit": 600
+  },
+  {
+   "name": "ts_mc",
+   "path": "ts_mc_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "ts_mc_nll",
+   "accuracy_key": "ts_mc_mc_cloze_acc",
+   "margin_key": "ts_mc_mc_cloze_margin",
+   "limit": 939
+  },
+  {
+   "name": "ts_nli",
+   "path": "ts_nli_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "ts_nli_nll",
+   "accuracy_key": "ts_nli_mc_cloze_acc",
+   "margin_key": "ts_nli_mc_cloze_margin",
+   "limit": 1000
+  },
+  {
+   "name": "ts_cls",
+   "path": "ts_cls_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "ts_cls_nll",
+   "accuracy_key": "ts_cls_mc_cloze_acc",
+   "margin_key": "ts_cls_mc_cloze_margin",
+   "limit": 1500
+  },
+  {
+   "name": "ts_pref",
+   "path": "ts_pref_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "ts_pref_nll",
+   "accuracy_key": "ts_pref_mc_cloze_acc",
+   "margin_key": "ts_pref_mc_cloze_margin",
+   "limit": 756
+  },
+  {
+   "name": "tulu3_short",
+   "path": "tulu3_short_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "tulu3_short_nll",
+   "accuracy_key": "tulu3_short_mc_cloze_acc",
+   "margin_key": "tulu3_short_mc_cloze_margin",
+   "limit": 1200
+  },
+  {
+   "name": "ultramix_short",
+   "path": "ultramix_short_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "ultramix_short_nll",
+   "accuracy_key": "ultramix_short_mc_cloze_acc",
+   "margin_key": "ultramix_short_mc_cloze_margin",
+   "limit": 905
+  },
+  {
+   "name": "themis_py",
+   "path": "themis_py_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "themis_py_nll",
+   "accuracy_key": "themis_py_mc_cloze_acc",
+   "margin_key": "themis_py_mc_cloze_margin",
+   "limit": 1200
+  },
+  {
+   "name": "python_dpo",
+   "path": "python_dpo_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "python_dpo_nll",
+   "accuracy_key": "python_dpo_mc_cloze_acc",
+   "margin_key": "python_dpo_mc_cloze_margin",
+   "limit": 153
+  }
+ ],
+ "disabled_legs": [
+  {
+   "name": "logiqa",
+   "path": "logiqa_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "logiqa_nll",
+   "limit": 500,
+   "_disabled_reason": "inert (sd 0.44)"
+  },
+  {
+   "name": "hellaswag",
+   "path": "hellaswag_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "hellaswag_nll",
+   "limit": 400,
+   "accuracy_key": "hellaswag_mc_cloze_acc",
+   "margin_key": "hellaswag_mc_cloze_margin",
+   "_disabled_reason": "inert (sd 0.13 vs 2.90 gsm8k)"
+  },
+  {
+   "name": "anli",
+   "path": "anli_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "anli_nll",
+   "limit": 400,
+   "accuracy_key": "anli_mc_cloze_acc",
+   "margin_key": "anli_mc_cloze_margin",
+   "_disabled_reason": "at chance (+1.2 over chance, NLL 8.79)"
+  },
+  {
+   "name": "codealpaca",
+   "path": "codealpaca_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "codealpaca_nll",
+   "limit": 200,
+   "_disabled_reason": "no headroom (baseline NLL 0.663)"
+  }
+ ],
+ "_note": "v11 = v8 with ts_dpo (tasksource_dpo_pairs @ebeb6a3f0160, 2024-07, 435 tasks, one leg) REPLACED by four legs from the 2026-09-26 rebuild @f49d6ee639c9 (465 tasks), split by answer format so each reads one skill: ts_mc (letter options, 58 tasks), ts_nli (entailment-menu tasks, 123), ts_cls (every other label set, 256), ts_pref (REAL preference data -- hh-rlhf, PKU-SafeRLHF, SHP, oasst2, chatbot_arena, webgpt, summarize_from_feedback, prm800k -- framed as an A/B judge question, 13 tasks). Sources another leg already measures are excluded so no source counts twice: arc, copa, winogrande, sciq, openbookqa, commonsense_qa, folio (own legs), HelpSteer* (hs2_short), UltraFeedback-paired (uf_short), and the self-referential tasksource_dpo_pairs task. Legs are prompt-disjoint. Long prompts are DROPPED (<=440 tokens), never tail-capped: tail-capping cut the instruction and option menu off 154 of ts_dpo's 1500 rows. Per-task caps count only rows that pass the length filter. Gate 1 (gold vs distractor chars / shortest-picker excess): mc 2.0/2.0 +0.0, nli 11.6/11.2 -4.4, cls 11.0/10.9 -2.6, pref 2.0/2.0 +0.0. Build: scripts/build_preference_evals.py --source tasksource --split validation --ts-subset {mc,nli,cls,pref} --per-task {16,12,6,60} --limit {1000,1000,1500,1000} --trunc 0 --min-delta 1 --max-prompt-tokens 440 --ts-exclude <the list above>. UNGATED on 2 and 3 (informative, sensitive): keep them out of ext composites until measured."
+}
