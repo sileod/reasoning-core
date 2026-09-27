@@ -6,6 +6,15 @@ No model calls, balancing, deduplication, or length rejection sampling belong he
 import json
 import time
 
+from .protocols import DEFAULT, PROTOCOLS
+
+# Training cuts a row (prompt and answer) at the protocol's max_length in the model's tokenizer,
+# and a row that does not fit is dropped: version_resolution fit 0 of 64 rows at level 6 and 10
+# at level 4, and the arm spun until its 10-hour walltime, twice. Tasks count with o200k, which
+# SmolLM2 exceeds by 1.11x on a median row, 1.24x at p90 and 1.48x at p99 (466 registry rows,
+# 2026-09-27); at 1.3x a row within ROW_TOKENS fits unless it is an outlier.
+ROW_TOKENS = int(PROTOCOLS[DEFAULT]["max_length"] / 1.3)
+
 # What a ladder should do: start solvable, end hard, and fall in between. The bands are wide
 # because the probe is a few samples per cell: a verdict says which ladders are worth a look,
 # not what to change.
@@ -15,7 +24,7 @@ MIN_SPAN = 0.25       # below this the knob is not moving difficulty
 MIN_N = 5             # a solve rate over 3 samples has a standard error near 0.3
 
 
-def check_headroom(task, *, levels=(0, 6), samples=16, max_prompt_tokens=2048,
+def check_headroom(task, *, levels=(0, 6), samples=16, max_row_tokens=ROW_TOKENS,
                    max_mean_seconds=1.0, timeout_seconds=3, min_unique_ratio=0.75):
     """Return per-level measurements; raise ValueError on an unusable endpoint.
 
@@ -34,9 +43,11 @@ def check_headroom(task, *, levels=(0, 6), samples=16, max_prompt_tokens=2048,
                 json.dumps(entry.to_dict())
                 if task.score_answer(entry.answer, entry) != 1:
                     raise ValueError("reference answer does not score 1")
-                tokens = len(task.tokenizer.encode(entry.prompt))
-                if tokens > max_prompt_tokens:
-                    raise ValueError(f"prompt has {tokens} tokens; ceiling {max_prompt_tokens}")
+                tokens = (len(task.tokenizer.encode(entry.prompt))
+                          + len(task.tokenizer.encode(str(entry.answer))))
+                if tokens > max_row_tokens:
+                    raise ValueError(f"prompt has {tokens} tokens with its answer; training fits "
+                                     f"about {max_row_tokens}")
                 if elapsed > timeout_seconds:
                     raise ValueError(f"generation took {elapsed:.2f}s; ceiling {timeout_seconds}s")
                 prompts.add(entry.prompt)
@@ -54,7 +65,7 @@ def check_headroom(task, *, levels=(0, 6), samples=16, max_prompt_tokens=2048,
             raise ValueError(f"headroom level {level}: instance pool is too repetitive "
                              f"({unique:.0%} unique across {samples} raw draws)")
         measurements.append(dict(level=level, samples=samples, unique_ratio=unique,
-                                 mean_seconds=mean, max_prompt_tokens=max(lengths)))
+                                 mean_seconds=mean, max_row_tokens=max(lengths)))
     return measurements
 
 

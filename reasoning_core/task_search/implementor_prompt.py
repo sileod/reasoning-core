@@ -3,6 +3,8 @@
 import pprint
 import textwrap
 
+from ..evaluation.difficulty import ROW_TOKENS
+
 PACE = {
     "hurry": {
         "stance": "That is enough only if you do not explore: the assignment and the"
@@ -204,7 +206,10 @@ def render_implementor_prompt(
             "  as simple as possible while preserving structural variety; preserve that",
             "  variety at level 6 with compact prompts and efficient generation. Vary",
             "  problem structure, not merely labels or wording. Both endpoints must",
-            "  stay within 2048 prompt tokens, 3 seconds per example and 1 second on average.",
+            f"  stay within {ROW_TOKENS} tokens of prompt plus answer (training cuts rows at",
+            "  1024 model tokens and drops what does not fit), 3 seconds per example and",
+            "  1 second on average. Also, the same seed must give a different problem at",
+            "  level 6 than at level 0: a config the generator never reads fails.",
             "- `gameability` measures constant-guess reward on label-balanced samples and",
             "  gates the excess over the 1/k floor for k distinct answers, with ceiling 0.4.",
             "  A balanced binary task is allowed; a level with only one answer fails.",
