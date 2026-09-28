@@ -71,3 +71,6 @@ python scripts/dataset_card.py stats      # scans the Hub -> stats.json
 python scripts/dataset_card.py render     # fails if the task list and the data disagree
 git commit datasets/procedural-pile && python scripts/dataset_card.py push
 ```
+
+Then tag the published revision with the version name (`rc13`), so it stays loadable
+after the next release replaces `main`.
