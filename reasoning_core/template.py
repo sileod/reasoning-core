@@ -403,6 +403,10 @@ class Task:
     def on_config_level_change(self):
         pass
 
+    def prepare(self):
+        """One-time setup that must not count against the per-example timeout (e.g. starting an
+        external prover). Called before every example; make repeat calls cheap."""
+
     def behavior_hash(self):
         return _module_behavior_hash(self.__class__.__module__)
         
@@ -425,6 +429,7 @@ class Task:
     def generate_example(self, level=None, max_tokens=8192, payload_shuffle_prob=0.0,
                          timeout=None, **kwargs):
         deadline = timeout if timeout is not None else self.timeout * (1 + level if level else 1)
+        self.prepare()
         @timeout_retry(int(deadline))
         def inner():
             t0=time.time()

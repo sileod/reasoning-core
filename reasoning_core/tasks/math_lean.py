@@ -26,6 +26,7 @@ import networkx as nx
 from appdirs import AppDirs
 from easydict import EasyDict as edict
 from gramforge import generate, init_grammar
+from reasoning_core.runtime import TimeoutException
 from reasoning_core.template import Config, Entry, Task, DevTask
 
 
@@ -247,7 +248,6 @@ class LeanRunner:
         self.use_mathlib = use_mathlib
         self.cache = {}
         self.proc = None
-        self.stdout = queue.Queue()
         self._mathlib_env = None
         self._start()
 
@@ -262,8 +262,15 @@ class LeanRunner:
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
-        threading.Thread(target=self._read, daemon=True).start()
-        resp = self._send_raw({"cmd": _LEAN_IMPORT_CMD})
+        # A fresh queue per process: lines a killed REPL still had in flight must not be read
+        # as the reply to the next command.
+        self.stdout = queue.Queue()
+        threading.Thread(target=self._read, args=(self.proc, self.stdout), daemon=True).start()
+        try:
+            resp = self._send_raw({"cmd": _LEAN_IMPORT_CMD})
+        except BaseException:
+            self.close()  # a half-started REPL must not serve the next check
+            raise
         msgs = resp.get("messages") or []
         errors = [m for m in msgs if m.get("severity") == "error"]
         self._mathlib_env = resp.get("env")
@@ -272,11 +279,12 @@ class LeanRunner:
             self.close()
             raise RuntimeError(f"Lean REPL failed to import prelude: {diag}")
 
-    def _read(self):
-        for line in self.proc.stdout:
+    @staticmethod
+    def _read(proc, out):
+        for line in proc.stdout:
             line = line.strip()
             if line:
-                self.stdout.put(line)
+                out.put(line)
 
     def close(self):
         if self.proc and self.proc.poll() is None:
@@ -310,14 +318,26 @@ class LeanRunner:
     def check(self, code):
         if code in self.cache:
             return self.cache[code]
+        if self.proc is None:
+            self._start()
         payload = {"cmd": code}
         if self._mathlib_env is not None:
             payload["env"] = self._mathlib_env
         try:
             result = self._send_raw(payload)
-        except Exception as e:
+        except TimeoutException:
+            # The caller's per-example alarm, not a verdict on `code`: the reply is still pending,
+            # so drop this REPL (the next check starts another) and let the caller retry.
+            self.close()
+            raise
+        except TimeoutError as e:
+            # Lean itself ran past self.timeout on `code`: counts as not closing the goal.
             self._start()
             return False, str(e)
+        except Exception:
+            # The REPL died (e.g. a broken pipe), which says nothing about `code`: ask a fresh one.
+            self._start()
+            result = self._send_raw({**payload, "env": self._mathlib_env})
         msgs = result.get("messages") or []
         has_error = any(m.get("severity") == "error" for m in msgs)
         has_sorry = bool(result.get("sorries"))
@@ -1872,6 +1892,9 @@ class LeanMissingLine(Task):
     def __init__(self, config=None, **kwargs):
         super().__init__(config=config or LeanConfig(use_mathlib=_profile_ready(use_mathlib=True)), timeout=120, **kwargs)
 
+    def prepare(self):
+        get_runner(use_mathlib=getattr(self.config, "use_mathlib", True))
+
     def generate_entry(self):
         use_mathlib = getattr(self.config, "use_mathlib", True)
         runner = get_runner(use_mathlib=use_mathlib)
@@ -1979,6 +2002,9 @@ class LeanCandidateCompilation(Task):
 
     def __init__(self, config=None, **kwargs):
         super().__init__(config=config or LeanConfig(), timeout=120, **kwargs)
+
+    def prepare(self):
+        get_runner(use_mathlib=getattr(self.config, "use_mathlib", True))
 
     def generate_entry(self):
         inst = make_compilation_pair(self.config)
