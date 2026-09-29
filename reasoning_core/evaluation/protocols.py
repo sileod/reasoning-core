@@ -20,13 +20,16 @@ _TINY = "reasoning_core/resources/batteries/copyfree_battery_v8_tiny.json"
 # rg75 from 2026-09-27: v8_tiny with ts_dpo replaced by the four tasksource legs. Every other leg is
 # byte-identical, so ext (which excludes the tasksource legs) pools across the two.
 _TINY11 = "reasoning_core/resources/batteries/copyfree_battery_v11_tiny.json"
+# rg75 from 2026-09-29: v11_tiny minus uf_short, tulu3_short, ultramix_short (SNR < 1, 23% of eval
+# tokens). Every remaining leg is byte-identical, so ext pools across v8, v11 and v12.
+_TINY12 = "reasoning_core/resources/batteries/copyfree_battery_v12_tiny.json"
 _FULL = "reasoning_core/resources/batteries/copyfree_battery_v8.json"
 
 PROTOCOLS = {
     "rg75": {"main": "fwdolcirg", "steps": 75, "mix": 0.5, "learning_rate": 5e-5,
              "lr_scheduler_type": "constant_with_warmup", "warmup_steps": 4,
              "carry_optimizer_state": True, "max_length": 1024, "batch_size": 4,
-             "gradient_accumulation_steps": 2, "token_ratio": True, "eval_manifest": _TINY11},
+             "gradient_accumulation_steps": 2, "token_ratio": True, "eval_manifest": _TINY12},
     # rg75 with the plain fw+dolci background. This one existed and was USED long before it had a
     # name -- the Influence Atlas and the contrast atlas are both built on it -- and being unnamed
     # is exactly how it gets mistaken for rg75, which it matches on every knob but the background.
@@ -51,7 +54,7 @@ ARM_SECONDS = {"rg75": 917, "carry": 917, "std": 2228}
 # The battery identities these protocols record, at max_length 1024. max_length is hashed into a
 # battery identifier, so the same manifest at 512 is a DIFFERENT battery; every shipped result is
 # at 1024.
-BATTERY_IDS = {"rg75": "copyfree_battery_v11_tiny/battery@v1:12e3036c27d2",
+BATTERY_IDS = {"rg75": "copyfree_battery_v12_tiny/battery@v1:14f00ecfceba",
                "carry": "copyfree_battery_v8_tiny/battery@v1:c94e9ad44be0",
                "std":  "copyfree_battery_v8/battery@v1:1a482a2aeb5d"}
 
