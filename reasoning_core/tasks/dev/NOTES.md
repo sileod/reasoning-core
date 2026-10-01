@@ -168,9 +168,11 @@ filters, with no per-domain lists:
   reach 1 step, 63% reach 2, 37% reach 3, 28% reach 4, 19% reach 6; from random starts only 32% take a step.
 
 **Task.** Given the context, the start term and the lemma sequence (with ← for right-to-left), give the
-resulting term as Lean prints it (`mathlib_rewrite`, forward execution). `mathlib_rewrite_middle` uses the same
-walks (2+ steps), also shows the final term, and asks for the term right after step i < k: it can be
-worked forward or backward. They are separate tasks so each gets its own value and difficulty curve. Both answers are unique
+resulting term as Lean prints it (format A); or show the final term too and ask for the term right after
+step i < k (format C), which can be worked forward or backward.
+**Since task_version 5, `mathlib_rewrite` is format C only, generated under the tight per-walk limits** (formerly
+`mathlib_rewrite_middle_fast`): C had the best eval value (table below), and A and the separate variants live in
+git history (commit 09bc739). Both answers are unique
 (`rw` is deterministic, one match per step). A third format, naming the lemma for a given step, was dropped:
 Mathlib aliases (`Nat.add_comm`, `AddCommMonoidWithOne.add_comm`) make that answer non-unique.
 
@@ -210,9 +212,8 @@ C, read both ways, is the most valuable form; A with a glossary scores below v2.
 time (10 walks; one took 98 s within a 50k-heartbeat budget), walks with no step 13%, and walks of 2+
 steps only 17%. Inside walks, executing candidate rewrites (`rwLemma`) dominates (20 s), then the `rw?`
 index lookup (10 s); the lazy index itself costs nothing to create per walk.
-`mathlib_rewrite_middle_fast` is the same task with tight per-walk limits (20k heartbeats; a walk stops
-extending after 5 s and keeps its prefix). It is a separate task because the limits change which walks get
-generated. The list of viable starts was re-explored under the current filters; the earlier one is kept
+`mathlib_rewrite_middle_fast` (now `mathlib_rewrite`) was the middle task with tight per-walk limits (20k heartbeats; a walk stops
+extending after 5 s and keeps its prefix); the limits change which walks get generated. The list of viable starts was re-explored under the current filters; the earlier one is kept
 as `mathlib_rewrite_viable.pre_v4.tsv`. Re-exploration: 16 workers × 20 min, 848 calls, 2,230 distinct starts,
 of which 773 reach at most 1 step, 460 reach 2, 216 reach 3, 131 reach 4, 55 reach 5 and 595 reach 6.
 - Even with the fast limits, 4 of the 16 workers hit the REPL's 360 s call timeout: some Lean operations are

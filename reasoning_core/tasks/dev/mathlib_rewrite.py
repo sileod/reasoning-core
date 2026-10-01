@@ -1,9 +1,9 @@
-"""Execute a random rewrite walk over Mathlib: the vocabulary is all of Mathlib, the semantics are Lean's.
+"""Read a random rewrite walk over Mathlib both ways: the vocabulary is all of Mathlib, the semantics are Lean's.
 
 A walk starts from the left-hand side of a random Mathlib equation (its binders become the context)
-and applies random rewrites found by Lean's `rw?` engine. The task gives the start term and the
-lemmas used, in order, and asks for the final term (`mathlib_rewrite`), or, given the final term too, for an
-intermediate one (`mathlib_rewrite_middle`).
+and applies random rewrites found by Lean's `rw?` engine. The task gives the start term, the lemmas
+used, in order, and the final term, and asks for the term after an intermediate step: it can be worked
+forward or backward. (Asking for the final term only scored lower; see NOTES.md and git history.)
 `rw` is deterministic and every step's pattern matches exactly one subterm, so the answer is unique; it is
 Lean's own pretty-printed term. Steps are given by name; a glossary states the lemmas, mixed with distractors
 that also rewrite the walk's terms, so the skill is composing the rules rather than recalling them.
@@ -80,8 +80,12 @@ def _starts(runner):
 
 
 _VIABLE_CACHE = {}  # starts that produced a walk: name -> steps reached, shared on disk by workers
-_BUFFER = defaultdict(list)  # (steps, limits) -> finished walks, consumed one per example
+_BUFFER = defaultdict(list)  # (steps, max_len) -> finished walks, consumed one per example
 _MAX_STEPS = 6  # walks always aim this far; a k-step example is a prefix of any walk of k or more steps
+# Per-walk limits. Walks that end in an error or exception took 65% of Lean time (one took 98 s); a walk that
+# runs out of heartbeats (thousands) is dropped, and after _WALK_MS it stops extending and keeps its prefix.
+_HEARTBEATS, _WALK_MS = 20000, 5000
+_CALL_TIMEOUT = 90  # seconds per Lean call: healthy ones take under 25 s, but a rare operation ignores heartbeats
 _BATCH = 16
 _EMITTED = set()  # walks already turned into examples in this process
 _USES = defaultdict(int)  # examples per start lemma in this process
@@ -100,7 +104,7 @@ def _viable():
     return _VIABLE_CACHE
 
 
-def _fill(runner, k, limits):
+def _fill(runner, k, max_len):
     """One REPL call runs a batch of walks as long as they go (up to _MAX_STEPS); each is buffered by length.
 
     Three quarters of the starts come from those known to produce walks of k steps, the rest explore the whole
@@ -110,9 +114,8 @@ def _fill(runner, k, limits):
     starts = _starts(runner)
     names = [random.choice(viable) if viable and random.random() < reuse else random.choice(starts) for _ in range(_BATCH)]
     lems = ", ".join(f"`{n}" for n in names)
-    max_len, heartbeats, walk_ms, call_timeout = limits
     out = _eval(runner, f"IO.println (← rcBatch #[{lems}] {_MAX_STEPS} {random.getrandbits(30)} {max_len} "
-                        f"{1 + _MAX_STEPS // 3} {heartbeats} {walk_ms})", call_timeout)
+                        f"{1 + _MAX_STEPS // 3} {_HEARTBEATS} {_WALK_MS})", _CALL_TIMEOUT)
     try:
         walks = json.loads(out)
     except json.JSONDecodeError:
@@ -123,9 +126,9 @@ def _fill(runner, k, limits):
         if "error" in walk or j == 0:
             continue
         sig = (walk["start"], tuple(walk["terms"]))
-        if sig not in _EMITTED and len(_BUFFER[(j, limits)]) < 256:
+        if sig not in _EMITTED and len(_BUFFER[(j, max_len)]) < 256:
             _EMITTED.add(sig)
-            _BUFFER[(j, limits)].append(walk)
+            _BUFFER[(j, max_len)].append(walk)
         if _viable().get(walk["start"], 0) < j:
             _VIABLE_CACHE[walk["start"]] = j
             found.append(f"{walk['start']}\t{j}\n")
@@ -136,7 +139,7 @@ def _fill(runner, k, limits):
 
 @dataclass
 class MathlibRewriteConfig(Config):
-    steps: float = 1.0
+    steps: float = 2.0  # at least 2: the question is about an intermediate step
     glossary: bool = True  # list lemma statements, with distractors; off: names only, for models that know Mathlib
     distractors: float = 1.0  # distractor lemmas in the glossary per step: fixed, so the glossary grows only with steps
     max_len: int = 160
@@ -178,14 +181,11 @@ def _glossary(walk, n):
 
 
 class MathlibRewrite(DevTask):
-    summary = "Apply a given sequence of Mathlib rewrite lemmas (rw) to a term and give the resulting term, as Lean prints it."
+    summary = ("Given a start term, a sequence of Mathlib rewrite lemmas (rw) and the final term, "
+               "give the term after a given intermediate step, as Lean prints it.")
     config_cls = MathlibRewriteConfig
-    task_version = 4
-    middle = False  # ask for an intermediate term, given the final one
+    task_version = 5
     preferred_batch_size = 64  # one process pays ~40 s of Lean startup, and each Lean call yields many walks
-    heartbeats = 50000  # per walk, in thousands: a walk that runs out is dropped, not its batch
-    walk_ms = 0  # per-walk time limit after which a walk stops extending (0: none)
-    call_timeout = None  # seconds for one Lean call of _BATCH walks (None: the runner's 360 s)
 
     def __init__(self, config=None, **kwargs):
         super().__init__(config=config or MathlibRewriteConfig(), timeout=300, **kwargs)
@@ -199,21 +199,21 @@ class MathlibRewrite(DevTask):
         if not _lean()._profile_ready(use_mathlib=True):
             raise RuntimeError("mathlib_rewrite needs the Lean + Mathlib install (see math_lean.ensure_lean_mathlib)")
         runner = _lean().get_runner(use_mathlib=True)
-        k = max(2 if self.middle else 1, stochastic_rounding(self.config.steps))
-        limits = (self.config.max_len, self.heartbeats, self.walk_ms, self.call_timeout)
+        k = max(2, stochastic_rounding(self.config.steps))
+        max_len = self.config.max_len
         for attempt in range(9):
             # the shortest buffered walk that is long enough, so long walks stay available for long requests
-            fits = [j for j in range(k, _MAX_STEPS + 1) if _BUFFER[(j, limits)]]
+            fits = [j for j in range(k, _MAX_STEPS + 1) if _BUFFER[(j, max_len)]]
             if fits or attempt == 8:
                 break
-            _fill(runner, k, limits)
+            _fill(runner, k, max_len)
         if not fits:
             raise RuntimeError(f"mathlib_rewrite: no walk of {k}+ steps after 8 batches")
-        bucket = _BUFFER[(fits[0], limits)]
+        bucket = _BUFFER[(fits[0], max_len)]
         walk = bucket.pop(random.randrange(len(bucket)))
         walk = {**walk, "steps": walk["steps"][:k], "terms": walk["terms"][:k + 1]}
         _USES[walk["start"]] += 1
-        ask = random.randrange(1, k) if self.middle else k
+        ask = random.randrange(1, k)
         glossary = _glossary(walk, stochastic_rounding(self.config.distractors * k)) if self.config.glossary else []
         meta = {"start_lemma": walk["start"], "universes": walk["universes"], "context": walk["context"], "start": walk["terms"][0],
                 "steps": [{"lemma": s["lemma"], "symm": s["symm"]} for s in walk["steps"]], "glossary": glossary,
@@ -227,20 +227,15 @@ class MathlibRewrite(DevTask):
         glossary = "".join(f"  {name} : {' '.join(stmt.split())}\n" for name, stmt in m["glossary"])
         if glossary:
             glossary = f"Statements of the lemmas involved (some are not used):\n{glossary}"
-        start = " ".join(m["start"].split())
-        k, ask = len(m["steps"]), m.get("ask", len(m["steps"]))
-        if ask == k:
-            question = "What is the resulting term?"
-        else:
-            final = " ".join(m["terms"][-1].split())
-            question = f"The final term is\n  {final}\nWhat is the term right after rewrite {ask}?"
+        start, final = " ".join(m["start"].split()), " ".join(m["terms"][-1].split())
         return (f"In Lean 4 with Mathlib, with\n{ctx}\n{glossary}"
                 f"start from the term\n  {start}\n"
                 f"and rewrite it successively (rw) with these Mathlib lemmas (← means right-to-left):\n{steps}\n"
                 "Each rewrite replaces the unique instance of the lemma's left-hand side (right-hand side for ←) "
                 "occurring in the current term.\n"
                 "Bound variables are named by nesting depth: x₁ for the outermost binder, x₂ inside it, and so on.\n"
-                f"{question} Answer with the term only, as Lean would print it.")
+                f"The final term is\n  {final}\nWhat is the term right after rewrite {m['ask']}? "
+                "Answer with the term only, as Lean would print it.")
 
     def score_answer(self, answer, entry):
         return score_term(answer, entry)
@@ -249,32 +244,6 @@ class MathlibRewrite(DevTask):
         """The walk's other terms: stopping early, going one step too far, or not rewriting at all."""
         terms, ask = entry["metadata"]["terms"], entry["metadata"]["ask"]
         return [t for i, t in enumerate(terms) if i != ask]
-
-
-@dataclass
-class MathlibRewriteMiddleConfig(MathlibRewriteConfig):
-    steps: float = 2.0
-
-
-class MathlibRewriteMiddle(MathlibRewrite):
-    """The same walks, read both ways: given the start and the final term, give an intermediate one."""
-    summary = ("Given a start term, a sequence of Mathlib rewrite lemmas (rw) and the final term, "
-               "give the term after a given intermediate step, as Lean prints it.")
-    config_cls = MathlibRewriteMiddleConfig
-    middle = True
-
-    def __init__(self, config=None, **kwargs):
-        super().__init__(config=config or MathlibRewriteMiddleConfig(), **kwargs)
-
-
-class MathlibRewriteMiddleFast(MathlibRewriteMiddle):
-    """`mathlib_rewrite_middle` with tight per-walk limits. Walks that end in an error or exception took 65%
-    of Lean time (one took 98 s), and short limits stop them early at the cost of some long walks."""
-    summary = ("Given a start term, a sequence of Mathlib rewrite lemmas (rw) and the final term, give the term "
-               "after a given intermediate step, as Lean prints it; walks generated under tight time limits.")
-    heartbeats = 20000
-    walk_ms = 5000
-    call_timeout = 90  # healthy calls take under 25 s; a rare Lean operation ignores heartbeats and stalls
 
 
 # Answer normalization: parse both terms with Lean's precedences for the notation walks produce and compare
@@ -295,7 +264,7 @@ _TOKEN = re.compile(rf"(\s*)(⁻¹'|''|=>|↦|\+\+|::|:=|//|\+ᵥ|-ᵥ|×ˢ|[()\
 _POSTFIX = re.compile(r"^(.*?)((?:ᶜ|⁻¹|⁺)*)$")
 # identifiers, numerals and constant symbols; any other word may be notation with unknown precedence
 _WORD = re.compile(r"(?:[\w.'!?⊥⊤∅∞]|ᶜ|⁻¹|⁺)+")
-_KEYWORDS = {"if", "then", "else", "match", "with", "let", "have", "show", "by", "do", "at", "fun₀"}
+_KEYWORDS = {"if", "bif", "then", "else", "match", "with", "let", "have", "show", "by", "do", "at", "fun₀"}
 
 
 class _Unsupported(Exception):
