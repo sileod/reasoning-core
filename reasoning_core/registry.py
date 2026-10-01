@@ -253,8 +253,22 @@ def get_task(name, *args, **kwargs):
     return catalog[name](*args, **kwargs)
 
 
-def list_tasks(include_mutated=False, include_generated=False):
-    """Return the shipped roster; optionally include experimental task families."""
+def list_tasks(include_mutated=False, include_generated=False, scope="roster"):
+    """Return the shipped roster; optionally include experimental task families.
+
+    scope="dev" returns the tasks under tasks/dev/ (human-supervised work in progress; DevTasks
+    parked inside core modules are demoted variants, see task_catalog(include_dev=True));
+    scope="generated" returns the unpromoted auto-pipeline tasks under tasks/generated/.
+    """
+    if scope == "dev":
+        return sorted(name for name, (module_name, _) in _dev_task_to_module_map.items()
+                      if module_name.split(".", 1)[0] == "dev")
+    if scope == "generated":
+        return [name for name, (module_name, _) in _task_to_module_map.items()
+                if module_name.split(".", 1)[0] == "generated"
+                and name not in PROMOTED and name not in IGNORED and name not in RETIRED]
+    if scope != "roster":
+        raise ValueError(f"scope must be 'roster', 'dev' or 'generated', not {scope!r}")
     return [
         name for name, (module_name, _) in _task_to_module_map.items()
         if name not in IGNORED and name not in RETIRED

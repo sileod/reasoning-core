@@ -155,3 +155,6 @@ reasoning_core/task_search/proposals/archive/*.yaml.partial
 # the same filesystem as what it copies. On NFS a still-open file survives the cleanup as
 # a .nfs silly-rename, so the directory outlives the test that made it.
 .task-search-test-*/
+
+# generated dev-task index: carries private eval numbers (reasoning_core.reports.dev_index)
+reasoning_core/tasks/dev/README.md
