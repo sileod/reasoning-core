@@ -2034,7 +2034,10 @@ class MultistepNLI(Task):
         self._case_state = {}
 
     def generate_entry(self):
-        for _ in range(3):
+        # At level 6 about 1 theory draw in 200 is accepted (2/3 are inconsistent), so 3 calls x 500 draws
+        # failed ~1 example in 25. Rejection sampling stops at the first acceptance: a larger budget only
+        # rescues those failures and leaves every other example unchanged.
+        for _ in range(40):
             case, key = generate_case(self.config, state=self._case_state)
             if not case:
                 continue
