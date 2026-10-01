@@ -40,6 +40,8 @@ RETIRED = {
     "aspectual_class_entailment", "joint_share_information", "ellipsis_reconstruction",
     "inversion_trigger_linearization",
     "incremental_build_rebuild_set",  # no longer imports: Task has no attribute 'register'
+    # Superseded for rc14 by inverse_math and mathlib_rewrite (Lean); ext #52 and #44 of 53 on v8_tiny.
+    "lean_candidate_compilation", "lean_missing_line",
 }
 
 

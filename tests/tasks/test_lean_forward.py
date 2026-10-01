@@ -9,8 +9,9 @@ from reasoning_core.tasks.math_lean import (
 )
 
 
-def test_current_lean_tasks_are_discoverable():
-    assert {"lean_missing_line", "lean_candidate_compilation"} <= set(list_tasks())
+def test_retired_lean_tasks_stay_loadable():
+    # Retired for rc14: out of the roster, still loadable for the data measured on them.
+    assert not {"lean_missing_line", "lean_candidate_compilation"} & set(list_tasks())
     assert type(get_task("LeanMissingLine", use_mathlib=False)).__name__ == "LeanMissingLine"
 
 
