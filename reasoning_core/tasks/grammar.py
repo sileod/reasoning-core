@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from nltk.parse.generate import generate as nltk_generate
 from nltk import CFG, ChartParser
 from nltk.parse.earleychart import EarleyChartParser
+from nltk.parse.chart import LeafEdge
 import sys
 from reasoning_core.template import Task, DevTask, Entry, Config, stochastic_rounding as sround
 import random
@@ -73,6 +74,7 @@ class GrammarConfig(Config):
     max_blanks: int = 3
     min_options: int = 4
     max_options: int = 25
+    cot: bool = False  # store a per-token derivation-path CoT in metadata (unused by default training formats)
     def apply_difficulty(self, level):
         self.n_types += level
         self.n_terminals += level
@@ -139,7 +141,7 @@ def nltk_to_gramforge(g):
 
 
 def trim_grammar(grammar, target_size=10, retries=10, shrink_tries=1000, seed=None, max_steps=10000):
-    rng = random.Random(seed)
+    rng = random.Random(seed) if seed is not None else random  # Random(None) seeds from the OS: not reproducible
 
     by_lhs = defaultdict(list)
     for p in grammar.productions():
@@ -407,10 +409,42 @@ def perturb(tokens, config=None):
 
     ])(tokens)
 
-def make_cot(g, tokens):
-    # Get up to 2 parses to detect ambiguity without exhaustively searching
-    ps = list(islice(EarleyChartParser(g).parse(tokens), 2))
-    
+def count_parses(chart, root, cap=2):
+    """Complete parses of the whole string, capped at `cap`, counted on the chart without building a tree.
+    nltk's Chart._trees materializes EVERY tree as a list, so `islice(parser.parse(tokens), 2)` still enumerated
+    all parses of an ambiguous string (exponential; 78 s per example seen at level 6). This mirrors _trees
+    exactly -- a fresh memo per root edge, incomplete edges give nothing, an edge still being expanded counts
+    0 (nltk's cycle filter) -- so the count equals len(list(chart.parses(root))) up to the cap."""
+    def count(edge, memo):
+        if edge in memo:
+            return memo[edge]
+        if edge.is_incomplete():
+            return 0
+        if isinstance(edge, LeafEdge):
+            memo[edge] = 1
+            return 1
+        memo[edge] = 0
+        total = 0
+        for cpl in chart.child_pointer_lists(edge):
+            n = 1
+            for child in cpl:  # no early exit: every child is visited, as in _trees, so the memo evolves the same
+                n = min(cap, n * count(child, memo))
+            total = min(cap, total + n)
+        memo[edge] = total
+        return total
+    return min(cap, sum(count(edge, {}) for edge in chart.select(start=0, end=chart.num_leaves(), lhs=root)))
+
+
+def parse_string(g, tokens, cot=False):
+    """(number of parses capped at 2, parse trees, CoT text or None). Trees are built only for a unique parse,
+    or for the CoT, which shows up to two parses and so pays the full enumeration when the string is ambiguous."""
+    chart = EarleyChartParser(g).chart_parse(tokens)
+    n = count_parses(chart, g.start())
+    ps = list(islice(chart.parses(g.start()), 2)) if n == 1 or (cot and n) else []
+    return n, ps, (make_cot(ps) if cot else None)
+
+
+def make_cot(ps):
     lines = []
     for i, t in enumerate(ps, 1):
         lines.append(f"Parse {i}:")
@@ -419,7 +453,7 @@ def make_cot(g, tokens):
             path = [t[idx[:k]].label() for k in range(len(idx))]
             lines.append(f"'{t[idx]}': {' > '.join(path)} (Depth: {len(path)})")
 
-    return "\n".join(lines), ps
+    return "\n".join(lines)
 
 def generate_parse(config=None, max_attempts=200):
     config = config or GrammarConfig()
@@ -442,12 +476,14 @@ def generate_parse(config=None, max_attempts=200):
                 continue
 
             try:
-                meta.cot, meta.parses = make_cot(g, tokens)
+                n, meta.parses, cot = parse_string(g, tokens, cot=config.cot)
             except (RecursionError, ValueError):
                 continue
+            if config.cot:
+                meta.cot = cot
 
-            meta.label = ("unparsable" if not meta.parses else 
-                         "ambiguous"   if len(meta.parses) > 1 else 
+            meta.label = ("unparsable" if not n else
+                         "ambiguous"   if n > 1 else
                          "unambiguous")
             meta.tokens = tokens
             meta.g = grammar_text(g, config)
@@ -482,16 +518,14 @@ class Parsing(DevTask):
     summary = "Parse unambiguous context-free grammar strings as canonical trees or token POS-and-depth annotations."
 
     def __init__(self, config=None):
-        super().__init__(config=config or GrammarConfig())
-        self.config.perturbation_rate = 0.0
+        super().__init__(config=config or GrammarConfig(perturbation_rate=0.0))  # survives set_level()
 
     def generate_entry(self):
         while True:
             meta = generate_parse(self.config)
-            if meta.label != 'unambiguous': continue
-            _, _, tail = meta.cot.partition('\n')
-            if not tail: continue  # Skip if cot has no content after header
-            meta.cot = tail
+            if meta.label != 'unambiguous' or not meta.tokens: continue  # an empty string has no leaves to annotate
+            if self.config.cot:
+                meta.cot = meta.cot.partition('\n')[2]  # drop the "Parse 1:" header
 
             t = meta.parses[0] # Get the Tree object directly
 
@@ -544,6 +578,10 @@ def labeled_rules(meta):
 
 @dataclass
 class ParsingDerivationConfig(GrammarConfig):
+    # A field, not an __init__ assignment: set_level() rebuilds the config from its defaults, which silently
+    # restored 0.5 at every level -- half the strings were perturbed, mostly unparsable, and one perturbation
+    # samples a whole new grammar (the free-form sampler can take ~8 s).
+    perturbation_rate: float = 0.0
     target_num_rules: int = 8
     min_prod_depth: int = 3
     max_prod_depth: int = 5
@@ -558,10 +596,9 @@ class ParsingDerivationConfig(GrammarConfig):
 
 class ParsingDerivation(Task):
     summary = "Determine the derivation production rule sequence parsing a given string."
-    task_version = 2
+    task_version = 3  # 3: strings are no longer perturbed (the rate was reset to 0.5 by set_level)
     def __init__(self, config=None):
         super().__init__(config=config or ParsingDerivationConfig())
-        self.config.perturbation_rate = 0.0
 
     def generate_entry(self):
         for _ in range(200):
