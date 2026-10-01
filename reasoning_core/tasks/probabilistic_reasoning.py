@@ -1,4 +1,5 @@
 import ast, json, random, re
+from collections import defaultdict
 from dataclasses import dataclass
 from fractions import Fraction as F
 from itertools import product
@@ -35,18 +36,24 @@ def sorted_lits(xs):
 
 
 def mpe_solution(src):
+    """Most probable complete assignment given the observation, by enumerating the (at most 64) worlds.
+    Same result as asking ProbLog for P(world | observed) per world, without its knowledge compilation
+    (~0.3-1 s per call, through temp files), which made generation the slowest in the roster."""
+    probs = {a: float(p) for p, a in re.findall(r"(?m)^\s*([0-9.]+)::\s*([a-z][a-z0-9_]*)\s*\.", src)}
+    formula = re.search(r"(?m)^observed :- (.+)\.$", src).group(1)
     atoms = hidden_atoms(src)
-    queries, keys = [], []
-
-    for i, bits in enumerate(product([False, True], repeat=len(atoms))):
-        name = f"mpe_{i}"
-        body = ", ".join(a if b else rf"\+{a}" for a, b in zip(atoms, bits))
-        lits = [a if b else f"not {a}" for a, b in zip(atoms, bits)]
-        queries += [f"{name} :- {body}.", f"query({name})."]
-        keys.append((name, sorted_lits(lits)))
-
-    p = qprobs(src + "\n" + "\n".join(queries))
-    ranked = sorted((p.get(k, 0.0), lits) for k, lits in keys)
+    joint = []
+    for bits in product([False, True], repeat=len(atoms)):
+        world = dict(zip(atoms, bits))
+        weight = 1.0
+        for a, b in world.items():
+            weight *= probs[a] if b else 1 - probs[a]
+        joint.append((weight if boolean_value(formula, world) else 0.0,
+                      sorted_lits(a if b else f"not {a}" for a, b in world.items())))
+    evidence = sum(w for w, _ in joint)
+    if evidence <= 0:
+        raise ValueError("the observation is impossible")
+    ranked = sorted((w / evidence, lits) for w, lits in joint)
     if len(ranked) > 1 and abs(ranked[-1][0] - ranked[-2][0]) < 1e-12:
         return None
     margin = ranked[-1][0] - ranked[-2][0] if len(ranked) > 1 else ranked[-1][0]
@@ -222,7 +229,77 @@ def influential_atoms(formula, atoms):
     return influential
 
 
+def subformulas(formula):
+    """Every compound subformula of a ProbLog Boolean formula, as text, innermost first (same grammar as
+    boolean_value: atoms, \\+, ',' binds tighter than ';', parentheses)."""
+    tokens = re.findall(r"\\\+|[a-f]|[(),;]", formula)
+    out, pos = [], 0
+
+    def node(parse):
+        nonlocal pos
+        start = pos
+        value, compound = parse()
+        if compound:
+            out.append("".join(tokens[start:pos]))
+        return value, compound
+
+    def factor():
+        nonlocal pos
+        if tokens[pos] == r"\+":
+            pos += 1
+            node(factor)
+            return None, True
+        if tokens[pos] == "(":
+            pos += 1
+            node(disjunction)  # records the inner formula; the parentheses only group, so not a second node
+            pos += 1
+            return None, False
+        pos += 1
+        return None, False
+
+    def chain(sub, sep):
+        def parse():
+            nonlocal pos
+            node(sub)
+            parts = 1
+            while pos < len(tokens) and tokens[pos] == sep:
+                pos += 1
+                node(sub)
+                parts += 1
+            return None, parts > 1
+        return parse
+
+    conjunction = chain(factor, ",")
+    disjunction = chain(conjunction, ";")
+    node(disjunction)
+    return out
+
+
+def degenerate_subformula(formula, atoms):
+    """The first compound subformula that is constant or equivalent to a smaller subformula inside it, else None.
+    Such padding ('f is false or f', 'a and a', 'not not x', an if-then-else with equal branches) adds words
+    without adding reasoning, and ProbLog's grounding mis-evaluates self-contradictions like (f,\\+f), which
+    corrupted world probabilities in the solver this generator used before."""
+    worlds = [dict(zip(atoms, bits)) for bits in product([False, True], repeat=len(atoms))]
+    table = lambda f: tuple(boolean_value(f, w) for w in worlds)
+    seen = defaultdict(list)  # truth table -> subformulas met so far (innermost first, so all smaller ones)
+    for atom in atoms:
+        seen[table(atom)].append(atom)
+    for sub in subformulas(formula):
+        t = table(sub)
+        if len(set(t)) == 1 or any(len(s) < len(sub) and s in sub for s in seen[t]):
+            return sub
+        seen[t].append(sub)
+    return None
+
+
 def evidence_instance(node, config=None):
+    checked = evidence_formula(node, config)
+    return checked and draw_evidence(*checked, config)
+
+
+def evidence_formula(node, config=None):
+    """The structural checks on a generated observation; (formula, text, structure) or None."""
     formula, text = node @ problog, node @ eng
     references = re.findall(r"\b[a-f]\b", formula)
     atoms = sorted(set(references))
@@ -236,6 +313,16 @@ def evidence_instance(node, config=None):
                    or len(influential) < config.min_influential_atoms
                    or shared < config.min_shared_atoms):
         return None
+    # Every factor the observation mentions must matter, and no part of it may be padding.
+    if len(influential) < len(atoms) or degenerate_subformula(formula, atoms):
+        return None
+    return formula, text, edict(reference_count=len(references), shared_atom_count=shared,
+                                influential_atoms=influential)
+
+
+def draw_evidence(formula, text, structure, config=None):
+    """Prior probabilities for a checked observation -> (problog source, english, structure)."""
+    atoms = sorted(set(re.findall(r"\b[a-f]\b", formula)))
     probability_grid = ([0.3, 0.4, 0.6, 0.7] if config and config.max_margin < 0.3
                         else [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9])
     probs = dict(zip(atoms, random.choices(probability_grid, k=len(atoms))))
@@ -248,8 +335,7 @@ def evidence_instance(node, config=None):
         + [f"The observation holds exactly when {text}.", "We observe it.",
            "Which hidden fact values form the most probable complete explanation?"]
     )
-    return src, english, edict(reference_count=len(references), shared_atom_count=shared,
-                               influential_atoms=influential, probabilities=probs)
+    return src, english, edict(structure, probabilities=probs)
 
 def outcome_grammar(max_count=8, target=None):
     R = init_grammar([problog, eng], preprocess_template=lambda s: s)
@@ -315,7 +401,8 @@ class MostProbableEvidenceConfig(Config):
     depth: int = 5
     min_atoms: int = 2
     max_atoms: int = 3
-    max_attempts: int = 200
+    max_attempts: int = 5000  # an attempt costs ~1-3 ms; 1-12% of random formulas are free of padding
+    prior_draws: int = 8  # prior redraws per accepted formula before drawing a new one
     min_margin: float = 0.03
     max_margin: float = 1.01
     min_references: int = 3
@@ -337,17 +424,23 @@ class MostProbableEvidenceConfig(Config):
 
 class MostProbableEvidence(Task):
     summary = "Find the most probable configuration of hidden variables given evidence."
+    task_version = 1  # exact world enumeration (ProbLog mis-scored self-contradictions); no padding subformulas
     def __init__(self, config=None):
         super().__init__(config=config or MostProbableEvidenceConfig())
         self.balancing_key_ratio = 1 / 3
 
     def generate_entry(self):
+        checked, draws = None, 0
         for _ in range(self.config.max_attempts):
-            node = generate(evidence_grammar(), depth=self.config.depth, min_depth=4)
-            instance = evidence_instance(node, self.config)
-            if instance is None:
-                continue
-            src, english, structure = instance
+            # A padding-free observation is the rare draw (1-12%); the margin and evidence-flip windows are then
+            # met by redrawing its priors, a few times before a new formula is drawn.
+            if checked is None or draws >= self.config.prior_draws:
+                checked, draws = evidence_formula(
+                    generate(evidence_grammar(), depth=self.config.depth, min_depth=4), self.config), 0
+                if checked is None:
+                    continue
+            draws += 1
+            src, english, structure = draw_evidence(*checked, self.config)
             try:
                 sol = mpe_solution(src)
             except Exception:
