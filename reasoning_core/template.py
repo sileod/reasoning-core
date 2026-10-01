@@ -134,6 +134,10 @@ def _shuffle_payload(payload, p=0.0, seed=None):
 
 class Task:
     config_cls = None
+    # Examples one worker call should produce in generate_balanced_batch(workers>1). None = one group
+    # per call. Set it on tasks with heavy per-process setup (a prover REPL, a lemma index) or that
+    # generate in internal batches, so a few processes each amortize the setup over many rows.
+    preferred_batch_size = None
     _distractor_reservoir_size = 64
     _distractor_saturation_patience = 8
 
@@ -512,6 +516,14 @@ class Task:
         """Generate one atomic group for balanced batching."""
         return [self.generate_example(**kwargs)]
 
+    def _generate_groups(self, size, **kwargs):
+        """At least `size` examples, as the atomic groups generate_examples returns."""
+        groups, count = [], 0
+        while count < size:
+            groups.append(self.generate_examples(**kwargs))
+            count += len(groups[-1])
+        return groups
+
     def generate_balanced_batch(self, batch_size=32, deduplication=False,
                                 progress=False, workers=1, **kwargs):
         max_per_key = math.ceil(batch_size * self.balancing_key_ratio)
@@ -554,15 +566,20 @@ class Task:
                 while len(batch) < batch_size:
                     pbar.update(try_accept(self.generate_examples(**kwargs)))
             else:
-                submit = lambda pool: pool.submit(self.generate_examples, **kwargs)
+                # Each call returns a list of groups; with preferred_batch_size a call is a chunk of rows,
+                # and only as many processes start as there are chunks, since each pays the task's setup.
+                chunk = self.preferred_batch_size or 1
+                workers = min(workers, math.ceil(batch_size / chunk))
+                submit = lambda pool: pool.submit(self._generate_groups, chunk, **kwargs)
                 with ProcessPoolExecutor(max_workers=workers) as pool:
-                    pending = {submit(pool) for _ in range(min(workers, batch_size))}
+                    pending = {submit(pool) for _ in range(workers)}
                     while len(batch) < batch_size:
                         done, pending = wait(pending, return_when=FIRST_COMPLETED)
                         for f in done:
-                            if len(batch) >= batch_size: break
-                            pbar.update(try_accept(f.result()))
-                        target = min(workers, batch_size - len(batch))
+                            for group in f.result():
+                                if len(batch) >= batch_size: break
+                                pbar.update(try_accept(group))
+                        target = min(workers, math.ceil((batch_size - len(batch)) / chunk))
                         pending |= {submit(pool) for _ in range(target - len(pending))}
         return batch
 
