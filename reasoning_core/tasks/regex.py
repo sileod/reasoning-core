@@ -866,7 +866,7 @@ class RegexReasoning(Task):
                     if r_equiv := _distinct_equivalent_rendering(r, f):
                         meta = edict(qtype="equivalence", regex_a=r, regex_b=r_equiv)
                         return Entry(meta, "Yes")
-                raise RuntimeError("Could not generate distinct equivalent regex renderings")
+                return None  # rare (~1 in 600): Task.generate_example redraws instead of failing
             meta = edict(qtype="equivalence", regex_a=r1, regex_b=r2)
             return Entry(meta, "No")
 
@@ -882,7 +882,7 @@ class RegexReasoning(Task):
                     if r_sup := _reduced_union_superset(r, f, r_other):
                         meta = edict(qtype="containment", regex_a=r, regex_b=r_sup)
                         return Entry(meta, "Yes")
-                raise RuntimeError("Could not generate a non-revealing containment pair")
+                return None
             else:
                 is_sub = f1.issubset(f2)
                 if random.random() < 0.5:
