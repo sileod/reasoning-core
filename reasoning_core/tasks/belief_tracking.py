@@ -47,6 +47,9 @@ class BeliefTrackingConfig(Config):
         self.candidate_count = sround(3 + 3.0 * t)
         self.observation_asymmetry = 0.10 + 0.55 * t
         self.target_conflicts = sround(2.0 * t)
+        # Hard items (no shallow reader gets them) are ~1% of depth-1 worlds, so a fixed 0.65 share
+        # made level 0 the slowest level and failed 2 in 10 batches; the share now rises with the level.
+        self.hard_fraction = min(0.65, 0.30 + 0.07 * level)
 
 
 @dataclass(frozen=True)
@@ -622,6 +625,7 @@ def _join(items):
 class BeliefTracking(DevTask):
     summary = "Track ordered beliefs through observation and communication."
     config_cls = BeliefTrackingConfig
+    task_version = 2
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1169,8 +1173,10 @@ class BeliefTracking(DevTask):
             knobs = self._sample_knobs()
             # Preserve sparse first-order hard cases, then leave the rejection
             # tail by sampling the higher-order chains hard items usually need.
-            if require_hard and attempt >= 32:
+            if require_hard and attempt >= 8:
                 knobs["modal_depth"] = max(2, knobs["modal_depth"])
+                # A single critical event is never hard (0/210 at level 0): a shallow reader follows it.
+                knobs["critical_event_count"] = max(2, knobs["critical_event_count"])
             agents, objects, containers, init = self._sample_world(knobs)
             specs, _target_obj, _proof_chain = self._world_specs(
                 knobs, agents, objects, containers, init
