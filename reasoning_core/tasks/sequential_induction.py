@@ -469,6 +469,86 @@ def identify_cached(
     return Identification(bank[index], terms, n_visible), "accepted"
 
 
+_PRIME = 268435399  # largest prime below 2**28: residue products stay below 2**56 in int64
+
+
+@lru_cache(maxsize=None)
+def _bank_arrays(recurrence_depth, max_cost=7):
+    """The bank as padded (monomial index, coefficient mod p) arrays, plus each candidate's cost."""
+    bank = candidate_bank(recurrence_depth, max_cost)
+    monomials = {}
+    width = max(len(candidate.poly) for candidate in bank)
+    index = np.zeros((len(bank), width), dtype=np.int64)
+    coefficient = np.zeros((len(bank), width), dtype=np.int64)
+    for row, candidate in enumerate(bank):
+        for column, (powers, value) in enumerate(candidate.poly):
+            index[row, column] = monomials.setdefault(powers, len(monomials))
+            coefficient[row, column] = value % _PRIME
+    exponents = np.array(list(monomials) or [(0,) * (recurrence_depth + 1)], dtype=np.int64)
+    costs = np.array([candidate.cost for candidate in bank], dtype=np.int64)
+    return index, coefficient, exponents, costs
+
+
+def _values_mod(arrays, rows, state):
+    """Values mod p of the candidates `rows` at `state` = [n, U[n-1], ..., U[n-d]]."""
+    index, coefficient, exponents, _ = arrays
+    residues = [value % _PRIME for value in state]
+    monomial = np.ones(len(exponents), dtype=np.int64)
+    for variable, residue in enumerate(residues):
+        for power in range(1, int(exponents[:, variable].max(initial=0)) + 1):
+            mask = exponents[:, variable] >= power
+            monomial[mask] = monomial[mask] * residue % _PRIME
+    return (coefficient[rows] * monomial[index[rows]] % _PRIME).sum(axis=1) % _PRIME
+
+
+def identify_fast(
+    target_poly,
+    initial_terms,
+    recurrence_depth,
+    min_visible=8,
+    max_visible=16,
+    max_cost=7,
+    max_digits=15,
+):
+    """identify_online's exact decision without rolling out the bank.
+
+    The target is identified at the first n whose visible terms no other candidate of cost <= its own
+    reproduces. A candidate reproduces terms d..k-1 iff it maps each of the target's states to the
+    target's next term, since until it diverges its history is the target's. So colliders are found by
+    evaluating the bank at the target's states (mod p, vectorized), and the last colliders are re-checked
+    in exact integers; a false modular match falls back to identify_online.
+    """
+    bank = candidate_bank(recurrence_depth, max_cost)
+    target = candidate_index(recurrence_depth, max_cost).get(target_poly)
+    if target is None:
+        return None, "outside_bank"
+    terms = rollout_prefix(target_poly, initial_terms, recurrence_depth, max_visible, max_digits)
+    if len(terms) < min_visible:
+        return None, "explosion"
+    arrays = _bank_arrays(recurrence_depth, max_cost)
+    alive = np.flatnonzero(arrays[3] <= bank[target].cost)
+    alive = alive[alive != target]
+    states = [[rank] + [terms[rank - lag] for lag in range(1, recurrence_depth + 1)]
+              for rank in range(recurrence_depth, len(terms))]
+    end, last = recurrence_depth, alive[:0]   # colliders reproduce terms[d:end]
+    for state, value in zip(states, terms[recurrence_depth:]):
+        alive = alive[_values_mod(arrays, alive, state) == value % _PRIME]
+        if not len(alive):
+            break
+        end, last = end + 1, alive
+    if len(last) and not any(
+        all(eval_poly(bank[row].poly, state) == value
+            for state, value in zip(states, terms[recurrence_depth:end]))
+        for row in last
+    ):
+        return identify_online(target_poly, initial_terms, recurrence_depth, min_visible,
+                               max_visible, max_cost, max_digits)
+    n_visible = max(min_visible, end + 1)
+    if n_visible > len(terms):
+        return None, "ambiguous"
+    return Identification(bank[target], terms[:n_visible], n_visible), "accepted"
+
+
 class Sequence:
     def __init__(self, formula, initial_elem=None, initial_min=-9, initial_max=9):
         self.rec_formula = _sympify_formula(formula)
@@ -556,9 +636,7 @@ class SequentialInduction(Task):
             max_cost=self.config.canonical_max_cost,
             max_digits=self.config.max_terms_len,
         )
-        if self.config.use_uniqueness_cache:
-            return identify_cached(cache_dir=self.config.uniqueness_cache_dir, **kwargs)
-        return identify_online(**kwargs)
+        return identify_fast(**kwargs)
 
     def generate_entry(self):
         reasons = Counter()

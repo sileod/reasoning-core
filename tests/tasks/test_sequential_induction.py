@@ -6,6 +6,7 @@ from reasoning_core.tasks.sequential_induction import (
     SequentialInduction,
     candidate_bank,
     candidate_index,
+    identify_fast,
     identify_online,
     parse_formula,
     poly_to_string,
@@ -47,6 +48,27 @@ def test_identification_accepts_unique_minimum_cost_polynomial():
     assert reason == "accepted"
     assert identification.candidate.syntax == "n"
     assert identification.terms == (0, 1)
+
+
+def test_fast_identification_matches_exhaustive_check():
+    # Small starts make trajectories coincide, so ambiguous and late (> min_visible) cases both occur.
+    import random
+
+    rng = random.Random(0)
+    for degree in (0, 1):
+        bank = candidate_bank(degree, max_cost=5)
+        outcomes = set()
+        for _ in range(80):
+            poly = bank[rng.randrange(len(bank))].poly
+            initial = tuple(rng.randint(-2, 2) for _ in range(degree))
+            min_visible = degree + rng.randint(1, 3)
+            args = (poly, initial, degree, min_visible, min_visible + 6, 5, 15)
+            fast, slow = identify_fast(*args)[0], identify_online(*args)[0]
+            assert (fast is None) == (slow is None)
+            if fast is not None:
+                assert (fast.n_visible, fast.terms) == (slow.n_visible, slow.terms)
+                outcomes.add(fast.n_visible - min_visible)
+        assert len(outcomes) > 1
 
 
 def test_rollout_retains_prefix_before_explosion():
