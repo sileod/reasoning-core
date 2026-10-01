@@ -619,22 +619,14 @@ class SequentialInduction(Task):
             return False
 
     def score_answer(self, answer, entry):
+        # Equality with the gold polynomial is the whole check: the gold is drawn from the candidate bank, so a
+        # bank-membership test adds nothing but a 0.4-5 s per-degree bank build in every scoring process.
         degree = entry.metadata["degree of recursion"]
-        max_cost = entry.metadata.get(
-            "canonical max cost",
-            entry.metadata.get("_config", {}).get(
-                "canonical_max_cost", SequenceConfig.canonical_max_cost
-            ),
-        )
         try:
             text = str(answer).strip()
             assignment = re.fullmatch(r"U\s*\[\s*n\s*\]\s*=\s*(.+)", text, re.DOTALL)
             predicted_poly = parse_formula(assignment.group(1) if assignment else text, degree)
-            expected_poly = parse_formula(entry.answer, degree)
-            return float(
-                predicted_poly == expected_poly
-                and predicted_poly in candidate_index(degree, max_cost)
-            )
+            return float(predicted_poly == parse_formula(entry.answer, degree))
         except Exception:
             return 0.0
 
