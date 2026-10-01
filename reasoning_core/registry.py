@@ -19,7 +19,7 @@ _REGISTRY = {}
 _PACKAGE_NAME = __package__
 _TASKS_PATH = Path(__file__).parent / "tasks"
 _CACHE_PATH = Path(user_cache_dir("reasoning_core")) / "task_registry.json"
-_CACHE_VERSION = 1
+_CACHE_VERSION = 3
 
 COLLECTIONS = {
     "procedural_warmup": ("tasks._procedural_warmup", "ProceduralWarmup"),
@@ -53,7 +53,7 @@ def prepr_task_name(name):
 
 def _parse_task_file(path, relative):
     tree = ast.parse(path.read_text(), filename=str(relative))
-    found = []
+    found, kinds = [], {}
     for node in tree.body:
         if not isinstance(node, ast.ClassDef):
             continue
@@ -62,9 +62,14 @@ def _parse_task_file(path, relative):
             for base in node.bases
             if isinstance(base, (ast.Name, ast.Attribute))
         }
-        kind = "dev" if "DevTask" in bases else "task" if "Task" in bases else None
+        # A subclass of a task class defined earlier in the same file inherits its kind
+        # (e.g. MathlibRewriteMiddle(MathlibRewrite)); bases imported from other files are not followed.
+        inherited = [kinds[base.id] for base in node.bases if isinstance(base, ast.Name) and base.id in kinds]
+        kind = ("dev" if "DevTask" in bases or "dev" in inherited
+                else "task" if "Task" in bases or inherited else None)
         if kind is None:
             continue
+        kinds[node.name] = kind
         name = prepr_task_name(node.name)
         for item in node.body:
             if (isinstance(item, ast.Assign) and len(item.targets) == 1
