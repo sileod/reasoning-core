@@ -10,7 +10,7 @@ from functools import lru_cache
 from types import CodeType
 from typing import Iterable
 
-from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
+from reasoning_core.template import Config, DevTask, Entry, Task, edict, stochastic_rounding as sround
 
 
 DSL_NAME = "StringFrag-v1"
@@ -442,7 +442,7 @@ class ProgramSynthesisCfg(Config):
         self.min_nodes = sround(self.min_nodes + level / 3)
 
 
-class ProgramSynthesis(Task):
+class ProgramSynthesis(DevTask):  # parked: last of 53 on v8_tiny (ext +0.8, margin -0.38)
     summary = "Synthesize minimum-cost bounded string-transformation programs from examples across compositional StringFrag operations."
 
     def __init__(self, config=None):
