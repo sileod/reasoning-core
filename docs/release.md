@@ -38,6 +38,18 @@ g5k.sh build rc13 --smoke     # sync, then 1 node x 2 batches per task, no uploa
 g5k.sh build rc13             # sync, then 16 besteffort nodes + a looping collector
 ```
 
+The default run (20,000 rows per task, about 1M rows in all) is the quick pass. The
+released size comes from a second, bulk run into the same staging folder, with its own
+run directory:
+
+```bash
+G5K_BUILD_SITE=nancy g5k.sh build rc14 --run-dir $ST/runs/rc14-bulk --rows-per-task 600000 --batch-size 64
+```
+
+rc13's bulk run gave 30.6M rows in 8.5 hours, and 25.5M were left after deduplication.
+Tasks with a small problem space hit the duplicate ceiling first. In rc13,
+metamath_entailment kept 296k of its ~620k draws.
+
 `build` syncs the code to the Lille storage and runs `submit` on the Lille frontend,
 with the run directory at `$ST/runs/<version>`. Logs are in `$ST/runs/<version>/logs/`.
 When generation ends, run the final collect command that `submit` printed. It is a
