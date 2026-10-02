@@ -106,8 +106,8 @@ Expected `mean_score` is 1. This verifies scoring only, not model ability.
 
 `scripts/check_rl_envs.py` installs each integration into a fresh uv venv with its
 latest dependencies and drives it like a trainer, with a policy that answers gold
-or adversarial wrong answers. It covers the Prime Intellect (verifiers) and OpenEnv
-envs on the procedural pile, plus the reasoning-gym and SynLogic adapters on fresh
+or adversarial wrong answers. It covers the Prime Intellect (verifiers), OpenEnv and
+OpenReward envs on the procedural pile, plus the reasoning-gym and SynLogic adapters on fresh
 generation. The pile revision is resolved to a commit SHA in the report; pass it
 back with `--revision` to replay a run.
 

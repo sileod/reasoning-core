@@ -10,6 +10,8 @@ trainer drives it, with a stand-in policy answering gold or adversarial wrong an
                   through the WebSocket client
   reasoning_gym   every roster task registered into reasoning-gym (fresh generation)
   collections     the reasoning-gym and SynLogic generators wrapped as core tasks
+  openreward      the OpenReward server (sileod/reasoning-core-openreward, checked out
+                  next to this repo or at $RC_OPENREWARD_DIR) on the procedural pile
 
 Checks: gold answers earn 1, wrong answers earn < 1, scorers never raise, every pile
 task in the sample reaches the env, and one seed serves the same rows twice. The pile
@@ -36,12 +38,15 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 PILE = "reasoning-core/procedural-pile"
 PYGGP = "978690ee0e6ccc7562f1ef1096c316a696ed4484"
+# OpenReward lives in its own repo (github.com/sileod/reasoning-core-openreward), checked out next to this one
+OPENREWARD_DIR = Path(os.getenv("RC_OPENREWARD_DIR", REPO.parent / "reasoning-core-openreward"))
 ENVS = {  # what to install next to reasoning-core for each probe
     "primeintellect": [str(REPO / "integrations/primeintellect/reasoning_core_env")],
     "openenv": [str(REPO / "integrations/openenv/reasoning_core_env")],
     # generation, not just scoring: the game tasks need pyggp, which is git-only and so undeclared
     "reasoning_gym": ["reasoning-gym", f"pyggp @ git+https://github.com/Entze/pyggp@{PYGGP}"],
-    "collections": ["reasoning-gym", "math-verify", "markdown"],  # markdown: SynLogic's verifiers
+    "collections": ["reasoning-gym", "math-verify", "markdown"],
+    "openreward": ["-r", str(OPENREWARD_DIR / "requirements.txt")],  # markdown: SynLogic's verifiers
 }
 # adversarial wrong answers: each has broken at least one scorer (crash, NaN, or reward 1)
 WRONGS = ["\x00x\x00", "", "zzz", "nan", "[[[[", "import os", "1" * 20000, "None"]
@@ -326,7 +331,72 @@ def probe_collections(n: int, seed: int, revision: str) -> dict:
     return report
 
 
-PROBES = {"primeintellect": probe_primeintellect, "openenv": probe_openenv,
+def free_port() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def wait_until_up(url: str, seconds: int = 600):
+    import urllib.error
+    import urllib.request
+    for _ in range(seconds):
+        try:
+            urllib.request.urlopen(url, timeout=1)
+            return
+        except urllib.error.HTTPError:  # any HTTP answer means the server is up
+            return
+        except OSError:
+            time.sleep(1)
+    raise RuntimeError(f"no server at {url}")
+
+
+def probe_openreward(n: int, seed: int, revision: str) -> dict:
+    """The OpenReward server (its own repo, RC_OPENREWARD_DIR), driven through the openreward client."""
+    from openreward import OpenReward
+
+    source = os.environ["RC_OPENREWARD_DIR"]
+    launch = f"import sys; sys.path.insert(0, {source!r}); import server; server.Server([server.ReasoningCore]).run(port=%d)"
+
+    def serve():  # tasks are built at import, so a fresh process per load also checks determinism
+        port = free_port()
+        process = subprocess.Popen([sys.executable, "-c", launch % port], cwd=source, env={
+            **os.environ, "PYTHONDONTWRITEBYTECODE": "1", "RC_HF_REVISION": revision, "RC_NUM_TRAIN": str(n), "RC_NUM_TEST": str(n),
+            "RC_SEED": str(seed)}, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        wait_until_up(f"http://127.0.0.1:{port}/")
+        return process, OpenReward(api_key="local").environments.get(name="reasoningcore", base_url=f"http://127.0.0.1:{port}")
+
+    report, prompts = {}, {}
+    process, env = serve()
+    try:
+        for split in ("train", "test"):
+            tasks = env.list_tasks(split)
+            prompts[split] = [t.task_spec["prompt"] for t in tasks]
+            rows, gold, wrong = [], [], []
+            for task in tasks:
+                spec = task.task_spec
+                rows.append({"task": spec["metadata"]["task"], "prompt": spec["prompt"], "answer": spec["answer"],
+                             "metadata": spec["metadata"]})
+                for answer, rewards in ((f"<answer>{spec['answer']}</answer>", gold), (wrong_answer(spec["prompt"]), wrong)):
+                    with env.session(task=task) as session:
+                        rewards.append(session.call_tool("answer", {"answer": answer}).reward)
+            # stored order, no shuffle: the env's rows are the split's first rows
+            from datasets import load_dataset
+            expected = Counter(r["task"] for r in load_dataset(PILE, split=split, streaming=True, revision=revision).take(n))
+            report[split] = summarize(rows, gold, wrong, expected)
+    finally:
+        process.terminate()
+        process.wait()
+    process, again = serve()
+    try:
+        report["deterministic"] = all(prompts[s] == [t.task_spec["prompt"] for t in again.list_tasks(s)] for s in prompts)
+    finally:
+        process.terminate()
+        process.wait()
+    return report
+
+
+PROBES = {"primeintellect": probe_primeintellect, "openenv": probe_openenv, "openreward": probe_openreward,
           "reasoning_gym": probe_reasoning_gym, "collections": probe_collections}
 
 
@@ -335,7 +405,7 @@ PROBES = {"primeintellect": probe_primeintellect, "openenv": probe_openenv,
 def versions(python: Path) -> dict:
     out = subprocess.run(["uv", "pip", "list", "--format", "json", "--python", str(python)],
                          capture_output=True, text=True, check=True).stdout
-    keep = {"reasoning-core", "verifiers", "openenv", "openenv-core", "datasets", "fastapi"}
+    keep = {"reasoning-core", "verifiers", "openenv", "openenv-core", "openreward", "datasets", "fastapi"}
     return {p["name"]: p["version"] + (f" ({p['editable_project_location']})" if p.get("editable_project_location") else "")
             for p in json.loads(out) if p["name"] in keep}
 
@@ -386,7 +456,7 @@ def main():
     from huggingface_hub import HfApi
     revision = HfApi().dataset_info(PILE, revision=args.revision).sha
     rc = {"local": ["-e", str(REPO)], "pypi": ["reasoning-core"]}.get(args.rc, [args.rc])
-    env = {"UV_CACHE_DIR": str(args.venv_root / "uv-cache"),  # local disk: NFS stalls uv for minutes
+    env = {"RC_OPENREWARD_DIR": str(OPENREWARD_DIR), "UV_CACHE_DIR": str(args.venv_root / "uv-cache"),  # local disk: NFS stalls uv for minutes
            "UV_PYTHON_INSTALL_DIR": str(args.venv_root / "uv-python"), **os.environ}
     if args.live_model:
         env |= {"RC_LIVE_MODEL": args.live_model, "RC_LIVE_N": str(args.live_n)}
