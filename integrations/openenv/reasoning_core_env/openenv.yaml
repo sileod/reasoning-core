@@ -7,5 +7,5 @@ port: 8000
 variables:
   MAX_CONCURRENT_ENVS: "16"
   RC_DATASET_SIZE: "1000"
-  RC_HF_DATASET: reasoning-core/formal-reasoning-env
+  RC_HF_DATASET: reasoning-core/procedural-pile
   RC_SEED: "42"

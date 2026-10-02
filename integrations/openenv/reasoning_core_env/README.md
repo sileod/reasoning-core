@@ -23,9 +23,10 @@ verifiable symbolic reasoning across logic, mathematics, planning, syntax, and
 related procedural domains.
 
 Tasks come from
-[`reasoning-core/formal-reasoning-env`](https://huggingface.co/datasets/reasoning-core/formal-reasoning-env)
+[`reasoning-core/procedural-pile`](https://huggingface.co/datasets/reasoning-core/procedural-pile)
 and are scored by the task-specific evaluators in
 [`reasoning-core`](https://github.com/sileod/reasoning_core).
+Pass `revision=` to `reset()` (or set `RC_HF_REVISION`) to pin a pile tag or commit.
 
 ## Use The Hosted Environment
 
@@ -51,9 +52,8 @@ Plain answers and answers wrapped in `<answer>...</answer>` are accepted. Reward
 are task-specific scores in the range 0 to 1.
 
 The environment only serves pre-generated examples from the Hugging Face
-dataset. Rows whose task scorer is unavailable in the installed
-`reasoning-core` version are skipped, preventing deprecated or unsupported task
-types from reaching an episode.
+dataset. Rows whose task has no scorer in the installed `reasoning-core`
+version are skipped; parked tasks that still have a scorer are served.
 
 ## Local Development
 

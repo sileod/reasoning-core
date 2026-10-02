@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from functools import cache
 from itertools import islice
 from typing import Any
 from uuid import uuid4
@@ -12,7 +13,7 @@ from uuid import uuid4
 from easydict import EasyDict as edict
 from openenv.core.env_server.interfaces import Environment
 from openenv.core.env_server.types import State
-from reasoning_core import list_tasks, score_answer
+from reasoning_core import get_score_answer_fn, score_answer
 
 try:
     from ..models import ReasoningCoreAction, ReasoningCoreObservation
@@ -22,11 +23,11 @@ except ImportError:
 
 DEFAULT_DATASET = os.getenv(
     "RC_HF_DATASET",
-    "reasoning-core/formal-reasoning-env",
+    "reasoning-core/procedural-pile",
 )
+DEFAULT_REVISION = os.getenv("RC_HF_REVISION") or None
 DEFAULT_SIZE = int(os.getenv("RC_DATASET_SIZE", "1000"))
 DEFAULT_SEED = int(os.getenv("RC_SEED", "42"))
-AVAILABLE_TASKS = frozenset(list_tasks())
 XML_ANSWER_PATTERN = re.compile(
     r"<answer>(.*?)</answer>",
     flags=re.IGNORECASE | re.DOTALL,
@@ -51,9 +52,19 @@ def _task_name(entry: dict[str, Any]) -> str | None:
     return str(value) if value is not None else None
 
 
+@cache
+def _is_scorable(task_name: str | None) -> bool:
+    """Roster and parked tasks both count: the pile keeps rows of tasks parked after its release."""
+    try:
+        get_score_answer_fn(task_name)
+        return True
+    except (ValueError, KeyError, ImportError):
+        return False
+
+
 def _normalize_entry(entry: dict[str, Any], index: int) -> dict[str, Any] | None:
     task_name = _task_name(entry)
-    if task_name not in AVAILABLE_TASKS:
+    if not _is_scorable(task_name):
         return None
     return {
         "id": str(entry.get("id", index)),
@@ -68,10 +79,11 @@ def _load_hub_entries(
     split: str,
     seed: int,
     size: int,
+    revision: str | None = None,
 ) -> list[dict[str, Any]]:
     from datasets import get_dataset_split_names, load_dataset
 
-    split_names = get_dataset_split_names(dataset_name)
+    split_names = get_dataset_split_names(dataset_name, revision=revision)
     source_split = split
     if source_split not in split_names:
         source_split = next(
@@ -79,7 +91,7 @@ def _load_hub_entries(
             "train",
         )
 
-    stream = load_dataset(dataset_name, split=source_split, streaming=True)
+    stream = load_dataset(dataset_name, split=source_split, streaming=True, revision=revision)
     stream = stream.shuffle(seed=seed, buffer_size=max(size * 4, 1000))
     entries: list[dict[str, Any]] = []
     for index, row in enumerate(islice(stream, size * 4)):
@@ -108,7 +120,7 @@ class ReasoningCoreEnvironment(Environment):
         self._entries: list[dict[str, Any]] = []
         self._entry_index = 0
         self._current_entry: dict[str, Any] | None = None
-        self._configuration: tuple[str, str, int, int] | None = None
+        self._configuration: tuple | None = None
 
     def _configure(
         self,
@@ -116,11 +128,12 @@ class ReasoningCoreEnvironment(Environment):
         split: str,
         seed: int,
         size: int,
+        revision: str | None,
     ) -> None:
-        configuration = (dataset_name, split, seed, size)
+        configuration = (dataset_name, split, seed, size, revision)
         if configuration == self._configuration:
             return
-        self._entries = _load_hub_entries(dataset_name, split, seed, size)
+        self._entries = _load_hub_entries(dataset_name, split, seed, size, revision)
         self._configuration = configuration
         self._entry_index = 0
 
@@ -130,11 +143,12 @@ class ReasoningCoreEnvironment(Environment):
         split: str = "train",
         seed: int = DEFAULT_SEED,
         size: int = DEFAULT_SIZE,
+        revision: str | None = DEFAULT_REVISION,
         episode_id: str | None = None,
     ) -> ReasoningCoreObservation:
         if size <= 0:
             raise ValueError("size must be positive")
-        self._configure(dataset_name, split, seed, size)
+        self._configure(dataset_name, split, seed, size, revision)
         self._current_entry = self._entries[self._entry_index % len(self._entries)]
         self._entry_index += 1
         self._state = State(

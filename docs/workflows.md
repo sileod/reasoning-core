@@ -102,6 +102,25 @@ python -m reasoning_core score /tmp/rc-predictions.jsonl
 
 Expected `mean_score` is 1. This verifies scoring only, not model ability.
 
+## Check the RL environments
+
+`scripts/check_rl_envs.py` installs each integration into a fresh uv venv with its
+latest dependencies and drives it like a trainer, with a policy that answers gold
+or adversarial wrong answers. It covers the Prime Intellect (verifiers) and OpenEnv
+envs on the procedural pile, plus the reasoning-gym and SynLogic adapters on fresh
+generation. The pile revision is resolved to a commit SHA in the report; pass it
+back with `--revision` to replay a run.
+
+```bash
+python scripts/check_rl_envs.py --n 300 --out env_check.json            # this checkout
+python scripts/check_rl_envs.py --rc pypi --revision <sha from a report>  # the release
+OPENROUTER_API_KEY=... python scripts/check_rl_envs.py --envs primeintellect \
+    --live-model openai/gpt-4.1-mini --live-n 100   # a real model, ~$0.5
+```
+
+It exits non-zero when a gold answer scores below 1, a wrong answer scores 1, a
+scorer raises, a pile task never reaches the env, or one seed serves different rows.
+
 ## Evaluate a model
 
 Two different questions, answered by two different tools.
