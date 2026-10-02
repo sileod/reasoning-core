@@ -22,9 +22,9 @@ from concurrent.futures.process import BrokenProcessPool
 import json
 from pathlib import Path
 
-from ..evaluation.difficulty import check_headroom, check_level_responds, diagnose
-from ..evaluation.signal_report import curves
-from ..evaluation.signals import SAMPLE_SECONDS, write_rows
+from .difficulty import check_headroom, check_level_responds, diagnose
+from .signal_report import curves
+from .signals import SAMPLE_SECONDS, write_rows
 
 LEVELS = (0, 2, 4, 6)
 SAMPLES = 8

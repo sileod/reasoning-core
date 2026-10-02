@@ -160,7 +160,7 @@ def test_tied_ranks_score_nothing_by_row_order():
 
 
 def test_the_level_audit_names_a_dead_knob_a_broken_rung_and_a_bad_curve():
-    from reasoning_core.task_search.level_audit import findings
+    from reasoning_core.evaluation.level_audit import findings
 
     record = {"task": "t", "fields": {}, "responds": False, "generation": {
         "0": {"max_row_tokens": 100}, "6": {"error": "headroom level 6: prompt has 3000 tokens"}}}

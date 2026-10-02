@@ -625,7 +625,7 @@ def main(argv=None):
                 for (task, level), value in predicted.items()})
         return
     if args.command == "level-audit":
-        from .level_audit import collect, report
+        from ..evaluation.level_audit import collect, report
         import reasoning_core
 
         records = collect(args.tasks or sorted(reasoning_core.list_tasks(include_generated=True)),
