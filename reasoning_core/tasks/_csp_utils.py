@@ -42,6 +42,10 @@ class Formula:
     def to_z3(self, ctx: Mapping[str, z3.ArithRef]):
         raise NotImplementedError
 
+    def _eval(self, env: Mapping[str, int]) -> bool:
+        """Truth under a full assignment of this formula's variables; mirrors to_z3."""
+        raise NotImplementedError
+
     def canonical(self):
         raise NotImplementedError
 
@@ -71,12 +75,14 @@ class _VarValue(Formula):
 @dataclass(frozen=True)
 class Eq(_VarValue):
     def to_z3(self, ctx): return ctx[self.x.name] == self.value
+    def _eval(self, env): return env[self.x.name] == self.value
     def canonical(self): return ("eq", _vkey(self.x), self.value)
 
 
 @dataclass(frozen=True)
 class Ne(_VarValue):
     def to_z3(self, ctx): return ctx[self.x.name] != self.value
+    def _eval(self, env): return env[self.x.name] != self.value
     def canonical(self): return ("ne", _vkey(self.x), self.value)
 
 
@@ -90,6 +96,7 @@ class In(Formula):
         object.__setattr__(self, "values", tuple(sorted(set(values))))
 
     def to_z3(self, ctx): return z3.Or(*[ctx[self.x.name] == v for v in self.values])
+    def _eval(self, env): return env[self.x.name] in self.values
     def canonical(self): return ("in", _vkey(self.x), self.values)
     def variables(self): return frozenset((self.x,))
 
@@ -108,18 +115,21 @@ class _VarVar(Formula):
 @dataclass(frozen=True)
 class EqVar(_VarVar):
     def to_z3(self, ctx): return ctx[self.x.name] == ctx[self.y.name]
+    def _eval(self, env): return env[self.x.name] == env[self.y.name]
     def canonical(self): return ("eqvar",) + self._ordered()
 
 
 @dataclass(frozen=True)
 class NeVar(_VarVar):
     def to_z3(self, ctx): return ctx[self.x.name] != ctx[self.y.name]
+    def _eval(self, env): return env[self.x.name] != env[self.y.name]
     def canonical(self): return ("nevar",) + self._ordered()
 
 
 @dataclass(frozen=True)
 class Lt(_VarVar):
     def to_z3(self, ctx): return ctx[self.x.name] < ctx[self.y.name]
+    def _eval(self, env): return env[self.x.name] < env[self.y.name]
     def canonical(self): return ("lt", _vkey(self.x), _vkey(self.y))
 
 
@@ -130,6 +140,7 @@ class Distance(Formula):
     k: int
 
     def to_z3(self, ctx): return z3.Abs(ctx[self.x.name] - ctx[self.y.name]) == self.k
+    def _eval(self, env): return abs(env[self.x.name] - env[self.y.name]) == self.k
     def canonical(self): return ("distance",) + tuple(sorted((_vkey(self.x), _vkey(self.y)))) + (self.k,)
     def variables(self): return frozenset((self.x, self.y))
 
@@ -168,6 +179,10 @@ class Linear(Formula):
     def to_z3(self, ctx):
         e = self._expr(ctx)
         return {"==": e == self.rhs, "!=": e != self.rhs, "<=": e <= self.rhs, ">=": e >= self.rhs}[self.op]
+    def _value(self, env): return sum(a * env[v.name] for a, v in zip(self.coeffs, self.vars))
+    def _eval(self, env):
+        e = self._value(env)
+        return {"==": e == self.rhs, "!=": e != self.rhs, "<=": e <= self.rhs, ">=": e >= self.rhs}[self.op]
     def canonical(self): return ("linear", tuple(zip(self.coeffs, map(_vkey, self.vars))), self.op, self.rhs)
     def variables(self): return frozenset(self.vars)
 
@@ -186,6 +201,7 @@ class Mod(Formula):
         object.__setattr__(self, "remainder", int(remainder) % modulus)
 
     def to_z3(self, ctx): return self.expr._expr(ctx) % self.modulus == self.remainder
+    def _eval(self, env): return self.expr._value(env) % self.modulus == self.remainder
     def canonical(self):
         terms = tuple(zip(self.expr.coeffs, map(_vkey, self.expr.vars)))
         return ("mod", terms, self.modulus, self.remainder)
@@ -203,6 +219,7 @@ class AllDifferent(Formula):
             raise ValueError("AllDifferent variables must be distinct")
         object.__setattr__(self, "vars", tuple(sorted(values, key=_vkey)))
     def to_z3(self, ctx): return z3.Distinct(*[ctx[v.name] for v in self.vars])
+    def _eval(self, env): return len({env[v.name] for v in self.vars}) == len(self.vars)
     def canonical(self): return ("alldifferent", tuple(map(_vkey, self.vars)))
     def variables(self): return frozenset(self.vars)
 
@@ -211,6 +228,7 @@ class AllDifferent(Formula):
 class Not(Formula):
     formula: Formula
     def to_z3(self, ctx): return z3.Not(self.formula.to_z3(ctx))
+    def _eval(self, env): return not self.formula._eval(env)
     def canonical(self): return ("not", self.formula.canonical())
     def variables(self): return self.formula.variables()
     def complexity(self): return 1 + self.formula.complexity()
@@ -236,6 +254,7 @@ class _Many(Formula):
 class Or(_Many):
     tag = "or"
     def to_z3(self, ctx): return z3.Or(*[f.to_z3(ctx) for f in self.formulas])
+    def _eval(self, env): return any(f._eval(env) for f in self.formulas)
 
 
 @dataclass(frozen=True)
@@ -252,6 +271,7 @@ class Xor(Formula):
     def to_z3(self, ctx):
         if not self.formulas: return z3.BoolVal(False)
         return z3.PbEq([(f.to_z3(ctx), 1) for f in self.formulas], 1)
+    def _eval(self, env): return sum(f._eval(env) for f in self.formulas) == 1
     def canonical(self): return (self.tag, tuple(f.canonical() for f in self.formulas))
     def variables(self): return frozenset().union(*(f.variables() for f in self.formulas))
     def complexity(self): return 1 + sum(f.complexity() for f in self.formulas)
@@ -262,6 +282,7 @@ class Implies(Formula):
     a: Formula
     b: Formula
     def to_z3(self, ctx): return z3.Implies(self.a.to_z3(ctx), self.b.to_z3(ctx))
+    def _eval(self, env): return not self.a._eval(env) or self.b._eval(env)
     def canonical(self): return ("implies", self.a.canonical(), self.b.canonical())
     def variables(self): return self.a.variables() | self.b.variables()
     def complexity(self): return 1 + self.a.complexity() + self.b.complexity()
@@ -284,11 +305,13 @@ class _Cardinality(Formula):
 class Exactly(_Cardinality):
     tag = "exactly"
     def to_z3(self, ctx): return z3.PbEq([(f.to_z3(ctx), 1) for f in self.formulas], self.k)
+    def _eval(self, env): return sum(f._eval(env) for f in self.formulas) == self.k
 
 
 class AtMost(_Cardinality):
     tag = "atmost"
     def to_z3(self, ctx): return z3.PbLe([(f.to_z3(ctx), 1) for f in self.formulas], self.k)
+    def _eval(self, env): return sum(f._eval(env) for f in self.formulas) <= self.k
 
 
 def canonical_unique(formulas):
@@ -321,6 +344,11 @@ class CSPSolver:
         self._values_cache = {}
         self._solutions_cache = {}
         self._expression_cache = {}
+        self._domain_cache = {}
+        # One persistent solver: domains asserted once, each formula guarded by a literal and switched on
+        # per query through check(assumptions). Rebuilding a z3.Solver per query was most of the cost.
+        self._incremental = None
+        self._guards = {}
 
     @staticmethod
     def _key(formulas):
@@ -332,31 +360,57 @@ class CSPSolver:
             self._expression_cache[key] = formula.to_z3(self.ctx)
         return self._expression_cache[key]
 
+    def _domain(self, v, values=None):
+        if values is not None:
+            return z3.Or(*[self.ctx[v.name] == x for x in values])
+        if v.name not in self._domain_cache:
+            self._domain_cache[v.name] = z3.Or(*[self.ctx[v.name] == x for x in v.domain])
+        return self._domain_cache[v.name]
+
     def solver(self, clues=None, extra=(), domains=None):
+        """A fresh solver holding the domains, base, clues and extra (for callers that push/add)."""
         solver = z3.Solver()
         for v in self.variables:
-            values = v.domain if domains is None else domains[v]
-            solver.add(z3.Or(*[self.ctx[v.name] == x for x in values]))
+            solver.add(self._domain(v, None if domains is None else domains[v]))
         for formula in (*self.base, *(self.clues if clues is None else clues), *extra):
             solver.add(self._expression(formula))
         return solver
+
+    def _persistent(self):
+        if self._incremental is None:
+            self._incremental = z3.Solver()
+            for v in self.variables:
+                self._incremental.add(self._domain(v))
+        return self._incremental
+
+    def _guard(self, formula):
+        key = formula.canonical()
+        if key not in self._guards:
+            literal = z3.Bool(f"__guard{len(self._guards)}")
+            self._persistent().add(z3.Implies(literal, self._expression(formula)))
+            self._guards[key] = literal
+        return self._guards[key]
+
+    def _check(self, formulas):
+        """Satisfiability of domains + base + formulas, on the persistent solver."""
+        literals = [self._guard(f).as_ast() for f in (*self.base, *formulas)]
+        solver = self._persistent()
+        # z3py's check() re-casts every assumption; the guards are already Bool constants.
+        r = z3.Z3_solver_check_assumptions(solver.ctx.ref(), solver.solver, len(literals), (z3.Ast * len(literals))(*literals))
+        return r == z3.Z3_L_TRUE
 
     def is_sat(self, clues=None, extra=()):
         active = self.clues if clues is None else clues
         key = (self._key(active), self._key(extra))
         if key not in self._sat_cache:
-            self._sat_cache[key] = self.solver(active, extra).check() == z3.sat
+            self._sat_cache[key] = self._check((*active, *extra))
         return self._sat_cache[key]
 
     def possible_values(self, var, clues=None, extra=()):
         active = self.clues if clues is None else clues
         key = (var, self._key(active), self._key(extra))
         if key in self._values_cache: return list(self._values_cache[key])
-        solver = self.solver(active, extra)
-        out = [
-            value for value in var.domain
-            if solver.check(self.ctx[var.name] == value) == z3.sat
-        ]
+        out = [value for value in var.domain if self._check((*active, *extra, Eq(var, value)))]
         self._values_cache[key] = tuple(out)
         return out
 
@@ -370,15 +424,20 @@ class CSPSolver:
         if key in self._solutions_cache:
             solutions, overflow = self._solutions_cache[key]
             return solutions, overflow
-        solver, out = self.solver(active), []
-        while solver.check() == z3.sat:
-            model = solver.model()
-            row = tuple(model.eval(self.ctx[v.name], model_completion=True).as_long() for v in self.variables)
-            out.append(row)
-            if limit is not None and len(out) > limit:
-                self._solutions_cache[key] = (None, True)
-                return None, True
-            solver.add(z3.Or(*[self.ctx[v.name] != x for v, x in zip(self.variables, row)]))
+        literals = [self._guard(f) for f in (*self.base, *active)]
+        solver, out = self._persistent(), []
+        solver.push()
+        try:
+            while solver.check(*literals) == z3.sat:
+                model = solver.model()
+                row = tuple(model.eval(self.ctx[v.name], model_completion=True).as_long() for v in self.variables)
+                out.append(row)
+                if limit is not None and len(out) > limit:
+                    self._solutions_cache[key] = (None, True)
+                    return None, True
+                solver.add(z3.Or(*[self.ctx[v.name] != x for v, x in zip(self.variables, row)]))
+        finally:
+            solver.pop()
         result = (sorted(out), False)
         self._solutions_cache[key] = result
         return result
@@ -500,6 +559,11 @@ def _supported_cached(formula, target, value, domain_items):
     """Whether a value has local support in one constraint (generalized arc consistency)."""
     variables = sorted(formula.variables(), key=lambda v: v.name)
     domains = dict(domain_items)
+    choices = [domains[v] if v != target else (value,) for v in variables]
+    try:
+        return any(formula._eval({v.name: x for v, x in zip(variables, values)}) for values in product(*choices))
+    except NotImplementedError:
+        pass
     ctx = {v.name: z3.Int(v.name) for v in variables}
     expression = formula.to_z3(ctx)
     for values in product(*(domains[v] if v != target else (value,) for v in variables)):
