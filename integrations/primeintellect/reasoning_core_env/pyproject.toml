@@ -6,7 +6,7 @@ version = "1.0.7"
 requires-python = ">=3.11"
 dependencies = [
     "verifiers>=0.1.4",
-    "reasoning-core>=0.4.0",
+    "reasoning-core>=0.5.0",
     "datasets",
     "easydict",
 ]

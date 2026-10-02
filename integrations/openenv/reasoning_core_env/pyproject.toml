@@ -11,7 +11,7 @@ dependencies = [
     "datasets>=3.0",
     "easydict>=1.13",
     "openenv[core]>=0.3.1",
-    "reasoning-core>=0.4.0",
+    "reasoning-core>=0.5.0",
 ]
 
 [project.optional-dependencies]
