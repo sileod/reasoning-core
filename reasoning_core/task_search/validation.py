@@ -17,7 +17,7 @@ from .implementor_prompt import (
     _sample_command,
     _sample_command_for,
 )
-from .judge import Question, get_judge
+from ..evaluation.judge import Question, get_judge
 from .sandbox import (
     _resource_command,
     _run_validation,

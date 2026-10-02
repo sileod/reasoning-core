@@ -3,8 +3,8 @@ import json
 
 import pytest
 
-from reasoning_core.task_search import signals
-from reasoning_core.task_search.judge import Question, abstain, answer
+from reasoning_core.evaluation import signals
+from reasoning_core.evaluation.judge import Question, abstain, answer
 
 
 def test_a_dimension_reads_its_distribution_as_one_number():
@@ -54,7 +54,7 @@ def test_collect_resumes_asking_only_what_is_missing(monkeypatch, tmp_path):
 
 
 def test_the_audit_reads_only_each_tasks_least_plausible_answers(monkeypatch, tmp_path):
-    from reasoning_core.task_search import answer_audit
+    from reasoning_core.evaluation import answer_audit
 
     def row(task, index, p):
         return {"task": task, "level": 0, "index": index, "prompt": f"{task}{index}",
@@ -82,7 +82,7 @@ def test_the_audit_reads_only_each_tasks_least_plausible_answers(monkeypatch, tm
 
 
 def test_a_formatting_variant_the_scorer_refuses_is_strict_not_wrong():
-    from reasoning_core.task_search import answer_audit
+    from reasoning_core.evaluation import answer_audit
 
     row = {"task": "t", "level": 0, "index": 0, "prompt": "p", "answer": "8,17"}
     assert answer_audit.decide(row, ["8, 17", "8, 17"]) == "STRICT"
@@ -91,7 +91,7 @@ def test_a_formatting_variant_the_scorer_refuses_is_strict_not_wrong():
 
 
 def test_disagreeing_solves_accuse_nothing():
-    from reasoning_core.task_search import answer_audit
+    from reasoning_core.evaluation import answer_audit
 
     class Solver:
         replies = iter(["FINAL: 5", "FINAL: 6"])
@@ -105,7 +105,7 @@ def test_disagreeing_solves_accuse_nothing():
 
 
 def test_a_ladder_calibrated_on_a_probe_is_judged_on_tasks_it_never_saw():
-    from reasoning_core.task_search.signal_report import ladder
+    from reasoning_core.evaluation.signal_report import ladder
 
     rows, measured = [], {}
     for task in range(12):
@@ -123,7 +123,7 @@ def test_a_ladder_calibrated_on_a_probe_is_judged_on_tasks_it_never_saw():
 def test_the_choice_screen_asks_jev_to_pick_the_reference_among_scored_wrong_answers(
         monkeypatch, tmp_path):
     import reasoning_core
-    from reasoning_core.task_search import answer_audit
+    from reasoning_core.evaluation import answer_audit
 
     class Task:
         def generate_distractors(self, entry, n, max_candidates):
@@ -153,7 +153,7 @@ def test_the_choice_screen_asks_jev_to_pick_the_reference_among_scored_wrong_ans
 
 
 def test_tied_ranks_score_nothing_by_row_order():
-    from reasoning_core.task_search.signal_report import spearman
+    from reasoning_core.evaluation.signal_report import spearman
 
     floor = [0.0, 0.0, 0.0, 0.5]   # a ladder that only moves at the top
     assert spearman([1, 2, 3, 4], floor) == pytest.approx(spearman([3, 2, 1, 4], floor))

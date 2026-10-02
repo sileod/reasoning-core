@@ -595,7 +595,7 @@ def main(argv=None):
         return
 
     if args.command == "signals":
-        from .signals import collect
+        from ..evaluation.signals import collect
         import reasoning_core
 
         collect(args.tasks or sorted(reasoning_core.list_tasks()), args.out,
@@ -603,13 +603,13 @@ def main(argv=None):
         return
 
     if args.command == "signals-report":
-        from .signal_report import report
+        from ..evaluation.signal_report import report
 
         rows = [json.loads(line) for line in Path(args.rows).read_text().splitlines()]
         print(report(rows, json.loads(Path(args.targets).read_text()), top=args.top))
         return
     if args.command == "signals-ladder":
-        from .signal_report import ladder
+        from ..evaluation.signal_report import ladder
 
         rows = [json.loads(line) for line in Path(args.rows).read_text().splitlines()]
         cells = json.loads(Path(args.measured).read_text())
@@ -636,7 +636,7 @@ def main(argv=None):
         print(report(records, rows, cache, args.probe_model))
         return
     if args.command == "answer-audit":
-        from .answer_audit import add_choice, audit
+        from ..evaluation.answer_audit import add_choice, audit
 
         rows = [json.loads(line) for line in Path(args.rows).read_text().splitlines()]
         add_choice(rows, args.rows)

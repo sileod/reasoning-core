@@ -22,9 +22,9 @@ from concurrent.futures.process import BrokenProcessPool
 import json
 from pathlib import Path
 
-from ..evaluation.difficulty import check_headroom, check_level_responds, curve, diagnose
-from .signal_report import ladder
-from .signals import SAMPLE_SECONDS, write_rows
+from ..evaluation.difficulty import check_headroom, check_level_responds, diagnose
+from ..evaluation.signal_report import curves
+from ..evaluation.signals import SAMPLE_SECONDS, write_rows
 
 LEVELS = (0, 2, 4, 6)
 SAMPLES = 8
@@ -107,24 +107,6 @@ def findings(record, points=None, source="probe"):
         if verdict:
             found.append(f"{source} {verdict[0]}: {verdict[1]}")
     return found
-
-
-def curves(rows, cache, model, levels=LEVELS):
-    """{task: (points, source)}: the probe's curve where it has every level, else Jev's,
-    calibrated on the probe's complete curves."""
-    measured = {task: points for task, (points, holes) in curve(cache, model).items()
-                if not holes and set(levels) <= set(points)}
-    predicted, _ = ladder(rows, {(t, level): rate for t, points in measured.items()
-                                 for level, rate in points.items()},
-                          features=["jev:glance", "log_prompt_chars"])
-    by_task = defaultdict(dict)
-    for (task, level), rate in predicted.items():
-        if level in levels:
-            by_task[task][level] = rate
-    out = {task: (points, "jev") for task, points in by_task.items()}
-    out.update({task: ({l: points[l] for l in levels}, "probe")
-                for task, points in measured.items()})
-    return out
 
 
 def report(records, rows=(), cache=None, model="deepseek-v4-flash"):

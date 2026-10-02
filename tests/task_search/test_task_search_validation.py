@@ -11,7 +11,8 @@ import tempfile
 
 import pytest
 
-from reasoning_core.task_search import judge_llm, prior_audit, trajectory, validation
+from reasoning_core.evaluation import judge_llm
+from reasoning_core.task_search import prior_audit, trajectory, validation
 
 from reasoning_core.task_search.implementor_prompt import (
     PACE,
@@ -476,7 +477,7 @@ def test_sample_sanity_reads_the_verdict_and_reason(tmp_path, monkeypatch):
         return io.BytesIO(reply.encode())
 
     monkeypatch.setattr(
-        "reasoning_core.task_search.judge_llm.urllib.request.urlopen", urlopen
+        "reasoning_core.evaluation.judge_llm.urllib.request.urlopen", urlopen
     )
     assert _sample_sanity(
         samples, instruction="counts stay non-negative", source="answer = -44 / 5"
@@ -498,7 +499,7 @@ def test_sample_sanity_fails_open_on_empty_model_content(tmp_path, monkeypatch):
     monkeypatch.setenv("TASK_SEARCH_REVIEW_MODEL", "example-model")
     reply = json.dumps({"choices": [{"message": {"content": None}}]})
     monkeypatch.setattr(
-        "reasoning_core.task_search.judge_llm.urllib.request.urlopen",
+        "reasoning_core.evaluation.judge_llm.urllib.request.urlopen",
         lambda *a, **k: io.BytesIO(reply.encode()),
     )
 

@@ -7,8 +7,9 @@ backend never reads policy.
 """
 import pytest
 
-from reasoning_core.task_search import judge, validation
-from reasoning_core.task_search.judge import Question, abstain, answer
+from reasoning_core.evaluation import judge
+from reasoning_core.task_search import validation
+from reasoning_core.evaluation.judge import Question, abstain, answer
 
 
 class FakeJudge:
@@ -125,7 +126,7 @@ def _jev_replying(monkeypatch, reply=None, error=None, ledger=None):
     import tempfile
     from pathlib import Path
 
-    from reasoning_core.task_search import judge_jev
+    from reasoning_core.evaluation import judge_jev
 
     sent = []
 
@@ -165,14 +166,14 @@ def test_jev_abstains_rather_than_inventing_a_verdict(monkeypatch, reply, error)
 
 
 def test_jev_abstains_without_a_key(monkeypatch):
-    from reasoning_core.task_search import judge_jev
+    from reasoning_core.evaluation import judge_jev
 
     monkeypatch.delenv(judge_jev.KEY_VAR, raising=False)
     assert judge_jev.JevJudge().evaluate("s", [validation._SANITY])["valid"]["value"] is None
 
 
 def test_the_jev_backend_is_selectable_per_purpose(monkeypatch):
-    from reasoning_core.task_search.judge_jev import JevJudge
+    from reasoning_core.evaluation.judge_jev import JevJudge
 
     monkeypatch.setenv("TASK_SEARCH_FIDELITY_BACKEND", "jev")
     assert isinstance(judge.get_judge("fidelity"), JevJudge)
@@ -180,7 +181,7 @@ def test_the_jev_backend_is_selectable_per_purpose(monkeypatch):
 
 def test_jev_stops_at_its_budget_across_processes(monkeypatch, tmp_path):
     """The key is shared, so Jev's own ledger is the only record of what Jev spent."""
-    from reasoning_core.task_search import judge_jev
+    from reasoning_core.evaluation import judge_jev
 
     monkeypatch.setenv(judge_jev.BUDGET_VAR, "0.001")
     ledger = tmp_path / "spend.tsv"

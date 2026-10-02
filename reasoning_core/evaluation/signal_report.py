@@ -13,6 +13,8 @@ import math
 import numpy as np
 from scipy.stats import rankdata
 
+from .difficulty import curve
+
 LENGTHS = ("log_prompt_chars", "log_answer_chars")
 
 
@@ -181,3 +183,21 @@ def ladder(rows, measured, *, judge="jev", features=None):
              "within_task_rho": sum(within) / len(within) if within else None,
              "direction": f"{agree}/{moved}"}
     return predicted, stats
+
+
+def curves(rows, cache, model, levels=(0, 2, 4, 6)):
+    """{task: (points, source)}: the probe's curve where it has every level, else Jev's,
+    calibrated on the probe's complete curves."""
+    measured = {task: points for task, (points, holes) in curve(cache, model).items()
+                if not holes and set(levels) <= set(points)}
+    predicted, _ = ladder(rows, {(t, level): rate for t, points in measured.items()
+                                 for level, rate in points.items()},
+                          features=["jev:glance", "log_prompt_chars"])
+    by_task = defaultdict(dict)
+    for (task, level), rate in predicted.items():
+        if level in levels:
+            by_task[task][level] = rate
+    out = {task: (points, "jev") for task, points in by_task.items()}
+    out.update({task: ({l: points[l] for l in levels}, "probe")
+                for task, points in measured.items()})
+    return out
