@@ -611,7 +611,8 @@ class ParsingDerivation(Task):
             except KeyError:
                 continue
             meta.pop("parses", None)
-            meta.pop("cot", None)
+            if "cot" in meta:  # older easydict (fleet) pop() raises on a missing key, default or not
+                meta.pop("cot")
             return Entry(meta, answer)
         raise RuntimeError("Failed to generate an unambiguous derivation after 200 attempts")
 
