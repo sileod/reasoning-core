@@ -28,11 +28,14 @@ COLLECTIONS = {
 }
 DEPRECATED = {"symbolic_arithmetics", "graph_node_centrality"}
 IGNORED = DEPRECATED | {"reasonining_gym", "count_elements"}
-# Roster membership is decided here, not by where a file sits: a generated task joins the shipped
-# roster by name (its file stays put, so its module path and identity do not change), and a
-# retired task leaves list_tasks() while staying loadable for the data already measured on it.
+# Roster membership is decided here, not by where a file sits: a generated task or a DevTask joins
+# the shipped roster by name (its file and class stay put, so its module path and identity do not
+# change), and a retired task leaves list_tasks() while staying loadable for the data already
+# measured on it.
 PROMOTED = {"rule_switching", "finite_automaton_execution", "shift_reduce_parsing",
-            "controlled_code_execution", "dynamic_programming"}
+            "controlled_code_execution", "dynamic_programming",
+            # rc14
+            "inverse_math", "process_inversion", "attribute_grammar", "belief_tracking", "systems_trace"}
 RETIRED = {
     "code_execution",  # superseded by controlled_code_execution: same influence, ~15x faster
     # No working difficulty knob: the same seed gives the same problem at every level
@@ -141,7 +144,7 @@ def _discover_tasks(tasks_path=None, refresh=False, cache_path=None):
     for key, record in records.items():
         module_name = ".".join(Path(key).with_suffix("").parts)
         for name, class_name, kind in record["tasks"]:
-            index = 1 if kind == "dev" else 0
+            index = 1 if kind == "dev" and name not in PROMOTED else 0
             location = f"tasks/{key}:{class_name}"
             if name in maps[index]:
                 raise RuntimeError(f"Duplicate task {name!r}: {origins[index][name]} and {location}")
@@ -170,7 +173,7 @@ class _LazyMap(Mapping):
             return self._mapping[key]
         module_name, class_name = self._mapping[key]
         return self._proxies.setdefault(
-            key, _PrettyLazy(key, module_name, class_name if self.index else None)
+            key, _PrettyLazy(key, module_name, class_name)
         )
 
     def __iter__(self):

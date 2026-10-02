@@ -1,4 +1,5 @@
 from reasoning_core import get_task, list_tasks
+from reasoning_core.registry import PROMOTED
 import pytest
 
 
@@ -18,7 +19,7 @@ def test_generated_tasks_are_discovered_but_not_in_the_default_roster():
     # addressable by name for the influence pipeline and the probes, and join the roster
     # only once influence has judged them worth it.
     assert set(TASKS) <= set(list_tasks(include_generated=True))
-    assert not set(TASKS) & set(list_tasks())
+    assert not (set(TASKS) - PROMOTED) & set(list_tasks())
 
 
 def test_generated_tasks_smoke():

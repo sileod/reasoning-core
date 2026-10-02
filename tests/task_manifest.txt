@@ -35,6 +35,7 @@ articulation_vertices
 aspectual_class_entailment
 asymptotic_cancellation_order
 attentional_blink_gating
+attribute_grammar
 attribute_grammar_evaluation
 automaton_word_counting
 axis_separable_transitions
@@ -45,6 +46,7 @@ ballot_clone_counterfactuals
 bayesian_conditioning
 bayesian_network_table_conversion
 bcnf_violation
+belief_tracking
 betweenness_triple_seriation
 bgp_best_path
 binary_matrix_margin_realization
@@ -367,6 +369,7 @@ interval_sweep
 intervention_information_value
 intransitive_information_purge
 invented_numeral_evaluation
+inverse_math
 inverse_variance_pooling
 inversion_trigger_linearization
 iterated_dominance_elimination
@@ -587,9 +590,9 @@ priority
 probability_tree
 probability_tree_marginal
 process_dissociation_routes
+process_inversion
 process_state
 program_slice_dependencies
-program_synthesis
 projective_configuration_invariants
 projective_phase_obstruction
 proof_net_link_repair
@@ -765,6 +768,7 @@ symmetric_poly_to_elementary
 sync_tuple_derivation
 syndrome_decoding
 syntax_error_detection
+systems_trace
 table_equivalence
 table_qa
 table_statistics
