@@ -2098,10 +2098,11 @@ class DefeasibleNLI(Task):
     def balancing_key(self, problem):
         return problem.answer
 
-def _canonical_premise_order(meta, facts):
-    """Facts, then rules, each alphabetical; renumbers every index field. Rendering lists the proof's
-    facts first in chain order, so the answer used to start at index 0 in 95-100% of examples (v0)."""
-    order = sorted(range(len(meta.premise)), key=lambda i: (meta.premise[i] not in facts, meta.premise[i], i))
+def _canonical_premise_order(meta):
+    """One alphabetical order over all premises; renumbers every index field. Rendering lists the
+    proof's facts first in chain order, so the answer started at index 0 in 95-100% of examples (v0);
+    facts-then-rules (v1) still put the needed facts on top (75% at L2, vs 42% mixed)."""
+    order = sorted(range(len(meta.premise)), key=lambda i: (meta.premise[i], i))
     new = {old: pos for pos, old in enumerate(order)}
     renumber = lambda xs: sorted(new[i] for i in xs)
     meta.premise = [meta.premise[old] for old in order]
@@ -2113,7 +2114,7 @@ def _canonical_premise_order(meta, facts):
 
 class MultistepEvidenceRetrieval(Task):
     summary = "Retrieve the specific premise indexes required to prove a logical hypothesis."
-    task_version = 1
+    task_version = 2
     def __init__(self, config=None):
         super().__init__(config=config or MultistepNLIConfig())
         self._case_state = {}
@@ -2130,8 +2131,7 @@ class MultistepEvidenceRetrieval(Task):
             meta.necessary_indices = nec
             meta.valid_supports = [nec]
             meta.support_indices = nec
-            pack = case.theory.domain_pack
-            _canonical_premise_order(meta, {atom_text(a, pack) + "." for a in case.theory.facts})
+            _canonical_premise_order(meta)
             meta.payload = {"premise": indexed_premise(meta.premise), "hypothesis": meta.hypothesis}
             return Entry(meta, " ".join(map(str, meta.necessary_indices)))
         raise RuntimeError("could not generate a unique-support multistep_evidence_retrieval example")
