@@ -18,6 +18,7 @@ from .implementor_prompt import (
     _sample_command_for,
 )
 from ..evaluation.judge import Question, get_judge
+from ..evaluation.judge_llm import configured_key
 from .sandbox import (
     _resource_command,
     _run_validation,
@@ -216,8 +217,7 @@ def _sample_sanity(sample_path, instruction="", source=""):
     reply and an unconfirmed accusation all return a null verdict, because neither a
     reviewer outage nor a lone hallucination may reject a task that is fine.
     """
-    key_name = os.environ.get("TASK_SEARCH_REVIEW_KEY_ENV", "")
-    key = os.environ.get(key_name, "") if key_name else ""
+    key = configured_key()[1]
     if not key:
         return {"verdict": None, "why": "no reviewer key"}
     if not sample_path.is_file():
@@ -338,8 +338,7 @@ def _sample_fidelity(sample_path, instruction="", source=""):
     Two votes to accuse, and fails open at every step, for the same reasons `_sample_sanity`
     does: a reviewer outage or one overreach must not refuse a task that is fine.
     """
-    key_name = os.environ.get("TASK_SEARCH_REVIEW_KEY_ENV", "")
-    key = os.environ.get(key_name, "") if key_name else ""
+    key = configured_key()[1]
     if not key:
         return {"verdict": None, "why": "no reviewer key"}
     if not sample_path.is_file():

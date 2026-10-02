@@ -18,6 +18,7 @@ ENDPOINT = "https://openrouter.ai/api/alpha/decisions"
 DEFAULT_MODEL = "typesafe/jev-1.13"
 KEV_MODEL = "jaredpalmer/kev-4b"
 KEY_VAR = "JEV_OPENROUTER_API_KEY"
+MODEL_VAR = "RC_JEV_MODEL"
 # The key is shared with other OpenRouter use, so its dashboard total cannot say what Jev
 # spent. Every call appends its reported cost here, and past the budget Jev abstains.
 LEDGER = Path.home() / ".local" / "share" / "reasoning_core" / "jev_spend.tsv"
@@ -33,7 +34,7 @@ class JevJudge:
 
     def __init__(self, key=None, model=None, ledger=LEDGER):
         self.key = key or os.environ.get(KEY_VAR, "")
-        self.model = model or os.environ.get("TASK_SEARCH_JEV_MODEL", DEFAULT_MODEL)
+        self.model = model or os.environ.get(MODEL_VAR, DEFAULT_MODEL)
         self.ledger = ledger
         self.budget = float(os.environ.get(BUDGET_VAR, DEFAULT_BUDGET_USD))
         self.spent = (sum(float(line.split("\t")[1]) for line in ledger.read_text().splitlines())

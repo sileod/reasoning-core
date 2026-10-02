@@ -19,6 +19,7 @@ import subprocess
 import sys
 import urllib.request
 
+from ..evaluation.judge_llm import ENDPOINT_VAR, KEY_ENV_VAR, MODEL_VAR, configured_key
 from . import embedding
 
 # Worker credentials reach the harness through a blanket copy of the environment, so what
@@ -32,8 +33,7 @@ PROVIDER_KEYS = {
     "orfree": "OPENROUTER_API_KEY",
     "inferx": "INFERX_API_KEY",
 }
-REVIEW_VARS = ("TASK_SEARCH_REVIEW_ENDPOINT", "TASK_SEARCH_REVIEW_MODEL",
-               "TASK_SEARCH_REVIEW_KEY_ENV")
+REVIEW_VARS = (ENDPOINT_VAR, MODEL_VAR, KEY_ENV_VAR)
 ENV_FILE = "~/.config/reasoning_core/env"
 
 
@@ -163,8 +163,7 @@ def check(provider=None, harness="opencode", live=False, timeout=60):
         _provider_key(report, "fallback key", fallback)
 
     missing = [name for name in REVIEW_VARS if not os.environ.get(name)]
-    review_key_name = os.environ.get("TASK_SEARCH_REVIEW_KEY_ENV", "")
-    review_key = os.environ.get(review_key_name, "") if review_key_name else ""
+    review_key_name, review_key = configured_key()
     if missing or not review_key:
         report.add(False, "reviewer config",
                    f"missing {', '.join(missing)}" if missing
@@ -173,8 +172,8 @@ def check(provider=None, harness="opencode", live=False, timeout=60):
                    "verdict for every trial and land skips them all as unreviewed")
     else:
         report.add(True, "reviewer config",
-                   f"{os.environ['TASK_SEARCH_REVIEW_MODEL']} via "
-                   f"{os.environ['TASK_SEARCH_REVIEW_ENDPOINT']}")
+                   f"{os.environ[MODEL_VAR]} via "
+                   f"{os.environ[ENDPOINT_VAR]}")
 
     # A warning and not a failure: the novelty gate falls back to string similarity, which
     # is the ranking it had before embeddings existed. Worth saying out loud, because the
@@ -193,8 +192,8 @@ def check(provider=None, harness="opencode", live=False, timeout=60):
     elif not review_key:
         report.add(None, "provider reachable", "skipped, no reviewer key to try")
     else:
-        ok, detail = _ask(os.environ["TASK_SEARCH_REVIEW_ENDPOINT"],
-                          os.environ["TASK_SEARCH_REVIEW_MODEL"], review_key, timeout)
+        ok, detail = _ask(os.environ[ENDPOINT_VAR],
+                          os.environ[MODEL_VAR], review_key, timeout)
         report.add(ok, "provider reachable", detail,
                    "a 429 here is the daily quota, which is counted per model: another "
                    "model on the same key may still answer")

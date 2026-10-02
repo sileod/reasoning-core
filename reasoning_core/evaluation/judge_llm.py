@@ -13,6 +13,16 @@ import urllib.request
 from .judge import abstain, answer, post_json
 
 MAX_TOKENS = 512
+ENDPOINT_VAR = "RC_JUDGE_ENDPOINT"
+MODEL_VAR = "RC_JUDGE_MODEL"
+# Names the variable holding the key, so the key itself never sits in a config file.
+KEY_ENV_VAR = "RC_JUDGE_KEY_ENV"
+
+
+def configured_key():
+    """(name of the key variable, its value); empty strings when either is unset."""
+    name = os.environ.get(KEY_ENV_VAR, "")
+    return name, os.environ.get(name, "") if name else ""
 
 
 def _post(request):
@@ -23,10 +33,9 @@ class LLMJudge:
     """Answers typed questions by asking a chat model for a verdict and a reason."""
 
     def __init__(self, endpoint=None, model=None, key=None):
-        key_name = os.environ.get("TASK_SEARCH_REVIEW_KEY_ENV", "")
-        self.endpoint = endpoint or os.environ.get("TASK_SEARCH_REVIEW_ENDPOINT", "")
-        self.model = model or os.environ.get("TASK_SEARCH_REVIEW_MODEL", "")
-        self.key = key or (os.environ.get(key_name, "") if key_name else "")
+        self.endpoint = endpoint or os.environ.get(ENDPOINT_VAR, "")
+        self.model = model or os.environ.get(MODEL_VAR, "")
+        self.key = key or configured_key()[1]
 
     def evaluate(self, state, questions):
         """`{question name: normalized answer}`, abstaining wherever it cannot answer."""

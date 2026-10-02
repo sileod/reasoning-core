@@ -58,12 +58,12 @@ def post_json(request):
 
 
 DEFAULT_BACKEND = "llm"
-BACKEND_VAR = "TASK_SEARCH_JUDGE_BACKEND"
+BACKEND_VAR = "RC_JUDGE_BACKEND"
 
 
 def backend_name(purpose):
     """This purpose's own variable, then the global one, then llm -- so one gate can move."""
-    return (os.environ.get(f"TASK_SEARCH_{purpose.upper()}_BACKEND")
+    return (os.environ.get(f"{BACKEND_VAR}_{purpose.upper()}")
             or os.environ.get(BACKEND_VAR)
             or DEFAULT_BACKEND)
 

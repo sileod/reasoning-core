@@ -138,22 +138,22 @@ It checks the two credential paths, which are separate and both fail open. Worke
 credentials reach the coding agent through a copy of the environment, so the provider's
 own key (`ALBERT_API_KEY` for albert) must be set in the shell that launches the run; a
 wave without it spends its whole queue on `harness_failed`. The semantic reviewer reads
-`TASK_SEARCH_REVIEW_ENDPOINT`, `TASK_SEARCH_REVIEW_MODEL` and
-`TASK_SEARCH_REVIEW_KEY_ENV` instead; without them it returns a null verdict for every
+`RC_JUDGE_ENDPOINT`, `RC_JUDGE_MODEL` and
+`RC_JUDGE_KEY_ENV` instead; without them it returns a null verdict for every
 trial and `land` skips them all as `unreviewed`. Both live in
 `~/.config/reasoning_core/env`, which is outside the checkout and must be sourced --
 background scripts do not inherit it. `--live` spends one tiny completion to prove the
 key is not merely present but accepted, which is how a spent daily quota shows up before
 a run rather than during one.
 
-Those three variables say where the reviewer lives; `TASK_SEARCH_JUDGE_BACKEND` says what
+Those three variables say where the reviewer lives; `RC_JUDGE_BACKEND` says what
 kind of thing answers it. `llm` is the default: it asks a chat model for a `VERDICT:` and
 a `WHY:`, which is what the gates have always done. `jev` asks TypeSafe's Jev through
 OpenRouter's decisions endpoint and gets a typed choice with a distribution instead; it
 reads `JEV_OPENROUTER_API_KEY`, a paid key, which is why it is never the default. Each call's cost goes to
 `~/.local/share/reasoning_core/jev_spend.tsv`, and past `JEV_BUDGET_USD` (default 5) Jev
 abstains. A single
-gate can be moved on its own with `TASK_SEARCH_<PURPOSE>_BACKEND` (`SANITY`, `FIDELITY`),
+gate can be moved on its own with `RC_JUDGE_BACKEND_<PURPOSE>` (`SANITY`, `FIDELITY`),
 so a new judge can be measured against the gates that did not move rather than against a
 memory of how the old one scored.
 

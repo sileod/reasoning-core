@@ -441,7 +441,7 @@ def test_unparseable_candidate_metadata_raises_something_catchable(
         _task_metadata(tmp_path, "reasoning_core/tasks/generated/n1")
 
 def test_sample_sanity_fails_open_without_a_reviewer(tmp_path, monkeypatch):
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_KEY_ENV", "TASK_SEARCH_ABSENT_KEY")
+    monkeypatch.setenv("RC_JUDGE_KEY_ENV", "TASK_SEARCH_ABSENT_KEY")
     monkeypatch.delenv("TASK_SEARCH_ABSENT_KEY", raising=False)
     assert _sample_sanity(tmp_path / "samples_S1.md") == {
         "verdict": None,
@@ -453,12 +453,12 @@ def test_sample_sanity_reads_the_verdict_and_reason(tmp_path, monkeypatch):
 
     samples = tmp_path / "samples_S1.md"
     samples.write_text("Answer: -44/5\n")
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_KEY_ENV", "TASK_SEARCH_FAKE_KEY")
+    monkeypatch.setenv("RC_JUDGE_KEY_ENV", "TASK_SEARCH_FAKE_KEY")
     monkeypatch.setenv("TASK_SEARCH_FAKE_KEY", "x")
     monkeypatch.setenv(
-        "TASK_SEARCH_REVIEW_ENDPOINT", "https://example.test/v1/chat/completions"
+        "RC_JUDGE_ENDPOINT", "https://example.test/v1/chat/completions"
     )
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_MODEL", "example-model")
+    monkeypatch.setenv("RC_JUDGE_MODEL", "example-model")
     reply = _json.dumps(
         {
             "choices": [
@@ -491,12 +491,12 @@ def test_sample_sanity_fails_open_on_empty_model_content(tmp_path, monkeypatch):
 
     samples = tmp_path / "samples_S1.md"
     samples.write_text("Answer: 1\n")
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_KEY_ENV", "TASK_SEARCH_FAKE_KEY")
+    monkeypatch.setenv("RC_JUDGE_KEY_ENV", "TASK_SEARCH_FAKE_KEY")
     monkeypatch.setenv("TASK_SEARCH_FAKE_KEY", "x")
     monkeypatch.setenv(
-        "TASK_SEARCH_REVIEW_ENDPOINT", "https://example.test/v1/chat/completions"
+        "RC_JUDGE_ENDPOINT", "https://example.test/v1/chat/completions"
     )
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_MODEL", "example-model")
+    monkeypatch.setenv("RC_JUDGE_MODEL", "example-model")
     reply = json.dumps({"choices": [{"message": {"content": None}}]})
     monkeypatch.setattr(
         "reasoning_core.evaluation.judge_llm.urllib.request.urlopen",
@@ -691,10 +691,10 @@ def test_each_reviewer_is_read_in_the_vocabulary_it_was_asked_for(monkeypatch):
     import io
     import json as json_module
 
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_KEY_ENV", "FAKE_REVIEW_KEY")
+    monkeypatch.setenv("RC_JUDGE_KEY_ENV", "FAKE_REVIEW_KEY")
     monkeypatch.setenv("FAKE_REVIEW_KEY", "x")
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_ENDPOINT", "https://example.invalid/v1/chat")
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_MODEL", "fake")
+    monkeypatch.setenv("RC_JUDGE_ENDPOINT", "https://example.invalid/v1/chat")
+    monkeypatch.setenv("RC_JUDGE_MODEL", "fake")
 
     def answering(text):
         def opener(request, timeout=None):

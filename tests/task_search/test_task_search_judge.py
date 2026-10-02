@@ -39,11 +39,11 @@ def test_an_abstention_carries_a_reason_and_never_a_verdict():
 
 def test_a_purpose_picks_its_own_backend_before_the_global_one(monkeypatch):
     monkeypatch.delenv(judge.BACKEND_VAR, raising=False)
-    monkeypatch.delenv("TASK_SEARCH_SANITY_BACKEND", raising=False)
+    monkeypatch.delenv("RC_JUDGE_BACKEND_SANITY", raising=False)
     assert judge.backend_name("sanity") == judge.DEFAULT_BACKEND
     monkeypatch.setenv(judge.BACKEND_VAR, "jev")
     assert judge.backend_name("sanity") == "jev"
-    monkeypatch.setenv("TASK_SEARCH_SANITY_BACKEND", "llm")
+    monkeypatch.setenv("RC_JUDGE_BACKEND_SANITY", "llm")
     assert judge.backend_name("sanity") == "llm"
     assert judge.backend_name("fidelity") == "jev"
 
@@ -90,7 +90,7 @@ def test_the_gate_decides_whether_the_second_reader_sees_the_first(monkeypatch, 
 
 def test_fidelity_rechecks_blind_and_sanity_shows_the_accusation(tmp_path, monkeypatch):
     """Fidelity's sentence only persuades; sanity's names the example that fails."""
-    monkeypatch.setenv("TASK_SEARCH_REVIEW_KEY_ENV", "FAKE_REVIEW_KEY")
+    monkeypatch.setenv("RC_JUDGE_KEY_ENV", "FAKE_REVIEW_KEY")
     monkeypatch.setenv("FAKE_REVIEW_KEY", "x")
     samples = tmp_path / "samples.md"
     samples.write_text("example")
@@ -175,7 +175,7 @@ def test_jev_abstains_without_a_key(monkeypatch):
 def test_the_jev_backend_is_selectable_per_purpose(monkeypatch):
     from reasoning_core.evaluation.judge_jev import JevJudge
 
-    monkeypatch.setenv("TASK_SEARCH_FIDELITY_BACKEND", "jev")
+    monkeypatch.setenv("RC_JUDGE_BACKEND_FIDELITY", "jev")
     assert isinstance(judge.get_judge("fidelity"), JevJudge)
 
 
