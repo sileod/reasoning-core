@@ -5,10 +5,11 @@ The card is hand-written. This script only touches what is derivable from the da
 
   - YAML `dataset_info` (features, split sizes) and `size_categories`
   - inline numbers wrapped in <!-- stat:KEY -->...<!-- /stat -->
-  - the "· N" count of each `- **Area** · N: `task`, ...` catalogue line
+  - the task catalogue, one `- **Area** · N: `task`, ...` line per area of
+    reasoning_core.registry.AREAS
 
-Which area a task belongs to stays a human decision: a task present in the data but
-absent from the catalogue (or the reverse) is an error to fix by hand, not auto-filled.
+Which area a task belongs to is decided in AREAS: a task present in the data but absent
+from AREAS (or the reverse) is an error to fix there, not auto-filled.
 
   python scripts/dataset_card.py stats              # scan the Hub -> stats.json
   python scripts/dataset_card.py render [--check]   # stats.json -> README.md
@@ -28,7 +29,6 @@ ROOT = Path(__file__).resolve().parents[1] / "datasets"
 ORG = "reasoning-core"
 STAT = re.compile(r"(<!-- stat:(\w+) -->)(.*?)(<!-- /stat -->)")
 ROW = re.compile(r"^(- \*\*(?P<area>[^*]+)\*\* · )(?P<n>\d+)(: )(?P<tasks>.*?)()$", re.M)
-TASK = re.compile(r"`([^`]+)`")
 SIZE_BUCKETS = [(1e3, "n<1K"), (1e4, "1K<n<10K"), (1e5, "10K<n<100K"), (1e6, "100K<n<1M"),
                 (1e7, "1M<n<10M"), (1e8, "10M<n<100M"), (1e9, "100M<n<1B"), (float("inf"), "n>1B")]
 
@@ -94,19 +94,21 @@ def render(text, stats):
         raise SystemExit(f"unknown stat markers: {sorted(unknown)}")
     body = STAT.sub(lambda s: f"{s[1]}{values[s[2]]}{s[4]}", body)
 
-    listed = Counter(t for row in ROW.finditer(body) for t in TASK.findall(row["tasks"]))
+    from reasoning_core.registry import AREAS
+    rows = list(ROW.finditer(body))
+    if not rows:
+        raise SystemExit("no `- **Area** · N: ...` catalogue lines found")
+    listed = {task for tasks in AREAS.values() for task in tasks}
     problems = []
-    if not listed:
-        problems.append("no `- **Area** · N: ...` catalogue lines found")
-    if dup := sorted(t for t, c in listed.items() if c > 1):
-        problems.append(f"listed more than once: {dup}")
-    if missing := sorted(set(stats["tasks"]) - set(listed)):
-        problems.append(f"in the data but not in the catalogue (assign an area): {missing}")
-    if stale := sorted(set(listed) - set(stats["tasks"])):
-        problems.append(f"in the catalogue but not in the data (remove): {stale}")
+    if missing := sorted(set(stats["tasks"]) - listed):
+        problems.append(f"in the data but in no area of registry.AREAS: {missing}")
+    if stale := sorted(listed - set(stats["tasks"])):
+        problems.append(f"in registry.AREAS but not in the data: {stale}")
     if problems:
         raise SystemExit("task catalogue out of sync:\n  " + "\n  ".join(problems))
-    body = ROW.sub(lambda r: f"{r[1]}{len(TASK.findall(r['tasks']))}{r[4]}{r['tasks']}{r[6]}", body)
+    catalogue = "\n".join(f"- **{area}** · {len(tasks)}: " + ", ".join(f"`{t}`" for t in tasks)
+                          for area, tasks in AREAS.items())
+    body = body[:rows[0].start()] + catalogue + body[rows[-1].end():]
 
     front = yaml.safe_dump(meta, sort_keys=False, allow_unicode=True, width=1000)
     return f"---\n{front}---\n{body}"

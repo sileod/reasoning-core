@@ -18,3 +18,12 @@ def test_registered_tasks_match_manifest():
     assert actual == expected, (
         f"unexpected tasks: {sorted(actual - expected)}; "
         f"missing tasks: {sorted(expected - actual)}")
+
+
+def test_every_roster_task_has_one_area():
+    from reasoning_core.registry import AREAS
+    listed = [task for tasks in AREAS.values() for task in tasks]
+    assert len(listed) == len(set(listed)), "a task is listed in two areas"
+    roster = set(reasoning_core.list_tasks())
+    assert set(listed) == roster, (
+        f"no area: {sorted(roster - set(listed))}; not in the roster: {sorted(set(listed) - roster)}")

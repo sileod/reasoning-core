@@ -48,6 +48,33 @@ RETIRED = {
 }
 
 
+# Capability areas of the shipped roster, in display order: the dataset card's task catalogue is
+# rendered from this (scripts/dataset_card.py), and tests check it covers list_tasks() exactly once.
+AREAS = {
+    "Logic & deduction": (
+        "logic_qa", "multistep_nli", "multistep_abduction", "multistep_evidence_retrieval",
+        "defeasible_nli", "logic_derivation", "unification_entailment", "rewrite_system",
+        "lambda_reduction", "metamath_core_select", "metamath_entailment", "analogical_case_matching"),
+    "State tracking & execution": (
+        "process_inversion", "systems_trace", "belief_tracking", "reference_tracking", "rule_switching",
+        "finite_automaton_execution", "shift_reduce_parsing", "controlled_code_execution",
+        "code_runnability", "code_analysis", "dynamic_programming"),
+    "Mathematics": (
+        "math_word_problem", "inverse_math", "combinatorics_formula", "equation_system", "arithmetics",
+        "function_manipulation", "sequential_induction"),
+    "Spatial, causal & probabilistic": (
+        "planar_geometry_relations", "constraint_satisfaction", "qualitative_causal_reasoning",
+        "qualitative_reasoning", "grid_navigation", "most_probable_outcome", "most_probable_evidence"),
+    "Formal languages & parsing": (
+        "attribute_grammar", "regex_reasoning", "regex_following", "constrained_continuation",
+        "syntax_error_detection", "parsing_derivation", "string_transduction"),
+    "Graphs, games & planning": (
+        "game_forced_win", "game_best_move", "graph_pathfinding", "graph_successors", "planning",
+        "coreference"),
+    "Sets & tables": (
+        "set_expression", "set_missing_element", "table_qa", "table_equivalence", "table_statistics"),
+}
+
 def register_dataset(name, dataset_cls):
     _REGISTRY[name] = dataset_cls
 
