@@ -8,7 +8,7 @@ Writing one generator does not need the full stack. Light install:
 scripts/install_authoring.sh        # or: pip install -e . --no-deps && pip install -r requirements/task-authoring.txt
 ```
 
-`pip install reasoning-core` is unchanged and still batteries-included; this is the contributor path.
+`pip install 'reasoning-core[gen]'` is the full install (plain `reasoning-core` only scores); this is the contributor path.
 Then run `Task().validate()` before opening a PR -- it is the contract, and a PR that could not run
 it is a PR nobody can review. See "Authoring without the full stack" at the end for details.
 

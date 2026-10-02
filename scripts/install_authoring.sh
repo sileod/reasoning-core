@@ -4,9 +4,9 @@
 #   scripts/install_authoring.sh          # in a clone
 #   scripts/install_authoring.sh --pypi   # no clone: pull the released wheel instead
 #
-# Minimal is deliberately NOT the default install. `pip install reasoning-core` stays
-# batteries-included, because the package is a collection of heterogeneous generators and a user
-# instantiating an arbitrary task should not hit a missing dependency. A `[minimal]` extra cannot
+# Minimal is deliberately NOT the default install. `pip install 'reasoning-core[gen]'` is the full
+# install, because the package is a collection of heterogeneous generators and a user instantiating
+# an arbitrary task should not hit a missing dependency (plain reasoning-core only scores). A `[minimal]` extra cannot
 # express this: extras are ADDITIVE, so reasoning-core[minimal] would install the full stack plus
 # the small list. --no-deps is the only mechanism that actually installs less.
 set -euo pipefail

@@ -11,7 +11,8 @@ Tasks target compact, canonical answers and expose task-native scorers—clean t
 ## Quickstart
 
 ```bash
-uv pip install reasoning-core
+uv pip install "reasoning-core[gen]"   # generate and score
+uv pip install reasoning-core          # score only, e.g. as an RL reward over the procedural pile
 ```
 
 ```python
@@ -26,7 +27,7 @@ assert score_answer(example.answer, example) == 1
 
 ## Everyday workflows
 
-Python 3.10+. From a checkout, use `python -m pip install -e .` or
+Python 3.10+. From a checkout, use `python -m pip install -e '.[gen]'` or
 `bash scripts/install_authoring.sh` for lightweight task authoring.
 
 | I want to… | Start here |

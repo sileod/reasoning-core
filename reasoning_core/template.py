@@ -511,7 +511,11 @@ class Task:
                 )
                 self._remember_answer(problem.answer)
                 return problem
-        return inner()
+        try:
+            return inner()
+        except ModuleNotFoundError as error:  # scoring needs only core deps; generating needs the extra
+            raise ModuleNotFoundError(f"{error}. Generating needs: pip install 'reasoning-core[gen]'",
+                                      name=error.name) from error
 
     def generate_examples(self, **kwargs):
         """Generate one atomic group for balanced batching."""

@@ -190,5 +190,7 @@ def load_tokenizer():
 
     try:
         return _tiktoken().get_encoding("o200k_base")
-    except Exception:
+    except Exception as error:
+        warnings.warn(f"tiktoken o200k_base unavailable ({error!r}): max_tokens now counts words, which "
+                      "changes which examples are kept. Install reasoning-core[gen].", stacklevel=2)
         return WhitespaceTokenizer()

@@ -115,7 +115,7 @@ The [task gallery](https://github.com/sileod/reasoning_core/blob/main/GALLERY.md
 
 ## Beyond SFT
 
-Each row carries what its task's verifier needs, so the same data can serve as a reward source for RL with `reasoning_core.score_answer(completion, row)`. Fresh problems at any difficulty come from the [Reasoning Core](https://github.com/sileod/reasoning_core) library (`pip install reasoning-core`).
+Each row carries what its task's verifier needs, so the same data can serve as a reward source for RL with `reasoning_core.score_answer(completion, row)`. Fresh problems at any difficulty come from the [Reasoning Core](https://github.com/sileod/reasoning_core) library (`pip install "reasoning-core[gen]"`; plain `reasoning-core` is enough to score).
 
 ## Citation
 

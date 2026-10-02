@@ -7,7 +7,7 @@ environment keeps authoring dependencies separate from the training stack:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e .
+python -m pip install -e '.[gen]'   # drop [gen] to only score
 ```
 
 For lightweight authoring only, use `bash scripts/install_authoring.sh` instead of

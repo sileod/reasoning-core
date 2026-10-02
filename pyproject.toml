@@ -15,50 +15,42 @@ dependencies = [
     "faker",
     "inflection",
     "rapidfuzz",
-    "unified-planning[pyperplan]",
-    "tarski",
-    "tiktoken",
     "networkx",
     "z3-solver>=4.15.8",  # math_minimal_premises needs a fix first released in 4.15.8
-    "pooch",
     "requests",
-    "beautifulsoup4",
     "easydict",
     "appdirs",
     "regex",
     "greenery",
     "tqdm",
-    "timeoutcontext",
     "pandas",
     "pyyaml",
     "tabulate",
     "duckdb",
     "funcy",
     "multiprocess",
-    "xpflow",
     "exrex",
     "nltk",
-    "wordfreq",
-    "pgmpy",
-    "unification",
-    "toolz",
     "numpy",
     "sympy",
     "pyparsing",
-    "whatthepatch",
-    "lazy_object_proxy",
     "udocker",
     "wrapt",
     "psutil",
-    "nfsdict",
     "xxhash",
     "problog",
     "inflect",
     "babel",
-    "lark",
 ]
 
 [project.optional-dependencies]
+# Generating new problems; the core list is what scoring needs (tests/integrations/test_rl_envs.py
+# scores every pile task without these). tiktoken sets the exact max_tokens filter (without it
+# lengths are counted in words, which changes which examples are kept); nfsdict backs the
+# validation cache and collection; pgmpy, lark, wordfreq serve off-roster tasks; pooch is needed by
+# gramforge's TPTP solver, which does not declare it. game_best_move and
+# game_forced_win also need pyggp, which is git-only: pip install "pyggp @ git+https://github.com/Entze/pyggp"
+gen = ["tiktoken", "nfsdict", "pgmpy", "lark", "wordfreq", "pooch"]
 prime = ["prime", "verifiers"]
 reasoning_gym = ["reasoning_gym"]
 training = ["torch", "transformers", "datasets", "trl", "safetensors", "prodigyplus"]
