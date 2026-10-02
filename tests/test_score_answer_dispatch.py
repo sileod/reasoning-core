@@ -27,3 +27,14 @@ def test_regression_proxy_really_rejects_deepcopy():
 
     with pytest.raises(NotImplementedError):
         copy.deepcopy(NoDeepcopy())
+
+
+@pytest.mark.parametrize("task", __import__("reasoning_core").list_tasks())
+def test_dispatched_scorer_never_touches_self(task):
+    # dispatch scores with a self stub; a wrong answer reaching super() used to raise here
+    try:
+        score_answer("reajrjrje9595!", edict(answer="x", metadata={"_task": task}))
+    except RuntimeError as error:
+        assert "should not use self" not in str(error), task
+    except Exception:
+        pass  # the toy entry lacks task metadata; only self-use matters here

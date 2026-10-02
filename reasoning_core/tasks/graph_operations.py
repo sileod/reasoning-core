@@ -285,16 +285,14 @@ class GraphPathfinding(BaseGraphTask, Task):
 
     def score_answer(self, answer, entry):
             text = str(answer).strip()
-            if "none" in text.lower():
-                pred = None
-            else:
-                pred = parse_space_ints(text)
-
             meta = entry.metadata
             opt = meta.get("optimal_cost")
             legacy_opt_len = meta.get("optimal_length")
             target = opt if opt is not None else legacy_opt_len
-            if pred is None: return 1.0 if target is None else 0.0
+            if text.lower().strip(" .") == "none":
+                return 1.0 if target is None else 0.0
+            pred = parse_space_ints(text)  # unparsable is wrong, not "None": garbage used to earn 1 on no-path rows
+            if pred is None: return 0.0
             if not isinstance(pred, list) or not pred: return 0.0
 
             th = lambda x: tuple(x) if isinstance(x, list) else x

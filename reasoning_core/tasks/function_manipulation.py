@@ -530,7 +530,7 @@ def _safe_polynomial(text):
         return None
     try:
         tree = ast.parse(text, mode="eval")
-    except SyntaxError:
+    except (SyntaxError, ValueError):  # ValueError: null bytes
         return None
 
     def visit(node):

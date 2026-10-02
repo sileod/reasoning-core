@@ -8,10 +8,6 @@ from typing_extensions import Self as _TypingSelf
 if not hasattr(typing, "Self"):
     typing.Self = _TypingSelf
 
-from pyggp import game_description_language as gdl
-from pyggp.engine_primitives import Turn
-from pyggp.interpreters import ClingoInterpreter, Interpreter
-
 from reasoning_core.template import Config, Entry, Task, edict, stochastic_rounding as sround
 
 
@@ -156,6 +152,9 @@ class _SmallGraphGame:
         )
 
     def _solve(self, interpreter, role, state):
+        from pyggp.engine_primitives import Turn
+        from pyggp.interpreters import Interpreter
+
         @lru_cache(maxsize=None)
         def value(state):
             if interpreter.is_terminal(state):
@@ -172,6 +171,10 @@ class _SmallGraphGame:
         return min(move for score, move in options if score == best_score), best_score, {move: score for score, move in options}
 
     def _sample_position(self, attempts=80):
+        # pyggp is generation-only: it is git-only with pins that clash with RL stacks, and scoring needs none
+        from pyggp import game_description_language as gdl
+        from pyggp.interpreters import ClingoInterpreter
+
         for _ in range(attempts):
             edges = self._sample_dag()
             leaves = [i for i, outs in edges.items() if not outs]

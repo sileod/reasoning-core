@@ -328,7 +328,8 @@ class Task:
         from reasoning_core import score_answer as dispatch_score
         wire = edict({**x.to_dict(), "metadata": json.dumps(dict(x.metadata))})
         assert dispatch_score(x.answer, wire) == 1, "score_answer must survive JSON metadata dispatch"
-        
+        assert dispatch_score('reajrjrje9595!\x00', wire) < 1, "dispatched score_answer must not use self (e.g. super())"
+
         self.score_answer('reajrjrje9595!',x) # should not error out
         self.score_answer('',x) # should not error out
         self.score_answer('import fakemodule',x) # should not eval strings 

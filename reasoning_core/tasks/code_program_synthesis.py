@@ -528,7 +528,7 @@ class ProgramSynthesis(DevTask):  # parked: last of 53 on v8_tiny (ext +0.8, mar
         try:
             tree = ast.parse(expr, mode="eval")
             target_tree = ast.parse(entry.metadata["solution_expr"], mode="eval")
-        except SyntaxError:
+        except (SyntaxError, ValueError):
             return 0.0
         if ast.dump(tree, include_attributes=False) == ast.dump(target_tree, include_attributes=False):
             return 1.0
@@ -647,7 +647,7 @@ def _extract_return_expr(answer: str) -> str | None:
         return match.group(1).strip()
     try:
         mod = ast.parse(candidate)
-    except SyntaxError:
+    except (SyntaxError, ValueError):  # ValueError: null bytes
         return candidate
     if len(mod.body) == 1 and isinstance(mod.body[0], ast.FunctionDef):
         fn = mod.body[0]

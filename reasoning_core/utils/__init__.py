@@ -19,6 +19,8 @@ def score_scalar(answer, entry, k=10.0):
         submitted = float(str(answer).split('=')[-1].strip().rstrip('.'))
     except (ValueError, TypeError):
         return 0.0
+    if not math.isfinite(submitted):  # "nan" would otherwise yield a NaN reward
+        return 0.0
 
     # Unified error: abs_err / (abs_ref + 1).
     normalized_error = abs(submitted - reference) / (abs(reference) + 1.0)

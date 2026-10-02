@@ -120,7 +120,7 @@ class ControlledCodeExecution(Task):
             b = ast.literal_eval(str(entry.answer).strip())
             return float(a == b)
         except Exception:
-            return super().score_answer(answer, entry)
+            return Task.score_answer(self, answer, entry)  # super() would touch self
 
     def balancing_key(self, problem):
         return tuple(problem.metadata.phenomena[:2])

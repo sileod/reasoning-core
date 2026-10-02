@@ -111,7 +111,7 @@ class FixpointIteration(Task):
             b = ast.literal_eval(str(entry.answer).strip())
             return float(set(a) == set(b))
         except Exception:
-            return super().score_answer(answer, entry)
+            return Task.score_answer(self, answer, entry)  # super() would touch self
 
     def balancing_key(self, problem):
         return min(4, problem.metadata.passes), problem.metadata.target
