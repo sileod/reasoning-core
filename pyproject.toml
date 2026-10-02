@@ -19,7 +19,7 @@ dependencies = [
     "tarski",
     "tiktoken",
     "networkx",
-    "z3-solver",
+    "z3-solver>=4.15.8",  # math_minimal_premises needs a fix first released in 4.15.8
     "pooch",
     "requests",
     "beautifulsoup4",
@@ -64,8 +64,6 @@ reasoning_gym = ["reasoning_gym"]
 training = ["torch", "transformers", "datasets", "trl", "safetensors", "prodigyplus"]
 eval = ["litlm"]
 collection = ["huggingface-hub", "pyarrow"]
-# math_minimal_premises (dev task) needs a z3 fix first released in 4.15.8; the roster runs on any z3
-math = ["z3-solver>=4.15.8"]
 
 [tool.hatch.version]
 path = "reasoning_core/__init__.py"
