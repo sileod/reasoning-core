@@ -369,15 +369,23 @@ def score_answer(answer, entry):
         entry.metadata = json.loads(entry.metadata)
     task_name = (entry.get("metadata", {}).get("_task") or entry.get("task")
                  or entry.get("metadata", {}).get("task"))
-    if task_name == "rg":
+    if task_name != "rg":
         try:
-            from reasoning_gym import get_score_answer_fn as reasoning_gym_scorer
-        except ImportError:
-            raise RuntimeError(
-                "reasoning_gym is not installed; install it with: pip install reasoning_gym"
-            )
-        return reasoning_gym_scorer(entry["metadata"]["source_dataset"])(answer, entry)
-    return get_score_answer_fn(task_name)(answer, entry)
+            scorer = get_score_answer_fn(task_name)
+        except ValueError:
+            # reasoning-gym rows carry their own task name ("ab", ...) plus source_dataset
+            if "source_dataset" not in entry.get("metadata", {}):
+                raise
+            task_name = "rg"
+        else:
+            return scorer(answer, entry)
+    try:
+        from reasoning_gym import get_score_answer_fn as reasoning_gym_scorer
+    except ImportError:
+        raise RuntimeError(
+            "reasoning_gym is not installed; install it with: pip install reasoning_gym"
+        )
+    return reasoning_gym_scorer(entry["metadata"]["source_dataset"])(answer, entry)
 
 
 def register_to_reasoning_gym(task_names=None):
