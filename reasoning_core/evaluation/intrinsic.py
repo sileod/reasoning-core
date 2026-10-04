@@ -1,5 +1,7 @@
 import hashlib
 import json
+import signal
+import threading
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 
@@ -11,6 +13,9 @@ from reasoning_core.template import Entry
 
 
 REWARD_VERSION = 2
+# CPU seconds one native score may take. A scorer that never returns on a malformed prediction
+# (inverse_math's normalize loops forever on an unclosed "\\frac{") stalled whole jobs for 14h.
+SCORE_CPU_LIMIT = 30
 
 
 @dataclass(frozen=True)
@@ -136,9 +141,36 @@ def _native_score(row, prediction):
     try:
         entry = Entry(metadata=metadata, answer=row["answer"])
         entry.prompt = row["prompt"]
-        return float(score_answer(prediction, entry))
+        with _cpu_limit(SCORE_CPU_LIMIT):
+            return float(score_answer(prediction, entry))
     except Exception:
         return None
+
+
+class _ScoreTimeout(Exception):
+    pass
+
+
+class _cpu_limit:
+    """Raise after `seconds` of process CPU time. ITIMER_PROF, not SIGALRM: scorers' own
+    timeout_retry guards end with alarm(0), which would silently cancel an outer alarm."""
+
+    def __init__(self, seconds):
+        self.seconds = seconds if threading.current_thread() is threading.main_thread() else 0
+
+    def __enter__(self):
+        if self.seconds:
+            self.old = signal.signal(signal.SIGPROF, self._raise)
+            signal.setitimer(signal.ITIMER_PROF, self.seconds)
+
+    def __exit__(self, *exc):
+        if self.seconds:
+            signal.setitimer(signal.ITIMER_PROF, 0)
+            signal.signal(signal.SIGPROF, self.old)
+
+    @staticmethod
+    def _raise(*_):
+        raise _ScoreTimeout()
 
 
 def _token_ids(tokenizer, text):
