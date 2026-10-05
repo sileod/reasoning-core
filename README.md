@@ -2,7 +2,7 @@
 
 **Procedural reasoning data for language-model pre-training, post-training, evaluation, and RL.**
 
-Reasoning Core generates verifiable textual tasks across first-order logic, formal mathematics with Lean and TPTP, planning, algorithms, syntax, and more. Use it as a Python library, generate datasets at scale, or plug it into modern reinforcement-learning environments.
+Reasoning Core generates verifiable textual tasks across first-order logic, symbolic mathematics, planning, algorithms, syntax, and more. Use it as a Python library, generate datasets at scale, or plug it into modern reinforcement-learning environments.
 
 More than **10B tokens** of pre-generated data are available in the 🤗 [Reasoning Core dataset collection](https://huggingface.co/collections/reasoning-core/datasets).
 
