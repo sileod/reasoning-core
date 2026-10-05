@@ -122,6 +122,7 @@ sync_results.sh
 task_diagnostics/
 
 # Machine-specific notes; not part of the package.
+/LOCAL_AGENT.md
 docs/GRID5000.md
 reasoning_core/task_search/README.providers.private.md
 # Internal tooling plus its build/ outputs. Machine-specific; keep the whole directory out.

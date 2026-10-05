@@ -1,5 +1,6 @@
 # Agent Notes
 
+- If `LOCAL_AGENT.md` exists, read it for workspace-specific instructions. It is local and untracked.
 - Start with `TASK_AUTHORING_GUIDE.md` before adding or changing tasks. It explains the expected `Task`/`DevTask` shape, canonical answers, scoring, validation, and dataset hygiene.
 - Use `GALLERY.md` for concrete examples of prompt/answer style. Keep new tasks similarly short, unambiguous, and easy to score.
 - Prefer `Task` only for stable core datasets. Use `DevTask` for deprecated datasets.
