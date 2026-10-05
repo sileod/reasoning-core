@@ -48,12 +48,11 @@ task rows before and after training.
 
 ## Which protocol
 
-The private research CLI `task_diagnostics.collection_influence` fills any knob you
-do not pass from a named protocol (`--protocol`). It lives in a separate checkout
-and is not installed by this package or included in a fresh clone. The public API
-is `run_influence()`; the linked smoke example runs without that private checkout.
-See [cluster run checks](workflows.md#cluster-research-runs) before using the
-private CLI on Grid'5000.
+The table below describes two reference configurations used for influence
+measurements. With the public `run_influence()` API, specify these settings
+explicitly in the arm plans; protocol names do not configure the API. The
+[offline smoke example](workflows.md#run-a-paired-influence-smoke) shows the
+required model, data, evaluation, and arm setup.
 
 | | rg75 *(default)* | std |
 |---|---|---|
