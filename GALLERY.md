@@ -1,8 +1,8 @@
 # 📖 Task Gallery
 
-65 tasks
+55 tasks
 
-[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`combinatorics_formula`](#combinatorics_formula) · [`function_manipulation`](#function_manipulation) · [`lean_missing_line`](#lean_missing_line) · [`lean_candidate_compilation`](#lean_candidate_compilation) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`unification_entailment`](#unification_entailment) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`multistep_nli`](#multistep_nli) · [`defeasible_nli`](#defeasible_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`logic_derivation`](#logic_derivation) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`grid_navigation`](#grid_navigation) · [`reference_tracking`](#reference_tracking) · [`belief_tracking`](#belief_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`regex_following`](#regex_following) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_matching`](#analogical_case_matching) · [`parsing_derivation`](#parsing_derivation) · [`syntax_error_detection`](#syntax_error_detection) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_equivalence`](#table_equivalence) · [`table_statistics`](#table_statistics) · [`string_transduction`](#string_transduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win) · [`qualitative_causal_reasoning`](#qualitative_causal_reasoning) · [`code_analysis`](#code_analysis) · [`code_runnability`](#code_runnability) · [`code_execution`](#code_execution) · [`program_synthesis`](#program_synthesis) · [`backtracking_search`](#backtracking_search) · [`boolean_propagation_search`](#boolean_propagation_search) · [`controlled_code_execution`](#controlled_code_execution) · [`dynamic_programming`](#dynamic_programming) · [`fixpoint_iteration`](#fixpoint_iteration) · [`matrix_induction`](#matrix_induction) · [`pattern_induction`](#pattern_induction) · [`schema_bound_query`](#schema_bound_query) · [`conditional_response_contract`](#conditional_response_contract) · [`protected_span_transformation`](#protected_span_transformation) · [`rule_switching`](#rule_switching) · [`shift_reduce_parsing`](#shift_reduce_parsing) · [`spatial_folding`](#spatial_folding) · [`typed_relation_extraction`](#typed_relation_extraction) · [`variable_elimination`](#variable_elimination)
+[`arithmetics`](#arithmetics) · [`math_word_problem`](#math_word_problem) · [`equation_system`](#equation_system) · [`combinatorics_formula`](#combinatorics_formula) · [`function_manipulation`](#function_manipulation) · [`planar_geometry_relations`](#planar_geometry_relations) · [`metamath_entailment`](#metamath_entailment) · [`metamath_core_select`](#metamath_core_select) · [`lambda_reduction`](#lambda_reduction) · [`rewrite_system`](#rewrite_system) · [`unification_entailment`](#unification_entailment) · [`most_probable_evidence`](#most_probable_evidence) · [`most_probable_outcome`](#most_probable_outcome) · [`multistep_nli`](#multistep_nli) · [`defeasible_nli`](#defeasible_nli) · [`multistep_evidence_retrieval`](#multistep_evidence_retrieval) · [`multistep_abduction`](#multistep_abduction) · [`logic_qa`](#logic_qa) · [`logic_derivation`](#logic_derivation) · [`planning`](#planning) · [`set_missing_element`](#set_missing_element) · [`set_expression`](#set_expression) · [`sequential_induction`](#sequential_induction) · [`qualitative_reasoning`](#qualitative_reasoning) · [`grid_navigation`](#grid_navigation) · [`reference_tracking`](#reference_tracking) · [`belief_tracking`](#belief_tracking) · [`coreference`](#coreference) · [`constraint_satisfaction`](#constraint_satisfaction) · [`graph_pathfinding`](#graph_pathfinding) · [`graph_successors`](#graph_successors) · [`regex_following`](#regex_following) · [`regex_reasoning`](#regex_reasoning) · [`analogical_case_matching`](#analogical_case_matching) · [`parsing_derivation`](#parsing_derivation) · [`syntax_error_detection`](#syntax_error_detection) · [`constrained_continuation`](#constrained_continuation) · [`table_qa`](#table_qa) · [`table_equivalence`](#table_equivalence) · [`table_statistics`](#table_statistics) · [`string_transduction`](#string_transduction) · [`game_best_move`](#game_best_move) · [`game_forced_win`](#game_forced_win) · [`qualitative_causal_reasoning`](#qualitative_causal_reasoning) · [`code_analysis`](#code_analysis) · [`code_runnability`](#code_runnability) · [`attribute_grammar`](#attribute_grammar) · [`inverse_math`](#inverse_math) · [`process_inversion`](#process_inversion) · [`systems_trace`](#systems_trace) · [`controlled_code_execution`](#controlled_code_execution) · [`dynamic_programming`](#dynamic_programming) · [`rule_switching`](#rule_switching) · [`shift_reduce_parsing`](#shift_reduce_parsing) · [`finite_automaton_execution`](#finite_automaton_execution)
 
 ---
 
@@ -110,70 +110,6 @@ The answer is a reduced rational number.
 **Answer:**
 ```
 2
-```
-
----
-
-## [lean_missing_line](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
-
-<!-- behavior-hash: a2189324940e2d23 -->
-
-Complete a Lean proof with a uniquely valid constrained proof line.
-
-**Prompt:**
-```
-Fill `__ANSWER__` with a Lean proof line. Mathlib is imported.
-
-THEOREM:
-theorem ex (s t u : Finset Nat) : s ∩ (t ∪ u) = (s ∩ t) ∪ (s ∩ u) := by
-  __ANSWER__
-
-The answer must have the form:
-simpa using inf_sup_left s X1 X2
-where:
-X1 := s | t | u
-X2 := s | t | u
-Answer with the complete Lean line.
-```
-
-**Answer:**
-```
-simpa using inf_sup_left s t u
-```
-
----
-
-## [lean_candidate_compilation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/math_lean.py)
-
-<!-- behavior-hash: a2189324940e2d23 -->
-
-Choose which complete Lean tactic body closes a theorem.
-
-**Prompt:**
-```
-Which Lean 4 tactic body closes the theorem? Exactly one does.
-The answer is A or B.
-
-THEOREM:
-theorem ex (a b c d : Nat) (h0 : a ∣ b) (h1 : b ∣ c) (h2 : c ∣ d) (junk0 : b ∣ d) : a ∣ d := by
-  ?
-
-A:
-have step1 : a ∣ b := h0
-have step2 : a ∣ c := dvd_trans step1 h0
-have step3 : a ∣ d := dvd_trans step2 h2
-exact step3
-
-B:
-have step1 : a ∣ b := h0
-have step2 : a ∣ c := dvd_trans step1 h1
-have step3 : a ∣ d := dvd_trans step2 h2
-exact step3
-```
-
-**Answer:**
-```
-B
 ```
 
 ---
@@ -1363,117 +1299,93 @@ OK
 
 ---
 
-## [code_execution](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_execution.py)
+## [attribute_grammar](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/dev/attribute_grammar.py)
 
-<!-- behavior-hash: 9a2062859a1b2a7b -->
+<!-- behavior-hash: 534572a79271f83d -->
 
-Predict the return value or stdout of executing generated Python code blocks.
+Evaluate a parse tree under an attribute grammar with two inherited attributes, an integer offset and a scoped variable environment with shadowing, over integer or string values; report the synthesized value of the root or of a marked inner node.
 
 **Prompt:**
-````
-Predict the value returned by this Python call.
-```python
-def endpoint(arg1, arg2):
-    seq6 = [arg1, arg2 // arg2, arg2, 3 + arg1, arg2, arg1]
-    acc7 = len(seq6) * -3
-    try:
-        acc7 += seq6.index(acc7)
-    except ValueError:
-        acc7 -= len(seq6)
-    ref9 = seq6
-    ref9[0] += -2
-    acc7 += seq6[0]
-    i8 = 0
-    while i8 < 2:
-        acc7 += len(seq6)
-        i8 += 1
-    acc7 += ref9.index(ref9[1])
-    return acc7
-
 ```
-Call: `endpoint(-4, 2)`
-The answer is the exact Python `repr` of the returned value.
-````
+A parse tree is evaluated with an attribute grammar over integer values. Two attributes are inherited (passed down): ctx, an integer that is 0 at the root, and env, a mapping from variable names to values that is empty at the root. One attribute is synthesized (passed up): the node's value. Rules:
+- N(v): a leaf whose value is v + ctx.
+- add/sub/mul(L, R): both children inherit ctx and env; the value is L + R, L - R or L * R.
+- env(k, T): T inherits ctx + k; the value is T's value.
+- let(x, E, T): E is evaluated with the current ctx and env; T inherits the current ctx and env extended with x bound to E's value (an inner let of the same name shadows the outer one); the value is T's value.
+- V(x): the value bound to x in the inherited env (ctx does not apply).
+
+Tree:
+    add(let(y, N(8), N(0)), env(-3, N(0)))
+
+What is the synthesized value of the root? Give only the value.
+```
 
 **Answer:**
 ```
--17
+-3
 ```
 
 ---
 
-## [program_synthesis](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/code_program_synthesis.py)
+## [inverse_math](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/dev/math_inverse.py)
 
-<!-- behavior-hash: 199f17d08656bf4f -->
+<!-- behavior-hash: 096405fc6bf8f9f0 -->
+
+Solve inverse problems generated from sampled answers: antiderivatives, complete integer factorizations, real solutions of substituted polynomial equations, closed forms of telescoped sums and linear recurrences, general solutions of first- and second-order ODEs, minima of expanded sums of squares with sum-of-squares proofs or counterexamples, eigenvalues of integer matrices, and ideal-membership cofactors proving polynomial implications.
 
 **Prompt:**
 ```
-Write f(s: str) -> str.
-
-Target: return the minimum-cost StringFrag-v1 expression matching the examples.
-
-Always allowed: s, string literals "", " ", "-", "_", and integer literals 0, 1, 2, 3.
-Allowed operators for this problem:
-- concat: str + str
-- eq_str: str == str
-- not: not bool
-Bounds: strings have length <= 64; integers are between -16 and 64. Use Python string semantics.
-Cost: AST nodes, then operator-count tuple in this global order (concat, substr, replace1, ite, len, find, add, sub, contains, eq_str, lt, not), then source length, then lexicographic source order.
-
-Examples:
-f(' ') = '   '
-f('abc') = '  abc'
-
-Return only:
-def f(s: str) -> str:
-    return <expression>
+Find the minimum value of f = 4*x^2 + 16*x + 29/2 over real x.
+The answer is an exact number.
+Use plain notation, e.g. 3*x^2*exp(x) + log(x)/2.
 ```
 
 **Answer:**
 ```
-def f(s: str) -> str:
-    return (" " + (" " + s))
+-3/2
 ```
 
 ---
 
-## [backtracking_search](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/backtracking_search.py)
+## [process_inversion](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/dev/process_inversion.py)
 
-<!-- behavior-hash: 794eed9f3f6f8c78 -->
+<!-- behavior-hash: 931bd5f6d93c2b97 -->
 
-Find the first finite-domain solution under deterministic backtracking with forward checking.
+Jars of objects go through add, remove, transfer, multiply and divide steps; one start count or one step amount is hidden and the final counts are given; report the count in a named jar right after a named step.
 
 **Prompt:**
 ```
-Variables X1..X5 each range over 1..4.
-Constraints: X1 < X3; X3 != X4; X2 - X3 != 1; X3 + X4 != 5; X3 + X5 != 2; X3 > X4; X1 < X4
-Search variables in order X1,X2,... and values in increasing order. After each assignment, remove from every later domain values that violate a constraint with the new assignment; backtrack immediately if a domain becomes empty.
-What is the first complete solution found? The answer is the space-separated values of X1..Xn.
+Jar A starts with 4 marbles. Then:
+Step 1: 6 marbles were added to jar A.
+Step 2: some marbles were removed from jar A.
+Step 3: the count in jar A was tripled.
+At the end, jar A holds 21.
+How many marbles were in jar A right after step 2? Answer with a number.
 ```
 
 **Answer:**
 ```
-1 1 4 2 1
+7
 ```
 
 ---
 
-## [boolean_propagation_search](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/boolean_propagation_search.py)
+## [systems_trace](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/dev/systems_trace.py)
 
-<!-- behavior-hash: 78cb65ce574c1bb8 -->
+<!-- behavior-hash: 9ab5d3940b779daf -->
 
-Find the canonical first Boolean model under propagation and backtracking.
+Trace a stateful system under explicit rules -- an LRU/FIFO/LFU cache, a token-bucket rate limiter, a binary min-heap, two-phase commit with a coordinator crash, or a half-open interval sweep -- and report a count, the sequence of outputs, or the final state.
 
 **Prompt:**
 ```
-Formula: (x2 or not x3) and (not x5 or x2) and (x5 or not x1) and (not x4 or not x1 or x2) and (x3 or not x4) and (not x5 or not x2) and (x4 or x2 or x1)
-Choose unassigned variables x1,x2,... in order and try False before True. Before each choice, repeatedly assign any value forced by a one-unassigned-literal clause; if several are forced, use the smallest variable first. Backtrack on contradiction.
-What is the first satisfying assignment found? The answer is 5 space-separated T/F values for x1..x5.
+Two-phase commit with a coordinator and participants P1, P2, P3. The coordinator asks each participant to vote: P1 votes yes; P2 votes yes; P3 votes yes. The coordinator decides commit only if every participant votes yes; otherwise it decides abort (a missing vote counts as no). The coordinator sends its decision to P2 in that order and then crashes.
+A participant that votes no or crashed before voting aborts on its own. A participant that voted yes adopts the decision if it receives it; otherwise it is blocked, unless cooperative termination applies: it asks the participants it can reach, and if any of them has aborted on its own or received the decision, it adopts that outcome. A network partition splits the participants into {P1, P2} and {P3}; each can reach only its own group.
+Give the final state of each participant in order as C (committed), A (aborted) or B (blocked), like P1:C P2:B
 ```
 
 **Answer:**
 ```
-F T F F F
+P1:C P2:C P3:B
 ```
 
 ---
@@ -1540,167 +1452,6 @@ B C B C B
 
 ---
 
-## [fixpoint_iteration](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/fixpoint_iteration.py)
-
-<!-- behavior-hash: 51bcd6d4cbb7ab36 -->
-
-Compute a least fixpoint of monotone finite-set propagation rules.
-
-**Prompt:**
-```
-Universe: 0..6. Start: X0={2,4}; X1={}; X2={2,3}; X3={2,3,6}
-Rules: X0 |= shift(X1,+0); X3 |= shift(X1,-2) & {3,4,6}; X3 |= shift(X2,+0) & {3,4,5,6}; X0 |= shift(X3,+2); X2 |= shift(X1,+2); X1 |= shift(X2,+0); X1 |= shift(X3,+2)
-Apply the rules repeatedly in listed order until no set changes. shift(S,d) = {x+d in the universe : x in S}.
-What is X1 at the fixed point? The answer is a sorted set like {0,2,5}.
-```
-
-**Answer:**
-```
-{2,3,4,5,6}
-```
-
----
-
-## [matrix_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/matrix_induction.py)
-
-<!-- behavior-hash: 57ada1dea937871f -->
-
-Infer a missing multi-attribute matrix cell under a certified finite rule family.
-
-**Prompt:**
-```
-Complete the missing cell of the 3x3 matrix. Each attribute is independent and uses one fixed rule for every row and every column. Encode each listed domain by indices 0,1,... in the shown order. For a row or column with encoded values a,b,c, c is obtained from a,b by one of: left=a; right=b; min=min(a,b); max=max(a,b); add+t=(a+b+t) mod k for some t; xor+t=a xor b xor t for some t (xor is used only for power-of-two domain sizes). Different attributes may use different rules.
-Domains:
-- count: 1, 2, 3, 4
-Matrix:
-count=3 | count=4 | count=4
-count=3 | count=1 | count=1
-count=3 | count=1 | ?
-The answer is the missing cell written with exactly the displayed attribute names as name=value pairs.
-```
-
-**Answer:**
-```
-count=1
-```
-
----
-
-## [pattern_induction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/pattern_induction.py)
-
-<!-- behavior-hash: 432c29d6e83dcf99 -->
-
-Infer a shared symbolic sequence rule from examples and predict a uniquely determined continuation.
-
-**Prompt:**
-```
-Infer one shared rule and continue the query.
-Letters are cyclic in this order: A B C D E F.
-Allowed rule family:
-- Interleave m lanes, with m in 1..2. Before repetition, latent positions visit lanes 0,1,...,m-1 cyclically.
-- Lane j has one fixed cyclic step s_j in {+1, -1}. Rows share m and all s_j, but may start from different letters.
-- Direction is either straight, or uses one shared turn period p in {2, 3}. Straight uses occurrence multipliers 0,1,2,...; turn p uses 0,1,...,p,p-1,...,1,0,... periodically.
-- Repeat every emitted letter r times, with r in 1..2. Rows share r and the turn choice.
-Examples:
-1. A F F A E B F -> A A F
-Query: B C A D F
-The answer is the next 2 letters, space-separated.
-```
-
-**Answer:**
-```
-E A
-```
-
----
-
-## [schema_bound_query](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/response_contracts.py)
-
-<!-- behavior-hash: b50cca7bfb835ccc -->
-
-Execute a record query while satisfying a sampled exact nested JSON schema.
-
-**Prompt:**
-```
-Records:
-R1: group=B, value=5
-R2: group=B, value=8
-R3: group=C, value=-2
-R4: group=C, value=0
-R5: group=A, value=-5
-R6: group=A, value=-6
-
-Select records with group=A and value >= -9, preserving input order.
-Answer as JSON matching exactly this schema, with no extra keys or prose:
-{"ids":[string,...],"count":integer,"total":integer}
-```
-
-**Answer:**
-```
-{"ids":["R5","R6"],"count":2,"total":-11}
-```
-
----
-
-## [conditional_response_contract](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/response_contracts.py)
-
-<!-- behavior-hash: b50cca7bfb835ccc -->
-
-Solve a selection problem and execute output transformations whose activation depends on the semantic result.
-
-**Prompt:**
-```
-Records:
-R1: score=9, eligible=yes, group=A, flag=yes
-R2: score=11, eligible=yes, group=C, flag=no
-R3: score=12, eligible=yes, group=A, flag=no
-R4: score=9, eligible=no, group=C, flag=no
-R5: score=9, eligible=yes, group=B, flag=no
-R6: score=0, eligible=no, group=B, flag=yes
-
-Choose the eligible record with the largest score; break ties by lexicographically smallest ID. Start the answer as that ID. Then apply these rules in order to the current answer:
-1. If the winner's score is even, append token EVEN; otherwise do nothing.
-2. If the winner's group is C, prepend token GROUP; otherwise do nothing.
-The answer is the final transformed string and nothing else.
-```
-
-**Answer:**
-```
-R3 EVEN
-```
-
----
-
-## [protected_span_transformation](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/response_contracts.py)
-
-<!-- behavior-hash: b50cca7bfb835ccc -->
-
-Select and transform records while preserving opaque protected spans byte-for-byte.
-
-**Prompt:**
-```
-Items:
-<B00:q-5> value=-8
-<D01:F-8> value=4
-<G02:M-6> value=-8
-<l03:Y-7> value=-2
-<m04:z-7> value=-8
-<d05:S-5> value=-1
-
-Keep exactly the items whose absolute original value is even. For each kept item compute -3*value + 3. Sort kept items by the computed value ascending, then by protected span. Each answer line is PROTECTED_SPAN=COMPUTED_VALUE. Copy every protected span exactly, including case and punctuation.
-```
-
-**Answer:**
-```
-<D01:F-8>=-9
-<l03:Y-7>=9
-<B00:q-5>=27
-<G02:M-6>=27
-<m04:z-7>=27
-```
-
----
-
 ## [rule_switching](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/rule_switching.py)
 
 <!-- behavior-hash: 36cb3d8da189c40b -->
@@ -1762,75 +1513,38 @@ N0 N0 N1
 
 ---
 
-## [spatial_folding](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/spatial_folding.py)
+## [finite_automaton_execution](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/wave0/n04_finite_automaton_execution/n04_finite_automaton_execution.py)
 
-<!-- behavior-hash: 82c53586c052ccc4 -->
+<!-- behavior-hash: bd06a9b30750d3ff -->
 
-Track hole positions while folding and unfolding a square grid.
+Execute nondeterministic finite automata and report active-set size, accepting-state count, or maximum active accepting state.
 
 **Prompt:**
 ```
-A 4x4 square sheet is divided into unit cells. Rows are numbered top-to-bottom and columns left-to-right, starting at 1. After every fold, renumber the visible folded rectangle from its new top-left corner.
-Folds, in order:
-1. fold the top half over the bottom half.
-After all folds the sheet is 2x4. Punch holes through cells: 1,4.
-Unfold the sheet completely. The answer is all punched cells as row,column pairs separated by semicolons, in row-major order.
+States:
+states 0..4, start state 3, accepting states {0, 1}
+
+Alphabet:
+{a, b}
+
+Transitions:
+state 0: on a -> {4}; on b -> {2}
+state 1: on a -> {0, 1}; on b -> {4}
+state 2: on a -> {0, 2}; on b -> {1, 4}
+state 3: on a -> {1}; on b -> {2}
+state 4: on a -> {0, 3}; on b -> {0, 1}
+
+Word:
+the input word is 'aaabb' (length 5)
+
+Compute the largest accepting state that is active after reading the entire input word 'aaabb'.
+
+The answer is a single state number (integer).
 ```
 
 **Answer:**
 ```
-2,4; 3,4
-```
-
----
-
-## [typed_relation_extraction](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/structured_extraction.py)
-
-<!-- behavior-hash: f597e57e2e8902b6 -->
-
-Extract the complete set of typed relations with sentence provenance while ignoring negated and irrelevant statements.
-
-**Prompt:**
-```
-Statements:
-1. Dara is visited by Cleo.
-2. Fara supports Dara.
-3. Fara does not precede Cleo.
-4. Dara precedes Fara.
-5. Enzo supports Cleo.
-6. Ivo manages Fara.
-7. Dara supports Enzo.
-
-Extract every affirmative supports, manages, and precedes relation. Interpret reversed wording semantically. Ignore negated statements and all other relation types. The answer is a JSON array in evidence-sentence order. Each object has exactly the keys relation, source, target, evidence, where evidence is the sentence number.
-```
-
-**Answer:**
-```
-[{"relation":"supports","source":"Fara","target":"Dara","evidence":2},{"relation":"precedes","source":"Dara","target":"Fara","evidence":4},{"relation":"supports","source":"Enzo","target":"Cleo","evidence":5},{"relation":"manages","source":"Ivo","target":"Fara","evidence":6},{"relation":"supports","source":"Dara","target":"Enzo","evidence":7}]
-```
-
----
-
-## [variable_elimination](https://github.com/sileod/reasoning-core/blob/main/reasoning_core/tasks/generated/variable_elimination.py)
-
-<!-- behavior-hash: 88fdc7c1321f9eb9 -->
-
-Execute deterministic fraction-free elimination and report a compact residual equation.
-
-**Prompt:**
-```
-Equations:
--x2 + 3*x3 - 3*x4 = -7
--5*x1 - 5*x2 - 5*x3 + 3*x4 = 6
--x1 + 2*x2 - 5*x3 = 4
--4*x2 + 2*x3 - x4 = 5
-Eliminate x1, x2 in that order. For each variable, use the first remaining equation with a nonzero coefficient as pivot. For every later row with coefficient b and pivot coefficient a, replace it by a*row - b*pivot; then divide the entire row by the gcd of its integer coefficients and make its first nonzero coefficient positive.
-After these eliminations, what is row 3? The answer is one simplified equation.
-```
-
-**Answer:**
-```
-25*x3 - 48*x4 = -91
+1
 ```
 
 ---

@@ -78,6 +78,39 @@ raw, cloze, and options-omitted legs. They stay separate, reorderable legs. MCQ 
 emit paired `<name>_nll`, `<name>_mc_cloze_acc`, and margin metrics from one scoring
 pass. Record `battery.identifier` in `ArmSpec.eval_ids`.
 
+For science/commonsense transfer and format controls, explicitly select
+`reasoning_core/resources/batteries/transfer_controls_v1.json`. It contains SciQ,
+ARC-Easy, ARC-Challenge, OpenBookQA, CommonsenseQA, COPA, Winogrande, MMLU-other,
+high-school MMLU math, and paired BBH menu/no-menu legs. Candidates are scored as
+answer text, rather than option letters. The eight science/commonsense prompts
+omit option menus. BBH pairs use the same questions, ordered candidates, and gold
+indices, restricted to prompts where the menu actually changes: 220 dev and 100
+test items. `keep` removes five repeated MMLU math rows and two MMLU-other rows
+without rebuilding the frozen source files. This battery has its own identity;
+existing runs and the default battery retain theirs.
+
+Historical names are not sufficient to identify a format control:
+`bbh_*_cloze` still displays the options, whereas `mmlu_math_cloze` already omits
+them. The latter contains high-school mathematics only. `mmlu_math_nomenu` is a
+different 600-item set, with only 50 matching questions and no prompt change on
+those questions. Its aggregate difference from `mmlu_math_cloze` is not a format
+effect. QA-NLL and MCQ legs sharing a file are intentional scoring variants.
+
+Use `scripts/report_format_controls.py` to join saved per-item sidecars and
+measure `(treatment-baseline)_menu - (treatment-baseline)_nomenu` on identical
+items. It verifies frozen battery identity, seed, candidate order, and array
+lengths. For historical full-v8 cells:
+
+```bash
+python scripts/report_format_controls.py per_task_results/*CMPSTD360M*.json \
+    --sidecars-root per_example --output /tmp/format-controls.json
+```
+
+For new control-battery cells, pass `--manifest` with the path above and
+`--pair bbh_dev_menu bbh_dev_nomenu --pair bbh_test_menu bbh_test_nomenu`.
+Intervals describe paired item uncertainty within each seed; they do not measure
+variation across training seeds.
+
 `FreeGenRewardSpec` in `evaluation/intrinsic.py` configures native task reward
 without environment variables. Pass a small reward evaluator as `evaluate_endpoints` to
 `run_influence()` to record the shared initial reward and each arm's final reward,

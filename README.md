@@ -45,31 +45,25 @@ and local checks. Catalogue queries read source metadata without importing tasks
 
 ## Representative example
 
-Reasoning Core includes compilation-checked formal reasoning tasks such as [`lean_candidate_compilation`](GALLERY.md#lean_candidate_compilation):
+[`function_manipulation`](GALLERY.md#function_manipulation) combines symbolic operations with short, exact answers:
 
 **Prompt**
 
 ```text
-Does this Lean 4 tactic body close the theorem?
-The answer is True or False.
-
-THEOREM:
-theorem ex (p2 p4 : Prop) : p2 → (p2 ∨ p4) := by
-  ?
-
-CANDIDATE:
-linarith
+Define h(x) = d/dx (1/x).
+Compute h'(1).
+The answer is a reduced rational number.
 ```
 
-**Answer:** `False`
+**Answer:** `2`
 
-Browse all [65 task examples](GALLERY.md).
+Browse all [55 task examples](GALLERY.md).
 
 ## Task catalogue
 
 [GALLERY](https://github.com/sileod/reasoning-core/blob/main/GALLERY.md) (names link to gallery examples)
 
-[`arithmetics`](GALLERY.md#arithmetics) · [`math_word_problem`](GALLERY.md#math_word_problem) · [`equation_system`](GALLERY.md#equation_system) · [`combinatorics_formula`](GALLERY.md#combinatorics_formula) · [`function_manipulation`](GALLERY.md#function_manipulation) · [`lean_missing_line`](GALLERY.md#lean_missing_line) · [`lean_candidate_compilation`](GALLERY.md#lean_candidate_compilation) · [`planar_geometry_relations`](GALLERY.md#planar_geometry_relations) · [`metamath_entailment`](GALLERY.md#metamath_entailment) · [`metamath_core_select`](GALLERY.md#metamath_core_select) · [`lambda_reduction`](GALLERY.md#lambda_reduction) · [`rewrite_system`](GALLERY.md#rewrite_system) · [`unification_entailment`](GALLERY.md#unification_entailment) · [`most_probable_evidence`](GALLERY.md#most_probable_evidence) · [`most_probable_outcome`](GALLERY.md#most_probable_outcome) · [`multistep_nli`](GALLERY.md#multistep_nli) · [`defeasible_nli`](GALLERY.md#defeasible_nli) · [`multistep_evidence_retrieval`](GALLERY.md#multistep_evidence_retrieval) · [`multistep_abduction`](GALLERY.md#multistep_abduction) · [`logic_qa`](GALLERY.md#logic_qa) · [`logic_derivation`](GALLERY.md#logic_derivation) · [`planning`](GALLERY.md#planning) · [`set_missing_element`](GALLERY.md#set_missing_element) · [`set_expression`](GALLERY.md#set_expression) · [`sequential_induction`](GALLERY.md#sequential_induction) · [`qualitative_reasoning`](GALLERY.md#qualitative_reasoning) · [`grid_navigation`](GALLERY.md#grid_navigation) · [`reference_tracking`](GALLERY.md#reference_tracking) · [`belief_tracking`](GALLERY.md#belief_tracking) · [`coreference`](GALLERY.md#coreference) · [`constraint_satisfaction`](GALLERY.md#constraint_satisfaction) · [`graph_pathfinding`](GALLERY.md#graph_pathfinding) · [`graph_successors`](GALLERY.md#graph_successors) · [`regex_following`](GALLERY.md#regex_following) · [`regex_reasoning`](GALLERY.md#regex_reasoning) · [`analogical_case_matching`](GALLERY.md#analogical_case_matching) · [`parsing_derivation`](GALLERY.md#parsing_derivation) · [`syntax_error_detection`](GALLERY.md#syntax_error_detection) · [`constrained_continuation`](GALLERY.md#constrained_continuation) · [`table_qa`](GALLERY.md#table_qa) · [`table_equivalence`](GALLERY.md#table_equivalence) · [`table_statistics`](GALLERY.md#table_statistics) · [`string_transduction`](GALLERY.md#string_transduction) · [`game_best_move`](GALLERY.md#game_best_move) · [`game_forced_win`](GALLERY.md#game_forced_win) · [`qualitative_causal_reasoning`](GALLERY.md#qualitative_causal_reasoning) · [`code_analysis`](GALLERY.md#code_analysis) · [`code_runnability`](GALLERY.md#code_runnability) · [`code_execution`](GALLERY.md#code_execution) · [`program_synthesis`](GALLERY.md#program_synthesis) · [`backtracking_search`](GALLERY.md#backtracking_search) · [`boolean_propagation_search`](GALLERY.md#boolean_propagation_search) · [`controlled_code_execution`](GALLERY.md#controlled_code_execution) · [`dynamic_programming`](GALLERY.md#dynamic_programming) · [`fixpoint_iteration`](GALLERY.md#fixpoint_iteration) · [`matrix_induction`](GALLERY.md#matrix_induction) · [`pattern_induction`](GALLERY.md#pattern_induction) · [`schema_bound_query`](GALLERY.md#schema_bound_query) · [`conditional_response_contract`](GALLERY.md#conditional_response_contract) · [`protected_span_transformation`](GALLERY.md#protected_span_transformation) · [`rule_switching`](GALLERY.md#rule_switching) · [`shift_reduce_parsing`](GALLERY.md#shift_reduce_parsing) · [`spatial_folding`](GALLERY.md#spatial_folding) · [`typed_relation_extraction`](GALLERY.md#typed_relation_extraction) · [`variable_elimination`](GALLERY.md#variable_elimination)
+[`arithmetics`](GALLERY.md#arithmetics) · [`math_word_problem`](GALLERY.md#math_word_problem) · [`equation_system`](GALLERY.md#equation_system) · [`combinatorics_formula`](GALLERY.md#combinatorics_formula) · [`function_manipulation`](GALLERY.md#function_manipulation) · [`planar_geometry_relations`](GALLERY.md#planar_geometry_relations) · [`metamath_entailment`](GALLERY.md#metamath_entailment) · [`metamath_core_select`](GALLERY.md#metamath_core_select) · [`lambda_reduction`](GALLERY.md#lambda_reduction) · [`rewrite_system`](GALLERY.md#rewrite_system) · [`unification_entailment`](GALLERY.md#unification_entailment) · [`most_probable_evidence`](GALLERY.md#most_probable_evidence) · [`most_probable_outcome`](GALLERY.md#most_probable_outcome) · [`multistep_nli`](GALLERY.md#multistep_nli) · [`defeasible_nli`](GALLERY.md#defeasible_nli) · [`multistep_evidence_retrieval`](GALLERY.md#multistep_evidence_retrieval) · [`multistep_abduction`](GALLERY.md#multistep_abduction) · [`logic_qa`](GALLERY.md#logic_qa) · [`logic_derivation`](GALLERY.md#logic_derivation) · [`planning`](GALLERY.md#planning) · [`set_missing_element`](GALLERY.md#set_missing_element) · [`set_expression`](GALLERY.md#set_expression) · [`sequential_induction`](GALLERY.md#sequential_induction) · [`qualitative_reasoning`](GALLERY.md#qualitative_reasoning) · [`grid_navigation`](GALLERY.md#grid_navigation) · [`reference_tracking`](GALLERY.md#reference_tracking) · [`belief_tracking`](GALLERY.md#belief_tracking) · [`coreference`](GALLERY.md#coreference) · [`constraint_satisfaction`](GALLERY.md#constraint_satisfaction) · [`graph_pathfinding`](GALLERY.md#graph_pathfinding) · [`graph_successors`](GALLERY.md#graph_successors) · [`regex_following`](GALLERY.md#regex_following) · [`regex_reasoning`](GALLERY.md#regex_reasoning) · [`analogical_case_matching`](GALLERY.md#analogical_case_matching) · [`parsing_derivation`](GALLERY.md#parsing_derivation) · [`syntax_error_detection`](GALLERY.md#syntax_error_detection) · [`constrained_continuation`](GALLERY.md#constrained_continuation) · [`table_qa`](GALLERY.md#table_qa) · [`table_equivalence`](GALLERY.md#table_equivalence) · [`table_statistics`](GALLERY.md#table_statistics) · [`string_transduction`](GALLERY.md#string_transduction) · [`game_best_move`](GALLERY.md#game_best_move) · [`game_forced_win`](GALLERY.md#game_forced_win) · [`qualitative_causal_reasoning`](GALLERY.md#qualitative_causal_reasoning) · [`code_analysis`](GALLERY.md#code_analysis) · [`code_runnability`](GALLERY.md#code_runnability) · [`attribute_grammar`](GALLERY.md#attribute_grammar) · [`inverse_math`](GALLERY.md#inverse_math) · [`process_inversion`](GALLERY.md#process_inversion) · [`systems_trace`](GALLERY.md#systems_trace) · [`controlled_code_execution`](GALLERY.md#controlled_code_execution) · [`dynamic_programming`](GALLERY.md#dynamic_programming) · [`rule_switching`](GALLERY.md#rule_switching) · [`shift_reduce_parsing`](GALLERY.md#shift_reduce_parsing) · [`finite_automaton_execution`](GALLERY.md#finite_automaton_execution)
 
 
 ## Task authoring guidelines

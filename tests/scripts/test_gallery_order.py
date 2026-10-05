@@ -8,7 +8,7 @@ def test_gallery_keeps_math_and_logic_tasks_in_their_clusters():
         "equation_system",
         "combinatorics_formula",
         "function_manipulation",
-        "lean_missing_line",
+        "planar_geometry_relations",
         "logic_qa",
         "logic_derivation",
         "planning",
@@ -16,7 +16,7 @@ def test_gallery_keeps_math_and_logic_tasks_in_their_clusters():
 
     assert positions["equation_system"] < positions["combinatorics_formula"]
     assert positions["combinatorics_formula"] < positions["function_manipulation"]
-    assert positions["function_manipulation"] < positions["lean_missing_line"]
+    assert positions["function_manipulation"] < positions["planar_geometry_relations"]
     assert positions["logic_qa"] < positions["logic_derivation"]
     assert positions["logic_derivation"] < positions["planning"]
 
