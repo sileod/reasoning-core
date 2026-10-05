@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build MCQ contrastive eval legs from public NLU datasets (BoolQ, SIQA, WiC, PIQA, ReClor).
+"""Build no-menu, answer-text eval legs from pinned public NLU datasets and MMLU.
 
 These are *contrast* legs, not preference legs: each item is one prompt plus a small fixed choice set
 with exactly one gold, scored by mean token logprob per candidate. That makes them directly comparable
@@ -20,6 +20,8 @@ never reach a battery.
 """
 from __future__ import annotations
 import argparse, json, os, random, re
+from collections import defaultdict
+from itertools import islice, zip_longest
 from pathlib import Path
 
 DC = Path(os.environ.get("EVAL_DATA_DIR", "data_cache"))
@@ -32,12 +34,13 @@ REVISIONS = {
     # the same data as parquet, so it loads under a pinned revision like everything else.
     "baber/piqa": "142f6d7367fd9877f0fb3b5734ea6a545f54cdd1",
     "tasksource/reclor": "0414b39bfc39b2d555b48fa245fc198744c46215",
+    "cais/mmlu": "c30699e8356da336a370243923dbaf21066bb9fe",
 }
 
 
 def _load(name, *args, **kw):
+    rev = REVISIONS[name]
     from datasets import load_dataset
-    rev = REVISIONS.get(name)
     try:
         return load_dataset(name, *args, revision=rev, **kw)
     except Exception as e:
@@ -107,8 +110,39 @@ def build_reclor(n, rng):
                    [o for o in opts if o != gold], rng)
 
 
+def build_mmlu_all_nomenu_cloze(n, rng):
+    """All MMLU subjects, interleaved; candidates are text and never appear as a menu."""
+    unique, conflicts = {}, set()
+    for row in _load("cais/mmlu", "all", split="test"):
+        question = str(row["question"]).strip()
+        choices = [str(c).strip() for c in row["choices"]]
+        index = int(row["answer"])
+        if not 0 <= index < len(choices):
+            raise ValueError("MMLU gold index is outside the candidate list")
+        gold = choices[index]
+        if (not question or not gold or len(choices) < 2
+                or len(set(choices)) != len(choices) or any(not c for c in choices)):
+            continue
+        key = question, tuple(sorted(choices))
+        if key in unique and unique[key][1] != gold:
+            conflicts.add(key)
+        unique.setdefault(key, (row, gold, choices))
+    subjects = defaultdict(list)
+    for key, (row, gold, choices) in unique.items():
+        if key not in conflicts:
+            item = _row(key[0], gold, [c for c in choices if c != gold], rng)
+            item["subject"] = row["subject"]
+            subjects[row["subject"]].append(item)
+    pools = [subjects[name] for name in sorted(subjects)]
+    for pool in pools:
+        rng.shuffle(pool)
+    interleaved = (row for tier in zip_longest(*pools) for row in tier if row is not None)
+    yield from islice(interleaved, n)
+
+
 BUILDERS = {"boolq": build_boolq, "siqa": build_siqa, "wic": build_wic,
-            "piqa": build_piqa, "reclor": build_reclor}
+            "piqa": build_piqa, "reclor": build_reclor,
+            "mmlu_all_nomenu_cloze": build_mmlu_all_nomenu_cloze}
 
 
 def gate1(rows):
@@ -128,21 +162,28 @@ def gate1(rows):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--tasks", nargs="+", default=sorted(BUILDERS))
+    ap.add_argument("--tasks", nargs="+", choices=sorted(BUILDERS), default=sorted(BUILDERS))
     ap.add_argument("--n", type=int, default=600)
     ap.add_argument("--max-prompt-chars", type=int, default=1400,
                     help="drop items whose prompt is too long for the battery's max_length")
     ap.add_argument("--seed", type=int, default=43)
+    ap.add_argument("--output-dir", type=Path, default=DC,
+                    help="Write new legs here; existing files are never overwritten")
     a = ap.parse_args()
-    DC.mkdir(parents=True, exist_ok=True)
+    a.output_dir.mkdir(parents=True, exist_ok=True)
+    for task in a.tasks:
+        out = a.output_dir / f"{task}_eval.jsonl"
+        if out.exists():
+            raise FileExistsError(out)
     for t in a.tasks:
         rng = random.Random(a.seed)
         rows = [r for r in BUILDERS[t](a.n * 2, rng) if r]
         rows = [r for r in rows if len(r["prompt"]) <= a.max_prompt_chars][:a.n]
         if not rows:
             print(f"[build] {t}: NO rows survived; skipped"); continue
-        out = DC / f"{t}_eval.jsonl"
-        out.write_text("".join(json.dumps(r) + "\n" for r in rows))
+        out = a.output_dir / f"{t}_eval.jsonl"
+        with out.open("x") as file:
+            file.write("".join(json.dumps(r) + "\n" for r in rows))
         g = gate1(rows)
         flag = ("  <-- FAILS GATE 1" if g["leak"] > 0.10 or g["shortest_excess_pt"] > 10 else "")
         print(f"[build] {t:<7} n={len(rows):<5} leak={'n/a (binary)' if g['binary'] else format(g['leak'],'.1%')} "

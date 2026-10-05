@@ -89,6 +89,22 @@ test items. `keep` removes five repeated MMLU math rows and two MMLU-other rows
 without rebuilding the frozen source files. This battery has its own identity;
 existing runs and the default battery retain theirs.
 
+For the full requested no-menu, answer-text suite, select
+`reasoning_core/resources/batteries/nomenu_cloze_v1.json` with `data_dir="data_cache"`.
+It includes SciQ, ARC-Easy, ARC-Challenge, BoolQ, CommonsenseQA, HellaSwag,
+OpenBookQA, PIQA, SocialIQA, Winogrande, and all 57 MMLU subjects (18 items per
+subject). Prompts omit option menus; the scorer compares mean token NLL of the
+actual candidate texts. `answer_idx` is internal gold metadata, never the model's
+target. This measures candidate ranking, not generated-answer exact match.
+
+The legs ship in the package and unpack automatically. Existing frozen legs are
+reused; SocialIQA excludes duplicate items and options through `keep`. Full MMLU
+uses a pinned source revision, excludes duplicates and conflicting labels, and
+has its own source file and battery identity. To build a new MMLU source, use
+`scripts/build_contrastive_evals.py --tasks mmlu_all_nomenu_cloze --output-dir NEW_DIR`.
+The builder refuses to overwrite existing files. Keep measured manifests and
+source bytes unchanged; create a new version for subsequent changes.
+
 Historical names are not sufficient to identify a format control:
 `bbh_*_cloze` still displays the options, whereas `mmlu_math_cloze` already omits
 them. The latter contains high-school mathematics only. `mmlu_math_nomenu` is a
