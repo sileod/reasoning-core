@@ -25,3 +25,4 @@
 - `tests/` mirrors the package: `tests/tasks/`, `tests/evaluation/`, `tests/generation/`, `tests/integrations/`, `tests/task_search/`, `tests/scripts/`, with the registry and task-contract tests at the top level. Run the directory matching what you changed.
 - With `pytest` installed, core changes: `python -m pytest -q tests/*.py`. Training changes: `python -m pytest -q tests/evaluation` (training extra required). Search changes: `python -m pytest -q tests/task_search`.
 - Operational artifacts and private checkouts are not source dependencies; use tracked files for shared workflows.
+- For cluster experiments, read [the operational boundary and run checks](docs/workflows.md#cluster-research-runs). `task_diagnostics/` is a separate private checkout, not part of a fresh clone. Never sync the shared deployment while running or queued jobs depend on it; test a forward/backward step on an allocated GPU before launching the full run.

@@ -48,7 +48,12 @@ task rows before and after training.
 
 ## Which protocol
 
-`collection_influence` fills any knob you do not pass from a named protocol (`--protocol`).
+The private research CLI `task_diagnostics.collection_influence` fills any knob you
+do not pass from a named protocol (`--protocol`). It lives in a separate checkout
+and is not installed by this package or included in a fresh clone. The public API
+is `run_influence()`; the linked smoke example runs without that private checkout.
+See [cluster run checks](workflows.md#cluster-research-runs) before using the
+private CLI on Grid'5000.
 
 | | rg75 *(default)* | std |
 |---|---|---|

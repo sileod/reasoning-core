@@ -223,6 +223,46 @@ The script includes all model, tokenizer, dataset factory, evaluation callback, 
 immutable-ID setup. Replace the toy data and model for actual research and follow the
 [influence protocol](influence.md).
 
+## Cluster research runs
+
+The public package owns training, evaluation, and content-addressed arm artifacts.
+Cluster allocation and the research CLI are separate: `task_diagnostics/` is a
+private checkout ignored by this repository, and `g5k.sh` is an external,
+machine-configured helper. Installing the training extra does not install either.
+Use the public smoke above for a fresh clone. For the research workspace, locate
+the Grid'5000 skill and read its `SKILL.md` and helper configuration before running
+its commands. The protocol table in [influence.md](influence.md#which-protocol)
+describes the private CLI's defaults, not defaults applied by the public API.
+
+Before submitting a research run:
+
+1. Record the public and private source revisions, job-script hash, model revision,
+   data IDs, battery ID, seed, and training configuration. Existing battery files
+   and manifests remain immutable; new variants get new files and names.
+2. Check every relevant site's queues. Select a site using current availability
+   and the actual GPU filter and walltime, rather than an old site table. Running,
+   waiting, failed, and completed jobs are different states.
+3. Freeze the code and inputs the job will use. The current helper's `sync` updates
+   a shared deployment in place; do not use it while running or queued jobs depend
+   on that deployment. A dirty checkout refusal must not be bypassed. A new job
+   requiring different code needs a separate deployment or must wait.
+4. On an allocated GPU, load the actual model and run one forward/backward step
+   with the intended dtype, sequence length, and attention implementation. An
+   import check or CPU data preflight cannot validate GPU kernels. Record the
+   GPU and Torch/CUDA/Transformers versions. Then run a short training/evaluation
+   smoke before committing to the full budget.
+5. Run training in the foreground and propagate its exit status. Collect arm
+   artifacts and per-item sidecars, then verify the expected arms and IDs before
+   reporting results. A scheduler state of `Terminated` alone does not establish
+   success. After a submission timeout, check whether the job exists before
+   retrying; after a run failure, inspect both output and error logs.
+
+For example, a SmolLM3 run failed on 2026-10-05 with a cuDNN SDPA execution-plan
+error after passing its data preflight. That is a GPU-runtime failure, not evidence
+about task transfer. Validate a supported attention backend on the allocated GPU
+before retrying, and keep any changed execution settings in the run provenance.
+Do not edit an already submitted script to change its future execution or retries.
+
 ## Run task search
 
 Task search creates new tasks with coding agents. To find an existing task, use
