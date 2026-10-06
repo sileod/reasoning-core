@@ -4,7 +4,8 @@ planar_geometry_relations asks qualitative questions about coordinates (orientat
 which point is closer). This task asks for a measured quantity using school facts: angle sums of
 triangles and polygons, isosceles and exterior angles, regular polygons, Pythagorean triangles,
 perimeters, areas, circles (answers in pi) and volumes. Each fact turns the previous quantity into a
-new one, so a chain of k facts is a k-step problem; level adds steps and widens the numbers.
+new one, so a chain of k facts is a k-step problem. The asked kind of quantity is drawn first, from
+the same distribution at every level; level only adds steps and widens the numbers.
 Answers stay short: integers below 1000, halves, or k*pi with such a k -- never decimals.
 """
 import random
@@ -121,6 +122,9 @@ def _transforms(kind, x, name, rng, scale):
     return out
 
 
+GOALS = ["angle", "count", "length", "area", "pi", "volume"]
+
+
 def _short(x):
     """Token-friendly answer: below 1000, and a whole number or a half."""
     return 0 < x < 1000 and x.denominator <= 2
@@ -160,7 +164,7 @@ def _parse(text):
 
 class GeometryMeasure(DevTask):
     summary = "Chain school geometry facts (angle sums, isosceles and exterior angles, regular polygons, Pythagoras, perimeter, area, circles, volume) to an exact measure."
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or GeometryMeasureConfig())
@@ -168,7 +172,8 @@ class GeometryMeasure(DevTask):
     def generate_entry(self):
         rng, c = random, self.config
         want = max(1, sround(c.steps))
-        for _ in range(200):
+        goal = rng.choice(GOALS)  # drawn before the chain, so level cannot shift what is asked
+        for _ in range(5000):
             sentence, prev, kind, x = _start(rng, c.scale)
             lines, used, steps = [sentence], {prev.split()[-1]}, 0
             while steps < want and kind not in ("pi", "volume"):
@@ -183,8 +188,8 @@ class GeometryMeasure(DevTask):
                 lines.append(text.format(prev=prev))
                 prev, steps = new, steps + 1
                 used.add(name)
-            if steps == want or (steps and kind in ("pi", "volume")):
-                return Entry({"facts": lines, "target": prev, "steps": steps}, _answer(kind, x))
+            if kind == goal and (steps == want or (steps and kind in ("pi", "volume"))):
+                return Entry({"facts": lines, "target": prev, "steps": steps, "kind": kind}, _answer(kind, x))
         raise RuntimeError("geometry_measure: no chain")
 
     def render_prompt(self, m):

@@ -123,7 +123,7 @@ def _fmt_dt(t, with_time):
 
 # ---- questions -----------------------------------------------------------------------------------
 
-def _quantity_problem(rng, want, span):
+def _quantity_problem(rng, want, span, pair=False):
     system = rng.choice(list(SYSTEMS))
     x = _amount(system, rng, span)
     lines = [f"Start with {mixed(system, x)}."]
@@ -131,12 +131,8 @@ def _quantity_problem(rng, want, span):
         text, x = rng.choice(_amount_steps(system, x, rng, span))
         lines.append(f"Then {text}.")
     units = SYSTEMS[system]
-    # Sometimes ask for two adjacent units only (e.g. feet and inches), when that stays a short number.
-    pairs = [i for i in range(len(units) - 1) if x < 1000 * units[i][1] and x % units[i + 1][1] == 0
-             and any(units[j][1] <= x for j in range(i))]
-    if pairs and rng.random() < 0.5:
-        i = rng.choice(pairs)
-        keep = [units[i][0], units[i + 1][0]]
+    if pair:  # the two smallest units, e.g. feet and inches: always expressible, at any level
+        keep = [units[-2][0], units[-1][0]]
         return lines, f"Write the result using only {keep[0]} and {keep[1]}.", mixed(system, x, keep), system
     return lines, "Write the result in mixed units, largest first, omitting zero parts.", mixed(system, x), system
 
@@ -181,7 +177,7 @@ def _difference_problem(rng, want, span):
 class UnitManipulation(DevTask):
     summary = ("Convert, offset, scale and compare quantities in mixed or irregular units: clock time, "
                "durations, calendar dates and weekdays, headings, lengths, mass, volume and money.")
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or UnitManipulationConfig())
@@ -191,7 +187,10 @@ class UnitManipulation(DevTask):
         want = max(1, sround(c.steps))
         maker = rng.choice([_quantity_problem, _quantity_problem, _calendar_problem, _calendar_problem,
                             _heading_problem, _difference_problem])
-        lines, ask, answer, kind = maker(rng, want, c.span)
+        if maker is _quantity_problem:
+            lines, ask, answer, kind = maker(rng, want, c.span, pair=rng.random() < 0.25)
+        else:
+            lines, ask, answer, kind = maker(rng, want, c.span)
         return Entry({"lines": lines, "ask": ask, "kind": kind}, answer)
 
     def render_prompt(self, m):
