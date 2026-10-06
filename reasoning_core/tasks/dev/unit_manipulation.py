@@ -110,7 +110,7 @@ def _datetime_steps(t, rng, span, with_time):
     out.append((f"move forward {months} calendar month{'s' * (months > 1)} (keeping the day, or the "
                 f"month's last day if it is shorter)", t.replace(year=t.year + y, month=m + 1, day=day)))
     if with_time:
-        secs = _amount("duration", rng, span) // 60 * 60
+        secs = max(60, _amount("duration", rng, span) // 60 * 60)
         out.append((f"move forward {mixed('duration', secs)}", t + dt.timedelta(seconds=secs)))
         out.append((f"move back {mixed('duration', secs)}", t - dt.timedelta(seconds=secs)))
     return out
