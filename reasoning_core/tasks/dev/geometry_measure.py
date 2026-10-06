@@ -5,7 +5,7 @@ which point is closer). This task asks for a measured quantity using school fact
 triangles and polygons, isosceles and exterior angles, regular polygons, Pythagorean triangles,
 perimeters, areas, circles (answers in pi) and volumes. Each fact turns the previous quantity into a
 new one, so a chain of k facts is a k-step problem; level adds steps and widens the numbers.
-Answers are exact: integers, fractions, or rational multiples of pi.
+Answers stay short: integers below 1000, halves, or k*pi with such a k -- never decimals.
 """
 import random
 from dataclasses import dataclass
@@ -19,14 +19,10 @@ TRIPLES = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25), (20, 21, 29)]
 NAMES = "ABCDEFGHJKLMNPQRSTUVWXYZ"
 
 
-FAMILIES = {"angles": ("angle", "count"), "measure": ("length", "area", "pi", "volume")}
-
-
 @dataclass
 class GeometryMeasureConfig(Config):
     steps: float = 1
     scale: int = 12
-    family: str = "measure"
 
     def apply_difficulty(self, level):
         self.steps += 0.8 * level
@@ -125,9 +121,14 @@ def _transforms(kind, x, name, rng, scale):
     return out
 
 
-def _start(rng, scale, family):
+def _short(x):
+    """Token-friendly answer: below 1000, and a whole number or a half."""
+    return 0 < x < 1000 and x.denominator <= 2
+
+
+def _start(rng, scale):
     name = rng.choice(NAMES)
-    kind = rng.choice(["angle", "angle", "angle", "count"] if family == "angles" else ["length", "length", "area"])
+    kind = rng.choice(["angle", "angle", "count", "length", "length", "area"])
     if kind == "angle":
         x = F(rng.choice([rng.randint(10, 170), rng.choice([20, 30, 36, 40, 45, 60, 72, 90, 120])]))
         return f"Angle {name} measures {_fmt(x)} degrees.", f"angle {name}", kind, x
@@ -158,7 +159,7 @@ def _parse(text):
 
 
 class GeometryMeasure(DevTask):
-    summary = "Chain school geometry facts (Pythagoras, perimeter, area, circles, volume) to an exact length, area or volume."
+    summary = "Chain school geometry facts (angle sums, isosceles and exterior angles, regular polygons, Pythagoras, perimeter, area, circles, volume) to an exact measure."
     task_version = 1
 
     def __init__(self, config=None):
@@ -166,14 +167,13 @@ class GeometryMeasure(DevTask):
 
     def generate_entry(self):
         rng, c = random, self.config
-        kinds, want = FAMILIES[c.family], max(1, sround(c.steps))
+        want = max(1, sround(c.steps))
         for _ in range(200):
-            sentence, prev, kind, x = _start(rng, c.scale, c.family)
+            sentence, prev, kind, x = _start(rng, c.scale)
             lines, used, steps = [sentence], {prev.split()[-1]}, 0
             while steps < want and kind not in ("pi", "volume"):
                 name = rng.choice([n for n in NAMES if n not in used])
-                options = [o for o in _transforms(kind, x, name, rng, c.scale)
-                           if o[2] in kinds and 0 < o[3] < 10 ** 6]
+                options = [o for o in _transforms(kind, x, name, rng, c.scale) if _short(F(o[3]))]
                 if steps < want - 1:  # pi and volume answers end a chain: keep them for the last step
                     options = [o for o in options if o[2] not in ("pi", "volume")] or options
                 if not options:
@@ -184,12 +184,12 @@ class GeometryMeasure(DevTask):
                 prev, steps = new, steps + 1
                 used.add(name)
             if steps == want or (steps and kind in ("pi", "volume")):
-                return Entry({"facts": lines, "target": prev, "steps": steps, "family": c.family}, _answer(kind, x))
-        raise RuntimeError(f"geometry_{c.family}: no chain")
+                return Entry({"facts": lines, "target": prev, "steps": steps}, _answer(kind, x))
+        raise RuntimeError("geometry_measure: no chain")
 
     def render_prompt(self, m):
         return (" ".join(m["facts"]) + f"\nWhat is {m['target']}?\n"
-                "The answer is an exact number (a fraction if needed, written k*pi when pi appears), without units.")
+                "The answer is a whole number, a half such as 7/2, or k*pi when pi appears; no units.")
 
     def score_answer(self, answer, entry):
         got, gold = _parse(answer), _parse(entry.answer)
@@ -201,10 +201,3 @@ class GeometryMeasure(DevTask):
             return 0.0
 
 
-
-class GeometryAngles(GeometryMeasure):
-    summary = "Chain angle facts (supplementary, isosceles, exterior, triangle and polygon angle sums, regular polygons) to an exact angle or side count."
-    task_version = 1
-
-    def __init__(self, config=None):
-        super().__init__(config=config or GeometryMeasureConfig(family="angles"))
