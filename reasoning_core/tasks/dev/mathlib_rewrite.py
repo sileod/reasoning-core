@@ -3,7 +3,7 @@
 A walk starts from the left-hand side of a random Mathlib equation (its binders become the context)
 and applies random rewrites found by Lean's `rw?` engine. The task gives the start term, the lemmas
 used, in order, and the final term, and asks for the term after an intermediate step: it can be worked
-forward or backward. (Asking for the final term only scored lower; see NOTES.md and git history.)
+forward or backward. (Asking for the final term only scored lower on the influence eval.)
 `rw` is deterministic and every step's pattern matches exactly one subterm, so the answer is unique; it is
 Lean's own pretty-printed term. Steps are given by name; a glossary states the lemmas, mixed with distractors
 that also rewrite the walk's terms, so the skill is composing the rules rather than recalling them.
