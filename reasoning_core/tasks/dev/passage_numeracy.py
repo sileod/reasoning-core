@@ -174,7 +174,7 @@ class PassageNumeracy(DevTask):
     summary = ("Count, total, compare, take the spread of, or find the remainder of numbers stated in a passage "
                "full of distractor numbers -- game logs (yards), stock ledgers (crates), timelines (years), census "
                "breakdowns (percentages, one decimal) -- selected by one or more descriptive conditions.")
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or PassageNumeracyConfig())
@@ -191,7 +191,8 @@ class PassageNumeracy(DevTask):
                              _num(value))
 
     def render_prompt(self, m):
-        return f"{m['passage']}\n{m['question']} Answer with a number."
+        fmt = "a number, at most one decimal, no % sign" if m["family"] == "census" else "an integer"
+        return f"{m['passage']}\n{m['question']} Answer with {fmt}."
 
     def score_answer(self, answer, entry):
         got = re.sub(r"[,%\s]", "", str(answer)).rstrip(".")
