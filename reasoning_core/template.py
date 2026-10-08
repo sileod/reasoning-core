@@ -182,7 +182,9 @@ class Task:
         if "decision" not in metadata:
             raise NotImplementedError("Task subclasses must implement 'render_prompt'")
         payload = metadata.payload
-        state = payload if isinstance(payload, str) else render_payload(payload)
+        flat = isinstance(payload, Mapping) and all(isinstance(v, str) for v in payload.values())
+        state = (payload if isinstance(payload, str) else render_payload(payload) if flat   # nested state: JSON,
+                 else json.dumps(payload, ensure_ascii=False))                                # as Jev reads it
         return f"{state}\n\n{Decision.from_dict(metadata.decision).prompt()}"
 
     def score_answer(self, answer, entry):

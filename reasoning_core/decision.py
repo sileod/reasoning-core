@@ -47,9 +47,14 @@ class Decision(str):
     def prompt(self):
         """The question as a plain model is asked it: the instructions and the exact answer format."""
         q = self.question
+        levels = q["criteria"] if q["type"] == "score" else []
+        plain = all(str(c).split()[0] == str(i) for i, c in enumerate(levels))   # "0", "1", ..., "9 or more"
+        capped = "".join(f" ({i} means {c})" for i, c in enumerate(levels) if plain and str(c) != str(i))
         fmt = ("Answer Yes or No." if q["type"] == "noul" else
-               f"Answer with a number from 0 to {len(q['criteria']) - 1}." if q["type"] == "score" else
-               "Answer with one of: " + ", ".join(q["criteria"]) + ".")
+               f"Answer with a number from 0 to {len(levels) - 1}{capped}." if q["type"] == "score" and plain else
+               "Answer with the level number: " + "; ".join(f"{i} = {str(c).rstrip('.')}" for i, c in
+                                                             enumerate(levels)) + "."
+               if q["type"] == "score" else "Answer with one of: " + ", ".join(q["criteria"]) + ".")
         return f"{q['instructions']}\n{fmt}"
 
     def to_dict(self):

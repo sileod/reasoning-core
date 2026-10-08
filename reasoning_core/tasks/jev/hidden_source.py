@@ -56,7 +56,7 @@ class HiddenSource(Task):
     def __init__(self, config=None):
         super().__init__(config=config or HiddenSourceConfig())
 
-    def generate_entry(self, state_seed=None):
+    def generate_entry(self, state_seed=None, question=None):   # one question: `question` is accepted for the convention
         state_seed = random.randrange(2 ** 32) if state_seed is None else state_seed
         c, rng = self.config, random.Random(state_seed)
         r = lambda x: sround(x, seed=rng.random())   # sizes too come from the state seed, not the global RNG
@@ -94,7 +94,7 @@ class HiddenSource(Task):
             soft[post[0][1]] += round(1 - sum(soft.values()), 4)   # rounding residue on the argmax
             answer = Decision(post[0][1], instructions="Which bag were the marbles drawn from?",
                               criteria=dict.fromkeys(names), soft=soft)
-            return Entry({"payload": state, "state_seed": state_seed, "posterior": {x: str(p) for p, x in post},
+            return Entry({"payload": state, "state_seed": state_seed, "question_id": "source", "posterior": {x: str(p) for p, x in post},
                           "n_bags": len(names), "replace": replace, "n_draws": len(seq)}, answer)
         raise RuntimeError("hidden_source: no instance with a clear most probable bag")
 
