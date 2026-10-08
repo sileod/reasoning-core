@@ -77,10 +77,9 @@ def make_judge(name, purpose="signals"):
         from .judge_llm import LLMJudge
 
         return LLMJudge()
-    if name in ("jev", "kev"):
-        from .judge_jev import JevJudge, KEV_MODEL
+    from .judge_jev import DECIDERS, JevJudge
 
-        # Kev answers the same decisions API; only the model differs.
-        return JevJudge(model=KEV_MODEL if name == "kev" else None)
-    raise ValueError(
-        f"unknown judge backend {name!r} for {purpose}: known backends are llm, jev, kev")
+    if name in DECIDERS:  # every decider answers the same decisions API; only the model differs
+        return JevJudge(model=None if name == "jev" else DECIDERS[name])
+    raise ValueError(f"unknown judge backend {name!r} for {purpose}: known backends are llm, "
+                     + ", ".join(DECIDERS))

@@ -17,6 +17,10 @@ from .judge import abstain, answer, post_json
 ENDPOINT = "https://openrouter.ai/api/alpha/decisions"
 DEFAULT_MODEL = "typesafe/jev-1.13"
 KEV_MODEL = "jaredpalmer/kev-4b"
+# Judge name -> model on the decisions endpoint. A new decider is one line here, then
+# `python -m reasoning_core.evaluation.judge_bench --judges jev,<name>` measures it.
+DECIDERS = {"jev": DEFAULT_MODEL, "kev": KEV_MODEL, "pplx": "perplexity/pplx-decider-v1.1-27b",
+            "luna": "openai/gpt-6-luna-decisions"}
 KEY_VAR = "JEV_OPENROUTER_API_KEY"
 MODEL_VAR = "RC_JEV_MODEL"
 # The key is shared with other OpenRouter use, so its dashboard total cannot say what Jev
