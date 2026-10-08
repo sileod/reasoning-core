@@ -13,7 +13,7 @@ of a rounding boundary (every gold label has a margin on both sides). A percenta
 carries the gist (about how likely), where a reduced fraction like 1506/1675 makes the model commit to bookkeeping digits
 before any sign of the magnitude. One decimal, not an integer: a wrong method (kept-out draws treated as put back) still
 rounds to the right integer 35% of the time but to the right tenth 5% of the time (2% for exact fractions).
-Level adds variables, formula depth, conditioning and the two-stage process.
+Level adds variables, formula depth and size (distinct facts), conditioning and the two-stage process.
 """
 import itertools
 import random
@@ -36,6 +36,7 @@ class OutcomeProbabilityConfig(Config):
     p_observe: float = 0.0
     p_two_stage: float = 0.0
     max_count: float = 4
+    min_atoms: float = 2   # distinct facts across the event and the observation
 
     def apply_difficulty(self, level):
         self.n_vars = min(5, self.n_vars + 0.5 * level)
@@ -43,6 +44,7 @@ class OutcomeProbabilityConfig(Config):
         self.p_observe = min(0.6, 0.12 * level)
         self.p_two_stage = min(0.35, 0.08 * level)
         self.max_count += level
+        self.min_atoms = min(4, self.min_atoms + level / 3)
 
 
 def _draws(colors, counts, back, n):
@@ -218,7 +220,7 @@ class OutcomeProbability(DevTask):
                "random process -- dependent urn draws, independent biased coins and dice, or a coin choosing the bag "
                "(posterior on the hidden choice) -- optionally given an observed formula; the numeric twin of "
                "most_probable_outcome, as general as most_probable_evidence.")
-    task_version = 4
+    task_version = 5
 
     def __init__(self, config=None):
         super().__init__(config=config or OutcomeProbabilityConfig())
@@ -243,6 +245,8 @@ class OutcomeProbability(DevTask):
                 continue
             used = _used(tree)
             if obs is None and len(used) < 2:   # one atom, nothing observed: the setup states the answer
+                continue
+            if len(used | (_used(obs) if obs else set())) < sround(c.min_atoms):   # size grows with level
                 continue
             live = [w for w in worlds if given is None or given(w)]
             if any(all(_eval(tree, atoms, w, {i: True}) == _eval(tree, atoms, w, {i: False}) for w in live)
