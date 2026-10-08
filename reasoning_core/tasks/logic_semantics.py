@@ -19,7 +19,7 @@ def run(expr, **kw):
 from gramforge.assets import fol_nli_verbalization
 
 import sys
-from reasoning_core.template import Task, DevTask, Entry, Config, render_payload
+from reasoning_core.template import Task, DevTask, Entry, Config, Decision, render_payload
 from reasoning_core.utils import parse_space_ints
 from gramforge.grammars.FOL import FOL_grammar
 from easydict import EasyDict as edict
@@ -187,6 +187,12 @@ def is_bloat(meta, label):
     }
     return rules in bloat_signatures
 
+NLI_QUESTION = "Is the hypothesis true given the premise?"
+NLI_CRITERIA = {"Yes": "The premise entails the hypothesis.",
+                "No": "The premise contradicts the hypothesis.",
+                "Maybe": "The premise does not settle the hypothesis."}
+
+
 class LogicNLI(DevTask):
     summary = "First-order logic natural language inference via automated theorem proving."
 
@@ -254,12 +260,13 @@ class LogicNLI(DevTask):
                 "hypothesis": verbalize_predicates(meta.hyp.eng, seed=meta.verbalize_seed),
             }
             mapping = {"entailment": "Yes", "contradiction": "No", "neutral": "Maybe"}
-            return Entry(meta, mapping[label])
+            return Entry(meta, Decision(mapping[label], state=meta.payload, instructions=NLI_QUESTION,
+                                        criteria=NLI_CRITERIA))
 
     def render_prompt(self, meta):
         return (
             f"{render_payload(meta.payload)}\n\n"
-            "Is the hypothesis true given the premise? "
+            f"{NLI_QUESTION} "
             "The answer is Yes, No, or Maybe."
         )
 
