@@ -1,26 +1,32 @@
-"""Is a new decision judge good enough to replace or join Jev? One fixed benchmark, any judge.
+"""Is a new decision judge good enough to replace or join the default? One fixed benchmark, any judge.
 
 Every judge answers the SAME stored examples (rows written by `signals.collect`), so judges are
-compared on identical states; answers are cached in OUT/answers.jsonl and a rerun or a new
-judge only asks what is missing. What is measured, and why each is ground truth:
+compared on identical states. Answers are cached in OUT/answers.jsonl under a hash of the state and
+questions, so a rerun, a new judge or a changed item asks only what is missing. Ground truths:
 
-  correct   AUROC of p(correct) for the true reference vs a sibling's answer the matcher rejects
-            (same task: same format, wrong content), overall and averaged within task -- a judge
-            that only learned "this task's references look wrong" scores 0.5 within task.
+  sibling   AUROC of p(correct): the true reference vs another example's reference from the same task
+            and, where one exists, the same level (same format and size, wrong content). Overall and
+            averaged within task: a judge that only learned "this task's references look wrong" is
+            0.5 within task. Cross-level siblings are easier (a level-6 answer is bigger), so they
+            are only a fallback.
+  near      the same AUROC against a near miss: the task's own `generate_distractors`, a wrong
+            answer the task's scorer rejects but built to look right. The generator bugs an answer
+            audit hunts look like this, not like a sibling.
   pick      accuracy choosing the reference among it and 3 sibling answers (chance 0.25).
   ladder    held-out fit of measured solve rates (zero-shot probe cache) from the judge's
             `glance` + prompt length: cell rho, within-task rho, ladder direction.
-  retest    the judge asked twice: per-dimension Spearman, the ceiling on any of its signals.
+  retest    the judge asked twice: per-dimension Spearman (deciders are deterministic: 1.0).
   agree     per-dimension Spearman with every other judge.
   cost, latency, abstentions.
 
-    python -m reasoning_core.evaluation.judge_bench --rows a.jsonl b.jsonl --judges jev,kev,pplx --out DIR
+    python -m reasoning_core.evaluation.judge_bench --rows a.jsonl b.jsonl --judges jev,pplx --out DIR
 """
 from __future__ import annotations
 
 import argparse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+import hashlib
 import json
 from pathlib import Path
 import random
@@ -29,10 +35,10 @@ import time
 import numpy as np
 
 from .answer_audit import LABELS, matcher
+from .difficulty import curve
 from .judge import Question, make_judge
 from .signal_report import ladder, spearman
 from .signals import DIMENSIONS, MAX_STATE_CHARS, state_of
-from .difficulty import curve
 
 
 def auroc(pos, neg):
@@ -41,6 +47,11 @@ def auroc(pos, neg):
         return float("nan")
     return float(((pos[:, None] > neg[None]).sum() + 0.5 * (pos[:, None] == neg[None]).sum())
                  / (len(pos) * len(neg)))
+
+
+def key(state, questions):
+    spec = "|".join(f"{q.name}:{','.join(q.choices)}" for q in questions)
+    return hashlib.sha1((state + "\x00" + spec).encode()).hexdigest()[:16]
 
 
 def load(paths, per_task, seed):
@@ -58,97 +69,114 @@ def load(paths, per_task, seed):
     return rows, by_task
 
 
-def items(rows, by_task, seed):
-    """The benchmark: (id, kind, state, questions, truth) for every probe of every row."""
+def _near_miss(row):
+    """One wrong answer the task's own scorer rejects, or None (rg tasks, generators without one)."""
+    try:
+        import reasoning_core
+        from reasoning_core.template import Entry
+        found = reasoning_core.get_task(row["task"]).generate_distractors(
+            Entry.from_dict(row), n=1, max_candidates=16)
+    except Exception:  # noqa: BLE001 - no distractor, no near-miss item
+        return None
+    return str(found[0]) if found else None
+
+
+def items(rows, by_task, seed, near=True):
+    """The benchmark: one dict per question put to a judge, keyed by row and kind."""
     profile_qs = tuple(d.question_() for d in DIMENSIONS)
-    correct_q = next(d for d in DIMENSIONS if d.name == "correct").question_()
+    correct_q = (next(d for d in DIMENSIONS if d.name == "correct").question_(),)
     rng, out = random.Random(seed), []
+
+    def add(rid, kind, state, qs, truth=None):
+        out.append({"rid": rid, "kind": kind, "state": state, "qs": qs, "truth": truth, "key": key(state, qs)})
+
     for i, row in enumerate(rows):
         rid = f"{row['task']}|{row['level']}|{i}"
-        out.append((rid + "|profile", "profile", state_of(row), profile_qs, None))
+        add(rid, "profile", state_of(row), profile_qs)
+        add(rid, "true", state_of(row), correct_q, 1)
         same = matcher(row)
-        wrong = list(dict.fromkeys(str(r["answer"]) for r in by_task[row["task"]]
-                                   if str(r["answer"]) != str(row["answer"])))
-        rng.shuffle(wrong)
-        wrong = [w for w in wrong[:12] if not same(w)][:3]
-        if not wrong:
-            continue
-        out.append((rid + "|true", "correct", state_of(row), (correct_q,), 1))
-        out.append((rid + "|false", "correct", state_of({**row, "answer": wrong[0]}), (correct_q,), 0))
-        options = [str(row["answer"])] + wrong
-        random.Random(rid).shuffle(options)
-        labels = tuple(LABELS[:len(options)])
-        state = (f"PROBLEM:\n{row['prompt']}\n\nCANDIDATE ANSWERS:\n"
-                 + "\n".join(f"{l}) {o}" for l, o in zip(labels, options)))[:MAX_STATE_CHARS]
-        pick = Question("pick", "Which candidate answer is the correct answer to the PROBLEM?", labels)
-        out.append((rid + "|pick", "pick", state, (pick,), labels[options.index(str(row["answer"]))]))
+        siblings = [r for r in by_task[row["task"]] if str(r["answer"]) != str(row["answer"])]
+        rng.shuffle(siblings)
+        siblings.sort(key=lambda r: r["level"] != row["level"])   # same level first, stable
+        wrong = [w for w in dict.fromkeys(str(r["answer"]) for r in siblings[:24]) if not same(w)][:3]
+        if wrong:
+            add(rid, "sibling", state_of({**row, "answer": wrong[0]}), correct_q, 0)
+            options = [str(row["answer"])] + wrong
+            random.Random(rid).shuffle(options)
+            labels = tuple(LABELS[:len(options)])
+            state = (f"PROBLEM:\n{row['prompt']}\n\nCANDIDATE ANSWERS:\n"
+                     + "\n".join(f"{l}) {o}" for l, o in zip(labels, options)))[:MAX_STATE_CHARS]
+            pick = Question("pick", "Which candidate answer is the correct answer to the PROBLEM?", labels)
+            add(rid, "pick", state, (pick,), labels[options.index(str(row["answer"]))])
+        miss = _near_miss(row) if near else None
+        if miss and not same(miss):
+            add(rid, "near", state_of({**row, "answer": miss}), correct_q, 0)
     return out
 
 
 def ask(judges, bench, cache_path, retest, workers):
-    """Fill the answer cache: every (judge, item), plus a second pass over `retest` profiles."""
+    """Fill the answer cache: every (judge, item), plus a second pass over the first `retest` profiles."""
     cache = {}
     if cache_path.exists():
         for line in cache_path.read_text().splitlines():
             r = json.loads(line)
-            cache[(r["judge"], r["id"])] = r
-    todo = [(name, iid + suffix, state, qs) for name in judges for iid, kind, state, qs, _ in bench
-            for suffix in ("",) + (("|again",) if kind == "profile" and int(iid.split("|")[2]) < retest
-                                   else ()) if (name, iid + suffix) not in cache]
+            cache[(r["judge"], r["key"])] = r
+    again = [dict(b, key=b["key"] + "|again") for b in [b for b in bench if b["kind"] == "profile"][:retest]]
+    todo = list({(name, b["key"]): (name, b) for name in judges for b in bench + again
+                 if (name, b["key"]) not in cache}.values())
 
     def one(job):
-        name, iid, state, qs = job
+        name, b = job
         start = time.time()
-        reply = judges[name].evaluate(state, list(qs))
-        return {"judge": name, "id": iid, "seconds": round(time.time() - start, 3),
+        reply = judges[name].evaluate(b["state"], list(b["qs"]))
+        return {"judge": name, "key": b["key"], "id": f"{b['rid']}|{b['kind']}",
+                "seconds": round(time.time() - start, 3),
                 "probs": {q: (reply[q] or {}).get("probs") for q in reply},
                 "abstain": [q for q in reply if not (reply[q] or {}).get("probs")]}
 
     with ThreadPoolExecutor(workers) as pool, cache_path.open("a") as out:
         for k, r in enumerate(pool.map(one, todo)):
-            cache[(r["judge"], r["id"])] = r
+            cache[(r["judge"], r["key"])] = r
             out.write(json.dumps(r) + "\n")
-            if k % 200 == 0:
+            if k % 500 == 0:
                 print(f"[judge_bench] {k}/{len(todo)} asked", flush=True)
     return cache
 
 
-def report(judges, rows, bench, cache, probe, probe_model):
+def report(judges, rows, bench, cache, probe, probe_model, retest):
     dims = {d.name: d for d in DIMENSIONS}
-    value = lambda r, name: dims[name].value((r or {}).get("probs", {}).get(name))
+    by = {(b["rid"], b["kind"]): b for b in bench}
+    profiles = [b for b in bench if b["kind"] == "profile"]
     out = {}
     for j in judges:
+        got = lambda b, suffix="": cache.get((j, b["key"] + suffix)) if b else None
+        value = lambda r, name: dims[name].value(((r or {}).get("probs") or {}).get(name))
         res = {}
-        pos, neg, task_of = [], [], []
-        for iid, kind, *_ , truth in bench:
-            if kind == "correct" and truth == 0:
-                t = value(cache.get((j, iid.rsplit("|", 1)[0] + "|true")), "correct")
-                f = value(cache.get((j, iid)), "correct")
-                if t is not None and f is not None:
-                    pos.append(t), neg.append(f), task_of.append(iid.split("|")[0])
-        res["correct_auroc"] = auroc(pos, neg)
-        within = defaultdict(lambda: ([], []))
-        for t, f, task in zip(pos, neg, task_of):
-            within[task][0].append(t), within[task][1].append(f)
-        per = [auroc(*v) for v in within.values() if len(v[0]) >= 3]
-        res["correct_auroc_within_task"] = float(np.nanmean(per)) if per else None
-        picks = [(cache.get((j, iid)) or {}).get("probs", {}).get("pick") for iid, kind, *_ in bench if kind == "pick"]
-        truths = [truth for iid, kind, *_, truth in bench if kind == "pick"]
-        hit = [max(p, key=p.get) == t for p, t in zip(picks, truths) if p]
-        res["pick_acc"] = sum(hit) / len(hit) if hit else None
-        res["pick_n"] = len(hit)
-        prof = [(iid, cache.get((j, iid)), cache.get((j, iid + "|again")))
-                for iid, kind, *_ in bench if kind == "profile"]
-        res["retest_rho"] = {n: _rho([value(a, n) for _, a, b in prof if b], [value(b, n) for _, a, b in prof if b])
+        for kind in ("sibling", "near"):
+            pos, neg, task_of = [], [], []
+            for b in bench:
+                if b["kind"] == kind:
+                    t, f = value(got(by.get((b["rid"], "true"))), "correct"), value(got(b), "correct")
+                    if t is not None and f is not None:
+                        pos.append(t), neg.append(f), task_of.append(b["rid"].split("|")[0])
+            within = defaultdict(lambda: ([], []))
+            for t, f, task in zip(pos, neg, task_of):
+                within[task][0].append(t), within[task][1].append(f)
+            per = [auroc(*v) for v in within.values() if len(v[0]) >= 3]
+            res[kind] = {"auroc": auroc(pos, neg), "within_task": float(np.nanmean(per)) if per else None,
+                         "n": len(pos)}
+        hit = [max(p, key=p.get) == b["truth"] for b in bench if b["kind"] == "pick"
+               for p in [((got(b) or {}).get("probs") or {}).get("pick")] if p]
+        res["pick"] = {"acc": sum(hit) / len(hit) if hit else None, "n": len(hit)}
+        twice = [(got(b), got(b, "|again")) for b in profiles[:retest]]
+        res["retest_rho"] = {n: _rho([value(a, n) for a, b in twice if b], [value(b, n) for a, b in twice if b])
                              for n in dims}
         if probe:
-            stored = [{**row, "signals": {j: {n: value(cache.get((j, iid)), n) for n in dims}}}
-                      for row, (iid, *_rest) in zip(rows, [b for b in bench if b[1] == "profile"])]
+            stored = [{**row, "signals": {j: {n: value(got(b), n) for n in dims}}} for row, b in zip(rows, profiles)]
             measured = {(t, lvl): rate for t, (points, holes) in curve(probe, probe_model).items()
                         if not holes for lvl, rate in points.items()}
             try:
-                _, stats = ladder(stored, measured, judge=j, features=[f"{j}:glance", "log_prompt_chars"])
-                res["ladder"] = stats
+                res["ladder"] = ladder(stored, measured, judge=j, features=[f"{j}:glance", "log_prompt_chars"])[1]
             except Exception as error:  # noqa: BLE001 - too few measured cells
                 res["ladder"] = f"n/a: {error}"
         answered = [r for (jj, _), r in cache.items() if jj == j]
@@ -156,9 +184,9 @@ def report(judges, rows, bench, cache, probe, probe_model):
         res["abstain_rate"] = sum(bool(r["abstain"]) for r in answered) / max(len(answered), 1)
         res["calls"] = len(answered)
         out[j] = res
-    profiles = [iid for iid, kind, *_ in bench if kind == "profile"]
-    out["agree"] = {f"{a}~{b}": {n: _rho([value(cache.get((a, i)), n) for i in profiles],
-                                         [value(cache.get((b, i)), n) for i in profiles]) for n in dims}
+    value = lambda r, name: dims[name].value(((r or {}).get("probs") or {}).get(name))
+    out["agree"] = {f"{a}~{b}": {n: _rho([value(cache.get((a, p["key"])), n) for p in profiles],
+                                         [value(cache.get((b, p["key"])), n) for p in profiles]) for n in dims}
                     for k, a in enumerate(judges) for b in list(judges)[k + 1:]}
     return out
 
@@ -172,16 +200,15 @@ def _rho(x, y):
 
 
 def text(res, judges):
-    lines = ["judge      correct  within  pick   ladder(cell/within/dir)  retest(glance/correct)  s/call  abstain  calls"]
+    f = lambda v: "  -  " if v is None or v != v else f"{v:.3f}"
+    lines = ["judge   sibling within | near  within (n) | pick  | ladder cell/within/dir | s/call abstain"]
     for j in judges:
-        r = res[j]
-        lad = r.get("ladder")
+        r, lad = res[j], res[j].get("ladder")
         lad = (f"{lad['cell_rho']:+.2f}/{lad['within_task_rho']:+.2f}/{lad['direction']}"
                if isinstance(lad, dict) and lad.get("cell_rho") is not None else str(lad)[:22])
-        rt = r["retest_rho"]
-        lines.append(f"{j:<10} {r['correct_auroc']:.3f}   {r['correct_auroc_within_task'] or float('nan'):.3f}   "
-                     f"{r['pick_acc'] or float('nan'):.3f}  {lad:<24} {rt['glance']}/{rt['correct']:<16} "
-                     f"{r['seconds_median']:.2f}    {r['abstain_rate']:.3f}    {r['calls']}")
+        lines.append(f"{j:<7} {f(r['sibling']['auroc'])}  {f(r['sibling']['within_task'])} | "
+                     f"{f(r['near']['auroc'])} {f(r['near']['within_task'])} ({r['near']['n']}) | "
+                     f"{f(r['pick']['acc'])} | {lad:<22} | {r['seconds_median']:.2f}   {r['abstain_rate']:.3f}")
     for pair, rhos in res["agree"].items():
         lines.append(f"agree {pair}: " + ", ".join(f"{n} {v:+.2f}" for n, v in rhos.items() if v is not None))
     return "\n".join(lines)
@@ -193,7 +220,8 @@ def main():
     p.add_argument("--judges", default="jev,pplx")
     p.add_argument("--out", required=True)
     p.add_argument("--per-task", type=int, default=8)
-    p.add_argument("--retest", type=int, default=150, help="profiles asked twice")
+    p.add_argument("--retest", type=int, default=50, help="profiles asked twice")
+    p.add_argument("--no-near", action="store_true", help="skip near-miss items (no generator calls)")
     p.add_argument("--probe", default="reasoning_core/reports/build/zeroshot.json")
     p.add_argument("--probe-model", default="deepseek-v4-flash")
     p.add_argument("--workers", type=int, default=16)
@@ -204,11 +232,12 @@ def main():
     names = a.judges.split(",")
     judges = {n: make_judge(n) for n in names}
     rows, by_task = load(a.rows, a.per_task, a.seed)
-    bench = items(rows, by_task, a.seed)
-    print(f"[judge_bench] {len(rows)} rows from {len(by_task)} tasks -> {len(bench)} items", flush=True)
+    bench = items(rows, by_task, a.seed, near=not a.no_near)
+    kinds = {k: sum(b["kind"] == k for b in bench) for k in ("profile", "sibling", "near", "pick")}
+    print(f"[judge_bench] {len(rows)} rows from {len(by_task)} tasks -> {kinds}", flush=True)
     cache = ask(judges, bench, out / "answers.jsonl", a.retest, a.workers)
     probe = json.loads(Path(a.probe).read_text()) if a.probe and Path(a.probe).exists() else None
-    res = report(names, rows, bench, cache, probe, a.probe_model)
+    res = report(names, rows, bench, cache, probe, a.probe_model, a.retest)
     (out / "report.json").write_text(json.dumps(res, indent=1))
     (out / "report.txt").write_text(text(res, names) + "\n")
     print(text(res, names))
