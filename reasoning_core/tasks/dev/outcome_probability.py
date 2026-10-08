@@ -1,4 +1,4 @@
-"""Give the probability, as a whole-number percentage, of a composed event about a random process, optionally
+"""Give the probability, as a percentage to one decimal place, of a composed event about a random process, optionally
 given a composed observation.
 
 Three processes: draws from an urn (2-4 colours, 2-5 draws, replacement set draw by draw, so draws are
@@ -8,9 +8,11 @@ event is a random formula -- and, or, not, if-then-otherwise -- over atomic fact
 colour, counts, orderings, sums, the hidden choice), as general as most_probable_evidence's observation but
 over dependent, multi-valued variables. Probabilities are exact by enumerating outcomes. Rejected: atoms that
 do not affect the event, events certain or impossible, answers the setup states (a bias, a colour's share),
-observations that do not change the answer, 50%, and answers that round to 0% or 100% or sit within 0.1 point of a
-rounding boundary. A percentage, not a fraction: its first token carries the gist (about how likely), where a reduced
-fraction like 1506/1675 makes the model commit to bookkeeping digits before any sign of the magnitude.
+observations that do not change the answer, 50%, and answers that round to 0.0% or 100.0% or sit within 0.025 point
+of a rounding boundary (every gold label has a margin on both sides). A percentage, not a fraction: its first token
+carries the gist (about how likely), where a reduced fraction like 1506/1675 makes the model commit to bookkeeping digits
+before any sign of the magnitude. One decimal, not an integer: a wrong method (kept-out draws treated as put back) still
+rounds to the right integer 35% of the time but to the right tenth 5% of the time (2% for exact fractions).
 Level adds variables, formula depth, conditioning and the two-stage process.
 """
 import itertools
@@ -212,11 +214,11 @@ def _collapses(t, atoms, worlds):
 
 
 class OutcomeProbability(DevTask):
-    summary = ("Give the probability, as a whole-number percentage, of an and/or/not/if formula over facts about a "
+    summary = ("Give the probability, as a percentage to one decimal place, of an and/or/not/if formula over facts about a "
                "random process -- dependent urn draws, independent biased coins and dice, or a coin choosing the bag "
                "(posterior on the hidden choice) -- optionally given an observed formula; the numeric twin of "
                "most_probable_outcome, as general as most_probable_evidence.")
-    task_version = 3
+    task_version = 4
 
     def __init__(self, config=None):
         super().__init__(config=config or OutcomeProbabilityConfig())
@@ -234,10 +236,10 @@ class OutcomeProbability(DevTask):
             given = (lambda w: _eval(obs, atoms, w)) if obs else None
             ans = _prob(worlds, lambda w: _eval(tree, atoms, w), given)
             # the setup must not state the answer, and an observation must change it
-            pct = None if ans is None else round(100 * ans)
-            if pct is None or not 1 <= pct <= 99 or pct == 50 or abs(100 * ans - pct) > F(2, 5) \
-                    or pct in {round(100 * q) for q in stated} \
-                    or (obs and pct == round(100 * _prob(worlds, lambda w: _eval(tree, atoms, w)))):
+            tenths = None if ans is None else round(1000 * ans)   # the answer in tenths of a percent
+            if tenths is None or not 1 <= tenths <= 999 or tenths == 500 or abs(1000 * ans - tenths) > F(1, 4) \
+                    or tenths in {round(1000 * q) for q in stated} \
+                    or (obs and tenths == round(1000 * _prob(worlds, lambda w: _eval(tree, atoms, w)))):
                 continue
             used = _used(tree)
             if obs is None and len(used) < 2:   # one atom, nothing observed: the setup states the answer
@@ -256,16 +258,16 @@ class OutcomeProbability(DevTask):
             obs = (_text(obs, atoms),) if obs else None
             return Entry({"setup": text, "event": event, "observation": obs[0] if obs else None,
                           "process": process.__name__[1:], "n_atoms": n_atoms, "exact": f"{ans.numerator}/{ans.denominator}"},
-                         str(pct))
+                         f"{tenths // 10}.{tenths % 10}")
 
     def render_prompt(self, m):
         given = f"\nYou are told that {m['observation']}." if m["observation"] else ""
         return (f"{m['setup']}{given}\nWhat is the probability that {m['event']}? "
-                "Answer with a percentage rounded to the nearest whole number, such as 37.")
+                "Answer with a percentage rounded to one decimal place, such as 37.5.")
 
     def score_answer(self, answer, entry):
         m = re.fullmatch(r"(\d+(?:\.\d+)?)\s*%?", str(answer).strip().rstrip("."))
         if not m:
             return 0.0
-        off = abs(float(m.group(1)) - int(entry.answer))
-        return 1.0 if off < 0.5 else 0.5 if off <= 1 else 0.0   # half credit for a rounding slip
+        off = abs(float(m.group(1)) - float(entry.answer))
+        return 1.0 if off < 0.05 else 0.5 if off < 0.15 else 0.0   # half credit for a rounding slip
