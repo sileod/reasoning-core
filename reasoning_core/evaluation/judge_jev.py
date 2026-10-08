@@ -27,7 +27,7 @@ MODEL_VAR = "RC_JEV_MODEL"
 # spent. Every call appends its reported cost here, and past the budget Jev abstains.
 LEDGER = Path.home() / ".local" / "share" / "reasoning_core" / "jev_spend.tsv"
 BUDGET_VAR = "JEV_BUDGET_USD"
-DEFAULT_BUDGET_USD = 5.0
+DEFAULT_BUDGET_USD = 10.0
 # The gates' prose ends by telling a chat model how to format its reply. Jev replies in
 # types, so that paragraph is an instruction about a wire format it does not use.
 CHAT_FORMAT = "\n\nAnswer in this exact shape"
