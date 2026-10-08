@@ -86,7 +86,7 @@ def test_arithmetics_apply_difficulty_target_values():
     assert config.min_depth == 5
     assert config.max_depth == 7
     assert config.out_digits == 8
-    assert config.out_decimals == 5
+    assert config.out_decimals == 2   # fixed: the answer contract caps decimals at every level
 
 
 def test_procedural_warmup_apply_difficulty_scales_k():

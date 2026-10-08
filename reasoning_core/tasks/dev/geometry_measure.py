@@ -31,6 +31,8 @@ class GeometryMeasureConfig(Config):
 
 
 def _fmt(x):
+    if x.denominator == 2:   # halves as decimals: 3.5, not 7/2
+        return f"{'-' * (x < 0)}{abs(x.numerator) // 2}.5"
     return str(x.numerator) if x.denominator == 1 else f"{x.numerator}/{x.denominator}"
 
 
@@ -164,7 +166,7 @@ def _parse(text):
 
 class GeometryMeasure(DevTask):
     summary = "Chain school geometry facts (angle sums, isosceles and exterior angles, regular polygons, Pythagoras, perimeter, area, circles, volume) to an exact measure."
-    task_version = 2
+    task_version = 3
 
     def __init__(self, config=None):
         super().__init__(config=config or GeometryMeasureConfig())
@@ -194,7 +196,7 @@ class GeometryMeasure(DevTask):
 
     def render_prompt(self, m):
         return (" ".join(m["facts"]) + f"\nWhat is {m['target']}?\n"
-                "The answer is a whole number, a half such as 7/2, or k*pi when pi appears; no units.")
+                "The answer is a whole number, a half such as 3.5, or k*pi when pi appears; no units.")
 
     def score_answer(self, answer, entry):
         got, gold = _parse(answer), _parse(entry.answer)

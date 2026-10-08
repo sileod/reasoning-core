@@ -1,7 +1,7 @@
 """Numeric mutation of most_probable_evidence: the same independent factors with prior probabilities and the
 same observation formula, but asked for a number. Either count the complete true/false assignments of the
 factors under which the observation holds (an integer), or give the probability that the observation holds as
-a reduced fraction, the latter only when its denominator stays small (no long decimals).
+a percentage, the latter only when it is exact at one decimal (no rounding, no long digit strings).
 """
 import random
 import re
@@ -32,9 +32,9 @@ def _worlds(src):
 
 class EvidenceCount(DevTask):
     summary = ("Given independent factors with prior probabilities and a Boolean observation over them, count the "
-               "complete assignments under which the observation holds (integer), or give its exact probability as "
-               "a reduced fraction with a small denominator; the numeric twin of most_probable_evidence.")
-    task_version = 1
+               "complete assignments under which the observation holds (integer), or give its probability as "
+               "an exact one-decimal percentage; the numeric twin of most_probable_evidence.")
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or MostProbableEvidenceConfig())
@@ -50,8 +50,10 @@ class EvidenceCount(DevTask):
             if not 0 < count < 2 ** n:
                 continue
             head = english.split("\nWe observe it.")[0]
-            if random.random() < 0.5 and prob.denominator <= 1000:
-                return Entry({"context": head, "ask": "probability", "n_atoms": n}, f"{prob.numerator}/{prob.denominator}")
+            tenths = prob * 1000   # the probability in tenths of a percent
+            if random.random() < 0.5 and tenths.denominator == 1:
+                t = int(tenths)
+                return Entry({"context": head, "ask": "probability", "n_atoms": n}, f"{t // 10}.{t % 10}")
             return Entry({"context": head, "ask": "count", "n_atoms": n}, str(count))
         raise RuntimeError("evidence_count: no observation")
 
@@ -60,10 +62,13 @@ class EvidenceCount(DevTask):
             return (f"{m['context']}\nOf the {2 ** m['n_atoms']} complete true/false assignments of the factors, "
                     "how many make the observation hold? Answer with an integer.")
         return (f"{m['context']}\nWhat is the probability that the observation holds? "
-                "Answer with a reduced fraction such as 3/8.")
+                "Answer with a percentage to one decimal place, such as 37.5.")
 
     def score_answer(self, answer, entry):
+        got = str(answer).strip().rstrip(".").rstrip("%").strip()
         try:
-            return float(Fraction(str(answer).strip().rstrip(".")) == Fraction(entry.answer))
+            if entry.metadata["ask"] == "count":
+                return float(Fraction(got) == Fraction(entry.answer))
+            return float(abs(float(got) - float(entry.answer)) < 0.05)
         except (ValueError, ZeroDivisionError):
             return 0.0

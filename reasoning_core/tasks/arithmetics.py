@@ -95,7 +95,7 @@ class ArithmeticsConfig(Config):
     gramforge_algorithm = "sequential"
     float_prob: float = 0.25
     in_decimals: int = 1
-    out_decimals: int = 3
+    out_decimals: int = 2   # answer contract: exact, at most 2 decimals at every level
     out_digits: int = 6
     n_trials: int = 50_000
     trailing_zero_prob: float = 0.2
@@ -110,7 +110,6 @@ class ArithmeticsConfig(Config):
         self.min_depth = sround(self.min_depth + level)
         self.max_depth = sround(self.max_depth + level)
         self.out_digits = sround(self.out_digits + level)
-        self.out_decimals = sround(self.out_decimals + level)
 
 def _add_trailing_zeros(s, prob=0.2):
     """Add trailing zeros to decimals with exponentially decreasing probability."""
@@ -290,13 +289,18 @@ def _contextual_semantics(expr, semantics="exact", places=3, decoy=False):
 class Arithmetics(Task):
     config_cls = ArithmeticsConfig
     summary = "Compositional arithmetics with float/int/bool, varied operators, number theory."
+    task_version = 2   # out_decimals no longer grows with level (was 3 + level: -39.849375 at L6)
 
     def generate_entry(self):
         while True:
             x = gramforge.generate(g, depth=self.config.max_depth, min_depth=self.config.min_depth, mode=self.config.gramforge_algorithm)
             expr = x@'py'
-            if expr.count('NUM') > 1 or random.random() < self.config.trivial_prob: break
-        final_expr, value = fill_num(expr, cfg=self.config)
+            if expr.count('NUM') > 1 or random.random() < self.config.trivial_prob:
+                try:   # some deep templates cannot land on out_decimals: draw another template
+                    final_expr, value = fill_num(expr, cfg=self.config)
+                    break
+                except RuntimeError:
+                    continue
         ans_str = _canonical_decimal(value, self.config.out_decimals)
         shown_expr, digit_mode = _display_expr(final_expr, ans_str, self.config)
         cue = _semantic_cue_required(final_expr, self.config.out_decimals)
