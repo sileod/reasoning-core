@@ -293,24 +293,21 @@ def get_task(name, *args, **kwargs):
 def list_tasks(include_mutated=False, include_generated=False, scope="roster"):
     """Return the shipped roster; optionally include experimental task families.
 
-    scope="dev" returns the tasks under tasks/dev/ (human-supervised work in progress; DevTasks
-    parked inside core modules are demoted variants, see task_catalog(include_dev=True));
-    scope="generated" returns the unpromoted auto-pipeline tasks under tasks/generated/.
+    The roster is the tasks in top-level modules of tasks/ plus PROMOTED ones; a subfolder of tasks/ is a
+    scope of its own (scope="generated", "jev", ...), listing its tasks that are not promoted. scope="dev"
+    lists tasks/dev/ (human-supervised work in progress; DevTasks parked inside core modules are demoted
+    variants, see task_catalog(include_dev=True)).
     """
-    if scope == "dev":
-        return sorted(name for name, (module_name, _) in _dev_task_to_module_map.items()
-                      if module_name.split(".", 1)[0] == "dev")
-    if scope == "generated":
-        return [name for name, (module_name, _) in _task_to_module_map.items()
-                if module_name.split(".", 1)[0] == "generated"
-                and name not in PROMOTED and name not in IGNORED and name not in RETIRED]
+    root = lambda module_name: module_name.split(".", 1)[0] if "." in module_name else None
     if scope != "roster":
-        raise ValueError(f"scope must be 'roster', 'dev' or 'generated', not {scope!r}")
+        tasks = _dev_task_to_module_map if scope == "dev" else _task_to_module_map
+        return sorted(name for name, (module_name, _) in tasks.items() if root(module_name) == scope
+                      and (scope == "dev" or name not in PROMOTED | IGNORED | RETIRED))
+    opted = {family for family, on in (("mutated", include_mutated), ("generated", include_generated)) if on}
     return [
         name for name, (module_name, _) in _task_to_module_map.items()
         if name not in IGNORED and name not in RETIRED
-        and (include_mutated or module_name.split(".", 1)[0] != "mutated")
-        and (include_generated or name in PROMOTED or module_name.split(".", 1)[0] != "generated")
+        and (root(module_name) is None or root(module_name) in opted or name in PROMOTED)
     ]
 
 

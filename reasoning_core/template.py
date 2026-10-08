@@ -14,6 +14,7 @@ from contextvars import ContextVar
 import xxhash
 from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 from .registry import _REGISTRY, prepr_task_name, register_dataset
+from .decision import Decision, jev_row  # noqa: F401  (jev_row re-exported)
 from .runtime import (
     TimeoutException,
     _stable_dump,
@@ -116,60 +117,6 @@ class Entry(Mapping):
     def __len__(self):
         return len(self.to_dict())
 
-class Decision(str):
-    """An answer that is also a Jev-style decision: a `state`, a typed question (`type`, `instructions`,
-    `criteria`) and the chosen `label`, with an optional exact distribution `soft` in jev-bench's shapes: P(yes)
-    for "noul", {option: p} for "choice", [p per level] for "score".
-
-    It IS the answer string -- the label for "choice", "Yes"/"No" for "noul", the level index for "score" -- so
-    training, scoring and serialization see a plain str; the decision itself is kept in metadata["decision"]
-    and restored by Entry.from_dict. `jev_row()` is the row in the jev-bench schema (tasksource/jevbench).
-    """
-    TYPES = ("choice", "noul", "score")
-
-    def __new__(cls, label, *, state, instructions, criteria=None, type="choice", soft=None):
-        if type == "noul":
-            label = str(label).lower() in ("1", "true", "yes")
-            text = "Yes" if label else "No"
-            options = [True, False]
-        elif type == "score":
-            label, text, options = int(label), str(int(label)), range(len(criteria))
-        elif type == "choice":
-            label = text = str(label)
-            options = list(criteria)
-        else:
-            raise ValueError(f"Decision type must be one of {cls.TYPES}, got {type!r}")
-        if label not in options:
-            raise ValueError(f"Decision label {label!r} is not one of the options {list(options)}")
-        mass = soft if type == "noul" else 1 if soft is None else sum(
-            soft.values() if isinstance(soft, Mapping) else soft)
-        if soft is not None and not (0 <= mass <= 1 if type == "noul" else abs(mass - 1) < 1e-6):
-            raise ValueError(f"Decision soft labels must be a probability distribution, got {soft!r}")
-        obj = super().__new__(cls, text)
-        obj.state, obj.label, obj.soft = state, label, soft
-        obj.question = {"type": type, "instructions": instructions, "criteria": criteria}
-        return obj
-
-    def to_dict(self):
-        return {"state": self.state, "question": self.question, "label": self.label, "soft": self.soft}
-
-    @classmethod
-    def from_dict(cls, d):
-        q = d["question"]
-        return cls(d["label"], state=d["state"], instructions=q["instructions"], criteria=q["criteria"],
-                   type=q["type"], soft=d.get("soft"))
-
-    def __reduce__(self):  # str subclasses with keyword-only __new__ do not pickle by default
-        return Decision.from_dict, (self.to_dict(),)
-
-    def jev_row(self):
-        """The jev-bench schema: every field a string, noul labels "1"/"0"."""
-        label = {True: "1", False: "0"}.get(self.label, str(self.label))
-        return {"primitive": self.question["type"], "state": json.dumps(self.state), "label": label,
-                "question": json.dumps({k: v for k, v in self.question.items() if v is not None}),
-                "soft_label": "" if self.soft is None else json.dumps(self.soft)}
-
-
 def render_payload(payload):
     """Render a JSON-friendly prompt payload mapping as labeled blocks."""
     return "\n\n".join(
@@ -230,8 +177,13 @@ class Task:
         raise NotImplementedError("Task subclasses must implement 'generate_entry'")
 
     def render_prompt(self, metadata):
-        """Override to render entry metadata as a prompt."""
-        raise NotImplementedError("Task subclasses must implement 'render_prompt'")
+        """Override to render entry metadata as a prompt. A Jev-shaped entry (a Decision answer over
+        metadata.payload) renders by default: the state, then the question with its answer format."""
+        if "decision" not in metadata:
+            raise NotImplementedError("Task subclasses must implement 'render_prompt'")
+        payload = metadata.payload
+        state = payload if isinstance(payload, str) else render_payload(payload)
+        return f"{state}\n\n{Decision.from_dict(metadata.decision).prompt()}"
 
     def score_answer(self, answer, entry):
         """To override in most cases; entry has entry.metadata and entry.answer fields"""
@@ -511,6 +463,8 @@ class Task:
                             p=payload_shuffle_prob,
                             seed=random.randrange(1 << 32),
                         )
+                    if isinstance(problem.answer, Decision):  # before rendering: a prompt may show its question
+                        problem.metadata['decision'] = problem.answer.to_dict()
                     problem.prompt = self.render_prompt(problem.metadata)
 
                     prompt_tokens = len(self.tokenizer.encode(problem.prompt))
@@ -552,8 +506,6 @@ class Task:
                 problem.metadata['_generator_commit'] = _generator_commit()
                 problem.metadata['_task_version'] = getattr(self, "task_version", "0")
                 problem.metadata['_task_behavior_hash'] = self.behavior_hash()
-                if isinstance(problem.answer, Decision):
-                    problem.metadata['decision'] = problem.answer.to_dict()
 
                 problem.balancing_key = self.balancing_key(problem)
                 canonical = self.deduplication_key(problem)
