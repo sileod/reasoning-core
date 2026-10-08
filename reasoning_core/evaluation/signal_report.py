@@ -14,6 +14,7 @@ import numpy as np
 from scipy.stats import rankdata
 
 from .difficulty import curve
+from .judge import DEFAULT_DECIDER
 
 LENGTHS = ("log_prompt_chars", "log_answer_chars")
 
@@ -125,7 +126,7 @@ def held_out_fit(profiles, targets, features, **options):
                     np.array([targets[k] for k in keys])), len(keys)
 
 
-def report(rows, targets, *, top=20, judges=("jev",)):
+def report(rows, targets, *, top=20, judges=(DEFAULT_DECIDER,)):
     profiles = task_profiles(rows)
     lines = [f"{len(profiles)} profiled tasks, {sum(t in targets for t in profiles)} with a target"]
     lines += [f"  {rho:+.2f}  n={n:<4} {feature}"
@@ -145,7 +146,7 @@ def report(rows, targets, *, top=20, judges=("jev",)):
     return "\n".join(lines)
 
 
-def ladder(rows, measured, *, judge="jev", features=None):
+def ladder(rows, measured, *, judge=DEFAULT_DECIDER, features=None):
     """Predicted solve rate for every profiled (task, level), calibrated on measured cells.
 
     `measured` is {(task, level): solve rate} from a real probe. Returns the predictions
@@ -185,19 +186,19 @@ def ladder(rows, measured, *, judge="jev", features=None):
     return predicted, stats
 
 
-def curves(rows, cache, model, levels=(0, 2, 4, 6)):
+def curves(rows, cache, model, levels=(0, 2, 4, 6), judge=DEFAULT_DECIDER):
     """{task: (points, source)}: the probe's curve where it has every level, else Jev's,
     calibrated on the probe's complete curves."""
     measured = {task: points for task, (points, holes) in curve(cache, model).items()
                 if not holes and set(levels) <= set(points)}
     predicted, _ = ladder(rows, {(t, level): rate for t, points in measured.items()
                                  for level, rate in points.items()},
-                          features=["jev:glance", "log_prompt_chars"])
+                          judge=judge, features=[f"{judge}:glance", "log_prompt_chars"])
     by_task = defaultdict(dict)
     for (task, level), rate in predicted.items():
         if level in levels:
             by_task[task][level] = rate
-    out = {task: (points, "jev") for task, points in by_task.items()}
+    out = {task: (points, judge) for task, points in by_task.items()}
     out.update({task: ({l: points[l] for l in levels}, "probe")
                 for task, points in measured.items()})
     return out

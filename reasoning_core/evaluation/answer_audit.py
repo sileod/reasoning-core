@@ -28,10 +28,9 @@ from pathlib import Path
 import random
 import re
 
-from .judge import Question
-from .judge_jev import JevJudge
+from .judge import DEFAULT_DECIDER, Question, make_judge
 from .judge_llm import LLMJudge
-from .signals import MAX_STATE_CHARS, write_rows
+from .signals import DIMENSIONS, MAX_STATE_CHARS, state_of, write_rows
 
 SOLVE = """Solve the problem. Work it out step by step, following only the rules the
 problem states. Then give your final answer on the last line, in exactly the form the
@@ -94,17 +93,25 @@ def choose(row, distractors, judge):
     return None if probs is None else probs[labels[options.index(str(row["answer"]))]]
 
 
-def add_choice(rows, path, *, workers=8, log=lambda line: print(line, flush=True)):
-    """Fill `jev:choice` on every row lacking it, and save. Distractors are drawn on the main
-    thread, since a generator's deadline is a signal; only the judge calls are pooled."""
+def add_choice(rows, path, *, workers=8, judge=DEFAULT_DECIDER,
+               log=lambda line: print(line, flush=True)):
+    """Fill `<judge>:choice`, and `<judge>:correct` where missing, on every row, and save.
+    Distractors are drawn on the main thread, since a generator's deadline is a signal; only the
+    judge calls are pooled."""
     import reasoning_core
     from reasoning_core.template import Entry
 
-    judge, tasks, pending = JevJudge(), {}, []
+    name, judge, tasks, pending = judge, make_judge(judge), {}, []
+    correct = next(d for d in DIMENSIONS if d.name == "correct")
+    asked = []
     with ThreadPoolExecutor(workers) as pool:
         for row in rows:
-            jev = (row.get("signals") or {}).get("jev") or {}
-            if "prompt" not in row or "choice" in jev or not row.get("metadata"):
+            if "prompt" not in row:
+                continue
+            mine = row.setdefault("signals", {}).setdefault(name, {})
+            if mine.get("correct") is None:
+                asked.append((mine, pool.submit(judge.evaluate, state_of(row), [correct.question_()])))
+            if "choice" in mine or not row.get("metadata"):
                 continue
             try:
                 task = tasks.get(row["task"]) or tasks.setdefault(
@@ -114,22 +121,24 @@ def add_choice(rows, path, *, workers=8, log=lambda line: print(line, flush=True
             except Exception:  # noqa: BLE001 - no distractors, no choice question
                 continue
             if distractors:
-                pending.append((jev, pool.submit(choose, row, distractors, judge)))
-        for jev, future in pending:
+                pending.append((mine, pool.submit(choose, row, distractors, judge)))
+        for mine, future in asked:
+            mine["correct"] = correct.value(future.result()["correct"]["probs"])
+        for mine, future in pending:
             if future.result() is not None:
-                jev["choice"] = future.result()
+                mine["choice"] = future.result()
     write_rows(Path(path), rows)
     log(f"choice asked of {len(pending)} examples")
 
 
-def plausibility(row, judge="jev"):
+def plausibility(row, judge=DEFAULT_DECIDER):
     """p(correct) times p(choice) where both exist, else whichever does."""
     values = [v for k, v in ((row.get("signals") or {}).get(judge) or {}).items()
               if k in ("correct", "choice") and v is not None]
     return None if not values else float(math.prod(values))
 
 
-def suspects(rows, *, per_task=2, below=0.5, judge="jev"):
+def suspects(rows, *, per_task=2, below=0.5, judge=DEFAULT_DECIDER):
     """Each task's least plausible examples, under `below`."""
     by_task = {}
     for row in rows:
@@ -163,14 +172,14 @@ def decide(row, solves):
     return "UNSURE"
 
 
-def adjudicate(row, solver, judge="jev"):
+def adjudicate(row, solver, judge=DEFAULT_DECIDER):
     solves = [solve(solver, row["prompt"]) for _ in range(2)]
     return {"task": row["task"], "level": row["level"], "index": row["index"],
             "plausibility": plausibility(row, judge), "reference": row["answer"],
             "solves": solves, "verdict": decide(row, solves)}
 
 
-def audit(rows, out, *, per_task=2, below=0.5, workers=4, solver=None,
+def audit(rows, out, *, per_task=2, below=0.5, workers=4, solver=None, judge=DEFAULT_DECIDER,
           log=lambda line: print(line, flush=True)):
     """Adjudicate the suspects not already in `out` (JSONL); return every verdict held."""
     out = Path(out)
@@ -184,12 +193,12 @@ def audit(rows, out, *, per_task=2, below=0.5, workers=4, solver=None,
             verdict["verdict"] = decide(row, [str(s).strip("*`").strip() if s else s
                                               for s in verdict["solves"]])
     seen = {(v["task"], v["level"], v["index"]) for v in done}
-    todo = [row for row in suspects(rows, per_task=per_task, below=below)
+    todo = [row for row in suspects(rows, per_task=per_task, below=below, judge=judge)
             if (row["task"], row["level"], row["index"]) not in seen]
     log(f"{len(todo)} suspects to adjudicate, {len(done)} already judged")
     write_rows(out, done)
     with ThreadPoolExecutor(workers) as pool, out.open("a") as sink:
-        for verdict in pool.map(lambda row: adjudicate(row, solver), todo):
+        for verdict in pool.map(lambda row: adjudicate(row, solver, judge), todo):
             sink.write(json.dumps(verdict, sort_keys=True) + "\n")
             sink.flush()
             done.append(verdict)

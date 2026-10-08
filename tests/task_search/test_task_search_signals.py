@@ -62,7 +62,7 @@ def test_the_audit_reads_only_each_tasks_least_plausible_answers(monkeypatch, tm
 
     rows = [row("a", 0, 0.9), row("a", 1, 0.05), row("a", 2, 0.3), row("a", 3, 0.2),
             row("b", 0, 0.8)]
-    assert [(r["task"], r["index"]) for r in answer_audit.suspects(rows, per_task=2)] == [
+    assert [(r["task"], r["index"]) for r in answer_audit.suspects(rows, per_task=2, judge="jev")] == [
         ("a", 1), ("a", 3)]
 
     class Solver:
@@ -75,9 +75,10 @@ def test_the_audit_reads_only_each_tasks_least_plausible_answers(monkeypatch, tm
 
     out = tmp_path / "audit.jsonl"
     solver = Solver(["2", "2 ", "1", "3"])   # a agrees twice on 2; b's second solve is 1
-    verdicts = answer_audit.audit(rows, out, per_task=2, solver=solver, log=lambda *_: None)
+    verdicts = answer_audit.audit(rows, out, per_task=2, solver=solver, judge="jev",
+                                  log=lambda *_: None)
     assert [v["verdict"] for v in verdicts] == ["WRONG", "CORRECT"]
-    answer_audit.audit(rows, out, per_task=2, solver=solver, log=lambda *_: None)
+    answer_audit.audit(rows, out, per_task=2, solver=solver, judge="jev", log=lambda *_: None)
     assert solver.calls == 4, "a judged suspect is not solved again"
 
 
@@ -114,7 +115,7 @@ def test_a_ladder_calibrated_on_a_probe_is_judged_on_tasks_it_never_saw():
             rows.append({"task": f"t{task}", "level": level, "index": 0, "prompt": "p" * 10,
                          "answer": "a", "signals": {"jev": {"glance": ease}}})
             measured[(f"t{task}", level)] = ease
-    predicted, stats = ladder(rows, measured, features=["jev:glance"])
+    predicted, stats = ladder(rows, measured, judge="jev", features=["jev:glance"])
     assert len(predicted) == 48 and stats["cells"] == 48
     assert stats["cell_rho"] > 0.99 and stats["within_task_rho"] > 0.99
     assert stats["direction"] == "12/12"
@@ -140,15 +141,15 @@ def test_the_choice_screen_asks_jev_to_pick_the_reference_among_scored_wrong_ans
                                                           for l in labels})}
 
     monkeypatch.setattr(reasoning_core, "get_task", lambda name: Task())
-    monkeypatch.setattr(answer_audit, "JevJudge", Jev)
+    monkeypatch.setattr(answer_audit, "make_judge", lambda name: Jev())
     rows = [{"task": "t", "level": 0, "index": 0, "prompt": "p", "answer": "1",
              "metadata": {"x": 1}, "signals": {"jev": {"correct": 0.5}}}]
     path = tmp_path / "rows.jsonl"
-    answer_audit.add_choice(rows, path, log=lambda *_: None)
+    answer_audit.add_choice(rows, path, judge="jev", log=lambda *_: None)
     assert rows[0]["signals"]["jev"]["choice"] == pytest.approx(0.6)
-    assert answer_audit.plausibility(rows[0]) == pytest.approx(0.3)
+    assert answer_audit.plausibility(rows[0], "jev") == pytest.approx(0.3)
     assert all(option in asked[0] for option in (") 1", ") 7", ") 8"))
-    answer_audit.add_choice(rows, path, log=lambda *_: None)
+    answer_audit.add_choice(rows, path, judge="jev", log=lambda *_: None)
     assert len(asked) == 1 and json.loads(path.read_text())["signals"]["jev"]["choice"]
 
 

@@ -31,6 +31,7 @@ from .implementation_runner import (
     run_plan,
 )
 from .sandbox import _write_json
+from ..evaluation.judge import DEFAULT_DECIDER
 from .doctor import default_fallback, default_provider
 from .wave_proposer import DEDUP, DEFAULT_DEDUP
 
@@ -261,7 +262,7 @@ def _parser():
     signals.add_argument("--levels", nargs="+", type=int, default=[0, 2, 4, 6])
     signals.add_argument("--n", type=int, default=3, help="examples per task and level")
     signals.add_argument("--seed", type=int, default=43)
-    signals.add_argument("--judges", nargs="+", default=["jev"])
+    signals.add_argument("--judges", nargs="+", default=[DEFAULT_DECIDER])
     report = subparsers.add_parser(
         "signals-report", help="rank signals against a {task: value} target")
     report.add_argument("rows")
@@ -272,7 +273,7 @@ def _parser():
     ladder.add_argument("rows")
     ladder.add_argument("measured", help="zeroshot_probe cache (task|level|model -> cell)")
     ladder.add_argument("--probe-model", default="deepseek-v4-flash")
-    ladder.add_argument("--judge", default="jev")
+    ladder.add_argument("--judge", default=DEFAULT_DECIDER)
     ladder.add_argument("--out", help="write predictions as probe cells under model "
                                       "signals:<judge>, for difficulty_tune to read")
     answers = subparsers.add_parser(
@@ -282,6 +283,7 @@ def _parser():
     answers.add_argument("--per-task", type=int, default=2)
     answers.add_argument("--below", type=float, default=0.5,
                          help="only examples whose p(correct) is under this")
+    answers.add_argument("--judge", default=DEFAULT_DECIDER, help="decider for correct + choice")
     levels = subparsers.add_parser(
         "level-audit", help="check every task's difficulty ladder: config, generation, curve")
     levels.add_argument("out", help="resumable JSONL of per-task config and generation checks")
@@ -639,8 +641,8 @@ def main(argv=None):
         from ..evaluation.answer_audit import add_choice, audit
 
         rows = [json.loads(line) for line in Path(args.rows).read_text().splitlines()]
-        add_choice(rows, args.rows)
-        verdicts = audit(rows, args.out, per_task=args.per_task, below=args.below)
+        add_choice(rows, args.rows, judge=args.judge)
+        verdicts = audit(rows, args.out, per_task=args.per_task, below=args.below, judge=args.judge)
         for kind in ("WRONG", "STRICT"):
             tasks = sorted({v["task"] for v in verdicts if v["verdict"] == kind})
             print(f"{kind}: {len(tasks)} tasks" + "".join(f"\n  {task}" for task in tasks))

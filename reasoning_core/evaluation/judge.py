@@ -58,6 +58,10 @@ def post_json(request):
 
 
 DEFAULT_BACKEND = "llm"
+# The decider asked by default for signals and answer audits. pplx won judge_bench v1 (2026-10-08) on
+# every axis vs jev-1.13: wrong-answer AUROC .924 vs .880, 4-way pick .81 vs .74. Signal columns are
+# keyed by this name, so old jev columns are never mixed with pplx answers.
+DEFAULT_DECIDER = "pplx"
 BACKEND_VAR = "RC_JUDGE_BACKEND"
 
 

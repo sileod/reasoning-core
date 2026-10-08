@@ -21,7 +21,7 @@ import json
 from pathlib import Path
 import random
 
-from .judge import Question, make_judge
+from .judge import DEFAULT_DECIDER, Question, make_judge
 
 MAX_STATE_CHARS = 60_000   # Jev reads 32k tokens; a prompt past this is not one we ship
 # Per example, not the task's own allowance: lean_candidate_compilation waited 35 minutes on
@@ -122,7 +122,7 @@ def _missing(row, judges, dimensions):
             if any((have.get(name) or {}).get(d.name) is None for d in dimensions)}
 
 
-def collect(tasks, out, *, levels=(0, 2, 4, 6), n=3, seed=43, judges=("jev",),
+def collect(tasks, out, *, levels=(0, 2, 4, 6), n=3, seed=43, judges=(DEFAULT_DECIDER,),
             dimensions=DIMENSIONS, workers=8, log=lambda line: print(line, flush=True)):
     """Sample, profile and store every (task, level); resumable, and re-asks only the gaps.
 
