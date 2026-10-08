@@ -7,8 +7,8 @@ its level tables stop at 4.
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task
 
 DIMENSIONS = ["authorization", "status", "financial", "ownership", "none"]
 RISK = ["Lower operational risk than before.", "No material risk change.", "Higher operational risk than before."]
@@ -107,5 +107,4 @@ class StatePerturbation(Task):
             "risk_direction": Decision((delta > 0) - (delta < 0) + 1, type="score", criteria=RISK, instructions=
                 "Following the risk rule, how did total operational risk change from before to after?"),
         }
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

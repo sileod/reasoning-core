@@ -14,8 +14,8 @@ tasksource.jev.procedural.taxonomy_routing; its level tables stop at 4.
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision, render_records
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose, render_records
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 AREAS = ["billing", "shipping", "returns", "accounts", "security", "hardware", "software", "partners",
          "compliance", "onboarding"]
@@ -139,5 +139,4 @@ class TaxonomyRouting(Task):
                 "How many of the conditions listed for {c} does the ticket meet?",
                 "Count the conditions of {c} that hold for this ticket."]).format(c=probe)),
         }
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

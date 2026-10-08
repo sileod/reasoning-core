@@ -7,8 +7,8 @@ tasksource.jev.procedural.needle_retrieval; its level tables stop at 4.
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision, render_records
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose, render_records
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 CITIES = ["Oslo", "Lima", "Accra", "Hanoi", "Quito", "Porto", "Dakar", "Perth", "Tunis", "Osaka",
           "Bergen", "Cusco", "Lagos", "Hue", "Cuenca", "Braga", "Thies", "Darwin", "Sfax", "Kobe"]
@@ -114,5 +114,4 @@ class NeedleRetrieval(Task):
             "id_listed": Decision(probe in listed, type="noul", instructions=rng.choice([
                 "Is there a {n} with id {p}?", "Does the list include {n} {p}?"]).format(n=noun, p=probe)),
         }
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

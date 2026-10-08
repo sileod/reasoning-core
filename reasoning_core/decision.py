@@ -2,11 +2,13 @@
 
 A task is Jev-shaped when its answer is a Decision. By convention its state is metadata.payload, drawn only from
 random.Random(state_seed) where state_seed is a generate_entry keyword recorded in metadata.state_seed, so
-several questions over one state share a seed and any of them regenerates from (level, seed). Task's default
-render_prompt shows the state and Decision.prompt(); the default score_answer (exact string) already fits, since
-the prompt names the exact answer strings. jev_row() exports an entry to the jev-bench schema.
+several questions over one state share a seed and any of them regenerates from (level, seed); pose() builds the
+entry and lists the state's question ids. Task's default render_prompt shows the state and Decision.prompt(); the
+default score_answer (exact string) already fits, since the prompt names the exact answer strings. jev_row()
+exports an entry to the jev-bench schema, jev_request() a whole state to the Jev / Kev request schema.
 """
 import json
+import random
 from collections.abc import Mapping
 
 
@@ -68,6 +70,39 @@ class Decision(str):
 
     def __reduce__(self):  # str subclasses with keyword-only __new__ do not pickle by default
         return Decision.from_dict, (self.to_dict(),)
+
+
+def pose(questions, payload, state_seed, question=None, **metadata):
+    """The entry asking one of a state's `questions` ({question_id: Decision}): `question`, or one drawn with the
+    ordinary RNG. metadata.question_ids lists them all, so an exporter can ask every question of the state."""
+    from .template import Entry   # template imports this module
+    qid = question or random.choice(sorted(questions))
+    if qid not in questions:
+        raise KeyError(f"question {qid!r} is not asked of this state; it asks {sorted(questions)}")
+    return Entry({"payload": payload, "state_seed": state_seed, "question_id": qid,
+                  "question_ids": sorted(questions), **metadata}, questions[qid])
+
+
+def jev_request(task, state_seed, level=0):
+    """One state of a Jev-shaped task with every question asked of it, as a labelled Jev / Kev request:
+    {"state", "questions": {id: {type, instructions, criteria, label, target}}, "_meta"}. Labels follow the API: the
+    option name (choice), a bool (noul), the level index (score); `target`, the soft label keyed the same way, is
+    there when the task has one."""
+    first = task.generate_example(level=level, state_seed=state_seed)
+    entries = {first.metadata.question_id: first}
+    for qid in first.metadata.question_ids:
+        if qid not in entries:
+            entries[qid] = task.generate_example(level=level, state_seed=state_seed, question=qid)
+    questions = {}
+    for qid, entry in sorted(entries.items()):
+        d = entry.answer
+        q = {**{k: v for k, v in d.question.items() if v is not None}, "label": d.label}
+        if d.soft is not None:
+            q["target"] = ({"true": d.soft, "false": round(1 - d.soft, 6)} if q["type"] == "noul" else
+                           {str(i): p for i, p in enumerate(d.soft)} if q["type"] == "score" else dict(d.soft))
+        questions[qid] = q
+    return {"state": json.loads(json.dumps(first.metadata.payload)), "questions": questions,
+            "_meta": {"source": first.task, "group_id": f"{first.task}:{level}:{state_seed}"}}
 
 
 def jev_row(entry, split="train"):

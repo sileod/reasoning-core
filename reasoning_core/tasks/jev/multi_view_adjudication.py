@@ -10,8 +10,8 @@ tasksource.jev.procedural.multi_view_adjudication; its level tables stop at 4.
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 INTENTS = {
     "billing": "Payments, invoices, refunds, or charges.",
@@ -196,5 +196,4 @@ class MultiViewAdjudication(Task):
             "workflow_impact": Decision(impact, type="score", criteria=IMPACT, instructions=
                 "Following the workflow impact rule, how much does the issue block the user's work?"),
         }
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

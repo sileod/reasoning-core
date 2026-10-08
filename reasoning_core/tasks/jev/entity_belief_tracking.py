@@ -7,8 +7,8 @@ at 4.
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 AGENTS = ["alice", "bob", "carol", "dave"]
 LOCATIONS = ["desk", "locker", "archive", "lab"]
@@ -76,5 +76,4 @@ class EntityBeliefTracking(Task):
         if level >= 2:
             questions["nested_belief_location"] = Decision(nested[target_agent, other][target_obj], criteria=where,
                 instructions=f"After all events, where does {target_agent} think {other} believes {target_obj} is?")
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

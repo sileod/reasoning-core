@@ -8,8 +8,8 @@ its level tables stop at 4.
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 N_EVIDENCE = [4, 6, 9, 12, 16]
 N_ORIGINS = [3, 4, 5, 7, 11]
@@ -101,5 +101,4 @@ class ClaimSupport(Task):
                 "Which origin of valid supporting evidence has the highest reliability? Break ties "
                 "lexicographically; choose none if there is no valid support."),
         }
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

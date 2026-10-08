@@ -10,8 +10,8 @@ import random
 from dataclasses import dataclass
 from fractions import Fraction
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 ROLES = ["analyst", "engineer", "manager"]
 TEAMS = ["alpha", "beta", "gamma"]
@@ -118,8 +118,7 @@ class PolicyUnderUncertainty(Task):
             "requester_role": Decision(_decided(posterior), criteria=dict.fromkeys(roles), soft=_soft(posterior, roles),
                                        instructions="What is the requester's most likely role?"),
         }
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)
 
     @staticmethod
     def _draw(rng, level):

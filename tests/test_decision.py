@@ -43,3 +43,19 @@ def test_state_seed_reproduces_the_state_and_groups_rows():
     ra, rb = jev_row(a), jev_row(b)
     assert ra["id"].split(":")[:3] == rb["id"].split(":")[:3] == ["hidden_source", "3", "7"]
     assert all(isinstance(v, str) for v in ra.values()) and json.loads(ra["question"])["type"] == ra["primitive"]
+
+
+def test_jev_request_asks_every_question_of_one_state():
+    from reasoning_core import get_task
+    from reasoning_core.decision import jev_request
+    t = get_task("policy_under_uncertainty")
+    r = jev_request(t, state_seed=7, level=2)
+    assert set(r["questions"]) == {"access_allowed", "governing_policy", "requester_role"}
+    assert r == json.loads(json.dumps(r)) == jev_request(t, state_seed=7, level=2)   # plain JSON, from the seed alone
+    for qid, q in r["questions"].items():   # every question regenerates as the entry with that label
+        d = t.generate_example(level=2, state_seed=7, question=qid).answer
+        assert q["label"] == d.label and {k: q.get(k) for k in d.question} == d.question
+    allowed = r["questions"]["access_allowed"]
+    assert isinstance(allowed["label"], bool) and abs(sum(allowed["target"].values()) - 1) < 1e-6
+    with pytest.raises(KeyError):
+        t.generate_example(level=2, state_seed=7, question="no_such_question")

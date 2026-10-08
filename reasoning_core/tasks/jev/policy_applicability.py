@@ -7,8 +7,8 @@ sensitivity by one step). Ported from tasksource.jev.procedural.policy_applicabi
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 ROLES = ["analyst", "engineer", "manager"]
 TEAMS = ["alpha", "beta", "gamma"]
@@ -138,5 +138,4 @@ class PolicyApplicability(Task):
             "review_risk": Decision(risk_index, type="score", criteria=RISK, instructions=
                 "Following the review rule, how risky is this policy outcome for automated execution?"),
         }
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

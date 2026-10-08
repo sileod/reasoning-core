@@ -7,8 +7,8 @@ stop at 4.
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 OWNERS = ["alice", "bob", "carol", "unassigned"]
 SEVERITY = ["Routine.", "Degraded service requiring attention.", "Critical user-blocking incident."]
@@ -110,5 +110,4 @@ class EventStateReconstruction(Task):
             "current_severity": Decision(severity, type="score", criteria=scale, instructions=
                                          "What is the incident's current severity after replaying the event log?"),
         }
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

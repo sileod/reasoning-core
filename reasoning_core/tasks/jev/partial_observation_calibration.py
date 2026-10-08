@@ -9,8 +9,8 @@ import random
 from dataclasses import dataclass
 from fractions import Fraction
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task
 
 RATES = [
     (Fraction(4, 5), Fraction(1, 5)),
@@ -69,5 +69,4 @@ class PartialObservationCalibration(Task):
         questions = {"incident_real": Decision(
             posterior > Fraction(1, 2), type="noul", soft=round(float(posterior), 6),
             instructions="After conditioning on every sensor observation, is the incident more likely real than not?")}
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

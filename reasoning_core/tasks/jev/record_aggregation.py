@@ -6,8 +6,8 @@ as well. Ported from tasksource.jev.procedural.record_aggregation; its level tab
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision, render_records
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose, render_records
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 COLORS = ["red", "blue", "green", "black", "white", "gray", "orange", "purple", "yellow", "brown"]
 OBJECTS = ["lamp", "chair", "kettle", "drill", "scarf", "clock", "vase", "rope", "tent", "mug"]
@@ -89,5 +89,4 @@ class RecordAggregation(Task):
                                          "Count the {c} items{s} whose quantity is {q} or more."]).format(
                     c=category, q=cut, s=" that are in stock" if stock else ""))
         state = render_records(items, rng.choice(["json", "table", "csv", "lines"]))
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

@@ -9,8 +9,8 @@ import json
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision, render_records
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose, render_records
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 OBJECTS = ["lamp", "chair", "kettle", "drill", "scarf", "clock", "vase", "rope", "tent", "mug"]
 COUNTS = [str(i) for i in range(10)]  # Jev scores have at most 10 levels
@@ -236,5 +236,4 @@ class PracticalArithmetic(Task):
         state_seed = random.randrange(2 ** 32) if state_seed is None else state_seed
         rng, level = random.Random(state_seed), min(self.config.level, 4)
         state, questions = rng.choice([_order, _ledger, _schedule])(rng, level)
-        qid = question or random.choice(sorted(questions))
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)

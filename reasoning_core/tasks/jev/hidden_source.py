@@ -8,8 +8,8 @@ import random
 from dataclasses import dataclass
 from fractions import Fraction as F
 
-from reasoning_core.decision import Decision
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 COLORS = ["red", "blue", "green", "yellow", "white", "black"]
 NAMES = ["A", "B", "C", "D", "E"]
@@ -94,8 +94,8 @@ class HiddenSource(Task):
             soft[post[0][1]] += round(1 - sum(soft.values()), 4)   # rounding residue on the argmax
             answer = Decision(post[0][1], instructions="Which bag were the marbles drawn from?",
                               criteria=dict.fromkeys(names), soft=soft)
-            return Entry({"payload": state, "state_seed": state_seed, "question_id": "source", "posterior": {x: str(p) for p, x in post},
-                          "n_bags": len(names), "replace": replace, "n_draws": len(seq)}, answer)
+            return pose({"source": answer}, state, state_seed, question, posterior={x: str(p) for p, x in post},
+                        n_bags=len(names), replace=replace, n_draws=len(seq))
         raise RuntimeError("hidden_source: no instance with a clear most probable bag")
 
     def render_prompt(self, m):

@@ -7,8 +7,8 @@ import json
 import random
 from dataclasses import dataclass
 
-from reasoning_core.decision import Decision, render_records
-from reasoning_core.template import Config, Entry, Task, stochastic_rounding as sround
+from reasoning_core.decision import Decision, pose, render_records
+from reasoning_core.template import Config, Task, stochastic_rounding as sround
 
 CITIES = ["Oslo", "Lima", "Accra", "Hanoi", "Quito", "Porto", "Dakar", "Perth", "Tunis", "Osaka",
           "Bergen", "Cusco", "Lagos", "Hue", "Cuenca", "Braga", "Thies", "Darwin", "Sfax", "Kobe"]
@@ -95,5 +95,4 @@ class TableLookup(Task):
                 f"How many people based in {city} started in {since} or later?",
                 f"Count the people in {city} whose start year is {since} or later."])),
         }
-        qid = question or random.choice(sorted(questions))   # the question, unlike the state, is not seeded
-        return Entry({"payload": state, "state_seed": state_seed, "question_id": qid}, questions[qid])
+        return pose(questions, state, state_seed, question)
