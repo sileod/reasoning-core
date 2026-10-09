@@ -38,8 +38,8 @@ task's own scorer.
 
 | config | source | tasks | train | test |
 |---|---|---|---|---|
-| `reasoning_core` (default) | [procedural-pretraining-pile](https://huggingface.co/datasets/reasoning-core/procedural-pretraining-pile) @ `rc14` | 55 | 50,000 | 5,000 |
-| `reasoning_gym` | [reasoning-gym](https://huggingface.co/datasets/reasoning-core/reasoning-gym) @ `531e215` | __RG_TASKS__ | __RG_TRAIN__ | __RG_TEST__ |
+| `reasoning_core` (default) | [procedural-pretraining-pile](https://huggingface.co/datasets/reasoning-core/procedural-pretraining-pile) @ `rc14` | 54 | 49,092 | 4,909 |
+| `reasoning_gym` | [reasoning-gym](https://huggingface.co/datasets/reasoning-core/reasoning-gym) @ `531e215` | 68 | 48,274 | 4,582 |
 
 ```python
 from datasets import load_dataset
@@ -74,13 +74,32 @@ Wrong options come from `Task.generate_distractors` in [reasoning-core](https://
 - **Option count varies:** each question has 2 to 13 options, depending on how many distinct wrong answers
   the task allows. Yes/no tasks have 2 options; open-ended answers usually have 13.
 - **Dropped questions:** a question is dropped when its reference does not score 1, or when no grounded wrong
-  option exists. For that reason `knights_knaves` is nearly absent from `reasoning_gym`: mined answers name
-  other people, and reasoning-gym has no near-miss generator.
-- **Checked shortcuts:** picking the longest option, the shortest option, or the option with the most prompt
-  overlap. Per task, these stay close to chance for that task's option count.
+  option exists. In `reasoning_gym` this empties some tasks entirely:
+  - the stored answer never scores 1 under reasoning-gym's own scorer: `arc_agi`, `graph_color`,
+    `propositional_logic`, `rearc`, `rubiks_cube`, `rush_hour`;
+  - answers that rearrange the prompt's own words leave no grounded mined option: `group_anagrams`,
+    `number_sorting`, `word_sorting`.
+- **Shortcut gate:** three solver-free rules are checked per task: pick the longest option, the shortest, or
+  the one with the most prompt overlap. A task is dropped whole when the best rule beats chance
+  (1 / number of options) by more than 0.25 on its train rows. Mined options can still differ from the reference
+  in scale or vocabulary: in `word_ladder`, only the reference starts and ends with the prompt's words.
+  - dropped from `reasoning_core`: `constrained_continuation`;
+  - dropped from `reasoning_gym`: `knights_knaves`, `number_format`, `puzzle24`, `word_ladder`.
+
+  Among the kept tasks, the best rule beats chance by a median of about 0.01–0.02. The largest remaining excess
+  is `regex_reasoning` (0.39 vs 0.18). Per-task values are in each config's `build_stats.json`.
+- **No train/test overlap:** test rows whose prompt also occurs in train are dropped.
+- **Excluded reasoning-gym generators:** the semantic audit in the Reasoning Core paper (Appendix G) found 13
+  generators with wrong scorers, wrong labels or prompt–oracle mismatches. These are left out: `game_of_life_halting`,
+  `intermediate_integration`, `boxnet`, `tsumego`, `mahjong_puzzle`, `syllogism`, `family_relationships`,
+  `calendar_arithmetic`, `time_intervals`, `aiw`, `simple_geometry`, `rectangle_count`, `power_function`. Also left
+  out are generators whose gold answer is one sampled solution among several valid ones, because another valid
+  answer could then appear as a wrong option: `codeio`, `needle_haystack`, `sentence_reordering`, `letter_jumble`,
+  `caesar_cipher` (`survo` is not in the source pool).
 
 Build: `python scripts/build_procedural_choices.py --out <dir> --source {reasoning_core,reasoning_gym}`
-(seed 0; 2 train shards of the source are sampled per config; tasks are balanced).
+(seed 0; 2 train shards of the source are sampled per config; tasks are balanced; `reasoning_gym` is built with
+`--n 59616 --test-n 5994`, a per-task quota that offsets the tasks dropped above).
 
 ## Citation
 
