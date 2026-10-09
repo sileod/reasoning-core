@@ -2,7 +2,8 @@
 
 The constant-guess rate is measured on the balanced label distribution the dataset
 is actually built with, and reported as the excess over the 1/k floor every k-label
-task must give away. Both corrections matter: the raw rate on the raw draw rejected
+task must give away (k per question, so a Jev-shaped state's yes/no and n-way questions
+each count at their own chance). Both corrections matter: the raw rate on the raw draw rejected
 13 of 70 shipped tasks, 12 of them for a skew that the balancing cap erases.
 
 A fixed constant answer is one way to win without reasoning. Copying something off the
@@ -97,29 +98,45 @@ def audit(task, level, n, deadline):
                 "top": ""}
     balanced = _balanced(entries, task, n)
     answers = [str(e.answer) for e in balanced]
-    top, ntop = collections.Counter(answers).most_common(1)[0]
-    rules = {name: statistics.mean(task.score_answer(shortcuts(e.prompt)[name], e)
-                                   for e in entries)
-             for name in shortcuts("")}
+    # Chance is per question: a Jev-shaped task asks several questions of one state, and a
+    # constant "No" only competes on its yes/no ones, at 1/2, whatever the pooled answer
+    # count. A declared answer set (a Decision's options; 2 for yes/no) sets k; otherwise
+    # it is the answers seen for that question. One answer seen and none declared is a
+    # level that only ever emits that answer: its chance stays 0, so it reads as gameable.
+    groups = collections.defaultdict(list)
+    for e in balanced:
+        groups[(getattr(e, "metadata", None) or {}).get("question_id")].append(e)
+    # The constant an example faces is the commonest answer among the *other* examples of
+    # its question: split per question, a group is a handful of samples, and an in-sample
+    # mode wins its own sample by construction (+0.15 on a 6-sample yes/no group).
+    top, chance = {}, {}
+    for members in groups.values():
+        seen = collections.Counter(str(e.answer) for e in members)
+        for e in members:
+            others = seen - collections.Counter([str(e.answer)])
+            top[id(e)] = (others or seen).most_common(1)[0][0]
+            q = getattr(e.answer, "question", None)
+            k = (2 if q["type"] == "noul" else len(q["criteria"])) if q else len(seen)
+            chance[id(e)] = 1.0 / k if k > 1 else 0.0
+    gain = lambda guess: statistics.mean(task.score_answer(guess(e), e) - chance[id(e)] for e in balanced)
+    # A k-label task hands any guesser 1/k however good it is, so a raw rate reads
+    # label-set size, not gameability: the pool's best task (regex_reasoning, 8 labels)
+    # is further above its floor than the binary tasks the raw rate rejects. Only the
+    # gain over chance is avoidable, so only the gain is gateable -- for the constant
+    # guess and for the prompt-surface guess alike ("Answer Yes or No." ends every
+    # yes/no prompt, so its last word wins half of them by chance alone).
+    rules = {name: gain(lambda e, name=name: shortcuts(e.prompt)[name]) for name in shortcuts("")}
     worst_rule = max(rules, key=rules.get)
-    const = statistics.mean(task.score_answer(top, e) for e in balanced)
-    # A k-label task hands a constant guesser 1/k however good it is, so the raw rate
-    # reads label-set size, not gameability: the pool's best task (regex_reasoning,
-    # 8 labels) is further above its floor than the binary tasks the raw rate rejects.
-    # Only the excess over that floor is avoidable, so only the excess is gateable.
     return {
         "n": len(balanced),
         "error": error,
         "distinct": len(set(answers)) / len(answers),
-        "const": const,
-        # k == 1 is a level that only ever emits one answer. Its 1/k floor is 1.00, so
-        # subtracting it would score a wholly constant level at zero and pass it; the
-        # unsolvable case has to report the raw rate instead.
-        "excess": (const - 1.0 / len(set(answers))) if len(set(answers)) > 1 else const,
+        "const": statistics.mean(task.score_answer(top[id(e)], e) for e in balanced),
+        "excess": gain(lambda e: top[id(e)]),
         "shortcut": rules[worst_rule],
         "rule": worst_rule,
         "len": statistics.mean(map(len, answers)),
-        "top": top,
+        "top": collections.Counter(answers).most_common(1)[0][0],
     }
 
 
@@ -132,7 +149,7 @@ def main(argv=None):
                     help="exit 1 if a constant guess beats the 1/k floor by more than this,"
                          " measured on the balanced (as-shipped) label distribution")
     ap.add_argument("--max-shortcut", type=float,
-                    help="exit 1 if reading an answer off the prompt scores above this")
+                    help="exit 1 if reading an answer off the prompt beats the 1/k floor by more than this")
     ap.add_argument("--budget-seconds", type=float, default=90.0,
                     help="stop sampling a level once this much time has gone into it")
     args = ap.parse_args(argv)
@@ -165,7 +182,7 @@ def main(argv=None):
                     worst["shortcut"], worst_rule = r["shortcut"], r["rule"]
             print(f"{name:28s} L{level}  n={r['n']:3d}  distinct={r['distinct']:4.2f}"
                   f"  const_reward={r['const']:4.2f}  excess={r['excess']:+5.2f}"
-                  f"  shortcut={r['shortcut']:4.2f}"
+                  f"  shortcut={r['shortcut']:+5.2f}"
                   f" ({r['rule']})  len={r['len']:5.1f}  ex={r['top'][:24]!r}"
                   # n<8 is too few to read a rate off, so the level is printed but not
                   # gated. Saying so stops a 0.50 off two unique answers reading as a
@@ -182,7 +199,7 @@ def main(argv=None):
               " skewed enough to win without reading the prompt", file=sys.stderr)
         return 1
     if args.max_shortcut is not None and worst["shortcut"] > args.max_shortcut:
-        print(f"FAIL: answering with the {worst_rule} in the prompt scores"
+        print(f"FAIL: answering with the {worst_rule} in the prompt beats the 1/k floor by"
               f" {worst['shortcut']:.2f} > {args.max_shortcut:.2f}; the prompt states its"
               " own answer, so the task is extraction and not reasoning", file=sys.stderr)
         return 1
@@ -190,7 +207,7 @@ def main(argv=None):
         # Passing is not the same as passing comfortably, and only this line tells the
         # author which of the two they did.
         print(f"OK: worst constant-guess excess {worst['excess']:+.2f}, worst prompt-surface guess"
-              f" {worst['shortcut']:.2f} ({worst_rule or '-'}), ceiling {args.max_const:.2f}")
+              f" excess {worst['shortcut']:+.2f} ({worst_rule or '-'}), ceiling {args.max_const:.2f}")
     return 0
 
 

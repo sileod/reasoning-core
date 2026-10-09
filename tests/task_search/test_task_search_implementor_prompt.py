@@ -170,7 +170,33 @@ def test_prior_audit_sees_a_prompt_that_states_its_own_answer():
     task = Copyable()
     report = prior_audit.audit(task, 0, 20, time.time() + 20)
     assert report["const"] < 0.4 and report["distinct"] >= 0.9
-    assert report["shortcut"] == 1.0 and report["rule"] == "last_number"
+    # Every answer distinct: chance is 1/20, so copying wins all but that.
+    assert report["shortcut"] > 0.9 and report["rule"] == "last_number"
+
+
+def test_prior_audit_counts_chance_per_question():
+    """A Jev-shaped state asks a yes/no question and an n-way one. "Answer Yes or No."
+    ends every yes/no prompt, so its last word wins half of them by chance alone, and
+    pooling the questions set k from both answer sets. Neither is gameability."""
+    from reasoning_core.decision import Decision
+
+    class YesNoAndPick:
+        config = types.SimpleNamespace(set_level=lambda level: None)
+
+        def generate_example(self):
+            if random.random() < 0.5:
+                d = Decision(random.choice(["Yes", "No"]), type="noul", instructions="Is it?")
+            else:
+                d = Decision(random.choice("ABCDEFGH"), criteria=dict.fromkeys("ABCDEFGH"), instructions="Which?")
+            return types.SimpleNamespace(prompt=f"state\n\n{d.prompt()}", answer=d,
+                                         metadata={"question_id": d.question["type"]})
+
+        def score_answer(self, answer, entry):
+            return float(str(answer) == str(entry.answer))
+
+    random.seed(0)
+    report = prior_audit.audit(YesNoAndPick(), 0, 200, time.time() + 20)
+    assert abs(report["excess"]) < 0.15 and abs(report["shortcut"]) < 0.15
 
 def test_pace_changes_the_prompt_and_nothing_else():
     """The hurry stance is an assumption about the bottleneck, so it has to be A/B-able.
