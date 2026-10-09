@@ -9,12 +9,12 @@ things the prompt never mentions is eliminated without solving (prompt overlap p
 the time on planning before this). A task is then dropped whole when a solver-free shortcut (pick the longest,
 the shortest, or the most prompt-overlapping option) beats chance on its train rows by more than --max-shortcut
 (mined options can still differ from the reference in scale or vocabulary), and test rows whose prompt occurs in
-train are dropped.
+train are dropped, as are repeated prompts within a split.
 
     python scripts/build_procedural_choices.py --out build/procedural_choices                      # reasoning_core
     python scripts/build_procedural_choices.py --out build/procedural_choices --source reasoning_gym
 """
-import argparse, collections, functools, json, random, re, signal, sys
+import argparse, collections, functools, hashlib, json, random, re, signal, sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -51,6 +51,11 @@ def _alarm(*_):
 def shard(source, name):
     repo, rev, *_ = SOURCES[source]
     return pd.read_parquet(hf_hub_download(repo, f"data/{name}.parquet", repo_type="dataset", revision=rev))
+
+
+def row_id(task, prompt, metadata):
+    """The source's deduplication key; reasoning-gym rows have none, so a hash of task and prompt."""
+    return json.loads(metadata).get("_deduplication_key") or hashlib.sha1(f"{task}\0{prompt}".encode()).hexdigest()[:32]
 
 
 def words(text):
@@ -129,7 +134,7 @@ def build_task(args):
         out.append(dict(task=name, level=int(row["level"]), prompt=row["prompt"],
                         options=[o for o, _ in options], option_scores=[s for _, s in options],
                         label=[s for _, s in options].index(1.0), answer=row["answer"],
-                        id=json.loads(row["metadata"]).get("_deduplication_key", "")))
+                        id=row_id(name, row["prompt"], row["metadata"])))
         n["kept"] += 1
     return name, out, n
 
@@ -171,7 +176,7 @@ def main():
         records, stats[split] = build(a.source, frame, -(-n // n_tasks), (a.min_distractors, a.max_distractors),
                                       a.seed, a.workers, a.tasks)
         random.Random(a.seed).shuffle(records)
-        splits[split] = pd.DataFrame(records[:n])
+        splits[split] = pd.DataFrame(records[:n]).drop_duplicates("prompt")  # the rg pool repeats small-space prompts
     excess = shortcut_excess(splits["train"])
     gamed = sorted(t for t, x in excess.items() if x > a.max_shortcut)
     for split, frame in splits.items():

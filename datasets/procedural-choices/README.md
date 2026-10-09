@@ -39,7 +39,7 @@ task's own scorer.
 | config | source | tasks | train | test |
 |---|---|---|---|---|
 | `reasoning_core` (default) | [procedural-pretraining-pile](https://huggingface.co/datasets/reasoning-core/procedural-pretraining-pile) @ `rc14` | 54 | 49,092 | 4,909 |
-| `reasoning_gym` | [reasoning-gym](https://huggingface.co/datasets/reasoning-core/reasoning-gym) @ `531e215` | 68 | 48,274 | 4,582 |
+| `reasoning_gym` | [reasoning-gym](https://huggingface.co/datasets/reasoning-core/reasoning-gym) @ `531e215` | 68 | 47,073 | 4,581 |
 
 ```python
 from datasets import load_dataset
@@ -56,7 +56,7 @@ rg = load_dataset("reasoning-core/procedural-choices", "reasoning_gym")
 - `option_scores`: the task scorer's score for each option. The reference scores 1. A wrong option scores
   below 1, and a few keep partial credit (for example a numeric answer close to the reference).
 - `answer`: the reference answer.
-- `id`: the source row's deduplication key (`reasoning_core` only).
+- `id`: a stable row id, unique within each config: the source row's deduplication key for `reasoning_core`, and a hash of task and prompt for `reasoning_gym`.
 
 ## How the options are made
 
@@ -88,7 +88,7 @@ Wrong options come from `Task.generate_distractors` in [reasoning-core](https://
 
   Among the kept tasks, the best rule beats chance by a median of about 0.01–0.02. The largest remaining excess
   is `regex_reasoning` (0.39 vs 0.18). Per-task values are in each config's `build_stats.json`.
-- **No train/test overlap:** test rows whose prompt also occurs in train are dropped.
+- **No train/test overlap, no repeats:** test rows whose prompt also occurs in train are dropped, and so are repeated prompts within a split (the reasoning-gym pool repeats prompts in tasks with few instances, such as `tower_of_hanoi`).
 - **Excluded reasoning-gym generators:** the semantic audit in the Reasoning Core paper (Appendix G) found 13
   generators with wrong scorers, wrong labels or prompt–oracle mismatches. These are left out: `game_of_life_halting`,
   `intermediate_integration`, `boxnet`, `tsumego`, `mahjong_puzzle`, `syllogism`, `family_relationships`,
