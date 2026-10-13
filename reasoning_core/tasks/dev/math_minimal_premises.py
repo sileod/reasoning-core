@@ -1,12 +1,13 @@
-"""Name the one minimal set of hypotheses that proves a conclusion, over several interpreted theories.
+"""Name the one minimal set of hypotheses that implies a conclusion, over several interpreted theories.
 
 Variables are typed: numbers in ℕ ⊂ ℤ ⊂ ℝ ⊂ ℂ (mixed through casts `↑`), elements `i : Fin u`, sets
-`S : Set (Fin u)` and maps `f : Fin u → Fin u`. Hypotheses and the conclusion are random well-typed atoms
-over that signature, so the theories meet inside one statement (`↑(f '' S).ncard + x ^ 2 ≤ 3`). Every
-symbol is interpreted, and entailment is decided exactly by z3: integers and real polynomials natively,
-ℂ as pairs of reals, and the finite theories unrolled over `Fin u`. The gold set is checked to be the only
-minimal one; instances where z3 answers `unknown` are dropped. A theory is a sort plus entries in
-`_gen_*`, `_z3_*` and `_show_*`.
+`S : Set (Fin u)`, maps `f : Fin u → Fin u`, and arrows `p : Fin 3 → Fin 2` between several finite
+objects (a concrete category: composites, `id`, injective/surjective as mono/epi; some instances are pure
+diagrams). Hypotheses and the conclusion are random well-typed atoms over that signature, so the
+theories meet inside one statement (`↑(f '' S).ncard + x ^ 2 ≤ 3`). Every symbol is interpreted, and
+implication is decided exactly by z3: integers and real polynomials natively, ℂ as pairs of reals, and
+the finite theories unrolled over `Fin u`. The gold set is checked to be the only minimal one; instances
+where z3 answers `unknown` are dropped. A theory is a sort plus entries in `_gen_*`, `_Z3` and `_show`.
 """
 import random
 from dataclasses import dataclass
@@ -383,7 +384,7 @@ class _Z3:
 
 class _Prover:
     """One incremental z3 solver for fixed hypotheses and candidate conclusions (None means False);
-    `entails(idx, k)` asks whether the hypotheses numbered `idx` prove conclusion `k`."""
+    `entails(idx, k)` asks whether the hypotheses numbered `idx` imply conclusion `k`."""
 
     def __init__(self, hyps, concls, types, u):
         E = _Z3(types, u)
@@ -587,12 +588,12 @@ def _declare(types, u):
 
 
 class MathMinimalPremises(DevTask):
-    summary = ("Given typed variables (ℕ ⊂ ℤ ⊂ ℝ ⊂ ℂ with casts, Fin u, sets and maps on Fin u), numbered "
-               "hypotheses mixing arithmetic, divisibility, set algebra, images, cardinality, injectivity "
-               "and surjectivity, and a conclusion (possibly False), name the unique minimal set of "
-               "hypotheses that proves it; entailment decided exactly by z3.")
+    summary = ("Given typed variables (ℕ ⊂ ℤ ⊂ ℝ ⊂ ℂ with casts, Fin u, sets and maps on Fin u, arrows "
+               "Fin p → Fin q), numbered hypotheses mixing arithmetic, divisibility, set algebra, images, "
+               "cardinality, injectivity/surjectivity and commuting diagrams of composites, and a conclusion "
+               "(possibly False), name the unique minimal set of hypotheses that implies it; decided by z3.")
     config_cls = MathMinimalPremisesConfig
-    task_version = 1
+    task_version = 2  # prompt: "implies" (was "proves"), and `∘` / `id` explained for arrow instances
 
     def generate_entry(self):
         cfg = self.config
@@ -606,7 +607,8 @@ class MathMinimalPremises(DevTask):
         return (f"Variables: {m.variables}\nHypotheses:\n{hyps}\nConclusion: {m.conclusion}\n\n"
                 "Notation is Lean/Mathlib: `↑` casts to the type of the surrounding expression, "
                 "`f '' S` is the image and `f ⁻¹' S` the preimage of S, `Sᶜ` the complement in Fin, "
-                "`S.ncard` the number of elements. Exactly one set of hypotheses proves the conclusion "
+                "`S.ncard` the number of elements, `g ∘ f` the composite (f first) and `id` the identity. "
+                "Exactly one set of hypotheses implies the conclusion "
                 "with every member needed. List its numbers in increasing order, comma-separated (e.g. 1, 3).")
 
     def score_answer(self, answer, entry):
