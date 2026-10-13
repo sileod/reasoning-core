@@ -34,6 +34,8 @@ REVISIONS = {
     # the same data as parquet, so it loads under a pinned revision like everything else.
     "baber/piqa": "142f6d7367fd9877f0fb3b5734ea6a545f54cdd1",
     "tasksource/reclor": "0414b39bfc39b2d555b48fa245fc198744c46215",
+    "allenai/qasc": "a34ba204eb9a33b919c10cc08f4f1c8dae5ec070",
+    "EleutherAI/hendrycks_math": "21a5633873b6a120296cce3e2df9d5550074f4a3",
     "cais/mmlu": "c30699e8356da336a370243923dbaf21066bb9fe",
 }
 
@@ -140,8 +142,89 @@ def build_mmlu_all_nomenu_cloze(n, rng):
     yield from islice(interleaved, n)
 
 
+def _reclor_all():
+    """Validation then train: nothing here is trained on, so train items are eval items too."""
+    for split in ("validation", "train"):
+        yield from _load("tasksource/reclor", split=split)
+
+
+def build_reclor_full(n, rng, context=True):
+    """ReClor over both splits; context=False keeps only the question, which measures how much of
+    the leg is answerable from the options alone (the authors' EASY/HARD bias, per item)."""
+    for r in islice(_reclor_all(), n):
+        opts = list(r["answers"])
+        gold = opts[int(r["label"])]
+        prompt = f"{r['context']}\nQuestion: {r['question']}" if context else f"Question: {r['question']}"
+        yield _row(prompt, gold, [o for o in opts if o != gold], rng)
+
+
+def build_qasc(n, rng, facts=True, noleak=False):
+    """Two-fact science composition, 8 options. facts=True states both facts (composition);
+    facts=False is the closed-book form (recall). The gold is copied verbatim from the facts in 74% of
+    items, so facts=True fails gate 1; noleak=True keeps only the items where it is not."""
+    for split in ("validation", "train"):
+        for r in _load("allenai/qasc", split=split):
+            opts = list(r["choices"]["text"])
+            gold = opts[r["choices"]["label"].index(r["answerKey"])]
+            if noleak and gold.lower() in f"{r['fact1']} {r['fact2']}".lower():
+                continue
+            prompt = (f"Fact 1: {r['fact1']}\nFact 2: {r['fact2']}\n" if facts else "") + f"Question: {r['question']}"
+            yield _row(prompt, gold, [o for o in opts if o != gold], rng)
+
+
+MATH_TYPES = ("algebra", "counting_and_probability", "geometry", "intermediate_algebra", "number_theory",
+              "prealgebra", "precalculus")
+
+
+def _boxed(solution):
+    i = solution.rfind("\\boxed{")
+    if i < 0:
+        return None
+    depth, j = 0, i + len("\\boxed{")
+    for k in range(j, len(solution)):
+        depth += {"{": 1, "}": -1}.get(solution[k], 0)
+        if depth < 0:
+            return solution[j:k].strip()
+    return None
+
+
+def _math_rows(levels=("Level 1", "Level 2")):
+    for t in MATH_TYPES:
+        for split in ("test", "train"):
+            for r in _load("EleutherAI/hendrycks_math", t, split=split):
+                a = _boxed(r["solution"])
+                if r["level"] in levels and a:
+                    yield r["problem"], a, r["type"], r["level"]
+
+
+def build_math_l12(n, rng):
+    """MATH levels 1-2, answer likelihood (qa_nll, as gsm8k): the final boxed answer after the problem."""
+    rows = list(_math_rows())
+    rng.shuffle(rows)
+    for problem, answer, *_ in rows[:n]:
+        yield {"prompt": f"Problem: {problem.strip()}\nAnswer:", "answer": answer}
+
+
+def build_math_l12_mc(n, rng):
+    """MATH levels 1-2 as a no-menu choice: the gold boxed answer against 3 boxed answers of other
+    problems of the same type and level, so the contrast needs the problem, not the answer's look."""
+    rows = list(_math_rows())
+    rng.shuffle(rows)
+    pool = defaultdict(list)
+    for problem, answer, typ, lvl in rows:
+        pool[typ, lvl].append(answer)
+    for problem, answer, typ, lvl in rows[:n]:
+        others = list(dict.fromkeys(a for a in pool[typ, lvl] if a != answer))
+        yield _row(f"Problem: {problem.strip()}", answer, rng.sample(others, min(3, len(others))), rng)
+
+
 BUILDERS = {"boolq": build_boolq, "siqa": build_siqa, "wic": build_wic,
             "piqa": build_piqa, "reclor": build_reclor,
+            "reclor_full": build_reclor_full,
+            "reclor_noctx": lambda n, rng: build_reclor_full(n, rng, context=False),
+            "qasc_facts": build_qasc, "qasc_closed": lambda n, rng: build_qasc(n, rng, facts=False),
+            "qasc_facts_noleak": lambda n, rng: build_qasc(n, rng, noleak=True),
+            "math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc,
             "mmlu_all_nomenu_cloze": build_mmlu_all_nomenu_cloze}
 
 
@@ -184,6 +267,8 @@ def main():
         out = a.output_dir / f"{t}_eval.jsonl"
         with out.open("x") as file:
             file.write("".join(json.dumps(r) + "\n" for r in rows))
+        if "choices" not in rows[0]:  # qa_nll leg: no options to game
+            print(f"[build] {t:<7} n={len(rows):<5} qa_nll (no choices) -> {out}"); continue
         g = gate1(rows)
         flag = ("  <-- FAILS GATE 1" if g["leak"] > 0.10 or g["shortest_excess_pt"] > 10 else "")
         print(f"[build] {t:<7} n={len(rows):<5} leak={'n/a (binary)' if g['binary'] else format(g['leak'],'.1%')} "
