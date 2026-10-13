@@ -4,7 +4,7 @@ import pandas as pd
 import networkx as nx
 import numbers
 from itertools import product
-from math import log, nan, floor, ceil
+from math import isfinite, log, nan, floor, ceil
 import ast
 from abc import ABC, abstractmethod
 
@@ -455,13 +455,14 @@ class Rung(ABC):
         dict_truth = _to_dict(entry.answer)
         try:
             dict_pred = _to_dict(answer)
-        except:
+            return js_reward(dict_truth, dict_pred)
+        except Exception:
             return 0
-        return js_reward(dict_truth, dict_pred)
 
 
 class BayesianAssociation(Rung, DevTask):
     summary = "Infer observational distributions in discrete Bayesian networks with evidence, noise, and conditional-independence structure."
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or Rung12Config())
@@ -495,6 +496,7 @@ class BayesianAssociation(Rung, DevTask):
 
 class BayesianIntervention(Rung, DevTask):
     summary = "Infer interventional distributions in discrete Bayesian networks under do-operations, evidence, noise, and conditional-independence structure."
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or Rung12Config())
@@ -566,12 +568,23 @@ def _to_dict(x):
             k2 = k
         out[k2] = float(v)
     
-    total = sum(out.values())
-    if total > 0 and not np.isclose(total, 1.0):
+    total = _validated_total(out.values())
+    if not np.isclose(total, 1.0):
         for k in out:
             out[k] = out[k] / total
             
     return out
+
+
+def _validated_total(weights):
+    """Require a finite, nonnegative distribution with positive finite mass."""
+    weights = list(weights)
+    if any(not isfinite(weight) or weight < 0 for weight in weights):
+        raise ValueError("Probability weights must be finite and nonnegative")
+    total = sum(weights)
+    if not isfinite(total) or total <= 0:
+        raise ValueError("Probability weights must have a positive finite total")
+    return total
 
 
 def js_divergence(d1, d2):
@@ -579,21 +592,19 @@ def js_divergence(d1, d2):
     Compute the Jensen-Shannon divergence between two discrete probability distributions.
     """
     keys = set(d1.keys()).union(set(d2.keys()))
-    if not keys:
-        return 0.0
-        
-    p = [d1.get(k, 0.0) for k in keys]
-    q = [d2.get(k, 0.0) for k in keys]
+
+    p = [float(d1.get(k, 0.0)) for k in keys]
+    q = [float(d2.get(k, 0.0)) for k in keys]
     
-    p_sum = sum(p)
-    q_sum = sum(q)
-    if p_sum > 0: p = [v / p_sum for v in p]
-    if q_sum > 0: q = [v / q_sum for v in q]
+    p_sum = _validated_total(p)
+    q_sum = _validated_total(q)
+    p = [v / p_sum for v in p]
+    q = [v / q_sum for v in q]
     
     m = [(p[i] + q[i]) / 2 for i in range(len(keys))]
 
     def kl_divergence(a, b):
-        return sum(a_i * log(a_i / b_i, 2) for a_i, b_i in zip(a, b) if a_i > 0 and b_i > 0)
+        return sum(a_i * log(a_i / b_i, 2) for a_i, b_i in zip(a, b) if a_i > 0)
 
     js = 0.5 * kl_divergence(p, m) + 0.5 * kl_divergence(q, m)
     return js
