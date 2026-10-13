@@ -762,10 +762,13 @@ def process_transform_batch(batch, pool, answer_pools, shot_pools, writer, args)
     rows_out = 0
     for row_i, row, is_verif in batch:
         out = out_by_row[row_i] if is_verif else dict(row)
+        split = "test" if stable_u01(row_i, row["prompt"], "test_split", seed=args.seed) < args.test_ratio else "train"
         out = maybe_cot(out, args)
         out = maybe_few_shot(out, shot_pools, args)
-        out["_split"] = "test" if stable_u01(row_i, row["prompt"], "test_split", seed=args.seed) < args.test_ratio else "train"
-        if out["mode"] == "instruct" and len(shot_pools[out["task"]]) < args.few_shot_pool_per_task:
+        out["_split"] = split
+        # Only train rows become demonstrations: a test row in the pool would put its prompt and
+        # answer verbatim into a later training prompt.
+        if split == "train" and out["mode"] == "instruct" and len(shot_pools[out["task"]]) < args.few_shot_pool_per_task:
             shot_pools[out["task"]].append({"prompt": out["prompt"], "answer": out["answer"]})
         writer.add(out)
         rows_out += 1
