@@ -86,11 +86,13 @@ def rc_ds_to_env(ds, system_prompt=DEFAULT_SYSTEM_PROMPT, do_extract_answer=True
     eval_dataset = _prepare_env_dataset(eval_ds) if eval_ds is not None else None
 
     def score_answer_vf(completion, info, **kwargs) -> float:
-        answer = completion[-1]["content"] if isinstance(completion, list) else completion
+        if isinstance(completion, list):  # a turn with only tool calls has content None
+            completion = completion[-1].get("content") if completion else None
+        answer = completion or ""
         if do_extract_answer:
             answer = extract_answer(answer)
         entry = edict(task=info["task_name"], answer=info["answer"], metadata=info["metadata"])
-        return float(score_answer(answer, entry))
+        return float(score_answer(answer.strip(), entry))
 
     rubric = vf.Rubric(funcs=[score_answer_vf])
     return vf.SingleTurnEnv(
