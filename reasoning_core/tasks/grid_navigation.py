@@ -36,7 +36,7 @@ VINV = {"above": "below", "below": "above", "aligned": "aligned"}
 SCORE_RE = {
     "coord": r"\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?",
     "distance": r"-?\d+",
-    "relation": r"(left|right|aligned)\s*,\s*(above|below|aligned)",
+    "relation": r"\(?\s*(left|right|aligned)\s*,\s*(above|below|aligned)\s*\)?",
 }
 
 
@@ -264,6 +264,7 @@ def pick_query(rng, solver, gv, names, final, query_names=None):
 
 class GridNavigation(Task):
     summary = "Infer object grid coordinates from spatial relations and step actions."
+    task_version = 1
 
     def __init__(self, config=None):
         super().__init__(config=config or GridNavigationConfig())
@@ -366,8 +367,9 @@ class GridNavigation(Task):
 
     def score_answer(self, answer, entry):
         kind = entry.metadata["answer_type"]
-        pa = re.search(SCORE_RE[kind], str(answer).lower())
-        pg = re.search(SCORE_RE[kind], entry.answer.lower())
+        # fullmatch: a search scored "not (2, 3)" as (2, 3)
+        pa = re.fullmatch(SCORE_RE[kind], str(answer).lower().strip().rstrip(".").strip())
+        pg = re.fullmatch(SCORE_RE[kind], entry.answer.lower().strip())
         if not pa or not pg:
             return 0.0
         return float(pa.group() == pg.group() if kind == "distance" else pa.groups() == pg.groups())

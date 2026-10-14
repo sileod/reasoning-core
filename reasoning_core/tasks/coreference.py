@@ -271,6 +271,7 @@ class Coreference(Task):
     """Track references through variable-width permutations and constraints."""
 
     summary = "Resolve references through ordered groups, later evidence, and branches."
+    task_version = 1
     config_cls = CoreferenceConfig
 
     def _entities(self):
@@ -537,6 +538,5 @@ class Coreference(Task):
         )
 
     def score_answer(self, answer, entry):
-        words = str(answer or '').strip().strip('.').strip("'\"").split()
-        predicted = (words or [''])[-1].lower()
-        return float(predicted == entry.answer.lower())
+        # The name must be the whole reply: taking the last word scored "not Kate" as Kate.
+        return float(str(answer or '').strip().strip('.').strip("'\"").strip().lower() == entry.answer.lower())

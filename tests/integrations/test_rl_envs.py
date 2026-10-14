@@ -54,6 +54,16 @@ def test_gold_scores_one_and_wrong_answers_score_below_one(row):
         assert score < 1 or wrong.strip() == row["answer"].strip(), wrong
 
 
+@pytest.mark.parametrize("row", ROWS, ids=IDS)
+def test_gold_inside_a_hedge_scores_below_one(row):
+    # a scorer that searches the reply for the answer pays "not X" and "X or not X" as X
+    if row["task"] == "program_synthesis":  # graded on the extracted program, which a prefix does not change
+        pytest.skip()
+    gold = row["answer"]
+    for hedge in (f"not {gold}", f"{gold} or not {gold}"):
+        assert float(score_answer(hedge, row)) < 1, hedge
+
+
 def test_prime_env_rollouts_reward_gold_and_only_gold():
     pytest.importorskip("verifiers")
     from datasets import Dataset, DatasetDict

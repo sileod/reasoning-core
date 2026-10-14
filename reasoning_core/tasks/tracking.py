@@ -61,6 +61,7 @@ class ReferenceTracking(Task):
                          the referent's current box (forcing both skills).
     """
     summary = "Track locations of balls in boxes across moves, swaps, and coreferences."
+    task_version = 1
 
     def __init__(self, config=None):
         super().__init__(config=config or ReferenceTrackingConfig())
@@ -378,13 +379,6 @@ class ReferenceTracking(Task):
 
         norm = lambda s: re.sub(r"[^a-z0-9]", "", str(s).strip().lower())
 
-        gold = norm(entry.answer)
-        ans  = str(answer).lower()
-        if norm(ans) == gold:
-            return 1.0
-        
-        prefix = gold[0] 
-        found  = set(re.findall(rf"{prefix}\d+", ans))
-        if len(found) == 1 and norm(next(iter(found))) == gold:
-            return 1.0
-        return 0.0
+        # The tag must be the whole reply: a search for a single tag inside it
+        # scored "not x1" as x1.
+        return float(norm(answer) == norm(entry.answer))

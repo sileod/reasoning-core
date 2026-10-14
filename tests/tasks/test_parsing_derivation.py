@@ -17,6 +17,7 @@ def test_parsing_derivation_soft_score():
     assert task.score_answer("Rules: R0, R1 R2", entry) == 1.0
     assert 0.0 < task.score_answer("R0 R2", entry) < 1.0
     assert task.score_answer("R8 R9", entry) == 0.0
+    assert task.score_answer("not R0 R1 R2", entry) == 0.0  # only rule labels count as an answer
 
 
 def test_parsing_derivation_uses_shorter_defaults():

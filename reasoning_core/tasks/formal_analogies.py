@@ -47,12 +47,12 @@ def _compact(atom):
 
 
 def _parse_sent(s):
-    s = str(s).strip()
-    m = re.search(r"\b(\w+)\s+is\s+([A-Za-z]\w*)-linked\s+to\s+(\w+)\b", s)
+    s = str(s).strip().rstrip(".").strip()  # the fact must be the whole reply
+    m = re.fullmatch(r"(\w+)\s+is\s+([A-Za-z]\w*)-linked\s+to\s+(\w+)", s)
     if m:
         a, p, b = m.groups()
         return p, a, b
-    m = re.search(r"\b([A-Za-z]\w*)\s*\(\s*(\w+)\s*,\s*(\w+)\s*\)", s)
+    m = re.fullmatch(r"([A-Za-z]\w*)\s*\(\s*(\w+)\s*,\s*(\w+)\s*\)", s)
     if m:
         return m.groups()
     m = re.fullmatch(r"(\w+)\s+([A-Za-z]\w*)\s+(\w+)\.?", s)
@@ -330,6 +330,7 @@ class AnalogicalCaseMatchingConfig(Config):
 
 class AnalogicalCaseMatching(Task):
     summary = "Retrieve analogical cases matching query objects, links, and logical facts."
+    task_version = 1
     def __init__(self, config=None):
         super().__init__(config=config or AnalogicalCaseMatchingConfig())
 
@@ -520,7 +521,9 @@ class AnalogicalCaseMatching(Task):
             return 1.0 if text == "none" else 0.0
 
         if entry.metadata.get("answer_format") == "index":
-            pred_ids = re.findall(r"\bM\d+\b", str(answer))
+            if not re.fullmatch(r"m\d+(?:[\s,;]+(?:and\s+)?m\d+)*", text):  # "not M0" is not M0
+                return 0.0
+            pred_ids = re.findall(r"\bM\d+\b", str(answer).upper())
             return 1.0 if pred_ids == list(entry.metadata["matching_case_ids"]) else 0.0
 
         gold = tuple(entry.metadata["answer_atom"])  # edict stores answer_atom as a list; parse yields a tuple

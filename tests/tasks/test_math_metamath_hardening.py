@@ -37,17 +37,17 @@ def test_entailment_compares_token_balanced_premise_sets():
 
 
 @pytest.mark.parametrize("answer, gold, expected", [
-    # Uppercasing the whole reply promoted the English article to a choice, and taking
-    # the last standalone letter let the prose after the conclusion overrule it.
+    # The reply must be the letter alone: any search over prose pays a hedge.
     ("C, which is a valid rule", "A", 0.0),
-    ("C, which is a valid rule", "C", 1.0),
+    ("C, which is a valid rule", "C", 0.0),
+    ("not A", "A", 0.0),
+    ("Not A but D", "D", 0.0),
     # The original leniency: a bare [A-D] search matched the letter inside any word.
     ("reajrjrje9595!", "A", 0.0),
-    # A reply that is nothing but a letter is a choice however it is cased.
+    # A reply that is nothing but a letter is a choice however it is cased or decorated.
     ("a", "A", 1.0),
     ("**C**", "C", 1.0),
-    # Reasoning before concluding still settles on the last letter it wrote.
-    ("Not A but D", "D", 1.0),
+    ("(B).", "B", 1.0),
 ])
 def test_core_select_scores_the_choice_not_a_letter_that_happens_to_appear(
     answer, gold, expected

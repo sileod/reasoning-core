@@ -608,6 +608,7 @@ class SequenceConfig(Config):
 
 class SequentialInduction(Task):
     summary = "Infer the canonical recurrence in a bounded polynomial DSL."
+    task_version = 1
     config_cls = SequenceConfig
 
     def __init__(self, config=None):
@@ -702,6 +703,8 @@ class SequentialInduction(Task):
         degree = entry.metadata["degree of recursion"]
         try:
             text = str(answer).strip()
+            if re.search(r"\b(and|or|not|if|else|lambda)\b", text):
+                return 0.0  # Python evaluates "A or not A" to A before sympy sees it
             assignment = re.fullmatch(r"U\s*\[\s*n\s*\]\s*=\s*(.+)", text, re.DOTALL)
             predicted_poly = parse_formula(assignment.group(1) if assignment else text, degree)
             return float(predicted_poly == parse_formula(entry.answer, degree))

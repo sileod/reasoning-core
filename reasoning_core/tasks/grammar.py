@@ -596,7 +596,7 @@ class ParsingDerivationConfig(GrammarConfig):
 
 class ParsingDerivation(Task):
     summary = "Determine the derivation production rule sequence parsing a given string."
-    task_version = 3  # 3: strings are no longer perturbed (the rate was reset to 0.5 by set_level)
+    task_version = 4  # 3: strings are no longer perturbed (the rate was reset to 0.5 by set_level); 4: replies must be rule labels only
     def __init__(self, config=None):
         super().__init__(config=config or ParsingDerivationConfig())
 
@@ -626,6 +626,9 @@ class ParsingDerivation(Task):
         )
 
     def score_answer(self, answer, entry):
+        body = re.sub(r"^\s*(rules|answer)\s*:", "", str(answer), flags=re.I)
+        if re.search(r"[^\s,.;>\-→]", re.sub(r"\bR\d+\b", "", body)):
+            return 0.0  # only rule labels: ignoring other words scored "not R0 R2" as R0 R2
         pred = re.findall(r"\bR\d+\b", str(answer))
         gold = entry["answer"].split()
         valid = set(re.findall(r"\bR\d+\b", entry.metadata["labeled_g"]))
