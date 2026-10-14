@@ -37,6 +37,9 @@ REVISIONS = {
     "allenai/qasc": "a34ba204eb9a33b919c10cc08f4f1c8dae5ec070",
     "EleutherAI/hendrycks_math": "21a5633873b6a120296cce3e2df9d5550074f4a3",
     "cais/mmlu": "c30699e8356da336a370243923dbaf21066bb9fe",
+    "tasksource/lsat-rc": "f0923a196e509340a94d1954e237ac95c65e6cf8",
+    "Samsoup/cosmos_qa": "5511553160809abc4f9c11d12421ec0a9681ee75",
+    "textmachinelab/quail": "2bd9d7f90a532fe1a910b70972cef5fda341c8fe",
 }
 
 
@@ -218,6 +221,41 @@ def build_math_l12_mc(n, rng):
         yield _row(f"Problem: {problem.strip()}", answer, rng.sample(others, min(3, len(others))), rng)
 
 
+TASKSOURCE = {"lsat_rc": ("lsat-rc", "tasksource/lsat-rc"), "cosmos_qa": ("cosmos_qa", "Samsoup/cosmos_qa"),
+              "quail": ("quail", "textmachinelab/quail")}
+
+
+def build_tasksource_mc(n, rng, leg):
+    """A tasksource MultipleChoice task, every split pooled (none is trained on) and deduplicated:
+    quail ships its validation set again as test."""
+    from tasksource import load_task
+    task, repo = TASKSOURCE[leg]
+    d, seen = load_task(task, revision=REVISIONS[repo]), set()
+    for split in ("validation", "test", "train"):
+        for r in d.get(split, ()):
+            opts = [r[k] for k in sorted(r) if k.startswith("choice")]
+            key = (r["inputs"], *opts)
+            if key in seen:
+                continue
+            seen.add(key)
+            gold = opts[int(r["labels"])]
+            yield _row(f"{r['inputs']}", gold, [o for o in opts if o != gold], rng)
+
+
+def build_quail_clean(n, rng):
+    """QuAIL without its two levers: every item offers "not enough information" (gold 11.5%), a
+    label prior like FOLIO's neutral, so it is removed and its gold items dropped; and in 6.7% of items
+    only the gold is copied verbatim from the passage, a copy detector's shortcut, so those go too."""
+    for r in build_tasksource_mc(n, rng, "quail"):
+        p = r["prompt"].lower()
+        others = [c for c in r["choices"] if c != r["answer"]]
+        if "not enough information" in r["answer"].lower() or (
+                r["answer"].lower() in p and not any(c.lower() in p for c in others)):
+            continue
+        yield _row(r["prompt"][:-len("\nAnswer:")], r["answer"],
+                   [c for c in others if "not enough information" not in c.lower()], rng)
+
+
 BUILDERS = {"boolq": build_boolq, "siqa": build_siqa, "wic": build_wic,
             "piqa": build_piqa, "reclor": build_reclor,
             "reclor_full": build_reclor_full,
@@ -225,7 +263,9 @@ BUILDERS = {"boolq": build_boolq, "siqa": build_siqa, "wic": build_wic,
             "qasc_facts": build_qasc, "qasc_closed": lambda n, rng: build_qasc(n, rng, facts=False),
             "qasc_facts_noleak": lambda n, rng: build_qasc(n, rng, noleak=True),
             "math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc,
-            "mmlu_all_nomenu_cloze": build_mmlu_all_nomenu_cloze}
+            "mmlu_all_nomenu_cloze": build_mmlu_all_nomenu_cloze,
+            "quail_clean": build_quail_clean,
+            **{leg: (lambda n, rng, leg=leg: build_tasksource_mc(n, rng, leg)) for leg in TASKSOURCE}}
 
 
 def gate1(rows):
