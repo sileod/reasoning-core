@@ -68,6 +68,23 @@ def test_prime_env_rollouts_reward_gold_and_only_gold():
     assert {r["task"] for r, x in zip(rows, wrong) if x >= 1 and r["answer"].strip() not in WRONGS} == set()
 
 
+def test_prime_env_reward_ignores_whitespace_in_tags_and_scores_empty_turns_zero():
+    pytest.importorskip("verifiers")
+    from datasets import Dataset, DatasetDict
+
+    module = load_by_path("pi_reasoning_core_env", "integrations/primeintellect/reasoning_core_env/reasoning_core_env.py")
+    data = Dataset.from_list([{k: row[k] for k in ("task", "prompt", "answer", "metadata")} for row in ROWS])
+    env = module.rc_ds_to_env(DatasetDict(train=data, test=data))
+    reward = getattr(env.rubric, "rubrics", [env.rubric])[0].funcs[0]  # verifiers may wrap it in a RubricGroup
+    # a model that puts the answer on its own line inside the tags
+    padded = {r["info"]["task_name"] for r in env.eval_dataset
+              if reward([{"role": "assistant", "content": f"<answer>\n  {r['answer']}\n</answer>"}], r["info"]) != 1}
+    assert padded == set()
+    info = env.eval_dataset[0]["info"]
+    assert reward([{"role": "assistant", "content": None}], info) == 0  # tool-call-only turn
+    assert reward([], info) == 0
+
+
 def test_openenv_episodes_reward_gold_and_only_gold(monkeypatch):
     pytest.importorskip("openenv")
     sys.path.insert(0, str(ROOT / "integrations/openenv/reasoning_core_env"))
