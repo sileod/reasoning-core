@@ -144,6 +144,10 @@ def discover_games():
     return _REGISTRY
 
 
+def _has_concrete_answer(answer):
+    return answer is not None and bool(str(answer).strip())
+
+
 def usable_games():
     """Discovered games that emit a concrete gold answer (trainable answer-only). Cached; test-gens once."""
     global _USABLE
@@ -153,7 +157,7 @@ def usable_games():
             try:
                 with _quiet_synlogic():
                     d = cls().generate(1)
-                if d and str(d[0].answer).strip():
+                if d and _has_concrete_answer(d[0].answer):
                     u.append(t)
             except Exception:
                 pass
@@ -174,6 +178,7 @@ class SynlogicConfig(Config):
 class Synlogic(Task):
     summary = "Execute reasoning games and tasks integrated from the SynLogic framework."
     task_name = "synlogic"
+    task_version = 2
 
     def __init__(self, config=None, *args, **kwargs):
         _on_path()
@@ -225,7 +230,7 @@ class Synlogic(Task):
                     d = self._game(name).generate(1, **self._generate_kwargs(name))[0]
             except Exception:
                 continue
-            if str(d.answer).strip() and self._accept_prompt(name, d.question):
+            if _has_concrete_answer(d.answer) and self._accept_prompt(name, d.question):
                 break
         else:
             raise RuntimeError("No SynLogic game generated a concrete answer.")
