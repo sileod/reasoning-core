@@ -73,6 +73,10 @@ BATTERY_IDS = {"rg75": "copyfree_battery_v12_tiny/battery@v1:14f00ecfceba",
 # tiny batteries and keying it now would re-owe every task measured before v12.
 BATTERY_KEYED = {"rg75v13"}
 
+# The same battery scored through the chat template, for scales with chat_template set (instruct
+# models). Only a battery-keyed protocol has one: a chat cell must never count as raw coverage.
+CHAT_BATTERY_IDS = {"rg75v13": "copyfree_battery_v13_tiny_chat/battery@v1:c1d446a84e93"}
+
 DEFAULT = "rg75"
 
 
@@ -106,6 +110,12 @@ SCALES = {
     # 300 steps, seed 43, optimizer saved -- at warm LR 1e-5 and effective batch 8 (BS2 GA4, as at
     # 360M). tail_lr is NOT measured here: std_lr/2 gives 5e-6, which is what the 1B sweep measured
     # for OLMo-1B, but no sweep has been run at these models.
+    # Instruct at 360M, scored through its chat template (the _chat battery); trained on the same
+    # raw-format rows as every other scale. Warmed with the 360M recipe, so it takes 360M's rates.
+    "360Mi": {"model": "HuggingFaceTB/SmolLM2-360M-Instruct",
+              "revision": "a10cc1512eabd3dde888204e902eca88bddb4951",
+              "std_lr": 1e-4, "batch_size": 4, "gradient_accumulation_steps": 2,
+              "warm": "checkpoints/warm_6cde1ec171b7_adam", "chat_template": True},
     "OLMo2": {"model": "allenai/OLMo-2-0425-1B",
               "revision": "a1847dff35000b4271fa70afc5db10fd29fedbdf",
               "std_lr": 1e-5, "batch_size": 2, "gradient_accumulation_steps": 4,
@@ -153,8 +163,23 @@ def learning_rate(protocol, scale):
     return measured if measured is not None else SCALES[scale]["std_lr"] / 2
 
 
+def eval_manifest(protocol, scale):
+    """The battery manifest this protocol is scored on at this scale: the _chat sibling for chat scales."""
+    path = PROTOCOLS[protocol]["eval_manifest"]
+    return path.replace(".json", "_chat.json") if SCALES[scale].get("chat_template") else path
+
+
+def battery_id(protocol, scale):
+    """The battery id an arm of this protocol carries at this scale, or None if not battery-keyed."""
+    if protocol not in BATTERY_KEYED:
+        return None
+    return CHAT_BATTERY_IDS[protocol] if SCALES[scale].get("chat_template") else BATTERY_IDS[protocol]
+
+
 def available(protocol, scale):
     """(ok, reason). A protocol that carries moments needs a warm checkpoint at that scale."""
+    if SCALES[scale].get("chat_template") and protocol not in CHAT_BATTERY_IDS:
+        return False, f"{scale} is scored through its chat template and {protocol} has no chat battery"
     if PROTOCOLS[protocol]["carry_optimizer_state"] and not SCALES[scale]["warm"]:
         return False, (f"{protocol} carries Adam moments and {scale} has no warm checkpoint; "
                        f"run the warm-up at {scale} first, or use --protocol std")
