@@ -430,6 +430,7 @@ def _run_trial(
     credential_env_names,
     pace=DEFAULT_PACE,
     snapshots=False,
+    notes=None,
 ):
     trial_root = invocation_root / trial.trial_id
     worktree = trial_root / "worktree"
@@ -480,7 +481,7 @@ def _run_trial(
         "changes": trial.changes,
         "generation": generation,
     }
-    prompt = render_implementor_prompt(plan, trial, repo_root, task_meta, pace)
+    prompt = render_implementor_prompt(plan, trial, repo_root, task_meta, pace, notes)
     prompt_path = trial_root / "prompt.md"
     prompt_path.write_text(prompt)
     runtime_root = trial_root / "runtime"
@@ -627,6 +628,7 @@ def _run_trial(
         # provenance mapping is not measuring the pacing alone.
         "pace": pace,
         "snapshots": snapshots if harness == "opencode" else None,
+        "notes_sha256": _sha256(notes) if notes else None,
         "prompt_sha256": _sha256(prompt),
         "generation": generation,
         "parent_source_id": parent_source_id,
@@ -776,8 +778,15 @@ def run_plan(
     transient_retries=DEFAULT_TRANSIENT_RETRIES,
     retry_backoff_seconds=30,
     snapshots=False,
+    notes=None,
+    record=True,
 ):
-    """Run selected trials concurrently in isolated Git worktrees."""
+    """Run selected trials concurrently in isolated Git worktrees.
+
+    `notes` is appended to every worker's prompt (see `render_implementor_prompt`).
+    `record=False` keeps the run out of the backlog's attempt counts, for experiments on
+    the pipeline itself rather than attempts at a proposal.
+    """
     if pace not in PACE:
         raise ValueError(
             f"unknown pace: {pace!r}; choose from {', '.join(sorted(PACE))}"
@@ -951,6 +960,7 @@ def run_plan(
                 tuple(credential_env_names),
                 pace,
                 snapshots,
+                notes,
             ): trial.trial_id
             for trial in selected
         }
@@ -975,6 +985,7 @@ def run_plan(
                 }
             results.append(result)
             write_summary()
-            record_outcomes(repo_root, plan.name,
-                            {trial_id: result.get("status") or "unknown"})
+            if record:
+                record_outcomes(repo_root, plan.name,
+                                {trial_id: result.get("status") or "unknown"})
     return sorted(results, key=lambda item: item["trial_id"])

@@ -62,9 +62,13 @@ def _design_choice_section(trial):
 
 
 def render_implementor_prompt(
-    plan, trial, repo_root, task_meta=None, pace=DEFAULT_PACE
+    plan, trial, repo_root, task_meta=None, pace=DEFAULT_PACE, notes=None
 ):
-    """Compose stable global context with one compact assignment."""
+    """Compose stable global context with one compact assignment.
+
+    `notes` is advice appended under its own heading -- what `gepa_search` evolves -- and
+    None renders the prompt every wave so far has seen, byte for byte.
+    """
     pacing = PACE[pace]
     sections = [
         f"# Task-search assignment {trial.trial_id}",
@@ -273,6 +277,8 @@ def render_implementor_prompt(
             "",
         )
     )
+    if notes:
+        sections.extend(("## Notes from earlier trials", "", notes.strip(), ""))
     return "\n".join(sections)
 
 

@@ -293,6 +293,17 @@ def _parser():
     levels.add_argument("--rows", help="signals JSONL, for Jev-predicted curves")
     levels.add_argument("--probe", help="zeroshot_probe cache, for measured curves")
     levels.add_argument("--probe-model", default="deepseek-v4-flash")
+    evolve = subparsers.add_parser(
+        "gepa", help="evolve the implementor's notes with GEPA, scored by gates, Jev and novelty")
+    evolve.add_argument("out", help="directory for plans, runs, the novelty index and GEPA state")
+    evolve.add_argument("--proposals", type=int, default=16, help="unbuilt proposals to draw")
+    evolve.add_argument("--holdout", type=int, default=4, help="of those, the validation set")
+    evolve.add_argument("--budget", type=int, default=40, help="trials GEPA may spend")
+    evolve.add_argument("--test-pool", help="directory of proposal waves GEPA never sees,"
+                        " scored with the empty and the best notes at the end")
+    evolve.add_argument("--jobs", type=int, default=4)
+    evolve.add_argument("--model", default=IMPLEMENTOR_MODEL)
+    evolve.add_argument("--provider", default=default_provider())
     run = subparsers.add_parser("run", help="launch folder-scoped coding workers")
     run.add_argument("plan")
     run.add_argument("--model", default=IMPLEMENTOR_MODEL,
@@ -625,6 +636,13 @@ def main(argv=None):
                 f"{task}|{level}|{model}": {"task": task, "level": level, "model": model,
                                             "status": "ok", "n": 3, "solve_rate": value}
                 for (task, level), value in predicted.items()})
+        return
+    if args.command == "gepa":
+        from .gepa_search import optimize
+
+        print(optimize(args.out, count=args.proposals, holdout=args.holdout, budget=args.budget,
+                       test_pool=args.test_pool, jobs=args.jobs, model=args.model, provider=args.provider,
+                       credential_env_names=tuple(_worker_credentials([]))))
         return
     if args.command == "level-audit":
         from ..evaluation.level_audit import collect, report
