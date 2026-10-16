@@ -102,6 +102,14 @@ SCALES = {
              # This dir carries optimizer.pt, so carry is satisfiable here -- seed 43 only; the
              # seed 44/45 1B warms predate carry and have no moments.
              "warm": "checkpoints/warm_1e323f8a24e1"},
+    # Scale-up scales (2026-10-16). Warmed with the 360M recipe -- fwdolci + rgA 22de0e25573f @0.10,
+    # 300 steps, seed 43, optimizer saved -- at warm LR 1e-5 and effective batch 8 (BS2 GA4, as at
+    # 360M). tail_lr is NOT measured here: std_lr/2 gives 5e-6, which is what the 1B sweep measured
+    # for OLMo-1B, but no sweep has been run at these models.
+    "OLMo2": {"model": "allenai/OLMo-2-0425-1B",
+              "revision": "a1847dff35000b4271fa70afc5db10fd29fedbdf",
+              "std_lr": 1e-5, "batch_size": 2, "gradient_accumulation_steps": 4,
+              "warm": "checkpoints/warm_4284e38c6195_adam"},
 }
 
 # Both scales by default: a single-scale ranking is a claim about one model, and the ladder work
