@@ -85,6 +85,14 @@ def test_opencode_profile_leaves_write_scope_to_mount_sandbox():
     assert permissions["task"] == "deny"
 
 
+def test_opencode_config_sends_tool_choice_for_the_routed_model():
+    trial = load_plan(PLAN).trials[0]
+    config = opencode_config(trial, "worker", provider="albert", model="deepseek-v4-flash")
+    model = config["providers"]["albert"]["models"]["deepseek-v4-flash"]
+    assert model["body"] == {"tool_choice": "auto"}
+    assert "providers" not in opencode_config(trial, "worker")
+
+
 def test_snapshots_toggle_does_not_change_worker_permissions():
     trial = load_plan(PLAN).trials[0]
     disabled = opencode_config(trial, "worker")
@@ -163,7 +171,7 @@ def test_hlink_is_the_only_harness_launcher(tmp_path):
     assert command[command.index("-p") + 1] == "assignment"
     assert command[command.index("--provider") + 1] == "nim"
     assert command[command.index("--") + 1 :] == [
-        "--pure",
+        "--standalone",
         "--agent",
         "worker",
         "--format",

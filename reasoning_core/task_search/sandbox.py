@@ -137,6 +137,29 @@ BASE_ENV_NAMES = (
     "XDG_RUNTIME_DIR",
 )
 
+# The root is bound read-only but readable, and the operator's home sits on it: the login
+# profile exports every API key, so a worker or candidate with a scrubbed environment could
+# still `cat` them, and nothing here cuts the network. Each existing one is covered: a
+# directory by an empty tmpfs, a file by /dev/null. Providers get their key by name instead.
+CREDENTIAL_PATHS = (
+    ".profile", ".bashrc", ".bash_profile", ".bash_history", ".netrc", ".git-credentials",
+    ".ssh", ".gnupg", ".aws", ".claude", ".config/gh", ".config/harness-link",
+    ".config/reasoning_core",
+)
+
+
+def _credential_masks(home=None):
+    home = Path(home or Path.home()).resolve()
+    masks = []
+    for name in CREDENTIAL_PATHS:
+        path = home / name
+        if path.is_dir():
+            masks.extend(("--tmpfs", str(path)))
+        elif path.is_file():
+            masks.extend(("--ro-bind", "/dev/null", str(path)))
+    return masks
+
+
 def _minimal_environment(passthrough=()):
     """Build an environment from an allowlist rather than subtracting from the operator's.
 
@@ -224,6 +247,7 @@ def _sandbox_command(
         "/dev",
         "--proc",
         "/proc",
+        *_credential_masks(),
         *space.binds(owned_path, home=synthetic_home),
     ]
     for source, target in writable_overlays:

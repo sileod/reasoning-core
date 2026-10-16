@@ -190,6 +190,8 @@ def opencode_config(
     top_p=None,
     max_steps=56,
     snapshots=False,
+    provider=None,
+    model=None,
 ):
     permissions = opencode_permissions(trial)
     agent_config = {
@@ -204,12 +206,20 @@ def opencode_config(
         agent_config["temperature"] = temperature
     if top_p is not None:
         agent_config["top_p"] = top_p
-    return {
+    config = {
         "$schema": "https://opencode.ai/config.json",
         "snapshot": snapshots,
         "permission": permissions,
         "agent": {agent: agent_config},
     }
+    if provider and model:
+        # Albert's deepseek-v4-flash answers a `tools` request with "\n\n" and no tool call
+        # unless tool_choice is sent explicitly, and opencode 2.x leaves "auto" out: every
+        # trial then ends after one sentence with exit 0. A model `body` is the one place
+        # opencode 2.x copies into the request (an agent's request.body and the legacy
+        # model options are not); it is the API default, so harmless on other providers.
+        config["providers"] = {provider: {"models": {model: {"body": {"tool_choice": "auto"}}}}}
+    return config
 
 
 def _mini_config(
@@ -290,7 +300,9 @@ def _prepare_harness(
         command.extend(("--fallback", fallback, "--show-routing"))
     native = []
     if harness == "opencode":
-        native = ["--pure", "--agent", agent, "--format", "json"]
+        # --standalone: a private server per trial. Without it opencode 2.x attaches to the
+        # operator's background service, which runs outside the sandbox. (--pure is gone.)
+        native = ["--standalone", "--agent", agent, "--format", "json"]
         if variant:
             native.extend(("--variant", variant))
     elif harness == "mini":
@@ -500,6 +512,8 @@ def _run_trial(
                 top_p=top_p,
                 max_steps=max_steps,
                 snapshots=snapshots,
+                provider=provider,
+                model=model,
             ),
         )
         events_path = trial_root / "events.jsonl"

@@ -138,6 +138,29 @@ def test_bubblewrap_can_overlay_one_harness_runtime_file():
         assert source.read_text() == "worker"
         assert target.read_text() == "host original\n"
 
+@needs_bwrap
+def test_bubblewrap_hides_the_operators_credential_files(monkeypatch):
+    with tempfile.TemporaryDirectory(prefix=".task-search-test-", dir=ROOT) as root:
+        root = Path(root)
+        home = root / "operator"
+        (home / ".config" / "reasoning_core").mkdir(parents=True)
+        (home / ".profile").write_text("export SECRET=1\n")
+        (home / ".config" / "reasoning_core" / "env").write_text("export SECRET=1\n")
+        (home / "notes.txt").write_text("kept\n")
+        monkeypatch.setenv("HOME", str(home))
+        (root / "worktree" / "owned").mkdir(parents=True)
+        command = _sandbox_command(
+            ["/bin/bash", "-c",
+             f"test ! -s {home}/.profile && test ! -e {home}/.config/reasoning_core/env "
+             f"&& test -s {home}/notes.txt"],
+            worktree=root / "worktree",
+            owned_path="owned",
+            runtime_root=root / "runtime",
+        )
+
+        subprocess.run(command, check=True)
+
+
 def test_systemd_resource_wrapper_records_hard_limits():
     command = _resource_command(
         ["bwrap", "true"],
