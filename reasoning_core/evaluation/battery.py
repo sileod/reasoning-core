@@ -72,6 +72,7 @@ class EvalBattery:
     name: str
     legs: tuple[EvalLeg, ...]
     max_length: int = 512
+    chat_template: bool = False     # score qa/mcq/generation legs through the tokenizer's chat template
 
     def __post_init__(self):
         names = [leg.name for leg in self.legs]
@@ -85,6 +86,8 @@ class EvalBattery:
     def identifier(self):
         payload = {"name": self.name, "max_length": self.max_length,
                    "legs": [leg.identifier for leg in self.legs]}
+        if self.chat_template:          # omitted when unset so existing battery ids stay byte-identical
+            payload["chat_template"] = True
         digest = hashlib.sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()[:12]
@@ -113,17 +116,19 @@ def evaluate_battery(model, tokenizer, battery, eos_token):
             if leg.kind == "qa_nll":
                 result = evaluate_qa_nll(
                     model, tokenizer, suite.examples, battery.max_length,
+                    chat_template=battery.chat_template,
                 )
                 metrics[leg.output_key] = result["nll"]
             elif leg.kind == "mcq":
                 result = evaluate_mcq(
                     model, tokenizer, suite.examples, battery.max_length,
+                    chat_template=battery.chat_template,
                 )
                 _add_mcq_metrics(metrics, leg, result)
             else:
                 result = evaluate_generation(
                     model, tokenizer, suite.examples, battery.max_length,
-                    leg.max_new_tokens,
+                    leg.max_new_tokens, chat_template=battery.chat_template,
                 )
                 metrics[leg.output_key] = _required(leg, result, "score")
         details[leg.name] = result
@@ -195,6 +200,7 @@ def load_battery_manifest(path, data_dir=None, max_length=None):
     return EvalBattery(
         payload.get("name", path.stem), legs,
         max_length if max_length is not None else payload.get("max_length", 512),
+        bool(payload.get("chat_template", False)),
     )
 
 

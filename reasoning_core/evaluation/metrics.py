@@ -91,14 +91,14 @@ def load_qa_jsonl(path, eos_token, limit=None):
 
 
 @torch.no_grad()
-def evaluate_qa_nll(model, tokenizer, examples, max_length):
+def evaluate_qa_nll(model, tokenizer, examples, max_length, chat_template=False):
     total_loss = total_tokens = 0
     per_example = []
     device = next(model.parameters()).device
     with evaluating(model):
         for item in examples:
             example = _example(item)
-            prompt_ids = _prompt_ids(tokenizer, example.prompt)
+            prompt_ids = _prompt_ids(tokenizer, example.prompt, chat_template)
             answer_ids = _token_ids(tokenizer, example.answer)
             if len(prompt_ids) + len(answer_ids) > max_length:
                 per_example.append(None)
@@ -151,7 +151,7 @@ def evaluate_lm_nll(model, tokenizer, texts, max_length):
 
 
 @torch.no_grad()
-def evaluate_mcq(model, tokenizer, examples, max_length):
+def evaluate_mcq(model, tokenizer, examples, max_length, chat_template=False):
     """Choice accuracy plus gold NLL and gold-vs-best-distractor margin."""
 
     correct = total = 0
@@ -164,7 +164,7 @@ def evaluate_mcq(model, tokenizer, examples, max_length):
             if not example.choices or example.answer_index is None:
                 per_example.append(None)
                 continue
-            prompt_ids = _prompt_ids(tokenizer, example.prompt)
+            prompt_ids = _prompt_ids(tokenizer, example.prompt, chat_template)
             scores = [
                 _candidate_nll(model, tokenizer, prompt_ids, choice, max_length, device)
                 for choice in example.choices
@@ -275,7 +275,7 @@ def contrastive_mc_objective_id(name, examples, max_length, temperature=1.0):
 
 @torch.no_grad()
 def evaluate_generation(model, tokenizer, examples, max_length, max_new_tokens,
-                        score=None):
+                        score=None, chat_template=False):
     """Greedy generation with an injectable task-specific scoring function."""
 
     score = score or _exact_match
@@ -284,7 +284,7 @@ def evaluate_generation(model, tokenizer, examples, max_length, max_new_tokens,
     with evaluating(model):
         for item in examples:
             example = _example(item)
-            prompt_ids = _prompt_ids(tokenizer, example.prompt)
+            prompt_ids = _prompt_ids(tokenizer, example.prompt, chat_template)
             if not prompt_ids or len(prompt_ids) > max_length:
                 per_example.append(None)
                 continue
@@ -354,14 +354,20 @@ def _token_ids(tokenizer, text):
 
 
 
-def _prompt_ids(tokenizer, prompt):
+def _prompt_ids(tokenizer, prompt, chat_template=False):
     """Tokenize an eval prompt the way TRAINING formats it.
 
     data.py format_row (influence_auto_v1 / sft_qa_v1) emits prompt as f"{prompt}\n" and the
     completion as f"{answer}{eos}". The evaluators used to tokenize example.prompt raw, so the model
     was scored on a prefix it never saw in training -- a train/eval mismatch on every leg. Normalise
     trailing newlines so a leg whose stored prompt already ends in one is not double-terminated.
+
+    chat_template: the prompt is a user turn and the candidate starts the assistant reply.
     """
+    if chat_template:
+        ids = tokenizer.apply_chat_template([{"role": "user", "content": str(prompt).rstrip("\n")}],
+                                            add_generation_prompt=True, tokenize=True)
+        return list(ids["input_ids"] if hasattr(ids, "keys") else ids)
     return _token_ids(tokenizer, str(prompt).rstrip("\n") + "\n")
 
 

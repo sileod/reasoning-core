@@ -48,3 +48,31 @@ def test_historical_full_battery_identity_is_preserved(tmp_path):
     battery = load_battery_manifest(
         RESOURCES / "batteries/copyfree_battery_v8.json", tmp_path, max_length=1024)
     assert battery.identifier == "copyfree_battery_v8/battery@v1:1a482a2aeb5d"
+
+
+def test_chat_template_battery_is_a_separate_identity(tmp_path):
+    rows = json.loads((RESOURCES / "batteries/copyfree_battery_v13_tiny.json").read_text())
+    rows = {**rows, "legs": [leg for leg in rows["legs"] if leg["name"] in ("arc_easy", "sciq")]}
+    (tmp_path / "raw.json").write_text(json.dumps(rows))
+    (tmp_path / "chat.json").write_text(json.dumps({**rows, "chat_template": True}))
+    raw = load_battery_manifest(tmp_path / "raw.json", tmp_path)
+    chat = load_battery_manifest(tmp_path / "chat.json", tmp_path)
+    assert not raw.chat_template and chat.chat_template
+    assert [leg.identifier for leg in raw.legs] == [leg.identifier for leg in chat.legs]
+    assert raw.identifier.split(":")[1] != chat.identifier.split(":")[1]
+
+
+def test_chat_template_prompt_is_a_user_turn():
+    from reasoning_core.evaluation.metrics import _prompt_ids
+
+    class Tok:
+        def __call__(self, text, add_special_tokens=False):
+            return {"input_ids": [ord(c) for c in text]}
+
+        def apply_chat_template(self, messages, add_generation_prompt, tokenize):
+            assert add_generation_prompt and tokenize
+            return [ord(c) for c in f"<u>{messages[0]['content']}</u><a>"]
+
+    decode = lambda ids: "".join(map(chr, ids))
+    assert decode(_prompt_ids(Tok(), "Q?\n")) == "Q?\n"
+    assert decode(_prompt_ids(Tok(), "Q?\n", chat_template=True)) == "<u>Q?</u><a>"
