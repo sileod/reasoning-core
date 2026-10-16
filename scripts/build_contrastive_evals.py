@@ -40,6 +40,8 @@ REVISIONS = {
     "tasksource/lsat-rc": "f0923a196e509340a94d1954e237ac95c65e6cf8",
     "Samsoup/cosmos_qa": "5511553160809abc4f9c11d12421ec0a9681ee75",
     "textmachinelab/quail": "2bd9d7f90a532fe1a910b70972cef5fda341c8fe",
+    "cam-cst/cbt": "72b5c46b1248e3316360f0f2f0b2c39e773b68e4",
+    "jeggers/riddle_sense": "42baa6f1630b798a7f9c26b8e0af25ed523f936d",
 }
 
 
@@ -222,7 +224,12 @@ def build_math_l12_mc(n, rng):
 
 
 TASKSOURCE = {"lsat_rc": ("lsat-rc", "tasksource/lsat-rc"), "cosmos_qa": ("cosmos_qa", "Samsoup/cosmos_qa"),
-              "quail": ("quail", "textmachinelab/quail")}
+              "quail": ("quail", "textmachinelab/quail"),
+              # Children's Book Test: 20 sentences, then a 21st with one word blanked; the answer names the
+              # word after "Answer:", which moved with procedural data in the tasksource survey (2 seeds, 360M
+              # base and instruct, OLMo-1B). Candidates fill the blank in place would score 0.9 and barely move.
+              "cbt_cn": ("cbt/cn", "cam-cst/cbt"), "cbt_ne": ("cbt/ne", "cam-cst/cbt"),
+              "riddle_sense": ("riddle_sense", "jeggers/riddle_sense")}
 
 
 def build_tasksource_mc(n, rng, leg):
@@ -265,7 +272,26 @@ BUILDERS = {"boolq": build_boolq, "siqa": build_siqa, "wic": build_wic,
             "math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc,
             "mmlu_all_nomenu_cloze": build_mmlu_all_nomenu_cloze,
             "quail_clean": build_quail_clean,
-            **{leg: (lambda n, rng, leg=leg: build_tasksource_mc(n, rng, leg)) for leg in TASKSOURCE}}
+            **{leg: (lambda n, rng, leg=leg: build_tasksource_mc(n, rng, leg)) for leg in TASKSOURCE},
+            **{leg: (lambda n, rng, leg=leg: build_cbt(n, rng, leg)) for leg in ("cbt_cn", "cbt_ne")}}
+
+
+def _most_frequent(r):
+    """The option the prompt repeats most, counting whole words."""
+    return max(r["choices"], key=lambda c: len(re.findall(rf"\b{re.escape(c.lower())}\b", r["prompt"].lower())))
+
+
+def build_cbt(n, rng, leg):
+    """CBT without its frequency lever: the gold is the candidate the passage repeats most in ~28% of items
+    (chance 10%), so those items are kept only at the chance rate. Models do not use the lever (their picks
+    agree with it 18-31%), but a leg a word counter beats by 15+ points fails gate 1."""
+    rows = [r for r in build_tasksource_mc(n, rng, leg) if r]
+    hit = [_most_frequent(r) == r["answer"] for r in rows]
+    f, c = sum(hit) / len(rows), 1 / len(rows[0]["choices"])
+    keep = min(1.0, c / (1 - c) * (1 - f) / f)   # share of lever items after subsampling = chance
+    for r, h in zip(rows, hit):
+        if not h or rng.random() < keep:
+            yield r
 
 
 def gate1(rows):
@@ -273,12 +299,17 @@ def gate1(rows):
     # For a binary yes/no leg the substring test is vacuous -- "no" occurs inside ordinary words in
     # any passage -- so it is skipped there and the shortest-picker excess carries gate 1 instead.
     binary = all(set(x.lower() for x in r["choices"]) == {"yes", "no"} for r in rows)
-    leak = 0.0 if binary else sum(r["answer"].lower() in r["prompt"].lower() for r in rows) / len(rows)
+    # Extractive legs (CBT) draw every option from the prompt, so "gold appears in the prompt" is always
+    # true and says nothing; the lever there is picking the option the prompt repeats most, reported instead.
+    within = lambda r: all(c.lower() in r["prompt"].lower() for c in r["choices"])
+    extractive = not binary and sum(map(within, rows)) / len(rows) > 0.9
+    leak = 0.0 if binary or extractive else sum(r["answer"].lower() in r["prompt"].lower() for r in rows) / len(rows)
+    freq = sum(_most_frequent(r) == r["answer"] for r in rows) / len(rows)
     short = sum(min(r["choices"], key=len) == r["answer"] for r in rows) / len(rows)
     chance = sum(1 / len(r["choices"]) for r in rows) / len(rows)
     dlen = (sum(len(r["answer"]) for r in rows) / len(rows)
             - sum(sum(len(c) for c in r["choices"]) / len(r["choices"]) for r in rows) / len(rows))
-    return {"leak": leak, "binary": binary, "shortest_picker": short, "chance": chance,
+    return {"leak": leak, "binary": binary, "extractive": extractive, "most_frequent_picker": freq, "shortest_picker": short, "chance": chance,
             "shortest_excess_pt": 100 * (short - chance), "gold_len_delta_chars": dlen}
 
 
@@ -310,8 +341,9 @@ def main():
         if "choices" not in rows[0]:  # qa_nll leg: no options to game
             print(f"[build] {t:<7} n={len(rows):<5} qa_nll (no choices) -> {out}"); continue
         g = gate1(rows)
-        flag = ("  <-- FAILS GATE 1" if g["leak"] > 0.10 or g["shortest_excess_pt"] > 10 else "")
-        print(f"[build] {t:<7} n={len(rows):<5} leak={'n/a (binary)' if g['binary'] else format(g['leak'],'.1%')} "
+        lever = g["most_frequent_picker"] - g["chance"] if g["extractive"] else 0
+        flag = ("  <-- FAILS GATE 1" if g["leak"] > 0.10 or g["shortest_excess_pt"] > 10 or lever > 0.10 else "")
+        print(f"[build] {t:<7} n={len(rows):<5} leak={'n/a (binary)' if g['binary'] else f"n/a (extractive; most-frequent-picker {g['most_frequent_picker']:.1%})" if g['extractive'] else format(g['leak'],'.1%')} "
               f"shortest-picker={g['shortest_picker']:.1%} (chance {g['chance']:.1%}, "
               f"excess {g['shortest_excess_pt']:+.1f}pt) gold_len_delta={g['gold_len_delta_chars']:+.0f}ch"
               f" -> {out}{flag}")
