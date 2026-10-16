@@ -24,6 +24,8 @@ _TINY11 = "reasoning_core/resources/batteries/copyfree_battery_v11_tiny.json"
 # tokens). Every remaining leg is byte-identical, so ext pools across v8, v11 and v12.
 _TINY12 = "reasoning_core/resources/batteries/copyfree_battery_v12_tiny.json"
 _FULL = "reasoning_core/resources/batteries/copyfree_battery_v8.json"
+# The paper roster (2026-10-16): menu-free legs with free-text options, split into dev and test groups.
+_TINY13 = "reasoning_core/resources/batteries/copyfree_battery_v13_tiny.json"
 
 PROTOCOLS = {
     "rg75": {"main": "fwdolcirg", "steps": 75, "mix": 0.5, "learning_rate": 5e-5,
@@ -37,6 +39,12 @@ PROTOCOLS = {
               "lr_scheduler_type": "constant_with_warmup", "warmup_steps": 4,
               "carry_optimizer_state": True, "max_length": 1024, "batch_size": 4,
               "gradient_accumulation_steps": 2, "token_ratio": True, "eval_manifest": _TINY},
+    # rg75 scored on the paper roster instead of v12_tiny. Every training knob is rg75's, so an
+    # rg75v13 cell differs from an rg75 cell only in what it is evaluated on.
+    "rg75v13": {"main": "fwdolcirg", "steps": 75, "mix": 0.5, "learning_rate": 5e-5,
+                "lr_scheduler_type": "constant_with_warmup", "warmup_steps": 4,
+                "carry_optimizer_state": True, "max_length": 1024, "batch_size": 4,
+                "gradient_accumulation_steps": 2, "token_ratio": True, "eval_manifest": _TINY13},
     "std":  {"main": "fwdolci", "steps": 300, "mix": 0.2, "learning_rate": 1e-4,
              "lr_scheduler_type": "linear", "warmup_steps": 0,
              "carry_optimizer_state": False, "max_length": 1024, "batch_size": 4,
@@ -49,14 +57,21 @@ PROTOCOLS = {
 # Consecutive completed arms in that job: std 2225s and 2231s, rg75 916s and 918s.
 # `carry` shares rg75's steps and battery, which is what the cost is made of, so it shares the
 # measurement; the background mixture does not change how long an arm takes.
-ARM_SECONDS = {"rg75": 917, "carry": 917, "std": 2228}
+# rg75v13 is rg75's training with a smaller battery (1,056 items vs ~6,300 sequences): an ESTIMATE until measured.
+ARM_SECONDS = {"rg75": 917, "carry": 917, "std": 2228, "rg75v13": 800}
 
 # The battery identities these protocols record, at max_length 1024. max_length is hashed into a
 # battery identifier, so the same manifest at 512 is a DIFFERENT battery; every shipped result is
 # at 1024.
 BATTERY_IDS = {"rg75": "copyfree_battery_v12_tiny/battery@v1:14f00ecfceba",
                "carry": "copyfree_battery_v8_tiny/battery@v1:c94e9ad44be0",
-               "std":  "copyfree_battery_v8/battery@v1:1a482a2aeb5d"}
+               "std":  "copyfree_battery_v8/battery@v1:1a482a2aeb5d",
+               "rg75v13": "copyfree_battery_v13_tiny/battery@v1:8721e42db0ed"}
+
+# Protocols whose coverage is keyed on the battery as well as (checkpoint, rate): an arm counts only if
+# it was scored on THIS battery. rg75 is left unkeyed on purpose -- its coverage spans the v8/v11/v12
+# tiny batteries and keying it now would re-owe every task measured before v12.
+BATTERY_KEYED = {"rg75v13"}
 
 DEFAULT = "rg75"
 
