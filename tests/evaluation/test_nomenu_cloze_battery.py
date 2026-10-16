@@ -76,3 +76,10 @@ def test_chat_template_prompt_is_a_user_turn():
     decode = lambda ids: "".join(map(chr, ids))
     assert decode(_prompt_ids(Tok(), "Q?\n")) == "Q?\n"
     assert decode(_prompt_ids(Tok(), "Q?\n", chat_template=True)) == "<u>Q?</u><a>"
+
+
+def test_v13_batteries_rebuild_from_the_shipped_legs(tmp_path):
+    for name, digest in (("copyfree_battery_v13_tiny", "8721e42db0ed"),
+                         ("copyfree_battery_v13_tiny_chat", "c1d446a84e93")):
+        battery = load_battery_manifest(RESOURCES / f"batteries/{name}.json", tmp_path, max_length=1024)
+        assert battery.identifier == f"{name}/battery@v1:{digest}"
