@@ -35,3 +35,37 @@ def test_notes_are_appended_and_absent_notes_change_nothing():
     assert render_implementor_prompt(plan, trial, ROOT, notes=None) == plain
     noted = render_implementor_prompt(plan, trial, ROOT, notes="Bound every loop.")
     assert noted.startswith(plain) and noted.endswith("Bound every loop.\n")
+
+
+def test_workers_get_only_the_chosen_providers_keys(capsys):
+    from reasoning_core.task_search.implementation_runner import _provider_credentials
+    names = ("ALBERT_API_KEY", "INFERX_API_KEY", "OPENROUTER_API_KEY")
+    assert _provider_credentials(names, "albert", None) == ("ALBERT_API_KEY",)
+    assert "OPENROUTER_API_KEY" in capsys.readouterr().err
+    assert _provider_credentials(names, "albert", "orfree") == (
+        "ALBERT_API_KEY", "OPENROUTER_API_KEY")
+    import pytest
+    with pytest.raises(ValueError):
+        _provider_credentials(names, None, None)
+
+
+def test_spend_cap_counts_step_costs_and_trips_only_past_the_budget(tmp_path, monkeypatch):
+    import json
+    from reasoning_core.task_search import spend
+    events = tmp_path / "events.jsonl"
+    events.write_text("".join(json.dumps(e) + "\n" for e in (
+        {"type": "step_finish", "part": {"cost": 0.25}},
+        {"type": "text", "part": {}},
+        {"type": "step_finish", "part": {"cost": 0}},
+    )) + '{"type": "step_fin')
+    ledger = tmp_path / "spend.tsv"
+    monkeypatch.delenv(spend.BUDGET_VAR, raising=False)
+    assert spend.trial_cost(events) == 0.25
+    assert not spend.over(0.0, ledger)          # free provider: never trips
+    assert spend.over(spend.trial_cost(events), ledger)
+    spend.record("w/T1", 0.0, ledger)
+    assert not ledger.exists()
+    spend.record("w/T1", 0.25, ledger)
+    monkeypatch.setenv(spend.BUDGET_VAR, "1")
+    assert spend.spent(ledger) == 0.25 and not spend.over(0.5, ledger)
+    assert spend.over(0.8, ledger)

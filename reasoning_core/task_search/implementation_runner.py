@@ -28,7 +28,7 @@ from .implementor_prompt import (
 from .backlog import record_outcomes
 from .triage import proposal_of, settles
 from .plan import _frozen_module_drift, _plan_problems, _select_trials, load_plan
-from . import namespace
+from . import namespace, spend
 from .sandbox import (
     _agy_writable_overlays,
     _check_sandbox_location,
@@ -432,6 +432,11 @@ def _run_trial(
     snapshots=False,
     notes=None,
 ):
+    if spend.over():
+        raise RuntimeError(
+            f"worker spend {spend.spent():.2f} USD is past {spend.BUDGET_VAR}="
+            f"{spend.budget():.2f}; see {spend.LEDGER}"
+        )
     trial_root = invocation_root / trial.trial_id
     worktree = trial_root / "worktree"
     trial_root.mkdir(parents=True)
@@ -581,25 +586,31 @@ def _run_trial(
         environment["OPENCODE_DISABLE_CLAUDE_CODE_SKILLS"] = "true"
     elif harness == "mini":
         environment["MSWEA_CONFIGURED"] = "true"
-    timed_out = False
+    timed_out = over_budget = False
+    deadline = time.monotonic() + timeout_seconds
     with (
         events_path.open("w") as stdout,
         (trial_root / "stderr.log").open("w") as stderr,
         prompt_path.open() if harness == "agy" else open(os.devnull) as stdin,
     ):
-        try:
-            completed = subprocess.run(
-                command,
-                env=environment,
-                stdin=stdin,
-                stdout=stdout,
-                stderr=stderr,
-                timeout=timeout_seconds,
-            )
-            harness_exit_code = completed.returncode
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            harness_exit_code = 124
+        process = subprocess.Popen(
+            command, env=environment, stdin=stdin, stdout=stdout, stderr=stderr
+        )
+        while True:
+            try:
+                harness_exit_code = process.wait(timeout=5)
+                break
+            except subprocess.TimeoutExpired:
+                timed_out = time.monotonic() > deadline
+                over_budget = not timed_out and spend.over(spend.trial_cost(events_path))
+                if timed_out or over_budget:
+                    process.kill()
+                    process.wait()
+                    # Positive, so a budget kill is not retried as a lost signal.
+                    harness_exit_code = 124 if timed_out else 137
+                    break
+    cost = spend.trial_cost(events_path)
+    spend.record(f"{plan.name}/{trial.trial_id}", cost)
     audit = validate_candidate(
         worktree,
         trial,
@@ -640,6 +651,8 @@ def _run_trial(
         "launcher": _launcher(hlink_version, fallback, trial_root / "stderr.log"),
         "trajectory": str(trajectory_path) if trajectory_path else None,
         "timed_out": timed_out,
+        "cost_usd": cost,
+        "over_budget": over_budget,
         "sandbox": {"name": "bubblewrap", "version": sandbox_version},
         "resource_limits": _public_resource_limits(resource_limits),
         "scrubbed_credential_env_names": sorted(credential_env_names),
@@ -745,6 +758,31 @@ def _skipping_settled(plan, run):
     return run_one
 
 
+def _provider_credentials(names, provider, fallback):
+    """Only the keys the chosen providers read.
+
+    A worker that can see a second provider's key can be routed to that provider, which
+    is how a run meant for Albert spent an OpenRouter key.
+    """
+    try:
+        from harness_link.providers import PROVIDERS
+    except ImportError:
+        PROVIDERS = {}
+    if provider not in PROVIDERS:
+        if len(names) > 1:
+            raise ValueError(
+                f"cannot tell which of {', '.join(names)} provider {provider!r} reads; "
+                "name one key with --credential-env"
+            )
+        return tuple(names)
+    wanted = {PROVIDERS[name].key_env for name in (provider, fallback) if name in PROVIDERS}
+    withheld = sorted(set(names) - wanted)
+    if withheld:
+        print(f"Withholding {', '.join(withheld)}: not read by {provider}"
+              + (f" or {fallback}" if fallback else ""), file=sys.stderr, flush=True)
+    return tuple(name for name in names if name in wanted)
+
+
 def run_plan(
     plan_path,
     *,
@@ -798,6 +836,8 @@ def run_plan(
     root = Path(runs_root).resolve() if runs_root else default_runs_root(repo_root)
     _check_sandbox_location(root, "runs root")
     selected = _siblings_last(_select_trials(plan, trial_ids, queue_names))
+    if harness != "agy":
+        credential_env_names = _provider_credentials(credential_env_names, provider, fallback)
     base_commit = subprocess.check_output(
         ["git", "rev-parse", plan.base_ref], cwd=repo_root, text=True
     ).strip()

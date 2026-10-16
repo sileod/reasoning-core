@@ -93,8 +93,9 @@ def read(trial_dir):
         "calls": calls,
         "denied": denied,
         "checks": checks,
-        "errors": (agy_errors or [e["error"]["name"] for e in events
-                                   if e.get("type") == "error"]),
+        # opencode 1 named an error; opencode 2 types it.
+        "errors": (agy_errors or [e["error"].get("name") or e["error"].get("type")
+                                   for e in events if e.get("type") == "error"]),
         "stopped": (agy_stopped if agy_stopped is not None else
                     events[-1]["part"].get("reason") if events and
                     events[-1].get("type") == "step_finish" else None),
