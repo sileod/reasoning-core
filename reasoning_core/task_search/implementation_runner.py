@@ -701,8 +701,10 @@ def _retryable_harness_failure(result):
     for event in reversed(list(_json_events(log_path))):
         if event.get("type") != "error":
             continue
-        data = event.get("error", {}).get("data", {})
-        status = data.get("statusCode")
+        error = event.get("error") or {}
+        data = error.get("data") or {}
+        # opencode 1 nested the HTTP status under data; opencode 2 sets it on the error.
+        status = data.get("statusCode") or error.get("status")
         if data.get("isRetryable") is True or status in _TRANSIENT_HTTP_STATUS:
             return f"provider_{status or 'transient'}"
     return None

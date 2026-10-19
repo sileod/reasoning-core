@@ -69,3 +69,13 @@ def test_spend_cap_counts_step_costs_and_trips_only_past_the_budget(tmp_path, mo
     monkeypatch.setenv(spend.BUDGET_VAR, "1")
     assert spend.spent(ledger) == 0.25 and not spend.over(0.5, ledger)
     assert spend.over(0.8, ledger)
+
+
+def test_an_opencode_2_rate_limit_is_retried(tmp_path):
+    import json
+    from reasoning_core.task_search.implementation_runner import _retryable_harness_failure
+    log = tmp_path / "events.jsonl"
+    log.write_text(json.dumps({"type": "error", "error": {
+        "type": "provider.quota", "message": "Rate limit exceeded.", "status": 429}}) + "\n")
+    result = {"status": "harness_failed", "harness_exit_code": 1, "harness_log": str(log)}
+    assert _retryable_harness_failure(result) == "provider_429"
