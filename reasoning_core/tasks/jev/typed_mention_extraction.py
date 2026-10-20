@@ -157,6 +157,9 @@ def _defined_roles(rng, c, doc):
                 sentences.append((rng.choice(FORMER[r]), x, None))
         else:
             sentences.append((rng.choice(OTHER), x, y))
+    if not sentences:  # at least one relation, between two other companies
+        x, y = rng.sample(others, 2)
+        sentences.append((rng.choice(OTHER), x, y))
     rng.shuffle(sentences)
     ref = _shortener(rng, c.short_refs, [us] + others, lambda x: "organization")
     for template, x, y in sentences:
@@ -170,16 +173,18 @@ def _pattern_codes(rng, c, doc):
     asked = rng.sample(sorted(CODES), min(len(CODES), max(1, sround(c.types, seed=rng.random()))))
     patterns = [re.compile(p) for _, p, _, _ in CODES.values()]
     present = [k for k in asked if rng.random() >= c.absent]
-    for _ in range(max(2, sround(c.mentions, seed=rng.random()))):
+    written, n = 0, max(2, sround(c.mentions, seed=rng.random()))
+    while written < n:
         k = rng.choice(asked)
         if k in present and rng.random() >= c.near_miss:
             code, mark = CODES[k][2](rng), k
         else:
             code = CODES[k][3](rng)
-            if any(p.fullmatch(code) for p in patterns):
+            if any(p.fullmatch(code) for p in patterns):  # a near miss that happens to fit a format: redraw
                 continue
             mark = None
         doc.add(rng.choice(CARRIERS) + " ", c=(code, mark))
+        written += 1
     return [{"name": k + "s", "type": "list", "instruction": f"Every {k.replace('_', ' ').replace('iso', 'ISO')} ({CODES[k][0]}), as a whole "
              "token written exactly in this format; strings that differ from it do not count."} for k in asked], \
         {k + "s": doc.marks.get(k, []) for k in asked}

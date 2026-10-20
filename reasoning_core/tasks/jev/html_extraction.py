@@ -149,6 +149,8 @@ def grid_cell(table, group, row):
                 for j in range(cs):
                     grid[r + i, col + j] = cell
             col += cs
+    if not grid:
+        return []
     width = max(c for _, c in grid) + 1
     header_rows = {r for r in range(len(rows)) if all(grid[r, c].tag == "th" for c in range(width) if (r, c) in grid)}
     hits = []
@@ -196,12 +198,14 @@ def _spec(rng, groups, rows, cell, style, merge):
     out = []
     for g in groups:
         present = [r for r in rows if cell(g, r) is not None]
+        if not present:  # no header without cells
+            continue
         if style == "colspan":
             out.append(El("tr", kids=[El("th", [("colspan", "2")], [g])]))
         for k, r in enumerate(present):
             head = [El("th", [("rowspan", str(len(present)))], [g])] if style == "rowspan" and k == 0 else []
             out.append(El("tr", kids=head + [El("th", kids=[r]), td(cell(g, r))]))
-    return El("table", [("class", "specs")], out)
+    return El("table", [("class", "specs")], out) if out else None
 
 
 def serialize(node, doc):
@@ -311,8 +315,10 @@ class HtmlExtraction(Task):
             values = {x: None if (x in absent or (x not in asked and rng.random() < 0.3)) else
                       leaf(CELLS[x[1]](rng) + units[x[1]]) for x in cells}
             style = rng.choice(["columns", "rowspan", "colspan"])
-            main.kids.append(_spec(rng, groups, list(units), lambda g, r: values[g, r], style,
-                                   c.merge if style == "columns" else 0))
+            table = _spec(rng, groups, list(units), lambda g, r: values[g, r], style,
+                          c.merge if style == "columns" else 0)
+            if table is not None:
+                main.kids.append(table)
         decoys = sorted(set([x for x in everything if x in absent] + rng.sample(everything, 3)), key=everything.index)
         if rng.random() < c.hidden:  # stale values in hidden content of the main scope
             wrap = rng.choice([[("hidden", None)], [("style", "display: none")], None])
