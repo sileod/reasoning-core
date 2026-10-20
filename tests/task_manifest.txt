@@ -256,6 +256,7 @@ event_order_reconstruction
 event_queue_simulation
 event_structure_residualization
 event_time_intervention_sensitivity
+event_triggered_execution
 evidence_reuse_equivalence
 evidential_felicity_verdicts
 exact_cover_selection
@@ -315,9 +316,11 @@ generic_variance_subtyping
 geometric_orientation_entailment
 gf2_matrix_rank
 gnfa_state_elimination
+goal_directed_planning
 grammar_first_follow
 graph_chordality
 graph_local_complement
+graph_navigation
 graph_pathfinding
 graph_planarity
 graph_rewrite
@@ -360,6 +363,7 @@ innocent_exclusion_exhaustification
 instant_runoff_winner
 instruction_boundary
 instruction_data_boundary
+instruction_execution
 instruction_priority
 integer_tatonnement_clearing
 interval_doubled_posets
@@ -626,6 +630,7 @@ rational_interval_arithmetic
 rational_plane_geometry
 reaching_definitions
 reaching_defs
+record_eligibility
 record_field_extraction
 recursion_tree_cost_analysis
 recursive_equivalence_extraction
