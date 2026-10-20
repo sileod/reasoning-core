@@ -6,9 +6,14 @@ several questions over one state share a seed and any of them regenerates from (
 entry and lists the state's question ids. Task's default render_prompt shows the state and Decision.prompt(); the
 default score_answer (exact string) already fits, since the prompt names the exact answer strings. jev_row()
 exports an entry to the jev-bench schema, jev_request() a whole state to the Jev / Kev request schema.
+
+An Extraction answer is the other Jev shape: typed fields filled from one text in a single pass (the request of
+extraction models such as Cloudflare's Clairic). Its state is metadata.payload, the text; its fields and gold
+offsets are metadata.extraction; extraction_row() exports it to the extraction schema of tasksource-jev.
 """
 import json
 import random
+import re
 from collections.abc import Mapping
 
 
@@ -128,3 +133,100 @@ def render_records(records, style):
     if style == "csv":
         return "\n".join([",".join(columns), *(",".join(str(r[c]) for c in columns) for r in records)])
     return "\n".join("; ".join(f"{c}={r[c]}" for c in columns) for r in records)
+
+
+class Extraction(str):
+    """An answer that is also an extraction request: `fields` [{name, type, instruction}] filled from one `text`,
+    with `type` text (one span) or list (every span, in order of appearance), and `spans` {name: [(start, end)]},
+    the gold offsets in `text`, none when the text does not state it.
+
+    It IS the answer string, the JSON object {name: "span" | ["span", ...] | null}, so scoring needs no metadata;
+    the fields and offsets go to metadata.extraction (to_dict) for exports and debugging.
+    """
+
+    def __new__(cls, text, fields, spans):
+        names = [f["name"] for f in fields]
+        if len(set(names)) != len(names) or set(spans) - set(names):
+            raise ValueError(f"Extraction fields must be unique and cover the spans, got {names} / {sorted(spans)}")
+        spans = {n: sorted({tuple(s) for s in spans.get(n, ())}) for n in names}
+        answer = {}
+        for f in fields:
+            values = [text[a:b] for a, b in spans[f["name"]]]
+            if f["type"] not in ("text", "list") or (f["type"] == "text" and len(set(values)) > 1):
+                raise ValueError(f"Extraction field {f['name']!r}: a text field has one value, got {values}")
+            if not all(v.strip() == v and v for v in values):
+                raise ValueError(f"Extraction field {f['name']!r}: spans must be trimmed and non-empty, got {values}")
+            values = list(dict.fromkeys(values))
+            answer[f["name"]] = (values or None) if f["type"] == "list" else (values[0] if values else None)
+        obj = super().__new__(cls, json.dumps(answer, ensure_ascii=False))
+        obj.fields, obj.spans = [dict(f) for f in fields], {n: [list(s) for s in v] for n, v in spans.items()}
+        return obj
+
+    def prompt(self):
+        lines = "\n".join(f"- {f['name']} ({f['type']}): {f['instruction']}" for f in self.fields)
+        return ("Extract these fields from the text and answer with one JSON object with exactly these keys:\n"
+                f"{lines}\nA text field is one span copied exactly from the text; a list field is every matching "
+                "span, each copied exactly, in order of appearance. Use null when the text does not state it.")
+
+    def to_dict(self):
+        return {"fields": self.fields, "spans": self.spans}
+
+    @classmethod
+    def from_dict(cls, d, text):
+        return cls(text, d["fields"], d["spans"])
+
+    def __reduce__(self):
+        raise TypeError("pickle the entry: an Extraction needs its text (Extraction.from_dict(d, text))")
+
+
+def _norm(value):
+    return re.sub(r"\s+", " ", str(value)).strip(" \t\n.,;:'\"").casefold()
+
+
+def _json_object(text):
+    text = str(text).strip()
+    text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
+    try:
+        value = json.loads(text)
+    except ValueError:
+        start, end = text.find("{"), text.rfind("}")
+        try:
+            value = json.loads(text[start:end + 1]) if 0 <= start < end else None
+        except ValueError:
+            value = None
+    return value if isinstance(value, dict) else None
+
+
+def score_extraction(answer, reference):
+    """Mean per-field credit of a JSON answer against the canonical one: exact span match (whitespace, case and
+    edge punctuation aside) for text fields, set F1 for list fields; null matches only null or an empty list."""
+    predicted, gold = _json_object(answer), json.loads(str(reference))
+    if predicted is None:
+        return 0.0
+    credit = []
+    for name, want in gold.items():
+        got = predicted.get(name)
+        if isinstance(want, list) or isinstance(got, list):
+            want_set = {_norm(v) for v in want or []}
+            got_set = {_norm(v) for v in (got if isinstance(got, list) else [got] if got else [])} - {""}
+            hit = len(want_set & got_set)
+            credit.append(1.0 if not want_set and not got_set else
+                          2 * hit / (len(want_set) + len(got_set)))
+        else:
+            credit.append(float(want is None and got in (None, "")) if want is None or got is None else
+                          float(_norm(want) == _norm(got)))
+    return sum(credit) / len(credit)
+
+
+def extraction_row(entry, split="train"):
+    """An Extraction entry as a row of tasksource-jev's extraction schema: the text as `state`, the fields, and one
+    answer per field {null, values [{text, start, end}]}, with the task, level and seed in `metadata`."""
+    m = entry.metadata
+    text, x = m.payload, m.extraction
+    answers = [{"null": not x["spans"][f["name"]],
+                "values": [{"text": text[a:b], "start": a, "end": b} for a, b in x["spans"][f["name"]]]}
+               for f in x["fields"]]
+    return {"id": f"{entry.task}:{m.get('_level')}:{m.get('state_seed')}:{split}", "source": entry.task,
+            "split": split, "state": text, "fields": [dict(f) for f in x["fields"]], "answers": answers,
+            "metadata": json.dumps({"level": m.get("_level"), "state_seed": m.get("state_seed"),
+                                    **{k: v for k, v in m.items() if k in ("family", "style")}})}

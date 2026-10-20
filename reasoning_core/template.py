@@ -14,7 +14,7 @@ from contextvars import ContextVar
 import xxhash
 from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 from .registry import _REGISTRY, prepr_task_name, register_dataset
-from .decision import Decision, jev_row  # noqa: F401  (jev_row re-exported)
+from .decision import Decision, Extraction, jev_row, score_extraction  # noqa: F401  (jev_row re-exported)
 from .runtime import (
     TimeoutException,
     _stable_dump,
@@ -98,6 +98,8 @@ class Entry(Mapping):
         answer = d.get("answer")
         if metadata.get("decision") and answer is not None:  # restore the decision the answer string came from
             answer = Decision.from_dict(metadata["decision"])
+        elif metadata.get("extraction") and answer is not None:
+            answer = Extraction.from_dict(metadata["extraction"], metadata["payload"])
         return cls(metadata=metadata, answer=answer, cot=d.get("cot"))
         
     def __repr__(self):
@@ -179,6 +181,8 @@ class Task:
     def render_prompt(self, metadata):
         """Override to render entry metadata as a prompt. A Jev-shaped entry (a Decision answer over
         metadata.payload) renders by default: the state, then the question with its answer format."""
+        if "extraction" in metadata:
+            return f"{metadata.payload}\n\n{Extraction.from_dict(metadata.extraction, metadata.payload).prompt()}"
         if "decision" not in metadata:
             raise NotImplementedError("Task subclasses must implement 'render_prompt'")
         payload = metadata.payload
@@ -190,6 +194,8 @@ class Task:
     def score_answer(self, answer, entry):
         """To override in most cases; entry has entry.metadata and entry.answer fields"""
         reference = entry['answer']
+        if "extraction" in (entry['metadata'] or {}):
+            return score_extraction(answer, reference)
         prepr = lambda x: str(x).strip()
         answer, reference = prepr(answer), prepr(reference)
         if answer==reference:
