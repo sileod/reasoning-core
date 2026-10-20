@@ -76,6 +76,7 @@ buddy_allocator
 buoyancy_layer_alignment
 burnside_orbit_count
 burrows_wheeler
+business_document_extraction
 c3_linearization
 cache_replacement_trace
 calendar_recurrence
@@ -347,6 +348,7 @@ hierarchical_knockout_compositing
 hierarchical_quorum_overlap
 hierarchical_rollup
 hindley_milner_inference
+html_extraction
 hydra_cut_regrowth
 hyperedge_replacement_derivation
 hysteresis_reversal_memory
@@ -501,6 +503,7 @@ nested_margin_collapse
 nested_membrane_evolution
 nested_port_wiring_substitution
 nested_radical_continuation
+nested_structure_extraction
 nested_template_expansion
 network_reliability_factoring
 newton_puiseux_branch_transfer

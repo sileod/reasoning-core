@@ -229,4 +229,4 @@ def extraction_row(entry, split="train"):
     return {"id": f"{entry.task}:{m.get('_level')}:{m.get('state_seed')}:{split}", "source": entry.task,
             "split": split, "state": text, "fields": [dict(f) for f in x["fields"]], "answers": answers,
             "metadata": json.dumps({"level": m.get("_level"), "state_seed": m.get("state_seed"),
-                                    **{k: v for k, v in m.items() if k in ("family", "style")}})}
+                                    **{k: v for k, v in m.items() if k in ("family", "style", "format")}})}
