@@ -3,8 +3,8 @@
 Each field holds the person's current value or null. Confusers state other values without asserting them: a
 negation, a former or hoped-for value, or a relative's value; null fields often have one, so null means
 "not stated" rather than "not mentioned". Levels add people (who share a first name or surname with the person),
-confusers, fields, short references (a first name or surname, once it is unambiguous) and chains of "same as"
-statements, whose answer is another person's value.
+confusers, fields, short references (a first name or surname, once it is unambiguous), chains of "same as"
+statements, whose answer is another person's value, and names that are also field values (May, Sydney, Paris).
 """
 import random
 from dataclasses import dataclass
@@ -15,6 +15,11 @@ from reasoning_core.tasks.jev._extraction import CITIES, COMPANIES, FIRST, LAST,
 
 ROLES = ["data engineer", "nurse", "accountant", "site manager", "translator", "pilot", "chemist",
          "sales director", "architect", "paralegal", "electrician", "editor"]
+# Names that are also values of the fields (months, cities): a person named May born in May, a Ms. Sydney living in
+# Sydney. Type-based guessing ("the span that looks like a city") then fails; the role in the sentence decides.
+COLLIDING_FIRST = ["May", "June", "April", "Florence", "Sydney", "Victoria", "Austin", "Paris", "Georgia", "Adelaide"]
+COLLIDING_LAST = ["London", "Paris", "Florence", "Sydney", "Austin", "Lima", "Porto", "Perth", "Darwin", "Victoria"]
+RECORD_CITIES = CITIES + ["Florence", "Sydney", "Victoria", "Austin", "Paris", "London", "Adelaide"]
 RELATIVES = ["brother", "sister", "manager", "neighbor", "cousin", "former partner"]
 DOMAINS = ["mailbox.org", "fastmail.com", "proton.me", "posteo.net"]
 SAME = {"city": "{w} lives in the same city as {x}.", "employer": "{w} works at the same company as {x}.",
@@ -34,7 +39,7 @@ def _email(rng, person):
 
 # field -> (instruction, value(rng, person), assertions, confusers, relative's value); {a} is the value's article
 ATTRS = {
-    "city": ("The city where {w} currently lives.", lambda rng, p: rng.choice(CITIES),
+    "city": ("The city where {w} currently lives.", lambda rng, p: rng.choice(RECORD_CITIES),
              ["{w} lives in {v}.", "{w} is based in {v}.", "These days {w} lives in {v}."],
              ["{w} does not live in {v}.", "{w} lived in {v} as a student and has since moved away.",
               "{w} is thinking about moving to {v}.", "{w} spent a holiday in {v}."],
@@ -65,14 +70,18 @@ ATTRS = {
 }
 
 
-def _people(rng, n, p_near):
-    """The person, then n others; with probability p_near another shares the person's first name or surname."""
-    target = (rng.choice(FIRST), rng.choice(LAST))
+def _people(rng, n, p_near, p_collide):
+    """The person, then n others; with probability p_near another shares the person's first name or surname, and
+    each name is one that is also a field value (a month, a city) with probability p_collide."""
+    def name(pool, colliding):
+        return rng.choice(colliding if rng.random() < p_collide else pool)
+
+    target = (name(FIRST, COLLIDING_FIRST), name(LAST, COLLIDING_LAST))
     people = [target]
     while len(people) < n + 1:
         near = rng.random() < p_near
-        first = target[0] if near and rng.random() < 0.5 else rng.choice(FIRST)
-        last = target[1] if near and first != target[0] else rng.choice(LAST)
+        first = target[0] if near and rng.random() < 0.5 else name(FIRST, COLLIDING_FIRST)
+        last = target[1] if near and first != target[0] else name(LAST, COLLIDING_LAST)
         if (first, last) not in people:
             people.append((first, last))
     return people
@@ -87,6 +96,7 @@ class RecordFieldExtractionConfig(Config):
     short_refs: float = 0.0
     hops: float = 0.0
     chain: float = 1.0
+    collide: float = 0.0
 
     def apply_difficulty(self, level):
         self.others = 0.5 + 1.3 * level
@@ -96,13 +106,14 @@ class RecordFieldExtractionConfig(Config):
         self.short_refs = min(0.8, 0.2 * level)
         self.hops = min(0.7, 0.2 * level)
         self.chain = 1 + 0.4 * level
+        self.collide = min(0.6, 0.15 * level)
 
 
 class RecordFieldExtraction(Task):
     summary = ("Fill a person's city, employer, job title, phone, email and birth-date fields, or null, from prose "
                "about several near-miss-named people with negated, former, hoped-for and relatives' values and "
-               "'same city/company/job as' chains through other people.")
-    task_version = 1
+               "'same city/company/job as' chains through other people, and names that are also months or cities.")
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or RecordFieldExtractionConfig())
@@ -110,7 +121,7 @@ class RecordFieldExtraction(Task):
     def generate_entry(self, state_seed=None):
         state_seed = random.randrange(2 ** 32) if state_seed is None else state_seed
         rng, c = random.Random(state_seed), self.config
-        people = _people(rng, sround(c.others, seed=rng.random()), c.near_name)
+        people = _people(rng, sround(c.others, seed=rng.random()), c.near_name, c.collide)
         target = people[0]
         names = rng.sample(sorted(ATTRS), min(len(ATTRS), max(2, sround(c.fields, seed=rng.random()))))
         stated = [n for n in names if rng.random() < 0.7] or names[:1]
