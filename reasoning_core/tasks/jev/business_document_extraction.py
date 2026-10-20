@@ -167,25 +167,35 @@ class BusinessDocumentExtraction(Task):
         cur, start = rng.choice(["€", "$", "£"]), date(2025, rng.randint(1, 12), 1)
         used, facts, letters = set(), [], iter("ABCDEFGH")
 
-        def fact(key, loc, rank=0, a=start, b=END, ref=None):
-            while not ref and (value := GEN[keys[key][1]](rng, cur)) in used:  # values are distinct
-                pass
-            used.add(value := None if ref else value)
+        def fresh(key):  # values are distinct, so a span names one fact; None once the kind's values run out
+            values = (GEN[keys[key][1]](rng, cur) for _ in range(30))
+            return next((v for v in values if v not in used), None)
+
+        def fact(key, loc, rank=0, a=start, b=END, ref=None, value=None):
+            used.add(value)
             facts.append({"key": key, "loc": loc, "rank": rank, "start": a, "end": b, "ref": ref, "value": value,
                           "mark": f"f{len(facts)}"})
 
         def place(key, loc, depth):  # a printed value, dated windows, or a reference to a new schedule
             if depth and rng.random() < c.refs and (target := next(letters, None)):
                 fact(key, loc, ref=target)
-                return place(key, target, depth - 1)
+                if not place(key, target, depth - 1):
+                    facts.pop()  # no dangling reference
+                    return False
+                return True
             if keys[key][1] in WINDOWED and rng.random() < c.windows:
-                a = start
+                a, placed = start, False
                 for _ in range(max(2, sround(c.periods, seed=rng.random()))):
                     b = a + timedelta(days=rng.randint(60, 240))
-                    fact(key, loc, a=a, b=b)
+                    if (value := fresh(key)) is not None:
+                        fact(key, loc, a=a, b=b, value=value)
+                        placed = True
                     a = b + timedelta(days=1)
-            else:
-                fact(key, loc)
+                return placed
+            if (value := fresh(key)) is None:
+                return False
+            fact(key, loc, value=value)
+            return True
 
         main = [k for k in keys if k not in NEAR]
         asked = rng.sample(main, min(len(main), 7, max(2, sround(c.fields, seed=rng.random()))))
@@ -196,16 +206,22 @@ class BusinessDocumentExtraction(Task):
             if near in keys and key in asked and (rng.random() < c.near or not any(f["key"] == key for f in facts)):
                 place(near, rng.choice(sorted({f["loc"] for f in facts if f["key"] == key} | {"body"})), 0)
         key = None
-        for rank in range(1, sround(c.amendments, seed=rng.random()) + 1):  # numbered amendments, maybe stacking
+        rank = 0
+        for _ in range(sround(c.amendments, seed=rng.random())):  # numbered amendments, maybe stacking
             if key is None or rng.random() >= c.stack:
                 key = rng.choice(asked + [n for n in NEAR if n in keys and NEAR[n] in asked])
             a = start + timedelta(days=rng.randrange(600))
             b = a + timedelta(days=rng.randint(60, 300)) if keys[key][1] in WINDOWED and rng.random() < 0.4 else END
             loc = rng.choice(sorted({f["loc"] for f in facts if f["key"] == key} | {"body"}))
+            if (value := fresh(key)) is None:
+                continue
             target = next(letters, None) if rng.random() < c.refs / 2 else None
-            fact(key, loc, rank, a, b, ref=target)
-            if target:
-                fact(key, target)
+            rank += 1
+            if target:  # the amendment points to a new schedule holding the value
+                fact(key, loc, rank, a, b, ref=target)
+                fact(key, target, value=value)
+            else:
+                fact(key, loc, rank, a, b, value=value)
 
         fields, gold = [], {}
         for key in asked:  # the query date falls near a date where the answer changes, or anywhere in the term
