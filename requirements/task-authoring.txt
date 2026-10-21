@@ -13,3 +13,4 @@ inflection
 wrapt
 xxhash
 appdirs
+psutil

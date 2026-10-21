@@ -22,12 +22,13 @@ fi
 if [ -f "$REQ" ]; then
   pip install -r "$REQ"
 else
-  pip install easydict inflection wrapt xxhash appdirs
+  pip install easydict inflection wrapt xxhash appdirs psutil
 fi
 
 python - <<'PY'
-from reasoning_core.template import Task
-print("authoring install ok: reasoning_core.template imports without the full stack")
+from reasoning_core.tasks.generated.pattern_induction import PatternInduction
+PatternInduction().generate_example()  # importing is not enough: generating needs runtime deps too (psutil)
+print("authoring install ok: a generator runs without the full stack")
 PY
 cat <<'MSG'
 
