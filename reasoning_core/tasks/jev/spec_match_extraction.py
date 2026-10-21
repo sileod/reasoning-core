@@ -13,32 +13,36 @@ import random
 from dataclasses import dataclass
 
 from reasoning_core.template import Config, Task, stochastic_rounding as sround
+from reasoning_core import surface_forms as sf
 from reasoning_core.tasks.jev._extraction import Doc, article, extraction_entry
 
-# spec: (label, base grid, units as (name, factor to base), phrase for prose, the better direction)
+# spec: (label, grid in the first unit, units as (symbol, surface_forms dimension or None for a bare suffix; "hm"
+# is hours and minutes), phrase for prose, the better direction)
+G, H = ("g", "mass"), [("min", "time"), ("h", "time"), ("hm", "time")]
 CATEGORIES = {
     "laptop": {
-        "weight": ("weight", range(900, 2800, 50), [("kg", 1000), ("g", 1)], "weighs {v}", -1),
-        "storage": ("storage", [128, 256, 512, 1000, 2000, 4000], [("GB", 1), ("TB", 1000)], "has {v} of storage", 1),
-        "memory": ("memory", [8, 16, 24, 32, 64], [("GB", 1)], "has {v} of memory", 1),
-        "battery": ("battery life", range(240, 1200, 30), [("h", 60), ("min", 1), ("hm", 1)], "lasts {v} on battery", 1),
-        "price": ("price", range(499, 3000, 50), [("$", 1)], "costs {v}", -1),
+        "weight": ("weight", range(900, 2800, 50), [G, ("kg", "mass")], "weighs {v}", -1),
+        "storage": ("storage", [128, 256, 512, 1000, 2000, 4000], [("GB", "data"), ("TB", "data")], "has {v} of storage", 1),
+        "memory": ("memory", [8, 16, 24, 32, 64], [("GB", "data")], "has {v} of memory", 1),
+        "battery": ("battery life", range(240, 1200, 30), H, "lasts {v} on battery", 1),
+        "price": ("price", range(499, 3000, 50), [("$", "money")], "costs {v}", -1),
     },
     "e-bike": {
-        "weight": ("weight", range(14000, 32000, 500), [("kg", 1000), ("g", 1)], "weighs {v}", -1),
-        "range": ("range", range(40, 160, 5), [("km", 1)], "has a range of {v}", 1),
-        "battery": ("battery capacity", range(300, 900, 25), [("Wh", 1), ("kWh", 1000)], "carries a {v} battery", 1),
-        "charge": ("charging time", range(120, 480, 15), [("h", 60), ("min", 1), ("hm", 1)], "charges in {v}", -1),
-        "price": ("price", range(1200, 6000, 100), [("$", 1)], "costs {v}", -1),
+        "weight": ("weight", range(14000, 32000, 500), [G, ("kg", "mass")], "weighs {v}", -1),
+        "range": ("range", range(40, 160, 5), [("km", "length")], "has a range of {v}", 1),
+        "battery": ("battery capacity", range(300, 900, 25), [("Wh", "energy"), ("kWh", "energy")], "carries a {v} battery", 1),
+        "charge": ("charging time", range(120, 480, 15), H, "charges in {v}", -1),
+        "price": ("price", range(1200, 6000, 100), [("$", "money")], "costs {v}", -1),
     },
     "monitor": {
-        "size": ("screen size", [24, 27, 32, 34, 38, 43, 49], [("inch", 1)], "has a {v} screen", 1),
-        "refresh": ("refresh rate", [60, 75, 100, 120, 144, 165, 240], [("Hz", 1)], "refreshes at {v}", 1),
-        "brightness": ("brightness", range(250, 1000, 50), [("nits", 1)], "reaches {v}", 1),
-        "weight": ("weight", range(3000, 12000, 100), [("kg", 1000), ("g", 1)], "weighs {v}", -1),
-        "price": ("price", range(149, 1500, 10), [("$", 1)], "costs {v}", -1),
+        "size": ("screen size", [24, 27, 32, 34, 38, 43, 49], [("in", "length"), ("cm", "length")], "has a {v} screen", 1),
+        "refresh": ("refresh rate", [60, 75, 100, 120, 144, 165, 240], [("Hz", None)], "refreshes at {v}", 1),
+        "brightness": ("brightness", range(250, 1000, 50), [("nits", None)], "reaches {v}", 1),
+        "weight": ("weight", range(3000, 12000, 100), [G, ("kg", "mass")], "weighs {v}", -1),
+        "price": ("price", range(149, 1500, 10), [("$", "money")], "costs {v}", -1),
     },
 }
+NUMBER_STYLES = ["eu", "si", "swiss"]
 BRANDS = ["Norvik", "Altamar", "Pexis", "Quillon", "Halvard", "Kestrel", "Orrin", "Lumen", "Sunvale", "Vela"]
 LINES = ["Aero", "Nova", "Flux", "Terra", "Pulse", "Atlas", "Zephyr", "Vertex", "Orbit", "Summit"]
 STYLES = ["prose", "bullets", "keyvalue", "table"]
@@ -46,21 +50,22 @@ COMPARATORS = {"at least": lambda x, t: x >= t, "at most": lambda x, t: x <= t,
                "more than": lambda x, t: x > t, "under": lambda x, t: x < t}
 
 
-def unit_text(value, unit, factor):
-    """``value`` (base units) in ``unit``, or None when the unit cannot write it exactly in one decimal."""
-    if unit == "hm":
-        h, m = divmod(value, 60)
-        return f"{h} h {m} min" if h and m else None
-    if (value * 10) % factor:
-        return None
-    number = value / factor
-    number = f"{number:,.0f}" if number == int(number) else f"{number:.1f}"
-    return {"$": f"${number}", "inch": f'{number}"'}.get(unit, f"{number} {unit}")
-
-
-def write(value, units, rng, variety):
-    """``value`` in a random exact unit; the first (canonical) unit unless ``variety`` draws another."""
-    options = [t for t in (unit_text(value, u, f) for u, f in units) if t]
+def write(value, units, rng, variety, style):
+    """``value`` (in the first unit) in a random unit that writes it exactly; the first unless ``variety`` draws
+    another."""
+    first, dimension = units[0]
+    options = []
+    for unit, dim in units:
+        if unit == "hm":
+            text = sf.mixed(sf.to_base(value, first, dimension), ["h", "min"], "time", style)
+            text = text if text and " min" in text and " h" in text else None
+        elif dim is None:
+            number = sf.format_number(value, style)
+            text = number and f"{number} {unit}"
+        else:
+            text = sf.render_quantity(sf.to_base(value, first, dimension), unit, dim, style)
+        if text:
+            options.append(text)
     return options[0] if len(options) == 1 or rng.random() >= variety else rng.choice(options[1:])
 
 
@@ -70,6 +75,7 @@ class SpecMatchExtractionConfig(Config):
     scale: float = 1.0
     requirements: float = 1.0
     unit_variety: float = 0.2
+    number_style: float = 0.0
     near_misses: float = 1.0
     unstated: float = 0.03
     boundary: float = 0.3
@@ -79,6 +85,7 @@ class SpecMatchExtractionConfig(Config):
         self.products = 4 + 4 * level
         self.requirements = 1 + 0.6 * level
         self.unit_variety = min(0.7, 0.2 + 0.12 * level)
+        self.number_style = min(0.5, 0.12 * level)
         self.near_misses = 1 + level
         self.unstated = min(0.1, 0.03 + 0.02 * level)
         self.boundary = min(0.8, 0.3 + 0.12 * level)
@@ -148,16 +155,18 @@ class SpecMatchExtraction(Task):
 
         # Names: near-miss names share a model line (Norvik Aero 14 / Norvik Aero 16).
         style, doc = rng.choice(STYLES), Doc()
+        numbers = rng.choice(NUMBER_STYLES) if rng.random() < c.number_style else "en"
+        rule = sf.NUMBER_STYLES[numbers].convention
+        doc.add(f"{category.capitalize()} catalog" + (f" ({rule})" if numbers != "en" else "") + ".\n\n")
         order = sorted(specs)
         if style == "table":
             doc.add("model | " + " | ".join(specs[key][0] for key in order) + "\n")
-        doc.add("" if style == "table" else f"{category.capitalize()} catalog.\n\n")
         line_names = sorted({n.rsplit(" ", 1)[0] for n in names[:len(products)]})
         for i, p in enumerate(products):
             p["name"] = f"{rng.choice(line_names)} {rng.choice([3, 5, 7, 9, 14, 15, 16])}"
             while p["name"] in {q.get("name") for q in products[:i]}:
                 p["name"] = names.pop()
-            shown = {key: write(p[key], specs[key][2], rng, c.unit_variety) for key in order if p[key] is not None}
+            shown = {key: write(p[key], specs[key][2], rng, c.unit_variety, numbers) for key in order if p[key] is not None}
             if style == "table":
                 doc.add("{n} | " + " | ".join(shown.get(key, "-") for key in order) + "\n", n=(p["name"], f"n{i}"))
             elif style == "prose":
@@ -175,7 +184,7 @@ class SpecMatchExtraction(Task):
 
         spans = {}
         for f, requirements in enumerate(queries):
-            phrase = " and ".join(f"{specs[key][0]} {comparator} {write(t, specs[key][2], rng, c.unit_variety)}"
+            phrase = " and ".join(f"{specs[key][0]} {comparator} {write(t, specs[key][2], rng, c.unit_variety, numbers)}"
                                   for key, comparator, t in requirements)
             match = [i for i, p in enumerate(products)
                      if all(p[key] is not None and COMPARATORS[cmp](p[key], t) for key, cmp, t in requirements)]
@@ -199,4 +208,4 @@ class SpecMatchExtraction(Task):
             fields.append({"name": name, "type": "text" if name.startswith("best") else "list",
                            "instruction": instruction})
             spans[name] = [span for i in match for span in doc.marks[f"n{i}"]]
-        return extraction_entry(doc.text.strip(), fields, spans, state_seed, style=style, category=category)
+        return extraction_entry(doc.text.strip(), fields, spans, state_seed, style=style, category=category, numbers=numbers)

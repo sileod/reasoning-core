@@ -14,7 +14,8 @@ import random
 from dataclasses import dataclass
 
 from reasoning_core.template import Config, Task, stochastic_rounding as sround
-from reasoning_core.tasks.jev._extraction import MONTHS, Doc, extraction_entry
+from reasoning_core import surface_forms as sf
+from reasoning_core.tasks.jev._extraction import Doc, extraction_entry
 
 DOMAINS = [
     ("invoice", "INV", ("issued", "due"), "Invoice {id} was issued {d0} and is due {d1}."),
@@ -23,31 +24,21 @@ DOMAINS = [
     ("ticket", "TCK", ("opened", "closed"), "Ticket {id} was opened {d0} and closed {d1}."),
 ]
 LINES = {"prose": "{text} ", "bullets": "- {text}\n"}
-WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-NUMBERS = [None, "one day", "two days", "three days", "four days", "five days", "six days", "a week"]
-# A section's convention decides which formats its dates may use.
-CONVENTIONS = {
-    "iso": "numeric dates are year-month-day",
-    "dmy": "numeric dates are day/month/year",
-    "mdy": "numeric dates are month/day/year",
-    "year": "dates without a year are in {year}",
+RELATIVE_DAYS = 28
+# A section's convention decides the formats its dates may use: numeric formats only under their stated order.
+SECTION_FORMATS = {
+    "iso": ["iso", "iso"] + sf.UNAMBIGUOUS_DATES,
+    "dmy": ["dmy_numeric", "dmy_short", "dmy_dots"] + sf.UNAMBIGUOUS_DATES,
+    "mdy": ["mdy_numeric", "mdy_short"] + sf.UNAMBIGUOUS_DATES,
+    "year": ["day_month", "month_day"],
 }
-
-
-def render(day, convention, rng, weekday):
-    """``day`` in a format allowed by ``convention``."""
-    d, m, y = day.day, MONTHS[day.month - 1], day.year
-    words = rng.choice([f"{d} {m} {y}", f"{m} {d}, {y}", f"{d} {m[:3]} {y}"])
-    text = {"iso": lambda: rng.choice([day.isoformat(), words]),
-            "dmy": lambda: rng.choice([f"{d:02d}/{day.month:02d}/{y}", f"{d}/{day.month}/{y}", words]),
-            "mdy": lambda: rng.choice([f"{day.month:02d}/{d:02d}/{y}", f"{day.month}/{d}/{y}", words]),
-            "year": lambda: rng.choice([f"{d} {m}", f"{m} {d}"])}[convention]()
-    return f"{WEEKDAYS[day.weekday()]} {text}" if weekday else text
+SECTION_RULES = {"iso": "numeric dates are year-month-day", "dmy": "numeric dates are day/month/year",
+                 "mdy": "numeric dates are month/day/year", "year": "dates without a year are in {year}"}
 
 
 def plain(day):
     """A query bound: unambiguous in any section."""
-    return f"{day.day} {MONTHS[day.month - 1]} {day.year}"
+    return sf.render_date(day, "day_month_year")
 
 
 @dataclass
@@ -63,7 +54,7 @@ class DateRangeExtractionConfig(Config):
     fields: float = 2.0
 
     def apply_difficulty(self, level):
-        self.records = 5 + 5 * level
+        self.records = 3 + 5 * level
         self.sections = 1 + 0.6 * level
         self.numeric = min(0.6, 0.15 * level)
         self.no_year = min(0.3, 0.08 * level)
@@ -114,18 +105,18 @@ class DateRangeExtraction(Task):
         for g, (convention, group) in enumerate(zip(conventions, groups)):
             if convention == "year" and any(d.year != year for i in group for d in records[i]["dates"]):
                 convention = "iso"
-            rule = CONVENTIONS[convention].format(year=year)
+            rule = SECTION_RULES[convention].format(year=year)
             doc.add(f"\nSection {g + 1} ({rule}):\n")
             for i in group:
                 r, parts = records[i], []
                 for role, day in zip(roles, r["dates"]):
-                    anchors = [(j, q) for j in written for q in range(2) if 0 < (day - records[j]["dates"][q]).days < len(NUMBERS)]
+                    anchors = [(j, q) for j in written for q in range(2) if 0 < (day - records[j]["dates"][q]).days <= RELATIVE_DAYS]
                     if anchors and rng.random() < c.relative:
                         j, q = rng.choice(anchors)
                         gap = (day - records[j]["dates"][q]).days
-                        parts.append(f"{NUMBERS[gap]} after {records[j]['id']} was {roles[q]}")
+                        parts.append(f"{sf.relative_days(gap)} after {records[j]['id']} was {roles[q]}")
                     else:
-                        parts.append("on " + render(day, convention, rng, rng.random() < 0.2))
+                        parts.append("on " + sf.render_date(day, rng.choice(SECTION_FORMATS[convention]), rng.random() < 0.2))
                 line = template.format(id="\0", d0=parts[0], d1=parts[1])
                 head, tail = line.split("\0")
                 doc.add(LINES[style].replace("{text}", "{h}{id}{t}"), h=head, id=(r["id"], f"id{i}"), t=tail)
@@ -165,11 +156,11 @@ class DateRangeExtraction(Task):
 
         if rng.random() < c.weekday_query:
             w = rng.choice(sorted({r["dates"][q].weekday() for r in records}))
-            return f"on a {WEEKDAYS[w]}", lambda d: d.weekday() == w
+            return f"on a {sf.WEEKDAYS[w]}", lambda d: d.weekday() == w
         kind = rng.choice(["between", "between", "between", "before", "after", "month"])
         if kind == "month":
             day = rng.choice(records)["dates"][q]
-            return (f"in {MONTHS[day.month - 1]} {day.year}",
+            return (f"in {sf.MONTHS[day.month - 1]} {day.year}",
                     lambda d: (d.year, d.month) == (day.year, day.month))
         if kind == "before":
             day, strict = bound(), rng.random() < 0.5
