@@ -7,7 +7,7 @@ from reasoning_core.decision import Extraction, extraction_row, score_extraction
 from reasoning_core.template import Entry
 
 TASKS = ["record_field_extraction", "state_update_extraction", "conditional_list_extraction", "log_query_extraction",
-         "typed_mention_extraction", "business_document_extraction", "nested_structure_extraction", "html_extraction"]
+         "typed_mention_extraction", "business_document_extraction", "nested_structure_extraction", "html_extraction", "date_range_extraction", "spec_match_extraction"]
 
 
 @pytest.mark.parametrize("name", TASKS)
