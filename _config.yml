@@ -1,0 +1,12 @@
+# GitHub Pages renders the repository root. Generated and mutated task folders hold machine-written Markdown whose
+# braces break Liquid; they are not part of the site. (A custom exclude replaces Jekyll's defaults, kept below.)
+exclude:
+  - reasoning_core/tasks/generated
+  - reasoning_core/tasks/mutated
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
