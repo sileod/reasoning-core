@@ -154,7 +154,7 @@ class BusinessDocumentExtraction(Task):
     summary = ("Find the value in force on a date in an invoice, purchase order, contract or insurance policy: "
                "numbered amendments override printed values and each other from their effective dates, schedule "
                "references chain, values vary over dated windows, and near-miss keys sit alongside.")
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or BusinessDocumentExtractionConfig())
@@ -233,7 +233,8 @@ class BusinessDocumentExtraction(Task):
                            "instruction": f"The {keys[key][0]} in force on {_fmt(max(day, start))}; null if none is."})
             gold[key] = hit["mark"] if hit else None
 
-        doc = Doc().add(f"{family.replace('_', ' ').upper()}\nIn force from {_fmt(start)}. Order of precedence: a "
+        # no printed start date: it would read as the answer to a commencement date the document leaves out
+        doc = Doc().add(f"{family.replace('_', ' ').upper()}\nOrder of precedence: a "
                         f"numbered {term.lower()} prevails over the printed text and over any {term.lower()} with a "
                         "lower number, from its effective date until its end date if it has one; dated ranges are "
                         "inclusive. \"See Schedule X\" means the value stated in Schedule X.\n\n")

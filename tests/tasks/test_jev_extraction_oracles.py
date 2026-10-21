@@ -152,7 +152,7 @@ def _date(s):
 
 
 def business_document(text, fields):
-    start = _date(re.search(r'In force from (' + DATE + ')', text)[1])
+    start = datetime.min.date()  # printed values hold from the start of the term; every query date is within it
     facts = []
     loc, label = 'body', None
     for line in text.splitlines()[3:]:
