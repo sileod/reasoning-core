@@ -8,8 +8,8 @@ choices' logits, so the battery's MCQ legs score the model directly (cost = -log
     arm:      the same stream, with a share `mix` of the task's rows; negatives are other answers of the
               same task at the same level, so they are in-format and cannot be told apart by surface
 
-Inits: `encoder` (raw Ettin encoder, fresh 1-logit head) and `reranker` (Ettin reranker, already a
-pair scorer), or a local dir saved by `warm`.
+Inits: `encoder` (raw Ettin encoder, fresh 1-logit head), `reranker` (Ettin reranker, already a pair
+scorer), `decider` (the reranker fine-tuned on typed choices), or a local dir saved by `warm`.
 
     python -m reasoning_core.evaluation.encoder warm  --init encoder --steps 2000 --out ckpt/
     python -m reasoning_core.evaluation.encoder value --init ckpt/ --rows task_rows/<cid> --out cell.json
@@ -28,7 +28,8 @@ from .battery import load_battery_manifest
 from .metrics import load_eval_suite, score_mcq
 
 INITS = {"encoder": ("jhu-clsp/ettin-encoder-150m", "45d08642849e5c5701b162671ac811b7654bfd9f"),
-         "reranker": ("cross-encoder/ettin-reranker-150m-v1", "025501c4e0f9bbeb4c5b198318e0089ff061cc14")}
+         "reranker": ("cross-encoder/ettin-reranker-150m-v1", "025501c4e0f9bbeb4c5b198318e0089ff061cc14"),
+         "decider": ("tasksource/tasksource-decider-nano", "2c7c01ffe5aba74dd15968cf38b0fdc83d1f3810")}
 DPO = ("tasksource/tasksource_dpo_pairs", "0b16d8574d3fc771320a32eab85ae405ea86207c")
 VERSION = 1
 
@@ -62,18 +63,87 @@ def load_rows(path):
     return [r for f in files for r in pq.read_table(f, columns=["task", "level", "prompt", "answer", "metadata"]).to_pylist()]
 
 
+class PairScorer(torch.nn.Module):
+    """Backbone + pooling + head -> one logit per (prompt, choice) pair. Rebuilt from each checkpoint's own
+    layout: AutoModelForSequenceClassification silently re-initialises the head of a sentence-transformers
+    CrossEncoder (CLS -> Dense+GELU -> LayerNorm -> Dense) and of the decider (mean -> Linear)."""
+
+    def __init__(self, backbone, head, pooling, template="{}"):
+        super().__init__()
+        self.backbone, self.head, self.pooling, self.template = backbone, head, pooling, template
+
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
+    def forward(self, input_ids, attention_mask, **_):
+        h = self.backbone(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
+        if self.pooling == "cls":
+            h = h[:, 0]
+        else:
+            m = attention_mask.unsqueeze(-1).to(h.dtype)
+            h = (h * m).sum(1) / m.sum(1).clamp_min(1)
+        return collections.namedtuple("Out", "logits")(self.head(h))
+
+    def save_pretrained(self, path):
+        Path(path).mkdir(parents=True, exist_ok=True)
+        torch.save({"pooling": self.pooling, "template": self.template, "head": self.head,
+                    "state": self.state_dict(), "config": self.backbone.config.to_dict()}, Path(path) / "pair_scorer.pt")
+
+
+def _head(path, hidden):
+    """The head a checkpoint ships: ST CrossEncoder modules, the decider's scorer, or a fresh linear head.
+    `path` = a local dir or (repo, revision); a file the layout needs but cannot be read is an error."""
+    from huggingface_hub import hf_hub_download, list_repo_files
+    from safetensors.torch import load_file
+    nn = torch.nn
+    if isinstance(path, tuple):
+        files = set(list_repo_files(path[0], revision=path[1]))
+        get = lambda f: hf_hub_download(path[0], f, revision=path[1])
+    else:
+        files = {str(p.relative_to(path)) for p in Path(path).rglob("*")}
+        get = lambda f: str(Path(path) / f)
+    if "4_Dense/model.safetensors" in files:              # CrossEncoder: Pooling, Dense+GELU, LayerNorm, Dense
+        pooling = json.loads(Path(get("1_Pooling/config.json")).read_text())["pooling_mode"]
+        dense, norm, out = nn.Linear(hidden, hidden, bias=False), nn.LayerNorm(hidden), nn.Linear(hidden, 1)
+        dense.load_state_dict({"weight": load_file(get("2_Dense/model.safetensors"))["linear.weight"]})
+        norm.load_state_dict({k[5:]: v for k, v in load_file(get("3_LayerNorm/model.safetensors")).items()})
+        out.load_state_dict({k[7:]: v for k, v in load_file(get("4_Dense/model.safetensors")).items()})
+        return nn.Sequential(dense, nn.GELU(), norm, out), pooling, None, "{}"
+    if "decider_config.json" in files:                    # decider: mean over the pair -> Linear
+        weights = load_file(get("model.safetensors"))
+        head = nn.Linear(hidden, 1)
+        head.load_state_dict({k[7:]: v for k, v in weights.items() if k.startswith("scorer.")})
+        return (head, "mean", {k[9:]: v for k, v in weights.items() if k.startswith("backbone.")},
+                "Question: Which answer is correct?\nOption: {}")              # its training pair format
+    return nn.Linear(hidden, 1), "mean", None, "{}"       # raw encoder: fresh head
+
+
 def load(init, device):
-    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    from transformers import AutoConfig, AutoModel, AutoTokenizer
     name, revision = INITS.get(init, (init, None))
     tok = AutoTokenizer.from_pretrained(name, revision=revision)
     tok.truncation_side = "left"            # keep the question at the end of a long prompt
-    model = AutoModelForSequenceClassification.from_pretrained(name, revision=revision, num_labels=1)
-    return model.to(device), tok
+    if (Path(name) / "pair_scorer.pt").exists():          # saved by `warm`
+        saved = torch.load(Path(name) / "pair_scorer.pt", map_location="cpu", weights_only=False)
+        cfg = AutoConfig.for_model(**saved["config"])
+        model = PairScorer(AutoModel.from_config(cfg), saved["head"], saved["pooling"], saved["template"])
+        model.load_state_dict(saved["state"])
+        return model.to(device), tok
+    path = name if Path(name).exists() else (name, revision)
+    cfg = AutoConfig.from_pretrained(name, revision=revision)
+    head, pooling, backbone_state, template = _head(path, cfg.hidden_size)
+    if backbone_state is None:
+        backbone = AutoModel.from_pretrained(name, revision=revision)
+    else:
+        backbone = AutoModel.from_config(cfg)
+        backbone.load_state_dict(backbone_state, strict=True)
+    return PairScorer(backbone, head, pooling, template).to(device), tok
 
 
 def logits(model, tok, prompts, choices, max_length):
     """One logit per (prompt, choice) pair."""
-    batch = tok(list(prompts), list(choices), truncation="longest_first", max_length=max_length,
+    batch = tok(list(prompts), [model.template.format(c) for c in choices], truncation="longest_first", max_length=max_length,
                 padding=True, return_tensors="pt").to(model.device)
     with torch.autocast(model.device.type, dtype=torch.bfloat16, enabled=model.device.type == "cuda"):
         return model(**batch).logits.squeeze(-1).float()
@@ -151,7 +221,7 @@ def _value(a, device):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("command", choices=("warm", "value"))
-    ap.add_argument("--init", default="encoder", help="encoder | reranker | a local dir saved by warm")
+    ap.add_argument("--init", default="encoder", help="encoder | reranker | decider | a local dir saved by warm")
     ap.add_argument("--rows", help="a task_rows cache dir (value)")
     ap.add_argument("--tasks", nargs="*", help="default: every task in --rows")
     ap.add_argument("--battery", default=str(Path(__file__).resolve().parents[1]
