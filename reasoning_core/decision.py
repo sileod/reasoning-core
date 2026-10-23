@@ -207,7 +207,7 @@ def score_extraction(answer, reference):
     for name, want in gold.items():
         got = predicted.get(name)
         if isinstance(want, list) or isinstance(got, list):
-            want_set = {_norm(v) for v in want or []}
+            want_set = {_norm(v) for v in (want if isinstance(want, list) else [want] if want else [])}
             got_set = {_norm(v) for v in (got if isinstance(got, list) else [got] if got else [])} - {""}
             hit = len(want_set & got_set)
             credit.append(1.0 if not want_set and not got_set else

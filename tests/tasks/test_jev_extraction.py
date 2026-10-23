@@ -34,6 +34,7 @@ def test_score_extraction_gives_per_field_credit():
     assert score_extraction('```json\n{"city": "lima.", "ids": ["K-2", "K-1"], "phone": null}\n```', gold) == 1
     assert score_extraction('{"city": "Quito", "ids": ["K-1"], "phone": "123"}', gold) == pytest.approx((2 / 3) / 3)
     assert score_extraction("no json", gold) == 0
+    assert score_extraction('{"city": ["Lima"], "ids": ["K-1", "K-2"], "phone": null}', gold) == 1  # a listed text value
 
 
 def test_extraction_rejects_two_values_for_a_text_field():
