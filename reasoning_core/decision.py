@@ -137,7 +137,7 @@ def render_records(records, style):
 
 class Extraction(str):
     """An answer that is also an extraction request: `fields` [{name, type, instruction}] filled from one `text`,
-    with `type` text (one span) or list (every span, in order of appearance), and `spans` {name: [(start, end)]},
+    with `type` text (one span) or list (every distinct matching value), and `spans` {name: [(start, end)]},
     the gold offsets in `text`, none when the text does not state it.
 
     It IS the answer string, the JSON object {name: "span" | ["span", ...] | null}, so scoring needs no metadata;
@@ -165,8 +165,8 @@ class Extraction(str):
     def prompt(self):
         lines = "\n".join(f"- {f['name']} ({f['type']}): {f['instruction']}" for f in self.fields)
         return ("Extract these fields from the text and answer with one JSON object with exactly these keys:\n"
-                f"{lines}\nA text field is one span copied exactly from the text; a list field is every matching "
-                "span, each copied exactly, in order of appearance. Use null when the text does not state it.")
+                f"{lines}\nA text field is one span copied exactly from the text; a list field is every distinct matching "
+                "value, each copied exactly, in any order. Use null when the text does not state it.")
 
     def to_dict(self):
         return {"fields": self.fields, "spans": self.spans}

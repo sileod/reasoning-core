@@ -159,7 +159,7 @@ def _ledger(rng, level):
     if len(low_days) == 1:
         pool["lowest_day"] = Decision(low_days[0], criteria=dict.fromkeys(days), instructions=rng.choice([
             "After which day's transaction is the balance lowest?",
-            "On which day does the balance reach its minimum?"]))
+            "Which day's transaction leaves the lowest balance?"]))
     return state, pool
 
 
@@ -227,7 +227,7 @@ class PracticalArithmeticConfig(Config):
 
 class PracticalArithmetic(Task):
     summary = "Exact arithmetic over an order, a ledger or a schedule, with distractor answers from typical slips."
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or PracticalArithmeticConfig())

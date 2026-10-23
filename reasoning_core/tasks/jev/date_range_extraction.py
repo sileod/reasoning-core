@@ -104,7 +104,7 @@ class DateRangeExtraction(Task):
         doc.add(f"{kind.capitalize()} register.\n")
         for g, (convention, group) in enumerate(zip(conventions, groups)):
             if convention == "year" and any(d.year != year for i in group for d in records[i]["dates"]):
-                convention = "iso"
+                convention = conventions[g] = "iso"
             rule = SECTION_RULES[convention].format(year=year)
             doc.add(f"\nSection {g + 1} ({rule}):\n")
             for i in group:

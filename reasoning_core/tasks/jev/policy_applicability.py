@@ -24,7 +24,8 @@ N_POLICIES = [2, 3, 5, 8, 12]
 N_CONSTRAINTS = [(1, 1), (1, 2), (2, 4), (3, 5), (4, 5)]
 NEAR_MISS = [0.0, 0.3, 0.5, 0.7, 0.8]
 SEMANTICS = ("A policy matches when every constraint it lists holds; a constraint it does not list matches anything. "
-             "roles, teams, and actions list the allowed values; min_clearance is the lowest clearance allowed; "
+             "roles, teams, and actions list the allowed requester roles, requester teams and actions (the "
+             "resource's team plays no part); min_clearance is the lowest requester clearance allowed; "
              "max_sensitivity is the most sensitive resource allowed, in the order public < internal < restricted. "
              "Apply the matching policy with the highest priority, where a larger priority number wins; "
              "deny if none match.")
@@ -84,7 +85,7 @@ class PolicyApplicabilityConfig(Config):
 
 class PolicyApplicability(Task):
     summary = "Find the governing policy for an access request among prioritized near-miss policies."
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or PolicyApplicabilityConfig())

@@ -53,7 +53,7 @@ INDIRECT = {  # current relations stated from the other side or as a description
                  "Without deliveries from {x}, {u}'s plant would stop."],
     "client": ["{x} relies on {u} for its sensors.", "Orders from {x} make up a third of {u}'s revenue.",
                "{x} renewed its yearly purchase contract with {u}."],
-    "partner": ["{x} is {u}'s co-developer on the new platform.", "Engineers from {x} and {u} share a lab."],
+    "partner": ["{x} is {u}'s co-developer on the new platform.", "Engineers from {x} and {u} jointly develop the new sensor line."],
 }
 ROLE_TEXT = {"supplier": "currently supplies goods to {u}", "client": "currently buys from {u}",
              "partner": "currently develops products jointly with {u}"}
@@ -220,7 +220,7 @@ class TypedMentionExtraction(Task):
     summary = ("Tag every mention of each requested type, NER-style: context-typed names shared by people, places, "
                "organizations and products; companies by a defined current role among other and former relations; "
                "and codes defined by a stated format among near-miss strings.")
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or TypedMentionExtractionConfig())

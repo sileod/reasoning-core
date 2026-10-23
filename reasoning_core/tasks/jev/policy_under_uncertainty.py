@@ -25,7 +25,9 @@ N_REPORTS = [1, 1, 2, 3, 4]
 PLURAL = {"analyst": "analysts", "engineer": "engineers", "manager": "managers"}
 MARGIN = Fraction(1, 10)
 SEMANTICS = (
-    "A policy matches when all listed constraints match; max_sensitivity is the most sensitive resource allowed, in "
+    "A policy matches when all listed constraints match: roles and teams list the allowed requester roles and "
+    "requester teams (the resource's team plays no part), min_clearance is the lowest requester clearance allowed, "
+    "actions lists the allowed actions, and max_sensitivity is the most sensitive resource allowed, in "
     "the order public < internal < restricted. Apply the matching policy with the highest priority, where a larger "
     "priority number wins; deny if none match. The requester's role is one of the roles in the history, in "
     "proportion to the history counts before the reports are considered. Each report is independent: it names the "
@@ -92,7 +94,7 @@ class PolicyUnderUncertaintyConfig(Config):
 
 class PolicyUnderUncertainty(Task):
     summary = "Apply prioritized policies when the requester's role is only known through a prior and noisy reports."
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or PolicyUnderUncertaintyConfig())

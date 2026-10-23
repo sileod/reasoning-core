@@ -337,7 +337,7 @@ RELATIONS = [
     ('partner', r'(.+?) and (.+?) co-develop a new platform\.', True),
     ('partner', r'(.+?) partners with (.+?) on battery research\.', False),
     ('partner', r"(.+?) is (.+?)'s co-developer on the new platform\.", False),
-    ('partner', r'Engineers from (.+?) and (.+?) share a lab\.', False),
+    ('partner', r'Engineers from (.+?) and (.+?) jointly develop the new sensor line\.', False),
 ]
 
 
