@@ -33,6 +33,7 @@ INITS = {"encoder": ("jhu-clsp/ettin-encoder-150m", "45d08642849e5c5701b162671ac
          "decider": ("tasksource/tasksource-decider-nano", "2c7c01ffe5aba74dd15968cf38b0fdc83d1f3810"),
          "ultrabert": ("dmis-lab/UltraBERT-150M", "545ac9d9c7aece444f014ada5a1e9818132b4d35")}
 REMOTE_CODE = {"dmis-lab/UltraBERT-150M"}      # model code audited at the pinned revision
+SNAPSHOT_FILES = ["*.json", "*.safetensors", "*.py", "*.txt", "*.model"]
 DPO = ("tasksource/tasksource_dpo_pairs", "0b16d8574d3fc771320a32eab85ae405ea86207c")
 VERSION = 1
 
@@ -95,17 +96,12 @@ class PairScorer(torch.nn.Module):
 
 
 def _head(path, hidden):
-    """The head a checkpoint ships: ST CrossEncoder modules, the decider's scorer, or a fresh linear head.
-    `path` = a local dir or (repo, revision); a file the layout needs but cannot be read is an error."""
-    from huggingface_hub import hf_hub_download, list_repo_files
+    """The head a checkpoint ships (local dir): ST CrossEncoder modules, the decider's scorer, or a fresh
+    linear head. A file the layout needs but cannot be read is an error."""
     from safetensors.torch import load_file
     nn = torch.nn
-    if isinstance(path, tuple):
-        files = set(list_repo_files(path[0], revision=path[1]))
-        get = lambda f: hf_hub_download(path[0], f, revision=path[1])
-    else:
-        files = {str(p.relative_to(path)) for p in Path(path).rglob("*")}
-        get = lambda f: str(Path(path) / f)
+    files = {str(p.relative_to(path)) for p in Path(path).rglob("*")}
+    get = lambda f: str(Path(path) / f)
     if "4_Dense/model.safetensors" in files:              # CrossEncoder: Pooling, Dense+GELU, LayerNorm, Dense
         pooling = json.loads(Path(get("1_Pooling/config.json")).read_text())["pooling_mode"]
         dense, norm, out = nn.Linear(hidden, hidden, bias=False), nn.LayerNorm(hidden), nn.Linear(hidden, 1)
@@ -126,7 +122,10 @@ def load(init, device):
     from transformers import AutoConfig, AutoModel, AutoTokenizer
     name, revision = INITS.get(init, (init, None))
     remote = {"trust_remote_code": True} if name in REMOTE_CODE else {}
-    tok = AutoTokenizer.from_pretrained(name, revision=revision, **remote)
+    if not Path(name).exists():             # pinned snapshot: weights, configs, code; works offline once cached
+        from huggingface_hub import snapshot_download
+        name = snapshot_download(name, revision=revision, allow_patterns=SNAPSHOT_FILES)
+    tok = AutoTokenizer.from_pretrained(name, **remote)
     tok.truncation_side = "left"            # keep the question at the end of a long prompt
     if (Path(name) / "pair_scorer.pt").exists():          # saved by `warm`
         saved = torch.load(Path(name) / "pair_scorer.pt", map_location="cpu", weights_only=False)
@@ -134,11 +133,10 @@ def load(init, device):
         model = PairScorer(AutoModel.from_config(cfg), saved["head"], saved["pooling"], saved["template"])
         model.load_state_dict(saved["state"])
         return model.to(device), tok
-    path = name if Path(name).exists() else (name, revision)
-    cfg = AutoConfig.from_pretrained(name, revision=revision, **remote)
-    head, pooling, backbone_state, template = _head(path, cfg.hidden_size)
+    cfg = AutoConfig.from_pretrained(name, **remote)
+    head, pooling, backbone_state, template = _head(name, cfg.hidden_size)
     if backbone_state is None:
-        backbone = AutoModel.from_pretrained(name, revision=revision, **remote)
+        backbone = AutoModel.from_pretrained(name, **remote)
     else:
         backbone = AutoModel.from_config(cfg)
         backbone.load_state_dict(backbone_state, strict=True)
