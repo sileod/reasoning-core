@@ -1,23 +1,29 @@
 """Generic hard negatives: other answers of the same task and level, ranked by similarity to the gold.
 
 No per-task or per-format rule: every candidate is a real answer the task produced elsewhere, so it is
-in-format; "hard" only reorders the pool, and the task's own scorer drops anything it accepts.
+in-format; a policy only reorders the pool, and the task's own scorer drops anything it accepts.
 
-    char    cosine of character n-gram counts (surface: digits, symbols, shared substrings)
-    embed   cosine of static word embeddings (meaning: "drawer" ~ "cabinet"), bekko-static-embedding-v1
+    difflib the builder's composite (`Task._distractor_similarity`, as in procedural-choices); hardest of
+            char n-grams, BM25, static embeddings and learned encoders under four judges (2026-10-23)
+    char    cosine of character n-gram counts
+    embed   cosine of static word embeddings, bekko-static-embedding-v1
     random  uniform
+
+Grounding (as in build_procedural_choices): when every word of the gold is in the prompt, so must every
+word of a negative, or it is eliminated without solving.
 """
 import collections
 import functools
 import itertools
 import random
+import re
 
 import numpy as np
 
 from .intrinsic import _cpu_limit
 
 EMBED = ("hotchpotch/bekko-static-embedding-v1", "c18167b8f244c1bc6de21ce9b710bac8a29c4615")
-POLICIES = {"random": ("random",), "hard": ("char", "embed")}
+POLICIES = {"random": ("random",), "difflib": ("difflib",), "hard": ("char", "embed")}
 
 
 def _ngrams(text, n=(2, 3, 4)):
@@ -60,7 +66,16 @@ def embed(gold, pool):
     return [pool[i] for i in np.argsort(-(e[1:] @ e[0]), kind="stable")]
 
 
-SOURCES = {"char": char, "embed": embed, "random": lambda gold, pool: list(pool)}
+def difflib(gold, pool):
+    from reasoning_core.template import Task
+    return sorted(pool, key=lambda c: -Task._distractor_similarity(c[:300], gold[:300]))
+
+
+def _words(text):
+    return set(re.findall(r"\w+", str(text).lower()))
+
+
+SOURCES = {"difflib": difflib, "char": char, "embed": embed, "random": lambda gold, pool: list(pool)}
 _WARM = set()
 
 
@@ -78,11 +93,13 @@ def is_wrong(candidate, row, seconds=2, first=120):
         return False
 
 
-def negatives(row, pool, k, policy="hard", seed=0, verify=True):
+def negatives(row, pool, k, policy="difflib", seed=0, verify=True):
     """Up to `k` verified-wrong answers for `row`; `pool` = other answers of its task and level.
     Sources' rankings are interleaved round-robin, then the pool at random fills any gap."""
     rng, gold = random.Random(seed), str(row["answer"])
     pool = [a for a in pool if a != gold and a.strip()]
+    if _words(gold) <= _words(row["prompt"]):
+        pool = [a for a in pool if _words(a) <= _words(row["prompt"])]
     rng.shuffle(pool)                   # ties break at random, not alphabetically
     lists = [SOURCES[name](gold, pool) for name in POLICIES[policy]]
     order = itertools.chain((c for group in zip(*lists) for c in group), rng.sample(pool, len(pool)))

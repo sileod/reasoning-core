@@ -40,7 +40,7 @@ def dpo_items(n, seed=0):
     return [(r["prompt"], (r["chosen"], r["rejected"]), 0) for r in rows if r["chosen"] != r["rejected"]]
 
 
-def task_items(rows, negatives, seed=0, policy="random"):
+def task_items(rows, negatives, seed=0, policy="difflib"):
     """{task: [(prompt, choices, gold)]}; choices = gold plus up to `negatives` verified-wrong answers drawn
     by a distractors policy from the same task and level. Rows with no negative are dropped."""
     from .distractors import negatives as draw
@@ -176,7 +176,7 @@ def train(model, tok, streams, steps, batch, lr, seed, max_length, micro=4):
 
 
 @torch.no_grad()
-def evaluate(model, tok, battery, max_length):
+def evaluate(model, tok, battery, max_length, full=False):
     """The battery's MCQ legs only; accuracy and margin under the battery's own metric keys."""
     model.eval()
     costs = lambda ex: (-logits(model, tok, [ex.prompt.rstrip("\n")] * len(ex.choices), ex.choices,
@@ -185,7 +185,7 @@ def evaluate(model, tok, battery, max_length):
     for leg in battery.legs:
         if leg.kind != "mcq":
             continue
-        suite = load_eval_suite(leg.path, "", name=leg.name, limit=leg.limit, keep=leg.keep)
+        suite = load_eval_suite(leg.path, "", name=leg.name, limit=leg.limit, keep=None if full else leg.keep)
         result = score_mcq(suite.examples, costs, max_length)
         _, acc_key, margin_key = leg.metric_keys
         metrics[acc_key], metrics[margin_key] = result["accuracy"], result["margin"]
@@ -201,13 +201,13 @@ def _value(a, device):
     def arm(streams):
         model, tok = load(a.init, device)
         train(model, tok, streams, a.steps, a.batch, a.lr, a.seed, a.max_length, a.micro)
-        return evaluate(model, tok, battery, a.max_length)
+        return evaluate(model, tok, battery, a.max_length, a.full_legs)
 
     base = arm([(dpo, 1.0)])
     cell = {"scorer": f"cross_encoder@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
             "battery_id": battery.identifier, "dpo": {"repo": DPO[0], "revision": DPO[1], "n": a.dpo_n},
             "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
-            "negatives": a.negatives, "distractors": a.distractors, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
+            "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
     for name, items in tasks.items():
         got = arm([(dpo, 1 - a.mix), (items, a.mix)])
         cell["tasks"][name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
@@ -233,7 +233,8 @@ def main(argv=None):
     ap.add_argument("--lr", type=float, default=2e-5)
     ap.add_argument("--mix", type=float, default=0.5)
     ap.add_argument("--negatives", type=int, default=3)
-    ap.add_argument("--distractors", default="random", choices=("random", "hard"), help="see distractors.py")
+    ap.add_argument("--distractors", default="difflib", choices=("difflib", "random", "hard"), help="see distractors.py")
+    ap.add_argument("--full-legs", action="store_true", help="every item up to each leg's limit, not the tiny keep subset")
     ap.add_argument("--dpo-n", type=int, default=50_000)
     ap.add_argument("--max-length", type=int, default=512)
     ap.add_argument("--seed", type=int, default=43)
