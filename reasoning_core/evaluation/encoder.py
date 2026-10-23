@@ -124,7 +124,10 @@ def load(init, device):
     remote = {"trust_remote_code": True} if name in REMOTE_CODE else {}
     if not Path(name).exists():             # pinned snapshot: weights, configs, code; works offline once cached
         from huggingface_hub import snapshot_download
-        name = snapshot_download(name, revision=revision, allow_patterns=SNAPSHOT_FILES)
+        try:                                # cached: no network call, even for the file listing
+            name = snapshot_download(name, revision=revision, allow_patterns=SNAPSHOT_FILES, local_files_only=True)
+        except Exception:
+            name = snapshot_download(name, revision=revision, allow_patterns=SNAPSHOT_FILES)
     tok = AutoTokenizer.from_pretrained(name, **remote)
     tok.truncation_side = "left"            # keep the question at the end of a long prompt
     if (Path(name) / "pair_scorer.pt").exists():          # saved by `warm`
