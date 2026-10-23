@@ -9,7 +9,8 @@ choices' logits, so the battery's MCQ legs score the model directly (cost = -log
               same task at the same level, so they are in-format and cannot be told apart by surface
 
 Inits: `encoder` (raw Ettin encoder, fresh 1-logit head), `reranker` (Ettin reranker, already a pair
-scorer), `decider` (the reranker fine-tuned on typed choices), or a local dir saved by `warm`.
+scorer), `decider` (the reranker fine-tuned on typed choices), `ultrabert` (raw UltraBERT-150M, fresh head),
+or a local dir saved by `warm`.
 
     python -m reasoning_core.evaluation.encoder warm  --init encoder --steps 2000 --out ckpt/
     python -m reasoning_core.evaluation.encoder value --init ckpt/ --rows task_rows/<cid> --out cell.json
@@ -29,7 +30,9 @@ from .metrics import load_eval_suite, score_mcq
 
 INITS = {"encoder": ("jhu-clsp/ettin-encoder-150m", "45d08642849e5c5701b162671ac811b7654bfd9f"),
          "reranker": ("cross-encoder/ettin-reranker-150m-v1", "025501c4e0f9bbeb4c5b198318e0089ff061cc14"),
-         "decider": ("tasksource/tasksource-decider-nano", "2c7c01ffe5aba74dd15968cf38b0fdc83d1f3810")}
+         "decider": ("tasksource/tasksource-decider-nano", "2c7c01ffe5aba74dd15968cf38b0fdc83d1f3810"),
+         "ultrabert": ("dmis-lab/UltraBERT-150M", "545ac9d9c7aece444f014ada5a1e9818132b4d35")}
+REMOTE_CODE = {"dmis-lab/UltraBERT-150M"}      # model code audited at the pinned revision
 DPO = ("tasksource/tasksource_dpo_pairs", "0b16d8574d3fc771320a32eab85ae405ea86207c")
 VERSION = 1
 
@@ -122,7 +125,8 @@ def _head(path, hidden):
 def load(init, device):
     from transformers import AutoConfig, AutoModel, AutoTokenizer
     name, revision = INITS.get(init, (init, None))
-    tok = AutoTokenizer.from_pretrained(name, revision=revision)
+    remote = {"trust_remote_code": True} if name in REMOTE_CODE else {}
+    tok = AutoTokenizer.from_pretrained(name, revision=revision, **remote)
     tok.truncation_side = "left"            # keep the question at the end of a long prompt
     if (Path(name) / "pair_scorer.pt").exists():          # saved by `warm`
         saved = torch.load(Path(name) / "pair_scorer.pt", map_location="cpu", weights_only=False)
@@ -131,10 +135,10 @@ def load(init, device):
         model.load_state_dict(saved["state"])
         return model.to(device), tok
     path = name if Path(name).exists() else (name, revision)
-    cfg = AutoConfig.from_pretrained(name, revision=revision)
+    cfg = AutoConfig.from_pretrained(name, revision=revision, **remote)
     head, pooling, backbone_state, template = _head(path, cfg.hidden_size)
     if backbone_state is None:
-        backbone = AutoModel.from_pretrained(name, revision=revision)
+        backbone = AutoModel.from_pretrained(name, revision=revision, **remote)
     else:
         backbone = AutoModel.from_config(cfg)
         backbone.load_state_dict(backbone_state, strict=True)
@@ -221,7 +225,7 @@ def _value(a, device):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("command", choices=("warm", "value"))
-    ap.add_argument("--init", default="encoder", help="encoder | reranker | decider | a local dir saved by warm")
+    ap.add_argument("--init", default="encoder", help="encoder | reranker | decider | ultrabert | a local dir saved by warm")
     ap.add_argument("--rows", help="a task_rows cache dir (value)")
     ap.add_argument("--tasks", nargs="*", help="default: every task in --rows")
     ap.add_argument("--battery", default=str(Path(__file__).resolve().parents[1]
