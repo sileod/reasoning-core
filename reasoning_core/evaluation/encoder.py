@@ -39,17 +39,18 @@ def dpo_items(n, seed=0):
     return [(r["prompt"], (r["chosen"], r["rejected"]), 0) for r in rows if r["chosen"] != r["rejected"]]
 
 
-def task_items(rows, negatives, seed=0):
-    """{task: [(prompt, choices, gold)]}; choices = gold plus up to `negatives` other answers of the same
-    task and level. Rows whose group has no other answer are dropped."""
+def task_items(rows, negatives, seed=0, policy="random"):
+    """{task: [(prompt, choices, gold)]}; choices = gold plus up to `negatives` verified-wrong answers drawn
+    by a distractors policy from the same task and level. Rows with no negative are dropped."""
+    from .distractors import negatives as draw
     rng, pools = random.Random(seed), collections.defaultdict(set)
     for r in rows:
         pools[r["task"], r["level"]].add(r["answer"])
     out = collections.defaultdict(list)
-    for r in rows:
-        others = sorted(pools[r["task"], r["level"]] - {r["answer"]})
-        if others:
-            choices = [r["answer"], *rng.sample(others, min(negatives, len(others)))]
+    for i, r in enumerate(rows):
+        negs = draw(r, sorted(pools[r["task"], r["level"]]), negatives, policy, seed=seed * 100003 + i)
+        if negs:
+            choices = [r["answer"], *negs]
             rng.shuffle(choices)
             out[r["task"]].append((r["prompt"], tuple(choices), choices.index(r["answer"])))
     return dict(out)
@@ -58,7 +59,7 @@ def task_items(rows, negatives, seed=0):
 def load_rows(path):
     import pyarrow.parquet as pq
     files = sorted(glob.glob(str(Path(path) / "data" / "*.parquet")))
-    return [r for f in files for r in pq.read_table(f, columns=["task", "level", "prompt", "answer"]).to_pylist()]
+    return [r for f in files for r in pq.read_table(f, columns=["task", "level", "prompt", "answer", "metadata"]).to_pylist()]
 
 
 def load(init, device):
@@ -124,7 +125,7 @@ def evaluate(model, tok, battery, max_length):
 def _value(a, device):
     battery = load_battery_manifest(a.battery, data_dir=a.data_dir, max_length=a.max_length)
     dpo = dpo_items(a.dpo_n)
-    tasks = task_items(load_rows(a.rows), a.negatives, seed=a.seed)
+    tasks = task_items(load_rows(a.rows), a.negatives, seed=a.seed, policy=a.distractors)
     tasks = {t: tasks[t] for t in (a.tasks or sorted(tasks))}
 
     def arm(streams):
@@ -136,7 +137,7 @@ def _value(a, device):
     cell = {"scorer": f"cross_encoder@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
             "battery_id": battery.identifier, "dpo": {"repo": DPO[0], "revision": DPO[1], "n": a.dpo_n},
             "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
-            "negatives": a.negatives, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
+            "negatives": a.negatives, "distractors": a.distractors, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
     for name, items in tasks.items():
         got = arm([(dpo, 1 - a.mix), (items, a.mix)])
         cell["tasks"][name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
@@ -162,6 +163,7 @@ def main(argv=None):
     ap.add_argument("--lr", type=float, default=2e-5)
     ap.add_argument("--mix", type=float, default=0.5)
     ap.add_argument("--negatives", type=int, default=3)
+    ap.add_argument("--distractors", default="random", choices=("random", "hard"), help="see distractors.py")
     ap.add_argument("--dpo-n", type=int, default=50_000)
     ap.add_argument("--max-length", type=int, default=512)
     ap.add_argument("--seed", type=int, default=43)
