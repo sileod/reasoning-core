@@ -180,7 +180,9 @@ class Extraction(str):
 
 
 def _norm(value):
-    return re.sub(r"\s+", " ", str(value)).strip(" \t\n.,;:'\"").casefold()
+    """Case, whitespace, edge punctuation and articles aside, as in SQuAD's answer normalization."""
+    text = re.sub(r"\s+", " ", str(value)).strip(" \t\n.,;:'\"").casefold()
+    return " ".join(re.sub(r"\b(?:a|an|the)\b", " ", text).split()) or text
 
 
 def _json_object(text):
