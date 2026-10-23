@@ -12,6 +12,7 @@ ways and shuffles their order. Levels add events, edges, temporal and ruled-out 
 questions, conjunctive rules and missing relations.
 """
 import random
+import re
 from dataclasses import dataclass
 
 from reasoning_core.template import Config, Task, stochastic_rounding as sround
@@ -31,18 +32,18 @@ THEMES = {
                  "ambulance diversion", "supply delay", "budget cut", "overtime ban", "patient transfer",
                  "audit visit", "system upgrade", "pharmacy error", "waiting list growth"],
 }
-CAUSAL = ["The {a} caused the {b}.", "The {b} was caused by the {a}.", "The {a} led directly to the {b}.",
-          "Because of the {a}, the {b} followed.", "The {b} was a direct result of the {a}."]
-TEMPORAL = ["The {a} happened before the {b}.", "The {b} came after the {a}.",
-            "Shortly after the {a}, the {b} was reported.", "The {a} took place earlier than the {b}."]
-RULED_OUT = ["The {a} preceded the {b} but did not cause it.",
-             "The {b} followed the {a}, though the {a} was not its cause.",
-             "Investigators ruled out the {a} as a cause of the {b}."]
-RULES = ["If the {a} occurs, the {b} follows.", "The {b} is triggered whenever the {a} occurs.",
-         "The {a} always leads to the {b}."]
-RULES2 = ["If both the {a} and the {c} occur, the {b} follows.", "The {a} together with the {c} triggers the {b}."]
-FACTS = ["The {a} occurred.", "The {a} has been confirmed."]
-NOT_FACTS = ["The {a} did not occur.", "The {a} was avoided."]
+CAUSAL = ["{A} caused {b}.", "{B} was caused by {a}.", "{A} led directly to {b}.",
+          "Because of {a}, {b} followed.", "{B} was a direct result of {a}."]
+TEMPORAL = ["{A} happened before {b}.", "{B} came after {a}.",
+            "Shortly after {a}, {b} was reported.", "{A} took place earlier than {b}."]
+RULED_OUT = ["{A} preceded {b} but did not cause it.",
+             "{B} followed {a}, though {a} was not its cause.",
+             "Investigators ruled out {a} as a cause of {b}."]
+RULES = ["If {a} occurs, {b} follows.", "{B} is triggered whenever {a} occurs.",
+         "{A} always leads to {b}."]
+RULES2 = ["If both {a} and {c} occur, {b} follows.", "{A} together with {c} triggers {b}."]
+FACTS = ["{A} occurred.", "{A} has been confirmed."]
+NOT_FACTS = ["{A} did not occur.", "{A} was avoided."]
 
 
 @dataclass
@@ -94,8 +95,10 @@ class RelationalSpanExtraction(Task):
         if rng.random() < self.config.shuffle:
             rng.shuffle(sentences)
         doc = Doc()
-        for template, slots in sentences:
-            doc.add(template + " ", **{k: (v, v) for k, v in slots.items()})
+        for template, slots in sentences:  # an uppercase slot starts the sentence
+            names = {k: re.search(r"\{(%s)\}" % k, template, re.I)[1] for k in slots}
+            doc.add(template + " ", **{names[k]: (("The " if names[k].isupper() else "the ") + e, e)
+                                       for k, e in slots.items()})
         spans = {f["name"]: [s for e in f.pop("events") for s in doc.marks.get(e, [])] for f in fields}
         return extraction_entry(doc.text.strip(), fields, spans, state_seed, kind=kind, theme=theme)
 
@@ -165,7 +168,7 @@ class RelationalSpanExtraction(Task):
                 else:
                     rules.append(((rng.choice(events[:j]),), b))
         sources = [e for e in events if not any(r[1] == e for r in rules)]
-        facts = {e for e in sources if rng.random() < 0.6}
+        facts = {e for e in sources if rng.random() < 0.6} or {rng.choice(sources)}
 
         derived, changed = set(facts), True
         while changed:
@@ -191,8 +194,8 @@ class RelationalSpanExtraction(Task):
                     continue
                 asked.add("follows")
                 fields.append({"name": f"follows_{k + 1}", "type": "list", "events": sorted(derived - facts),
-                               "instruction": "Every event that must occur given the stated facts and rules, other "
-                                              "than those stated to have occurred."})
+                               "instruction": "Every event that the rules imply must also occur, starting from the "
+                                              "events stated to have occurred (not counting those)."})
                 continue
             relation = triggers if q == "triggers" else triggered
             empty = [e for e in mentioned if not relation[e]]

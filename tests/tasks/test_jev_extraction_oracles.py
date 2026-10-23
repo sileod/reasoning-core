@@ -586,9 +586,9 @@ def relational_span(text, fields):
         elif m := re.fullmatch(r'Every event that a rule says follows from the (.+), alone or together with another event\.', q):
             got = {b for ante, b in rules if m[1] in ante}
         else:
-            assert q.startswith('Every event that must occur given the stated facts'), q
+            assert q.startswith('Every event that the rules imply must also occur'), q
             got = derived - facts
-        answer[f['name']] = _pack(f, sorted(got))
+        answer[f['name']] = _pack(f, ['the ' + e for e in sorted(got)])  # mentions are noun phrases
     return answer
 
 
