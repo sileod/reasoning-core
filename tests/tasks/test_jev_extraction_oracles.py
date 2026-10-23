@@ -446,8 +446,84 @@ def lookalike_field(text, fields):
     return answer
 
 
+def _outline(text):
+    tree, section, sub = {}, None, None
+    for line in text.split('\n')[1:]:
+        if not line.strip():
+            continue
+        if ': ' in line:
+            label, value = re.fullmatch(r'(?:- |    )?(.+?): (.+)', line).groups()
+            tree[section][sub][label.lower()] = value
+        elif m := re.fullmatch(r'## (.+)|  (\S.*)|-- (.+) --|\d+\.\d+ (.+)', line):
+            sub = next(g for g in m.groups() if g).lower()
+            tree[section][sub] = {}
+        else:
+            m = re.fullmatch(r'# (.+)|=== (.+) ===|\d+\. (.+)|(\S.*)', line)
+            section, sub = next(g for g in m.groups() if g).lower(), None
+            tree[section] = {}
+    return tree
+
+
+def _tables(text):
+    tables = {}
+    for block in text.split('\n\n'):
+        title, *lines = block.split('\n')
+        if any(';' in line for line in lines):
+            rows = [line.split(';') for line in lines]
+        elif lines[0].startswith('+'):
+            rows = [[c.strip() for c in line.strip('|').split('|')] for line in lines if line.startswith('|')]
+        elif lines[0].startswith('|'):
+            rows = [[c.strip() for c in line.strip('|').split('|')] for line in lines if '---' not in line]
+            if not any('---' in line for line in lines):  # transposed: one line per column
+                rows = [list(r) for r in zip(*rows)]
+        else:
+            rows = [['' if c == '-' else c for c in re.split(r'\s{2,}', line)] for line in lines]
+            rows = [r + [''] * (len(rows[0]) - len(r)) for r in rows]
+        tables[title] = [dict(zip(rows[0], r)) for r in rows[1:]]
+    return tables
+
+
+def structure_lookup(text, fields):
+    from reasoning_core.tasks.jev.structure_lookup_extraction import ORDINALS, noun
+    answer = {}
+    if ' directory\n' in text.split('\n')[0] + '\n':
+        tree = _outline(text)
+        for f in fields:
+            q = f['instruction']
+            if m := re.fullmatch(r'The (.+) under (.+) > (.+)\.', q):
+                label, section, sub = m.groups()
+            elif m := re.fullmatch(r'In the (.+) section, the (\S+) (.+)\.', q):
+                section, sub, label = m.groups()
+            else:
+                section, sub, label = re.fullmatch(r'(.+) > (.+) > (.+): the value\.', q).groups()
+            answer[f['name']] = tree.get(section.lower(), {}).get(sub.lower(), {}).get(label.lower())
+        return answer
+    tables = _tables(text)
+    for f in fields:
+        q = f['instruction']
+        m = (re.fullmatch(r'(.+), in the (.+) table\.', q) or re.fullmatch(r'In the (.+) table, (.+)\.', q)
+             or re.fullmatch(r'(.+) \((.+)\)\.', q))
+        phrase, title = m.groups() if not q.startswith('In the ') else m.groups()[::-1]
+        rows = tables[title]
+        header = list(rows[0])
+        column = {noun(h): h for h in header}
+        phrase = phrase[0].lower() + phrase[1:]
+        if m := re.fullmatch(r'the (.+) of the \w+ whose (.+) is (.+)', phrase):
+            col, ccol, value = column[m[1]], column[m[2]], m[3]
+            hits = [r for r in rows if r[ccol] == value]
+        elif m := re.fullmatch(r'the (.+) of the (\w+) \w+ listed', phrase):
+            col, hits = column[m[1]], [rows[ORDINALS.index(m[2])]]
+        else:
+            m = re.fullmatch(r'the (.+) of (.+)', phrase)
+            col, hits = column[m[1]], [r for r in rows if r[header[0]] == m[2]]
+        assert len(hits) <= 1, (q, hits)
+        answer[f['name']] = (hits[0][col] or None) if hits else None
+    return answer
+
+
 SOLVERS = {'typed_mention': typed_mention, 'business_document': business_document,
-           'nested_structure': nested_structure, 'html': html, 'lookalike_field': lookalike_field}
+           'nested_structure': nested_structure, 'html': html, 'lookalike_field': lookalike_field,
+           'structure_lookup': structure_lookup}
 
 # Handwritten semantic assertions; confusers do not match these positive statements.
 RECORD_ASSERTIONS = {
