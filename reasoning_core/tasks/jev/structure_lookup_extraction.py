@@ -127,8 +127,8 @@ class StructureLookupExtractionConfig(Config):
         self.rows = 3 + 2 * level
         self.columns = 3 + 0.5 * level
         self.fields = 2 + 1.0 * level
-        self.empty = 0.05 + 0.025 * level
-        self.missing = 0.15 + 0.0625 * level
+        self.empty = 0.05 + 0.015 * level
+        self.missing = 0.15 + 0.0375 * level
         self.condition = min(0.5, 0.2 + 0.08 * level)
         self.position = min(0.3, 0.1 + 0.05 * level)
 
@@ -139,7 +139,7 @@ class StructureLookupExtraction(Task):
                "column, a condition on another column or a row position; null when the path, cell or condition "
                "exists only elsewhere. Outlines as headings, indented, numbered or banners; tables as Markdown, "
                "ASCII, CSV, aligned or transposed.")
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or StructureLookupExtractionConfig())

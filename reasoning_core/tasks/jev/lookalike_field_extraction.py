@@ -150,7 +150,7 @@ class LookalikeFieldExtractionConfig(Config):
         self.types = 2 + 0.75 * level
         self.lookalikes = 2 + 0.5 * level
         self.fields = 2 + 1.0 * level
-        self.missing = 0.15 + 0.0625 * level
+        self.missing = 0.15 + 0.0375 * level
         self.placeholder = min(0.3, 0.05 + 0.06 * level)
         self.paraphrase = min(0.8, 0.3 + 0.12 * level)
         self.date_variety = min(0.8, 0.2 + 0.15 * level)
@@ -163,7 +163,7 @@ class LookalikeFieldExtraction(Task):
                "a form, sections, table, prose, email, log or YAML-like record; an asked role that is not stated is "
                "null although other roles of its type are (issue date beside delivery date, subtotal beside tax) or "
                "it shows a placeholder, and questions never say the answer may be absent.")
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or LookalikeFieldExtractionConfig())

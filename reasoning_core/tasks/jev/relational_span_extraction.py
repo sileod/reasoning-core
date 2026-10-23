@@ -66,7 +66,7 @@ class RelationalSpanExtractionConfig(Config):
         self.shuffle = min(1.0, 0.25 * level)
         self.transitive = min(0.5, 0.12 * level)
         self.conjunctive = 0.1 * level
-        self.missing = 0.15 + 0.0625 * level
+        self.missing = 0.15 + 0.0375 * level
         self.fields = 2 + 0.75 * level
 
 
@@ -75,7 +75,7 @@ class RelationalSpanExtraction(Task):
                "narrative where some ordered events are only temporal or explicitly not causal, or what follows from "
                "facts and if-then rules, what triggers an event and what it triggers; null when the relation is not "
                "stated although a temporal or rule look-alike is.")
-    task_version = 1
+    task_version = 2
 
     def __init__(self, config=None):
         super().__init__(config=config or RelationalSpanExtractionConfig())
