@@ -169,7 +169,8 @@ def business_document(text, fields):
                 facts.append((loc, label, 0, start, datetime.max.date(), value.strip()))
     answer = {}
     for f in fields:
-        noun, day = re.fullmatch(r'The (.+) in force on (' + DATE + r'); null if none is\.', f['instruction']).groups()
+        noun, day = re.match(r'(?:The|What is the) (.+?) (?:in force on|as of|that applies on|on) (' + DATE + r')[.?]',
+                             f['instruction']).groups()
         aliases = next(row.split('|')[1:] for row in BUSINESS_LABELS.splitlines() if row.split('|')[0] == noun)
         def resolve(where, seen=()):
             assert where not in seen

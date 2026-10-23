@@ -8,8 +8,8 @@ wins, and a reference ("see Schedule B") resolves the same key and date in that 
 schedules and amendments override printed values, earlier amendments, references and schedule entries. Nothing live
 is null, while a near-miss key (subtotal for total, invoice date for due date) is stated. The document states the
 precedence rule; the renderer only words facts as label lines, dated windows, schedules and numbered amendments.
-Levels add keys, near-miss keys, windows, amendments, amendments stacking on one key, reference chains and
-amendments listed out of order.
+Levels add keys, missing asked keys, near-miss keys, windows, amendments, amendments stacking on one key, reference
+chains and amendments listed out of order.
 """
 import random
 from dataclasses import dataclass
@@ -107,6 +107,9 @@ NEAR = {"previous_invoice": "invoice_number", "subtotal": "total_due", "invoice_
         "beneficiary": "policyholder", "broker": "insurer", "sum_insured": "premium", "admin_fee": "deductible",
         "claim_window": "cancellation_notice"}
 END = date(2099, 12, 31)
+# Asked fields, worded without saying that the answer may be absent; a null cue is added at random, whatever the answer.
+QUESTIONS = ["The {n} in force on {d}.", "The {n} as of {d}.", "The {n} that applies on {d}.", "What is the {n} on {d}?"]
+NULL_CUES = ["Null if none is.", "Leave it empty if the document gives none.", "Answer null if there is none."]
 
 
 def _fmt(d):
@@ -126,7 +129,8 @@ def resolve(facts, key, loc, day, seen=()):
 class BusinessDocumentExtractionConfig(Config):
     fields: float = 2.0
     near: float = 0.3
-    missing: float = 0.12
+    missing: float = 0.15
+    null_cue: float = 0.1
     windows: float = 0.1
     periods: float = 2.0
     amendments: float = 0.5
@@ -139,7 +143,7 @@ class BusinessDocumentExtractionConfig(Config):
     def apply_difficulty(self, level):
         self.fields = 2 + 1.2 * level
         self.near = min(0.9, 0.3 + 0.15 * level)
-        self.missing = 0.12 + 0.02 * level
+        self.missing = 0.15 + 0.0625 * level
         self.windows = min(0.5, 0.1 + 0.1 * level)
         self.periods = 2 + 0.5 * level
         self.amendments = 0.5 + 1.0 * level
@@ -154,7 +158,7 @@ class BusinessDocumentExtraction(Task):
     summary = ("Find the value in force on a date in an invoice, purchase order, contract or insurance policy: "
                "numbered amendments override printed values and each other from their effective dates, schedule "
                "references chain, values vary over dated windows, and near-miss keys sit alongside.")
-    task_version = 2
+    task_version = 3
 
     def __init__(self, config=None):
         super().__init__(config=config or BusinessDocumentExtractionConfig())
@@ -229,8 +233,10 @@ class BusinessDocumentExtraction(Task):
             day = (rng.choice(edges) + timedelta(days=rng.choice([-1, 0, 1, rng.randint(-40, 40)]))
                    if edges and rng.random() < 0.7 else start + timedelta(days=rng.randrange(700)))
             hit = resolve(facts, key, "body", max(day, start))
-            fields.append({"name": key, "type": "text",
-                           "instruction": f"The {keys[key][0]} in force on {_fmt(max(day, start))}; null if none is."})
+            instruction = rng.choice(QUESTIONS).format(n=keys[key][0], d=_fmt(max(day, start)))
+            if rng.random() < c.null_cue:
+                instruction += " " + rng.choice(NULL_CUES)
+            fields.append({"name": key, "type": "text", "instruction": instruction})
             gold[key] = hit["mark"] if hit else None
 
         # no printed start date: it would read as the answer to a commencement date the document leaves out
