@@ -15,6 +15,7 @@ import random
 import string
 from dataclasses import dataclass
 from datetime import date, timedelta
+from fractions import Fraction
 
 from reasoning_core.template import Config, Task, stochastic_rounding as sround
 from reasoning_core import surface_forms as sf
@@ -215,7 +216,7 @@ class LookalikeFieldExtraction(Task):
                     v = "+{} {} {} {}".format(rng.randint(1, 99), rng.randint(100, 999), rng.randint(100, 999),
                                               rng.randint(1000, 9999))
                 elif t == "weight":
-                    n, unit = rng.choice([(rng.randint(2, 9000) / 10, "kg"), (rng.randint(50, 20_000), "g"),
+                    n, unit = rng.choice([(Fraction(rng.randint(2, 9000), 10), "kg"), (rng.randint(50, 20_000), "g"),
                                           (rng.randint(2, 900), "lb")])
                     v = f"{sf.format_number(n, numbers, 1)} {unit}"
                 else:
@@ -261,7 +262,7 @@ class LookalikeFieldExtraction(Task):
                 if layout == "sections":
                     doc.add("\n")
             if notes and layout != "yaml":
-                doc.add("\n" + "\n".join(notes))
+                doc.add(("" if layout == "sections" else "\n") + "\n".join(notes))
         elif layout == "table":
             doc.add(f"{header}\n\n| Field | Value |\n|---|---|\n")
             for t, role, v in lines:
