@@ -410,8 +410,44 @@ def typed_mention(text, fields):
     return answer
 
 
+def lookalike_field(text, fields):
+    """Reads (label, value) pairs off any layout; only the role lexicon comes from the generator."""
+    from reasoning_core.tasks.jev.lookalike_field_extraction import ROLES
+    role_of = {}
+    for roles in ROLES.values():
+        for role, (nouns, labels) in roles.items():
+            for word in nouns + labels:
+                for key in {word.lower(), word.lower().replace('.', '').replace(' ', '_')}:
+                    assert role_of.setdefault(key, role) == role, word
+    lines = text.split('\n')
+    pairs = []
+    if '| Field | Value |' in text:
+        pairs = [tuple(c.strip() for c in line.strip('|').split('|')) for line in lines
+                 if line.startswith('| ') and '---' not in line][1:]
+    elif any(line.startswith('|') for line in lines):
+        rows = [[c.strip() for c in line.strip('|').split('|')] for line in lines if line.startswith('|')]
+        pairs = list(zip(rows[0], rows[2]))
+    elif ' INFO ' in text:
+        pairs = [re.fullmatch(r'\S+ INFO \S+ set "(.+)" to (.+)', line).groups() for line in lines if ' INFO ' in line]
+    elif text.startswith('Subject:') or ': ' not in text:
+        for sentence in re.split(r'(?<=\.) |\n', text):
+            if m := re.fullmatch(r'The (.+?) is (.+)\.', sentence):
+                pairs.append(m.groups())
+            elif m := re.fullmatch(r'It lists (.+) as the (.+)\.', sentence) or re.fullmatch(r'(.+) is the (.+)\.', sentence):
+                pairs.append(m.groups()[::-1])
+    else:
+        pairs = [tuple(x.strip() for x in line.split(': ', 1)) for line in lines if ': ' in line]
+    answer = {}
+    for f in fields:
+        values = [v for label, v in pairs if role_of.get(label.lower()) == f['name']]
+        assert len(values) <= 1, (f, values)
+        answer[f['name']] = _pack(f, [v for v in values if v not in {'pending', 'not yet assigned', 'to be confirmed',
+                                                                      'unknown', 'N/A', 'TBD', '-'}])
+    return answer
+
+
 SOLVERS = {'typed_mention': typed_mention, 'business_document': business_document,
-           'nested_structure': nested_structure, 'html': html}
+           'nested_structure': nested_structure, 'html': html, 'lookalike_field': lookalike_field}
 
 # Handwritten semantic assertions; confusers do not match these positive statements.
 RECORD_ASSERTIONS = {
