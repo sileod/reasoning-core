@@ -1,70 +1,66 @@
-"""Generic hard negatives for any task row: no per-task code, every candidate checked by the task's verifier.
+"""Generic hard negatives: other answers of the same task and level, ranked by similarity to the gold.
 
-A source maps (gold, prompt, pool) to candidate answers; `negatives` draws from a policy's sources,
-dedups, drops anything the task itself scores as correct, and tops up from the pool at random.
+No per-task or per-format rule: every candidate is a real answer the task produced elsewhere, so it is
+in-format; "hard" only reorders the pool, and the task's own scorer drops anything it accepts.
 
-    spans   tokens of the prompt with the gold's shape (the entity, number or label a shallow reader picks)
-    shape   pool answers with the gold's shape ("E3" -> "A9", "Alice" -> "Aa", "3/4" -> "9/9")
-    mutate  the gold with one number nudged, two tokens swapped or one token dropped
-    lexical pool answers nearest the gold by character trigrams
-    random  pool answers, uniformly
+    char    cosine of character n-gram counts (surface: digits, symbols, shared substrings)
+    embed   cosine of static word embeddings (meaning: "drawer" ~ "cabinet"), bekko-static-embedding-v1
+    random  uniform
 """
+import collections
+import functools
 import itertools
 import random
-import re
+
+import numpy as np
 
 from .intrinsic import _cpu_limit
 
-TOKEN = re.compile(r"[\w./+-]+")
-POLICIES = {"random": ("random",), "hard": ("spans", "shape", "mutate", "lexical")}
+EMBED = ("hotchpotch/bekko-static-embedding-v1", "c18167b8f244c1bc6de21ce9b710bac8a29c4615")
+POLICIES = {"random": ("random",), "hard": ("char", "embed")}
 
 
-def shape(text):
-    text = re.sub(r"[A-Z]+", "A", str(text).strip())
-    return re.sub(r"\d+", "9", re.sub(r"[a-z]+", "a", text))
+def _ngrams(text, n=(2, 3, 4)):
+    text = f" {text.lower()} "
+    return collections.Counter(text[i:i + k] for k in n for i in range(len(text) - k + 1))
 
 
-def _trigrams(text):
-    text = f"  {text.lower()} "
-    return {text[i:i + 3] for i in range(len(text) - 2)}
+def char(gold, pool):
+    g = _ngrams(gold)
+    gn = sum(v * v for v in g.values()) ** .5 or 1
+
+    def cos(a):
+        a = _ngrams(a)
+        return sum(g[k] * v for k, v in a.items()) / (gn * (sum(v * v for v in a.values()) ** .5 or 1))
+    return sorted(pool, key=cos, reverse=True)
 
 
-def spans(gold, prompt, pool, rng):
-    """Prompt tokens shaped like the gold; those that are also answers elsewhere in the task come first."""
-    want, known = shape(gold), set(pool)
-    toks = [t for t in dict.fromkeys(TOKEN.findall(prompt)) if shape(t) == want]
-    return [t for t in toks if t in known] or toks
+@functools.lru_cache(1)
+def _static(dim=256):
+    """(tokenizer, table): a static embedding is a token table; a text is the mean of its tokens' rows."""
+    from huggingface_hub import hf_hub_download
+    from safetensors.numpy import load_file
+    from tokenizers import Tokenizer
+    tok = Tokenizer.from_file(hf_hub_download(EMBED[0], "tokenizer.json", revision=EMBED[1]))
+    table = next(iter(load_file(hf_hub_download(EMBED[0], "model.safetensors", revision=EMBED[1])).values()))
+    return tok, np.asarray(table[:, :dim], dtype=np.float32)          # Matryoshka: a prefix is a model
 
 
-def shape_matched(gold, prompt, pool, rng):
-    want = shape(gold)
-    return [a for a in pool if shape(a) == want]
+def _embed(texts):
+    tok, table = _static()
+    out = np.stack([table[e.ids].mean(0) if e.ids else np.zeros(table.shape[1], np.float32)
+                    for e in tok.encode_batch(list(texts), add_special_tokens=False)])
+    return out / (np.linalg.norm(out, axis=1, keepdims=True) + 1e-9)
 
 
-def mutate(gold, prompt, pool, rng):
-    out, nums = [], list(re.finditer(r"-?\d+", gold))
-    for m in nums:
-        n = int(m.group())
-        out += [gold[:m.start()] + str(v) + gold[m.end():] for v in (n + 1, n - 1, 2 * n) if v != n]
-    toks = gold.split()
-    if len(toks) >= 2:
-        i, j = rng.sample(range(len(toks)), 2)
-        toks[i], toks[j] = toks[j], toks[i]
-        out.append(" ".join(toks))
-    if len(gold.split()) >= 3:
-        out.append(" ".join(t for k, t in enumerate(gold.split()) if k != rng.randrange(len(gold.split()))))
-    return out
+def embed(gold, pool):
+    if not pool:
+        return []
+    e = _embed([gold, *pool])
+    return [pool[i] for i in np.argsort(-(e[1:] @ e[0]), kind="stable")]
 
 
-def lexical(gold, prompt, pool, rng, top=30):
-    g = _trigrams(gold)
-    return sorted(pool, key=lambda a: -len(g & _trigrams(a)) / (len(g | _trigrams(a)) or 1))[:top]
-
-
-SOURCES = {"spans": spans, "shape": shape_matched, "mutate": mutate, "lexical": lexical,
-           "random": lambda gold, prompt, pool, rng: list(pool)}
-
-
+SOURCES = {"char": char, "embed": embed, "random": lambda gold, pool: list(pool)}
 _WARM = set()
 
 
@@ -84,21 +80,17 @@ def is_wrong(candidate, row, seconds=2, first=120):
 
 def negatives(row, pool, k, policy="hard", seed=0, verify=True):
     """Up to `k` verified-wrong answers for `row`; `pool` = other answers of its task and level.
-    Sources are interleaved round-robin (each shuffled), then the pool at random fills any gap."""
+    Sources' rankings are interleaved round-robin, then the pool at random fills any gap."""
     rng, gold = random.Random(seed), str(row["answer"])
-    pool = [a for a in pool if a != gold]
-    lists = []
-    for name in POLICIES[policy]:
-        cands = SOURCES[name](gold, row["prompt"], pool, rng)
-        rng.shuffle(cands)
-        lists.append(cands)
-    order = itertools.chain((c for group in itertools.zip_longest(*lists) for c in group if c is not None),
-                            rng.sample(pool, len(pool)))
+    pool = [a for a in pool if a != gold and a.strip()]
+    rng.shuffle(pool)                   # ties break at random, not alphabetically
+    lists = [SOURCES[name](gold, pool) for name in POLICIES[policy]]
+    order = itertools.chain((c for group in zip(*lists) for c in group), rng.sample(pool, len(pool)))
     seen, out = {gold}, []
     for c in order:
         if len(out) == k:
             break
-        if c not in seen and c.strip():
+        if c not in seen:
             seen.add(c)
             if not verify or is_wrong(c, row):
                 out.append(c)

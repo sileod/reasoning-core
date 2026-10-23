@@ -1,22 +1,20 @@
 import pytest
 
-from reasoning_core.evaluation.distractors import POLICIES, is_wrong, negatives, shape
+from reasoning_core.evaluation.distractors import POLICIES, char, is_wrong, negatives
 from reasoning_core.evaluation.metrics import EvalExample, score_mcq
 from reasoning_core.utils.hf_sample import sample_rows
 
 
 def test_negatives_are_distinct_and_never_the_gold():
-    row = {"prompt": "E1 is newer than E2. E4 is the oldest.", "answer": "E3"}
+    row = {"prompt": "E1 is newer than E2. E4 is the oldest.", "answer": "E3", "task": "t"}
     pool = ["E1", "E2", "E3", "E5", "bin", "7"]
     for policy in POLICIES:
         got = negatives(row, pool, k=3, policy=policy, seed=1, verify=False)
         assert len(got) == 3 and len(set(got)) == 3 and "E3" not in got
 
 
-def test_hard_policy_prefers_same_shape_candidates():
-    row = {"prompt": "Alice gave Bob 12 apples and kept 30.", "answer": "18"}
-    got = negatives(row, ["cat", "dog", "x y z"], k=2, policy="hard", seed=0, verify=False)
-    assert all(shape(c) == "9" for c in got)
+def test_char_similarity_ranks_near_misses_first():
+    assert char("[3, 5, 7]", ["cabinet", "[3, 5, 8]", "No"])[0] == "[3, 5, 8]"
 
 
 def test_the_verifier_rejects_only_wrong_answers():
