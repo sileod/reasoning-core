@@ -154,45 +154,56 @@ def evaluate_lm_nll(model, tokenizer, texts, max_length):
 def evaluate_mcq(model, tokenizer, examples, max_length, chat_template=False):
     """Choice accuracy plus gold NLL and gold-vs-best-distractor margin."""
 
+    device = next(model.parameters()).device
+
+    def costs(example):
+        prompt_ids = _prompt_ids(tokenizer, example.prompt, chat_template)
+        return [_candidate_nll(model, tokenizer, prompt_ids, choice, max_length, device)
+                for choice in example.choices]
+
+    with evaluating(model):
+        return score_mcq(examples, costs, max_length)
+
+
+def score_mcq(examples, costs, max_length=None):
+    """MCQ metrics from any per-choice cost (lower is better; inf = unscorable).
+
+    `gold_nll` and `margin` are in the cost's units: NLL for a language model, negated logits for a
+    cross-encoder. Accuracy is comparable across scorers; the other two are not.
+    """
     correct = total = 0
     gold_nlls, margins, per_example = [], [], []
     skipped = 0                      # rows dropped because prompt+candidate exceeded max_length
-    device = next(model.parameters()).device
-    with evaluating(model):
-        for item in examples:
-            example = _example(item)
-            if not example.choices or example.answer_index is None:
-                per_example.append(None)
-                continue
-            prompt_ids = _prompt_ids(tokenizer, example.prompt, chat_template)
-            scores = [
-                _candidate_nll(model, tokenizer, prompt_ids, choice, max_length, device)
-                for choice in example.choices
-            ]
-            gold = example.answer_index
-            if not -len(scores) <= gold < len(scores) or all(
-                score == float("inf") for score in scores
-            ):
-                skipped += 1
-                per_example.append(None)
-                continue
-            if any(score == float("inf") for score in scores):
-                skipped += 1     # partial: some candidates unscorable, margin is computed on the rest
-            prediction = min(range(len(scores)), key=scores.__getitem__)
-            distractors = [score for index, score in enumerate(scores)
-                           if index != gold and score != float("inf")]
-            margin = (
-                min(distractors) - scores[gold]
-                if distractors and scores[gold] != float("inf") else None
-            )
-            correct += prediction == gold
-            total += 1
-            if scores[gold] != float("inf"):
-                gold_nlls.append(scores[gold])
-            if margin is not None:
-                margins.append(margin)
-            per_example.append({"prediction": prediction, "gold_nll": scores[gold],
-                                "margin": margin})
+    for item in examples:
+        example = _example(item)
+        if not example.choices or example.answer_index is None:
+            per_example.append(None)
+            continue
+        scores = costs(example)
+        gold = example.answer_index
+        if not -len(scores) <= gold < len(scores) or all(
+            score == float("inf") for score in scores
+        ):
+            skipped += 1
+            per_example.append(None)
+            continue
+        if any(score == float("inf") for score in scores):
+            skipped += 1     # partial: some candidates unscorable, margin is computed on the rest
+        prediction = min(range(len(scores)), key=scores.__getitem__)
+        distractors = [score for index, score in enumerate(scores)
+                       if index != gold and score != float("inf")]
+        margin = (
+            min(distractors) - scores[gold]
+            if distractors and scores[gold] != float("inf") else None
+        )
+        correct += prediction == gold
+        total += 1
+        if scores[gold] != float("inf"):
+            gold_nlls.append(scores[gold])
+        if margin is not None:
+            margins.append(margin)
+        per_example.append({"prediction": prediction, "gold_nll": scores[gold],
+                            "margin": margin})
     # A row whose prompt+candidate exceeds max_length scores inf and is dropped SILENTLY. That is a
     # data-format bug (prompt too long for the battery's max_length), not a property of the model, and
     # it biases every metric below toward whichever rows happen to be short. Say so, loudly.

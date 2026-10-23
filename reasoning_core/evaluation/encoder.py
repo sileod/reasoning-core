@@ -1,0 +1,182 @@
+"""Encoder valuation: the value of a task for a cross-encoder, read on a battery's MCQ legs.
+
+Same estimand as the decoder arms -- arm minus baseline under one recipe -- with a cross-encoder in
+place of the language model. Every item is (prompt, choices, gold) and training is a softmax over the
+choices' logits, so the battery's MCQ legs score the model directly (cost = -logit) and need no change.
+
+    baseline: tasksource_dpo_pairs (prompt, [chosen, rejected])
+    arm:      the same stream, with a share `mix` of the task's rows; negatives are other answers of the
+              same task at the same level, so they are in-format and cannot be told apart by surface
+
+Inits: `encoder` (raw Ettin encoder, fresh 1-logit head) and `reranker` (Ettin reranker, already a
+pair scorer), or a local dir saved by `warm`.
+
+    python -m reasoning_core.evaluation.encoder warm  --init encoder --steps 2000 --out ckpt/
+    python -m reasoning_core.evaluation.encoder value --init ckpt/ --rows task_rows/<cid> --out cell.json
+"""
+import argparse
+import collections
+import glob
+import json
+import random
+from pathlib import Path
+
+import torch
+import torch.nn.functional as F
+
+from .battery import load_battery_manifest
+from .metrics import load_eval_suite, score_mcq
+
+INITS = {"encoder": ("jhu-clsp/ettin-encoder-150m", "45d08642849e5c5701b162671ac811b7654bfd9f"),
+         "reranker": ("cross-encoder/ettin-reranker-150m-v1", "025501c4e0f9bbeb4c5b198318e0089ff061cc14")}
+DPO = ("tasksource/tasksource_dpo_pairs", "0b16d8574d3fc771320a32eab85ae405ea86207c")
+VERSION = 1
+
+
+def dpo_items(n, seed=0):
+    from reasoning_core.utils.hf_sample import sample_rows
+    rows = sample_rows(*DPO, n=n, seed=seed, columns=["prompt", "chosen", "rejected"])
+    return [(r["prompt"], (r["chosen"], r["rejected"]), 0) for r in rows if r["chosen"] != r["rejected"]]
+
+
+def task_items(rows, negatives, seed=0):
+    """{task: [(prompt, choices, gold)]}; choices = gold plus up to `negatives` other answers of the same
+    task and level. Rows whose group has no other answer are dropped."""
+    rng, pools = random.Random(seed), collections.defaultdict(set)
+    for r in rows:
+        pools[r["task"], r["level"]].add(r["answer"])
+    out = collections.defaultdict(list)
+    for r in rows:
+        others = sorted(pools[r["task"], r["level"]] - {r["answer"]})
+        if others:
+            choices = [r["answer"], *rng.sample(others, min(negatives, len(others)))]
+            rng.shuffle(choices)
+            out[r["task"]].append((r["prompt"], tuple(choices), choices.index(r["answer"])))
+    return dict(out)
+
+
+def load_rows(path):
+    import pyarrow.parquet as pq
+    files = sorted(glob.glob(str(Path(path) / "data" / "*.parquet")))
+    return [r for f in files for r in pq.read_table(f, columns=["task", "level", "prompt", "answer"]).to_pylist()]
+
+
+def load(init, device):
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    name, revision = INITS.get(init, (init, None))
+    tok = AutoTokenizer.from_pretrained(name, revision=revision)
+    tok.truncation_side = "left"            # keep the question at the end of a long prompt
+    model = AutoModelForSequenceClassification.from_pretrained(name, revision=revision, num_labels=1)
+    return model.to(device), tok
+
+
+def logits(model, tok, prompts, choices, max_length):
+    """One logit per (prompt, choice) pair."""
+    batch = tok(list(prompts), list(choices), truncation="longest_first", max_length=max_length,
+                padding=True, return_tensors="pt").to(model.device)
+    with torch.autocast(model.device.type, dtype=torch.bfloat16, enabled=model.device.type == "cuda"):
+        return model(**batch).logits.squeeze(-1).float()
+
+
+def train(model, tok, streams, steps, batch, lr, seed, max_length, micro=4):
+    """`streams` = [(items, weight)]; each step draws `batch` items by weight, forwarded `micro` items
+    at a time (gradient accumulation). Loss = cross-entropy of the gold among its item's choices."""
+    rng = random.Random(seed)
+    torch.manual_seed(seed)
+    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+    sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / max(1, steps // 25)))
+    pools, weights = [s for s, _ in streams], [w for _, w in streams]
+    model.train()
+    for _ in range(steps):
+        items = [rng.choice(rng.choices(pools, weights)[0]) for _ in range(batch)]
+        for start in range(0, batch, micro):
+            chunk = items[start:start + micro]
+            flat = [(p.rstrip("\n"), c) for p, cs, _ in chunk for c in cs]
+            out = logits(model, tok, [p for p, _ in flat], [c for _, c in flat], max_length)
+            loss, at = 0.0, 0
+            for _, cs, gold in chunk:
+                loss = loss + F.cross_entropy(out[at:at + len(cs)][None], torch.tensor([gold], device=out.device))
+                at += len(cs)
+            (loss / batch).backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        opt.step(), sched.step(), opt.zero_grad()
+    model.eval()
+    return model
+
+
+@torch.no_grad()
+def evaluate(model, tok, battery, max_length):
+    """The battery's MCQ legs only; accuracy and margin under the battery's own metric keys."""
+    model.eval()
+    costs = lambda ex: (-logits(model, tok, [ex.prompt.rstrip("\n")] * len(ex.choices), ex.choices,
+                                max_length)).tolist()
+    metrics = {}
+    for leg in battery.legs:
+        if leg.kind != "mcq":
+            continue
+        suite = load_eval_suite(leg.path, "", name=leg.name, limit=leg.limit, keep=leg.keep)
+        result = score_mcq(suite.examples, costs, max_length)
+        _, acc_key, margin_key = leg.metric_keys
+        metrics[acc_key], metrics[margin_key] = result["accuracy"], result["margin"]
+    return metrics
+
+
+def _value(a, device):
+    battery = load_battery_manifest(a.battery, data_dir=a.data_dir, max_length=a.max_length)
+    dpo = dpo_items(a.dpo_n)
+    tasks = task_items(load_rows(a.rows), a.negatives, seed=a.seed)
+    tasks = {t: tasks[t] for t in (a.tasks or sorted(tasks))}
+
+    def arm(streams):
+        model, tok = load(a.init, device)
+        train(model, tok, streams, a.steps, a.batch, a.lr, a.seed, a.max_length, a.micro)
+        return evaluate(model, tok, battery, a.max_length)
+
+    base = arm([(dpo, 1.0)])
+    cell = {"scorer": f"cross_encoder@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
+            "battery_id": battery.identifier, "dpo": {"repo": DPO[0], "revision": DPO[1], "n": a.dpo_n},
+            "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
+            "negatives": a.negatives, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
+    for name, items in tasks.items():
+        got = arm([(dpo, 1 - a.mix), (items, a.mix)])
+        cell["tasks"][name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
+                                         if got[k] is not None and base[k] is not None}}
+        print(f"[encoder] {name}: " + ", ".join(f"{k}={v:+.4f}" for k, v in cell["tasks"][name].items()
+                                                 if k.endswith("acc_delta")), flush=True)
+        Path(a.out).write_text(json.dumps(cell, indent=1))        # rewritten per task: a partial run is still readable
+    return cell
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("command", choices=("warm", "value"))
+    ap.add_argument("--init", default="encoder", help="encoder | reranker | a local dir saved by warm")
+    ap.add_argument("--rows", help="a task_rows cache dir (value)")
+    ap.add_argument("--tasks", nargs="*", help="default: every task in --rows")
+    ap.add_argument("--battery", default=str(Path(__file__).resolve().parents[1]
+                                             / "resources/batteries/copyfree_battery_v13_tiny.json"))
+    ap.add_argument("--data-dir", default="data_cache")
+    ap.add_argument("--steps", type=int, default=300)
+    ap.add_argument("--batch", type=int, default=16)
+    ap.add_argument("--micro", type=int, default=4, help="items per forward; gradient accumulation")
+    ap.add_argument("--lr", type=float, default=2e-5)
+    ap.add_argument("--mix", type=float, default=0.5)
+    ap.add_argument("--negatives", type=int, default=3)
+    ap.add_argument("--dpo-n", type=int, default=50_000)
+    ap.add_argument("--max-length", type=int, default=512)
+    ap.add_argument("--seed", type=int, default=43)
+    ap.add_argument("--out", required=True, help="warm: a model dir; value: a cell json")
+    a = ap.parse_args(argv)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if a.command == "warm":
+        model, tok = load(a.init, device)
+        train(model, tok, [(dpo_items(a.dpo_n), 1.0)], a.steps, a.batch, a.lr, a.seed, a.max_length, a.micro)
+        model.save_pretrained(a.out), tok.save_pretrained(a.out)
+        return
+    if not a.rows:
+        ap.error("value needs --rows")
+    _value(a, device)
+
+
+if __name__ == "__main__":
+    main()
