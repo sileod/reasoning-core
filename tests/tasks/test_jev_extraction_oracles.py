@@ -521,9 +521,80 @@ def structure_lookup(text, fields):
     return answer
 
 
+RELATION_SENTENCES = [
+    ('cause', r'The (.+) caused the (.+)'), ('cause', r'The (?P<b>.+) was caused by the (?P<a>.+)'),
+    ('cause', r'The (.+) led directly to the (.+)'), ('cause', r'Because of the (.+), the (.+) followed'),
+    ('cause', r'The (?P<b>.+) was a direct result of the (?P<a>.+)'),
+    ('other', r'The (.+) happened before the (.+)'), ('other', r'The (.+) came after the (.+)'),
+    ('other', r'Shortly after the (.+), the (.+) was reported'), ('other', r'The (.+) took place earlier than the (.+)'),
+    ('other', r'The (.+) preceded the (.+) but did not cause it'),
+    ('other', r'The (.+) followed the (.+), though the .+ was not its cause'),
+    ('other', r'Investigators ruled out the (.+) as a cause of the (.+)'),
+    ('rule', r'If the (.+) occurs, the (.+) follows'), ('rule', r'The (?P<b>.+) is triggered whenever the (?P<a>.+) occurs'),
+    ('rule', r'The (.+) always leads to the (.+)'),
+    ('rule2', r'If both the (.+) and the (.+) occur, the (.+) follows'), ('rule2', r'The (.+) together with the (.+) triggers the (.+)'),
+    ('fact', r'The (.+) occurred'), ('fact', r'The (.+) has been confirmed'),
+    ('other', r'The (.+) did not occur'), ('other', r'The (.+) was avoided'),
+]
+
+
+def relational_span(text, fields):
+    causes, rules, facts = {}, [], set()
+    for sentence in re.split(r'(?<=\.) ', text):
+        sentence = sentence.rstrip('.')
+        kind, m = next((k, m) for k, p in RELATION_SENTENCES if (m := re.fullmatch(p, sentence)))
+        a, b = (m['a'], m['b']) if 'a' in m.groupdict() else (m.groups() + (None,))[:2]
+        if kind == 'cause':
+            causes.setdefault(b, set()).add(a)
+        elif kind == 'rule':
+            rules.append(({a}, b))
+        elif kind == 'rule2':
+            rules.append(({m[1], m[2]}, m[3]))
+        elif kind == 'fact':
+            facts.add(a)
+
+    def closure(e, step):
+        out, todo = set(), list(step(e))
+        while todo:
+            x = todo.pop()
+            if x not in out:
+                out.add(x)
+                todo += step(x)
+        return out
+
+    effects = lambda e: {b for b, a in causes.items() if e in a}
+    derived, changed = set(facts), True
+    while changed:
+        changed = False
+        for ante, b in rules:
+            if b not in derived and ante <= derived:
+                derived.add(b)
+                changed = True
+    answer = {}
+    for f in fields:
+        q = f['instruction']
+        if m := re.fullmatch(r'Every event that led to the (.+), directly or through other events\.', q):
+            got = closure(m[1], lambda e: causes.get(e, set()))
+        elif m := re.fullmatch(r'Every event the (.+) led to, directly or through other events\.', q):
+            got = closure(m[1], effects)
+        elif m := re.fullmatch(r'Every direct cause of the (.+)\.|Every event that directly caused the (.+)\.', q):
+            got = causes.get(m[1] or m[2], set())
+        elif m := re.fullmatch(r'Every direct effect of the (.+)\.|Every event the (.+) directly caused\.', q):
+            got = effects(m[1] or m[2])
+        elif m := re.fullmatch(r'Every event that a rule names as a condition for the (.+)\.', q):
+            got = {a for ante, b in rules if b == m[1] for a in ante}
+        elif m := re.fullmatch(r'Every event that a rule says follows from the (.+), alone or together with another event\.', q):
+            got = {b for ante, b in rules if m[1] in ante}
+        else:
+            assert q.startswith('Every event that must occur given the stated facts'), q
+            got = derived - facts
+        answer[f['name']] = _pack(f, sorted(got))
+    return answer
+
+
 SOLVERS = {'typed_mention': typed_mention, 'business_document': business_document,
            'nested_structure': nested_structure, 'html': html, 'lookalike_field': lookalike_field,
-           'structure_lookup': structure_lookup}
+           'structure_lookup': structure_lookup, 'relational_span': relational_span}
 
 # Handwritten semantic assertions; confusers do not match these positive statements.
 RECORD_ASSERTIONS = {
