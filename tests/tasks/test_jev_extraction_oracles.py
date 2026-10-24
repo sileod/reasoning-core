@@ -483,54 +483,9 @@ def _tables(text):
     return tables
 
 
-def _breakdown(text, fields):
-    """Reads the group list, the per-group figures (table or sentences) and the overall figures of a report."""
-    unit_plural, listed = re.search(r' across \d+ (\w+): (.+?)\. ', text).groups()
-    groups = re.split(r', | and ', listed)
-    per, overall = {}, {}
-    lines = text.split('\n')
-    for i, line in enumerate(lines):
-        if line.startswith('| ') or (i > 2 and re.match(r'[A-Z]\w+ {2,}', line) and not lines[i - 1].strip()):
-            block = [x for x in lines[i:] if x.strip()][:len(groups) + 2]
-            rows = ([[c.strip() for c in x.strip('|').split('|')] for x in block if x.startswith('|') and '---' not in x]
-                    if line.startswith('| ') else [re.split(r' {2,}', x) for x in block[:len(groups) + 1]])
-            for row in rows[1:]:
-                for metric, value in zip(rows[0][1:], row[1:]):
-                    if value != '-':
-                        per.setdefault(metric.lower(), {})[row[0]] = value
-            break
-    for sentence in re.split(r'(?<=[.]) |\n', text):
-        if m := (re.fullmatch(r'Overall (.+) was (.+)\.', sentence) or re.fullmatch(r'Across all \w+, (.+) was (.+)\.', sentence)
-                 or re.fullmatch(r'.+ reported (.+) of (.+) overall\.', sentence)):
-            overall[m[1]] = m[2]
-        elif m := re.fullmatch(r'In (\w+), (.+) came to (.+)\.', sentence) or re.fullmatch(r'For (\w+), (.+) was (.+)\.', sentence):
-            per.setdefault(m[2], {})[m[1]] = m[3]
-        elif m := re.fullmatch(r'(.+) in (\w+) was (.+)\.', sentence):
-            per.setdefault(m[1].lower(), {})[m[2]] = m[3]
-    answer = {}
-    for f in fields:
-        q = f['instruction']
-        if m := re.fullmatch(r'The overall (.+)\.', q) or re.fullmatch(r'The (.+) across all \w+\.', q):
-            values = [overall[m[1]]] if m[1] in overall else []
-        elif m := re.fullmatch(r'The (.+) of the (\w+) \w+\.', q) or re.fullmatch(r'What was the (.+) in (\w+)\?', q):
-            values = [v] if (v := per.get(m[1], {}).get(m[2])) else []
-        elif m := re.fullmatch(r'(\w+): the (.+) for .+\.', q):
-            values = [v] if (v := per.get(m[2], {}).get(m[1])) else []
-        elif re.fullmatch(r'Every \w+ (?:the report covers|named in the report)\.', q):
-            values = groups
-        else:
-            metric = (re.fullmatch(r'Every \w+ whose (.+) is reported\.', q)
-                      or re.fullmatch(r'Every \w+ for which the report gives an? (.+) figure\.', q))[1]
-            values = list(per.get(metric, {}))
-        answer[f['name']] = _pack(f, values)
-    return answer
-
-
 def structure_lookup(text, fields):
     from reasoning_core.tasks.jev.structure_lookup_extraction import ORDINALS, noun
     answer = {}
-    if ': report for ' in text.split('\n')[0]:
-        return _breakdown(text, fields)
     if ' directory\n' in text.split('\n')[0] + '\n':
         tree = _outline(text)
         for f in fields:
