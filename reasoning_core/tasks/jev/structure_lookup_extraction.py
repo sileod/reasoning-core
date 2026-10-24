@@ -1,5 +1,6 @@
-"""Read a value by its place in a document's structure: a section path in an outline, or a cell of one of several
-look-alike tables, picked by row and column, by a condition on another column, or by row position.
+"""Read a value by its place in a document's structure: a section path in an outline, a cell of one of several
+look-alike tables, picked by row and column, by a condition on another column, or by row position, or a figure of a
+report broken down by groups.
 
 Latent structure: either an outline (sections, each with subsections holding labeled fields, the same subsection and
 field labels recurring under other sections) or several tables of one domain (same columns, different titles such as
@@ -9,8 +10,14 @@ store whose staff count is 14, in the 2024 table) or a position (the third store
 solver reads the latent place; it is null when the path exists only under another section, the cell is empty, or
 the condition holds only in another table, so a look-alike value always sits elsewhere. The renderer writes outlines
 as Markdown headings, indented blocks, numbered sections or banner forms, and tables as Markdown, ASCII boxes, CSV,
-aligned columns or transposed. Levels add sections or tables, rows, columns, fields, empty cells, missing places,
-condition and position queries.
+aligned columns or transposed.
+
+A breakdown report names its groups in prose (segments, regions, departments, campuses) and gives some metrics per
+group, in a table or in sentences, sometimes for only some groups, and others only overall. Questions ask the groups,
+a group's figure, an overall figure, or the groups whose figure for a metric is reported; a group's figure is null
+when the metric is reported only overall or not for that group, although the overall figure and other groups' figures
+are stated. Levels add sections or tables, rows, columns, groups, metrics, fields, empty cells, missing places,
+condition and position queries, and partial breakdowns; the "no breakdown" remark becomes rarer.
 """
 import random
 import string
@@ -18,7 +25,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from reasoning_core.template import Config, Task, stochastic_rounding as sround
-from reasoning_core.tasks.jev._extraction import CITIES, COMPANIES, FIRST, LAST, Doc, extraction_entry
+from reasoning_core.tasks.jev._extraction import CITIES, COMPANIES, FIRST, LAST, Doc, article, extraction_entry
 
 SECTIONS = ["Billing", "Shipping", "Support", "Sales", "Headquarters", "Warehouse", "Legal", "IT", "Facilities",
             "Human resources"]
@@ -46,6 +53,28 @@ DOMAINS = {
 }
 NOUNS = {"Opened": "opening date", "Staff": "staff count", "Patched": "last patch date", "Shipped": "shipping date",
          "Desk": "desk number", "Weight": "weight", "Cost": "cost", "IP address": "IP address", "CPU load": "CPU load"}
+# domain: (unit, its plural, groups, {metric: value kind}, organizations); metric nouns are singular and never
+# contain a group name.
+BREAKDOWNS = {
+    "company": ("segment", "segments", ["Retail", "Wholesale", "Online", "Services", "Licensing", "Hardware", "Consulting"],
+                {"revenue": "money", "operating income": "money", "headcount": "count", "customer count": "count",
+                 "gross margin": "percent"}, COMPANIES),
+    "region": ("region", "regions", ["North", "South", "East", "West", "Central", "Coastal"],
+               {"sales": "money", "store count": "count", "return rate": "percent", "staff count": "count"},
+               ["Sunvale Foods", "Lumen Textiles", "Cedar & Moss", "Brightway Stores", "Halden Pharmacies"]),
+    "hospital": ("department", "departments", ["Cardiology", "Oncology", "Pediatrics", "Orthopedics", "Emergency", "Neurology"],
+                 {"admission count": "count", "average stay": "days", "budget": "money", "bed occupancy": "percent"},
+                 ["St Anne's Hospital", "Arcadia Health", "Eastmoor General Hospital", "Calder Valley Hospital"]),
+    "school": ("campus", "campuses", ["Northfield", "Riverside", "Hillcrest", "Lakeview", "Westgate"],
+               {"enrollment": "count", "graduation rate": "percent", "budget": "money", "teacher count": "count"},
+               ["Ashford College", "Marlow School District", "Kingsbridge Academy Trust", "Elmhurst University"]),
+}
+PERIODS = ["Q1 2024", "Q3 2025", "fiscal 2024", "the first half of 2025", "2023", "the year to June 2025"]
+GROUP_LINES = ["{M} in {g} was {v}.", "In {g}, {m} came to {v}.", "For {g}, {m} was {v}."]
+TOTAL_LINES = ["Overall {m} was {v}.", "Across all {us}, {m} was {v}.", "{O} reported {m} of {v} overall."]
+REMARKS = ["No breakdown by {u} is given.", "This figure is not split by {u}."]
+REPORT_NOTES = ["Figures are unaudited.", "Comparisons are with the same period last year.",
+                "Totals may not add up because of rounding.", "All figures are provisional."]
 KEYS = {"stores": "store", "employees": "person", "shipments": "id", "servers": "host"}
 ORDINALS = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth",
             "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth"]
@@ -120,6 +149,10 @@ class StructureLookupExtractionConfig(Config):
     missing: float = 0.15
     condition: float = 0.2
     position: float = 0.1
+    groups: float = 3.0
+    metrics: float = 2.0
+    partial: float = 0.0
+    remark: float = 0.5
 
     def apply_difficulty(self, level):
         self.sections = 2 + 0.75 * level
@@ -131,15 +164,20 @@ class StructureLookupExtractionConfig(Config):
         self.missing = 0.15 + 0.0375 * level
         self.condition = min(0.5, 0.2 + 0.08 * level)
         self.position = min(0.3, 0.1 + 0.05 * level)
+        self.groups = 3 + 0.5 * level
+        self.metrics = 2 + 0.5 * level
+        self.partial = 0.1 * level
+        self.remark = 0.5 - 0.1 * level
 
 
 class StructureLookupExtraction(Task):
     summary = ("Read a value by its place: a section path (Billing > Contact > Phone) in an outline whose labels "
                "recur under other sections, or a cell of one of several same-column tables picked by row and "
                "column, a condition on another column or a row position; null when the path, cell or condition "
-               "exists only elsewhere. Outlines as headings, indented, numbered or banners; tables as Markdown, "
-               "ASCII, CSV, aligned or transposed.")
-    task_version = 2
+               "exists only elsewhere; or a figure of a report broken down by groups, null when the metric is "
+               "reported only overall or not for that group. Outlines as headings, indented, numbered or banners; "
+               "tables as Markdown, ASCII, CSV, aligned or transposed.")
+    task_version = 3
 
     def __init__(self, config=None):
         super().__init__(config=config or StructureLookupExtractionConfig())
@@ -157,9 +195,12 @@ class StructureLookupExtraction(Task):
                     return v
             return None
 
-        if rng.random() < 0.5:
+        r = rng.random()
+        if r < 0.35:
             return self._outline(rng, fresh, state_seed)
-        return self._tables(rng, fresh, state_seed)
+        if r < 0.7:
+            return self._tables(rng, fresh, state_seed)
+        return self._breakdown(rng, fresh, state_seed)
 
     def _outline(self, rng, fresh, state_seed):
         c = self.config
@@ -271,6 +312,99 @@ class StructureLookupExtraction(Task):
             fields.append({"name": name, "type": "text", "instruction": instruction})
             spans[name] = [] if i is None else list(doc.marks.get((title, i, col), []))
         return extraction_entry(doc.text.strip(), fields, spans, state_seed, kind="tables", style=style, domain=domain)
+
+    def _breakdown(self, rng, fresh, state_seed):
+        c = self.config
+        domain = rng.choice(sorted(BREAKDOWNS))
+        unit, units, group_pool, metric_kinds, orgs = BREAKDOWNS[domain]
+        groups = rng.sample(group_pool, min(len(group_pool), max(2, sround(c.groups, seed=rng.random()))))
+        metrics = rng.sample(sorted(metric_kinds), min(len(metric_kinds), max(2, sround(c.metrics, seed=rng.random()))))
+        # Each metric is broken down (for every group, or for some at the partial rate) or reported only overall;
+        # at least one of each.
+        split = {m: rng.random() < 0.5 for m in metrics}
+        split[metrics[0]], split[metrics[1]] = True, False
+        # Every group has a figure for every metric; a sum or count overall is their total.
+        hidden = {m: {g: fresh(metric_kinds[m]) for g in groups} for m in metrics}
+        by_group = {}
+        for m in metrics:
+            if split[m]:
+                some = [g for g in groups if rng.random() >= 0.3] if rng.random() < c.partial else groups
+                by_group[m] = {g: hidden[m][g] for g in (some or groups[:1])}
+        overall = {}
+        for m in metrics:
+            if not split[m] or rng.random() < 0.5:
+                kind = metric_kinds[m]
+                if kind in ("money", "count"):
+                    total = sum(int(v.strip("$").replace(",", "")) for v in hidden[m].values())
+                    overall[m] = f"${total:,}" if kind == "money" else f"{total:,}"
+                else:
+                    overall[m] = fresh(kind)
+
+        org, period, doc = rng.choice(orgs), rng.choice(PERIODS), Doc()
+        doc.add(f"{org}: report for {period}\n\n")
+        doc.add(f"{org} reports results for {period} across {len(groups)} {units}: ")
+        for i, g in enumerate(groups):
+            doc.add("{g}" + (", " if i < len(groups) - 2 else " and " if i == len(groups) - 2 else ". "),
+                    g=(g, ("group", g)))
+        split_metrics = [m for m in metrics if split[m]]
+        if rng.random() < 0.5:  # per-group figures as a table, a missing figure shown as a dash
+            doc.add("\n\n")
+            header = [unit.capitalize()] + [m.capitalize() for m in split_metrics]
+            cells = [[(g, ("group", g))] + [(by_group[m][g], (m, g)) if g in by_group[m] else "-"
+                                            for m in split_metrics] for g in groups]
+            self._table(doc, rng.choice(["markdown", "aligned"]), header, cells)
+            doc.add("\n")
+        else:
+            lines = [(m, g) for m in split_metrics for g in groups if g in by_group[m]]
+            for m, g in lines:
+                t = rng.choice(GROUP_LINES)
+                doc.add(t.replace("{M}", m.capitalize()).replace("{m}", m) + " ",
+                        g=(g, ("group", g)), v=(by_group[m][g], (m, g)))
+            doc.add("\n\n")
+        for m in metrics:
+            if m in overall:
+                t = rng.choice(TOTAL_LINES).replace("{M}", m.capitalize()).replace("{m}", m).replace("{us}", units)
+                doc.add(t.replace("{O}", org) + " ", v=(overall[m], (m, None)))
+                if not split[m] and rng.random() < c.remark:
+                    doc.add(rng.choice(REMARKS).replace("{u}", unit) + " ")
+        doc.add(" ".join(rng.sample(REPORT_NOTES, rng.randint(0, 2))))
+
+        # Fields: the groups, a group's figure, an overall figure, the groups whose figure is reported.
+        fields, spans, asked = [], {}, set()
+        for k in range(max(1, sround(c.fields, seed=rng.random()))):
+            q = rng.choice(["figure", "figure", "overall", "groups", "reported"])
+            if q == "figure":
+                missing = [(m, g) for m in metrics for g in groups if g not in by_group.get(m, {})]
+                pool = missing if missing and rng.random() < c.missing else \
+                    [(m, g) for m in by_group for g in by_group[m]]
+                m, g = rng.choice(pool)
+                key, mark, typ = (q, m, g), (m, g), "text"
+                instruction = rng.choice([f"The {m} of the {g} {unit}.", f"{g}: the {m} for {period}.",
+                                          f"What was the {m} in {g}?"])
+            elif q == "overall":
+                m = rng.choice(sorted(overall))
+                key, mark, typ = (q, m), (m, None), "text"
+                instruction = rng.choice([f"The overall {m}.", f"The {m} across all {units}."])
+            elif q == "groups":
+                key, typ = (q,), "list"
+                instruction = rng.choice([f"Every {unit} the report covers.", f"Every {unit} named in the report."])
+            else:
+                m = rng.choice([x for x in metrics if not split[x]] if rng.random() < c.missing else split_metrics)
+                key, typ = (q, m), "list"
+                instruction = rng.choice([f"Every {unit} whose {m} is reported.",
+                                          f"Every {unit} for which the report gives {article(m)} {m} figure."])
+            if key in asked:
+                continue
+            asked.add(key)
+            name = f"{q}_{k + 1}"
+            fields.append({"name": name, "type": typ, "instruction": instruction})
+            if q == "groups":
+                spans[name] = [s for g in groups for s in doc.marks[("group", g)]]
+            elif q == "reported":
+                spans[name] = [s for g in by_group.get(m, {}) for s in doc.marks[("group", g)]]
+            else:
+                spans[name] = list(doc.marks.get(mark, []))
+        return extraction_entry(doc.text.strip(), fields, spans, state_seed, kind="breakdown", domain=domain)
 
     @staticmethod
     def _table(doc, style, header, cells):
