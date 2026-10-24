@@ -8,10 +8,14 @@ roles of a stated type, so every null has look-alikes: a value of its type under
 still appear with a placeholder (pending, N/A), which is null too. The renderer writes the stated roles as a form,
 sectioned key-value blocks, a table, prose, an email, log lines or YAML-like keys, labels drawn from each role's
 synonyms, dates and amounts in mixed conventions, and asks fields with a noun of the role, never saying the answer
-may be absent (a cue is added on a random share of fields, whatever the answer). Levels add types, look-alikes per
-type, asked fields, missing roles, placeholders, label paraphrases between question and document, and filler.
+may be absent (a cue is added on a random share of fields, whatever the answer). An asked role may also appear in a
+conditional or policy sentence with another value ("If payment is received late, a late fee of 1.5% may apply."):
+a value that would hold under a condition, not the record's, so the answer stays the stated value or null. Levels add
+types, look-alikes per type, asked fields, missing roles, placeholders, conditional values, label paraphrases between
+question and document, and filler.
 """
 import random
+import re
 import string
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -48,6 +52,7 @@ ROLES = {
                                 ["Outstanding balance", "Balance remaining"]),
         "refund": (["refund", "refunded amount"], ["Refund", "Amount refunded"]),
         "service_fee": (["service fee", "handling fee"], ["Service fee", "Handling fee"]),
+        "late_fee": (["late fee", "late payment charge"], ["Late fee", "Late payment charge"]),
         "salary": (["salary", "annual pay"], ["Salary", "Annual pay"]),
     },
     "person": {
@@ -116,6 +121,23 @@ PLACEHOLDERS = ["pending", "not yet assigned", "to be confirmed", "unknown", "N/
 QUESTIONS = ["The {n}.", "What is the {n}?", "Find the {n}.", "The {n} given in the document.", "Give the {n}."]
 NULL_CUES = ["Null if not stated.", "Leave it empty if the document gives none.", "Answer null if there is none."]
 LAYOUTS = ["form", "sections", "table", "wide_table", "prose", "email", "log", "yaml"]
+# Values that would hold under a condition; conditions never state a role and each has "is" or "are".
+CONDITIONS = {
+    "date": ["the order is delayed", "the contract is renewed", "the booking is changed", "the deadline is missed"],
+    "amount": ["payment is received late", "the order is cancelled", "the goods are returned",
+               "the express option is chosen", "the account is upgraded"],
+    "person": ["the request is escalated", "the case is reassigned", "the booking is changed"],
+    "id": ["the order is resubmitted", "the request is reopened", "the account is migrated"],
+    "address": ["the delivery is redirected", "the office is relocated", "the booking is changed"],
+    "phone": ["the case is reassigned", "the office is relocated", "the account is migrated"],
+    "weight": ["the express option is chosen", "the goods are repacked", "the order is split"],
+    "duration": ["the contract is renewed", "the express option is chosen", "the order is split"],
+}
+CONDITIONALS = ["If {c}, the {n} would be {v}.", "Had {c2}, the {n} would have been {v}."]
+CONDITIONAL_AMOUNTS = ["If {c}, {a} {n} of {v} may apply.", "{P} may incur {a} {n} of {v}.",
+                       "{A} {n} of up to {v} can be charged if {c}."]
+POLICY_SUBJECTS = ["Late payments", "Cancelled orders", "Returned goods", "Changes after confirmation",
+                   "Missed appointments"]
 CURRENCIES = ["$", "€", "£", " EUR", " USD", " CHF"]
 STREETS = ["Harbour Road", "Elm Street", "Rue des Lilas", "Kings Avenue", "Mill Lane", "Via Roma", "Calle Mayor",
            "Station Road", "Birch Close", "Park Lane", "Quay Street", "Rosenweg"]
@@ -145,6 +167,7 @@ class LookalikeFieldExtractionConfig(Config):
     number_style: float = 0.0
     filler: float = 1.0
     null_cue: float = 0.1
+    conditional: float = 0.1
 
     def apply_difficulty(self, level):
         self.types = 2 + 0.75 * level
@@ -156,14 +179,16 @@ class LookalikeFieldExtractionConfig(Config):
         self.date_variety = min(0.8, 0.2 + 0.15 * level)
         self.number_style = min(0.4, 0.1 * level)
         self.filler = 1 + 0.75 * level
+        self.conditional = 0.1 + 0.1 * level
 
 
 class LookalikeFieldExtraction(Task):
     summary = ("Fill asked fields (dates, amounts, people, ids, addresses, phones, weights, durations by role) from "
                "a form, sections, table, prose, email, log or YAML-like record; an asked role that is not stated is "
                "null although other roles of its type are (issue date beside delivery date, subtotal beside tax) or "
-               "it shows a placeholder, and questions never say the answer may be absent.")
-    task_version = 2
+               "it shows a placeholder; a conditional or policy value of the role (a late fee that may apply) is not "
+               "the answer, and questions never say the answer may be absent.")
+    task_version = 3
 
     def __init__(self, config=None):
         super().__init__(config=config or LookalikeFieldExtractionConfig())
@@ -235,6 +260,9 @@ class LookalikeFieldExtraction(Task):
         layout, doc = rng.choice(LAYOUTS), Doc()
         title = f"{rng.choice(SUBJECTS)} {rng.choice(TITLES).lower()}"
         notes = rng.sample(FILLER, min(len(FILLER), sround(c.filler, seed=rng.random())))
+        for t, role in asked:  # stated or not, so a conditional value does not signal a null
+            if rng.random() < c.conditional:
+                notes.insert(rng.randint(0, len(notes)), self._conditional(rng, t, role, value, numbers))
         amounts = numbers != "en" and any(t == "amount" and v for t, _, v in lines)
         header = title + (f" ({sf.NUMBER_STYLES[numbers].convention})" if amounts else "")
         prose = layout in ("prose", "email", "log")
@@ -261,8 +289,9 @@ class LookalikeFieldExtraction(Task):
                     doc.add(("  " if layout != "form" else "") + key + ": {v}\n", v=slot(role, v))
                 if layout == "sections":
                     doc.add("\n")
-            if notes and layout != "yaml":
-                doc.add(("" if layout == "sections" else "\n") + "\n".join(notes))
+            if notes:
+                doc.add("".join(f"# {x}\n" for x in notes) if layout == "yaml" else
+                        ("" if layout == "sections" else "\n") + "\n".join(notes))
         elif layout == "table":
             doc.add(f"{header}\n\n| Field | Value |\n|---|---|\n")
             for t, role, v in lines:
@@ -304,3 +333,18 @@ class LookalikeFieldExtraction(Task):
             fields.append({"name": role, "type": "text", "instruction": instruction})
         spans = {role: doc.marks.get(role, []) if gold[role] else [] for _, role in asked}
         return extraction_entry(doc.text.strip(), fields, spans, state_seed, layout=layout, types=types)
+
+    @staticmethod
+    def _conditional(rng, t, role, value, numbers):
+        n = rng.choice(ROLES[t][role][0])
+        a = "an" if n[0] in "aeiou" else "a"
+        templates = CONDITIONALS + (CONDITIONAL_AMOUNTS if t == "amount" else [])
+        v = value(t)
+        if t == "amount" and rng.random() < 0.5:  # a rate rather than a sum
+            rate = rng.choice(["1", "1.5", "2", "2.5", "3", "5", "10"]).replace(".", sf.NUMBER_STYLES[numbers].decimal)
+            v = f"{rate}%" + rng.choice(["", " per month", " of the total"])
+        c = rng.choice(CONDITIONS[t])
+        c2 = re.sub(r" (?:is|are) ", " been ", c, count=1)  # "Had the order been cancelled"
+        sentence = rng.choice(templates).format(c=c, c2=c2, n=n, a=a, v=v, A=a.capitalize(),
+                                                P=rng.choice(POLICY_SUBJECTS))
+        return sentence[0].upper() + sentence[1:]
