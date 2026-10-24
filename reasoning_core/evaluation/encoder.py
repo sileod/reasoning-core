@@ -128,7 +128,13 @@ def load(init, device):
             name = snapshot_download(name, revision=revision, allow_patterns=SNAPSHOT_FILES, local_files_only=True)
         except Exception:
             name = snapshot_download(name, revision=revision, allow_patterns=SNAPSHOT_FILES)
-    tok = AutoTokenizer.from_pretrained(name, **remote)
+    try:
+        tok = AutoTokenizer.from_pretrained(name, **remote)
+    except (ValueError, AttributeError):    # config saved by transformers 5, read by 4.x (fleet): tokenizer.json is portable
+        from transformers import PreTrainedTokenizerFast
+        cfg = json.loads((Path(name) / "tokenizer_config.json").read_text())
+        tok = PreTrainedTokenizerFast(tokenizer_file=str(Path(name) / "tokenizer.json"),
+                                      **{k: v for k, v in cfg.items() if k.endswith("_token") and isinstance(v, str)})
     tok.truncation_side = "left"            # keep the question at the end of a long prompt
     if (Path(name) / "pair_scorer.pt").exists():          # saved by `warm`
         saved = torch.load(Path(name) / "pair_scorer.pt", map_location="cpu", weights_only=False)
