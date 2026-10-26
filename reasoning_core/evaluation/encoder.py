@@ -26,7 +26,7 @@ import torch
 import torch.nn.functional as F
 
 from .battery import load_battery_manifest
-from .metrics import load_eval_suite, score_mcq
+from .metrics import EvalExample, load_eval_suite, score_mcq
 
 INITS = {"encoder": ("jhu-clsp/ettin-encoder-150m", "45d08642849e5c5701b162671ac811b7654bfd9f"),
          "reranker": ("cross-encoder/ettin-reranker-150m-v1", "025501c4e0f9bbeb4c5b198318e0089ff061cc14"),
@@ -187,8 +187,9 @@ def train(model, tok, streams, steps, batch, lr, seed, max_length, micro=4):
 
 
 @torch.no_grad()
-def evaluate(model, tok, battery, max_length, full=False):
-    """The battery's MCQ legs only; accuracy and margin under the battery's own metric keys."""
+def evaluate(model, tok, battery, max_length, full=False, proc=None):
+    """The battery's MCQ legs only; accuracy and margin under the battery's own metric keys.
+    `proc` = {task: held-out items}: transfer to procedural tasks, as `proc_<task>_{acc,margin}`."""
     model.eval()
     costs = lambda ex: (-logits(model, tok, [ex.prompt.rstrip("\n")] * len(ex.choices), ex.choices,
                                 max_length)).tolist()
@@ -200,6 +201,9 @@ def evaluate(model, tok, battery, max_length, full=False):
         result = score_mcq(suite.examples, costs, max_length)
         _, acc_key, margin_key = leg.metric_keys
         metrics[acc_key], metrics[margin_key] = result["accuracy"], result["margin"]
+    for task, items in (proc or {}).items():
+        result = score_mcq([EvalExample(p, cs[g], cs, g) for p, cs, g in items], costs, max_length)
+        metrics[f"proc_{task}_acc"], metrics[f"proc_{task}_margin"] = result["accuracy"], result["margin"]
     return metrics
 
 
@@ -208,17 +212,21 @@ def _value(a, device):
     dpo = dpo_items(a.dpo_n)
     tasks = task_items(load_rows(a.rows), a.negatives, seed=a.seed, policy=a.distractors)
     tasks = {t: tasks[t] for t in (a.tasks or sorted(tasks))}
+    held = {}
+    for t, items in tasks.items():         # one fixed held-out split for every seed: arms compare paired
+        items = random.Random(t).sample(items, len(items))
+        held[t], tasks[t] = items[:a.proc_eval], items[a.proc_eval:]
 
     def arm(streams):
         model, tok = load(a.init, device)
         train(model, tok, streams, a.steps, a.batch, a.lr, a.seed, a.max_length, a.micro)
-        return evaluate(model, tok, battery, a.max_length, a.full_legs)
+        return evaluate(model, tok, battery, a.max_length, a.full_legs, held)
 
     base = arm([(dpo, 1.0)])
     cell = {"scorer": f"cross_encoder@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
             "battery_id": battery.identifier, "dpo": {"repo": DPO[0], "revision": DPO[1], "n": a.dpo_n},
             "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
-            "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
+            "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "proc_eval": a.proc_eval, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
     for name, items in tasks.items():
         got = arm([(dpo, 1 - a.mix), (items, a.mix)])
         cell["tasks"][name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
@@ -246,6 +254,7 @@ def main(argv=None):
     ap.add_argument("--negatives", type=int, default=3)
     ap.add_argument("--distractors", default="difflib", choices=("difflib", "random", "hard"), help="see distractors.py")
     ap.add_argument("--full-legs", action="store_true", help="every item up to each leg's limit, not the tiny keep subset")
+    ap.add_argument("--proc-eval", type=int, default=0, help="items per task held out of training, scored on every arm")
     ap.add_argument("--dpo-n", type=int, default=50_000)
     ap.add_argument("--max-length", type=int, default=512)
     ap.add_argument("--seed", type=int, default=43)
