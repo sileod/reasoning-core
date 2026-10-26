@@ -8,7 +8,10 @@ When every word of the reference occurs in the prompt, so must every word of an 
 things the prompt never mentions is eliminated without solving (prompt overlap picked the reference 93% of
 the time on planning before this). A task is then dropped whole when a solver-free shortcut (pick the longest,
 the shortest, or the most prompt-overlapping option) beats chance on its train rows by more than --max-shortcut
-(mined options can still differ from the reference in scale or vocabulary), and test rows whose prompt occurs in
+(mined options can still differ from the reference in scale or vocabulary). Rules that crude miss the subtler
+cue: near misses make the reference the medoid of its options, and a surface model fitted on OTHER tasks picked
+it at .28 vs .18 chance on 20 of 54 tasks. --surface-gate (default on) then thins each task's items that model
+gets right down to the chance rate (surface_audit.gate, 2 rounds). Test rows whose prompt occurs in
 train are dropped, as are repeated prompts within a split.
 
     python scripts/build_procedural_choices.py --out build/procedural_choices                      # reasoning_core
@@ -163,6 +166,8 @@ def main():
     ap.add_argument("--workers", type=int, default=16)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-shortcut", type=float, default=0.25)
+    ap.add_argument("--surface-gate", action=argparse.BooleanOptionalAction, default=True,
+                    help="drop items a leave-task-out surface model picks, down to chance per task (surface_audit.gate)")
     a = ap.parse_args()
     out = Path(a.out) / a.source; out.mkdir(parents=True, exist_ok=True)
     _, rev, train, test = SOURCES[a.source]
@@ -179,8 +184,15 @@ def main():
         splits[split] = pd.DataFrame(records[:n]).drop_duplicates("prompt")  # the rg pool repeats small-space prompts
     excess = shortcut_excess(splits["train"])
     gamed = sorted(t for t, x in excess.items() if x > a.max_shortcut)
+    kept = {}
     for split, frame in splits.items():
         frame = frame[~frame.task.isin(gamed)]
+        if a.surface_gate:
+            from reasoning_core.evaluation.surface_audit import features, gate
+            keep = gate([(features(p, [str(o) for o in o_]), g) for p, o_, g in zip(frame.prompt, frame.options, frame.label)],
+                        frame.task.values, seed=a.seed)
+            kept[split] = {t: round(float(k.mean()), 3) for t, k in pd.Series(keep).groupby(frame.task.values)}
+            frame = frame[keep]
         if split == "test" and "train" in splits:
             frame = frame[~frame.prompt.isin(set(splits["train"].prompt))]
         frame.to_parquet(out / f"{split}.parquet", index=False)
@@ -190,6 +202,7 @@ def main():
                                                           excluded=sorted(EXCLUDE.get(a.source, ())),
                                                           shortcut_excess={t: round(x, 3) for t, x in excess.items()},
                                                           dropped_for_shortcuts=gamed,
+                                                          surface_gate_kept=kept,
                                                           stats=stats), indent=1))
 
 

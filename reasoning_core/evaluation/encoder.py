@@ -6,7 +6,9 @@ choices' logits, so the battery's MCQ legs score the model directly (cost = -log
 
     baseline: tasksource_dpo_pairs (prompt, [chosen, rejected])
     arm:      the same stream, with a share `mix` of the task's rows; negatives are other answers of the
-              same task at the same level, so they are in-format and cannot be told apart by surface
+              same task at the same level, so they are in-format. In-format is not surface-free: a
+              solver-free surface model still picks the gold at .38-.42 vs .28 chance (difflib near misses
+              make the gold the medoid of its options); --surface-gate filters that down to chance
 
 Inits: `encoder` (raw Ettin encoder, fresh 1-logit head), `reranker` (Ettin reranker, already a pair
 scorer), `decider` (the reranker fine-tuned on typed choices), `ultrabert` (raw UltraBERT-150M, fresh head),
@@ -212,6 +214,11 @@ def _value(a, device):
     dpo = dpo_items(a.dpo_n)
     tasks = task_items(load_rows(a.rows), a.negatives, seed=a.seed, policy=a.distractors)
     tasks = {t: tasks[t] for t in (a.tasks or sorted(tasks))}
+    if a.surface_gate:                  # drop items a solver-free surface model picks, down to chance per task
+        from .surface_audit import features, gate
+        flat = [(t, item) for t, items in tasks.items() for item in items]
+        keep = gate([(features(p, list(cs)), g) for _, (p, cs, g) in flat], [t for t, _ in flat])  # seed-free: arms stay paired
+        tasks = {t: [item for (u, item), k in zip(flat, keep) if k and u == t] for t in tasks}
     held = {}
     for t, items in tasks.items():         # one fixed held-out split for every seed: arms compare paired
         items = random.Random(t).sample(items, len(items))
@@ -226,7 +233,7 @@ def _value(a, device):
     cell = {"scorer": f"cross_encoder@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
             "battery_id": battery.identifier, "dpo": {"repo": DPO[0], "revision": DPO[1], "n": a.dpo_n},
             "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
-            "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "proc_eval": a.proc_eval, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
+            "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "proc_eval": a.proc_eval, "surface_gate": a.surface_gate, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
     for name, items in tasks.items():
         got = arm([(dpo, 1 - a.mix), (items, a.mix)])
         cell["tasks"][name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
@@ -255,6 +262,7 @@ def main(argv=None):
     ap.add_argument("--distractors", default="difflib", choices=("difflib", "random", "hard"), help="see distractors.py")
     ap.add_argument("--full-legs", action="store_true", help="every item up to each leg's limit, not the tiny keep subset")
     ap.add_argument("--proc-eval", type=int, default=0, help="items per task held out of training, scored on every arm")
+    ap.add_argument("--surface-gate", action="store_true", help="adversarially filter task items (surface_audit.gate)")
     ap.add_argument("--dpo-n", type=int, default=50_000)
     ap.add_argument("--max-length", type=int, default=512)
     ap.add_argument("--seed", type=int, default=43)

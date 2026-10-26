@@ -14,7 +14,9 @@ on train splits). Revisions are PINNED: `revision=None` resolves to whatever sna
 serves that day, which has already produced one stale-pool incident in this project.
 
 Every build prints the three gates before the file is usable as a leg:
-  1 GAMEABLE   -- answer leaked into the prompt; a shortest-answer picker beating chance
+  1 GAMEABLE   -- answer leaked into the prompt; a shortest-answer picker beating chance; and the
+                  surface auditor (surface_audit, fitted on procedural-choices, never on the leg)
+                  beating chance by 5pt -- a warning, not a failure: it can fire on real knowledge cues
   2 INFORMATIVE-- a base model must score above chance (measured separately, see probe_leg_*)
   3 SENSITIVE  -- must move across aux arms (only measurable after a run)
 Gate 1 is checked here because it is a property of the DATA and is cheap; a leg that fails it should
@@ -22,6 +24,7 @@ never reach a battery.
 """
 from __future__ import annotations
 import argparse, json, os, random, re
+import numpy as np
 from collections import defaultdict
 from pathlib import Path
 
@@ -294,6 +297,7 @@ def main():
         out = a.output_dir / f"{task}_eval.jsonl"
         if out.exists():
             raise FileExistsError(out)
+    surface = None                                    # fitted on first use: the procedural-choices auditor
     for t in a.tasks:
         rng = random.Random(a.seed)
         rows = [r for r in BUILDERS[t](a.n * 2, rng) if r and len(r["prompt"]) <= a.max_prompt_chars
@@ -307,9 +311,15 @@ def main():
             print(f"[build] {t:<7} n={len(rows):<5} qa_nll (no choices) -> {out}"); continue
         g = gate1(rows)
         lever = max(g["most_frequent_picker"] if g["extractive"] else 0, g["overlap_picker"]) - g["chance"]
-        flag = ("  <-- FAILS GATE 1" if g["leak"] > 0.10 or g["shortest_excess_pt"] > 10 or lever > 0.15 else "")
+        if surface is None:
+            from reasoning_core.evaluation.surface_audit import features, fit_reference, pick
+            surface = fit_reference()
+        g["surface_picker"] = float(np.mean(pick(surface, [features(r["prompt"], r["choices"]) for r in rows])
+                                            == np.array([r["answer_idx"] for r in rows])))
+        flag = ("  <-- FAILS GATE 1" if g["leak"] > 0.10 or g["shortest_excess_pt"] > 10 or lever > 0.15 else
+                "  <-- surface model" if g["surface_picker"] - g["chance"] > 0.05 else "")
         print(f"[build] {t:<16} n={len(rows):<5} leak={'n/a (binary)' if g['binary'] else 'n/a (extractive)' if g['extractive'] else format(g['leak'],'.1%')} "
-              f"shortest={g['shortest_picker']:.1%} overlap={g['overlap_picker']:.1%} most-frequent={g['most_frequent_picker']:.1%} "
+              f"shortest={g['shortest_picker']:.1%} surface={g['surface_picker']:.1%} overlap={g['overlap_picker']:.1%} most-frequent={g['most_frequent_picker']:.1%} "
               f"(chance {g['chance']:.1%}) gold_len_delta={g['gold_len_delta_chars']:+.0f}ch -> {out}{flag}")
 
 
