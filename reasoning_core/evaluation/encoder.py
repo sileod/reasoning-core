@@ -99,9 +99,9 @@ class PairScorer(torch.nn.Module):
 
 
 class JointScorer(torch.nn.Module):
-    """The decider as it was trained (typed_models.decider): every option of an item in ONE forward, the
+    """The decider as it was trained (typed_encoders.decider): every option of an item in ONE forward, the
     state encoded once, an option's logit = Linear(mean of its own tokens). Options never attend to each
-    other, so only the softmax is joint. Needs `typed_models` (github.com/sileod/typed-models) and transformers 5."""
+    other, so only the softmax is joint. Needs `typed-encoders` (pip; github.com/sileod/typed-models) and transformers 5."""
 
     def __init__(self, head, tok, train_length, infer_length, attn):
         super().__init__()
@@ -122,7 +122,7 @@ def _split(prompt):
 def _joint(path, tok, device):
     from safetensors.torch import load_file
     from transformers import AutoConfig, AutoModel
-    from typed_models.decider import JointHead
+    from typed_encoders.decider import JointHead
     cfg = json.loads((Path(path) / "decider_config.json").read_text())
     backbone = AutoModel.from_config(AutoConfig.from_pretrained(path))
     head = JointHead(backbone, backbone.config.hidden_size)
@@ -200,7 +200,7 @@ def logits(model, tok, prompts, choices, max_length):
 def item_logits(model, tok, items, max_length, training=False):
     """[(prompt, choices)] -> one logit tensor per item."""
     if isinstance(model, JointScorer):      # its own lengths: trained at 2048 (state truncated), never truncated at inference
-        from typed_models.decider import shared_logits
+        from typed_encoders.decider import shared_logits
         reqs = [(state, [(question, list(cs))]) for p, cs in items for state, question in [_split(p)]]
         return shared_logits(model, reqs, model.max_length if training else model.infer_length, truncate=training,
                              attn=model.attn)
@@ -276,6 +276,9 @@ def _value(a, device):
             "battery_id": battery.identifier, "dpo": {"repo": DPO[0], "revision": DPO[1], "n": a.dpo_n},
             "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
             "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "proc_eval": a.proc_eval, "surface_gate": a.surface_gate, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
+    if a.init == "decider-joint":
+        from importlib.metadata import version
+        cell["typed_encoders"] = version("typed-encoders")
     for name, items in tasks.items():
         got = arm([(dpo, 1 - a.mix), (items, a.mix)])
         cell["tasks"][name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
