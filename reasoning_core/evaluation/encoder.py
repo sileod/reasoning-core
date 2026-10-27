@@ -33,6 +33,7 @@ from .metrics import EvalExample, load_eval_suite, score_mcq
 INITS = {"encoder": ("jhu-clsp/ettin-encoder-150m", "45d08642849e5c5701b162671ac811b7654bfd9f"),
          "reranker": ("cross-encoder/ettin-reranker-150m-v1", "025501c4e0f9bbeb4c5b198318e0089ff061cc14"),
          "decider": ("tasksource/tasksource-decider-nano", "2c7c01ffe5aba74dd15968cf38b0fdc83d1f3810"),
+         "decider-joint": ("tasksource/tasksource-decider-nano", "2c7c01ffe5aba74dd15968cf38b0fdc83d1f3810"),
          "ultrabert": ("dmis-lab/UltraBERT-150M", "545ac9d9c7aece444f014ada5a1e9818132b4d35")}
 REMOTE_CODE = {"dmis-lab/UltraBERT-150M"}      # model code audited at the pinned revision
 SNAPSHOT_FILES = ["*.json", "*.safetensors", "*.py", "*.txt", "*.model"]
@@ -97,6 +98,38 @@ class PairScorer(torch.nn.Module):
                     "state": self.state_dict(), "config": self.backbone.config.to_dict()}, Path(path) / "pair_scorer.pt")
 
 
+class JointScorer(torch.nn.Module):
+    """The decider as it was trained (typed_models.decider): every option of an item in ONE forward, the
+    state encoded once, an option's logit = Linear(mean of its own tokens). Options never attend to each
+    other, so only the softmax is joint. Needs `typed_models` (github.com/sileod/typed-models) and transformers 5."""
+
+    def __init__(self, head, tok, train_length, infer_length, attn):
+        super().__init__()
+        self.model, self.tok, self.max_length, self.infer_length, self.attn = head, tok, train_length, infer_length, attn
+
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
+
+def _split(prompt):
+    """(state, question): the payload's last blank-line block is the question, the rest the state."""
+    from .surface_audit import blocks
+    *state, question = blocks(prompt.rstrip("\n"))
+    return ("\n\n".join(state), question) if state else (prompt.rstrip("\n"), "Which answer is correct?")
+
+
+def _joint(path, tok, device):
+    from safetensors.torch import load_file
+    from transformers import AutoConfig, AutoModel
+    from typed_models.decider import JointHead
+    cfg = json.loads((Path(path) / "decider_config.json").read_text())
+    backbone = AutoModel.from_config(AutoConfig.from_pretrained(path))
+    head = JointHead(backbone, backbone.config.hidden_size)
+    head.load_state_dict({k: v.float() for k, v in load_file(str(Path(path) / "model.safetensors")).items()}, strict=True)
+    return JointScorer(head, tok, cfg["train_max_length"], cfg["inference_max_length"], cfg["attn"]).to(device)
+
+
 def _head(path, hidden):
     """The head a checkpoint ships (local dir): ST CrossEncoder modules, the decider's scorer, or a fresh
     linear head. A file the layout needs but cannot be read is an error."""
@@ -138,6 +171,8 @@ def load(init, device):
         tok = PreTrainedTokenizerFast(tokenizer_file=str(Path(name) / "tokenizer.json"),
                                       **{k: v for k, v in cfg.items() if k.endswith("_token") and isinstance(v, str)})
     tok.truncation_side = "left"            # keep the question at the end of a long prompt
+    if init == "decider-joint":
+        return _joint(name, tok, device), tok
     if (Path(name) / "pair_scorer.pt").exists():          # saved by `warm`
         saved = torch.load(Path(name) / "pair_scorer.pt", map_location="cpu", weights_only=False)
         cfg = AutoConfig.for_model(**saved["config"])
@@ -162,6 +197,18 @@ def logits(model, tok, prompts, choices, max_length):
         return model(**batch).logits.squeeze(-1).float()
 
 
+def item_logits(model, tok, items, max_length, training=False):
+    """[(prompt, choices)] -> one logit tensor per item."""
+    if isinstance(model, JointScorer):      # its own lengths: trained at 2048 (state truncated), never truncated at inference
+        from typed_models.decider import shared_logits
+        reqs = [(state, [(question, list(cs))]) for p, cs in items for state, question in [_split(p)]]
+        return shared_logits(model, reqs, model.max_length if training else model.infer_length, truncate=training,
+                             attn=model.attn)
+    flat = [(p.rstrip("\n"), c) for p, cs in items for c in cs]
+    out = logits(model, tok, [p for p, _ in flat], [c for _, c in flat], max_length)
+    return list(out.split([len(cs) for _, cs in items]))
+
+
 def train(model, tok, streams, steps, batch, lr, seed, max_length, micro=4):
     """`streams` = [(items, weight)]; each step draws `batch` items by weight, forwarded `micro` items
     at a time (gradient accumulation). Loss = cross-entropy of the gold among its item's choices."""
@@ -175,12 +222,8 @@ def train(model, tok, streams, steps, batch, lr, seed, max_length, micro=4):
         items = [rng.choice(rng.choices(pools, weights)[0]) for _ in range(batch)]
         for start in range(0, batch, micro):
             chunk = items[start:start + micro]
-            flat = [(p.rstrip("\n"), c) for p, cs, _ in chunk for c in cs]
-            out = logits(model, tok, [p for p, _ in flat], [c for _, c in flat], max_length)
-            loss, at = 0.0, 0
-            for _, cs, gold in chunk:
-                loss = loss + F.cross_entropy(out[at:at + len(cs)][None], torch.tensor([gold], device=out.device))
-                at += len(cs)
+            out = item_logits(model, tok, [(p, cs) for p, cs, _ in chunk], max_length, training=True)
+            loss = sum(F.cross_entropy(z[None], torch.tensor([gold], device=z.device)) for z, (_, _, gold) in zip(out, chunk))
             (loss / batch).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step(), sched.step(), opt.zero_grad()
@@ -193,8 +236,7 @@ def evaluate(model, tok, battery, max_length, full=False, proc=None):
     """The battery's MCQ legs only; accuracy and margin under the battery's own metric keys.
     `proc` = {task: held-out items}: transfer to procedural tasks, as `proc_<task>_{acc,margin}`."""
     model.eval()
-    costs = lambda ex: (-logits(model, tok, [ex.prompt.rstrip("\n")] * len(ex.choices), ex.choices,
-                                max_length)).tolist()
+    costs = lambda ex: (-item_logits(model, tok, [(ex.prompt, ex.choices)], max_length)[0]).float().tolist()
     metrics = {}
     for leg in battery.legs:
         if leg.kind != "mcq":
@@ -230,7 +272,7 @@ def _value(a, device):
         return evaluate(model, tok, battery, a.max_length, a.full_legs, held)
 
     base = arm([(dpo, 1.0)])
-    cell = {"scorer": f"cross_encoder@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
+    cell = {"scorer": f"{'joint_decider' if a.init == 'decider-joint' else 'cross_encoder'}@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
             "battery_id": battery.identifier, "dpo": {"repo": DPO[0], "revision": DPO[1], "n": a.dpo_n},
             "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
             "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "proc_eval": a.proc_eval, "surface_gate": a.surface_gate, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
@@ -247,7 +289,7 @@ def _value(a, device):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("command", choices=("warm", "value"))
-    ap.add_argument("--init", default="encoder", help="encoder | reranker | decider | ultrabert | a local dir saved by warm")
+    ap.add_argument("--init", default="encoder", help="encoder | reranker | decider | decider-joint | ultrabert | a local dir saved by warm")
     ap.add_argument("--rows", help="a task_rows cache dir (value)")
     ap.add_argument("--tasks", nargs="*", help="default: every task in --rows")
     ap.add_argument("--battery", default=str(Path(__file__).resolve().parents[1]
