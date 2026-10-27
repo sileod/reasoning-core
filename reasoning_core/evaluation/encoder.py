@@ -106,6 +106,7 @@ class JointScorer(torch.nn.Module):
     def __init__(self, head, tok, train_length, infer_length, attn):
         super().__init__()
         self.model, self.tok, self.max_length, self.infer_length, self.attn = head, tok, train_length, infer_length, attn
+        self.token_budget = 4096            # padded tokens per forward: length-homogeneous batches, 2.7x vs per-option
 
     @property
     def device(self):
@@ -199,11 +200,10 @@ def logits(model, tok, prompts, choices, max_length):
 
 def item_logits(model, tok, items, max_length, training=False):
     """[(prompt, choices)] -> one logit tensor per item."""
-    if isinstance(model, JointScorer):      # its own lengths: trained at 2048 (state truncated), never truncated at inference
+    if isinstance(model, JointScorer):      # the per-option path's budget: max_length per (state, question, option)
         from typed_encoders.decider import shared_logits
         reqs = [(state, [(question, list(cs))]) for p, cs in items for state, question in [_split(p)]]
-        return shared_logits(model, reqs, model.max_length if training else model.infer_length, truncate=training,
-                             attn=model.attn)
+        return shared_logits(model, reqs, max_length, truncate=True, attn=model.attn, token_budget=model.token_budget)
     flat = [(p.rstrip("\n"), c) for p, cs in items for c in cs]
     out = logits(model, tok, [p for p, _ in flat], [c for _, c in flat], max_length)
     return list(out.split([len(cs) for _, cs in items]))
@@ -217,6 +217,8 @@ def train(model, tok, streams, steps, batch, lr, seed, max_length, micro=4):
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / max(1, steps // 25)))
     pools, weights = [s for s, _ in streams], [w for _, w in streams]
+    if isinstance(model, JointScorer):     # one call per step; shared_logits splits it by token_budget
+        micro = batch
     model.train()
     for _ in range(steps):
         items = [rng.choice(rng.choices(pools, weights)[0]) for _ in range(batch)]
