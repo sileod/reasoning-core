@@ -5,7 +5,8 @@
   "Encoder legs: the v14 multiple-choice legs plus retrieval as multiple choice (GaRAGe, FollowIR): a query and",
   "four passages, distractors judged non-answering for that query, lexical pickers rebalanced to chance.",
   "Retrieval legs are NOT in battery_legs.zip (FollowIR documents are TREC news, GaRAGe is CC BY-NC):",
-  "build them with scripts/build_contrastive_evals.py --tasks garage followir_... --output-dir data_cache/v14."
+  "build them with scripts/build_contrastive_evals.py --tasks garage followir_... --output-dir data_cache/v14.",
+  "jev: tasksource/jevbench test, 50 rows per task over its 22 natural typed-decision tasks, state + instructions as the prompt (the decider's own format); local-only like retrieval: build with --tasks jevbench --n 1100 --max-prompt-chars 4000."
  ],
  "groups": {
   "mcq": [
@@ -34,6 +35,9 @@
    "followir_core17_instr",
    "followir_news21",
    "followir_news21_instr"
+  ],
+  "jev": [
+   "jevbench"
   ]
  },
  "legs": [
@@ -1376,6 +1380,81 @@
     352,
     440,
     468
+   ]
+  },
+  {
+   "name": "jevbench",
+   "kind": "mcq",
+   "output_key": "jevbench_nll",
+   "accuracy_key": "jevbench_mc_cloze_acc",
+   "margin_key": "jevbench_mc_cloze_margin",
+   "path": "v14/jevbench_eval.jsonl",
+   "limit": 1100,
+   "keep": [
+    8,
+    25,
+    39,
+    78,
+    82,
+    95,
+    97,
+    106,
+    122,
+    135,
+    142,
+    153,
+    161,
+    167,
+    175,
+    190,
+    217,
+    220,
+    301,
+    310,
+    315,
+    331,
+    343,
+    344,
+    348,
+    375,
+    403,
+    406,
+    441,
+    448,
+    456,
+    469,
+    473,
+    475,
+    479,
+    529,
+    536,
+    559,
+    566,
+    598,
+    656,
+    660,
+    682,
+    685,
+    717,
+    729,
+    730,
+    743,
+    752,
+    769,
+    800,
+    802,
+    810,
+    811,
+    814,
+    823,
+    891,
+    908,
+    937,
+    961,
+    979,
+    1038,
+    1057,
+    1083
    ]
   }
  ]

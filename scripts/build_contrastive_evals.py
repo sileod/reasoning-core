@@ -31,6 +31,7 @@ from pathlib import Path
 DC = Path(os.environ.get("EVAL_DATA_DIR", "data_cache"))
 
 REVISIONS = {
+    "tasksource/jevbench": "5f154ceb30bc8d5f7bda676a00071c4d7f22d35a",
     "tasksource/social_i_qa": "c5e31ad2d8d6b2aec4cf6491653a1fe1640dd647",
     "baber/piqa": "142f6d7367fd9877f0fb3b5734ea6a545f54cdd1",
     "allenai/qasc": "a34ba204eb9a33b919c10cc08f4f1c8dae5ec070",
@@ -254,7 +255,46 @@ def build_math_l12_mc(n, rng):
         yield _row(f"Problem: {problem.strip()}", answer, rng.sample(others, min(3, len(others))), rng)
 
 
-BUILDERS = {"math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc, "winogrande": _winogrande,
+def _jev_option(key, desc):
+    """The decider's own option rendering (typed_encoders.formatting.format_option): the description,
+    prefixed by its key unless the key is a dummy index (A, option_3, (b))."""
+    desc = (desc if isinstance(desc, str) else json.dumps(desc, ensure_ascii=False)).strip() if desc is not None else ""
+    key = str(key).strip()
+    dummy = key.lower().startswith(("option_", "k_", "choice_", "item_")) or (len(key) == 1 and key.isalpha()) \
+        or (key.startswith("(") and key.endswith(")") and len(key) <= 4)
+    return key if not desc or desc.lower() == key.lower() else desc if dummy else f"{key}: {desc}"
+
+
+def _jevbench(n, rng, max_chars=4000, max_options=10):
+    """jevbench test (22 natural typed-decision tasks), n rows per task (--n 1100 = 50 each). Prompt = state, blank line, the
+    question's instructions -- the decider's (state, question) split. Choice option sets are capped at the gold
+    and 9 others seeded by row id (as EXP-0018); yes/no and score questions offer their criteria descriptions."""
+    by_task = defaultdict(list)
+    for r in _load("tasksource/jevbench", split="test"):
+        q, label = json.loads(r["question"]), r["label"]
+        crit = q.get("criteria") or {}
+        if q["type"] == "choice":
+            keys = list(crit)
+            if len(keys) > max_options:
+                keys = [label] + random.Random(r["id"]).sample([k for k in keys if k != label], max_options - 1)
+                keys = [k for k in crit if k in keys]                       # source order
+            choices, gold = [_jev_option(k, crit[k]) for k in keys], keys.index(label)
+        elif q["type"] == "noul":
+            choices = [_jev_option(k, crit.get(k, crit.get(k.title(), k.title()))) for k in ("false", "true")]
+            gold = int(label in ("1", "true", "True"))
+        else:                                                               # score: ordinal descriptions
+            choices, gold = [str(c) for c in crit], int(label)
+        state = r["state"] if not r["state"].startswith('"') else json.loads(r["state"])
+        prompt = f"{state}\n\n{q['instructions']}"
+        if len(prompt) <= max_chars and len(set(choices)) == len(choices):
+            by_task[r["task"]].append({"prompt": prompt, "answer": choices[gold], "choices": choices,
+                                       "answer_idx": gold, "task": r["task"], "id": r["id"], "type": q["type"]})
+    rows = [x for t in sorted(by_task) for x in rng.sample(by_task[t], min(n, len(by_task[t])))]
+    rng.shuffle(rows)
+    return rows
+
+
+BUILDERS = {"math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc, "winogrande": _winogrande, "jevbench": lambda n, rng: _jevbench(n // 44, rng),          # called with 2 * --n
             **{leg: (lambda n, rng, leg=leg: build_leg(leg, n, rng)) for leg in LEGS}}
 
 
