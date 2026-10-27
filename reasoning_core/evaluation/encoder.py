@@ -236,17 +236,26 @@ def evaluate(model, tok, battery, max_length, full=False, proc=None):
     """The battery's MCQ legs only; accuracy and margin under the battery's own metric keys.
     `proc` = {task: held-out items}: transfer to procedural tasks, as `proc_<task>_{acc,margin}`."""
     model.eval()
-    costs = lambda ex: (-item_logits(model, tok, [(ex.prompt, ex.choices)], max_length)[0]).float().tolist()
+    def costs_for(examples, chunk=32):
+        """Every example's costs up front, in length-sorted batches (one item per forward was ~85% of a run)."""
+        todo = sorted({(ex.prompt, tuple(ex.choices)) for ex in examples if ex.choices}, key=lambda k: len(k[0]) + sum(map(len, k[1])))
+        out = {}
+        for i in range(0, len(todo), chunk):
+            part = todo[i:i + chunk]
+            for key, z in zip(part, item_logits(model, tok, [(p, list(cs)) for p, cs in part], max_length)):
+                out[key] = (-z).float().tolist()
+        return lambda ex: out[(ex.prompt, tuple(ex.choices))]
     metrics = {}
     for leg in battery.legs:
         if leg.kind != "mcq":
             continue
         suite = load_eval_suite(leg.path, "", name=leg.name, limit=leg.limit, keep=None if full else leg.keep)
-        result = score_mcq(suite.examples, costs, max_length)
+        result = score_mcq(suite.examples, costs_for(suite.examples), max_length)
         _, acc_key, margin_key = leg.metric_keys
         metrics[acc_key], metrics[margin_key] = result["accuracy"], result["margin"]
     for task, items in (proc or {}).items():
-        result = score_mcq([EvalExample(p, cs[g], cs, g) for p, cs, g in items], costs, max_length)
+        examples = [EvalExample(p, cs[g], cs, g) for p, cs, g in items]
+        result = score_mcq(examples, costs_for(examples), max_length)
         metrics[f"proc_{task}_acc"], metrics[f"proc_{task}_margin"] = result["accuracy"], result["margin"]
     return metrics
 
