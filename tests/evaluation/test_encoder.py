@@ -48,3 +48,11 @@ def test_random_groups_are_balanced_distinct_and_seed_free():
     assert max(counts.values()) - min(counts.values()) <= 1
     with pytest.raises(SystemExit):
         groups(argparse.Namespace(groups="t1+nope", random_groups=None), names)
+
+
+def test_chunks_cap_items_and_pairs():
+    from reasoning_core.evaluation.encoder import _chunks
+    items = [("p", ("a",) * n, 0) for n in (2, 2, 2, 2, 2, 10, 10, 4, 4, 4, 4)]
+    got = _chunks(items, 4)
+    assert [len(c) for c in got] == [4, 2, 2, 3] and sum(map(len, got)) == len(items)
+    assert all(len(c) == 1 or sum(len(i[1]) for i in c) <= 16 for c in got)

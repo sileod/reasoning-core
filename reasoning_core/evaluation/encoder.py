@@ -240,9 +240,22 @@ def item_logits(model, tok, items, max_length, training=False):
     return list(out.split([len(cs) for _, cs in items]))
 
 
+def _chunks(items, micro):
+    """Consecutive runs of at most `micro` items and 4 * micro (prompt, choice) pairs: a 10-option jev item
+    costs 2.5 procedural ones, and 4 of them per forward ran out of memory on 22GB."""
+    out, pairs = [[]], 0
+    for item in items:
+        if out[-1] and (len(out[-1]) == micro or pairs + len(item[1]) > 4 * micro):
+            out.append([])
+            pairs = 0
+        out[-1].append(item)
+        pairs += len(item[1])
+    return out
+
+
 def train(model, tok, streams, steps, batch, lr, seed, max_length, micro=4):
     """`streams` = [(items, weight)]; each step draws `batch` items by weight, forwarded `micro` items
-    at a time (gradient accumulation). Loss = cross-entropy of the gold among its item's choices."""
+    (at most 4 * micro pairs) at a time (gradient accumulation). Loss = cross-entropy of the gold among its item's choices."""
     rng = random.Random(seed)
     torch.manual_seed(seed)
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
@@ -253,8 +266,7 @@ def train(model, tok, streams, steps, batch, lr, seed, max_length, micro=4):
     model.train()
     for _ in range(steps):
         items = [rng.choice(rng.choices(pools, weights)[0]) for _ in range(batch)]
-        for start in range(0, batch, micro):
-            chunk = items[start:start + micro]
+        for chunk in _chunks(items, micro):
             out = item_logits(model, tok, [(p, cs) for p, cs, _ in chunk], max_length, training=True)
             loss = sum(F.cross_entropy(z[None], torch.tensor([gold], device=z.device)) for z, (_, _, gold) in zip(out, chunk))
             (loss / batch).backward()
