@@ -34,3 +34,17 @@ def test_score_mcq_takes_any_cost_lower_is_better():
 def test_sample_rows_needs_a_pinned_revision():
     with pytest.raises(ValueError):
         sample_rows("tasksource/tasksource_dpo_pairs", "main", n=10)
+
+
+def test_random_groups_are_balanced_distinct_and_seed_free():
+    import argparse, collections
+    from reasoning_core.evaluation.encoder import groups
+    names = [f"t{i}" for i in range(12)]
+    spec = argparse.Namespace(groups="t1+t2", random_groups="3:20")
+    got = groups(spec, names)
+    assert got == groups(spec, names) and got[0] == ["t1", "t2"] and len(got) == 21
+    assert len({frozenset(g) for g in got}) == 21 and all(len(set(g)) == len(g) for g in got)
+    counts = collections.Counter(t for g in got[1:] for t in g)
+    assert max(counts.values()) - min(counts.values()) <= 1
+    with pytest.raises(SystemExit):
+        groups(argparse.Namespace(groups="t1+nope", random_groups=None), names)

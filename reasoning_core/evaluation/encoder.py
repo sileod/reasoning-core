@@ -4,7 +4,9 @@ Same estimand as the decoder arms -- arm minus baseline under one recipe -- with
 place of the language model. Every item is (prompt, choices, gold) and training is a softmax over the
 choices' logits, so the battery's MCQ legs score the model directly (cost = -logit) and need no change.
 
-    baseline: tasksource_dpo_pairs (prompt, [chosen, rejected])
+    baseline: natural decisions only -- `dpo` = tasksource_dpo_pairs (prompt, [chosen, rejected]), or `jev` =
+              tasksource-jev-typed-decisions, English, hard targets, minus its procedural subset and the
+              training splits of every source a battery leg or jevbench draws from
     arm:      the same stream, with a share `mix` of the task's rows; negatives are other answers of the
               same task at the same level, so they are in-format. In-format is not surface-free: a
               solver-free surface model still picks the gold at .38-.42 vs .28 chance (difflib near misses
@@ -38,6 +40,15 @@ INITS = {"encoder": ("jhu-clsp/ettin-encoder-150m", "45d08642849e5c5701b162671ac
 REMOTE_CODE = {"dmis-lab/UltraBERT-150M"}      # model code audited at the pinned revision
 SNAPSHOT_FILES = ["*.json", "*.safetensors", "*.py", "*.txt", "*.model"]
 DPO = ("tasksource/tasksource_dpo_pairs", "0b16d8574d3fc771320a32eab85ae405ea86207c")
+JEV = ("tasksource/tasksource-jev-typed-decisions", "8df2e5c9a33f19a2c2b8febf291c3acb0a91a8a8")
+# source prefixes dropped from JEV: generated rows, non-English rows, and the train splits behind the MCQ legs
+# (arc..winogrande) and jevbench (arc..yelp); BLiMP and MMLU are already excluded by the dataset
+JEV_EXCLUDE = ("procedural-typed-decisions/", "multilingual/",
+               "ai2_arc", "cbt/", "commonsense_qa", "hellaswag", "openbookqa", "piqa", "qasc", "quail", "riddle_sense",
+               "sciq", "social_i_qa", "winogrande",
+               "banking77", "boolq", "super_glue/boolq", "chaos-mnli", "civil_comments", "clinc_oos", "fever-evidence",
+               "go_emotions", "HelpSteer2/helpfulness", "HelpSteer2/verbosity", "lex_glue/ledgar", "massive",
+               "measuring_hate_speech", "glue/mnli", "paws", "sms_spam", "sst5", "strategy-qa", "glue/stsb", "yelp_review")
 VERSION = 1
 
 
@@ -45,6 +56,30 @@ def dpo_items(n, seed=0):
     from reasoning_core.utils.hf_sample import sample_rows
     rows = sample_rows(*DPO, n=n, seed=seed, columns=["prompt", "chosen", "rejected"])
     return [(r["prompt"], (r["chosen"], r["rejected"]), 0) for r in rows if r["chosen"] != r["rejected"]]
+
+
+def jev_items(n, seed=0, max_options=10):
+    """n hard-target decisions, one per source example: choice and score rows as their options, yes/no
+    (noul) rows as (no, yes). Soft targets (votes, interpolated ratings) are dropped, not softened. Option sets
+    are capped at the gold and 9 others (as the jevbench leg): 7% of rows have more, up to 174 intents."""
+    from reasoning_core.utils.hf_sample import sample_rows
+    rows = sample_rows(*JEV, n=3 * n, seed=seed, columns=["state", "question", "kind", "options", "target", "source", "example_id"])
+    out, seen = [], set()
+    for r in rows:
+        t, opts = r["target"], list(r["options"]) if r["kind"] != "noul" else ["no", "yes"]
+        t = t if r["kind"] != "noul" else [1 - t[0], t[0]]
+        if r["source"].startswith(JEV_EXCLUDE) or r["example_id"] in seen or max(t) != 1.0 or len(set(opts)) != len(opts):
+            continue
+        seen.add(r["example_id"])
+        gold = opts[t.index(1.0)]
+        if len(opts) > max_options:
+            keep = {gold, *random.Random(r["example_id"]).sample([o for o in opts if o != gold], max_options - 1)}
+            opts = [o for o in opts if o in keep]
+        out.append((f"{r['state']}\n\n{r['question']}", tuple(opts), opts.index(gold)))
+    return out[:n]
+
+
+NATURAL = {"dpo": (DPO, dpo_items), "jev": (JEV, jev_items)}
 
 
 def task_items(rows, negatives, seed=0, policy="difflib"):
@@ -260,7 +295,8 @@ def evaluate(model, tok, battery, max_length, full=False, proc=None):
 
 def _value(a, device):
     battery = load_battery_manifest(a.battery, data_dir=a.data_dir, max_length=a.max_length)
-    dpo = dpo_items(a.dpo_n)
+    source, draw = NATURAL[a.natural]
+    dpo = draw(a.dpo_n)
     tasks = task_items(load_rows(a.rows), a.negatives, seed=a.seed, policy=a.distractors)
     tasks = {t: tasks[t] for t in (a.tasks or sorted(tasks))}
     if a.surface_gate:                  # drop items a solver-free surface model picks, down to chance per task
@@ -280,20 +316,51 @@ def _value(a, device):
 
     base = arm([(dpo, 1.0)])
     cell = {"scorer": f"{'joint_decider' if a.init == 'decider-joint' else 'cross_encoder'}@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
-            "battery_id": battery.identifier, "dpo": {"repo": DPO[0], "revision": DPO[1], "n": a.dpo_n},
+            "battery_id": battery.identifier, "natural": {"repo": source[0], "revision": source[1], "n": len(dpo)},
             "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
             "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "proc_eval": a.proc_eval, "surface_gate": a.surface_gate, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
     if a.init == "decider-joint":
         from importlib.metadata import version
         cell["typed_encoders"] = version("typed-encoders")
-    for name, items in tasks.items():
-        got = arm([(dpo, 1 - a.mix), (items, a.mix)])
-        cell["tasks"][name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
+    arms = [] if a.no_singles else [(t, [t]) for t in tasks]
+    arms += [("+".join(g), g) for g in groups(a, list(tasks))]
+    cell["groups"] = {}
+    for name, members in arms:     # a group splits the aux share equally over its members, whatever their row counts
+        got = arm([(dpo, 1 - a.mix)] + [(tasks[t], a.mix / len(members)) for t in members])
+        where = cell["tasks"] if len(members) == 1 and name in tasks else cell["groups"]
+        where[name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
                                          if got[k] is not None and base[k] is not None}}
-        print(f"[encoder] {name}: " + ", ".join(f"{k}={v:+.4f}" for k, v in cell["tasks"][name].items()
+        print(f"[encoder] {name}: " + ", ".join(f"{k}={v:+.4f}" for k, v in where[name].items()
                                                  if k.endswith("acc_delta")), flush=True)
         Path(a.out).write_text(json.dumps(cell, indent=1))        # rewritten per task: a partial run is still readable
     return cell
+
+
+def groups(a, names):
+    """Explicit --groups 'a+b,c+d+e', then --random-groups K:G: G groups of K distinct tasks, drawn from shuffled
+    passes over the task list so every task sits in about G*K/N groups. The draw is seeded by the task list
+    alone, never by --seed, so every seed trains the same groups."""
+    out = [g.split("+") for g in a.groups.split(",")] if a.groups else []
+    if a.random_groups:
+        k, n = map(int, a.random_groups.split(":"))
+        rng, deck, seen, drawn = random.Random("groups:" + ",".join(names)), [], {frozenset(g) for g in out}, 0
+        for _ in range(1000 * n):
+            if drawn == n:
+                break
+            if len(deck) < k:
+                deck += rng.sample(names, len(names))
+            g = deck[:k]
+            if len(set(g)) == k and frozenset(g) not in seen:
+                out.append(g), seen.add(frozenset(g))
+                del deck[:k]
+                drawn += 1
+            else:                         # a repeat, or a leftover deck of one task: reshuffle with a fresh pass
+                deck = rng.sample(deck + names, len(deck) + len(names))
+    for g in out:
+        missing = [t for t in g if t not in names]
+        if missing:
+            raise SystemExit(f"--groups: unknown tasks {missing}")
+    return out
 
 
 def main(argv=None):
@@ -315,7 +382,11 @@ def main(argv=None):
     ap.add_argument("--full-legs", action="store_true", help="every item up to each leg's limit, not the tiny keep subset")
     ap.add_argument("--proc-eval", type=int, default=0, help="items per task held out of training, scored on every arm")
     ap.add_argument("--surface-gate", action="store_true", help="adversarially filter task items (surface_audit.gate)")
-    ap.add_argument("--dpo-n", type=int, default=50_000)
+    ap.add_argument("--natural", default="dpo", choices=list(NATURAL), help="the natural stream of every arm and the whole baseline")
+    ap.add_argument("--dpo-n", type=int, default=50_000, help="natural items drawn")
+    ap.add_argument("--groups", help="explicit group arms, 'a+b,c+d+e' (equal shares)")
+    ap.add_argument("--random-groups", help="K:G -> G random groups of K tasks, balanced, same for every seed")
+    ap.add_argument("--no-singles", action="store_true", help="skip the one-task arms")
     ap.add_argument("--max-length", type=int, default=512)
     ap.add_argument("--seed", type=int, default=43)
     ap.add_argument("--out", required=True, help="warm: a model dir; value: a cell json")
@@ -323,7 +394,7 @@ def main(argv=None):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if a.command == "warm":
         model, tok = load(a.init, device)
-        train(model, tok, [(dpo_items(a.dpo_n), 1.0)], a.steps, a.batch, a.lr, a.seed, a.max_length, a.micro)
+        train(model, tok, [(NATURAL[a.natural][1](a.dpo_n), 1.0)], a.steps, a.batch, a.lr, a.seed, a.max_length, a.micro)
         model.save_pretrained(a.out), tok.save_pretrained(a.out)
         return
     if not a.rows:
