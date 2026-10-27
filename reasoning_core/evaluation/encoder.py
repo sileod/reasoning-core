@@ -121,14 +121,10 @@ def _split(prompt):
 
 
 def _joint(path, tok, device):
-    from safetensors.torch import load_file
-    from transformers import AutoConfig, AutoModel
-    from typed_encoders.decider import JointHead
+    from typed_encoders.decider import Decider       # typed-encoders >= 0.1.2 reads the released layout
+    d = Decider.from_pretrained(path, device)
     cfg = json.loads((Path(path) / "decider_config.json").read_text())
-    backbone = AutoModel.from_config(AutoConfig.from_pretrained(path))
-    head = JointHead(backbone, backbone.config.hidden_size)
-    head.load_state_dict({k: v.float() for k, v in load_file(str(Path(path) / "model.safetensors")).items()}, strict=True)
-    return JointScorer(head, tok, cfg["train_max_length"], cfg["inference_max_length"], cfg["attn"]).to(device)
+    return JointScorer(d.model, tok, cfg["train_max_length"], cfg["inference_max_length"], cfg["attn"]).to(device)
 
 
 def _head(path, hidden):
