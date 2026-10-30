@@ -364,6 +364,10 @@ def _value(a, device):
         where = cell["tasks"] if len(members) == 1 and name in tasks else cell["groups"]
         if name in where:
             continue
+        if not all(tasks[t] for t in members):     # the gate can leave fewer items than --proc-eval holds out
+            cell.setdefault("skipped", {})[name] = "no training items left after the held-out split"
+            print(f"[encoder] skip {name}: no training items", flush=True)
+            continue
         got = arm([(dpo, 1 - a.mix)] + [(tasks[t], a.mix / len(members)) for t in members])
         where[name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
                                          if got[k] is not None and base[k] is not None}}
