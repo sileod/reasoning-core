@@ -326,25 +326,50 @@ def _value(a, device):
         train(model, tok, streams, a.steps, a.batch, a.lr, a.seed, a.max_length, a.micro)
         return evaluate(model, tok, battery, a.max_length, a.full_legs, held)
 
-    base = arm([(dpo, 1.0)])
     cell = {"scorer": f"{'joint_decider' if a.init == 'decider-joint' else 'cross_encoder'}@v{VERSION}", "init": a.init, "init_revision": INITS.get(a.init, (0, None))[1],
             "battery_id": battery.identifier, "natural": {"repo": source[0], "revision": source[1], "n": len(dpo)},
             "rows": str(a.rows), "steps": a.steps, "batch": a.batch, "lr": a.lr, "mix": a.mix,
-            "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "proc_eval": a.proc_eval, "surface_gate": a.surface_gate, "seed": a.seed, "max_length": a.max_length, "baseline": base, "tasks": {}}
+            "negatives": a.negatives, "distractors": a.distractors, "full_legs": a.full_legs, "proc_eval": a.proc_eval, "surface_gate": a.surface_gate, "seed": a.seed, "max_length": a.max_length, "tasks": {}, "groups": {}}
     if a.init == "decider-joint":
         from importlib.metadata import version
         cell["typed_encoders"] = version("typed-encoders")
-    arms = [] if a.no_singles else [(t, [t]) for t in tasks]
+    out = Path(a.out)
+
+    def same_spec(path):                # a cell of the same spec, or refuse: its baseline and arms are reusable
+        old = json.loads(Path(path).read_text())
+        nat = old.get("natural") or old.get("dpo")       # cells before --natural named the stream "dpo"
+        diff = [k for k in cell if k not in ("natural", "tasks", "groups") and old.get(k) != cell[k]]
+        diff += ["tasks"] if a.proc_eval and {f"proc_{t}_acc" for t in held} - set(old["baseline"]) else []  # baseline scored other tasks
+        if diff or (nat["repo"], nat["revision"]) != source:
+            raise SystemExit(f"{path} holds another spec (differs on {diff or 'natural'})")
+        return old
+    if out.exists():                    # resume: keep its baseline and finished arms
+        old = same_spec(out)
+        cell.update(baseline=old["baseline"], tasks=old["tasks"], groups=old.get("groups", {}))
+        print(f"[encoder] resuming {out}: {len(cell['tasks'])} tasks, {len(cell['groups'])} groups done", flush=True)
+    elif a.baseline_from:               # shards of one table share one baseline
+        cell["baseline"] = same_spec(a.baseline_from)["baseline"]
+    else:
+        cell["baseline"] = arm([(dpo, 1.0)])
+    base = cell["baseline"]
+
+    def save():                         # after the baseline and every arm, atomically: a partial run is readable and resumable
+        tmp = out.with_suffix(".tmp")
+        tmp.write_text(json.dumps(cell, indent=1))
+        tmp.replace(out)
+    save()
+    arms = [] if a.no_singles else [(t, [t]) for t in tasks if a.only is None or t in a.only.split(",")]
     arms += [("+".join(g), g) for g in groups(a, list(tasks))]
-    cell["groups"] = {}
     for name, members in arms:     # a group splits the aux share equally over its members, whatever their row counts
-        got = arm([(dpo, 1 - a.mix)] + [(tasks[t], a.mix / len(members)) for t in members])
         where = cell["tasks"] if len(members) == 1 and name in tasks else cell["groups"]
+        if name in where:
+            continue
+        got = arm([(dpo, 1 - a.mix)] + [(tasks[t], a.mix / len(members)) for t in members])
         where[name] = {**got, **{f"{k}_delta": got[k] - base[k] for k in got
                                          if got[k] is not None and base[k] is not None}}
         print(f"[encoder] {name}: " + ", ".join(f"{k}={v:+.4f}" for k, v in where[name].items()
                                                  if k.endswith("acc_delta")), flush=True)
-        Path(a.out).write_text(json.dumps(cell, indent=1))        # rewritten per task: a partial run is still readable
+        save()
     return cell
 
 
@@ -399,6 +424,8 @@ def main(argv=None):
     ap.add_argument("--groups", help="explicit group arms, 'a+b,c+d+e' (equal shares)")
     ap.add_argument("--random-groups", help="K:G -> G random groups of K tasks, balanced, same for every seed")
     ap.add_argument("--no-singles", action="store_true", help="skip the one-task arms")
+    ap.add_argument("--only", help="comma list: the one-task arms to run ('' = none); every task is still held out and scored")
+    ap.add_argument("--baseline-from", help="a cell of the same spec whose baseline to reuse (shards of one table)")
     ap.add_argument("--max-length", type=int, default=512)
     ap.add_argument("--seed", type=int, default=43)
     ap.add_argument("--out", required=True, help="warm: a model dir; value: a cell json")
