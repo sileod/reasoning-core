@@ -31,6 +31,8 @@ from pathlib import Path
 DC = Path(os.environ.get("EVAL_DATA_DIR", "data_cache"))
 
 REVISIONS = {
+    "tasksource/ConTRoL-nli": "2c5a0f3d8cefe4130aa8d341297181c0c12e5d0f",
+    "tasksource/folio": "04c740613c4973cdecfce8b198d12dda85828e1d",
     "tasksource/jevbench": "5f154ceb30bc8d5f7bda676a00071c4d7f22d35a",
     "tasksource/social_i_qa": "c5e31ad2d8d6b2aec4cf6491653a1fe1640dd647",
     "baber/piqa": "142f6d7367fd9877f0fb3b5734ea6a545f54cdd1",
@@ -265,6 +267,35 @@ def _jev_option(key, desc):
     return key if not desc or desc.lower() == key.lower() else desc if dummy else f"{key}: {desc}"
 
 
+def _jsonl(repo, files):
+    from huggingface_hub import hf_hub_download
+    return [json.loads(line) for f in files for line in open(hf_hub_download(repo, f, repo_type="dataset", revision=REVISIONS[repo]))]
+
+
+def _closed_nli(rows, context, claim, question, labels, rng):
+    """A context, the claim, and the question as the last block (the decider's state/question split); the options are
+    the label words themselves -- a fixed, closed set, so read accuracy per label as well (a label prior is not reasoning)."""
+    out = [_row(f"{r[context].strip()}\n\n{claim}: {r['__claim'].strip()}\n\n{question}", labels[r['__label']],
+                [w for w in labels.values() if w != labels[r['__label']]], rng, answer_cue=False) for r in rows]
+    rng.shuffle(out)
+    return out
+
+
+def _control(n, rng):
+    """ConTRoL (long-context NLI over passages; dev + test, never trained on). Encoder legs only: max_length 512
+    truncates long passages, so build with --max-prompt-chars ~2200 (keeps passages up to ~500 tokens)."""
+    rows = [dict(r, __claim=r["hypothesis"], __label=r["label"]) for r in _jsonl("tasksource/ConTRoL-nli", ["dev.jsonl", "test.jsonl"])]
+    return _closed_nli(rows, "premise", "Hypothesis", "Does the passage entail the hypothesis, contradict it, or neither?",
+                       {"entailment": "entailment", "neutral": "neutral", "contradiction": "contradiction"}, rng)
+
+
+def _folio(n, rng):
+    """FOLIO v2 (first-order-logic stories; train + validation, never trained on): True / False / Uncertain."""
+    rows = [dict(r, __claim=r["conclusion"], __label=r["label"]) for r in _jsonl("tasksource/folio", ["folio_v2_train.jsonl", "folio_v2_validation.jsonl"])]
+    return _closed_nli(rows, "premises", "Conclusion", "Based only on the premises, is the conclusion true, false, or uncertain?",
+                       {"True": "True", "False": "False", "Uncertain": "Uncertain"}, rng)
+
+
 def _jevbench(n, rng, max_chars=4000, max_options=10):
     """jevbench test (22 natural typed-decision tasks), n rows per task (--n 1100 = 50 each). Prompt = state, blank line, the
     question's instructions -- the decider's (state, question) split. Choice option sets are capped at the gold
@@ -294,7 +325,7 @@ def _jevbench(n, rng, max_chars=4000, max_options=10):
     return rows
 
 
-BUILDERS = {"math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc, "winogrande": _winogrande, "jevbench": lambda n, rng: _jevbench(n // 44, rng),          # called with 2 * --n
+BUILDERS = {"control_nli": _control, "folio": _folio, "math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc, "winogrande": _winogrande, "jevbench": lambda n, rng: _jevbench(n // 44, rng),          # called with 2 * --n
             **{leg: (lambda n, rng, leg=leg: build_leg(leg, n, rng)) for leg in LEGS}}
 
 
