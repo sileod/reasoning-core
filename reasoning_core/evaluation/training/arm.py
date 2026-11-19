@@ -10,6 +10,8 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from types import SimpleNamespace
 
+import torch
+
 from transformers import TrainerCallback
 from trl import SFTConfig, SFTTrainer
 
@@ -84,8 +86,17 @@ class ArmSpec:
     aux_data_id: str = ""
     eval_ids: tuple[str, ...] = ()
     callback_ids: tuple[str, ...] = ()
+    # Ambient SFT (arXiv 2611.23229): with probability anchor_prob an optimizer step drops the CE
+    # loss and instead matches the frozen starting model's tempered next-token distribution,
+    # KL(p_T(start) || p_T(student)) over the supervised positions. Off when anchor_temperature is None.
+    anchor_temperature: float | None = None
+    anchor_prob: float = 0.0
 
     def __post_init__(self):
+        if (self.anchor_temperature is None) != (self.anchor_prob == 0.0):
+            raise ValueError("anchor_temperature and anchor_prob are set together")
+        if not 0.0 <= self.anchor_prob < 1.0 or (self.anchor_temperature or 1.0) <= 0:
+            raise ValueError("anchor_prob must be in [0, 1) and anchor_temperature positive")
         missing = [name for name in ("initialization_id", "main_data_id")
                    if not getattr(self, name)]
         uses_aux = (
@@ -160,6 +171,12 @@ def run_arm(model, tokenizer, dataset, spec, eval_dataset=None, callbacks=(), ev
         optimizer, scheduler = create_optimizer_and_scheduler(model, optimizer_args)
         trainer_cls = schedule_free_trainer(trainer_cls_for_optimizer(optimizer_args))
         trainer_kwargs["optimizers"] = (optimizer, scheduler)
+    if spec.anchor_temperature is not None:
+        # The model holds the arm's starting weights here (run_influence restores them before every
+        # arm, and a resumed arm loads its checkpoint later, inside train()), so the copy is the start.
+        trainer_cls = anchored_trainer(trainer_cls)
+        trainer_kwargs.update(anchor=_frozen_copy(model), anchor_temperature=spec.anchor_temperature,
+                              anchor_prob=spec.anchor_prob)
     checkpoint = ResumableCheckpointCallback(
         spec.checkpoint_every_minutes, save_final=spec.save_final,
     )
@@ -291,7 +308,8 @@ def _callback_metrics(callbacks):
 # Fields added after arms exist are spelled as ABSENT at their default value, so every id and
 # status.json written before they existed stays byte-identical and in-flight runs stay resumable.
 _ADDED_FIELDS = {"warmup_steps": 0, "carry_optimizer_state": False,
-                 "aux_tasks": None, "aux_weights": None}
+                 "aux_tasks": None, "aux_weights": None,
+                 "anchor_temperature": None, "anchor_prob": 0.0}
 
 
 def _stable_spec(spec):
@@ -300,6 +318,58 @@ def _stable_spec(spec):
         if payload.get(name) == default:
             payload.pop(name, None)
     return payload
+
+
+def _frozen_copy(model):
+    anchor = copy.deepcopy(model).eval()
+    anchor.requires_grad_(False)
+    return anchor
+
+
+def anchored_trainer(base):
+    class AnchoredTrainer(AnchorLossMixin, base):
+        pass
+    return AnchoredTrainer
+
+
+class AnchorLossMixin:
+    """Ambient SFT: a step is, with probability ``anchor_prob``, a tempered match to the start.
+
+    The draw is keyed on (seed, global_step), so every micro-batch of one optimizer step agrees and a
+    resumed run replays the same schedule. In expectation this is CE + lambda * KL with
+    lambda = anchor_prob / (1 - anchor_prob), and only anchor steps pay the extra forward. The KL is
+    summed over supervised positions and normalized exactly as the CE is, so the two share a scale.
+    """
+
+    def __init__(self, *args, anchor, anchor_temperature, anchor_prob, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.anchor, self.anchor_temperature, self.anchor_prob = anchor, anchor_temperature, anchor_prob
+
+    def _anchor_step(self):
+        draw = hashlib.sha256(f"{self.args.seed}:{self.state.global_step}".encode()).digest()
+        return int.from_bytes(draw[:8], "big") / 2**64 < self.anchor_prob
+
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        if not (model.training and self._anchor_step()):
+            return super().compute_loss(model, inputs, return_outputs, num_items_in_batch)
+        drop = {"labels", "source_ids", "_prediction_loss_only"}
+        forward = {k: v for k, v in inputs.items() if k not in drop} | {"use_cache": False}
+        outputs = model(**forward)
+        mask = inputs["labels"][..., 1:].ne(-100)
+        with torch.no_grad():
+            target = self.anchor(**forward).logits[..., :-1, :][mask].float()
+            target = torch.softmax(target / self.anchor_temperature, dim=-1)
+        student = torch.log_softmax(
+            outputs.logits[..., :-1, :][mask].float() / self.anchor_temperature, dim=-1)
+        kl = torch.nn.functional.kl_div(student, target, reduction="sum")
+        tokens = max(int(mask.sum()), 1)
+        if self.model_accepts_loss_kwargs and num_items_in_batch is not None:
+            loss = kl / num_items_in_batch  # the trainer then skips its own division, as for CE
+        else:
+            loss = kl / tokens
+        self._metrics["train"]["anchor/kl"].append(kl.item() / tokens)
+        return (loss, outputs) if return_outputs else loss
+
 
 
 class _CarriedOptimizerState(TrainerCallback):
