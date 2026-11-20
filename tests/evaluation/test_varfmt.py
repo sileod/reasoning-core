@@ -20,3 +20,16 @@ def test_every_wrapper_is_announced_in_the_prompt():
         assert cue, "a template with no prompt cue makes the wrapper unpredictable"
         if lead or tail:  # framing inside the completion must be spelled out by an instruction
             assert (lead.strip() or tail.strip()) in suf
+
+
+def test_episode_puts_demos_in_the_prompt_in_one_template():
+    from reasoning_core.evaluation.training.data import format_episode
+    demos = [{"prompt": "2+2?", "answer": "4"}, {"prompt": "3+3?", "answer": "6"}]
+    row = {"prompt": "1+1?", "answer": "2"}
+    out = format_episode(demos, row, "</s>", 4)  # "The answer is <answer>."
+    assert out["completion"] == "The answer is 2.</s>"
+    assert out["prompt"].count('Reply in the form') == 3
+    assert "The answer is 4.\n\n" in out["prompt"] and "The answer is 6.\n\n" in out["prompt"]
+    assert out["prompt"].endswith('1+1?\nReply in the form "The answer is <answer>."\n')
+    assert format_episode([], row, "</s>", 0) == {"prompt": "1+1?\nAnswer: ", "completion": "2</s>"}
+    assert format_row(row, "</s>", "influence_icl_v1") == format_row(row, "</s>", "influence_varfmt_v1")

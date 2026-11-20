@@ -10,7 +10,8 @@ from pathlib import Path
 from datasets import interleave_datasets, load_dataset
 
 
-FORMATTERS = ("sft_qa_v1", "influence_legacy_v1", "influence_auto_v1", "text_v1", "influence_varfmt_v1")
+FORMATTERS = ("sft_qa_v1", "influence_legacy_v1", "influence_auto_v1", "text_v1", "influence_varfmt_v1",
+              "influence_icl_v1")
 
 # influence_varfmt_v1: the answer WRAPPER varies by row and the PROMPT always states it (a label right
 # before the answer, or an explicit instruction), so the model learns to follow a format cue rather than
@@ -48,6 +49,16 @@ class StreamSpec:
             raise ValueError(f"Unknown formatter {self.formatter!r}; choose from {FORMATTERS}")
 
 
+def format_episode(demos, row, eos_token, template):
+    """influence_icl_v1: a MetaICL-style episode. `demos` (solved rows of the same task) precede `row`,
+    all in VARFMT_TEMPLATES[template], so both the format and the procedure can be read from context.
+    The demos sit in the prompt: only the target answer is supervised. No demos = influence_varfmt_v1
+    with an explicit template."""
+    pre, suf, lead, tail = VARFMT_TEMPLATES[template]
+    shots = "".join(f"{pre}{d['prompt']}{suf}{lead}{d['answer']}{tail}\n\n" for d in demos)
+    return {"prompt": f"{shots}{pre}{row['prompt']}{suf}", "completion": f"{lead}{row['answer']}{tail}{eos_token}"}
+
+
 def format_row(row, eos_token, formatter, prompt_prefix=""):
     if formatter == "text_v1" or (
         formatter == "influence_auto_v1" and row.get("text") is not None
@@ -55,7 +66,7 @@ def format_row(row, eos_token, formatter, prompt_prefix=""):
         text = row["text"][:1200] if formatter == "influence_auto_v1" else row["text"]
         return {"prompt": "", "completion": text + eos_token}
     prompt, answer = row["prompt"], row["answer"]
-    if formatter == "influence_varfmt_v1":
+    if formatter in ("influence_varfmt_v1", "influence_icl_v1"):  # a lone row is a 0-shot episode
         pre, suf, lead, tail = VARFMT_TEMPLATES[
             int(hashlib.sha1(prompt.encode()).hexdigest(), 16) % len(VARFMT_TEMPLATES)]
         return {"prompt": f"{prompt_prefix}{pre}{prompt}{suf}", "completion": f"{lead}{answer}{tail}{eos_token}"}
