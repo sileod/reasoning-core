@@ -203,7 +203,7 @@ def score_mcq(examples, costs, max_length=None):
         if margin is not None:
             margins.append(margin)
         per_example.append({"prediction": prediction, "gold_nll": scores[gold],
-                            "margin": margin})
+                            "margin": margin, "costs": list(scores)})  # per option: label-prior calibration offline
     # A row whose prompt+candidate exceeds max_length scores inf and is dropped SILENTLY. That is a
     # data-format bug (prompt too long for the battery's max_length), not a property of the model, and
     # it biases every metric below toward whichever rows happen to be short. Say so, loudly.
