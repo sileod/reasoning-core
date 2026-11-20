@@ -31,5 +31,16 @@ def test_episode_puts_demos_in_the_prompt_in_one_template():
     assert out["prompt"].count('Reply in the form') == 3
     assert "The answer is 4.\n\n" in out["prompt"] and "The answer is 6.\n\n" in out["prompt"]
     assert out["prompt"].endswith('1+1?\nReply in the form "The answer is <answer>."\n')
-    assert format_episode([], row, "</s>", 0) == {"prompt": "1+1?\nAnswer: ", "completion": "2</s>"}
-    assert format_row(row, "</s>", "influence_icl_v1") == format_row(row, "</s>", "influence_varfmt_v1")
+    assert format_episode([], row, "</s>", 0) == {"prompt": "1+1?\nAnswer:", "completion": " 2</s>"}
+    assert format_row(row, "</s>", "influence_icl_v2") == format_row(row, "</s>", "influence_varfmt_v2")
+    assert format_episode([], row, "</s>", 0, "influence_icl_v1")["prompt"] == "1+1?\nAnswer: "  # v1 kept as it ran
+
+
+def test_v2_prompts_never_end_in_a_space_and_keep_the_v1_text():
+    from reasoning_core.evaluation.training.data import VARFMT_TEMPLATES_V2
+    for (pre, suf, lead, tail), v1 in zip(VARFMT_TEMPLATES_V2, VARFMT_TEMPLATES):
+        assert not suf.endswith(" ") and pre + suf + lead + tail == "".join(v1)
+    rows = [{"prompt": f"task {i}?", "answer": f"ans{i}"} for i in range(50)]
+    for r in rows:
+        a, b = format_row(r, "</s>", "influence_varfmt_v1"), format_row(r, "</s>", "influence_varfmt_v2")
+        assert a["prompt"] + a["completion"] == b["prompt"] + b["completion"] and not b["prompt"].endswith(" ")
