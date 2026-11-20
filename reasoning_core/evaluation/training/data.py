@@ -10,7 +10,24 @@ from pathlib import Path
 from datasets import interleave_datasets, load_dataset
 
 
-FORMATTERS = ("sft_qa_v1", "influence_legacy_v1", "influence_auto_v1", "text_v1")
+FORMATTERS = ("sft_qa_v1", "influence_legacy_v1", "influence_auto_v1", "text_v1", "influence_varfmt_v1")
+
+# influence_varfmt_v1: the answer WRAPPER varies by row and the PROMPT always states it (a label right
+# before the answer, or an explicit instruction), so the model learns to follow a format cue rather than
+# imprint one fixed habit. The answer text never changes, so it applies to any task. Motivation: the
+# fixed legacy wrapper ("{prompt}\n{answer}") leaks into generative benchmarks (rg: strict DROP -12 F1
+# vs +0 whitespace-robust, RCP1B). Template = hash of the prompt: deterministic, seed-independent.
+# (prompt prefix, prompt suffix, completion lead, completion tail)
+VARFMT_TEMPLATES = (
+    ("", "\nAnswer: ", "", ""),
+    ("Question: ", "\nAnswer: ", "", ""),
+    ("Q: ", "\nA: ", "", ""),
+    ("", "\nAnswer only, no other text:\n", "", ""),
+    ("", '\nReply in the form "The answer is <answer>."\n', "The answer is ", "."),
+    ("", '\nEnd with "Final answer: <answer>".\n', "Final answer: ", ""),
+    ("", '\nGive the answer after "**Answer:**".\n', "**Answer:** ", ""),
+    ("", "\nPut the answer between <answer> and </answer>.\n", "<answer>", "</answer>"),
+)
 
 
 @dataclass(frozen=True)
@@ -38,6 +55,10 @@ def format_row(row, eos_token, formatter, prompt_prefix=""):
         text = row["text"][:1200] if formatter == "influence_auto_v1" else row["text"]
         return {"prompt": "", "completion": text + eos_token}
     prompt, answer = row["prompt"], row["answer"]
+    if formatter == "influence_varfmt_v1":
+        pre, suf, lead, tail = VARFMT_TEMPLATES[
+            int(hashlib.sha1(prompt.encode()).hexdigest(), 16) % len(VARFMT_TEMPLATES)]
+        return {"prompt": f"{prompt_prefix}{pre}{prompt}{suf}", "completion": f"{lead}{answer}{tail}{eos_token}"}
     if formatter == "sft_qa_v1":
         return {
             "prompt": f"{prompt_prefix}Q: {prompt}\nA:",
