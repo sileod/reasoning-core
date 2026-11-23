@@ -1,3 +1,4 @@
+import shutil
 import signal
 import time
 from pathlib import Path
@@ -7,6 +8,7 @@ from transformers import TrainerCallback
 
 COMPLETE_MARKER = ".complete"
 FORMAT_MARKER = ".resumable-checkpoints-v1"
+RESUME_STATE = ("optimizer.pt", "scheduler.pt", "rng_state.pth")
 
 
 def prepare_checkpoint_dir(output_dir):
@@ -36,6 +38,22 @@ def latest_complete_checkpoint(output_dir):
         if (path / COMPLETE_MARKER).exists():
             checkpoints.append((step, path))
     return str(max(checkpoints)[1]) if checkpoints else None
+
+
+def prune_finished_checkpoints(output_dir):
+    """After training finishes: keep only the newest checkpoint's weights; resume state is mid-run only."""
+    def step(path):
+        try:
+            return int(path.name.rsplit("-", 1)[-1])
+        except ValueError:
+            return -1
+    checkpoints = sorted(Path(output_dir).glob("checkpoint-*"), key=step)
+    for old in checkpoints[:-1]:
+        shutil.rmtree(old)
+    for checkpoint in checkpoints[-1:]:
+        for name in RESUME_STATE:
+            (checkpoint / name).unlink(missing_ok=True)
+        (checkpoint / COMPLETE_MARKER).unlink(missing_ok=True)
 
 
 class ResumableCheckpointCallback(TrainerCallback):

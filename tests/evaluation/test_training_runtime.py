@@ -12,6 +12,7 @@ from reasoning_core.evaluation.training.checkpointing import (
     ResumableCheckpointCallback,
     latest_complete_checkpoint,
     prepare_checkpoint_dir,
+    prune_finished_checkpoints,
 )
 from reasoning_core.evaluation.training.paths import HOME, home_path
 from reasoning_core.evaluation.training.arm import ArmSpec, _evaluate_model, optimizer_eval_mode
@@ -56,6 +57,18 @@ def test_existing_trainer_checkpoint_is_adopted(tmp_path):
         (checkpoint / name).touch()
     prepare_checkpoint_dir(tmp_path)
     assert latest_complete_checkpoint(tmp_path) == str(checkpoint)
+
+
+def test_finished_stage_keeps_only_final_weights(tmp_path):
+    for step in (5, 40, 100):
+        checkpoint = tmp_path / f"checkpoint-{step}"
+        checkpoint.mkdir()
+        for name in ("model.safetensors", "optimizer.pt", "scheduler.pt", "rng_state.pth", COMPLETE_MARKER):
+            (checkpoint / name).touch()
+    prune_finished_checkpoints(tmp_path)
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["checkpoint-100"]
+    assert sorted(p.name for p in (tmp_path / "checkpoint-100").iterdir()) == ["model.safetensors"]
+    assert latest_complete_checkpoint(tmp_path) is None
 
 
 def test_wall_clock_checkpoint_marks_completed_save(tmp_path, monkeypatch):

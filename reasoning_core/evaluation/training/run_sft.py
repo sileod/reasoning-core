@@ -38,6 +38,7 @@ from trl import SFTConfig
 from tabulate import tabulate
 from reasoning_core.evaluation.training.controlled_experiment import add_control_args, row_filter, wrap_aux_dataset_for_control
 from reasoning_core.evaluation.intrinsic import load_intrinsic_eval_split, log_intrinsic_task_rewards
+from reasoning_core.evaluation.training.checkpointing import prune_finished_checkpoints
 from reasoning_core.evaluation.training.local_metrics import LocalMetricsCallback, LocalMetricsSink
 from reasoning_core.evaluation.training.optimizers import add_optimizer_args, create_optimizer_and_scheduler, trainer_cls_for_optimizer
 from reasoning_core.evaluation.training.source_signals import SourceDataCollator, add_source, pack_by_source
@@ -75,6 +76,7 @@ parser.add_argument('--per_device_train_batch_size', type=int, default=0)
 parser.add_argument('--gradient_checkpointing', type=ast.literal_eval, default=False)
 parser.add_argument("--save_steps", type=int, default=400)
 parser.add_argument("--save_total_limit", type=int, default=1)
+parser.add_argument("--keep_resume_state", type=ast.literal_eval, default=False)  # else finished stages keep final weights only
 add_control_args(parser)
 parser.add_argument("--eval_main_override", type=str, default="")
 parser.add_argument("--eval_main_budget", type=int, default=50_000)
@@ -741,6 +743,8 @@ def run_stage(ds, stage_name, epochs=1.0, max_steps=-1, restart=False):
 
     optimizer.train()
     trainer.train(resume_from_checkpoint=resume)
+    if not args.keep_resume_state:
+        prune_finished_checkpoints(stage_dir)
     completed.add(stage_name)
     save_ckpt({"hash": run_hash, "group_id": group_id,
                "args": {k: str(v) for k, v in vars(args).items()},
