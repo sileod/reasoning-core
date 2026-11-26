@@ -408,3 +408,13 @@ def _differentiable_candidate_nll(model, tokenizer, prompt_ids, candidate,
 def _exact_match(prediction, answer):
     normalize = lambda text: " ".join(str(text).strip().casefold().split())
     return normalize(prediction) == normalize(answer)
+
+
+def _first_line_match(prediction, answer):
+    """Exact match on the first non-empty generated line, trailing period dropped: a base model asked for
+    "Answer:" states the answer and then keeps going, which whole-output exact match would score 0."""
+    line = next((l for l in str(prediction).splitlines() if l.strip()), "")
+    return _exact_match(line.strip().rstrip("."), answer)
+
+
+SCORERS = {"exact": _exact_match, "first_line": _first_line_match}

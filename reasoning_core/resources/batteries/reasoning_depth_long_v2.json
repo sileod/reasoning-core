@@ -1,0 +1,23 @@
+{
+ "name": "reasoning_depth_long_v2",
+ "max_length": 2048,
+ "legs": [
+  {
+   "name": "musr_full",
+   "path": "depth_v2/musr_full_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "musr_full_nll",
+   "accuracy_key": "musr_full_acc",
+   "margin_key": "musr_full_margin"
+  },
+  {
+   "name": "musr_full_optonly",
+   "path": "depth_v2/musr_full_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "musr_full_optonly_nll",
+   "accuracy_key": "musr_full_optonly_acc",
+   "margin_key": "musr_full_optonly_margin"
+  }
+ ],
+ "_note": "MuSR, all three domains (murder mysteries 250, object placements 252, team allocation 250; prompts up to 1611 SmolLM2 tokens), rows tagged `domain` and `provenance` (llm), with its options-only twin. Built with --max-prompt-chars 8000. max_length 2048 is part of the identity: do not pool with 1024-token batteries."
+}

@@ -211,8 +211,9 @@ LEGS = {
 # Reasoning-depth legs: every row carries `depth` (hops, steps, objects, operations; None where the
 # source has none) and `provenance` (how the text was written: human, templated, llm), from the
 # tasksource eval_only annotation, so a depth curve or a templated-vs-human split is one groupby.
-def _tagged(depth_key=None):
-    return lambda m, a: {"depth": m.get(depth_key) if depth_key else None, "provenance": a.provenance}
+def _tagged(depth_key=None, *keys):
+    return lambda m, a: {"depth": m.get(depth_key) if depth_key else None, "provenance": a.provenance,
+                         **{k: m.get(k) for k in keys}}
 
 
 def stratified(key="depth"):
@@ -238,7 +239,7 @@ def _eval_only(task, **kw):
     return a, a(load_dataset(a.dataset_name, a.config_name, **a.load_dataset_kwargs))["train"]
 
 
-def _depth_closed(tasks, depth, prompt, rng):
+def _depth_closed(tasks, depth, prompt, rng, extra=lambda task, m: {}):
     """Closed-label legs (ProverQA levels, CLUTRR relations): the label words are the options, so read
     accuracy per label too. Options are the annotation's whole label set."""
     out = []
@@ -249,9 +250,26 @@ def _depth_closed(tasks, depth, prompt, rng):
             m = json.loads(r["metadata"] or "{}")
             gold = names[r["labels"]]
             row = _row(prompt(r), gold, [w for w in names if w != gold], rng, answer_cue=False)
-            out.append({**row, "depth": depth(task, m), "provenance": a.provenance})
+            out.append({**row, "depth": depth(task, m), "provenance": a.provenance, **extra(task, m)})
     rng.shuffle(out)
     return out
+
+
+PROVERQA_AUDIT = None   # semforge benchmarks/audit_proverqa.py output (--proverqa-audit); None = no audit fields
+
+
+def _audit_fields(task, m):
+    """semforge's z3 audit of one ProverQA row. `forced_chain`: no premise set smaller than the cited
+    chain gives the conclusion (the chain cannot be bypassed); `mandatory`: premises every proof needs.
+    Neutral rows, and rows z3 labels differently, have no chain to audit (None)."""
+    if PROVERQA_AUDIT is None:
+        return {}
+    row = PROVERQA_AUDIT[task.split("__")[1], m["id"]]
+    chain = "claimed" in row
+    return {"audit": {"z3_label": row["label"], "label_agrees": row["label"] == row["gold"],
+                      "steps": row.get("steps"), "claimed": row.get("claimed"), "mandatory": row.get("mandatory"),
+                      "minimal_support": row.get("minimal_support"),
+                      "forced_chain": row["minimal_support"] >= row["claimed"] if chain else None}}
 
 
 def _proverqa(n, rng):
@@ -260,7 +278,8 @@ def _proverqa(n, rng):
     return stratified()(_depth_closed(
         list(level), lambda t, m: level[t],
         lambda r: f"{r['sentence1'].strip()}\n\nStatement: {r['sentence2'].strip()}\n\n"
-                  "Based only on the information above, is the statement true, false, or uncertain?", rng), rng)
+                  "Based only on the information above, is the statement true, false, or uncertain?", rng,
+        extra=_audit_fields), rng)
 
 
 def _clutrr(n, rng):
@@ -310,6 +329,7 @@ def no_stated_option(rows, rng):
 _BBH = lambda family: [f"eval_only.bbh_{family}_{k}_objects" for k in ("three", "five", "seven")]
 DEPTH_LEGS = {
     "musr": (["eval_only.musr"], None, False, None),   # 3 domains, no depth; murder mysteries exceed 1k tokens
+    "musr_full": (["eval_only.musr"], None, False, None),  # every domain: build with --max-prompt-chars 8000
     **{f"agieval_{x}": ([f"eval_only.agieval_{x}"], None, False, None) for x in ("lsat_ar", "lsat_lr", "logiqa_en")},
     "knowlogic": (["eval_only.knowlogic"], "level", True, None),
     "divlogiceval": (["eval_only.divlogiceval__polished"], None, False, None),
@@ -322,7 +342,8 @@ DEPTH_LEGS = {
 def _depth_mc(leg):
     def build(n, rng):
         tasks, key, balance, post = DEPTH_LEGS[leg]
-        rows = [r for t in tasks for r in tasksource_rows(t, rng, splits=("train",), meta=_tagged(key))]
+        meta = _tagged(key, "domain") if leg == "musr_full" else _tagged(key)
+        rows = [r for t in tasks for r in tasksource_rows(t, rng, splits=("train",), meta=meta)]
         rng.shuffle(rows)
         rows = list(post(rows, rng)) if post else rows
         return stratified()(rows, rng) if balance else rows
@@ -457,6 +478,19 @@ BUILDERS = {**DEPTH_BUILDERS, "control_nli": _control, "folio": _folio, "math_l1
             **{leg: (lambda n, rng, leg=leg: build_leg(leg, n, rng)) for leg in LEGS}}
 
 
+def options_only(src, dst, stem="Answer:"):
+    """The options-only baseline of a multiple-choice leg: same rows, order, options and gold, the prompt
+    replaced by a bare stem. What it scores is option prior (plausibility, length, label bias), so a leg's
+    accuracy above its options-only twin is what the context bought; for a closed-label leg (ProverQA,
+    CLUTRR) its per-option costs are the content-free label prior used for calibration."""
+    rows = [json.loads(line) for line in Path(src).open()]
+    if not all(r.get("choices") for r in rows):
+        raise ValueError(f"{src}: options-only needs a multiple-choice leg")
+    with Path(dst).open("x") as file:
+        file.write("".join(json.dumps({**r, "prompt": stem}) + "\n" for r in rows))
+    return len(rows)
+
+
 def gate1(rows):
     """GAMEABLE checks on the data alone: answer leaked into the prompt, and shortest-picker excess."""
     # For a binary yes/no leg the substring test is vacuous -- "no" occurs inside ordinary words in
@@ -488,10 +522,23 @@ def main():
     ap.add_argument("--max-choice-chars", type=int, default=None,
                     help="drop items with a longer option (retrieval passages)")
     ap.add_argument("--seed", type=int, default=43)
+    ap.add_argument("--proverqa-audit", type=Path, default=None,
+                    help="semforge results/audit/proverqa.json: join its per-row audit into the proverqa leg")
+    ap.add_argument("--options-only", nargs="+", type=Path, default=None, metavar="LEG_FILE",
+                    help="write each MC leg's options-only twin (<name>_optonly_eval.jsonl) to --output-dir; nothing else")
     ap.add_argument("--output-dir", type=Path, default=DC,
                     help="Write new legs here; existing files are never overwritten")
     a = ap.parse_args()
     a.output_dir.mkdir(parents=True, exist_ok=True)
+    if a.options_only:
+        for src in a.options_only:
+            dst = a.output_dir / src.name.replace("_eval.jsonl", "_optonly_eval.jsonl")
+            print(f"[build] {dst.name} n={options_only(src, dst)}")
+        return
+    if a.proverqa_audit:
+        global PROVERQA_AUDIT
+        audit = json.loads(a.proverqa_audit.read_text())["rows"]
+        PROVERQA_AUDIT = {(level, r["id"]): r for level, rows in audit.items() for r in rows}
     for task in a.tasks:
         out = a.output_dir / f"{task}_eval.jsonl"
         if out.exists():

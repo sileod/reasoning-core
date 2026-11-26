@@ -102,6 +102,23 @@ legs, so check per-label accuracy and hold out reasoning_core tasks of the same 
 The sources are tasksource `eval_only` annotations, each with a `provenance` field. They
 are built by `scripts/build_contrastive_evals.py` (the `DEPTH_LEGS`/`DEPTH_BUILDERS` entries).
 
+Use `reasoning_depth_v2.json` for new runs. It drops BBH temporal sequences, whose
+likelihood score sits far below chance. It pairs every multiple-choice leg with an
+options-only twin (`<leg>_optonly`) and adds semforge's z3 audit to ProverQA as the row
+field `audit`, which includes `forced_chain` and `mandatory`. It scores GSM-Infinite by
+generation with first-line exact match; read that leg only at 3B and above. SynthWorlds
+stays as a knowledge-vs-reasoning control. MuSR with its murder mysteries is in the
+separate `reasoning_depth_long_v2.json` (max_length 2048). Read results with:
+
+    python -m reasoning_core.evaluation.depth_report --manifest <manifest> \
+        --sidecar <arm per-example sidecar> [--baseline <baseline sidecar>] [--by depth]
+
+Per group, it reports chance-adjusted accuracy, where 0 is chance for any option count. It
+adds options-only accuracy and context gain, calibrated accuracy for ProverQA and CLUTRR
+(label prior taken from the options-only twin, and from the leg itself), and paired
+treatment-minus-baseline deltas with 95% intervals. `--by audit.forced_chain` splits
+ProverQA by audit field.
+
 For the full requested no-menu, answer-text suite, select
 `reasoning_core/resources/batteries/nomenu_cloze_v1.json` with `data_dir="data_cache"`.
 It includes SciQ, ARC-Easy, ARC-Challenge, BoolQ, CommonsenseQA, HellaSwag,

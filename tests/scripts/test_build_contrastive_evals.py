@@ -91,3 +91,22 @@ def test_no_stated_option_drops_copyable_items():
 def test_depth_legs_are_eval_only_and_registered():
     assert all(t.startswith("eval_only.") for tasks, *_ in builder.DEPTH_LEGS.values() for t in tasks)
     assert set(builder.DEPTH_LEGS) <= set(builder.BUILDERS)
+
+
+def test_options_only_keeps_items_and_drops_context(tmp_path):
+    src, dst = tmp_path / "x_eval.jsonl", tmp_path / "x_optonly_eval.jsonl"
+    src.write_text('{"prompt": "Story.", "answer": "b", "choices": ["a", "b"], "answer_idx": 1, "depth": 3}\n')
+    assert builder.options_only(src, dst) == 1
+    import json
+    assert json.loads(dst.read_text()) == {"prompt": "Answer:", "answer": "b", "choices": ["a", "b"], "answer_idx": 1, "depth": 3}
+    with pytest.raises(FileExistsError):
+        builder.options_only(src, dst)
+
+
+def test_proverqa_audit_fields(monkeypatch):
+    monkeypatch.setattr(builder, "PROVERQA_AUDIT", {
+        ("hard", 0): {"gold": "entailment", "label": "entailment", "steps": 8, "claimed": 12, "mandatory": 12, "minimal_support": 10},
+        ("hard", 5): {"gold": "neutral", "label": "neutral"}})
+    chained = builder._audit_fields("proverqa__hard", {"id": 0})["audit"]
+    assert chained["forced_chain"] is False and chained["label_agrees"] and chained["mandatory"] == 12
+    assert builder._audit_fields("proverqa__hard", {"id": 5})["audit"]["forced_chain"] is None

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from reasoning_core.evaluation.metrics import (
+    SCORERS,
     evaluate_generation,
     evaluate_lm_nll,
     evaluate_mcq,
@@ -31,6 +32,7 @@ class EvalLeg:
     margin_key: str | None = None
     max_chars: int | None = None
     keep: tuple[int, ...] | None = None
+    scorer: str | None = None       # generation legs: a SCORERS name; None = whole-output exact match
 
     def __post_init__(self):
         if self.kind not in KINDS:
@@ -40,6 +42,8 @@ class EvalLeg:
             if len(set(keep)) != len(keep) or min(keep, default=0) < 0:
                 raise ValueError(f"Leg {self.name!r}: keep must be distinct non-negative indices")
             object.__setattr__(self, "keep", keep)
+        if self.scorer is not None and (self.kind != "generation" or self.scorer not in SCORERS):
+            raise ValueError(f"Leg {self.name!r}: scorer needs kind 'generation' and one of {sorted(SCORERS)}")
 
     @property
     def metric_keys(self):
@@ -62,6 +66,8 @@ class EvalLeg:
         }
         if self.keep is not None:      # omitted when unset so pre-`keep` leg ids stay byte-identical
             config["keep"] = list(self.keep)
+        if self.scorer is not None:    # likewise omitted when unset
+            config["scorer"] = self.scorer
         config = json.dumps(config, sort_keys=True, separators=(",", ":")).encode()
         digest = hashlib.sha256(Path(self.path).expanduser().read_bytes() + config).hexdigest()[:12]
         return f"{self.name}/{self.kind}@v1:{digest}"
@@ -128,7 +134,8 @@ def evaluate_battery(model, tokenizer, battery, eos_token):
             else:
                 result = evaluate_generation(
                     model, tokenizer, suite.examples, battery.max_length,
-                    leg.max_new_tokens, chat_template=battery.chat_template,
+                    leg.max_new_tokens, score=SCORERS[leg.scorer] if leg.scorer else None,
+                    chat_template=battery.chat_template,
                 )
                 metrics[leg.output_key] = _required(leg, result, "score")
         details[leg.name] = result

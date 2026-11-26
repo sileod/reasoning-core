@@ -1,0 +1,187 @@
+{
+ "name": "reasoning_depth_v2",
+ "max_length": 1024,
+ "legs": [
+  {
+   "name": "musr",
+   "path": "depth_v1/musr_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "musr_nll",
+   "accuracy_key": "musr_acc",
+   "margin_key": "musr_margin"
+  },
+  {
+   "name": "agieval_lsat_ar",
+   "path": "depth_v1/agieval_lsat_ar_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_lsat_ar_nll",
+   "accuracy_key": "agieval_lsat_ar_acc",
+   "margin_key": "agieval_lsat_ar_margin"
+  },
+  {
+   "name": "agieval_lsat_lr",
+   "path": "depth_v1/agieval_lsat_lr_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_lsat_lr_nll",
+   "accuracy_key": "agieval_lsat_lr_acc",
+   "margin_key": "agieval_lsat_lr_margin"
+  },
+  {
+   "name": "agieval_logiqa_en",
+   "path": "depth_v1/agieval_logiqa_en_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_logiqa_en_nll",
+   "accuracy_key": "agieval_logiqa_en_acc",
+   "margin_key": "agieval_logiqa_en_margin"
+  },
+  {
+   "name": "knowlogic",
+   "path": "depth_v1/knowlogic_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "knowlogic_nll",
+   "accuracy_key": "knowlogic_acc",
+   "margin_key": "knowlogic_margin"
+  },
+  {
+   "name": "divlogiceval",
+   "path": "depth_v1/divlogiceval_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "divlogiceval_nll",
+   "accuracy_key": "divlogiceval_acc",
+   "margin_key": "divlogiceval_margin"
+  },
+  {
+   "name": "bbh_logical_deduction",
+   "path": "depth_v1/bbh_logical_deduction_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_logical_deduction_nll",
+   "accuracy_key": "bbh_logical_deduction_acc",
+   "margin_key": "bbh_logical_deduction_margin"
+  },
+  {
+   "name": "bbh_tracking_shuffled_objects",
+   "path": "depth_v1/bbh_tracking_shuffled_objects_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_tracking_shuffled_objects_nll",
+   "accuracy_key": "bbh_tracking_shuffled_objects_acc",
+   "margin_key": "bbh_tracking_shuffled_objects_margin"
+  },
+  {
+   "name": "clutrr",
+   "path": "depth_v1/clutrr_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "clutrr_nll",
+   "accuracy_key": "clutrr_acc",
+   "margin_key": "clutrr_margin"
+  },
+  {
+   "name": "proverqa",
+   "path": "depth_v2/proverqa_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "proverqa_nll",
+   "accuracy_key": "proverqa_acc",
+   "margin_key": "proverqa_margin"
+  },
+  {
+   "name": "musr_optonly",
+   "path": "depth_v2/musr_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "musr_optonly_nll",
+   "accuracy_key": "musr_optonly_acc",
+   "margin_key": "musr_optonly_margin"
+  },
+  {
+   "name": "agieval_lsat_ar_optonly",
+   "path": "depth_v2/agieval_lsat_ar_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_lsat_ar_optonly_nll",
+   "accuracy_key": "agieval_lsat_ar_optonly_acc",
+   "margin_key": "agieval_lsat_ar_optonly_margin"
+  },
+  {
+   "name": "agieval_lsat_lr_optonly",
+   "path": "depth_v2/agieval_lsat_lr_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_lsat_lr_optonly_nll",
+   "accuracy_key": "agieval_lsat_lr_optonly_acc",
+   "margin_key": "agieval_lsat_lr_optonly_margin"
+  },
+  {
+   "name": "agieval_logiqa_en_optonly",
+   "path": "depth_v2/agieval_logiqa_en_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_logiqa_en_optonly_nll",
+   "accuracy_key": "agieval_logiqa_en_optonly_acc",
+   "margin_key": "agieval_logiqa_en_optonly_margin"
+  },
+  {
+   "name": "knowlogic_optonly",
+   "path": "depth_v2/knowlogic_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "knowlogic_optonly_nll",
+   "accuracy_key": "knowlogic_optonly_acc",
+   "margin_key": "knowlogic_optonly_margin"
+  },
+  {
+   "name": "divlogiceval_optonly",
+   "path": "depth_v2/divlogiceval_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "divlogiceval_optonly_nll",
+   "accuracy_key": "divlogiceval_optonly_acc",
+   "margin_key": "divlogiceval_optonly_margin"
+  },
+  {
+   "name": "bbh_logical_deduction_optonly",
+   "path": "depth_v2/bbh_logical_deduction_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_logical_deduction_optonly_nll",
+   "accuracy_key": "bbh_logical_deduction_optonly_acc",
+   "margin_key": "bbh_logical_deduction_optonly_margin"
+  },
+  {
+   "name": "bbh_tracking_shuffled_objects_optonly",
+   "path": "depth_v2/bbh_tracking_shuffled_objects_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_tracking_shuffled_objects_optonly_nll",
+   "accuracy_key": "bbh_tracking_shuffled_objects_optonly_acc",
+   "margin_key": "bbh_tracking_shuffled_objects_optonly_margin"
+  },
+  {
+   "name": "clutrr_optonly",
+   "path": "depth_v2/clutrr_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "clutrr_optonly_nll",
+   "accuracy_key": "clutrr_optonly_acc",
+   "margin_key": "clutrr_optonly_margin"
+  },
+  {
+   "name": "proverqa_optonly",
+   "path": "depth_v2/proverqa_optonly_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "proverqa_optonly_nll",
+   "accuracy_key": "proverqa_optonly_acc",
+   "margin_key": "proverqa_optonly_margin"
+  },
+  {
+   "name": "gsm_infinite_gen",
+   "path": "depth_v1/gsm_infinite_eval.jsonl",
+   "kind": "generation",
+   "output_key": "gsm_infinite_gen_em",
+   "max_new_tokens": 12,
+   "scorer": "first_line"
+  },
+  {
+   "name": "synthworlds_real",
+   "path": "depth_v1/synthworlds_real_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "synthworlds_real_nll"
+  },
+  {
+   "name": "synthworlds_synthetic",
+   "path": "depth_v1/synthworlds_synthetic_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "synthworlds_synthetic_nll"
+  }
+ ],
+ "_note": "v1 with: temporal_sequences dropped (its wrong options are the time slots the story mentions, so likelihood scoring sits far below chance: 0.03-0.04 at 360M/1.7B); every multiple-choice leg paired with an options-only twin (<leg>_optonly: same items and order, prompt replaced by 'Answer:') -- option prior, and for proverqa/clutrr the content-free label prior used to calibrate; proverqa joined with semforge's z3 audit (semforge-internal results/audit/proverqa.json @30563da): row field `audit` = z3_label, label_agrees, steps, claimed, mandatory, minimal_support, forced_chain (no premise set smaller than the cited chain proves it; None for neutral rows); semforge does not compute a certified depth (spine) for ProverQA, `mandatory` is the nearest proxy. GSM-Infinite is scored by greedy generation, first-line exact match (12 new tokens, no chain of thought): read it at 3B and above only. synthworlds_* are a knowledge-vs-reasoning CONTROL, not a depth probe (open answers scored by gold likelihood). MuSR with murder mysteries is the separate reasoning_depth_long_v2 (max_length 2048). KnowLogic stays: SCoRE, its hop-annotated successor, has no released data (github pokerwf/KnowLogic holds only the README). Read with reasoning_core.evaluation.depth_report: chance-adjusted accuracy per depth, context gain over the options-only twin, calibrated accuracy for closed-label legs, paired deltas."
+}
