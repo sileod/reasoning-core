@@ -12,8 +12,11 @@ default; any field, dotted for nesting, e.g. ``audit.forced_chain``) and reports
   mean cost over the leg's own items, which also removes the in-context label bias a bare stem does
   not show (SmolLM2-1.7B on ProverQA: the twin favours "Uncertain" by ~1 nat, the leg by ~2.5).
   A constant label-prior picker scores chance under ``cal_own``.
+- ``margin`` (and ``cal_own_margin``): best distractor cost minus gold cost, in nats. Continuous, so a paired
+  difference resolves shifts far below what accuracy on a few hundred items can (about 4-5 points at n=600).
 
-``compare`` gives treatment-minus-baseline per group, paired by item, with a 95% interval.
+``compare`` gives treatment-minus-baseline per group, paired by item, with a 95% interval and z; the battery
+report gives it for accuracy and for margin.
 
     python -m reasoning_core.evaluation.depth_report \\
         --manifest reasoning_core/resources/batteries/reasoning_depth_v2.json \\
@@ -53,6 +56,11 @@ def label_prior(rows, scores):
     return {label: mean(values) for label, values in sums.items()}
 
 
+def _margin(costs, gold):
+    rest = [c for j, c in enumerate(costs) if j != gold and c != float("inf")]
+    return min(rest) - costs[gold] if rest and costs[gold] != float("inf") else None
+
+
 def item_scores(rows, scores, optonly=None, calibrate=False):
     """Per item: correct, chance-adjusted correct, and (when available) the options-only and calibrated versions."""
     priors = {}
@@ -72,11 +80,15 @@ def item_scores(rows, scores, optonly=None, calibrate=False):
         if optonly and optonly["prediction"][i] is not None:
             item["opt"] = float(optonly["prediction"][i] == gold)
             item["opt_adj"] = adj(item["opt"])
-        costs = _costs(scores, i) if priors else None
+        costs = _costs(scores, i)
+        if costs and (margin := _margin(costs, gold)) is not None:
+            item["margin"] = margin
         for key, prior in priors.items() if costs else ():
             shifted = [c - prior.get(label, 0.0) for c, label in zip(costs, row["choices"])]
             item[key] = float(min(range(k), key=shifted.__getitem__) == gold)
             item[f"{key}_adj"] = adj(item[key])
+            if (margin := _margin(shifted, gold)) is not None:
+                item[f"{key}_margin"] = margin
         out.append(item)
     return out
 
@@ -103,6 +115,10 @@ def leg_report(rows, scores, optonly=None, calibrate=False, by="depth"):
             if scored:
                 summary[f"{key}_acc"] = mean(i[key] for i in scored)
                 summary[f"{key}_adj"] = mean(i[f"{key}_adj"] for i in scored)
+        for key in ("margin", "cal_own_margin"):
+            scored = [i[key] for i in items if key in i]
+            if scored:
+                summary[key] = mean(scored)
         if "opt_acc" in summary:
             summary["context_gain"] = summary["acc"] - summary["opt_acc"]
         report[group] = summary
@@ -111,16 +127,18 @@ def leg_report(rows, scores, optonly=None, calibrate=False, by="depth"):
 
 def compare(rows, baseline, treatment, optonly=(None, None), calibrate=False, by="depth", metric="adj"):
     """Treatment minus baseline per group, paired by item, with a normal 95% interval.
-    ``metric``: "adj" (chance-adjusted accuracy), "cal_adj" or "cal_own_adj" (calibrated, closed-label legs)."""
+    ``metric``: "adj" (chance-adjusted accuracy), "cal_adj" or "cal_own_adj" (calibrated, closed-label legs),
+    "margin" or "cal_own_margin" (nats)."""
     base = item_scores(rows, baseline, optonly[0], calibrate)
     treat = item_scores(rows, treatment, optonly[1], calibrate)
     diffs = [t[metric] - b[metric] if b and t and metric in b and metric in t else None for b, t in zip(base, treat)]
     report = {}
     for group, values in _groups(rows, diffs, by).items():
         delta = mean(values)
-        half = 1.96 * stdev(values) / len(values) ** 0.5 if len(values) > 1 else None
+        se = stdev(values) / len(values) ** 0.5 if len(values) > 1 else None
         report[group] = {"n": len(values), "delta": delta,
-                         "ci95": None if half is None else [delta - half, delta + half]}
+                         "ci95": None if se is None else [delta - 1.96 * se, delta + 1.96 * se],
+                         "z": delta / se if se else None}
     return report
 
 
@@ -140,8 +158,10 @@ def battery_report(battery, sidecar, baseline=None, by="depth"):
         if baseline and leg.name in baseline["legs"]:
             base = baseline["legs"][leg.name]
             if "prediction" in base:
-                entry["delta"] = compare(rows, base, legs[leg.name], (baseline["legs"].get(twin), legs.get(twin)),
-                                         calibrate, by, "cal_own_adj" if calibrate else "adj")
+                pair = (rows, base, legs[leg.name], (baseline["legs"].get(twin), legs.get(twin)), calibrate, by)
+                entry["delta"] = compare(*pair, "cal_own_adj" if calibrate else "adj")
+                if base.get("costs") and legs[leg.name].get("costs"):
+                    entry["delta_margin"] = compare(*pair, "cal_own_margin" if calibrate else "margin")
         out[leg.name] = entry
     return out
 

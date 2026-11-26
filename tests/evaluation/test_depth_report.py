@@ -50,6 +50,15 @@ def test_compare_is_paired_and_groups_by_any_field():
     assert set(by) == {"false", "true", "null", "all"} and by["true"]["n"] == 2
 
 
+def test_margin_is_reported_and_compared_paired():
+    r = rows([1, 1])
+    base = {"prediction": [0, 1], "costs": [[1.0, 2.0, 3.0, 4.0], [2.0, 1.5, 3.0, 4.0]]}
+    treat = {"prediction": [0, 0], "costs": [[1.0, 2.5, 3.0, 4.0], [1.0, 1.5, 3.0, 4.0]]}
+    assert dr.leg_report(r, base)["all"]["margin"] == pytest.approx((1.0 - 0.5) / 2)
+    out = dr.compare(r, base, treat, metric="margin")["all"]
+    assert out["delta"] == pytest.approx(0.75) and out["z"] == pytest.approx(3.0)   # diffs .5, 1.0: se .25
+
+
 def test_generation_and_nll_legs_report_means_per_group():
     r = [{"prompt": "p", "answer": "1", "depth": d} for d in (2, 2, 30)]
     assert dr.leg_report(r, {"score": [1.0, 0.0, 0.0]})["2"]["score"] == 0.5
