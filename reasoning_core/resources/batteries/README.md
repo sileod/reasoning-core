@@ -8,7 +8,7 @@ here is code.
 with `ts_dpo` replaced by four tasksource legs (`ts_mc`, `ts_nli`, `ts_cls`, `ts_pref`), every other
 leg byte-identical. `copyfree_battery_v8_tiny.json` is what `default_battery()` returns and what every
 earlier tiny-battery result was measured on. `paper_battery.json` is the 21-leg suite of the first influence paper,
-reachable through `paper_battery()`. Everything else is archived: kept so an old
+reachable through `paper_battery()`. `reasoning_depth_v1.json` is the opt-in depth/transfer probe for procedural data (legs under `depth_v1/`, each row tagged with `depth` and `provenance`; see docs/evaluation.md). Everything else is archived: kept so an old
 measurement can be rebuilt, referenced by nothing.
 
 ## Why the filenames still carry version numbers

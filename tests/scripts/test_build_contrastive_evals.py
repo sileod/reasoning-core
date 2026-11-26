@@ -68,3 +68,26 @@ def test_cli_checks_all_outputs_before_building(monkeypatch, tmp_path):
         builder.main()
     assert existing.read_text() == "frozen bytes\n"
     assert not (tmp_path / "siqa_eval.jsonl").exists()
+
+
+def test_items_carry_metadata_only_when_asked():
+    d = {"train": [dict(row("Q"), metadata='{"level": 3}')]}
+    assert builder._items(d, ("train",)) == [("Q", ["water", "oxygen"], "water")]
+    assert builder._items(d, ("train",), meta=True) == [("Q", ["water", "oxygen"], "water", {"level": 3})]
+
+
+def test_stratified_balances_the_first_rows_across_depths():
+    rows = [{"depth": 2}] * 50 + [{"depth": 3}] * 5 + [{"depth": None}] * 5
+    first = list(builder.stratified()(rows, random.Random(0)))[:15]
+    assert sorted(r["depth"] for r in first if r["depth"]) == [2] * 5 + [3] * 5
+
+
+def test_no_stated_option_drops_copyable_items():
+    rows = [builder._row("Ann is first. Bob is last.", "Ann is first", ["Bob is first"], random.Random(0)),
+            builder._row("Ann is before Bob.", "Ann is first", ["Bob is first"], random.Random(0))]
+    assert [r["prompt"] for r in builder.no_stated_option(rows, None)] == ["Ann is before Bob.\nAnswer:"]
+
+
+def test_depth_legs_are_eval_only_and_registered():
+    assert all(t.startswith("eval_only.") for tasks, *_ in builder.DEPTH_LEGS.values() for t in tasks)
+    assert set(builder.DEPTH_LEGS) <= set(builder.BUILDERS)

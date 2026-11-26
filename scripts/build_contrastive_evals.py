@@ -80,9 +80,10 @@ def _row(prompt, gold, distractors, rng, answer_cue=True):
             "choices": choices, "answer_idx": choices.index(gold)}
 
 
-def _items(d, splits):
+def _items(d, splits, meta=False):
     """(inputs, options, gold index) per labeled row, deduplicated on (inputs, option set); an item
-    seen again with another gold is a conflict and dropped everywhere (MMLU repeats some questions)."""
+    seen again with another gold is a conflict and dropped everywhere (MMLU repeats some questions).
+    meta=True appends the row's parsed tasksource metadata (depth labels) as a fourth element."""
     unique, conflicts = {}, set()
     for split in splits:
         for r in d.get(split, ()):
@@ -94,13 +95,14 @@ def _items(d, splits):
             key, gold = (r["inputs"].strip(), tuple(sorted(opts))), opts[int(label)]
             if key in unique and unique[key][1] != gold:
                 conflicts.add(key)
-            unique.setdefault(key, (opts, gold))
-    return [(k[0], opts, gold) for k, (opts, gold) in unique.items() if k not in conflicts]
+            unique.setdefault(key, (opts, gold, json.loads(r.get("metadata") or "{}") if meta else None))
+    return [(k[0], opts, gold) + ((m,) if meta else ()) for k, (opts, gold, m) in unique.items() if k not in conflicts]
 
 
-def tasksource_rows(task, rng, answer_cue=True, splits=("validation", "test"), **kw):
+def tasksource_rows(task, rng, answer_cue=True, splits=("validation", "test"), meta=None, **kw):
     """A tasksource multiple-choice task (catalog id, or an eval_only annotation by name), every
-    native option kept. Only evaluation splits: nothing here may be in an encoder's training pairs."""
+    native option kept. Only evaluation splits: nothing here may be in an encoder's training pairs.
+    meta: a function of (row metadata, annotation) -> extra fields for each output row (depth labels)."""
     if task.startswith("eval_only."):
         from tasksource import eval_only
         annotation = getattr(eval_only, task.split(".", 1)[1])
@@ -114,10 +116,11 @@ def tasksource_rows(task, rng, answer_cue=True, splits=("validation", "test"), *
     else:
         from tasksource import load_task
         dataset = load_task(task, native_options=True, **kw)
-    items = _items(dataset, splits)
+    items = _items(dataset, splits, meta=meta is not None)
     rng.shuffle(items)
-    for prompt, opts, gold in items:
-        yield _row(prompt, gold, [o for o in opts if o != gold], rng, answer_cue)
+    for prompt, opts, gold, *m in items:
+        r = _row(prompt, gold, [o for o in opts if o != gold], rng, answer_cue)
+        yield {**r, **meta(m[0], annotation)} if r and meta else r
 
 
 def _winogrande(n, rng):
@@ -203,6 +206,127 @@ LEGS = {
     **{f"followir_{s}{suffix}": (f"eval_only.followir_{s}__{view}", None, dict(splits=("train",)), lexical)
        for s in ("robust04", "core17", "news21") for suffix, view in (("", "choice"), ("_instr", "instruction_choice"))},
 }
+
+
+# Reasoning-depth legs: every row carries `depth` (hops, steps, objects, operations; None where the
+# source has none) and `provenance` (how the text was written: human, templated, llm), from the
+# tasksource eval_only annotation, so a depth curve or a templated-vs-human split is one groupby.
+def _tagged(depth_key=None):
+    return lambda m, a: {"depth": m.get(depth_key) if depth_key else None, "provenance": a.provenance}
+
+
+def stratified(key="depth"):
+    """Round-robin over the key's values, so the first n rows (what --n keeps) are balanced across depths."""
+    def post(rows, rng):
+        groups = defaultdict(list)
+        for r in rows:
+            if r:
+                groups[r.get(key)].append(r)
+        order = sorted(groups, key=str)
+        while any(groups.values()):
+            for k in order:
+                if groups[k]:
+                    yield groups[k].pop()
+    return post
+
+
+def _eval_only(task, **kw):
+    """A non-multiple-choice eval_only annotation, loaded at its own pinned revision and preprocessed."""
+    from datasets import load_dataset
+    from tasksource import eval_only
+    a = getattr(eval_only, task)
+    return a, a(load_dataset(a.dataset_name, a.config_name, **a.load_dataset_kwargs))["train"]
+
+
+def _depth_closed(tasks, depth, prompt, rng):
+    """Closed-label legs (ProverQA levels, CLUTRR relations): the label words are the options, so read
+    accuracy per label too. Options are the annotation's whole label set."""
+    out = []
+    for task in tasks:
+        a, rows = _eval_only(task)
+        names = rows.features["labels"].names
+        for r in rows:
+            m = json.loads(r["metadata"] or "{}")
+            gold = names[r["labels"]]
+            row = _row(prompt(r), gold, [w for w in names if w != gold], rng, answer_cue=False)
+            out.append({**row, "depth": depth(task, m), "provenance": a.provenance})
+    rng.shuffle(out)
+    return out
+
+
+def _proverqa(n, rng):
+    """ProverQA dev easy/medium/hard (1-2, 3-5, 6-9 proof steps), True / False / Uncertain; depth = level 1-3."""
+    level = {"proverqa__easy": 1, "proverqa__medium": 2, "proverqa__hard": 3}
+    return stratified()(_depth_closed(
+        list(level), lambda t, m: level[t],
+        lambda r: f"{r['sentence1'].strip()}\n\nStatement: {r['sentence2'].strip()}\n\n"
+                  "Based only on the information above, is the statement true, false, or uncertain?", rng), rng)
+
+
+def _clutrr(n, rng):
+    """CLUTRR generalization test (2-10 hops): the relation word completes "<B> is <A>'s", over all relations."""
+    def prompt(r):
+        b, a = re.match(r"How is (.+) related to (.+)\?$", r["sentence2"]).groups()
+        return f"{r['sentence1'].strip()}\n\n{b} is {a}'s"
+    return stratified()(_depth_closed(["clutrr_gen"], lambda t, m: m["hops"], prompt, rng), rng)
+
+
+def _exact(task, depth_key, rng):
+    """An exact-answer eval_only task as a qa_nll leg (as gsm8k): the gold answer's likelihood after "Answer:"."""
+    a, rows = _eval_only(task)
+    out = []
+    for r in rows:
+        m = json.loads(r["metadata"] or "{}")
+        out.append({"prompt": f"{r['prompt'].strip()}\nAnswer:", "answer": r["output"],
+                    "depth": m.get(depth_key), "provenance": a.provenance, "id": m.get("id")})
+    rng.shuffle(out)
+    return out
+
+
+def _gsm_infinite(n, rng):
+    """GSM-Infinite medium, no filler context: depth = operations (2-30), balanced."""
+    return stratified()(_exact("gsm_infinite_medium", "ops", rng), rng)
+
+
+def _synthworlds(world):
+    """SynthWorlds QA, gold documents in the prompt: the real and renamed worlds share item ids, so the two
+    legs are built over the SAME items (both prompts under 3600 characters) -- knowledge vs reasoning."""
+    def build(n, rng, max_chars=3600):
+        legs = {w: _exact(f"synthworlds__{w}", "hops", random.Random(0)) for w in ("real", "synthetic")}
+        fits = [{r["id"].rsplit("-", 2)[0] for r in rows if len(r["prompt"]) <= max_chars} for rows in legs.values()]
+        keep = sorted(set.intersection(*fits))
+        rng.shuffle(keep)
+        by_id = {r["id"].rsplit("-", 2)[0]: r for r in legs[world]}
+        return [by_id[i] for i in keep]
+    return build
+
+
+def no_stated_option(rows, rng):
+    """Drop items whose prompt states an option verbatim: BBH logical deduction often lists the answer
+    among its premises (32% of items), zero-step items a copy-or-guess picker wins. Rebalancing to
+    chance is not enough there: copy when possible, else guess, still beats chance."""
+    return (r for r in rows if r and not any(c.lower() in r["prompt"].lower() for c in r["choices"]))
+# leg: (eval_only annotations, metadata depth key or None, balance the first n rows across depths, post-filter)
+_BBH = lambda family: [f"eval_only.bbh_{family}_{k}_objects" for k in ("three", "five", "seven")]
+DEPTH_LEGS = {
+    "musr": (["eval_only.musr"], None, False, None),   # 3 domains, no depth; murder mysteries exceed 1k tokens
+    **{f"agieval_{x}": ([f"eval_only.agieval_{x}"], None, False, None) for x in ("lsat_ar", "lsat_lr", "logiqa_en")},
+    "knowlogic": (["eval_only.knowlogic"], "level", True, None),
+    "divlogiceval": (["eval_only.divlogiceval__polished"], None, False, None),
+    "bbh_logical_deduction": (_BBH("logical_deduction"), "objects", True, no_stated_option),
+    "bbh_tracking_shuffled_objects": (_BBH("tracking_shuffled_objects"), "objects", True, None),  # options all named
+    "bbh_temporal_sequences": (["eval_only.bbh_temporal_sequences"], None, False, None)
+}
+
+
+def _depth_mc(leg):
+    def build(n, rng):
+        tasks, key, balance, post = DEPTH_LEGS[leg]
+        rows = [r for t in tasks for r in tasksource_rows(t, rng, splits=("train",), meta=_tagged(key))]
+        rng.shuffle(rows)
+        rows = list(post(rows, rng)) if post else rows
+        return stratified()(rows, rng) if balance else rows
+    return build
 
 
 def build_leg(leg, n, rng):
@@ -325,7 +449,11 @@ def _jevbench(n, rng, max_chars=4000, max_options=10):
     return rows
 
 
-BUILDERS = {"control_nli": _control, "folio": _folio, "math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc, "winogrande": _winogrande, "jevbench": lambda n, rng: _jevbench(n // 44, rng),          # called with 2 * --n
+DEPTH_BUILDERS = {**{leg: _depth_mc(leg) for leg in DEPTH_LEGS},
+                  "proverqa": _proverqa, "clutrr": _clutrr, "gsm_infinite": _gsm_infinite,
+                  "synthworlds_real": _synthworlds("real"), "synthworlds_synthetic": _synthworlds("synthetic")}
+
+BUILDERS = {**DEPTH_BUILDERS, "control_nli": _control, "folio": _folio, "math_l12": build_math_l12, "math_l12_mc": build_math_l12_mc, "winogrande": _winogrande, "jevbench": lambda n, rng: _jevbench(n // 44, rng),          # called with 2 * --n
             **{leg: (lambda n, rng, leg=leg: build_leg(leg, n, rng)) for leg in LEGS}}
 
 

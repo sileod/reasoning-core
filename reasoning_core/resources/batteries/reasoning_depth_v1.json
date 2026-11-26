@@ -1,0 +1,113 @@
+{
+ "name": "reasoning_depth_v1",
+ "max_length": 1024,
+ "legs": [
+  {
+   "name": "musr",
+   "path": "depth_v1/musr_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "musr_nll",
+   "accuracy_key": "musr_acc",
+   "margin_key": "musr_margin"
+  },
+  {
+   "name": "agieval_lsat_ar",
+   "path": "depth_v1/agieval_lsat_ar_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_lsat_ar_nll",
+   "accuracy_key": "agieval_lsat_ar_acc",
+   "margin_key": "agieval_lsat_ar_margin"
+  },
+  {
+   "name": "agieval_lsat_lr",
+   "path": "depth_v1/agieval_lsat_lr_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_lsat_lr_nll",
+   "accuracy_key": "agieval_lsat_lr_acc",
+   "margin_key": "agieval_lsat_lr_margin"
+  },
+  {
+   "name": "agieval_logiqa_en",
+   "path": "depth_v1/agieval_logiqa_en_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "agieval_logiqa_en_nll",
+   "accuracy_key": "agieval_logiqa_en_acc",
+   "margin_key": "agieval_logiqa_en_margin"
+  },
+  {
+   "name": "knowlogic",
+   "path": "depth_v1/knowlogic_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "knowlogic_nll",
+   "accuracy_key": "knowlogic_acc",
+   "margin_key": "knowlogic_margin"
+  },
+  {
+   "name": "divlogiceval",
+   "path": "depth_v1/divlogiceval_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "divlogiceval_nll",
+   "accuracy_key": "divlogiceval_acc",
+   "margin_key": "divlogiceval_margin"
+  },
+  {
+   "name": "bbh_logical_deduction",
+   "path": "depth_v1/bbh_logical_deduction_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_logical_deduction_nll",
+   "accuracy_key": "bbh_logical_deduction_acc",
+   "margin_key": "bbh_logical_deduction_margin"
+  },
+  {
+   "name": "bbh_tracking_shuffled_objects",
+   "path": "depth_v1/bbh_tracking_shuffled_objects_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_tracking_shuffled_objects_nll",
+   "accuracy_key": "bbh_tracking_shuffled_objects_acc",
+   "margin_key": "bbh_tracking_shuffled_objects_margin"
+  },
+  {
+   "name": "bbh_temporal_sequences",
+   "path": "depth_v1/bbh_temporal_sequences_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "bbh_temporal_sequences_nll",
+   "accuracy_key": "bbh_temporal_sequences_acc",
+   "margin_key": "bbh_temporal_sequences_margin"
+  },
+  {
+   "name": "proverqa",
+   "path": "depth_v1/proverqa_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "proverqa_nll",
+   "accuracy_key": "proverqa_acc",
+   "margin_key": "proverqa_margin"
+  },
+  {
+   "name": "clutrr",
+   "path": "depth_v1/clutrr_eval.jsonl",
+   "kind": "mcq",
+   "output_key": "clutrr_nll",
+   "accuracy_key": "clutrr_acc",
+   "margin_key": "clutrr_margin"
+  },
+  {
+   "name": "gsm_infinite",
+   "path": "depth_v1/gsm_infinite_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "gsm_infinite_nll"
+  },
+  {
+   "name": "synthworlds_real",
+   "path": "depth_v1/synthworlds_real_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "synthworlds_real_nll"
+  },
+  {
+   "name": "synthworlds_synthetic",
+   "path": "depth_v1/synthworlds_synthetic_eval.jsonl",
+   "kind": "qa_nll",
+   "output_key": "synthworlds_synthetic_nll"
+  }
+ ],
+ "_note": "Reasoning-depth and transfer probes for procedural data, from tasksource eval_only annotations at pinned revisions (scripts/build_contrastive_evals.py, seed 43, --n 600 --max-prompt-chars 3600). Every row carries `depth` (KnowLogic level 1-3, BBH objects 3/5/7, ProverQA level 1-3 = 1-2/3-5/6-9 steps, CLUTRR hops 2-10, GSM-Infinite operations 2-30, SynthWorlds hops; None for MuSR, AGIEval, DivLogicEval, temporal_sequences) and `provenance` (human: AGIEval; templated: KnowLogic, BBH, CLUTRR, GSM-Infinite; llm: MuSR, DivLogicEval polished, ProverQA, SynthWorlds), so per-depth and templated-vs-human reads are a groupby. Multiple-choice legs score real option text with no menu in the prompt; proverqa and clutrr are closed-label legs (the label words are the options: read per-label accuracy, and hold out reasoning_core tasks of the same NLI/relation shape). gsm_infinite and synthworlds are qa_nll (gold answer likelihood, as gsm8k). synthworlds_real and synthworlds_synthetic share item ids (same graph, entities renamed): their gap is knowledge, not reasoning. BBH logical deduction drops items whose prompt states an option verbatim. MuSR keeps the items under 3600 characters (team allocation, part of object placements; no murder mysteries). Not included: Tales from a Graph and LogicTree (no public data), ParaRules (tasksource/ruletaker NatLang rows are the templated theories, not the paraphrases), Verbose ListOps (~10k-token narratives)."
+}

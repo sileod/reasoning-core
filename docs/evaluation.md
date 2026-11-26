@@ -89,6 +89,19 @@ test items. `keep` removes five repeated MMLU math rows and two MMLU-other rows
 without rebuilding the frozen source files. This battery has its own identity;
 existing runs and the default battery retain theirs.
 
+To ask whether procedural data moves *deep* reasoning on data it was not generated from,
+select `reasoning_core/resources/batteries/reasoning_depth_v1.json`. It has MuSR, AGIEval
+(AR-LSAT, LSAT-LR, LogiQA), KnowLogic, DivLogicEval, BBH (logical deduction and shuffled
+objects at 3/5/7 objects, temporal sequences), ProverQA, CLUTRR, GSM-Infinite, and
+SynthWorlds real/renamed. Each row records `depth` (hops, steps, objects, operations) and
+`provenance`, meaning how the text was written: `human`, `templated` or `llm`. Read the
+results as a curve over depth and split by provenance, not as a single average. A
+templated benchmark that shares a shape with the training tasks is near transfer by
+construction. ProverQA (True/False/Uncertain) and CLUTRR (relation words) are closed-label
+legs, so check per-label accuracy and hold out reasoning_core tasks of the same shape.
+The sources are tasksource `eval_only` annotations, each with a `provenance` field. They
+are built by `scripts/build_contrastive_evals.py` (the `DEPTH_LEGS`/`DEPTH_BUILDERS` entries).
+
 For the full requested no-menu, answer-text suite, select
 `reasoning_core/resources/batteries/nomenu_cloze_v1.json` with `data_dir="data_cache"`.
 It includes SciQ, ARC-Easy, ARC-Challenge, BoolQ, CommonsenseQA, HellaSwag,
